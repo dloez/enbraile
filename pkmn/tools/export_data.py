@@ -5521,6 +5521,8 @@ SAVE_FOLDER = "Pokemon Anil"
 SLOT = re.compile(r"^Partida (\d+)\.rxdata$")
 GENDERS = {0: "M", 1: "F", 2: "N"}
 SHINY_CHANCE = 65
+ITEM_POCKETS = (1, 5)
+TM_POCKET = 4
 
 
 class Symbol(str):
@@ -5894,6 +5896,64 @@ def export_pokemon(pokemon: RubyObject, table: dict, capsules, notices: list[str
     }
 
 
+def bag_entries(save: dict) -> list[tuple[str, int]]:
+    bag = save.get("bag")
+    pockets = (bag.get("pockets") or []) if isinstance(bag, RubyObject) else []
+    return [
+        (str(entry[0]), entry[1])
+        for pocket in pockets
+        if isinstance(pocket, list)
+        for entry in pocket
+        if isinstance(entry, list) and len(entry) == 2
+    ]
+
+
+def held_items(save: dict) -> list[tuple[str, int]]:
+    return [(str(pokemon.get("item")), 1) for pokemon in all_pokemon(save) if pokemon.get("item")]
+
+
+def tm_move(game_id: str, tm_map) -> str | None:
+    rolled = tm_map.get(game_id) if isinstance(tm_map, dict) else None
+    if isinstance(rolled, RubyObject) and rolled.get("id"):
+        return str(rolled.get("id"))
+    return DATA["tm_moves"].get(game_id)
+
+
+def export_items(save: dict, tm_map, notices: list[str]) -> tuple[list[dict], list[dict]]:
+    showdown = DATA["showdown"]
+    counts: dict[str, int] = {}
+    tms: dict[str, str] = {}
+    missing: list[str] = []
+    unnamed_moves: list[str] = []
+    for game_id, quantity in bag_entries(save) + held_items(save):
+        pocket = DATA["pockets"].get(game_id)
+        if pocket not in ITEM_POCKETS and not (pocket == TM_POCKET and game_id in DATA["tm_moves"]):
+            continue
+        item = showdown["items"].get(game_id)
+        if item is None:
+            if game_id not in missing:
+                missing.append(game_id)
+            continue
+        if pocket in ITEM_POCKETS:
+            counts[item] = counts.get(item, 0) + quantity
+            continue
+        if item in tms or game_id in unnamed_moves:
+            continue
+        move = tm_move(game_id, tm_map)
+        named = showdown["moves"].get(move) if move else None
+        if named is None:
+            unnamed_moves.append(game_id)
+            notices.append(f"Left out {game_id}: its move {move} has no Showdown ID.")
+            continue
+        tms.setdefault(item, named)
+    for game_id in missing:
+        notices.append(f"Left out {game_id}: it has no Showdown item.")
+    return (
+        [{"item": item, "quantity": quantity} for item, quantity in counts.items()],
+        [{"item": item, "move": move} for item, move in tms.items()],
+    )
+
+
 def output_path(save: dict, chosen: str | None) -> Path:
     if chosen:
         return Path(chosen)
@@ -5902,7 +5962,7 @@ def output_path(save: dict, chosen: str | None) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Export a Pokémon Añil save's shared Pokémon to JSON for an open-sheet fight.")
+    parser = argparse.ArgumentParser(description="Export a Pokémon Añil save's shared Pokémon, items and TMs to JSON for an open-sheet fight.")
     parser.add_argument("--save", help="the save file to read instead of picking a slot")
     parser.add_argument("--out", help="where to write the JSON instead of <trainer>-open-sheet.json here")
     arguments = parser.parse_args()
@@ -5920,6 +5980,7 @@ def main() -> None:
         for entry in (export_pokemon(pokemon, table, capsules, notices) for pokemon in all_pokemon(save))
         if entry is not None
     ]
+    items, tms = export_items(save, metadata.get("tm_move_map"), notices)
     version = metadata.get("randomlocke_version")
     if version != DATA["randomlocke_version"]:
         notices.append(
@@ -5927,10 +5988,10 @@ def main() -> None:
             f"{DATA['randomlocke_version']}; some of what it wrote may be wrong."
         )
     out = output_path(save, arguments.out)
-    out.write_text(json.dumps({"pokemon": exported}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    out.write_text(json.dumps({"pokemon": exported, "items": items, "tms": tms}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     for notice in notices:
         print(notice)
-    print(f"Wrote {len(exported)} Pokémon to {out}")
+    print(f"Wrote {len(exported)} Pokémon, {len(items)} items and {len(tms)} TMs to {out}")
 
 
 if __name__ == "__main__":
