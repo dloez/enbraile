@@ -4,6 +4,13 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
+## pkmn/tools: name the export's version and species list among its shipped data
+
+The explanation's "Data Shipped With the Script" lists what the `DATA` dict holds as the Showdown ID table, types, pockets, TM moves, Shedinja's fixed abilities and level-up evolutions, but `build()` in `pkmn/tools/generate_export_data.py` also writes `randomlocke_version`, the value the script's version notice compares the save against. The same section's list of what the generator reads from Wonder leaves out `packages/randomlocke/src/randomlocke/data/species.txt`, which `build()` reads for the allowed evolution targets; only a build-rule bullet names it, as "the mod's `species.txt`", without its path. Name both there, so the section matches `DATA`'s seven keys and the generator's seven inputs.
+
+Verify manually: every top-level key of `DATA` in `pkmn/tools/export_data.py`, and every file `generate_export_data.py` opens under the Wonder checkout, is named in the explanation's "Data Shipped With the Script" section.
+**Touches:** `docs/pkmn/tools/explanation/open-sheet-export.md`
+
 ## pkmn/tools: decide which item IDs count as Showdown's
 
 The export's "Showdown ID" for an item is the Showdown-style ID of its PokéAPI English name (Wonder's `showdown.txt`), not an entry of Showdown's own item data. Of the 306 nameable pocket 1 items, 67 are absent from Showdown's `data/items.ts` (Repels, Shards, Apricorns, Nuggets, Relics, Mulches and the like), and so is every TM item (`tm01` to `tm125`); the decision says an item with no Showdown counterpart is left out because it cannot exist in a Showdown fight, and that the IDs let any Showdown data source be looked up. Record the answer in the export's explanation doc under `docs/pkmn/tools/`, close the open question, and change the generator and the script if the answer changes what goes out.
@@ -19,6 +26,14 @@ The export takes held items only from the Pokémon it exports (`held_items` uses
 Verify manually: in a copy of `Partida 1` where a permafainted boxed Pokémon holds `LEFTOVERS`, the export's `leftovers` quantity and notices match the recorded decision.
 **Touches:** `pkmn/tools/export_data.py`, `docs/pkmn/tools/`, `docs/work-in-progress/open-questions.md`
 **Needs the author:** do held items of permafainted Pokémon count as shared items, given the player can recover them by taking or releasing?
+
+## pkmn/tools: post the open sheet export as a gist
+
+The export's explanation decides it is shared as a GitHub Gist that a rival runs by its raw URL, and steps 3 and 4 of [How to Run and Share the Open Sheet Export](../pkmn/tools/how-to/run-the-open-sheet-export.md) say how, but no Gist exists yet (`gh gist list` on the logged-in owner account lists none, 2026-10-15), so a rival without the repository cannot run it the decided way. Post `pkmn/tools/export_data.py` with step 3, and record the result as the owner answers.
+
+Verify manually: `gh gist list` shows the Gist; on `Partida 1`, `uv run <raw URL> --save <path> --out a.json` and `uv run pkmn/tools/export_data.py --save <path> --out b.json` write identical files (`cmp a.json b.json`), and the save's modification time is unchanged.
+**Touches:** `docs/pkmn/tools/how-to/run-the-open-sheet-export.md`
+**Needs the author:** may the Gist be posted, secret, from your GitHub account now, before the item-ID and permafainted-held-item questions settle (each answer that changes the script then needs a `gh gist edit`), and should its raw URL replace the `<owner>/<gist id>` placeholders in the how-to?
 
 ## pkmn: scope the Open Sheet web app
 
