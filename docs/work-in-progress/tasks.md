@@ -4,19 +4,11 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/site: design the Open Sheet screens
-
-Design in Claude Design, with the owner, the screens [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page) and [Interfaces and Integration](open-sheet-site-discovery.md#interfaces-and-integration) describe: the site's home, importing a file into a tab, the sheet browser with its filters, the PC-style team builder (including its phone layout, tap-to-add) and the team page, in light and dark. Link the chosen design from the [scope doc](open-sheet-site-discovery.md#surfaces-reuse-and-data), under "What does it look like?".
-
-Verify manually: the design covers every view named above with a realistic sheet (a dozen Pokémon, items, TMs); the owner has signed it off; its link is in the scope doc.
-**Touches:** `docs/work-in-progress/open-sheet-site-discovery.md`
-**Needs the author:** the design is made and chosen with the owner.
-
 ## pkmn/site: scaffold the site
 
 Create `pkmn/site/` with the stack of [Surfaces, Reuse and Data](open-sheet-site-discovery.md#surfaces-reuse-and-data), at each package's latest stable version, pinned, deployed as a Worker with static assets for `pkmn.enbraile.vip` ([Portability and Environment](open-sheet-site-discovery.md#portability-and-environment)): shadcn initialised, TanStack Router with a home page listing the tools and an empty `/open-sheet` route, `npm run gate` (`tsc` and `vitest`), and `pkmn/site/CLAUDE.md` naming the gate. Add the project's row to `docs/pkmn/index.md`.
 
-Verify manually: `npm run gate` passes; `npm run dev` serves the home page and `/open-sheet`, in light and dark; `npm run build` then `npx wrangler dev` serves the same from the Worker; `npm outdated` lists nothing.
+Verify manually: `npm run gate` passes; `npm run dev` serves the home page and `/open-sheet` in the dark theme; `npm run build` then `npx wrangler dev` serves the same from the Worker; `npm outdated` lists nothing.
 **Touches:** `pkmn/site/`, `docs/pkmn/index.md`
 
 ## pkmn/site: deploy on Workers Builds
@@ -34,23 +26,23 @@ Build importing and the tabs of [Interfaces and Integration](open-sheet-site-dis
 
 Verify manually: import a real export and a second one; two tabs open, named after their trainers; reload, and both are still there; a file with `pokemon` removed is refused with a message naming it; closing a tab removes it after a reload.
 **Touches:** `pkmn/site/`
-**After:** pkmn/site: scaffold the site; pkmn/site: design the Open Sheet screens
+**After:** pkmn/site: scaffold the site
 
-## pkmn/site: browse a sheet
+## pkmn/site: browse a sheet in the PC
 
-Show a tab's sheet with `@pkmn/dex` and `@pkmn/img` ([Interfaces and Integration](open-sheet-site-discovery.md#interfaces-and-integration)): a card per Pokémon (sprite, shiny and gender, nickname, level, nature, types with the mismatch flag, base stats, current and possible abilities with descriptions), the items with icons, quantities and descriptions, the TMs with their move's type, category, power, accuracy and description; unknown IDs by raw ID with a marker and `tinymushroom` labelled; search by name and filters for type, ability and level, and for a TM's move type and category. Follow the design.
+Build the PC and the bag of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page) with `@pkmn/dex` and `@pkmn/img` ([Interfaces and Integration](open-sheet-site-discovery.md#interfaces-and-integration)): the box grid of the tab's Pokémon with search by name and a type filter; clicking one opens its summary, Info (species, nickname, level, nature, gender, shiny, types with the mismatch flag, every possible ability with its description, the current one marked) and Stats (base stats and Level 50 ranges); the Bag button opens the bag with its Items, Berries and TMs pockets and search, items with icons, quantities and descriptions, TMs with their move's type, category, power, accuracy and description; unknown IDs by raw ID with a marker and `tinymushroom` labelled. Follow the design.
 
-Verify manually: on a real export, the party's Walrein shows its sprite, Showdown's base stats and its abilities' descriptions; filtering by Ice type keeps only Ice Pokémon; `tinymushroom` reads "Mini Seta (Tiny Mushroom)"; a hand-edited export with an unknown species shows it marked, without breaking the page; on a phone-width window every view is readable.
+Verify manually: on a real export, clicking the party's Walrein shows its sprite, Showdown's base stats and its abilities' descriptions; filtering by Ice type keeps only Ice Pokémon; `tinymushroom` reads "Mini Seta (Tiny Mushroom)"; a hand-edited export with an unknown species shows it marked, without breaking the page; on a phone-width window every view is readable.
 **Touches:** `pkmn/site/`
 **After:** pkmn/site: import exports into tabs
 
 ## pkmn/site: build teams
 
-Build the PC-style builder of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page): named teams per tab (create, rename, duplicate, delete), stored with Dexie; Pokémon dragged from a box grid into six slots; items held under the quantity limit; abilities switchable with the Mini Seta count against `tinymushroom`; four move slots offering the tab's TMs, then any Gen 1–5 move; tap-to-add on a phone. Follow the design.
+Build team building in the PC and the Team view of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page), point and click only: named teams per tab (create, rename, duplicate, delete), stored with Dexie; the six-slot strip, filled from a Pokémon's summary; items given and TMs taught from the bag, items held under the quantity limit; abilities switchable with the Mini Seta count against `tinymushroom`; four move slots offering the tab's TMs, then any Gen 1–5 move. Follow the design.
 
-Verify manually: with one `leftovers` in the tab, a second member cannot take it; switching two members' abilities shows 2 Mini Setas needed against the tab's count; a TM's move and a free-picked move both fill slots; two teams in one tab survive a reload; on a phone, tapping a Pokémon adds it to the team.
+Verify manually: with one `leftovers` in the tab, a second member cannot take it; switching two members' abilities shows 2 Mini Setas needed against the tab's count; a TM taught from the bag and a free-picked move both fill slots; two teams in one tab survive a reload; on a phone, tapping a Pokémon then Add to team puts it in the strip.
 **Touches:** `pkmn/site/`
-**After:** pkmn/site: browse a sheet
+**After:** pkmn/site: browse a sheet in the PC
 
 ## pkmn/site: analyse a team
 

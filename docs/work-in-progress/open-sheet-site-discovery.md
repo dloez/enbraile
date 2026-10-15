@@ -9,7 +9,7 @@ A: The group's Pokémon site, `pkmn/site/`. For now it holds one tool, Open Shee
 **Why:** the owner: the site will grow in depth over the series, and this is the tool needed now.
 
 **Q: What does the Open Sheet tool do?**
-A: It imports exports, each into its own tab, and on every tab lets the reader browse the sheet, filter and search it, build teams from it in a PC-style builder, and analyse a team on a team page.
+A: It imports exports, each into its own tab, and on every tab lets the reader look through the sheet in a PC, search it and filter it by type, build teams from it in that same PC, and analyse a team on a team page.
 **Why:** the owner chose the browse, filter, two-sheet and team-builder jobs; the team page follows pokeos's builder: stats, what is effective and what is not.
 
 **Q: Does the site know whose sheet is whose?**
@@ -58,8 +58,8 @@ A: Yes: a button copies it in Showdown's team format: species, nickname, gender,
 ## The Builder and the Team Page
 
 **Q: How is a team built?**
-A: In a PC-style screen: the tab's Pokémon in a box grid, dragged into six team slots; items and TMs dragged onto members. Each tab holds any number of named teams, which can be created, renamed, duplicated and deleted.
-**Why:** the owner, for the PC-style drag-and-drop and for many teams per tab.
+A: In the PC, by pointing and clicking, with no drag and drop. The PC is the tab's main view: its Pokémon in a scrollable box grid, searchable by name and filterable by type, under a strip of six team slots. Clicking a Pokémon opens its summary (Info, with every possible ability and its description, and Stats); its button adds it to the first free slot or removes it. A Bag button opens a scrollable bag with Items, Berries and TMs pockets; clicking an entry shows the team's members, and clicking one gives it the item or teaches it the TM. The Team view shows each member's item, ability, four moves and Level 50 stats, with the analysis below; clicking a member's item slot opens the bag for that member. Each tab holds any number of named teams, which can be created, renamed, duplicated and deleted.
+**Why:** the owner, in the design pass: a real Pokémon PC with a bag, point and click rather than drag, and many teams per tab. _(2026-10-16)_
 
 **Q: Do item quantities limit a team?**
 A: Yes. An item can be held by no more members than the tab's `quantity` of it; once used up, it shows as unavailable.
@@ -84,7 +84,7 @@ A: `pkmn/site/`, a project of its own; its lasting docs go under `docs/pkmn/site
 **Why:** the owner.
 
 **Q: What is it built with?**
-A: npm; Vite 8, React 19, TypeScript 7, Tailwind 4 and shadcn/ui, each at its latest stable version on the day the site is scaffolded, pinned exactly; TanStack Router; zod 4 for the import schema; Dexie over IndexedDB for storage; dnd-kit for drag and drop; `@pkmn/dex` and `@pkmn/img`. The gate is `npm run gate`: `tsc` and `vitest`. Latest as of 2026-10-15: vite 8.3.4, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, shadcn 4.21.5, @cloudflare/vite-plugin 1.64.0, wrangler 4.151.0, @pkmn/dex 0.10.11, @pkmn/img 0.3.4.
+A: npm; Vite 8, React 19, TypeScript 7, Tailwind 4 and shadcn/ui, each at its latest stable version on the day the site is scaffolded, pinned exactly; TanStack Router; zod 4 for the import schema; Dexie over IndexedDB for storage; `@pkmn/dex` and `@pkmn/img`. The gate is `npm run gate`: `tsc` and `vitest`. Latest as of 2026-10-15: vite 8.3.4, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, shadcn 4.21.5, @cloudflare/vite-plugin 1.64.0, wrangler 4.151.0, @pkmn/dex 0.10.11, @pkmn/img 0.3.4.
 **Why:** the owner chose Vite, React, TypeScript, Tailwind and shadcn at their latest versions, to future-proof the site; the rest follows the owner's unlit and blink, confirmed by the owner.
 
 **Q: What is stored, and where?**
@@ -92,13 +92,13 @@ A: Imports, open tabs and teams, in the reader's browser (IndexedDB), per browse
 **Why:** the owner.
 
 **Q: What does it look like?**
-A: Designed first in Claude Design, before any screen is built: the import and tabs, the sheet browser, the PC-style builder and the team page. English UI. Desktop-first: every view stays usable on a phone, with tap-to-add standing in for drag in the builder. Light and dark themes come with shadcn.
-**Why:** the owner asked for the design pass first, an English UI (Showdown's names are English) and desktop-first.
+A: As the [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) design in Claude Design, signed off by the owner on 2026-10-16: the home page, importing into tabs, the PC with its summary and bag, and the Team view, on desktop and phone. One dark theme, charcoal with a slate-blue PC and orange for actions; no light theme. No helper text explaining the UI. English UI. Desktop-first: every view stays usable on a phone.
+**Why:** the owner asked for the design pass first, an English UI (Showdown's names are English) and desktop-first, and in the design pass chose dark only and no explanatory labels. _(2026-10-16)_
 
 ## Dependencies and Ordering
 
 **Q: What must exist first?**
-A: The export and its JSON reference already exist. The design comes before any screen; the site's scaffold can be built alongside it. Importing comes before browsing, browsing before the builder, the builder before the team page and the Showdown copy.
+A: The export and its JSON reference already exist. The design comes before any screen; the site's scaffold can be built alongside it. Importing comes before the PC, the PC before team building, the builder before the team page and the Showdown copy.
 
 ## Portability and Environment
 
