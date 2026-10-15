@@ -5595,20 +5595,20 @@ def can_evolve(game_id: str, pokemon: RubyObject, level: int | None, gender: int
     ]
 
 
-def fieldable(pokemon) -> bool:
-    return (
-        isinstance(pokemon, RubyObject)
-        and (pokemon.get("steps_to_hatch") or 0) <= 0
-        and not pokemon.get("perma_faint")
-    )
+def hatched(pokemon) -> bool:
+    return isinstance(pokemon, RubyObject) and (pokemon.get("steps_to_hatch") or 0) <= 0
 
 
-def all_pokemon(save: dict) -> list[RubyObject]:
+def stored_pokemon(save: dict) -> list[RubyObject]:
     found = list(save["player"].get("party") or [])
     storage = save.get("storage_system")
     for box in (storage.get("boxes") or []) if isinstance(storage, RubyObject) else []:
         found.extend(box.get("pokemon") or [])
-    return [pokemon for pokemon in found if fieldable(pokemon)]
+    return [pokemon for pokemon in found if hatched(pokemon)]
+
+
+def fieldable_pokemon(save: dict) -> list[RubyObject]:
+    return [pokemon for pokemon in stored_pokemon(save) if not pokemon.get("perma_faint")]
 
 
 def export_pokemon(pokemon: RubyObject, table: dict, capsules, notices: list[str]) -> dict | None:
@@ -5668,7 +5668,7 @@ def bag_entries(save: dict) -> list[tuple[str, int]]:
 
 
 def held_items(save: dict) -> list[tuple[str, int]]:
-    return [(str(pokemon.get("item")), 1) for pokemon in all_pokemon(save) if pokemon.get("item")]
+    return [(str(pokemon.get("item")), 1) for pokemon in stored_pokemon(save) if pokemon.get("item")]
 
 
 def tm_move(game_id: str, tm_map) -> str | None:
@@ -5736,7 +5736,7 @@ def main() -> None:
     notices: list[str] = []
     exported = [
         entry
-        for entry in (export_pokemon(pokemon, table, capsules, notices) for pokemon in all_pokemon(save))
+        for entry in (export_pokemon(pokemon, table, capsules, notices) for pokemon in fieldable_pokemon(save))
         if entry is not None
     ]
     items, tms = export_items(save, metadata.get("tm_move_map"), notices)
