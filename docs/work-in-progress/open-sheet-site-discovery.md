@@ -87,6 +87,10 @@ A: `pkmn/site/`, a project of its own; its lasting docs go under `docs/pkmn/site
 A: npm; Vite 8, React 19, TypeScript 7, Tailwind 4 and shadcn/ui, each at its latest stable version on the day the site is scaffolded, pinned exactly; TanStack Router; zod 4 for the import schema; Dexie over IndexedDB for storage; `@pkmn/dex` and `@pkmn/img`. The gate is `npm run gate`: `tsc` and `vitest`. Latest as of 2026-10-15: vite 8.3.4, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, shadcn 4.21.5, @cloudflare/vite-plugin 1.64.0, wrangler 4.151.0, @pkmn/dex 0.10.11, @pkmn/img 0.3.4.
 **Why:** the owner chose Vite, React, TypeScript, Tailwind and shadcn at their latest versions, to future-proof the site; the rest follows the owner's unlit and blink, confirmed by the owner.
 
+**Q: How is the scaffold put together?**
+A: Routes are declared in code (`src/router.tsx`), not with TanStack Router's file-based plugin. shadcn is initialised with its Nova preset on Radix, its palette replaced by the design's dark colours as the only theme, and the design's fonts (Chakra Petch, IBM Plex Sans, IBM Plex Mono) are bundled from Fontsource rather than loaded from Google Fonts. The Worker serves static assets only, with single-page-application fallback, and `wrangler.jsonc` attaches `pkmn.enbraile.vip` as a custom domain. Scaffolded on 2026-10-16 at vite 8.3.4, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, shadcn 4.21.5, @tanstack/react-router 1.170.44, vitest 5.0.5, @cloudflare/vite-plugin 1.64.0, wrangler 4.151.0.
+**Why:** two routes need no generated route tree for `tsc` to check before a build; bundled fonts keep the site free of runtime calls beyond Showdown's sprites. _(2026-10-16)_
+
 **Q: What is stored, and where?**
 A: Imports, open tabs and teams, in the reader's browser (IndexedDB), per browser and device. Nothing goes to a server.
 **Why:** the owner.

@@ -4,13 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/site: scaffold the site
-
-Create `pkmn/site/` with the stack of [Surfaces, Reuse and Data](open-sheet-site-discovery.md#surfaces-reuse-and-data), at each package's latest stable version, pinned, deployed as a Worker with static assets for `pkmn.enbraile.vip` ([Portability and Environment](open-sheet-site-discovery.md#portability-and-environment)): shadcn initialised, TanStack Router with a home page listing the tools and an empty `/open-sheet` route, `npm run gate` (`tsc` and `vitest`), and `pkmn/site/CLAUDE.md` naming the gate. Add the project's row to `docs/pkmn/index.md`.
-
-Verify manually: `npm run gate` passes; `npm run dev` serves the home page and `/open-sheet` in the dark theme; `npm run build` then `npx wrangler dev` serves the same from the Worker; `npm outdated` lists nothing.
-**Touches:** `pkmn/site/`, `docs/pkmn/index.md`
-
 ## pkmn/site: deploy on Workers Builds
 
 Connect the repository to Cloudflare Workers Builds for `pkmn/site/` and attach `pkmn.enbraile.vip`, as [Portability and Environment](open-sheet-site-discovery.md#portability-and-environment) settles.

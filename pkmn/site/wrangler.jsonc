@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pkmn-site",
+  "compatibility_date": "2026-10-12",
+  "assets": {
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [
+    {
+      "pattern": "pkmn.enbraile.vip",
+      "custom_domain": true
+    }
+  ]
+}
