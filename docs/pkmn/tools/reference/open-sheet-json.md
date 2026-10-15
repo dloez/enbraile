@@ -47,7 +47,7 @@ There is no header: no trainer, badges, format version or export time.
 | `shiny` | boolean | Whether it is shiny |
 | `level` | integer or null | Its level; null when the save has not filled it in |
 | `nature` | string or null | The nature that sets its stats (a mint's when one was used); null when the save has not filled it in, or when it has no Showdown ID |
-| `ability` | string or null | Its current ability; null when it cannot be read or has no Showdown ID |
+| `ability` | string or null | Its current ability; null, with a notice, when it cannot be worked out or has no Showdown ID |
 | `abilities` | object or null | The abilities it can have under the randomizer, as `base` and `hidden` arrays of IDs; null when the rolled abilities were not found |
 | `types` | array of strings | Its one or two types |
 

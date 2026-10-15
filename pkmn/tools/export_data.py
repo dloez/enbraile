@@ -5791,13 +5791,13 @@ def ability_lists(game_id: str, pokemon: RubyObject, table: dict, capsules) -> d
 
 def current_ability(pokemon: RubyObject, lists: dict | None, capsules) -> str | None:
     rolled = capsule_list(pokemon, capsules)
-    if rolled is not None:
+    if rolled:
         index = pokemon.get("ability_index")
         if index is not None:
             for ability, slot in rolled:
                 if slot == index:
                     return str(ability)
-        return str(rolled[0][0]) if rolled else None
+        return str(rolled[0][0])
     if pokemon.get("forced_ability"):
         return str(pokemon.get("forced_ability"))
     if pokemon.get("ability"):
@@ -5875,6 +5875,10 @@ def export_pokemon(pokemon: RubyObject, table: dict, capsules, notices: list[str
     if named is None or any(None in abilities for abilities in named.values()):
         notices.append(f"No rolled abilities found for {label}; exported without them.")
         named = None
+    current = showdown["abilities"].get(ability) if ability else None
+    if current is None:
+        reason = f"{ability} has no Showdown ID" if ability else "it could not be worked out"
+        notices.append(f"The current ability of {label} was not exported: {reason}.")
     level = pokemon.get("level")
     gender = pokemon.get("gender")
     nature = pokemon.get("nature_for_stats") or pokemon.get("nature")
@@ -5890,7 +5894,7 @@ def export_pokemon(pokemon: RubyObject, table: dict, capsules, notices: list[str
         "shiny": is_shiny(pokemon),
         "level": level,
         "nature": showdown["natures"].get(str(nature)) if nature is not None else None,
-        "ability": showdown["abilities"].get(ability) if ability else None,
+        "ability": current,
         "abilities": named,
         "types": DATA["types"][game_id],
     }

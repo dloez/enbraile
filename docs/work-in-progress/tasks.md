@@ -4,13 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/tools: notice the export's unreadable current ability
-
-The export writes `"ability": null` without a notice when a Pokémon's current ability has no Showdown ID (a `@forced_ability` or a stored `@ability` outside the rolled Gen 1–5 set), and when a Random Ability Capsule list is empty, where the game falls through to `@forced_ability` and `@ability` (`008_RandomAbilityCapsule.rb:75-93`) but the script returns nothing. Make both follow the export's notice rule (a notice for everything it could not read) and the game's ability load order, both recorded in the export's explanation doc under `docs/pkmn/tools/`, and update the export's docs under `docs/pkmn/tools/` to match.
-
-Verify manually: in a copy of `Partida 1` whose Walrein has `@forced_ability` set to an ability with no Showdown ID, the run prints a notice naming it and Walrein's `ability` is null; with `$PokemonGlobal.random_abs_pokes` holding an empty list for Walrein's `@id`, its `ability` reads `bigpecks`; on the unchanged save the file is identical to before.
-**Touches:** `pkmn/tools/export_data.py`, `docs/pkmn/tools/`
-
 ## pkmn/tools: decide which item IDs count as Showdown's
 
 The export's "Showdown ID" for an item is the Showdown-style ID of its PokéAPI English name (Wonder's `showdown.txt`), not an entry of Showdown's own item data. Of the 306 nameable pocket 1 items, 67 are absent from Showdown's `data/items.ts` (Repels, Shards, Apricorns, Nuggets, Relics, Mulches and the like), and so is every TM item (`tm01` to `tm125`); the decision says an item with no Showdown counterpart is left out because it cannot exist in a Showdown fight, and that the IDs let any Showdown data source be looked up. Record the answer in the export's explanation doc under `docs/pkmn/tools/`, close the open question, and change the generator and the script if the answer changes what goes out.
