@@ -10,6 +10,7 @@ Temporary, evolving content. Treat it as proposals, not settled decisions: it ma
 | [Tasks](tasks.md) | Queue | The ordered work queue for `/next-task` and `/work-queue` |
 | [Open Sheet](open-sheet.md) | Initiative | The first tool: a save export to JSON and a web app to browse it, for open-sheet tournament fights |
 | [Open Sheet: Origin Conversation](open-sheet-origin-conversation.md) | Context | The Wonder session where the export was first discussed |
+| [Open Sheet: Export Script Discovery](open-sheet-export-discovery.md) | Scope | Decisions behind the save export, `pkmn/tools/export_data.py` |
 
 ## Lifecycle
 
