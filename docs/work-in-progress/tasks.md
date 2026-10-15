@@ -4,20 +4,12 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/tools: document the export
-
-Move the lasting content of the [Export Script Discovery](open-sheet-export-discovery.md) into `docs/pkmn/tools/`: an explanation doc holding its decisions, a reference for the JSON the export writes, and a how-to for running it and for posting it as a Gist; then delete the discovery doc and update [Open Sheet](open-sheet.md), the [Work in Progress](index.md) index and `docs/pkmn/index.md` (a row for the `tools` project).
-
-Verify manually: every decision in the discovery doc has a home under `docs/pkmn/tools/`; `grep -rn open-sheet-export-discovery docs/` finds nothing; following the how-to, a Gist's raw URL run with `uv run` in WSL writes the same file as the local script.
-**Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/open-sheet.md`, `docs/work-in-progress/index.md`, `docs/work-in-progress/open-sheet-export-discovery.md`
-
 ## pkmn/tools: notice the export's unreadable current ability
 
 The export writes `"ability": null` without a notice when a Pokémon's current ability has no Showdown ID (a `@forced_ability` or a stored `@ability` outside the rolled Gen 1–5 set), and when a Random Ability Capsule list is empty, where the game falls through to `@forced_ability` and `@ability` (`008_RandomAbilityCapsule.rb:75-93`) but the script returns nothing. Make both follow the export's notice rule (a notice for everything it could not read) and the game's ability load order, both recorded in the export's explanation doc under `docs/pkmn/tools/`, and update the export's docs under `docs/pkmn/tools/` to match.
 
 Verify manually: in a copy of `Partida 1` whose Walrein has `@forced_ability` set to an ability with no Showdown ID, the run prints a notice naming it and Walrein's `ability` is null; with `$PokemonGlobal.random_abs_pokes` holding an empty list for Walrein's `@id`, its `ability` reads `bigpecks`; on the unchanged save the file is identical to before.
 **Touches:** `pkmn/tools/export_data.py`, `docs/pkmn/tools/`
-**After:** pkmn/tools: document the export
 
 ## pkmn/tools: decide which item IDs count as Showdown's
 
@@ -25,7 +17,6 @@ The export's "Showdown ID" for an item is the Showdown-style ID of its PokéAPI 
 
 Verify manually: the export's explanation and reference docs state which item list the IDs are checked against and what a TM's `item` holds; every `item` in a fresh export of `Partida 1` is found in that list, or the docs say why not.
 **Touches:** `pkmn/tools/`, `docs/pkmn/tools/`, `docs/work-in-progress/open-questions.md`
-**After:** pkmn/tools: document the export
 **Needs the author:** should items absent from Showdown's own item data (TMs, Repels, Nuggets and the rest of pocket 1's non-battle items) be left out with a notice, kept as now, or kept only for TMs, whose `move` is what the rival reads?
 
 ## pkmn/tools: decide whether permafainted Pokémon's held items go out
@@ -34,7 +25,6 @@ The export takes held items only from the Pokémon it exports (`held_items` uses
 
 Verify manually: in a copy of `Partida 1` where a permafainted boxed Pokémon holds `LEFTOVERS`, the export's `leftovers` quantity and notices match the recorded decision.
 **Touches:** `pkmn/tools/export_data.py`, `docs/pkmn/tools/`, `docs/work-in-progress/open-questions.md`
-**After:** pkmn/tools: document the export
 **Needs the author:** do held items of permafainted Pokémon count as shared items, given the player can recover them by taking or releasing?
 
 ## pkmn: scope the Open Sheet web app
@@ -43,5 +33,4 @@ Run `/scope` for part 2 of [Open Sheet](open-sheet.md): the web app that shows a
 
 Verify manually: a scope doc for the web app exists in `docs/work-in-progress/` and is linked from [Open Sheet](open-sheet.md) and the [Work in Progress](index.md) index; its tasks are in this queue.
 **Touches:** `docs/work-in-progress/`
-**After:** pkmn/tools: document the export
 **Needs the author:** part 2 is not designed yet; its `/scope` interview needs the owner.
