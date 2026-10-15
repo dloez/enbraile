@@ -11,7 +11,7 @@ Two parts, scoped and built in this order:
 1. **Export script.** A Python script, run with `uv run`, that reads a player's save and writes this information to a JSON file.
 2. **Web app.** It shows a player's export and helps the reader navigate it.
 
-Part 1 is built as `pkmn/tools/export_data.py` and documented in [Open Sheet Export](../pkmn/tools/explanation/open-sheet-export.md); part 2 is not designed yet. `/scope` turns each part into a scope doc and tasks ([Tasks](tasks.md)).
+Part 1 is built as `pkmn/tools/export_data.py` and documented in [Open Sheet Export](../pkmn/tools/explanation/open-sheet-export.md); part 2, the web app, is scoped in [Site Discovery](open-sheet-site-discovery.md) as the first tool of the pkmn site, `pkmn/site/`. `/scope` turns each part into a scope doc and tasks ([Tasks](tasks.md)).
 
 ## Context
 
