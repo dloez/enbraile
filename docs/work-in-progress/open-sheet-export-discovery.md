@@ -66,6 +66,12 @@ A: Only the save. The script ships the little game data it needs, generated once
 **Q: Where does that data come from?**
 A: A generator, run by the owner only, reads it from Wonder in place: `packages/randomlocke/src/randomlocke/data/showdown.txt` (built from PokéAPI's English names, covering species-forms, abilities, items, moves and natures) and `types.txt`, and the build's `Data/items.dat` and `species.dat`. It writes the data into the script itself. It copies nothing else from Wonder and imports none of Wonder's code.
 **Why:** Wonder is not in Enbraile yet, and whether its shared material moves now is still open ([Open Questions → Shared Pokémon material before Wonder moves](open-questions.md#shared-pokémon-material-before-wonder-moves)). Reading it in place answers nothing early.
+**Built:** `pkmn/tools/generate_export_data.py`, run with `uv run pkmn/tools/generate_export_data.py [WONDER]` (default `~/workspace/wonder`), replaces the `DATA` dict in `export_data.py` and rewrites nothing when the data is unchanged. The implementer's build choices _(2026-10-15)_:
+- It reads the two `.dat` files with `rubymarshal`, which handles them though not the save.
+- The Randomlocke version is the `VERSION` constant of Wonder's `randomlocke/sources.py`, read as text.
+- Types come from `types.txt`, falling back to `species.dat` for species-forms outside it, for every species-form with a Showdown ID.
+- The TM moves are the TMs' own `@move`, with HMs left out.
+- A level-up evolution is any evolution whose parameter is a level (`Level` and its variants, the stat comparisons, `Silcoon`, `Cascoon`, `Ninjask`; not `Shedinja`, which adds a Pokémon rather than evolving one), kept only when its target is in the mod's `species.txt`, the list the mod's `check_evolution_internal` checks, so evolutions the mod blocks never reach the export.
 
 **Q: How is the save read?**
 A: With a Marshal reader written for the script. `rubymarshal` fails on the owner's real save ("invalid link destination: Object id 5837 is not yet unmarshaled"): the save links back to objects still being read, which `rubymarshal` does not support. A minimal reader that registers each object before reading its contents read the whole save in the probe.
