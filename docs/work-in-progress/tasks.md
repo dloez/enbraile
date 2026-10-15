@@ -4,13 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/tools: name the export's version and species list among its shipped data
-
-The explanation's "Data Shipped With the Script" lists what the `DATA` dict holds as the Showdown ID table, types, pockets, TM moves, Shedinja's fixed abilities and level-up evolutions, but `build()` in `pkmn/tools/generate_export_data.py` also writes `randomlocke_version`, the value the script's version notice compares the save against. The same section's list of what the generator reads from Wonder leaves out `packages/randomlocke/src/randomlocke/data/species.txt`, which `build()` reads for the allowed evolution targets; only a build-rule bullet names it, as "the mod's `species.txt`", without its path. Name both there, so the section matches `DATA`'s seven keys and the generator's seven inputs.
-
-Verify manually: every top-level key of `DATA` in `pkmn/tools/export_data.py`, and every file `generate_export_data.py` opens under the Wonder checkout, is named in the explanation's "Data Shipped With the Script" section.
-**Touches:** `docs/pkmn/tools/explanation/open-sheet-export.md`
-
 ## pkmn/tools: decide which item IDs count as Showdown's
 
 The export's "Showdown ID" for an item is the Showdown-style ID of its PokéAPI English name (Wonder's `showdown.txt`), not an entry of Showdown's own item data. Of the 306 nameable pocket 1 items, 67 are absent from Showdown's `data/items.ts` (Repels, Shards, Apricorns, Nuggets, Relics, Mulches and the like), and so is every TM item (`tm01` to `tm125`); the decision says an item with no Showdown counterpart is left out because it cannot exist in a Showdown fight, and that the IDs let any Showdown data source be looked up. Record the answer in the export's explanation doc under `docs/pkmn/tools/`, close the open question, and change the generator and the script if the answer changes what goes out.
