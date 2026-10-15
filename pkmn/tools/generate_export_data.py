@@ -7,6 +7,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.request import urlopen
 
 from rubymarshal.reader import load
 
@@ -29,6 +30,8 @@ LEVEL_METHODS = {
     "LevelDarkInParty", "AttackGreater", "AtkDefEqual", "DefenseGreater", "Silcoon",
     "Cascoon", "Ninjask",
 }
+SHOWDOWN_ITEMS = "https://raw.githubusercontent.com/smogon/pokemon-showdown/master/data/items.ts"
+SHOWDOWN_ITEM_KEY = re.compile(r"^\t([a-z0-9]+): \{$", re.MULTILINE)
 BLOCK = re.compile(r"^DATA = \{\n.*?^\}\n", re.MULTILINE | re.DOTALL)
 
 
@@ -55,6 +58,19 @@ def showdown_ids(wonder: Path) -> dict[str, dict[str, str]]:
         kind, game_id, name = line.split(" ", 2)
         tables[kind][game_id] = showdown_id(name)
     return tables
+
+
+def modeled_items() -> set[str]:
+    with urlopen(SHOWDOWN_ITEMS, timeout=30) as response:
+        text = response.read().decode("utf-8")
+    keys = set(SHOWDOWN_ITEM_KEY.findall(text))
+    if not keys:
+        sys.exit(f"no items found in {SHOWDOWN_ITEMS}")
+    return keys
+
+
+def modeled_names(names: dict[str, str], tm_moves: dict[str, str], modeled: set[str]) -> dict[str, str]:
+    return {game_id: item for game_id, item in names.items() if item in modeled or game_id in tm_moves}
 
 
 def randomlocke_version(wonder: Path) -> int:
@@ -119,17 +135,19 @@ def build(wonder: Path) -> dict:
     allowed = {line[0] for line in read_lines(data_dir / "species.txt")}
     species = read_marshal(wonder / GAME_DATA / "species.dat")
     items = read_marshal(wonder / GAME_DATA / "items.dat")
+    tm_moves = {
+        game_id: symbol(attribute(item, "move"))
+        for game_id, item in items.items()
+        if game_id.startswith("TM") and attribute(item, "move") is not None
+    }
+    showdown["items"] = modeled_names(showdown["items"], tm_moves, modeled_items())
     return {
         "randomlocke_version": randomlocke_version(wonder),
         "showdown": showdown,
         "types": species_types(species, mod_types, showdown["species"]),
         "fixed_abilities": fixed_abilities(wonder, species, showdown["species"]),
         "pockets": {game_id: attribute(item, "pocket") for game_id, item in items.items()},
-        "tm_moves": {
-            game_id: symbol(attribute(item, "move"))
-            for game_id, item in items.items()
-            if game_id.startswith("TM") and attribute(item, "move") is not None
-        },
+        "tm_moves": tm_moves,
         "level_evolutions": level_evolutions(species, allowed),
     }
 

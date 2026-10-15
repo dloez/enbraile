@@ -55,7 +55,7 @@ There is no header: no trainer, badges, format version or export time.
 
 | Key | Type | Holds |
 |-----|------|-------|
-| `item` | string | The item's ID, listed once |
+| `item` | string | The item's ID, listed once; always a key of Showdown's `data/items.ts` |
 | `quantity` | integer | The bag's quantity plus 1 for each Pokémon holding it |
 
 Holds the items of pocket 1 (Objetos) and pocket 5 (Bayas), and the held items that belong to those pockets.
@@ -64,7 +64,7 @@ Holds the items of pocket 1 (Objetos) and pocket 5 (Bayas), and the held items t
 
 | Key | Type | Holds |
 |-----|------|-------|
-| `item` | string | The TM item's ID (`tm01` and so on), listed once |
+| `item` | string | The TM item's ID (`tm01` and so on), listed once; a label, not in Showdown's `data/items.ts`, which has no TM items |
 | `move` | string | The ID of the move it teaches in this save |
 
 ## Command Line

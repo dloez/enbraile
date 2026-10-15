@@ -4,13 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/tools: leave out items Showdown does not model
-
-Apply the decision in [Open Sheet Export → Decisions](../pkmn/tools/explanation/open-sheet-export.md#decisions) that an item counts as having a Showdown ID only when that ID is in Showdown's own item data (`data/items.ts`), with TMs exempt: the generator checks the items it ships against that list, so the export leaves the rest out with its existing no-Showdown-ID notice, and the reference under `docs/pkmn/tools/` says which list the item IDs are checked against and that a TM's `item` is a label outside it.
-
-Verify manually: on `Partida 1`, the 17 items absent from Showdown's `items.ts` (among them `repel`, `amuletcoin`, `smokeball`, `luckyegg`, `starpiece`) are gone from the file and each is named in a notice; every other `item` is in `items.ts`; the 101 TMs are unchanged; running the generator twice leaves the script unchanged.
-**Touches:** `pkmn/tools/`, `docs/pkmn/tools/`
-
 ## pkmn/tools: count the held items of permafainted Pokémon
 
 Apply the decision in [Open Sheet Export → Decisions](../pkmn/tools/explanation/open-sheet-export.md#decisions) that held items of permafainted Pokémon count as shared: `held_items` in `pkmn/tools/export_data.py` takes them from every Pokémon in the party and boxes that is not an egg, not only from those exported, under the same pocket rule, and the docs under `docs/pkmn/tools/` that describe where held items come from say so.

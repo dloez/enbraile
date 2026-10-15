@@ -49,7 +49,7 @@ and sends back the JSON it writes.
 
 ## Refreshing the Shipped Data
 
-Only when the game build or Wonder's data changes, the owner regenerates the data embedded in the script, reading a Wonder checkout (default `~/workspace/wonder`):
+Only when the game build, Wonder's data or Showdown's item list changes, the owner regenerates the data embedded in the script, reading a Wonder checkout (default `~/workspace/wonder`) and downloading Showdown's `data/items.ts`, so it needs a network connection:
 
 ```sh
 uv run pkmn/tools/generate_export_data.py [WONDER]
