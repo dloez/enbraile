@@ -1,7 +1,8 @@
 import { useMemo, useState, type DragEvent } from "react";
 import { addImport, closeTab, renameTab, replaceImport, useOpenTabs, type OpenTab } from "@/open-sheet/db";
-import { checkSheet, readSheet, type Checked, type Sheet } from "@/open-sheet/schema";
+import { checkSheet, readSheet, type Checked } from "@/open-sheet/schema";
 import { DropZone } from "@/open-sheet/components/drop-zone";
+import { Pc } from "@/open-sheet/components/pc";
 import { Refusal, type Refused } from "@/open-sheet/components/refusal";
 import { TabBar } from "@/open-sheet/components/tab-bar";
 
@@ -9,16 +10,6 @@ type View = { kind: "import" } | { kind: "tab"; id: number };
 
 function checkTab(tab: OpenTab): Checked {
   return tab.import ? checkSheet(tab.import.data) : { ok: false, reason: "is missing" };
-}
-
-function SheetView({ sheet }: { sheet: Sheet }) {
-  return (
-    <main className="flex-1 px-4 py-7 sm:px-8">
-      <p className="font-mono text-sm text-muted-foreground">
-        {sheet.pokemon.length} Pokémon · {sheet.items.length} items · {sheet.tms.length} TMs
-      </p>
-    </main>
-  );
 }
 
 function ImportView({ stale, onFiles }: { stale?: Refused; onFiles: (files: File[]) => void }) {
@@ -109,7 +100,9 @@ export function OpenSheetPage() {
         </div>
       )}
       {active && activeCheck?.ok ? (
-        <SheetView sheet={activeCheck.sheet} />
+        <main className="flex flex-1 flex-col">
+          <Pc key={active.id} sheet={activeCheck.sheet} />
+        </main>
       ) : active && activeCheck ? (
         <ImportView
           stale={{

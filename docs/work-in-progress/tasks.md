@@ -13,14 +13,6 @@ Verify manually: a push to `main` touching `pkmn/site/` deploys; `https://pkmn.e
 **After:** pkmn/site: scaffold the site
 **Needs the author:** the Cloudflare dashboard and the `enbraile.vip` zone are the owner's.
 
-## pkmn/site: browse a sheet in the PC
-
-Build the PC and the bag of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page) with `@pkmn/dex` and `@pkmn/img` ([Interfaces and Integration](open-sheet-site-discovery.md#interfaces-and-integration)): the box grid of the tab's Pokémon with search by name and a type filter; clicking one opens its summary, Info (species, nickname, level, nature, gender, shiny, types with the mismatch flag, every possible ability with its description, the current one marked) and Stats (base stats and Level 50 ranges); the Bag button opens the bag with its Items, Berries and TMs pockets and search, items with icons, quantities and descriptions, TMs with their move's type, category, power, accuracy and description; unknown IDs by raw ID with a marker and `tinymushroom` labelled. Follow the design.
-
-Verify manually: on a real export, clicking the party's Walrein shows its sprite, Showdown's base stats and its abilities' descriptions; filtering by Ice type keeps only Ice Pokémon; `tinymushroom` reads "Mini Seta (Tiny Mushroom)"; a hand-edited export with an unknown species shows it marked, without breaking the page; on a phone-width window every view is readable.
-**Touches:** `pkmn/site/`
-**After:** pkmn/site: import exports into tabs
-
 ## pkmn/site: build teams
 
 Build team building in the PC and the Team view of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page), point and click only: named teams per tab (create, rename, duplicate, delete), stored with Dexie; the six-slot strip, filled from a Pokémon's summary; items given and TMs taught from the bag, items held under the quantity limit; abilities switchable with the Mini Seta count against `tinymushroom`; four move slots offering the tab's TMs, then any Gen 1–5 move. Follow the design.

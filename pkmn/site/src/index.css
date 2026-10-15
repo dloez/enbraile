@@ -97,6 +97,24 @@
     --box: #1d2030;
     --cell: #272b3d;
     --cell-hi: #363c56;
+    --type-normal: #9fa19f;
+    --type-fire: #e62829;
+    --type-water: #2980ef;
+    --type-grass: #3fa129;
+    --type-electric: #fac000;
+    --type-ice: #3dcef3;
+    --type-fighting: #ff8000;
+    --type-poison: #9141cb;
+    --type-ground: #915121;
+    --type-flying: #81b9ef;
+    --type-psychic: #ef4179;
+    --type-bug: #91a119;
+    --type-rock: #afa981;
+    --type-ghost: #704170;
+    --type-dragon: #5060e1;
+    --type-dark: #624d4e;
+    --type-steel: #60a1b8;
+    --type-fairy: #ef70ef;
 }
 
 @layer base {
