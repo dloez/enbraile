@@ -95,6 +95,10 @@ A: Routes are declared in code (`src/router.tsx`), not with TanStack Router's fi
 A: Imports, open tabs and teams, in the reader's browser (IndexedDB), per browser and device. Nothing goes to a server.
 **Why:** the owner.
 
+**Q: How are imports and tabs stored, and checked?**
+A: Dexie database `open-sheet`, version 1, with an `imports` table (file name, import time, the validated JSON) and a `tabs` table (name, position, its import); each tab has its own import, and closing a tab deletes both. The zod schema in `src/open-sheet/schema.ts` mirrors [Open Sheet JSON](../pkmn/tools/reference/open-sheet-json.md) and ignores keys it does not know, so a field added to the export does not mark old imports. Every stored import is checked against it when the tabs load; a failing one marks its tab and opens it as the import view with the reason, and a file dropped anywhere on that tab replaces its import instead of opening a new tab. A refusal is shown above whatever view is open and names the first failing field by its JSON path, set in mono after the file name: "MIRAMEEE-open-sheet.json has no pokemon list", "… has no pokemon[0].species".
+**Why:** build choices made while implementing importing; replacing in place keeps a marked tab's name, and later its teams. _(2026-10-16)_
+
 **Q: What does it look like?**
 A: As the [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) design in Claude Design, signed off by the owner on 2026-10-16: the home page, importing into tabs, the PC with its summary and bag, and the Team view, on desktop and phone. One dark theme, charcoal with a slate-blue PC and orange for actions; no light theme. No helper text explaining the UI. English UI. Desktop-first: every view stays usable on a phone.
 **Why:** the owner asked for the design pass first, an English UI (Showdown's names are English) and desktop-first, and in the design pass chose dark only and no explanatory labels. _(2026-10-16)_
