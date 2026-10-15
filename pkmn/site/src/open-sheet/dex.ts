@@ -1,4 +1,4 @@
-import { Dex, type StatID } from "@pkmn/dex";
+import { Dex, type Species, type StatID } from "@pkmn/dex";
 import { Icons, Sprites } from "@pkmn/img";
 import type { SheetItem, SheetPokemon, SheetTm } from "@/open-sheet/schema";
 
@@ -111,8 +111,16 @@ function named(id: string, entry: { exists: boolean; name: string }): Named {
   return { id, name: label ?? id, known: false, marked: label === undefined };
 }
 
-export function statAt(stat: StatID, base: number, iv: number, nature: Nature | null, level = 50, ev = 1): number {
-  const core = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100);
+export function statAt(
+  stat: StatID,
+  species: Pick<Species, "baseStats" | "maxHP">,
+  iv: number,
+  nature: Nature | null,
+  level = 50,
+  ev = 1,
+): number {
+  if (stat === "hp" && species.maxHP !== undefined) return species.maxHP;
+  const core = Math.floor(((2 * species.baseStats[stat] + iv + Math.floor(ev / 4)) * level) / 100);
   if (stat === "hp") return core + level + 10;
   const value = core + 5;
   if (nature?.plus === stat) return Math.floor(value * 1.1);
@@ -171,8 +179,8 @@ export function describePokemon(p: SheetPokemon, index: number): Mon {
       ? STATS.map((stat) => ({
           stat,
           base: entry.baseStats[stat],
-          low: statAt(stat, entry.baseStats[stat], 0, nat),
-          high: statAt(stat, entry.baseStats[stat], 31, nat),
+          low: statAt(stat, entry, 0, nat),
+          high: statAt(stat, entry, 31, nat),
         }))
       : null,
     sprite: entry.exists

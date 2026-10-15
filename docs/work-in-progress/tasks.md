@@ -12,13 +12,6 @@ Verify manually: a push to `main` touching `pkmn/site/` deploys; `https://pkmn.e
 **Touches:** `pkmn/site/`
 **Needs the author:** the Cloudflare dashboard and the `enbraile.vip` zone are the owner's.
 
-## pkmn/site: give Shedinja its 1 HP
-
-`statAt` in `pkmn/site/src/open-sheet/dex.ts` runs the HP formula for every species, so a Shedinja (Gen 3, in the Gen 1–5 roster) shows a Level 50 HP range of 61–76 in the PC's Stats page, where Showdown's Gen 9 data (`maxHP: 1`), which [Interfaces and Integration](open-sheet-site-discovery.md#interfaces-and-integration) makes the source of base stats, gives it 1 HP at any IV. The team page's ranges and speed order will read the same function. Take the species' `maxHP` from `@pkmn/dex` when it is set, and unit-test it beside Walrein's range.
-
-Verify manually: a hand-edited export with a `shedinja` shows HP 1–1 on its Stats page; Walrein still shows HP 170–185 with a Hasty nature; `npm run gate` passes.
-**Touches:** `pkmn/site/src/open-sheet/dex.ts`, `pkmn/site/src/open-sheet/dex.test.ts`
-
 ## pkmn/site: build teams
 
 Build team building in the PC and the Team view of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page), point and click only: named teams per tab (create, rename, duplicate, delete), stored with Dexie; the six-slot strip, filled from a Pokémon's summary; items given and TMs taught from the bag, items held under the quantity limit; abilities switchable with the Mini Seta count against `tinymushroom`; four move slots offering the tab's TMs, then any Gen 1–5 move. Follow the design.

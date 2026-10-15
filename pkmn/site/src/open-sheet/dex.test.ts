@@ -1,3 +1,4 @@
+import { Dex } from "@pkmn/dex";
 import { describe, expect, it } from "vitest";
 import { describeItem, describePokemon, describeTm, statAt } from "@/open-sheet/dex";
 import type { SheetPokemon } from "@/open-sheet/schema";
@@ -58,9 +59,16 @@ describe("describePokemon", () => {
 describe("statAt", () => {
   it("gives Walrein's Level 50 range with a Hasty nature", () => {
     const nature = describePokemon(walrein, 0).nature;
-    expect([statAt("hp", 110, 0, nature), statAt("hp", 110, 31, nature)]).toEqual([170, 185]);
-    expect([statAt("def", 90, 0, nature), statAt("def", 90, 31, nature)]).toEqual([85, 99]);
-    expect([statAt("spe", 65, 0, nature), statAt("spe", 65, 31, nature)]).toEqual([77, 93]);
+    const species = Dex.forGen(9).species.get("walrein");
+    expect([statAt("hp", species, 0, nature), statAt("hp", species, 31, nature)]).toEqual([170, 185]);
+    expect([statAt("def", species, 0, nature), statAt("def", species, 31, nature)]).toEqual([85, 99]);
+    expect([statAt("spe", species, 0, nature), statAt("spe", species, 31, nature)]).toEqual([77, 93]);
+  });
+
+  it("gives Shedinja its fixed 1 HP at any IV", () => {
+    const species = Dex.forGen(9).species.get("shedinja");
+    expect([statAt("hp", species, 0, null), statAt("hp", species, 31, null)]).toEqual([1, 1]);
+    expect([statAt("atk", species, 0, null), statAt("atk", species, 31, null)]).toEqual([95, 110]);
   });
 });
 
