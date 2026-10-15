@@ -68,7 +68,7 @@ The run is safe to repeat: it opens the save read-only, never writes it, and wri
 
 It runs in WSL only, reading the Windows save, because everyone in the group runs it there. It finds the save folder by itself: `%APPDATA%` from `cmd.exe /c echo %APPDATA%`, turned into a path with `wslpath`, falling back to a glob of `/mnt/c/Users/*/AppData/Roaming/`, then `Pokemon Anil/`. The game saves there because its `mkxp.json` leaves `dataPathApp` unset and `Game.ini`'s title is `Pokemon Anil`. It lists the `Partida N.rxdata` slots it finds, the names Multi Save gives them (`P/Multi Save/Multi Save.rb:31`), skipping backups and `.bak` files, and takes the only one or lets the player pick; `--save PATH` reads another file. When it finds none, it says where it looked and points to `--save`.
 
-The export is one self-contained file, `pkmn/tools/export_data.py`, with its dependencies declared inline (PEP 723) and its data embedded, so `uv run` needs nothing beside it. That is what lets the owner post it as a GitHub Gist and a rival run it straight from the Gist's raw URL, always getting the latest; sending the file itself works as well. `tools` is the pkmn project for small scripts like this one, so its docs live here and part 2's web app links to them.
+The export is one self-contained file, `pkmn/tools/export_data.py`, with its dependencies declared inline (PEP 723) and its data embedded, so `uv run` needs nothing beside it. That is what lets a rival run it straight from its raw URL in this public repository, `https://raw.githubusercontent.com/dloez/enbraile/main/pkmn/tools/export_data.py`, always getting what is on `main`; sending the file itself works as well. `tools` is the pkmn project for small scripts like this one, so its docs live here and part 2's web app links to them.
 
 ## Decisions
 
@@ -78,11 +78,13 @@ The export is one self-contained file, `pkmn/tools/export_data.py`, with its dep
 - **Possible abilities are the randomized ones,** with a capsule roll's own list and `@forced_ability` honoured as the game does, and Shedinja's real abilities with no notice. **Why:** the owner asked for the randomized ones; the per-Pokémon list and the forced ability are forced by the game's code. _(owner, 2026-10-15)_
 - **A current ability the save has not filled in is worked out** from the table entry, `@ability_index` and `@personalID & 1`, as the game does. _(settled 2026-10-15)_
 - **Items are pockets 1 and 5 whole plus pocket 4's TMs, with held items added under the same rule.** **Why:** no hand-kept list of competitive items is needed, and Showdown has no bag use. _(owner, 2026-10-15)_
+- **Held items of permafainted Pokémon count too,** added like any other held item although the Pokémon itself is left out. **Why:** the player can take the item off or release the Pokémon to get it back, and the group's rules allow both. _(owner, 2026-10-15)_
 - **A TM carries its item and its move, never its compatibility.** **Why:** compatibility was dropped on purpose and is rolled lazily, so an offline script cannot answer it. _(owner, 2026-10-13 and 2026-10-15)_
 - **No header** of trainer, badges, format version or export time. _(owner, 2026-10-15)_
 - **Hiding IVs and EVs is not enforced;** it rests on trust. _(owner, 2026-10-15)_
 - **Showdown IDs only,** for species-forms, abilities, items, moves, natures and types. **Why:** Showdown's data is what runs in the fights; PokéAPI and carrying both were rejected. _(owner, 2026-10-15)_
 - **An item with no Showdown ID is left out with a notice.** **Why:** it cannot exist in a Showdown fight, and nothing should vanish silently. _(owner, 2026-10-15)_
+- **An item counts as having a Showdown ID only when that ID is in Showdown's own item data** (`data/items.ts`); items it does not model, such as Repel, Amulet Coin or Star Piece, are left out with a notice like any other item without one. TMs are the exception and keep their `tm` item ID as a label, since Showdown has no TM items and what the rival reads is the TM's move, itself a Showdown ID. **Why:** Showdown models only items with a battle effect, so the rest cannot matter in a fight. _(owner, 2026-10-15)_
 - **A Pokémon with no Showdown species (only `ARCEUS_9`) is left out with a notice,** the item rule applied to Pokémon. **Why:** the agent's inference from the owner's item rule, for the owner to overturn. _(settled 2026-10-15)_
 - **Notices** for what is left out, abilities not found, could-evolve Pokémon and a Randomlocke version mismatch, printed to the terminal only. **Why:** the owner asked for the first three; the version notice guards the data shipped inside the script. _(owner, 2026-10-15)_
 - **The player points the script at the save only; the game data ships inside it.** **Why:** the owner wanted no game folder, and every player plays the same package. _(owner, 2026-10-15)_
@@ -93,9 +95,4 @@ The export is one self-contained file, `pkmn/tools/export_data.py`, with its dep
 - **WSL only, finding the save folder by itself.** **Why:** everyone runs it in WSL. _(owner, 2026-10-15)_
 - **The player picks among the `Partida N` slots found, or names a file with `--save`.** _(owner, 2026-10-15)_
 - **The JSON goes to `<trainer name>-open-sheet.json` in the working folder, or `--out`.** _(settled 2026-10-15)_
-- **One self-contained PEP 723 file, in `pkmn/tools/`, shared as a GitHub Gist run by its raw URL.** **Why:** the owner's choice, once it was clear `uv` runs a script from a URL. _(owner, 2026-10-15)_
-
-## Open
-
-- See [Open Questions → Which item IDs count as Showdown's](../../../work-in-progress/open-questions.md#which-item-ids-count-as-showdowns).
-- See [Open Questions → Held items of permafainted Pokémon](../../../work-in-progress/open-questions.md#held-items-of-permafainted-pokémon).
+- **One self-contained PEP 723 file, in `pkmn/tools/`, shared by its raw URL on `main` in this public repository, with no Gist.** **Why:** the owner's choice, once it was clear `uv` runs a script from a URL. _(owner, 2026-10-15)_

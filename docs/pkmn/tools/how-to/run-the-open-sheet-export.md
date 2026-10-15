@@ -1,12 +1,11 @@
 # How to Run and Share the Open Sheet Export
 
-Write a save's [Open Sheet JSON](../reference/open-sheet-json.md) with `pkmn/tools/export_data.py`, and post the script as a GitHub Gist so a rival can run it without the repository. Why it works this way is in [Open Sheet Export](../explanation/open-sheet-export.md).
+Write a save's [Open Sheet JSON](../reference/open-sheet-json.md) with `pkmn/tools/export_data.py`, and have a rival run it from the repository's raw URL without a checkout. Why it works this way is in [Open Sheet Export](../explanation/open-sheet-export.md).
 
 ## Prerequisites
 
 - WSL, on the Windows machine where Pokémon Añil saves its games.
 - [`uv`](https://docs.astral.sh/uv/) installed in WSL. It fetches the Python the script asks for (3.11 or newer).
-- To post the Gist: the [GitHub CLI](https://cli.github.com/) (`gh`), logged in with `gh auth login`.
 
 ## Steps
 
@@ -22,7 +21,7 @@ From the folder the JSON should land in, with `<repo>` the Enbraile checkout:
 uv run <repo>/pkmn/tools/export_data.py
 ```
 
-Without the repository, run the copy you were sent (`uv run export_data.py`) or the Gist's raw URL (step 4).
+Without the repository, run the copy you were sent (`uv run export_data.py`) or the raw URL (step 3).
 
 With one `Partida N` slot it reads that one; with several it lists them and asks which. To read another file, or to write elsewhere:
 
@@ -32,32 +31,18 @@ uv run <repo>/pkmn/tools/export_data.py --save "/mnt/c/Users/<you>/AppData/Roami
 
 It writes `<trainer name>-open-sheet.json`, overwriting a file of that name, prints a notice for each thing it left out or could not read, and ends with a line counting the Pokémon, items and TMs it wrote.
 
-### 3. Post the script as a Gist
+### 3. Give the rival the raw URL
 
-The owner does this once:
+The script on `main` of this public repository is served at:
+
+```
+https://raw.githubusercontent.com/dloez/enbraile/main/pkmn/tools/export_data.py
+```
+
+It serves whatever was last pushed to `main`, a few minutes after a push at most, so a change reaches rivals once it is pushed. The rival runs, in WSL:
 
 ```sh
-gh gist create pkmn/tools/export_data.py -d "Pokémon Añil open-sheet export"
-```
-
-Gists are secret by default: unlisted, but readable by anyone holding the link, which is all a rival needs. The command prints the Gist's URL; its id is the last part. After changing the script, replace the Gist's copy:
-
-```sh
-gh gist edit <gist id> --filename export_data.py pkmn/tools/export_data.py
-```
-
-### 4. Give the rival the raw URL
-
-The raw URL without a revision in it serves the latest copy, a few minutes after an edit at most:
-
-```
-https://gist.githubusercontent.com/<owner>/<gist id>/raw/export_data.py
-```
-
-The **Raw** button on the Gist's page adds a revision hash between `raw/` and the filename, which pins that version; drop it. The rival runs, in WSL:
-
-```sh
-uv run https://gist.githubusercontent.com/<owner>/<gist id>/raw/export_data.py
+uv run https://raw.githubusercontent.com/dloez/enbraile/main/pkmn/tools/export_data.py
 ```
 
 and sends back the JSON it writes.
@@ -70,10 +55,10 @@ Only when the game build or Wonder's data changes, the owner regenerates the dat
 uv run pkmn/tools/generate_export_data.py [WONDER]
 ```
 
-It rewrites the `DATA` dict in `export_data.py`, and nothing when the data is unchanged. Update the Gist afterwards (step 3).
+It rewrites the `DATA` dict in `export_data.py`, and nothing when the data is unchanged. Commit and push it to reach rivals (step 3).
 
 ## Verification
 
 - The run ends with `Wrote N Pokémon, N items and N TMs to <path>`, and that file exists.
-- Run from the Gist's raw URL and from the local script on the same save, the two files are identical (`cmp`).
+- Run from the raw URL and from the local script of the same pushed commit on the same save, the two files are identical (`cmp`).
 - The save file's modification time is unchanged.
