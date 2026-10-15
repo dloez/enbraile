@@ -8,6 +8,8 @@ Temporary, evolving content. Treat it as proposals, not settled decisions: it ma
 |----------|------|-------------|
 | [Open Questions](open-questions.md) | Tracker | Everything not yet decided |
 | [Tasks](tasks.md) | Queue | The ordered work queue for `/next-task` and `/work-queue` |
+| [Open Sheet](open-sheet.md) | Initiative | The first tool: a save export to JSON and a web app to browse it, for open-sheet tournament fights |
+| [Open Sheet: Origin Conversation](open-sheet-origin-conversation.md) | Context | The Wonder session where the export was first discussed |
 
 ## Lifecycle
 
