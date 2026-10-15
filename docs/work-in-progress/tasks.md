@@ -10,8 +10,14 @@ Connect the repository to Cloudflare Workers Builds for `pkmn/site/` and attach 
 
 Verify manually: a push to `main` touching `pkmn/site/` deploys; `https://pkmn.enbraile.vip` serves the home page; a branch push gets a preview URL.
 **Touches:** `pkmn/site/`
-**After:** pkmn/site: scaffold the site
 **Needs the author:** the Cloudflare dashboard and the `enbraile.vip` zone are the owner's.
+
+## pkmn/site: give Shedinja its 1 HP
+
+`statAt` in `pkmn/site/src/open-sheet/dex.ts` runs the HP formula for every species, so a Shedinja (Gen 3, in the Gen 1–5 roster) shows a Level 50 HP range of 61–76 in the PC's Stats page, where Showdown's Gen 9 data (`maxHP: 1`), which [Interfaces and Integration](open-sheet-site-discovery.md#interfaces-and-integration) makes the source of base stats, gives it 1 HP at any IV. The team page's ranges and speed order will read the same function. Take the species' `maxHP` from `@pkmn/dex` when it is set, and unit-test it beside Walrein's range.
+
+Verify manually: a hand-edited export with a `shedinja` shows HP 1–1 on its Stats page; Walrein still shows HP 170–185 with a Hasty nature; `npm run gate` passes.
+**Touches:** `pkmn/site/src/open-sheet/dex.ts`, `pkmn/site/src/open-sheet/dex.test.ts`
 
 ## pkmn/site: build teams
 
@@ -19,7 +25,6 @@ Build team building in the PC and the Team view of [The Builder and the Team Pag
 
 Verify manually: with one `leftovers` in the tab, a second member cannot take it; switching two members' abilities shows 2 Mini Setas needed against the tab's count; a TM taught from the bag and a free-picked move both fill slots; two teams in one tab survive a reload; on a phone, tapping a Pokémon then Add to team puts it in the strip.
 **Touches:** `pkmn/site/`
-**After:** pkmn/site: browse a sheet in the PC
 
 ## pkmn/site: analyse a team
 
