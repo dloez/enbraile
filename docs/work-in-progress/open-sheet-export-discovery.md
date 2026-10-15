@@ -71,11 +71,20 @@ A: A generator, run by the owner only, reads it from Wonder in place: `packages/
 - The Randomlocke version is the `VERSION` constant of Wonder's `randomlocke/sources.py`, read as text.
 - Types come from `types.txt`, falling back to `species.dat` for species-forms outside it, for every species-form with a Showdown ID.
 - The TM moves are the TMs' own `@move`, with HMs left out.
+- Shedinja's real abilities ship as `fixed_abilities`: the species-forms of `SPECIES_WITHOUT_RANDOM_ABS`, read from the mod's `000_Config.rb` in Wonder's extracted game, that have a Showdown ID, with their `species.dat` abilities.
 - A level-up evolution is any evolution whose parameter is a level (`Level` and its variants, the stat comparisons, `Silcoon`, `Cascoon`, `Ninjask`; not `Shedinja`, which adds a Pokémon rather than evolving one), kept only when its target is in the mod's `species.txt`, the list the mod's `check_evolution_internal` checks, so evolutions the mod blocks never reach the export.
 
 **Q: How is the save read?**
 A: With a Marshal reader written for the script. `rubymarshal` fails on the owner's real save ("invalid link destination: Object id 5837 is not yet unmarshaled"): the save links back to objects still being read, which `rubymarshal` does not support. A minimal reader that registers each object before reading its contents read the whole save in the probe.
 **Why:** forced by the probe (2026-10-15, `Partida 1.rxdata`, 11.7 MB).
+**Built:** `pkmn/tools/export_data.py` reads it in about a second. The implementer's build choices _(2026-10-15)_:
+- The JSON is `{"pokemon": [...]}`, each Pokémon with `species` (the species-form's Showdown ID), `nickname` (null when it has none), `gender` (`M`, `F` or `N`), `shiny`, `level`, `nature`, `ability`, `abilities` (`base` and `hidden`, or null when the rolled ones were not found) and `types`, in party then box order. The items and TMs are added beside `pokemon`.
+- The form is `@forced_form`, else `@form`, as the game's `species_data` reads it; a form above 0 makes the species-form `<SPECIES>_<form>`.
+- `shiny` is `@shiny`, or worked out from the personal ID and the owner's ID as `shiny?` does when it is nil. `@level`, `@gender` and `@nature` are filled when the game makes the Pokémon or registers it, and none was nil in the probed save; one that is nil is exported as null with a notice rather than worked out, since that needs growth rates and gender ratios the script does not ship.
+- `nature` is the one that sets the stats: `@nature_for_stats` when a mint set it, else `@nature`, as the game's `nature_for_stats` reads it. A Showdown nature only changes stats, so the minted one is the one that holds in the fight; two Pokémon of the probed save are minted.
+- The current ability follows the game's load order: a Random Ability Capsule roll first (`008_RandomAbilityCapsule.rb` wraps `ability_id` last), then `@forced_ability`, then `@ability`, then the table fallback.
+- The could-evolve notice checks the level and whatever else of the evolution's own condition the save holds: the gender for `LevelMale` and `LevelFemale`, attack against defense for the stat comparisons, and the personal ID for `Silcoon` and `Cascoon`. Time of day, weather and place are not checked.
+- A save that cannot be parsed ends the run with the finish-saving message and writes nothing.
 
 **Q: Where are the things it reads in the save?**
 A: All under the save's top-level hash, as the probe read them: `player` (`@party`), `storage_system` (`@boxes`, each with `@pokemon`), `bag` (`@pockets`, index 0 empty), `randomized_data` (`abilities`, 1,519 entries), and `global_metadata` (`@tm_move_map`, each value a `GameData::Move` with `@id`; `@random_abs_pokes`, nil in the probed save; `@randomlocke_version`, 1). Field layouts are in State (Wonder: `docs/domains/game/reference/state.md`).

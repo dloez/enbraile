@@ -4,20 +4,12 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/tools: export the Pokémon
-
-Write the export's save handling and its Pokémon: finding the WSL save folder, the slot picker and `--save`, the script's own Marshal reader, `--out`, the Pokémon and fields of [Scope Edges](open-sheet-export-discovery.md#scope-edges), and the Pokémon notices of [Interfaces and Integration](open-sheet-export-discovery.md#interfaces-and-integration) (no Showdown species, missing abilities, could evolve, Randomlocke version), as [Portability and Environment](open-sheet-export-discovery.md#portability-and-environment) settles.
-
-Verify manually: in WSL, `uv run pkmn/tools/export_data.py` with no arguments finds `Partida 1` and writes `MIRAMEEE-open-sheet.json`; it lists the 6 party Pokémon and the living boxed ones, with no egg and no permafainted Pokémon; the party's Walrein reads level 59, `hasty`, ability `bigpecks`, and its possible abilities match its species' table entry; nothing in it carries stats, IVs, EVs, moves or a box slot; `--save` on a copy of the save gives the same file; a Pokémon whose species is set to `ARCEUS_9` in a copy of the save is left out with a notice; the save's modification time is unchanged.
-**Touches:** `pkmn/tools/`
-
 ## pkmn/tools: export the items and TMs
 
 Add the items and TMs of [Scope Edges](open-sheet-export-discovery.md#scope-edges) to the export: pockets 1 and 5 with quantities, held items merged under the same pocket rule, pocket 4's TMs with their moves, and the notice for items with no Showdown ID.
 
 Verify manually: run on `Partida 1`; Walrein's `leftovers` is counted in the items; no item comes from pockets 2, 3, 6, 7 or 8; each TM shows its rolled move, matching the in-game bag's MT list for three TMs picked at random; every item the notice names is absent from the file.
 **Touches:** `pkmn/tools/`
-**After:** pkmn/tools: export the Pokémon
 
 ## pkmn/tools: document the export
 

@@ -3,6 +3,13 @@
 # dependencies = []
 # ///
 
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
 DATA = {
     "randomlocke_version": 1,
     "showdown": {
@@ -4204,6 +4211,12 @@ DATA = {
         "ARCEUS_17": ["dark"],
         "ARCEUS_18": ["fairy"],
     },
+    "fixed_abilities": {
+        "SHEDINJA": {
+            "base": ["WONDERGUARD"],
+            "hidden": [],
+        },
+    },
     "pockets": {
         "REPEL": 1,
         "SUPERREPEL": 1,
@@ -5503,3 +5516,422 @@ DATA = {
         "RUFFLET_1": [["BRAVIARY", "Level", 35]],
     },
 }
+
+SAVE_FOLDER = "Pokemon Anil"
+SLOT = re.compile(r"^Partida (\d+)\.rxdata$")
+GENDERS = {0: "M", 1: "F", 2: "N"}
+SHINY_CHANCE = 65
+
+
+class Symbol(str):
+    pass
+
+
+class RubyObject:
+    def __init__(self, cls):
+        self.cls = cls
+        self.ivars = {}
+
+    def get(self, name, default=None):
+        return self.ivars.get(f"@{name}", default)
+
+
+class MarshalError(Exception):
+    pass
+
+
+def hashable(key):
+    if isinstance(key, list):
+        return tuple(hashable(inner) for inner in key)
+    if isinstance(key, dict):
+        return ("hash", id(key))
+    return key
+
+
+class MarshalReader:
+    def __init__(self, data: bytes):
+        self.data = data
+        self.pos = 0
+        self.symbols = []
+        self.objects = []
+
+    def load(self):
+        if self.data[:2] != b"\x04\x08":
+            raise MarshalError("not a Ruby Marshal 4.8 file")
+        self.pos = 2
+        return self.read()
+
+    def byte(self) -> int:
+        if self.pos >= len(self.data):
+            raise MarshalError("unexpected end of data")
+        value = self.data[self.pos]
+        self.pos += 1
+        return value
+
+    def integer(self) -> int:
+        head = self.byte()
+        head = head - 256 if head > 127 else head
+        if head == 0:
+            return 0
+        if 4 < head:
+            return head - 5
+        if head < -4:
+            return head + 5
+        size = abs(head)
+        value = int.from_bytes(self.chunk(size), "little")
+        return value if head > 0 else value - (1 << (8 * size))
+
+    def chunk(self, size: int) -> bytes:
+        if self.pos + size > len(self.data):
+            raise MarshalError("unexpected end of data")
+        value = self.data[self.pos:self.pos + size]
+        self.pos += size
+        return value
+
+    def raw(self) -> bytes:
+        return self.chunk(self.integer())
+
+    def register(self, value):
+        self.objects.append(value)
+        return value
+
+    def symbol(self) -> Symbol:
+        value = Symbol(self.raw().decode("utf-8", "replace"))
+        self.symbols.append(value)
+        return value
+
+    def symbol_name(self) -> Symbol:
+        value = self.read()
+        if not isinstance(value, Symbol):
+            raise MarshalError("expected a symbol")
+        return value
+
+    def fill(self, target: dict, count: int):
+        for _ in range(count):
+            key = self.read()
+            target[hashable(key)] = self.read()
+
+    def read(self):
+        kind = chr(self.byte())
+        if kind == "0":
+            return None
+        if kind == "T":
+            return True
+        if kind == "F":
+            return False
+        if kind == "i":
+            return self.integer()
+        if kind == ":":
+            return self.symbol()
+        if kind == ";":
+            return self.symbols[self.integer()]
+        if kind == "@":
+            return self.objects[self.integer()]
+        if kind == "I":
+            value = self.read()
+            for _ in range(self.integer()):
+                self.read()
+                self.read()
+            return value
+        if kind == "e":
+            self.symbol_name()
+            return self.read()
+        if kind == '"':
+            return self.register(self.raw().decode("utf-8", "replace"))
+        if kind == "f":
+            return self.register(float(self.raw().decode("ascii")))
+        if kind == "l":
+            sign = chr(self.byte())
+            value = int.from_bytes(self.chunk(2 * self.integer()), "little")
+            return self.register(-value if sign == "-" else value)
+        if kind == "[":
+            value = self.register([])
+            for _ in range(self.integer()):
+                value.append(self.read())
+            return value
+        if kind in "{}":
+            value = self.register({})
+            self.fill(value, self.integer())
+            if kind == "}":
+                self.read()
+            return value
+        if kind in "oS":
+            value = self.register(RubyObject(self.symbol_name()))
+            self.fill(value.ivars, self.integer())
+            return value
+        if kind == "C":
+            self.symbol_name()
+            return self.read()
+        if kind == "u":
+            value = RubyObject(self.symbol_name())
+            value.ivars["_dump"] = self.raw()
+            return self.register(value)
+        if kind == "U":
+            value = self.register(RubyObject(self.symbol_name()))
+            value.ivars["_load"] = self.read()
+            return value
+        if kind == "/":
+            value = self.register(self.raw())
+            self.byte()
+            return value
+        if kind in "cmM":
+            return self.register(self.raw().decode("utf-8", "replace"))
+        raise MarshalError(f"unsupported Marshal type {kind!r} at byte {self.pos - 1}")
+
+
+def windows_appdata() -> list[Path]:
+    try:
+        echoed = subprocess.run(
+            ["cmd.exe", "/c", "echo %APPDATA%"], capture_output=True, text=True, timeout=10, cwd="/mnt/c"
+        ).stdout.strip()
+        if echoed and "%" not in echoed:
+            converted = subprocess.run(
+                ["wslpath", "-u", echoed], capture_output=True, text=True, timeout=10
+            ).stdout.strip()
+            if converted:
+                return [Path(converted)]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return sorted(Path("/mnt/c/Users").glob("*/AppData/Roaming"))
+
+
+def save_folders() -> list[Path]:
+    return [appdata / SAVE_FOLDER for appdata in windows_appdata()]
+
+
+def find_slots(folders: list[Path]) -> list[Path]:
+    slots = []
+    for folder in folders:
+        if folder.is_dir():
+            slots.extend(path for path in folder.iterdir() if path.is_file() and SLOT.match(path.name))
+    return sorted(slots, key=lambda path: (str(path.parent), int(SLOT.match(path.name).group(1))))
+
+
+def pick_save() -> Path:
+    folders = save_folders()
+    slots = find_slots(folders)
+    if not slots:
+        looked = ", ".join(str(folder) for folder in folders) or "/mnt/c/Users/*/AppData/Roaming"
+        sys.exit(f"No save found in {looked}. Point to one with --save PATH.")
+    if len(slots) == 1:
+        return slots[0]
+    for number, slot in enumerate(slots, 1):
+        print(f"{number}. {slot.stem} ({slot.parent})")
+    while True:
+        try:
+            answer = input(f"Which save? [1-{len(slots)}] ").strip()
+        except EOFError:
+            sys.exit("No save picked. Point to one with --save PATH.")
+        if answer.isdigit() and 1 <= int(answer) <= len(slots):
+            return slots[int(answer) - 1]
+
+
+def read_save(path: Path) -> dict:
+    try:
+        with path.open("rb") as handle:
+            data = handle.read()
+    except OSError as error:
+        sys.exit(f"Could not read {path}: {error}")
+    try:
+        save = MarshalReader(data).load()
+    except (MarshalError, IndexError, ValueError, UnicodeDecodeError) as error:
+        sys.exit(f"Could not read {path} ({error}). If the game was saving, let it finish and run this again.")
+    if not isinstance(save, dict) or "player" not in save:
+        sys.exit(f"{path} is not a Pokémon Añil save.")
+    return save
+
+
+def species_form(pokemon: RubyObject) -> str:
+    form = pokemon.get("forced_form")
+    if form is None:
+        form = pokemon.get("form") or 0
+    species = str(pokemon.get("species"))
+    return f"{species}_{form}" if form else species
+
+
+def is_shiny(pokemon: RubyObject) -> bool:
+    shiny = pokemon.get("shiny")
+    if shiny is not None:
+        return bool(shiny)
+    owner = pokemon.get("owner")
+    owner_id = owner.get("id") if isinstance(owner, RubyObject) else None
+    personal = pokemon.get("personalID")
+    if owner_id is None or personal is None:
+        return False
+    mixed = personal ^ owner_id
+    return ((mixed & 0xFFFF) ^ ((mixed >> 16) & 0xFFFF)) < SHINY_CHANCE
+
+
+def capsule_list(pokemon: RubyObject, capsules) -> list | None:
+    if not isinstance(capsules, dict):
+        return None
+    rolled = capsules.get(pokemon.get("id"))
+    return rolled if pokemon.get("id") is not None and isinstance(rolled, list) else None
+
+
+def ability_lists(game_id: str, pokemon: RubyObject, table: dict, capsules) -> dict | None:
+    rolled = capsule_list(pokemon, capsules)
+    if rolled is not None:
+        return {
+            "base": [str(entry[0]) for entry in rolled if entry[1] < 2],
+            "hidden": [str(entry[0]) for entry in rolled if entry[1] >= 2],
+        }
+    if game_id in DATA["fixed_abilities"]:
+        return DATA["fixed_abilities"][game_id]
+    entry = table.get(game_id)
+    if not isinstance(entry, dict):
+        return None
+    return {
+        "base": [str(ability) for ability in entry.get("base") or [] if ability],
+        "hidden": [str(ability) for ability in entry.get("hidden") or [] if ability],
+    }
+
+
+def current_ability(pokemon: RubyObject, lists: dict | None, capsules) -> str | None:
+    rolled = capsule_list(pokemon, capsules)
+    if rolled is not None:
+        index = pokemon.get("ability_index")
+        if index is not None:
+            for ability, slot in rolled:
+                if slot == index:
+                    return str(ability)
+        return str(rolled[0][0]) if rolled else None
+    if pokemon.get("forced_ability"):
+        return str(pokemon.get("forced_ability"))
+    if pokemon.get("ability"):
+        return str(pokemon.get("ability"))
+    if lists is None:
+        return None
+    personal_bit = (pokemon.get("personalID") or 0) & 1
+    index = pokemon.get("ability_index")
+    index = personal_bit if index is None else index
+    if index >= 2:
+        hidden = lists["hidden"]
+        if index - 2 < len(hidden):
+            return hidden[index - 2]
+        index = personal_bit
+    base = lists["base"]
+    if index < len(base):
+        return base[index]
+    return base[0] if base else None
+
+
+def can_evolve(game_id: str, pokemon: RubyObject, level: int | None, gender: int | None) -> list[str]:
+    if level is None:
+        return []
+    personal = pokemon.get("personalID") or 0
+    attack = pokemon.get("attack") or 0
+    defense = pokemon.get("defense") or 0
+    checks = {
+        "LevelMale": gender == 0,
+        "LevelFemale": gender == 1,
+        "AttackGreater": attack > defense,
+        "AtkDefEqual": attack == defense,
+        "DefenseGreater": attack < defense,
+        "Silcoon": ((personal >> 16) & 0xFFFF) % 10 < 5,
+        "Cascoon": ((personal >> 16) & 0xFFFF) % 10 >= 5,
+    }
+    return [
+        target
+        for target, method, needed in DATA["level_evolutions"].get(game_id, [])
+        if level >= needed and checks.get(method, True)
+    ]
+
+
+def fieldable(pokemon) -> bool:
+    return (
+        isinstance(pokemon, RubyObject)
+        and (pokemon.get("steps_to_hatch") or 0) <= 0
+        and not pokemon.get("perma_faint")
+    )
+
+
+def all_pokemon(save: dict) -> list[RubyObject]:
+    found = list(save["player"].get("party") or [])
+    storage = save.get("storage_system")
+    for box in (storage.get("boxes") or []) if isinstance(storage, RubyObject) else []:
+        found.extend(box.get("pokemon") or [])
+    return [pokemon for pokemon in found if fieldable(pokemon)]
+
+
+def export_pokemon(pokemon: RubyObject, table: dict, capsules, notices: list[str]) -> dict | None:
+    showdown = DATA["showdown"]
+    game_id = species_form(pokemon)
+    label = f"{game_id} (level {pokemon.get('level')})"
+    species = showdown["species"].get(game_id)
+    if species is None:
+        notices.append(f"Left out {label}: {game_id} has no Showdown species.")
+        return None
+    lists = ability_lists(game_id, pokemon, table, capsules)
+    ability = current_ability(pokemon, lists, capsules)
+    named = None
+    if lists is not None:
+        named = {
+            slot: [showdown["abilities"].get(ability_id) for ability_id in abilities]
+            for slot, abilities in lists.items()
+        }
+    if named is None or any(None in abilities for abilities in named.values()):
+        notices.append(f"No rolled abilities found for {label}; exported without them.")
+        named = None
+    level = pokemon.get("level")
+    gender = pokemon.get("gender")
+    nature = pokemon.get("nature_for_stats") or pokemon.get("nature")
+    for field, value in (("level", level), ("gender", gender), ("nature", nature)):
+        if value is None:
+            notices.append(f"The save has not filled in the {field} of {label}; exported without it.")
+    for target in can_evolve(game_id, pokemon, level, gender):
+        notices.append(f"{label} could already evolve into {target}.")
+    return {
+        "species": species,
+        "nickname": pokemon.get("name") or None,
+        "gender": GENDERS.get(gender),
+        "shiny": is_shiny(pokemon),
+        "level": level,
+        "nature": showdown["natures"].get(str(nature)) if nature is not None else None,
+        "ability": showdown["abilities"].get(ability) if ability else None,
+        "abilities": named,
+        "types": DATA["types"][game_id],
+    }
+
+
+def output_path(save: dict, chosen: str | None) -> Path:
+    if chosen:
+        return Path(chosen)
+    trainer = str(save["player"].get("name") or "trainer").replace("/", "_")
+    return Path.cwd() / f"{trainer}-open-sheet.json"
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Export a Pokémon Añil save's shared Pokémon to JSON for an open-sheet fight.")
+    parser.add_argument("--save", help="the save file to read instead of picking a slot")
+    parser.add_argument("--out", help="where to write the JSON instead of <trainer>-open-sheet.json here")
+    arguments = parser.parse_args()
+    save_path = Path(arguments.save).expanduser() if arguments.save else pick_save()
+    save = read_save(save_path)
+    metadata = save.get("global_metadata")
+    metadata = metadata if isinstance(metadata, RubyObject) else RubyObject("PokemonGlobalMetadata")
+    randomized = save.get("randomized_data")
+    table = randomized.get("abilities") if isinstance(randomized, dict) else None
+    table = table if isinstance(table, dict) else {}
+    capsules = metadata.get("random_abs_pokes")
+    notices: list[str] = []
+    exported = [
+        entry
+        for entry in (export_pokemon(pokemon, table, capsules, notices) for pokemon in all_pokemon(save))
+        if entry is not None
+    ]
+    version = metadata.get("randomlocke_version")
+    if version != DATA["randomlocke_version"]:
+        notices.append(
+            f"The save is Randomlocke version {version}, but this script's data is for version "
+            f"{DATA['randomlocke_version']}; some of what it wrote may be wrong."
+        )
+    out = output_path(save, arguments.out)
+    out.write_text(json.dumps({"pokemon": exported}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    for notice in notices:
+        print(notice)
+    print(f"Wrote {len(exported)} Pokémon to {out}")
+
+
+if __name__ == "__main__":
+    main()

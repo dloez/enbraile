@@ -14,6 +14,9 @@ EXPORT = Path(__file__).with_name("export_data.py")
 DEFAULT_WONDER = Path.home() / "workspace" / "wonder"
 RANDOMLOCKE = Path("packages/randomlocke/src/randomlocke")
 GAME_DATA = Path("game/base/es-v4.14/Data")
+RANDOMIZER_CONFIG = Path(
+    "game/extracted/es-v4.14/plugins/Random Pokemon & Moves + Randomizer EX (Abilities)/000_Config.rb"
+)
 SHOWDOWN_KINDS = ("species", "abilities", "items", "moves", "natures")
 SHOWDOWN_TYPES = {
     "NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND", "ROCK", "BUG", "GHOST", "STEEL",
@@ -67,6 +70,21 @@ def read_marshal(path: Path) -> dict:
         return {symbol(key): value for key, value in load(handle).items()}
 
 
+def fixed_abilities(wonder: Path, species: dict, named: dict[str, str]) -> dict[str, dict[str, list[str]]]:
+    config = (wonder / RANDOMIZER_CONFIG).read_text(encoding="utf-8")
+    match = re.search(r"SPECIES_WITHOUT_RANDOM_ABS\s*=\s*\[([^\]]*)\]", config)
+    if not match:
+        sys.exit(f"no SPECIES_WITHOUT_RANDOM_ABS in {RANDOMIZER_CONFIG}")
+    return {
+        game_id: {
+            "base": [symbol(ability) for ability in attribute(species[game_id], "abilities")],
+            "hidden": [symbol(ability) for ability in attribute(species[game_id], "hidden_abilities")],
+        }
+        for game_id in re.findall(r":(\w+)", match.group(1))
+        if game_id in named and game_id in species
+    }
+
+
 def species_types(species: dict, mod_types: dict[str, list[str]], named: dict[str, str]) -> dict[str, list[str]]:
     types = {}
     for game_id in named:
@@ -105,6 +123,7 @@ def build(wonder: Path) -> dict:
         "randomlocke_version": randomlocke_version(wonder),
         "showdown": showdown,
         "types": species_types(species, mod_types, showdown["species"]),
+        "fixed_abilities": fixed_abilities(wonder, species, showdown["species"]),
         "pockets": {game_id: attribute(item, "pocket") for game_id, item in items.items()},
         "tm_moves": {
             game_id: symbol(attribute(item, "move"))
@@ -151,7 +170,7 @@ def main() -> None:
     counts = ", ".join(f"{len(table)} {kind}" for kind, table in data["showdown"].items())
     print(
         f"Randomlocke version {data['randomlocke_version']}; Showdown IDs: {counts}; "
-        f"{len(data['types'])} species-form types, {len(data['pockets'])} item pockets, "
+        f"{len(data['types'])} species-form types, {len(data['fixed_abilities'])} with fixed abilities, {len(data['pockets'])} item pockets, "
         f"{len(data['tm_moves'])} TM moves, {len(data['level_evolutions'])} species with "
         f"level-up evolutions; written to {EXPORT}"
     )
