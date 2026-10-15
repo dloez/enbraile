@@ -31,6 +31,7 @@ LEVEL_METHODS = {
     "Cascoon", "Ninjask",
 }
 SHOWDOWN_ITEMS = "https://raw.githubusercontent.com/smogon/pokemon-showdown/master/data/items.ts"
+UNMODELED_ITEMS_KEPT = {"TINYMUSHROOM"}
 SHOWDOWN_ITEM_KEY = re.compile(r"^\t([a-z0-9]+): \{$", re.MULTILINE)
 BLOCK = re.compile(r"^DATA = \{\n.*?^\}\n", re.MULTILINE | re.DOTALL)
 
@@ -70,7 +71,11 @@ def modeled_items() -> set[str]:
 
 
 def modeled_names(names: dict[str, str], tm_moves: dict[str, str], modeled: set[str]) -> dict[str, str]:
-    return {game_id: item for game_id, item in names.items() if item in modeled or game_id in tm_moves}
+    return {
+        game_id: item
+        for game_id, item in names.items()
+        if item in modeled or game_id in tm_moves or game_id in UNMODELED_ITEMS_KEPT
+    }
 
 
 def randomlocke_version(wonder: Path) -> int:

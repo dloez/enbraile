@@ -1465,6 +1465,7 @@ DATA = {
             "FOSSILIZEDDRAKE": "fossilizeddrake",
             "FOSSILIZEDDINO": "fossilizeddino",
             "PRETTYFEATHER": "prettyfeather",
+            "TINYMUSHROOM": "tinymushroom",
             "BIGNUGGET": "bignugget",
             "RAREBONE": "rarebone",
             "AIRBALLOON": "airballoon",
