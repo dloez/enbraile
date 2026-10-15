@@ -101,7 +101,7 @@ export function OpenSheetPage() {
       )}
       {active && activeCheck?.ok ? (
         <main className="flex flex-1 flex-col">
-          <Pc key={active.id} sheet={activeCheck.sheet} />
+          <Pc key={active.id} tabId={active.id} sheet={activeCheck.sheet} />
         </main>
       ) : active && activeCheck ? (
         <ImportView

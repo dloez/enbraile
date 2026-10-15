@@ -225,3 +225,25 @@ export function describeTm(t: SheetTm): BagTm {
 export function displayName(mon: Mon): string {
   return mon.nickname ?? mon.species.name;
 }
+
+export interface MoveInfo extends Named {
+  type: string | null;
+}
+
+export function describeMove(id: string): MoveInfo {
+  const entry = gen.moves.get(id);
+  return { ...named(id, entry), type: entry.exists ? entry.type : null };
+}
+
+export const MOVES: readonly MoveInfo[] = [
+  ...new Map(
+    gen.moves
+      .all()
+      .filter((move) => move.num > 0 && move.gen <= 5 && move.id !== "struggle")
+      .map((move) => [move.id, describeMove(move.id)] as const),
+  ).values(),
+].sort((a, b) => a.name.localeCompare(b.name));
+
+export function currentAbility(mon: Mon): string | null {
+  return mon.abilities.find((a) => a.current)?.id ?? null;
+}

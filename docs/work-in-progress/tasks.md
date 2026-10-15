@@ -12,13 +12,6 @@ Verify manually: a push to `main` touching `pkmn/site/` deploys; `https://pkmn.e
 **Touches:** `pkmn/site/`
 **Needs the author:** the Cloudflare dashboard and the `enbraile.vip` zone are the owner's.
 
-## pkmn/site: build teams
-
-Build team building in the PC and the Team view of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page), point and click only: named teams per tab (create, rename, duplicate, delete), stored with Dexie; the six-slot strip, filled from a Pokémon's summary; items given and TMs taught from the bag, items held under the quantity limit; abilities switchable with the Mini Seta count against `tinymushroom`; four move slots offering the tab's TMs, then any Gen 1–5 move. Follow the design.
-
-Verify manually: with one `leftovers` in the tab, a second member cannot take it; switching two members' abilities shows 2 Mini Setas needed against the tab's count; a TM taught from the bag and a free-picked move both fill slots; two teams in one tab survive a reload; on a phone, tapping a Pokémon then Add to team puts it in the strip.
-**Touches:** `pkmn/site/`
-
 ## pkmn/site: analyse a team
 
 Build the team page of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page): base stats and Level 50 stat ranges (IVs 0–31, 1 EV, nature) with the speed order, the defensive chart with the hand-kept list of matchup-changing abilities, and offensive coverage from picked moves, falling back to STAB, using Showdown's types. Unit-test the stat ranges, the chart and the coverage.

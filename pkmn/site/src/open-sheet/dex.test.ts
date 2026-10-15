@@ -1,6 +1,6 @@
 import { Dex } from "@pkmn/dex";
 import { describe, expect, it } from "vitest";
-import { describeItem, describePokemon, describeTm, statAt } from "@/open-sheet/dex";
+import { describeItem, describeMove, describePokemon, describeTm, MOVES, statAt } from "@/open-sheet/dex";
 import type { SheetPokemon } from "@/open-sheet/schema";
 
 const walrein: SheetPokemon = {
@@ -108,5 +108,21 @@ describe("describeTm", () => {
 
   it("marks an unknown move", () => {
     expect(describeTm({ item: "tm99", move: "notamove" }).move).toMatchObject({ name: "notamove", marked: true });
+  });
+});
+
+describe("MOVES", () => {
+  it("lists every Gen 1–5 move once, Hidden Power without its typed copies", () => {
+    expect(MOVES).toHaveLength(558);
+    expect(new Set(MOVES.map((m) => m.id)).size).toBe(MOVES.length);
+    expect(MOVES.find((m) => m.id === "hiddenpower")?.name).toBe("Hidden Power");
+    expect(MOVES.some((m) => m.id === "fusionbolt")).toBe(true);
+    expect(MOVES.some((m) => m.id === "fairywind")).toBe(false);
+    expect(MOVES.some((m) => m.id === "struggle")).toBe(false);
+  });
+
+  it("describes an unknown move by its raw id", () => {
+    expect(describeMove("madeup")).toEqual({ id: "madeup", name: "madeup", known: false, marked: true, type: null });
+    expect(describeMove("icebeam").type).toBe("Ice");
   });
 });
