@@ -19,10 +19,3 @@ Move the lasting content of the [Site Discovery](open-sheet-site-discovery.md) i
 Verify manually: every decision in the discovery doc has a home under `docs/pkmn/site/`; `grep -rn open-sheet-site-discovery docs/ pkmn/` finds nothing; the Open Sheet and Site rows of `docs/pkmn/index.md` describe what is built and deployed.
 **Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/`, `pkmn/site/CLAUDE.md`
 **After:** pkmn/site: deploy on Workers Builds
-
-## pkmn/site: theme the overlay scrims
-
-`pkmn/site/src/components/ui/dialog.tsx:40` and `pkmn/site/src/components/ui/sheet.tsx:40` darken the page behind the bag, the move picker and the phone summary with shadcn's raw `bg-black/10`. Give the scrim its variable and Tailwind token as [Surfaces, Reuse and Data](open-sheet-site-discovery.md#surfaces-reuse-and-data) settles ("Do the vendored shadcn components follow the theme rule?") and use it in both overlays.
-
-Verify manually: opening the bag, and a Pokémon's summary at phone width, shows the design's 60% black scrim; `grep -rn 'bg-black' pkmn/site/src` finds nothing; `npm run gate` passes.
-**Touches:** `pkmn/site/src/components/ui/`, `pkmn/site/src/index.css`
