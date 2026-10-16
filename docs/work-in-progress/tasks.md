@@ -22,8 +22,7 @@ Verify manually: every decision in the discovery doc has a home under `docs/pkmn
 
 ## pkmn/site: theme the overlay scrims
 
-`pkmn/site/src/components/ui/dialog.tsx:40` and `pkmn/site/src/components/ui/sheet.tsx:40` darken the page behind the bag, the move picker and the phone summary with shadcn's raw `bg-black/10`, where `pkmn/site/CLAUDE.md` takes every colour from the `:root` variables of `src/index.css`, set by the Open Sheet Screens design of [Surfaces, Reuse and Data](open-sheet-site-discovery.md#surfaces-reuse-and-data). Either give the scrim a variable and Tailwind token from the design and use it in both overlays, or record in `pkmn/site/CLAUDE.md` that the shadcn files under `src/components/ui/` are exempt.
+`pkmn/site/src/components/ui/dialog.tsx:40` and `pkmn/site/src/components/ui/sheet.tsx:40` darken the page behind the bag, the move picker and the phone summary with shadcn's raw `bg-black/10`. Give the scrim its variable and Tailwind token as [Surfaces, Reuse and Data](open-sheet-site-discovery.md#surfaces-reuse-and-data) settles ("Do the vendored shadcn components follow the theme rule?") and use it in both overlays.
 
-Verify manually: opening the bag, and a Pokémon's summary at phone width, shows the scrim the design shows; `grep -rn 'bg-black' pkmn/site/src` finds nothing unless the files are exempted; `npm run gate` passes.
-**Touches:** `pkmn/site/src/components/ui/`, `pkmn/site/src/index.css`, `pkmn/site/CLAUDE.md`
-**Needs the author:** do the vendored shadcn components in `src/components/ui/` follow the site's no-raw-colours theme rule, so the scrims get a token from the design, or are they exempt, so the rule says so?
+Verify manually: opening the bag, and a Pokémon's summary at phone width, shows the design's 60% black scrim; `grep -rn 'bg-black' pkmn/site/src` finds nothing; `npm run gate` passes.
+**Touches:** `pkmn/site/src/components/ui/`, `pkmn/site/src/index.css`
