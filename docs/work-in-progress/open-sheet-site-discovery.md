@@ -141,7 +141,7 @@ A: Cloudflare Workers Builds, connected to the GitHub repository: each push to `
 ## Secrets and Config
 
 **Q: Are there secrets?**
-A: None in the repository. Workers Builds is connected in the Cloudflare dashboard; the custom domain is set in `wrangler.jsonc`, with `enbraile.vip`'s zone on the owner's Cloudflare account.
+A: None in the repository. Workers Builds is connected in the Cloudflare dashboard; the custom domain is set in `wrangler.jsonc`, with `enbraile.vip`'s zone on the owner's Cloudflare account, and `preview_urls` there gives each branch's Preview a public `workers.dev` URL.
 
 ## Idempotency and Rollback
 

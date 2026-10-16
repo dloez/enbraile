@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "pkmn-site",
   "compatibility_date": "2026-10-12",
+  "preview_urls": true,
   "assets": {
     "not_found_handling": "single-page-application"
   },
