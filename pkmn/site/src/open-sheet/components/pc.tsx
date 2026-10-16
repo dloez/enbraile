@@ -209,7 +209,7 @@ function TeamPc({ sheet, teams, team, onTeam }: {
                   </select>
                 </label>
               </div>
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(60px,1fr))] gap-2 px-3.5 pb-3.5 sm:grid-cols-[repeat(auto-fill,minmax(92px,1fr))]">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-2 px-3.5 pb-3.5 sm:grid-cols-[repeat(auto-fill,minmax(112px,1fr))]">
                 {shown.map((mon) => (
                   <Cell key={mon.index} mon={mon} selected={mon.index === selected} onPick={() => setPicked(mon.index)} />
                 ))}
