@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
-import { describeItem, describeTm, displayName, type BagItem, type BagTm, type Mon } from "@/open-sheet/dex";
+import { canLearn, describeItem, describeTm, displayName, type BagItem, type BagTm, type Learn, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { heldCount, memberMon, type Slots } from "@/open-sheet/team";
 import { TypeSquare, UnknownMark } from "@/open-sheet/components/marks";
@@ -28,6 +28,46 @@ export function ItemIcon({ item }: { item: BagItem }) {
 interface Target {
   slot: number;
   mon: Mon;
+  can?: Learn | null;
+}
+
+function TargetButton({ target, move, onGive }: { target: Target; move?: string; onGive: (slot: number) => void }) {
+  const name = displayName(target.mon);
+  const no = target.can === "no";
+  const unchecked = target.can === "unchecked";
+  const label = no ? `${name} can't learn ${move}` : unchecked ? `${name} (not checked in game yet)` : name;
+  const button = (
+    <button
+      type="button"
+      disabled={no}
+      aria-label={label}
+      title={label}
+      onClick={() => onGive(target.slot)}
+      className={cn(
+        "relative grid size-13 cursor-pointer place-items-center rounded-[10px] border bg-box outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-35",
+        unchecked && "border-destructive",
+      )}
+    >
+      <MonSprite mon={target.mon} className="size-12" />
+      {unchecked && (
+        <span
+          aria-hidden="true"
+          className="absolute -top-1.25 -right-1.25 grid size-4.5 place-items-center rounded-full border border-destructive bg-destructive-soft text-[11px] font-bold text-destructive"
+        >
+          ?
+        </span>
+      )}
+    </button>
+  );
+  if (target.can === undefined || target.can === null) return button;
+  return (
+    <div className="flex w-16 flex-col items-center gap-1">
+      {button}
+      <span className={cn("text-center text-[11px]", no ? "text-muted-foreground" : "text-foreground")}>
+        {no ? "Can't learn" : unchecked ? "Not checked" : name}
+      </span>
+    </div>
+  );
 }
 
 function Row({ icon, name, marked, sub, desc, qty, spent, usable, open, targets, onClick, onGive }: {
@@ -74,16 +114,7 @@ function Row({ icon, name, marked, sub, desc, qty, spent, usable, open, targets,
       {open && (
         <div className="flex flex-wrap gap-2 pr-2 pb-3 pl-12">
           {targets.map((target) => (
-            <button
-              key={target.slot}
-              type="button"
-              aria-label={displayName(target.mon)}
-              title={displayName(target.mon)}
-              onClick={() => onGive(target.slot)}
-              className="grid size-13 cursor-pointer place-items-center rounded-[10px] border bg-box outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <MonSprite mon={target.mon} className="size-12" />
-            </button>
+            <TargetButton key={target.slot} target={target} move={name} onGive={onGive} />
           ))}
         </div>
       )}
@@ -197,6 +228,10 @@ export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, on
                 .filter((tm) => !q || tm.move.name.toLowerCase().includes(q) || tm.label.toLowerCase().includes(q))
                 .map((tm) => {
                   const key = `tm:${tm.label}`;
+                  const tmTargets = targets.map((target) => ({ ...target, can: canLearn(target.mon, tm.move.id) }));
+                  const usable = giveMon
+                    ? canLearn(giveMon, tm.move.id) !== "no"
+                    : tmTargets.some((target) => target.can !== "no");
                   return (
                     <Row
                       key={tm.label}
@@ -205,9 +240,9 @@ export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, on
                       marked={tm.move.marked}
                       sub={tmSub(tm)}
                       desc={tm.desc}
-                      usable={targets.length > 0}
+                      usable={usable}
                       open={!giveMon && picked === key}
-                      targets={targets}
+                      targets={tmTargets}
                       onClick={() => choose(key, (slot) => onTeach(slot, tm.move.id))}
                       onGive={(slot) => onTeach(slot, tm.move.id)}
                     />

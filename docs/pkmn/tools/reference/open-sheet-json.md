@@ -50,6 +50,7 @@ There is no header: no trainer, badges, format version or export time.
 | `ability` | string or null | Its current ability; null, with a notice, when it cannot be worked out or has no Showdown ID |
 | `abilities` | object or null | The abilities it can have under the randomizer, as `base` and `hidden` arrays of IDs; null when the rolled abilities were not found |
 | `types` | array of strings | Its one or two types |
+| `moves` | object | Only with `--moves`: `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks; `unchecked`, the moves of the bag's TMs the game has not checked against its species yet (with a notice). All three are arrays of move IDs, each move once |
 
 ## `items[]`
 
@@ -73,6 +74,7 @@ Holds the items of pocket 1 (Objetos) and pocket 5 (Bayas), and the held items t
 |--------|--------|
 | *(none)* | Finds the `Partida N.rxdata` slots in the Windows save folder; takes the only one, or asks which |
 | `--save PATH` | Reads that save file instead |
+| `--moves` | Adds `moves` to each Pokémon |
 | `--out PATH` | Writes there instead of `<trainer name>-open-sheet.json` in the current folder |
 
 An existing file at the output path is overwritten. Notices and the closing count go to the terminal, never into the JSON; the [explanation](../explanation/open-sheet-export.md#notices) lists them.

@@ -1,9 +1,11 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { displayName, STAT_LABELS, type Mon } from "@/open-sheet/dex";
-import { TypeChip, UnknownMark } from "@/open-sheet/components/marks";
+import { displayName, STAT_LABELS, tmLabels, type LearnMove, type Mon } from "@/open-sheet/dex";
+import type { Sheet } from "@/open-sheet/schema";
+import { TypeChip, TypeDot, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
 
-type Page = "info" | "stats";
+type Page = "info" | "stats" | "moves";
 
 const PAGES: [Page, string][] = [
   ["info", "Info"],
@@ -137,6 +139,76 @@ function Stats({ mon }: { mon: Mon }) {
   );
 }
 
+function moveMeta(move: LearnMove): string {
+  if (move.category === null) return "";
+  if (move.category === "Status") return "Status";
+  return `${move.category === "Physical" ? "Phys" : "Spec"} ${move.power ?? "—"}`;
+}
+
+function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
+  const [query, setQuery] = useState("");
+  const labels = useMemo(() => tmLabels(sheet.tms), [sheet]);
+  const learn = mon.learnable;
+  if (!learn) return null;
+  const q = query.trim().toLowerCase();
+  const hit = (move: LearnMove) =>
+    !q || move.name.toLowerCase().includes(q) || (labels.get(move.id) ?? "").toLowerCase().includes(q);
+  const groups: [string, LearnMove[], boolean][] = [
+    ["Move Relearner", learn.relearner, false],
+    ["TMs", learn.tms, false],
+    ["Not checked yet", learn.unchecked, true],
+  ];
+  return (
+    <>
+      <label className="flex min-h-10 items-center gap-2 rounded-lg border px-2.5">
+        <Search className="size-4 flex-none" aria-hidden="true" />
+        <span className="sr-only">Search moves</span>
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search"
+          className="min-w-0 flex-1 bg-transparent outline-none"
+        />
+      </label>
+      {groups.map(([name, moves, unchecked]) => {
+        const shown = moves.filter(hit);
+        if (moves.length === 0 || (q && shown.length === 0)) return null;
+        return (
+          <section key={name} aria-label={name} className="flex flex-col gap-1.5">
+            <div className="flex items-baseline gap-2">
+              <h3 className="m-0 text-[13px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{name}</h3>
+              <span className="font-mono text-xs text-muted-foreground">{moves.length}</span>
+            </div>
+            {unchecked && (
+              <p className="m-0 rounded-[10px] bg-destructive-soft px-2.75 py-2.25 text-[13px]">
+                The game has not checked these TMs against {mon.species.name} yet, so it may or may not learn them.
+              </p>
+            )}
+            <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+              {shown.map((move) => (
+                <li
+                  key={move.id}
+                  className="grid grid-cols-[10px_1fr_auto_52px] items-center gap-2.5 rounded-lg px-2 py-1.75 odd:bg-muted"
+                >
+                  <TypeDot type={move.type} />
+                  <span className="min-w-0 truncate font-medium">
+                    {move.name}
+                    {move.marked && <UnknownMark />}
+                    {unchecked && <UncheckedMark />}
+                  </span>
+                  <span className="font-mono text-xs text-muted-foreground">{moveMeta(move)}</span>
+                  <span className="text-right font-mono text-xs text-muted-foreground">{labels.get(move.id) ?? ""}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </>
+  );
+}
+
 export function SummaryHead({ mon, title }: { mon: Mon; title: (text: string) => ReactNode }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-3.5">
@@ -156,12 +228,19 @@ export function SummaryHead({ mon, title }: { mon: Mon; title: (text: string) =>
   );
 }
 
-export function SummaryBody({ mon }: { mon: Mon }) {
+export function SummaryBody({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
   const [page, setPage] = useState<Page>("info");
+  const learn = mon.learnable;
+  const pages: [Page, string, number | null][] = [
+    ...PAGES.map(([id, name]): [Page, string, number | null] => [id, name, null]),
+    ...(learn
+      ? [["moves", "Moves", learn.relearner.length + learn.tms.length + learn.unchecked.length] as [Page, string, number]]
+      : []),
+  ];
   return (
     <>
       <div role="tablist" aria-label="Summary" className="flex flex-none gap-1 border-b px-4 pt-2.5 sm:px-4.5 sm:pt-3">
-        {PAGES.map(([id, name]) => (
+        {pages.map(([id, name, count]) => (
           <button
             key={id}
             type="button"
@@ -174,11 +253,12 @@ export function SummaryBody({ mon }: { mon: Mon }) {
             )}
           >
             {name}
+            {count !== null && <span className="font-normal text-muted-foreground"> {count}</span>}
           </button>
         ))}
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-auto px-4 py-3.5 sm:gap-4 sm:px-4.5 sm:py-4">
-        {page === "info" ? <Info mon={mon} /> : <Stats mon={mon} />}
+        {page === "info" ? <Info mon={mon} /> : page === "stats" ? <Stats mon={mon} /> : <Moves mon={mon} sheet={sheet} />}
       </div>
     </>
   );

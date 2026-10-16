@@ -13,6 +13,19 @@ export function UnknownMark({ className }: { className?: string }) {
   );
 }
 
+export function UncheckedMark({ className }: { className?: string }) {
+  return (
+    <span
+      role="img"
+      aria-label="Not checked in game yet"
+      title="Not checked in game yet"
+      className={cn("ml-2 text-[11px] font-bold text-destructive", className)}
+    >
+      ?
+    </span>
+  );
+}
+
 function typeColour(type: string | null): string {
   return type ? `var(--type-${type.toLowerCase()}, var(--muted-foreground))` : "var(--muted-foreground)";
 }

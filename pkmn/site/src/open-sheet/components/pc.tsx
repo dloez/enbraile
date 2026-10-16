@@ -226,7 +226,7 @@ function TeamPc({ sheet, teams, team, onTeam }: {
                     title={(text) => <h2 className="m-0 font-heading text-[22px] leading-[1.1] font-bold">{text}</h2>}
                   />
                 </div>
-                <SummaryBody key={selectedMon.index} mon={selectedMon} />
+                <SummaryBody key={selectedMon.index} mon={selectedMon} sheet={sheet} />
                 <AddButton slots={slots} mons={mons} mon={selectedMon} onChange={save} className="px-4.5 py-3.5" />
               </aside>
             )}
@@ -250,7 +250,7 @@ function TeamPc({ sheet, teams, team, onTeam }: {
                     )}
                   />
                 </div>
-                <SummaryBody key={selectedMon.index} mon={selectedMon} />
+                <SummaryBody key={selectedMon.index} mon={selectedMon} sheet={sheet} />
                 <AddButton
                   slots={slots}
                   mons={mons}

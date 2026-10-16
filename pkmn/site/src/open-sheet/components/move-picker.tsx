@@ -2,13 +2,14 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
-import { describeTm, MOVES, type MoveInfo } from "@/open-sheet/dex";
+import { describeTm, displayName, MOVES, tmLabels, type LearnMove, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
-import { TypeDot, UnknownMark } from "@/open-sheet/components/marks";
+import { TypeDot, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface MovePickerProps {
   sheet: Sheet;
+  mon: Mon;
   title: string;
   current: string | null;
   open: boolean;
@@ -16,9 +17,10 @@ interface MovePickerProps {
   onPick: (move: string | null) => void;
 }
 
-function MoveRow({ move, label, current, onPick }: {
+function MoveRow({ move, label, unchecked, current, onPick }: {
   move: MoveInfo;
   label?: string;
+  unchecked?: boolean;
   current: boolean;
   onPick: () => void;
 }) {
@@ -37,6 +39,7 @@ function MoveRow({ move, label, current, onPick }: {
         <span className="flex-1 font-medium">
           {move.name}
           {move.marked && <UnknownMark />}
+          {unchecked && <UncheckedMark />}
         </span>
         {label && <span className="font-mono text-xs text-muted-foreground">{label}</span>}
       </button>
@@ -53,13 +56,23 @@ function Group({ name, children }: { name: string; children: ReactNode }) {
   );
 }
 
-export function MovePicker({ sheet, title, current, open, onOpenChange, onPick }: MovePickerProps) {
+export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onPick }: MovePickerProps) {
   const [query, setQuery] = useState("");
   const tms = useMemo(() => sheet.tms.map(describeTm), [sheet]);
+  const labels = useMemo(() => tmLabels(sheet.tms), [sheet]);
   const q = query.trim().toLowerCase();
   const hit = (name: string) => !q || name.toLowerCase().includes(q);
-  const shownTms = tms.filter((tm) => hit(tm.move.name) || hit(tm.label));
-  const shownMoves = MOVES.filter((move) => hit(move.name));
+  const learn = mon.learnable;
+  const shownTms = learn ? [] : tms.filter((tm) => hit(tm.move.name) || hit(tm.label));
+  const shownMoves = learn ? [] : MOVES.filter((move) => hit(move.name));
+  const learnGroups: [string, LearnMove[], boolean][] = learn
+    ? [
+        ["Move Relearner", learn.relearner, false],
+        ["TMs", learn.tms, false],
+        ["Not checked yet", learn.unchecked, true],
+      ]
+    : [];
+  const learnCount = learn ? learn.relearner.length + learn.tms.length + learn.unchecked.length : 0;
 
   function pick(move: string | null) {
     onPick(move);
@@ -88,7 +101,7 @@ export function MovePicker({ sheet, title, current, open, onOpenChange, onPick }
             <X className="size-5" aria-hidden="true" />
           </DialogPrimitive.Close>
         </div>
-        <div className="flex flex-none border-b px-4.5 pt-2 pb-2.5">
+        <div className="flex flex-none flex-col gap-2 border-b px-4.5 pt-2 pb-2.5">
           <label className="flex min-h-10 flex-1 items-center gap-2 rounded-lg border px-2.5">
             <Search className="size-4 flex-none" aria-hidden="true" />
             <span className="sr-only">Search moves</span>
@@ -101,6 +114,11 @@ export function MovePicker({ sheet, title, current, open, onOpenChange, onPick }
               className="min-w-0 flex-1 bg-transparent outline-none"
             />
           </label>
+          {learn && (
+            <span className="text-xs text-muted-foreground">
+              Only the {learnCount} moves {displayName(mon)} can learn in this save
+            </span>
+          )}
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-auto px-2 py-1.5">
           {current !== null && !q && (
@@ -116,6 +134,24 @@ export function MovePicker({ sheet, title, current, open, onOpenChange, onPick }
               </li>
             </ul>
           )}
+          {learnGroups.map(([name, moves, unchecked]) => {
+            const shown = moves.filter((move) => hit(move.name) || hit(labels.get(move.id) ?? ""));
+            if (shown.length === 0) return null;
+            return (
+              <Group key={name} name={name}>
+                {shown.map((move) => (
+                  <MoveRow
+                    key={move.id}
+                    move={move}
+                    label={labels.get(move.id)}
+                    unchecked={unchecked}
+                    current={move.id === current}
+                    onPick={() => pick(move.id)}
+                  />
+                ))}
+              </Group>
+            );
+          })}
           {shownTms.length > 0 && (
             <Group name="TMs">
               {shownTms.map((tm) => (

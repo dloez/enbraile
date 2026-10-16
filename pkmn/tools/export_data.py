@@ -5668,7 +5668,7 @@ def fieldable_pokemon(save: dict) -> list[RubyObject]:
     return [pokemon for pokemon in stored_pokemon(save) if not pokemon.get("perma_faint")]
 
 
-def export_pokemon(pokemon: RubyObject, table: dict, capsules, notices: list[str]) -> dict | None:
+def export_pokemon(pokemon: RubyObject, table: dict, capsules, moves: dict | None, notices: list[str]) -> dict | None:
     showdown = DATA["showdown"]
     game_id = species_form(pokemon)
     label = f"{game_id} (level {pokemon.get('level')})"
@@ -5699,7 +5699,7 @@ def export_pokemon(pokemon: RubyObject, table: dict, capsules, notices: list[str
             notices.append(f"The save has not filled in the {field} of {label}; exported without it.")
     for target, ways in missed_evolutions(game_id, pokemon, level, gender).items():
         notices.append(f"{label} has not evolved into {target} ({', '.join(ways)}).")
-    return {
+    exported = {
         "species": species,
         "nickname": pokemon.get("name") or None,
         "gender": GENDERS.get(gender),
@@ -5710,6 +5710,9 @@ def export_pokemon(pokemon: RubyObject, table: dict, capsules, notices: list[str
         "abilities": named,
         "types": DATA["types"][game_id],
     }
+    if moves is not None:
+        exported["moves"] = learnable_moves(pokemon, moves, label, notices)
+    return exported
 
 
 def bag_entries(save: dict) -> list[tuple[str, int]]:
@@ -5770,6 +5773,91 @@ def export_items(save: dict, tm_map, notices: list[str]) -> tuple[list[dict], li
     )
 
 
+def move_id(move) -> str | None:
+    if isinstance(move, RubyObject):
+        move = move.get("id")
+    return str(move) if move else None
+
+
+def tm_compatibility(save_path: Path, save: dict, metadata: RubyObject, notices: list[str]) -> dict[str, dict[str, bool]]:
+    slot = save["player"].get("save_slot")
+    name = f"tm_compatibility_{re.sub(r'[^a-zA-Z0-9]', '_', str(slot))}.dat" if slot else "tm_compatibility.dat"
+    side = save_path.parent / name
+    raw = metadata.get("tm_compatibility_random")
+    if side.is_file():
+        try:
+            raw = MarshalReader(side.read_bytes()).load()
+        except (OSError, MarshalError, IndexError, ValueError, UnicodeDecodeError) as error:
+            notices.append(f"Could not read {side} ({error}); TM compatibility comes from the save instead.")
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        str(species): {
+            move_id(entry[0]): bool(entry[1])
+            for entry in pairs
+            if isinstance(entry, list) and len(entry) == 2 and move_id(entry[0])
+        }
+        for species, pairs in raw.items()
+        if isinstance(pairs, list)
+    }
+
+
+def bag_tms(save: dict) -> list[str]:
+    bag = save.get("bag")
+    pockets = (bag.get("pockets") or []) if isinstance(bag, RubyObject) else []
+    pocket = pockets[TM_POCKET] if len(pockets) > TM_POCKET and isinstance(pockets[TM_POCKET], list) else []
+    return [str(entry[0]) for entry in pocket if isinstance(entry, list) and entry and str(entry[0]) in DATA["tm_moves"]]
+
+
+def relearner_moves(pokemon: RubyObject, learnsets, per_form: bool, label: str, notices: list[str]) -> list[str]:
+    found = [move_id(move) for move in pokemon.get("first_moves") or []]
+    form = pokemon.get("forced_form")
+    if form is None:
+        form = pokemon.get("form") or 0
+    forms = learnsets.get(str(pokemon.get("species"))) if isinstance(learnsets, dict) else None
+    learnset = forms.get(form if per_form else 0) if isinstance(forms, dict) else None
+    if not isinstance(learnset, list):
+        notices.append(f"The learnset of {label} has not been rolled yet; its relearner moves are its first moves only.")
+        learnset = []
+    level = pokemon.get("level")
+    for entry in learnset:
+        if isinstance(entry, list) and len(entry) == 2 and level is not None and entry[0] <= level:
+            found.append(move_id(entry[1]))
+    return list(dict.fromkeys(move for move in found if move))
+
+
+def learnable_moves(pokemon: RubyObject, context: dict, label: str, notices: list[str]) -> dict:
+    relearner = relearner_moves(pokemon, context["learnsets"], context["per_form"], label, notices)
+    species = str(pokemon.get("species"))
+    rolled = context["compatibility"].get(species, {})
+    tms = []
+    unrolled = []
+    for game_id in context["bag_tms"]:
+        move = tm_move(game_id, context["tm_map"])
+        if move is None or move in relearner or move in tms:
+            continue
+        if move not in rolled:
+            unrolled.append(game_id)
+        elif rolled[move]:
+            tms.append(move)
+    if unrolled and species not in context["unrolled_species"]:
+        context["unrolled_species"].add(species)
+        notices.append(
+            f"{len(unrolled)} TMs have not been checked against {species} yet ({', '.join(unrolled)}), so they are listed "
+            "as unchecked; open the move relearner for it in game, save, and run this again."
+        )
+    unchecked = list(dict.fromkeys(tm_move(game_id, context["tm_map"]) for game_id in unrolled))
+    names = DATA["showdown"]["moves"]
+    for move in relearner + tms + unchecked:
+        if move not in names:
+            notices.append(f"Left out the move {move} of {label}: it has no Showdown ID.")
+    return {
+        "relearner": [names[move] for move in relearner if move in names],
+        "tms": [names[move] for move in tms if move in names],
+        "unchecked": [names[move] for move in unchecked if move in names],
+    }
+
+
 def output_path(save: dict, chosen: str | None) -> Path:
     if chosen:
         return Path(chosen)
@@ -5781,6 +5869,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Export a Pokémon Añil save's shared Pokémon, items and TMs to JSON for an open-sheet fight.")
     parser.add_argument("--save", help="the save file to read instead of picking a slot")
     parser.add_argument("--out", help="where to write the JSON instead of <trainer>-open-sheet.json here")
+    parser.add_argument("--moves", action="store_true", help="also export the moves each Pokémon can learn at the move relearner and from the bag's TMs")
     arguments = parser.parse_args()
     save_path = Path(arguments.save).expanduser() if arguments.save else pick_save()
     save = read_save(save_path)
@@ -5791,9 +5880,19 @@ def main() -> None:
     table = table if isinstance(table, dict) else {}
     capsules = metadata.get("random_abs_pokes")
     notices: list[str] = []
+    moves = None
+    if arguments.moves:
+        moves = {
+            "learnsets": metadata.get("random_moves"),
+            "per_form": bool(metadata.get("different_movesets_per_form")),
+            "compatibility": tm_compatibility(save_path, save, metadata, notices),
+            "bag_tms": bag_tms(save),
+            "tm_map": metadata.get("tm_move_map"),
+            "unrolled_species": set(),
+        }
     exported = [
         entry
-        for entry in (export_pokemon(pokemon, table, capsules, notices) for pokemon in fieldable_pokemon(save))
+        for entry in (export_pokemon(pokemon, table, capsules, moves, notices) for pokemon in fieldable_pokemon(save))
         if entry is not None
     ]
     items, tms = export_items(save, metadata.get("tm_move_map"), notices)

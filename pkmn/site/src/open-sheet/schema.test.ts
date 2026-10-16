@@ -34,6 +34,12 @@ describe("checkSheet", () => {
     expect(checkSheet({ ...sheet, pokemon: [nulls] }).ok).toBe(true);
   });
 
+  it("accepts the learnable moves of an export made with --moves", () => {
+    const moves = { relearner: ["brine"], tms: ["icebeam"], unchecked: ["protect"] };
+    const result = checkSheet({ ...sheet, pokemon: [{ ...sheet.pokemon[0], moves }] });
+    expect(result.ok && result.sheet.pokemon[0].moves).toEqual(moves);
+  });
+
   it("names a missing top-level list", () => {
     expect(checkSheet(without("pokemon"))).toEqual({ ok: false, reason: "has no `pokemon` list" });
     expect(checkSheet(without("tms"))).toEqual({ ok: false, reason: "has no `tms` list" });

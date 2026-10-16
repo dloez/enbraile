@@ -29,6 +29,8 @@ With one `Partida N` slot it reads that one; with several it lists them and asks
 uv run <repo>/pkmn/tools/export_data.py --save "/mnt/c/Users/<you>/AppData/Roaming/Pokemon Anil/Partida 2.rxdata" --out sheet.json
 ```
 
+`--moves` also writes the moves each Pokémon can learn at the move relearner and from the bag's TMs. A TM the game has never checked against a species is listed as not checked yet, with a notice; open the move relearner for that Pokémon in game, save, and run it again.
+
 It writes `<trainer name>-open-sheet.json`, overwriting a file of that name, prints a notice for each thing it left out or could not read, and ends with a line counting the Pokémon, items and TMs it wrote.
 
 ### 3. Give the rival the raw URL

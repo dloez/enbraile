@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { ClipboardCheck, ClipboardCopy, Package, Plus, X } from "lucide-react";
+import { CircleAlert, ClipboardCheck, ClipboardCopy, Package, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { currentAbility, describeItem, describeMove, displayName, STAT_LABELS, type Mon } from "@/open-sheet/dex";
+import { canLearn, currentAbility, describeItem, describeMove, displayName, STAT_LABELS, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { MINI_SETA, memberMon, quantityOf, setasNeeded, type Member, type Slots } from "@/open-sheet/team";
 import { ItemIcon } from "@/open-sheet/components/bag";
@@ -40,6 +40,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
   const ability = member.ability ?? current;
   const n = mon.nature;
   const name = displayName(mon);
+  const unlearnable = member.moves.flatMap((id) => (id && canLearn(mon, id) === "no" ? [describeMove(id).name] : []));
 
   return (
     <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card">
@@ -130,16 +131,18 @@ function MemberCard({ sheet, slot, member, mon, props }: {
         <div className="grid grid-cols-2 gap-2">
           {member.moves.map((id, at) => {
             const move = id ? describeMove(id) : null;
+            const wrong = id !== null && canLearn(mon, id) === "no";
             return (
               <button
                 key={at}
                 type="button"
                 onClick={() => setPicking(at)}
-                aria-label={`Move ${at + 1}${move ? `: ${move.name}` : ""}`}
+                aria-label={`Move ${at + 1}${move ? `: ${move.name}` : ""}${wrong ? `, which ${name} can't learn` : ""}`}
                 className={cn(
                   field,
                   "cursor-pointer px-2.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                   move ? "text-foreground" : "text-muted-foreground",
+                  wrong && "border-destructive bg-destructive-soft",
                 )}
               >
                 <TypeDot type={move?.type ?? null} className="size-2.25" />
@@ -147,10 +150,16 @@ function MemberCard({ sheet, slot, member, mon, props }: {
                   {move ? move.name : "—"}
                   {move?.marked && <UnknownMark />}
                 </span>
+                {wrong && <CircleAlert className="size-4 flex-none text-destructive" aria-hidden="true" />}
               </button>
             );
           })}
         </div>
+        {unlearnable.length > 0 && (
+          <p className="m-0 text-[13px] text-destructive">
+            {name} can't learn {unlearnable.join(", ")} in this save.
+          </p>
+        )}
         <div className="grid grid-cols-6 gap-1 border-t pt-1">
           {(mon.stats ?? []).map((s) => {
             const up = n?.plus === s.stat && n.minus !== s.stat;
@@ -175,6 +184,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
       </div>
       <MovePicker
         sheet={sheet}
+        mon={mon}
         title={`${name} · Move ${(picking ?? 0) + 1}`}
         current={picking === null ? null : member.moves[picking]}
         open={picking !== null}

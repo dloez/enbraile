@@ -26,7 +26,7 @@ A: A matchup of a team against another tab's Pokémon (the team page analyses th
 **Why:** the owner chose team-only analysis and no damage calc for now; the rest follows from the decisions below.
 
 **Q: Does the design account for data the export does not carry?**
-A: Yes. Moves, learnsets and IVs or stats are not in the export, but the views and the stored model leave room for them: a member already has four move slots, and a learnset arriving in a later export narrows the move picker instead of reshaping the builder.
+A: Yes. Moves, learnsets and IVs or stats are not in the default export (its `--moves` flag adds learnable moves, which the site reads: see the next answer), but the views and the stored model leave room for them: a member already has four move slots, and a learnset arriving in a later export narrows the move picker instead of reshaping the builder.
 **Why:** the owner: build with those in mind.
 
 ## Interfaces and Integration
@@ -70,7 +70,7 @@ A: Its current ability by default, switchable to any of its `abilities` (base or
 **Why:** the owner: an NPC switches an ability for 1 Mini Seta, to any of the Pokémon's abilities, hidden included.
 
 **Q: What goes in a member's four move slots?**
-A: The tab's TMs first (any TM on any member, since compatibility is unknown), then any Gen 1–5 move. Picked moves feed offensive coverage.
+A: The tab's TMs first (any TM on any member, since compatibility is unknown), then any Gen 1–5 move. Picked moves feed offensive coverage. When the export carries the Pokémon's learnable moves (`--moves`), the one move picker lists only those instead, in three groups: Move Relearner, TMs, and "Not checked yet" (TMs the game has not rolled for the species, marked `?`), with no "All moves". The summary gains a Moves tab listing the same groups; the bag's TMs pocket keeps teaching TMs, greying out members that cannot learn one ("Can't learn") and marking unchecked ones; and a team member holding a move it cannot learn (picked before such an export was imported) shows that slot in the warning colour with a line naming the moves. An export without `moves` behaves as before. Designed in the Open Sheet Screens canvas, "Learnable moves" row. _(owner, 2026-10-16: learnable moves in the site, one picker for relearner and TMs, the bag's TM teaching kept)_
 **Why:** the owner.
 
 **Q: What does the team page show?**

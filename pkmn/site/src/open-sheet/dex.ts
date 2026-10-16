@@ -80,7 +80,21 @@ export interface Mon {
   abilities: Ability[];
   stats: StatLine[] | null;
   sprite: string | null;
+  learnable: Learnable | null;
 }
+
+export interface LearnMove extends MoveInfo {
+  category: string | null;
+  power: number | null;
+}
+
+export interface Learnable {
+  relearner: LearnMove[];
+  tms: LearnMove[];
+  unchecked: LearnMove[];
+}
+
+export type Learn = "yes" | "no" | "unchecked";
 
 export type Pocket = "items" | "berries";
 
@@ -157,6 +171,35 @@ function abilities(p: SheetPokemon): Ability[] {
   return list;
 }
 
+function learnMove(id: string): LearnMove {
+  const entry = gen.moves.get(id);
+  return {
+    ...describeMove(id),
+    category: entry.exists ? entry.category : null,
+    power: entry.exists ? entry.basePower || null : null,
+  };
+}
+
+function learnable(p: SheetPokemon): Learnable | null {
+  if (!p.moves) return null;
+  return {
+    relearner: p.moves.relearner.map(learnMove),
+    tms: p.moves.tms.map(learnMove),
+    unchecked: p.moves.unchecked.map(learnMove),
+  };
+}
+
+export function canLearn(mon: Mon, move: string): Learn | null {
+  const l = mon.learnable;
+  if (!l) return null;
+  if (l.relearner.some((m) => m.id === move) || l.tms.some((m) => m.id === move)) return "yes";
+  return l.unchecked.some((m) => m.id === move) ? "unchecked" : "no";
+}
+
+export function tmLabels(tms: readonly SheetTm[]): Map<string, string> {
+  return new Map(tms.map((t) => [t.move, describeTm(t).label]));
+}
+
 export function describePokemon(p: SheetPokemon, index: number): Mon {
   const entry = gen.species.get(p.species);
   const types = p.types.map(typeName);
@@ -190,6 +233,7 @@ export function describePokemon(p: SheetPokemon, index: number): Mon {
           gender: p.gender === "F" ? "F" : undefined,
         }).url
       : null,
+    learnable: learnable(p),
   };
 }
 
