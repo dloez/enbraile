@@ -12,14 +12,6 @@ Verify manually: a push to `main` touching `pkmn/site/` deploys; `https://pkmn.e
 **Touches:** `pkmn/site/`
 **Needs the author:** the Cloudflare dashboard and the `enbraile.vip` zone are the owner's.
 
-## pkmn/site: analyse a team
-
-Build the team page of [The Builder and the Team Page](open-sheet-site-discovery.md#the-builder-and-the-team-page): base stats and Level 50 stat ranges (IVs 0–31, 1 EV, nature) with the speed order, the defensive chart with the hand-kept list of matchup-changing abilities, and offensive coverage from picked moves, falling back to STAB, using Showdown's types. Unit-test the stat ranges, the chart and the coverage.
-
-Verify manually: a team with Walrein shows its Level 50 ranges matching Showdown's damage calculator at IV 0 and 31 with 1 EV; a member with Levitate counts as immune to Ground; a team whose moves and STAB types hit nothing super-effectively against Steel lists Steel as uncovered; `npm run gate` passes.
-**Touches:** `pkmn/site/`
-**After:** pkmn/site: build teams
-
 ## pkmn/site: copy a team as Showdown text
 
 Add the button of [Interfaces and Integration](open-sheet-site-discovery.md#interfaces-and-integration) that copies a team in Showdown's team format: species, nickname, gender, shiny, item, ability, nature, Level 50 and the picked moves, no IVs or EVs.

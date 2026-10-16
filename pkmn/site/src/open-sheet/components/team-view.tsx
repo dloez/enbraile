@@ -6,6 +6,7 @@ import type { Sheet } from "@/open-sheet/schema";
 import { MINI_SETA, memberMon, quantityOf, setasNeeded, type Member, type Slots } from "@/open-sheet/team";
 import { ItemIcon } from "@/open-sheet/components/bag";
 import { TypeDot, UnknownMark } from "@/open-sheet/components/marks";
+import { TeamAnalysis } from "@/open-sheet/components/team-analysis";
 import { MovePicker } from "@/open-sheet/components/move-picker";
 import { MonSprite } from "@/open-sheet/components/summary";
 
@@ -165,6 +166,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
                 </span>
                 <span className="font-mono text-xs">{s.high}</span>
                 <span className="font-mono text-[11px] text-muted-foreground">{s.low}</span>
+                <span className="font-mono text-[11px] text-muted-foreground/60">{s.base}</span>
               </div>
             );
           })}
@@ -225,6 +227,7 @@ export function TeamView(props: TeamViewProps) {
           return <MemberCard key={slot} sheet={sheet} slot={slot} member={member} mon={mon} props={props} />;
         })}
       </div>
+      <TeamAnalysis slots={slots} mons={mons} />
     </div>
   );
 }
