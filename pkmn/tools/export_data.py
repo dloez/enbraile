@@ -5842,10 +5842,7 @@ def learnable_moves(pokemon: RubyObject, context: dict, label: str, notices: lis
             tms.append(move)
     if unrolled and species not in context["unrolled_species"]:
         context["unrolled_species"].add(species)
-        notices.append(
-            f"{len(unrolled)} TMs have not been checked against {species} yet ({', '.join(unrolled)}), so they are listed "
-            "as unchecked; open the move relearner for it in game, save, and run this again."
-        )
+        notices.append(f"{species} is not fully rolled; open the move relearner for it in game, save, and run this again.")
     unchecked = list(dict.fromkeys(tm_move(game_id, context["tm_map"]) for game_id in unrolled))
     names = DATA["showdown"]["moves"]
     for move in relearner + tms + unchecked:
