@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Package, Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ClipboardCheck, ClipboardCopy, Package, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { currentAbility, describeItem, describeMove, displayName, STAT_LABELS, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
@@ -9,6 +9,7 @@ import { TypeDot, UnknownMark } from "@/open-sheet/components/marks";
 import { TeamAnalysis } from "@/open-sheet/components/team-analysis";
 import { MovePicker } from "@/open-sheet/components/move-picker";
 import { MonSprite } from "@/open-sheet/components/summary";
+import { showdownTeam } from "@/open-sheet/showdown";
 
 interface TeamViewProps {
   sheet: Sheet;
@@ -184,6 +185,38 @@ function MemberCard({ sheet, slot, member, mon, props }: {
   );
 }
 
+function CopyButton({ slots, mons }: { slots: Slots; mons: readonly Mon[] }) {
+  const [copied, setCopied] = useState<"copied" | "failed" | null>(null);
+  const text = showdownTeam(slots, mons);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(null), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  return (
+    <button
+      type="button"
+      disabled={text === ""}
+      onClick={() =>
+        navigator.clipboard.writeText(text).then(
+          () => setCopied("copied"),
+          () => setCopied("failed"),
+        )
+      }
+      className="ml-auto inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-card px-3 font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50"
+    >
+      {copied === "copied" ? (
+        <ClipboardCheck className="size-4 text-primary" aria-hidden="true" />
+      ) : (
+        <ClipboardCopy className="size-4" aria-hidden="true" />
+      )}
+      {copied === "copied" ? "Copied" : copied === "failed" ? "Copy failed" : "Copy for Showdown"}
+    </button>
+  );
+}
+
 export function TeamView(props: TeamViewProps) {
   const { sheet, name, slots, mons } = props;
   const needed = setasNeeded(slots, mons);
@@ -206,6 +239,7 @@ export function TeamView(props: TeamViewProps) {
           </span>
           Mini Seta
         </span>
+        <CopyButton slots={slots} mons={mons} />
       </div>
       <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3">
         {slots.map((member, slot) => {
