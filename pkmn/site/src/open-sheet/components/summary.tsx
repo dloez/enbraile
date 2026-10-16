@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { displayName, STAT_LABELS, tmLabels, type LearnMove, type Mon } from "@/open-sheet/dex";
+import { displayName, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { TypeChip, TypeDot, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
 
@@ -139,7 +139,7 @@ function Stats({ mon }: { mon: Mon }) {
   );
 }
 
-function moveMeta(move: LearnMove): string {
+function moveMeta(move: MoveInfo): string {
   if (move.category === null) return "";
   if (move.category === "Status") return "Status";
   return `${move.category === "Physical" ? "Phys" : "Spec"} ${move.power ?? "—"}`;
@@ -151,9 +151,9 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
   const learn = mon.learnable;
   if (!learn) return null;
   const q = query.trim().toLowerCase();
-  const hit = (move: LearnMove) =>
+  const hit = (move: MoveInfo) =>
     !q || move.name.toLowerCase().includes(q) || (labels.get(move.id) ?? "").toLowerCase().includes(q);
-  const groups: [string, LearnMove[], boolean][] = [
+  const groups: [string, MoveInfo[], boolean][] = [
     ["Move Relearner", learn.relearner, false],
     ["TMs", learn.tms, false],
     ["Not checked yet", learn.unchecked, true],

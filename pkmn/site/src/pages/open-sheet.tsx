@@ -8,6 +8,25 @@ import { TabBar } from "@/open-sheet/components/tab-bar";
 
 type View = { kind: "import" } | { kind: "tab"; id: number };
 
+const LAST_TAB = "open-sheet:tab";
+
+function lastTab(): View | null {
+  try {
+    const id = Number(localStorage.getItem(LAST_TAB));
+    return Number.isInteger(id) && id > 0 ? { kind: "tab", id } : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberTab(id: number) {
+  try {
+    localStorage.setItem(LAST_TAB, String(id));
+  } catch {
+    return;
+  }
+}
+
 function checkTab(tab: OpenTab): Checked {
   return tab.import ? checkSheet(tab.import.data) : { ok: false, reason: "is missing" };
 }
@@ -23,7 +42,7 @@ function ImportView({ stale, onFiles }: { stale?: Refused; onFiles: (files: File
 
 export function OpenSheetPage() {
   const tabs = useOpenTabs();
-  const [view, setView] = useState<View | null>(null);
+  const [view, setView] = useState<View | null>(lastTab);
   const [refused, setRefused] = useState<Refused[]>([]);
 
   const checks = useMemo(() => new Map((tabs ?? []).map((tab) => [tab.id, checkTab(tab)])), [tabs]);
@@ -63,7 +82,10 @@ export function OpenSheetPage() {
       }
     }
     setRefused(refusals);
-    if (opened !== undefined) setView({ kind: "tab", id: opened });
+    if (opened !== undefined) {
+      rememberTab(opened);
+      setView({ kind: "tab", id: opened });
+    }
   }
 
   function pageDrop(event: DragEvent) {
@@ -72,6 +94,7 @@ export function OpenSheetPage() {
   }
 
   function show(next: View) {
+    if (next.kind === "tab") rememberTab(next.id);
     setRefused([]);
     setView(next);
   }

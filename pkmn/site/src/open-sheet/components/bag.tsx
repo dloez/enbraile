@@ -166,7 +166,7 @@ export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, on
   const pockets: [PocketId, string, number][] = [
     ["items", "Items", items.filter((i) => i.pocket === "items").length],
     ["berries", "Berries", items.filter((i) => i.pocket === "berries").length],
-    ["tms", "TMs", tms.length],
+    ...(giveTo === null ? [["tms", "TMs", tms.length] as [PocketId, string, number]] : []),
   ];
 
   return (
@@ -223,15 +223,13 @@ export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, on
           </label>
         </div>
         <ul className="m-0 min-h-0 flex-1 list-none overflow-auto px-2.5 py-1.5">
-          {pocket === "tms"
+          {pocket === "tms" && giveTo === null
             ? tms
                 .filter((tm) => !q || tm.move.name.toLowerCase().includes(q) || tm.label.toLowerCase().includes(q))
                 .map((tm) => {
                   const key = `tm:${tm.label}`;
                   const tmTargets = targets.map((target) => ({ ...target, can: canLearn(target.mon, tm.move.id) }));
-                  const usable = giveMon
-                    ? canLearn(giveMon, tm.move.id) !== "no"
-                    : tmTargets.some((target) => target.can !== "no");
+                  const usable = tmTargets.some((target) => target.can !== "no");
                   return (
                     <Row
                       key={tm.label}

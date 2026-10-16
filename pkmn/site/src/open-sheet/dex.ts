@@ -83,15 +83,10 @@ export interface Mon {
   learnable: Learnable | null;
 }
 
-export interface LearnMove extends MoveInfo {
-  category: string | null;
-  power: number | null;
-}
-
 export interface Learnable {
-  relearner: LearnMove[];
-  tms: LearnMove[];
-  unchecked: LearnMove[];
+  relearner: MoveInfo[];
+  tms: MoveInfo[];
+  unchecked: MoveInfo[];
 }
 
 export type Learn = "yes" | "no" | "unchecked";
@@ -171,21 +166,12 @@ function abilities(p: SheetPokemon): Ability[] {
   return list;
 }
 
-function learnMove(id: string): LearnMove {
-  const entry = gen.moves.get(id);
-  return {
-    ...describeMove(id),
-    category: entry.exists ? entry.category : null,
-    power: entry.exists ? entry.basePower || null : null,
-  };
-}
-
 function learnable(p: SheetPokemon): Learnable | null {
   if (!p.moves) return null;
   return {
-    relearner: p.moves.relearner.map(learnMove),
-    tms: p.moves.tms.map(learnMove),
-    unchecked: p.moves.unchecked.map(learnMove),
+    relearner: p.moves.relearner.map(describeMove),
+    tms: p.moves.tms.map(describeMove),
+    unchecked: p.moves.unchecked.map(describeMove),
   };
 }
 
@@ -272,11 +258,29 @@ export function displayName(mon: Mon): string {
 
 export interface MoveInfo extends Named {
   type: string | null;
+  category: string | null;
+  power: number | null;
+  accuracy: number | null;
+  desc: string;
 }
 
 export function describeMove(id: string): MoveInfo {
   const entry = gen.moves.get(id);
-  return { ...named(id, entry), type: entry.exists ? entry.type : null };
+  if (!entry.exists) return { ...named(id, entry), type: null, category: null, power: null, accuracy: null, desc: "" };
+  return {
+    ...named(id, entry),
+    type: entry.type,
+    category: entry.category,
+    power: entry.basePower || null,
+    accuracy: entry.accuracy === true ? null : entry.accuracy,
+    desc: entry.shortDesc || entry.desc,
+  };
+}
+
+export function moveStats(move: Pick<MoveInfo, "category" | "power" | "accuracy">): string {
+  return [move.category, move.power, move.accuracy !== null ? `${move.accuracy}%` : null]
+    .filter((part) => part !== null)
+    .join(" · ");
 }
 
 export const MOVES: readonly MoveInfo[] = [

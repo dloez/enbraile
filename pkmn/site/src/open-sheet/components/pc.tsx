@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -107,14 +107,24 @@ function TeamPc({ sheet, teams, team, onTeam }: {
   const [picked, setPicked] = useState<number | null>(null);
   const [bagOpen, setBagOpen] = useState(false);
   const [giveTo, setGiveTo] = useState<number | null>(null);
-  const slots = useMemo(() => liveSlots(team.slots, mons), [team.slots, mons]);
+  const [draft, setDraft] = useState<{ id: number; slots: Slots } | null>(null);
+  const pending = useRef(0);
+  useEffect(() => {
+    if (pending.current === 0) setDraft(null);
+  }, [team.slots]);
+  const stored = draft?.id === team.id ? draft.slots : team.slots;
+  const slots = useMemo(() => liveSlots(stored, mons), [stored, mons]);
 
   const shown = mons.filter((mon) => matches(mon, query, type));
   const selected = picked ?? (wide ? 0 : null);
   const selectedMon = selected === null ? undefined : mons[selected];
 
   function save(next: Slots) {
-    void saveSlots(team.id, next);
+    setDraft({ id: team.id, slots: next });
+    pending.current += 1;
+    void saveSlots(team.id, next).finally(() => {
+      pending.current -= 1;
+    });
   }
 
   function openBag(slot: number | null) {

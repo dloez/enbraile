@@ -1,6 +1,6 @@
 import { Dex } from "@pkmn/dex";
 import { describe, expect, it } from "vitest";
-import { canLearn, describeItem, describeMove, describePokemon, describeTm, MOVES, statAt, tmLabels } from "@/open-sheet/dex";
+import { canLearn, describeItem, describeMove, describePokemon, describeTm, moveStats, MOVES, statAt, tmLabels } from "@/open-sheet/dex";
 import type { SheetPokemon } from "@/open-sheet/schema";
 
 const walrein: SheetPokemon = {
@@ -33,6 +33,15 @@ describe("canLearn", () => {
     const mon = describePokemon(walrein, 0);
     expect(mon.learnable).toBeNull();
     expect(canLearn(mon, "surf")).toBeNull();
+  });
+});
+
+describe("describeMove", () => {
+  it("carries the description and the stats line", () => {
+    const brine = describeMove("brine");
+    expect(brine.desc).toBe("Power doubles if the target's HP is 50% or less.");
+    expect(moveStats(brine)).toBe("Special · 65 · 100%");
+    expect(moveStats(describeMove("protect"))).toBe("Status");
   });
 });
 
@@ -149,7 +158,17 @@ describe("MOVES", () => {
   });
 
   it("describes an unknown move by its raw id", () => {
-    expect(describeMove("madeup")).toEqual({ id: "madeup", name: "madeup", known: false, marked: true, type: null });
+    expect(describeMove("madeup")).toEqual({
+      id: "madeup",
+      name: "madeup",
+      known: false,
+      marked: true,
+      type: null,
+      category: null,
+      power: null,
+      accuracy: null,
+      desc: "",
+    });
     expect(describeMove("icebeam").type).toBe("Ice");
   });
 });

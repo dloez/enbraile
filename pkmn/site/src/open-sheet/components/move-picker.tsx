@@ -2,9 +2,9 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
-import { describeTm, displayName, MOVES, tmLabels, type LearnMove, type Mon, type MoveInfo } from "@/open-sheet/dex";
+import { describeTm, displayName, MOVES, moveStats, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
-import { TypeDot, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
+import { TypeSquare, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface MovePickerProps {
@@ -24,6 +24,7 @@ function MoveRow({ move, label, unchecked, current, onPick }: {
   current: boolean;
   onPick: () => void;
 }) {
+  const stats = moveStats(move);
   return (
     <li>
       <button
@@ -31,26 +32,39 @@ function MoveRow({ move, label, unchecked, current, onPick }: {
         aria-pressed={current}
         onClick={onPick}
         className={cn(
-          "flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-          current ? "bg-accent" : "hover:bg-cell",
+          "grid min-h-14 w-full cursor-pointer grid-cols-[24px_minmax(0,1fr)] items-start gap-x-3 rounded-[10px] px-2.5 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:grid-cols-[24px_minmax(0,1fr)_auto] sm:items-center",
+          current ? "bg-cell-hi" : "hover:bg-cell",
         )}
       >
-        <TypeDot type={move.type} />
-        <span className="flex-1 font-medium">
-          {move.name}
-          {move.marked && <UnknownMark />}
-          {unchecked && <UncheckedMark />}
+        <TypeSquare type={move.type} />
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="flex items-baseline gap-2">
+            <span className="min-w-0 flex-1 font-semibold">
+              {move.name}
+              {move.marked && <UnknownMark />}
+              {unchecked && <UncheckedMark />}
+            </span>
+            {label && <span className="font-mono text-xs text-muted-foreground sm:hidden">{label}</span>}
+          </span>
+          {stats && <span className="font-mono text-xs text-muted-foreground sm:hidden">{stats}</span>}
+          {move.desc && <span className="text-[13px] text-muted-foreground">{move.desc}</span>}
         </span>
-        {label && <span className="font-mono text-xs text-muted-foreground">{label}</span>}
+        <span className="hidden flex-col items-end gap-0.5 font-mono text-xs whitespace-nowrap text-muted-foreground sm:flex">
+          <span>{stats}</span>
+          {label && <span>{label}</span>}
+        </span>
       </button>
     </li>
   );
 }
 
-function Group({ name, children }: { name: string; children: ReactNode }) {
+function Group({ name, count, children }: { name: string; count?: number; children: ReactNode }) {
   return (
     <section aria-label={name} className="flex flex-col gap-0.5">
-      <h3 className="m-0 px-2.5 pt-2 pb-1 text-[13px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{name}</h3>
+      <h3 className="m-0 px-2.5 pt-2 pb-1 text-[13px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+        {name}
+        {count !== undefined && <span className="ml-2 font-mono font-normal tracking-normal">{count}</span>}
+      </h3>
       <ul className="m-0 flex list-none flex-col gap-0.5 p-0">{children}</ul>
     </section>
   );
@@ -63,15 +77,16 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
   const q = query.trim().toLowerCase();
   const hit = (name: string) => !q || name.toLowerCase().includes(q);
   const learn = mon.learnable;
-  const shownTms = learn ? [] : tms.filter((tm) => hit(tm.move.name) || hit(tm.label));
-  const shownMoves = learn ? [] : MOVES.filter((move) => hit(move.name));
-  const learnGroups: [string, LearnMove[], boolean][] = learn
+  const groups: [string, MoveInfo[], boolean][] = learn
     ? [
         ["Move Relearner", learn.relearner, false],
         ["TMs", learn.tms, false],
         ["Not checked yet", learn.unchecked, true],
       ]
-    : [];
+    : [
+        ["TMs", tms.map((tm) => ({ ...tm.move, type: tm.type, category: tm.category, power: tm.power, accuracy: tm.accuracy, desc: tm.desc })), false],
+        ["All moves", [...MOVES], false],
+      ];
   const learnCount = learn ? learn.relearner.length + learn.tms.length + learn.unchecked.length : 0;
 
   function pick(move: string | null) {
@@ -90,7 +105,7 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        className="top-auto bottom-0 flex h-[90svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-[20px] rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-120 sm:-translate-y-1/2 sm:rounded-2xl"
+        className="top-auto bottom-0 flex h-[94svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-[20px] rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-190 sm:-translate-y-1/2 sm:rounded-2xl"
       >
         <div className="flex flex-none items-center gap-3 pt-3 pr-2 pl-4.5">
           <DialogTitle className="min-w-0 flex-1 truncate font-heading text-xl leading-normal font-bold">{title}</DialogTitle>
@@ -120,7 +135,7 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
             </span>
           )}
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-auto px-2 py-1.5">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-auto px-2.5 py-1.5">
           {current !== null && !q && (
             <ul className="m-0 list-none p-0">
               <li>
@@ -134,16 +149,16 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
               </li>
             </ul>
           )}
-          {learnGroups.map(([name, moves, unchecked]) => {
+          {groups.map(([name, moves, unchecked]) => {
             const shown = moves.filter((move) => hit(move.name) || hit(labels.get(move.id) ?? ""));
             if (shown.length === 0) return null;
             return (
-              <Group key={name} name={name}>
-                {shown.map((move) => (
+              <Group key={name} name={name} count={learn ? moves.length : undefined}>
+                {shown.map((move, at) => (
                   <MoveRow
-                    key={move.id}
+                    key={`${name}:${move.id}:${at}`}
                     move={move}
-                    label={labels.get(move.id)}
+                    label={name === "All moves" ? undefined : labels.get(move.id)}
                     unchecked={unchecked}
                     current={move.id === current}
                     onPick={() => pick(move.id)}
@@ -152,26 +167,6 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
               </Group>
             );
           })}
-          {shownTms.length > 0 && (
-            <Group name="TMs">
-              {shownTms.map((tm) => (
-                <MoveRow
-                  key={tm.label}
-                  move={{ ...tm.move, type: tm.type }}
-                  label={tm.label}
-                  current={tm.move.id === current}
-                  onPick={() => pick(tm.move.id)}
-                />
-              ))}
-            </Group>
-          )}
-          {shownMoves.length > 0 && (
-            <Group name="All moves">
-              {shownMoves.map((move) => (
-                <MoveRow key={move.id} move={move} current={move.id === current} onPick={() => pick(move.id)} />
-              ))}
-            </Group>
-          )}
         </div>
       </DialogContent>
     </Dialog>
