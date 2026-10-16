@@ -14,8 +14,16 @@ Verify manually: a push to `main` touching `pkmn/site/` deploys; `https://pkmn.e
 
 ## pkmn/site: document the site
 
-Move the lasting content of the [Site Discovery](open-sheet-site-discovery.md) into `docs/pkmn/site/`: an explanation doc holding its decisions and a how-to for running and deploying the site; then delete the discovery doc and update [Open Sheet](open-sheet.md) (closing the initiative if nothing is left), the [Work in Progress](index.md) index, `docs/pkmn/index.md` and `docs/index.md` where needed.
+Move the lasting content of the [Site Discovery](open-sheet-site-discovery.md) into `docs/pkmn/site/`: an explanation doc holding its decisions and a how-to for running and deploying the site; then delete the discovery doc and update [Open Sheet](open-sheet.md) (closing the initiative if nothing is left), the [Work in Progress](index.md) index, `docs/pkmn/index.md` and `docs/index.md` where needed. In `docs/pkmn/index.md`, the Open Sheet row's status still reads "web app scoped" though the web app is built, and both rows link the discovery doc. `pkmn/site/CLAUDE.md` names the discovery doc as the site's design until `docs/pkmn/site/` exists; point it at the new docs.
 
-Verify manually: every decision in the discovery doc has a home under `docs/pkmn/site/`; `grep -rn open-sheet-site-discovery docs/` finds nothing.
-**Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/`
-**After:** pkmn/site: analyse a team; pkmn/site: copy a team as Showdown text; pkmn/site: deploy on Workers Builds
+Verify manually: every decision in the discovery doc has a home under `docs/pkmn/site/`; `grep -rn open-sheet-site-discovery docs/ pkmn/` finds nothing; the Open Sheet and Site rows of `docs/pkmn/index.md` describe what is built and deployed.
+**Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/`, `pkmn/site/CLAUDE.md`
+**After:** pkmn/site: deploy on Workers Builds
+
+## pkmn/site: theme the overlay scrims
+
+`pkmn/site/src/components/ui/dialog.tsx:40` and `pkmn/site/src/components/ui/sheet.tsx:40` darken the page behind the bag, the move picker and the phone summary with shadcn's raw `bg-black/10`, where `pkmn/site/CLAUDE.md` takes every colour from the `:root` variables of `src/index.css`, set by the Open Sheet Screens design of [Surfaces, Reuse and Data](open-sheet-site-discovery.md#surfaces-reuse-and-data). Either give the scrim a variable and Tailwind token from the design and use it in both overlays, or record in `pkmn/site/CLAUDE.md` that the shadcn files under `src/components/ui/` are exempt.
+
+Verify manually: opening the bag, and a Pokémon's summary at phone width, shows the scrim the design shows; `grep -rn 'bg-black' pkmn/site/src` finds nothing unless the files are exempted; `npm run gate` passes.
+**Touches:** `pkmn/site/src/components/ui/`, `pkmn/site/src/index.css`, `pkmn/site/CLAUDE.md`
+**Needs the author:** do the vendored shadcn components in `src/components/ui/` follow the site's no-raw-colours theme rule, so the scrims get a token from the design, or are they exempt, so the rule says so?
