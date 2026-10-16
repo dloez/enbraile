@@ -5830,13 +5830,16 @@ def learnable_moves(pokemon: RubyObject, context: dict, label: str, notices: lis
     relearner = relearner_moves(pokemon, context["learnsets"], context["per_form"], label, notices)
     species = str(pokemon.get("species"))
     rolled = context["compatibility"].get(species, {})
+    known = {move_id(move.get("id")) for move in pokemon.get("moves") or [] if isinstance(move, RubyObject)}
     tms = []
     unrolled = []
     for game_id in context["bag_tms"]:
         move = tm_move(game_id, context["tm_map"])
         if move is None or move in relearner or move in tms:
             continue
-        if move not in rolled:
+        if move in known:
+            tms.append(move)
+        elif move not in rolled:
             unrolled.append(game_id)
         elif rolled[move]:
             tms.append(move)
