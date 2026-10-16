@@ -23,13 +23,7 @@ SHOWDOWN_TYPES = {
     "NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND", "ROCK", "BUG", "GHOST", "STEEL",
     "FIRE", "WATER", "GRASS", "ELECTRIC", "PSYCHIC", "ICE", "DRAGON", "DARK", "FAIRY",
 }
-LEVEL_METHODS = {
-    "Level", "LevelMale", "LevelFemale", "LevelDay", "LevelNight", "LevelMorning",
-    "LevelAfternoon", "LevelEvening", "LevelNoWeather", "LevelSun", "LevelRain", "LevelSnow",
-    "LevelSandstorm", "LevelCycling", "LevelSurfing", "LevelDiving", "LevelDarkness",
-    "LevelDarkInParty", "AttackGreater", "AtkDefEqual", "DefenseGreater", "Silcoon",
-    "Cascoon", "Ninjask",
-}
+NON_EVOLUTIONS = {"None", "Shedinja"}
 SHOWDOWN_ITEMS = "https://raw.githubusercontent.com/smogon/pokemon-showdown/master/data/items.ts"
 UNMODELED_ITEMS_KEPT = {"TINYMUSHROOM"}
 SHOWDOWN_ITEM_KEY = re.compile(r"^\t([a-z0-9]+): \{$", re.MULTILINE)
@@ -117,15 +111,19 @@ def species_types(species: dict, mod_types: dict[str, list[str]], named: dict[st
     return types
 
 
-def level_evolutions(species: dict, allowed: set[str]) -> dict[str, list[list]]:
+def parameter(value):
+    return symbol(value) if hasattr(value, "name") else value
+
+
+def evolutions(species: dict, allowed: set[str]) -> dict[str, list[list]]:
     evolutions = {}
     for game_id, data in species.items():
         entries = [
-            [symbol(entry[0]), symbol(entry[1]), entry[2]]
+            [symbol(entry[0]), symbol(entry[1]), parameter(entry[2])]
             for entry in attribute(data, "evolutions")
             if len(entry) == 4
             and entry[3] is False
-            and symbol(entry[1]) in LEVEL_METHODS
+            and symbol(entry[1]) not in NON_EVOLUTIONS
             and symbol(entry[0]) in allowed
         ]
         if entries:
@@ -153,11 +151,17 @@ def build(wonder: Path) -> dict:
         "fixed_abilities": fixed_abilities(wonder, species, showdown["species"]),
         "pockets": {game_id: attribute(item, "pocket") for game_id, item in items.items()},
         "tm_moves": tm_moves,
-        "level_evolutions": level_evolutions(species, allowed),
+        "evolutions": evolutions(species, allowed),
     }
 
 
 def literal(value) -> str:
+    if value is None or isinstance(value, bool):
+        return repr(value)
+    if isinstance(value, list):
+        return "[" + ", ".join(literal(item) for item in value) + "]"
+    if isinstance(value, dict):
+        return "{" + ", ".join(f"{literal(k)}: {literal(v)}" for k, v in value.items()) + "}"
     return json.dumps(value, ensure_ascii=False)
 
 
@@ -194,8 +198,8 @@ def main() -> None:
     print(
         f"Randomlocke version {data['randomlocke_version']}; Showdown IDs: {counts}; "
         f"{len(data['types'])} species-form types, {len(data['fixed_abilities'])} with fixed abilities, {len(data['pockets'])} item pockets, "
-        f"{len(data['tm_moves'])} TM moves, {len(data['level_evolutions'])} species with "
-        f"level-up evolutions; written to {EXPORT}"
+        f"{len(data['tm_moves'])} TM moves, {len(data['evolutions'])} species with "
+        f"evolutions; written to {EXPORT}"
     )
 
 
