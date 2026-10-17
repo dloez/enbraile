@@ -1,28 +1,10 @@
 import { Dex } from "@pkmn/dex";
-import { currentAbility, TYPES, type Mon } from "@/open-sheet/dex";
+import { damageTaken, typeMultiplier } from "@/analysis/chart";
+import { TYPES, type TypeName } from "@/analysis/dex";
+import { currentAbility, type Mon } from "@/open-sheet/dex";
 import { memberMon, type Member, type Slots } from "@/open-sheet/team";
 
 const gen = Dex.forGen(9);
-
-export type TypeName = (typeof TYPES)[number];
-
-type Modifier = Partial<Record<TypeName, number>>;
-
-export const MATCHUP_ABILITIES: Record<string, Modifier> = {
-  levitate: { Ground: 0 },
-  flashfire: { Fire: 0 },
-  waterabsorb: { Water: 0 },
-  voltabsorb: { Electric: 0 },
-  motordrive: { Electric: 0 },
-  lightningrod: { Electric: 0 },
-  stormdrain: { Water: 0 },
-  sapsipper: { Grass: 0 },
-  dryskin: { Water: 0, Fire: 1.25 },
-  thickfat: { Fire: 0.5, Ice: 0.5 },
-  heatproof: { Fire: 0.5 },
-};
-
-const WONDER_GUARD = "wonderguard";
 
 const TYPELESS_DAMAGE = new Set([
   "counter",
@@ -67,18 +49,6 @@ export function speedOrder(team: readonly Analysed[]): SpeedEntry[] {
     .sort((a, b) => b.high - a.high || b.low - a.low || a.slot - b.slot);
 }
 
-function typeMultiplier(attack: string, types: readonly string[]): number {
-  if (!gen.getImmunity(attack, [...types])) return 0;
-  return 2 ** gen.getEffectiveness(attack, [...types]);
-}
-
-export function damageTaken(attack: TypeName, types: readonly string[], ability: string | null): number {
-  const base = typeMultiplier(attack, types);
-  if (ability === WONDER_GUARD) return base > 1 ? base : 0;
-  const modifier = ability ? MATCHUP_ABILITIES[ability]?.[attack] : undefined;
-  return modifier === undefined ? base : base * modifier;
-}
-
 export interface DefenceRow {
   type: TypeName;
   weak: number;
@@ -89,7 +59,7 @@ export interface DefenceRow {
 
 export function defensiveChart(team: readonly Analysed[]): DefenceRow[] {
   return TYPES.map((type) => {
-    const taken = team.map(({ member, mon, types }) => damageTaken(type, types, member.ability ?? currentAbility(mon)));
+    const taken = team.map(({ member, mon, types }) => damageTaken(9, type, types, member.ability ?? currentAbility(mon)));
     const weak = taken.filter((m) => m > 1).length;
     const resist = taken.filter((m) => m > 0 && m < 1).length;
     const immune = taken.filter((m) => m === 0).length;
@@ -126,7 +96,7 @@ export function offensiveCoverage(team: readonly Analysed[]): { sources: AttackS
   const sources = team.map(attackTypes);
   const rows = TYPES.map((type) => ({
     type,
-    hitters: sources.filter((s) => s.types.some((attack) => typeMultiplier(attack, [type]) > 1)).map((s) => s.slot),
+    hitters: sources.filter((s) => s.types.some((attack) => typeMultiplier(9, attack, [type]) > 1)).map((s) => s.slot),
   }));
   return { sources, rows };
 }

@@ -3,7 +3,8 @@ import { Search, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { createTeam, deleteTeam, duplicateTeam, renameTeam, saveSlots, useTeams, type StoredTeam } from "@/open-sheet/db";
-import { currentAbility, describePokemon, displayName, TYPES, type Mon } from "@/open-sheet/dex";
+import { TYPES } from "@/analysis/dex";
+import { currentAbility, describePokemon, displayName, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import {
   addMember,

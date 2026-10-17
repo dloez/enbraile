@@ -4,27 +4,6 @@ import type { SheetItem, SheetPokemon, SheetTm } from "@/open-sheet/schema";
 
 const gen = Dex.forGen(9);
 
-export const TYPES = [
-  "Normal",
-  "Fire",
-  "Water",
-  "Grass",
-  "Electric",
-  "Ice",
-  "Fighting",
-  "Poison",
-  "Ground",
-  "Flying",
-  "Psychic",
-  "Bug",
-  "Rock",
-  "Ghost",
-  "Dragon",
-  "Dark",
-  "Steel",
-  "Fairy",
-] as const;
-
 export const STATS: readonly StatID[] = ["hp", "atk", "def", "spa", "spd", "spe"];
 
 export const STAT_LABELS: Record<StatID, string> = {

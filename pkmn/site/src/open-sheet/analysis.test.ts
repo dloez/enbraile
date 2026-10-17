@@ -4,7 +4,6 @@ import type { SheetPokemon } from "@/open-sheet/schema";
 import type { Member, Slots } from "@/open-sheet/team";
 import {
   analysed,
-  damageTaken,
   damagingType,
   defensiveChart,
   offensiveCoverage,
@@ -59,29 +58,6 @@ describe("speedOrder", () => {
       ["walrein", 77, 93],
       ["bronzong", 38, 53],
     ]);
-  });
-});
-
-describe("damageTaken", () => {
-  it("uses Showdown's type chart", () => {
-    expect(damageTaken("Electric", ["Ice", "Water"], null)).toBe(2);
-    expect(damageTaken("Fighting", ["Ice", "Water"], null)).toBe(2);
-    expect(damageTaken("Ground", ["Flying"], null)).toBe(0);
-    expect(damageTaken("Fire", ["Steel", "Psychic"], null)).toBe(2);
-  });
-
-  it("counts abilities that change matchups", () => {
-    expect(damageTaken("Ground", ["Steel", "Psychic"], "levitate")).toBe(0);
-    expect(damageTaken("Electric", ["Electric"], "voltabsorb")).toBe(0);
-    expect(damageTaken("Fire", ["Ice", "Water"], "thickfat")).toBe(0.5);
-    expect(damageTaken("Ice", ["Ice", "Water"], "thickfat")).toBe(0.125);
-    expect(damageTaken("Fire", ["Grass"], "dryskin")).toBe(2.5);
-    expect(damageTaken("Water", ["Grass"], "dryskin")).toBe(0);
-  });
-
-  it("lets only super-effective hits through Wonder Guard", () => {
-    expect(damageTaken("Fire", ["Bug", "Ghost"], "wonderguard")).toBe(2);
-    expect(damageTaken("Water", ["Bug", "Ghost"], "wonderguard")).toBe(0);
   });
 });
 

@@ -28,20 +28,12 @@ Verify manually: the discovery doc's Surfaces answer no longer reads "Awaiting t
 **Touches:** `docs/work-in-progress/`
 **Needs the author:** the sign-off and the three answers are the owner's.
 
-## pkmn/site: port PokeGraph's team analysis
-
-Port PokeGraph's logic to TypeScript in `pkmn/site/src/analysis/`, on `@pkmn/dex` per generation as [Interfaces and Integration](team-analysis-discovery.md#interfaces-and-integration) settles: the Showdown parser, a member's real stats, move tags and roles, the pool and its statistics, defence, synergy edges, offence, the weighted values, archetype features and classification, and the checklist. Move `src/open-sheet/analysis.ts` and its tests into the module and keep Open Sheet's Team view working on it. Port PokeGraph's sample teams. No UI.
-
-Verify manually: `npm run gate` passes; the module's tests cover Gen 5 Clefable as Normal, a Gen 3 move's category from its type, a later-generation move ignored, and PokeGraph's Balance sample classified as it is in PokeGraph under the same pool; Open Sheet's Team view shows the same speed order, defence and coverage as before.
-**Touches:** `pkmn/site/src/analysis/`, `pkmn/site/src/open-sheet/`
-
 ## pkmn/site: port the comparison and damage calc
 
 Add PokeGraph's `compare.js` metrics (scoreboard, weighted weakness load, weighted defence and offence) and its head-to-head damage calc to `pkmn/site/src/analysis/`, with its stated simplifications (full HP, no weather, boosts or crits; variable-power and multi-hit moves skipped).
 
 Verify manually: `npm run gate` passes; for two sample teams the scoreboard and the head-to-head numbers match PokeGraph's under the same pool.
 **Touches:** `pkmn/site/src/analysis/`
-**After:** pkmn/site: port PokeGraph's team analysis
 
 ## pkmn/site: Team Analysis tool, Analyse view
 
@@ -49,7 +41,7 @@ Add the `/team-analysis` route and its home-page card, the pool bar, the paste a
 
 Verify manually: paste PokeGraph's Balance sample and see every panel of the design filled; change the generation and see percentiles and the archetype move; at 390 px wide nothing scrolls sideways but the matrices.
 **Touches:** `pkmn/site/src/team-analysis/`, `pkmn/site/src/router.tsx`, `pkmn/site/src/tools.ts`, `pkmn/site/package.json`
-**After:** pkmn/site: sign off the Team Analysis design; pkmn/site: port PokeGraph's team analysis
+**After:** pkmn/site: sign off the Team Analysis design
 
 ## pkmn/site: Team Analysis Pool and Compare views
 

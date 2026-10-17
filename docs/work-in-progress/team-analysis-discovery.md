@@ -34,7 +34,16 @@ A: `@pkmn/dex`, already bundled in the site, through `Dex.forGen(n)` for the poo
 A: Pasted as Showdown text, parsed as PokeGraph's `parser.js` does (header, ability, level, Tera type, EVs, IVs, nature, moves; level 100 when no `Level:` line), or picked from the sample teams, or carried from an Open Sheet team.
 
 **Q: How do the shared module and Open Sheet's current analysis fit together?**
-A: Open Sheet's `src/open-sheet/analysis.ts` (speed order, defensive chart, coverage) becomes part of the shared module; Open Sheet's Summary keeps those three panels, on the same rules as today, beside the archetype and checklist.
+A: The module is `pkmn/site/src/analysis/`: `dex.ts` (generations, the 18 types, availability), `chart.ts` (type matchups, matchup abilities, move special cases), `paste.ts` (the Showdown parser), `member.ts` (real stats, moves, move tags), `pool.ts` (the pool, its statistics and legality), `team.ts` (defence, synergy, offence, weighted values, archetype, roles, checklist) and `samples.ts` (PokeGraph's sample teams). Open Sheet's `src/open-sheet/analysis.ts` keeps only what reads Open Sheet's own members (speed order, defensive chart, coverage), on the shared chart and types, and its Summary keeps those three panels, on the same rules as today, beside the archetype and checklist.
+**Why:** those three functions take Open Sheet's members and slots; moving them into the module would make it depend on Open Sheet. _(2026-10-17)_
+
+**Q: Which abilities change a matchup?**
+A: One table for the site, PokeGraph's: Levitate and Earth Eater (Ground), Flash Fire and Well-Baked Body (Fire), Water Absorb and Storm Drain (Water), Volt Absorb, Lightning Rod and Motor Drive (Electric), Sap Sipper (Grass) as immunities; Dry Skin (immune to Water, ×1.25 from Fire); Thick Fat (Fire and Ice), Heatproof and Water Bubble (Fire) and Purifying Salt (Ghost) as halving; Fluffy (×2 from Fire); and Wonder Guard. An ability counts only from Gen 3 and in a generation that has it. Open Sheet reads it in Gen 9, which changes nothing there: the abilities it adds are Gen 7–9 ones, and the mod only rolls the 164 Gen 1–5 abilities ([Open Sheet Export](../pkmn/tools/explanation/open-sheet-export.md)).
+**Why:** forced by that evidence: one table serves both places with no change to Open Sheet's results. _(2026-10-17)_
+
+**Q: Which Pokémon make up a pool?**
+A: The species and formes Showdown lists for the pool's generation that it has not marked as later content (`isNonstandard` "Future"; "Past" ones stay, since a Gen 9 Custom Game fields them), leaving out battle-only formes, Megas, Primals, Gigantamax and Totem formes, and any forme whose types and base stats are its base species' (Gastrodon-East, the Deerling seasons). Legendary is Showdown's Restricted Legendary or Sub-Legendary tag, mythical its Mythical tag, not fully evolved its generation's `nfe`. Moves follow the same line: a "Future" move is ignored, as PokeGraph's `notInGen` did, and a "Past" one counts. The pools come out a little larger than PokeGraph's PokeAPI-built ones (fully evolved, any BST: 684 against 601 in Gen 9, 379 against 346 in Gen 5), and PokeGraph's four sample teams get the same archetype ranking, within 0.01, in both generations.
+**Why:** build choices made while porting, measured against PokeGraph run on its own cached data. _(2026-10-17)_
 
 ## Surfaces
 
