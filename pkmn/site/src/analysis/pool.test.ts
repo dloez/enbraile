@@ -20,6 +20,10 @@ describe("buildPool", () => {
     expect(g7.has("Gastrodon-East")).toBe(false);
     expect(g7.has("Rotom-Wash")).toBe(true);
     expect(g7.has("Raichu-Alola")).toBe(true);
+    expect(g7.has("Arceus")).toBe(true);
+    expect(g7.has("Arceus-Fire")).toBe(false);
+    expect(g7.has("Silvally-Water")).toBe(false);
+    expect(g7.has("Giratina-Origin")).toBe(true);
   });
 
   it("keeps species Gen 9 dropped from its games", () => {

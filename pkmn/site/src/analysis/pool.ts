@@ -63,11 +63,8 @@ export const invested = (base: number) => 2 * base + 99;
 function sameAsBase(gen: Gen, s: Species): boolean {
   if (!s.forme) return false;
   const base = dexFor(gen).species.get(s.baseSpecies);
-  return (
-    base.exists &&
-    base.types.join() === s.types.join() &&
-    STATS.every((k) => base.baseStats[k] === s.baseStats[k])
-  );
+  if (!base.exists || !STATS.every((k) => base.baseStats[k] === s.baseStats[k])) return false;
+  return base.types.join() === s.types.join() || !!s.requiredItem || !!s.requiredItems?.length;
 }
 
 function selectable(gen: Gen, speciesGen: Gen, s: Species): boolean {

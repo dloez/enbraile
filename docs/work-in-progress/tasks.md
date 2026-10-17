@@ -20,13 +20,6 @@ Verify manually: every decision in the discovery doc has a home under `docs/pkmn
 **Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/`, `pkmn/site/CLAUDE.md`
 **After:** pkmn/site: deploy on Workers Builds
 
-## pkmn/site: Team Analysis Pool and Compare views
-
-Add the Pool view (tiles, base-stat statistics, distribution, types, correlations, the sortable table) and the Compare view (2–4 teams, scoreboard, head-to-head, fingerprints, by-type tables) as the design draws them.
-
-Verify manually: the Pool view's counts change with the pool bar; comparing two sample teams shows the scoreboard with stars and the head-to-head in both directions.
-**Touches:** `pkmn/site/src/team-analysis/`
-
 ## pkmn/site: the analysis in Open Sheet's Team view
 
 Give Open Sheet's Team view the Analysis section of the design (Summary with archetype and checklist beside the speed order, defence and coverage; Graph; Archetype; Members; Matrices; the pool chip) and the "Open in Team Analysis" button, which opens the team in Team Analysis.
