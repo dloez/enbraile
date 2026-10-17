@@ -24,6 +24,7 @@ A: Deployed at `pkmn.enbraile.vip`, a reader drops in two exports, gets two tabs
 **Q: What is out?**
 A: A matchup of a team against another tab's Pokémon (the team page analyses the team alone), a damage calculator, shareable links, accounts and any server-side storage, a Spanish UI, and TM compatibility (the export leaves it out on purpose: [Open Sheet Export](../pkmn/tools/explanation/open-sheet-export.md)).
 **Why:** the owner chose team-only analysis and no damage calc for now; the rest follows from the decisions below.
+Comparing teams and the damage calc have since gone to the Team Analysis tool, which an Open Sheet team reaches through a button ([Team Analysis: Discovery](team-analysis-discovery.md)).
 
 **Q: Does the design account for data the export does not carry?**
 A: Yes. Moves, learnsets and IVs or stats are not in the default export (its `--moves` flag adds learnable moves, which the site reads: see the next answer), but the views and the stored model leave room for them: a member already has four move slots, and a learnset arriving in a later export narrows the move picker instead of reshaping the builder.

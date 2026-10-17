@@ -19,3 +19,50 @@ Move the lasting content of the [Site Discovery](open-sheet-site-discovery.md) i
 Verify manually: every decision in the discovery doc has a home under `docs/pkmn/site/`; `grep -rn open-sheet-site-discovery docs/ pkmn/` finds nothing; the Open Sheet and Site rows of `docs/pkmn/index.md` describe what is built and deployed.
 **Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/`, `pkmn/site/CLAUDE.md`
 **After:** pkmn/site: deploy on Workers Builds
+
+## pkmn/site: sign off the Team Analysis design
+
+Review the [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABaszfH) design ([Surfaces](team-analysis-discovery.md#surfaces)) and answer the three Team Analysis entries in [Open Questions](open-questions.md#team-analysis-pool-in-open-sheet); record the sign-off and the answers in the discovery doc.
+
+Verify manually: the discovery doc's Surfaces answer no longer reads "Awaiting the owner's sign-off"; `open-questions.md` has no Team Analysis entry.
+**Touches:** `docs/work-in-progress/`
+**Needs the author:** the sign-off and the three answers are the owner's.
+
+## pkmn/site: port PokeGraph's team analysis
+
+Port PokeGraph's logic to TypeScript in `pkmn/site/src/analysis/`, on `@pkmn/dex` per generation as [Interfaces and Integration](team-analysis-discovery.md#interfaces-and-integration) settles: the Showdown parser, a member's real stats, move tags and roles, the pool and its statistics, defence, synergy edges, offence, the weighted values, archetype features and classification, and the checklist. Move `src/open-sheet/analysis.ts` and its tests into the module and keep Open Sheet's Team view working on it. Port PokeGraph's sample teams. No UI.
+
+Verify manually: `npm run gate` passes; the module's tests cover Gen 5 Clefable as Normal, a Gen 3 move's category from its type, a later-generation move ignored, and PokeGraph's Balance sample classified as it is in PokeGraph under the same pool; Open Sheet's Team view shows the same speed order, defence and coverage as before.
+**Touches:** `pkmn/site/src/analysis/`, `pkmn/site/src/open-sheet/`
+
+## pkmn/site: port the comparison and damage calc
+
+Add PokeGraph's `compare.js` metrics (scoreboard, weighted weakness load, weighted defence and offence) and its head-to-head damage calc to `pkmn/site/src/analysis/`, with its stated simplifications (full HP, no weather, boosts or crits; variable-power and multi-hit moves skipped).
+
+Verify manually: `npm run gate` passes; for two sample teams the scoreboard and the head-to-head numbers match PokeGraph's under the same pool.
+**Touches:** `pkmn/site/src/analysis/`
+**After:** pkmn/site: port PokeGraph's team analysis
+
+## pkmn/site: Team Analysis tool, Analyse view
+
+Add the `/team-analysis` route and its home-page card, the pool bar, the paste and team strip, and the Analyse view as the design draws it: archetype, checklist, graph with its selection panel, archetype map, speed tiers, members and matrices; usable on a phone.
+
+Verify manually: paste PokeGraph's Balance sample and see every panel of the design filled; change the generation and see percentiles and the archetype move; at 390 px wide nothing scrolls sideways but the matrices.
+**Touches:** `pkmn/site/src/team-analysis/`, `pkmn/site/src/router.tsx`, `pkmn/site/src/tools.ts`, `pkmn/site/package.json`
+**After:** pkmn/site: sign off the Team Analysis design; pkmn/site: port PokeGraph's team analysis
+
+## pkmn/site: Team Analysis Pool and Compare views
+
+Add the Pool view (tiles, base-stat statistics, distribution, types, correlations, the sortable table) and the Compare view (2–4 teams, scoreboard, head-to-head, fingerprints, by-type tables) as the design draws them.
+
+Verify manually: the Pool view's counts change with the pool bar; comparing two sample teams shows the scoreboard with stars and the head-to-head in both directions.
+**Touches:** `pkmn/site/src/team-analysis/`
+**After:** pkmn/site: Team Analysis tool, Analyse view; pkmn/site: port the comparison and damage calc
+
+## pkmn/site: the analysis in Open Sheet's Team view
+
+Give Open Sheet's Team view the Analysis section of the design (Summary with archetype and checklist beside the speed order, defence and coverage; Graph; Archetype; Members; Matrices; the pool chip) and the "Open in Team Analysis" button, which opens the team in Team Analysis.
+
+Verify manually: a built team shows its archetype and checklist; "Open in Team Analysis" shows the same team analysed there; a team with an unknown species still analyses the rest.
+**Touches:** `pkmn/site/src/open-sheet/`
+**After:** pkmn/site: Team Analysis tool, Analyse view

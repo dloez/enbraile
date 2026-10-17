@@ -32,3 +32,4 @@ Open questions, scope docs, and the work queue. Non-authoritative — see [lifec
 - [Open Questions](work-in-progress/open-questions.md)
 - [Tasks](work-in-progress/tasks.md) — the work queue
 - [Open Sheet](work-in-progress/open-sheet.md) — the first tool: save export and web app for open-sheet fights
+- [Team Analysis](work-in-progress/team-analysis-discovery.md) — PokeGraph's team analysis as a site tool and inside Open Sheet
