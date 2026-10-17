@@ -1,6 +1,6 @@
 import { Dex } from "@pkmn/dex";
 import { describe, expect, it } from "vitest";
-import { canLearn, describeItem, describeMove, describePokemon, describeTm, moveStats, MOVES, statAt, tmLabels } from "@/open-sheet/dex";
+import { canLearn, describeItem, describeMove, describePokemon, describeTm, learnCount, moveStats, MOVES, statAt, tmLabels } from "@/open-sheet/dex";
 import type { SheetPokemon } from "@/open-sheet/schema";
 
 const walrein: SheetPokemon = {
@@ -16,17 +16,19 @@ const walrein: SheetPokemon = {
 };
 
 describe("canLearn", () => {
-  const moves = { relearner: ["brine"], tms: ["icebeam"], unchecked: ["protect"] };
+  const moves = { current: ["storedpower", "brine"], relearner: ["brine"], tms: ["icebeam"], unchecked: ["protect"] };
 
   it("answers from the export's learnable moves", () => {
     const mon = describePokemon({ ...walrein, moves }, 0);
     expect(mon.learnable?.relearner.map((m) => [m.name, m.type, m.category, m.power])).toEqual([
       ["Brine", "Water", "Special", 65],
     ]);
+    expect(canLearn(mon, "storedpower")).toBe("yes");
     expect(canLearn(mon, "brine")).toBe("yes");
     expect(canLearn(mon, "icebeam")).toBe("yes");
     expect(canLearn(mon, "protect")).toBe("unchecked");
     expect(canLearn(mon, "surf")).toBe("no");
+    expect(learnCount(mon.learnable!)).toBe(4);
   });
 
   it("knows nothing when the export has no moves", () => {

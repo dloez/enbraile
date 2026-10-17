@@ -5830,7 +5830,8 @@ def learnable_moves(pokemon: RubyObject, context: dict, label: str, notices: lis
     relearner = relearner_moves(pokemon, context["learnsets"], context["per_form"], label, notices)
     species = str(pokemon.get("species"))
     rolled = context["compatibility"].get(species, {})
-    known = {move_id(move.get("id")) for move in pokemon.get("moves") or [] if isinstance(move, RubyObject)}
+    current = [move for move in dict.fromkeys(move_id(move.get("id")) for move in pokemon.get("moves") or [] if isinstance(move, RubyObject)) if move]
+    known = set(current)
     tms = []
     unrolled = []
     for game_id in context["bag_tms"]:
@@ -5848,10 +5849,11 @@ def learnable_moves(pokemon: RubyObject, context: dict, label: str, notices: lis
         notices.append(f"{species} is not fully rolled; open the move relearner for it in game, save, and run this again.")
     unchecked = list(dict.fromkeys(tm_move(game_id, context["tm_map"]) for game_id in unrolled))
     names = DATA["showdown"]["moves"]
-    for move in relearner + tms + unchecked:
+    for move in dict.fromkeys(current + relearner + tms + unchecked):
         if move not in names:
             notices.append(f"Left out the move {move} of {label}: it has no Showdown ID.")
     return {
+        "current": [names[move] for move in current if move in names],
         "relearner": [names[move] for move in relearner if move in names],
         "tms": [names[move] for move in tms if move in names],
         "unchecked": [names[move] for move in unchecked if move in names],
@@ -5869,7 +5871,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Export a Pokémon Añil save's shared Pokémon, items and TMs to JSON for an open-sheet fight.")
     parser.add_argument("--save", help="the save file to read instead of picking a slot")
     parser.add_argument("--out", help="where to write the JSON instead of <trainer>-open-sheet.json here")
-    parser.add_argument("--moves", action="store_true", help="also export the moves each Pokémon can learn at the move relearner and from the bag's TMs")
+    parser.add_argument("--moves", action="store_true", help="also export the moves each Pokémon knows and the ones it can learn at the move relearner and from the bag's TMs")
     arguments = parser.parse_args()
     save_path = Path(arguments.save).expanduser() if arguments.save else pick_save()
     save = read_save(save_path)

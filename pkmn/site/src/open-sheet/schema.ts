@@ -19,6 +19,7 @@ export const pokemonSchema = z.object({
   types: z.array(id).min(1).max(2),
   moves: z
     .object({
+      current: z.array(id).max(4),
       relearner: z.array(id),
       tms: z.array(id),
       unchecked: z.array(id),

@@ -50,7 +50,7 @@ There is no header: no trainer, badges, format version or export time.
 | `ability` | string or null | Its current ability; null, with a notice, when it cannot be worked out or has no Showdown ID |
 | `abilities` | object or null | The abilities it can have under the randomizer, as `base` and `hidden` arrays of IDs; null when the rolled abilities were not found |
 | `types` | array of strings | Its one or two types |
-| `moves` | object | Only with `--moves`: `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks; `unchecked`, the moves of the bag's TMs the game has not checked against its species yet (with a notice). All three are arrays of move IDs, each move once |
+| `moves` | object | Only with `--moves`: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks; `unchecked`, the moves of the bag's TMs the game has not checked against its species yet (with a notice). All four are arrays of move IDs, each move once |
 
 ## `items[]`
 

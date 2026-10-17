@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { displayName, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
+import { displayName, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { TypeChip, TypeDot, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
 
@@ -154,6 +154,7 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
   const hit = (move: MoveInfo) =>
     !q || move.name.toLowerCase().includes(q) || (labels.get(move.id) ?? "").toLowerCase().includes(q);
   const groups: [string, MoveInfo[], boolean][] = [
+    ["Current moves", learn.current, false],
     ["Move Relearner", learn.relearner, false],
     ["TMs", learn.tms, false],
     ["Not checked yet", learn.unchecked, true],
@@ -234,7 +235,7 @@ export function SummaryBody({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
   const pages: [Page, string, number | null][] = [
     ...PAGES.map(([id, name]): [Page, string, number | null] => [id, name, null]),
     ...(learn
-      ? [["moves", "Moves", learn.relearner.length + learn.tms.length + learn.unchecked.length] as [Page, string, number]]
+      ? [["moves", "Moves", learnCount(learn)] as [Page, string, number]]
       : []),
   ];
   return (

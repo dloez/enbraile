@@ -63,6 +63,7 @@ export interface Mon {
 }
 
 export interface Learnable {
+  current: MoveInfo[];
   relearner: MoveInfo[];
   tms: MoveInfo[];
   unchecked: MoveInfo[];
@@ -148,6 +149,7 @@ function abilities(p: SheetPokemon): Ability[] {
 function learnable(p: SheetPokemon): Learnable | null {
   if (!p.moves) return null;
   return {
+    current: p.moves.current.map(describeMove),
     relearner: p.moves.relearner.map(describeMove),
     tms: p.moves.tms.map(describeMove),
     unchecked: p.moves.unchecked.map(describeMove),
@@ -157,8 +159,12 @@ function learnable(p: SheetPokemon): Learnable | null {
 export function canLearn(mon: Mon, move: string): Learn | null {
   const l = mon.learnable;
   if (!l) return null;
-  if (l.relearner.some((m) => m.id === move) || l.tms.some((m) => m.id === move)) return "yes";
+  if ([l.current, l.relearner, l.tms].some((list) => list.some((m) => m.id === move))) return "yes";
   return l.unchecked.some((m) => m.id === move) ? "unchecked" : "no";
+}
+
+export function learnCount(l: Learnable): number {
+  return new Set([l.current, l.relearner, l.tms, l.unchecked].flatMap((list) => list.map((m) => m.id))).size;
 }
 
 export function tmLabels(tms: readonly SheetTm[]): Map<string, string> {

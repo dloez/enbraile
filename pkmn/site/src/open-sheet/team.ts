@@ -42,7 +42,7 @@ export function addMember(slots: Slots, mon: Mon): Slots | null {
     species: mon.species.id,
     item: null,
     ability: null,
-    moves: Array.from({ length: MOVE_SLOTS }, () => null),
+    moves: Array.from({ length: MOVE_SLOTS }, (_, at) => mon.learnable?.current[at]?.id ?? null),
   };
   return next;
 }

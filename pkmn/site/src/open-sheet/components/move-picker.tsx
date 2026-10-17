@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
-import { describeTm, displayName, MOVES, moveStats, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
+import { describeTm, displayName, learnCount, MOVES, moveStats, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { TypeSquare, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -79,6 +79,7 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
   const learn = mon.learnable;
   const groups: [string, MoveInfo[], boolean][] = learn
     ? [
+        ["Current moves", learn.current, false],
         ["Move Relearner", learn.relearner, false],
         ["TMs", learn.tms, false],
         ["Not checked yet", learn.unchecked, true],
@@ -87,7 +88,7 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
         ["TMs", tms.map((tm) => ({ ...tm.move, type: tm.type, category: tm.category, power: tm.power, accuracy: tm.accuracy, desc: tm.desc })), false],
         ["All moves", [...MOVES], false],
       ];
-  const learnCount = learn ? learn.relearner.length + learn.tms.length + learn.unchecked.length : 0;
+  const learnTotal = learn ? learnCount(learn) : 0;
 
   function pick(move: string | null) {
     onPick(move);
@@ -131,7 +132,7 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
           </label>
           {learn && (
             <span className="text-xs text-muted-foreground">
-              Only the {learnCount} moves {displayName(mon)} can learn in this save
+              Only the {learnTotal} moves {displayName(mon)} can learn in this save
             </span>
           )}
         </div>

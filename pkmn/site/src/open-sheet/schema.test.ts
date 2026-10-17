@@ -35,7 +35,7 @@ describe("checkSheet", () => {
   });
 
   it("accepts the learnable moves of an export made with --moves", () => {
-    const moves = { relearner: ["brine"], tms: ["icebeam"], unchecked: ["protect"] };
+    const moves = { current: ["brine"], relearner: ["brine"], tms: ["icebeam"], unchecked: ["protect"] };
     const result = checkSheet({ ...sheet, pokemon: [{ ...sheet.pokemon[0], moves }] });
     expect(result.ok && result.sheet.pokemon[0].moves).toEqual(moves);
   });

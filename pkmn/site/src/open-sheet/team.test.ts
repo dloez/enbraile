@@ -110,6 +110,12 @@ describe("moves", () => {
     expect(teach(slots, 0, "blizzard")[0]?.moves).toEqual(["icebeam", "surf", "rest", "blizzard"]);
   });
 
+  it("starts a new member with the moves it knows now", () => {
+    const moves = { current: ["storedpower", "brine"], relearner: [], tms: [], unchecked: [] };
+    const slots = addMember(emptySlots(), describePokemon({ ...walrein, moves }, 0));
+    expect(slots?.[0]?.moves).toEqual(["storedpower", "brine", null, null]);
+  });
+
   it("moves a picked move out of the slot that already had it", () => {
     const slots = setMove(teach(team(0), 0, "icebeam"), 0, 2, "icebeam");
     expect(slots[0]?.moves).toEqual([null, null, "icebeam", null]);
