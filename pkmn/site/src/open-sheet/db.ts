@@ -76,9 +76,9 @@ export async function ensureTeam(tabId: number): Promise<void> {
   });
 }
 
-export async function createTeam(tabId: number): Promise<number> {
+export async function createTeam(tabId: number, slots: Slots = emptySlots()): Promise<number> {
   return db.transaction("rw", db.teams, async () =>
-    db.teams.add({ tabId, name: nextTeamName(await teamNames(tabId)), slots: emptySlots() }),
+    db.teams.add({ tabId, name: nextTeamName(await teamNames(tabId)), slots }),
   );
 }
 

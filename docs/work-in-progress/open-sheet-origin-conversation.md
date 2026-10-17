@@ -1,6 +1,6 @@
 # Open Sheet: Origin Conversation
 
-The Claude Code session in Wonder where the open fight's export was first discussed, kept as context for scoping [Open Sheet](open-sheet.md). It predates the decision to build it in Enbraile. Claude's answers here are a feasibility read, not verified facts or decisions: check every claim about the save against a real save before relying on it.
+The Claude Code session in Wonder where the open fight's export was first discussed, kept as context for [Open Sheet](../pkmn/site/explanation/open-sheet.md). It predates the decision to build it in Enbraile. Claude's answers here are a feasibility read, not verified facts or decisions: check every claim about the save against a real save before relying on it.
 
 - **Session:** `68106453-83e3-4903-9cdf-3c9ffae7c629`, project `~/workspace/wonder`, 2026-10-13
 - **Transcript:** `~/.claude/projects/-home-david-workspace-wonder/68106453-83e3-4903-9cdf-3c9ffae7c629.jsonl`

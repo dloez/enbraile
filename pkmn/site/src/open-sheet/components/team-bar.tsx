@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { ClipboardPaste, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StoredTeam } from "@/open-sheet/db";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ interface TeamBarProps {
   onPick: (id: number) => void;
   onCreate: () => void;
   onDuplicate: () => void;
+  onPaste: () => void;
   onRename: (name: string) => void;
   onDelete: () => void;
 }
@@ -52,7 +53,7 @@ function TeamName({ team, onDone }: { team: StoredTeam; onDone: (name: string) =
   );
 }
 
-export function TeamBar({ view, onView, teams, team, onPick, onCreate, onDuplicate, onRename, onDelete }: TeamBarProps) {
+export function TeamBar({ view, onView, teams, team, onPick, onCreate, onDuplicate, onPaste, onRename, onDelete }: TeamBarProps) {
   const [renaming, setRenaming] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -104,6 +105,15 @@ export function TeamBar({ view, onView, teams, team, onPick, onCreate, onDuplica
       </button>
       <button type="button" aria-label="Duplicate team" title="Duplicate team" onClick={onDuplicate} className={toolButton}>
         <Copy className="size-4" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label="Import from Showdown"
+        title="Import from Showdown"
+        onClick={onPaste}
+        className={toolButton}
+      >
+        <ClipboardPaste className="size-4" aria-hidden="true" />
       </button>
       <button type="button" aria-label="Rename team" title="Rename team" onClick={() => setRenaming(true)} className={toolButton}>
         <Pencil className="size-4" aria-hidden="true" />

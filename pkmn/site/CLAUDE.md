@@ -1,6 +1,6 @@
 # pkmn/site
 
-Adds to the root and `pkmn/` `CLAUDE.md`; never repeats them. The site's docs live in `docs/pkmn/site/`, never under `pkmn/site/`; until they exist, its design is the [Site Discovery](../../docs/work-in-progress/open-sheet-site-discovery.md).
+Adds to the root and `pkmn/` `CLAUDE.md`; never repeats them. The site's docs live in `docs/pkmn/site/`, never under `pkmn/site/`: [The pkmn Site](../../docs/pkmn/site/explanation/site.md), [Open Sheet](../../docs/pkmn/site/explanation/open-sheet.md) and [How to Run and Deploy the Site](../../docs/pkmn/site/how-to/run-and-deploy-the-site.md).
 
 - **Gate:** `npm run gate` (`tsc -b` and `vitest run`), from `pkmn/site/`. It must pass before a change is done.
 - **Versions:** every package is pinned exactly (`.npmrc` sets `save-exact`); a new one goes in at its latest stable version, and `npm outdated` stays empty.

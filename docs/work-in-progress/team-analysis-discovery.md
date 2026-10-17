@@ -1,6 +1,6 @@
 # Team Analysis: Discovery
 
-The decisions behind bringing PokeGraph (`~/pokegraph`, a local vanilla-JS app with a Python proxy) into the pkmn site: its analysis becomes a shared module of `pkmn/site/`, a new Team Analysis tool, and a deeper analysis in [Open Sheet](open-sheet-site-discovery.md)'s Team view. Scoped with the owner on 2026-10-17.
+The decisions behind bringing PokeGraph (`~/pokegraph`, a local vanilla-JS app with a Python proxy) into the pkmn site: its analysis becomes a shared module of `pkmn/site/`, a new Team Analysis tool, and a deeper analysis in [Open Sheet](../pkmn/site/explanation/open-sheet.md)'s Team view. Scoped with the owner on 2026-10-17.
 
 ## Goal and Success
 
@@ -22,13 +22,13 @@ A: pokepast.es links, and with them any Worker route; PokeAPI and PokeGraph's `t
 **Why:** the owner kept the site static: pokepast.es sends no CORS headers, so a link would need a proxy on the Worker. _(2026-10-17)_
 
 **Q: Does this change Open Sheet's own scope?**
-A: Open Sheet's Team view still analyses the team alone and has no damage calc; comparing and the damage calc live in Team Analysis, which an Open Sheet team reaches through "Open in Team Analysis". See [Scope Edges](open-sheet-site-discovery.md#scope-edges) of the Open Sheet discovery.
+A: Open Sheet's Team view still analyses the team alone and has no damage calc; comparing and the damage calc live in Team Analysis, which an Open Sheet team reaches through "Open in Team Analysis". See [Open Sheet](../pkmn/site/explanation/open-sheet.md)'s scope.
 
 ## Interfaces and Integration
 
 **Q: Where does the data come from?**
 A: `@pkmn/dex`, already bundled in the site, through `Dex.forGen(n)` for the pool's generation, replacing PokeGraph's PokeAPI data and its generated `pokedex.json` and `typecharts.json`. Checked 2026-10-17 against `@pkmn/dex` 0.10.11: `forGen` returns past typings and stats (Gen 5 Clefable is Normal with 85 SpA; Gen 9's is Fairy with 95), Gen 1's single Special stat, the type-based physical/special split (Gen 3 Crunch is Special), species `tags` for Sub-Legendary, Restricted Legendary and Mythical, and `nfe` for not fully evolved. It also keeps later content in earlier generations (Moonblast and the Fairy type exist in `forGen(5)`), so moves, abilities and types are filtered by their `gen`, as PokeGraph's `notInGen` did.
-**Why:** the owner chose `@pkmn/dex`, and the site already decided against runtime API calls ([Open Sheet discovery](open-sheet-site-discovery.md#interfaces-and-integration)). _(2026-10-17)_
+**Why:** the owner chose `@pkmn/dex`, and the site already decided against runtime API calls ([Open Sheet](../pkmn/site/explanation/open-sheet.md#what-it-reads)). _(2026-10-17)_
 
 **Q: How does a team get into Team Analysis?**
 A: Pasted as Showdown text, parsed as PokeGraph's `parser.js` does (header, ability, level, Tera type, EVs, IVs, nature, moves; level 100 when no `Level:` line), or picked from the sample teams, or carried from an Open Sheet team.
@@ -63,15 +63,15 @@ A: The pasted team, the compare slots and the pool rules, in `localStorage`, per
 **Why:** the owner chose `localStorage` over a Dexie database. _(2026-10-17)_
 
 **Q: How does Open Sheet's Team view reach the analysis?**
-A: Through the team's Showdown text, the same one "Copy for Showdown" writes: the shared parser reads it in Gen 9, so members with an unknown species are left out as they are there, and IVs count as 31 with no EVs. "Open in Team Analysis" stores that text as Team Analysis's pasted team and opens `/team-analysis`, keeping its pool rules.
+A: Through the team's Showdown text, the same one "Copy for Showdown" writes: the shared parser reads it in Gen 9, so members with an unknown species are left out as they are there, and IVs count as 31 with the league's 1 EV in every stat, which changes no Level 50 stat. "Open in Team Analysis" stores that text as Team Analysis's pasted team and opens `/team-analysis`, keeping its pool rules.
 **Why:** build choice: one path from an Open Sheet team to the module, already tested by the Showdown copy. _(2026-10-17)_
 
 **Q: Which pool does Open Sheet's analysis rank a team against?**
 A: Showdown's Gen 9 data with species introduced up to Gen 5, fully evolved, no BST cap: Añil's roster under the rules league fights run. The pool chip names it and does not change it.
-**Why:** the owner. Fights are a Gen 9 Custom Game ([Open Sheet discovery](open-sheet-site-discovery.md#interfaces-and-integration)). _(2026-10-17)_
+**Why:** the owner. Fights are a Gen 9 Custom Game ([Open Sheet](../pkmn/site/explanation/open-sheet.md#what-it-reads)). _(2026-10-17)_
 
 ## References
 
 - PokeGraph: `~/pokegraph/README.md`; the logic in `static/js/analysis.js`, `data.js`, `pool.js`, `types.js`, `compare.js`, `parser.js`; the graph in `graph.js`
-- [Open Sheet: Site Discovery](open-sheet-site-discovery.md)
+- [Open Sheet](../pkmn/site/explanation/open-sheet.md)
 - `@pkmn/dex`: https://github.com/pkmn/ps

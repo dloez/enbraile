@@ -20,6 +20,7 @@ import {
   type Slots,
 } from "@/open-sheet/team";
 import { Bag } from "@/open-sheet/components/bag";
+import { PasteDialog } from "@/open-sheet/components/paste-dialog";
 import { MonSprite, SummaryBody, SummaryHead } from "@/open-sheet/components/summary";
 import { TeamBar, type View } from "@/open-sheet/components/team-bar";
 import { TeamStrip } from "@/open-sheet/components/team-strip";
@@ -108,6 +109,7 @@ function TeamPc({ sheet, teams, team, onTeam }: {
   const [picked, setPicked] = useState<number | null>(null);
   const [bagOpen, setBagOpen] = useState(false);
   const [giveTo, setGiveTo] = useState<number | null>(null);
+  const [pasting, setPasting] = useState(false);
   const [draft, setDraft] = useState<{ id: number; slots: Slots } | null>(null);
   const pending = useRef(0);
   useEffect(() => {
@@ -150,6 +152,7 @@ function TeamPc({ sheet, teams, team, onTeam }: {
           onPick={onTeam}
           onCreate={() => void createTeam(team.tabId).then(onTeam)}
           onDuplicate={() => void duplicateTeam(team.id).then((id) => id !== undefined && onTeam(id))}
+          onPaste={() => setPasting(true)}
           onRename={(name) => void renameTeam(team.id, name)}
           onDelete={() => void deleteTeam(team.id).then(() => onTeam(teams.find((t) => t.id !== team.id)?.id ?? -1))}
         />
@@ -277,6 +280,16 @@ function TeamPc({ sheet, teams, team, onTeam }: {
           </SheetContent>
         </BottomSheet>
       )}
+      <PasteDialog
+        sheet={sheet}
+        mons={mons}
+        open={pasting}
+        onOpenChange={setPasting}
+        onImport={async (pasted) => {
+          onTeam(await createTeam(team.tabId, pasted));
+          setView("team");
+        }}
+      />
       <Bag
         sheet={sheet}
         open={bagOpen}
