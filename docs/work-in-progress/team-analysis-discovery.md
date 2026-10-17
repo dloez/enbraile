@@ -42,7 +42,7 @@ A: One table for the site, PokeGraph's: Levitate and Earth Eater (Ground), Flash
 **Why:** forced by that evidence: one table serves both places with no change to Open Sheet's results. _(2026-10-17)_
 
 **Q: Which Pokémon make up a pool?**
-A: The species and formes Showdown lists for the pool's generation that it has not marked as later content (`isNonstandard` "Future"; "Past" ones stay, since a Gen 9 Custom Game fields them), leaving out battle-only formes, Megas, Primals, Gigantamax and Totem formes, and any forme whose types and base stats are its base species' (Gastrodon-East, the Deerling seasons). Legendary is Showdown's Restricted Legendary or Sub-Legendary tag, mythical its Mythical tag, not fully evolved its generation's `nfe`. Moves follow the same line: a "Future" move is ignored, as PokeGraph's `notInGen` did, and a "Past" one counts. The pools come out a little larger than PokeGraph's PokeAPI-built ones (fully evolved, any BST: 684 against 601 in Gen 9, 379 against 346 in Gen 5), and PokeGraph's four sample teams get the same archetype ranking, within 0.01, in both generations.
+A: The species and formes Showdown lists for the pool's generation that it has not marked as later content (`isNonstandard` "Future"; "Past" ones stay, since a Gen 9 Custom Game fields them), leaving out battle-only formes, Megas, Primals, Gigantamax and Totem formes, and any forme whose types and base stats are its base species' (Gastrodon-East, the Deerling seasons). A pool can also hold species to an earlier generation than its data (`speciesGen`), which Open Sheet's pool uses; Team Analysis keeps the two equal. Legendary is Showdown's Restricted Legendary or Sub-Legendary tag, mythical its Mythical tag, not fully evolved its generation's `nfe`. Moves follow the same line: a "Future" move is ignored, as PokeGraph's `notInGen` did, and a "Past" one counts. The pools come out a little larger than PokeGraph's PokeAPI-built ones (fully evolved, any BST: 684 against 601 in Gen 9, 379 against 346 in Gen 5), and PokeGraph's four sample teams get the same archetype ranking, within 0.01, in both generations.
 **Why:** build choices made while porting, measured against PokeGraph run on its own cached data. _(2026-10-17)_
 
 ## Surfaces
@@ -53,6 +53,10 @@ A: As the [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABas
 **Q: What draws the graph and the charts?**
 A: Cytoscape.js, pinned, for the team graph: dragging, its layouts and PNG export. The radar, archetype map, histograms and bars are the site's own SVG components, coloured from the theme tokens.
 **Why:** the owner: the graph's drag and force layout are what a library buys; the charts are simple enough without one. _(2026-10-17)_
+
+**Q: What does the graph's PNG export hold?**
+A: The graph without sprites: the export swaps them for the members' type-coloured rings and names, then puts them back. On screen the sprites load without a CORS request.
+**Why:** forced by evidence: Showdown's sprite server sends no `Access-Control-Allow-Origin` header (checked 2026-10-17), so a canvas holding its sprites cannot be read back into an image. _(2026-10-17)_
 
 **Q: What does Team Analysis keep between visits?**
 A: The pasted team, the compare slots and the pool rules, in `localStorage`, per browser, as small drafts; a missing or unreadable draft starts empty.

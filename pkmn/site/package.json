@@ -18,6 +18,7 @@
     "@tanstack/react-router": "1.170.44",
     "class-variance-authority": "0.7.1",
     "cn": "0.4.0",
+    "cytoscape": "3.34.4",
     "dexie": "4.4.6",
     "lucide-react": "1.57.0",
     "radix-ui": "1.8.1",

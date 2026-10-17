@@ -2,6 +2,7 @@ import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/re
 import { SiteHeader } from "@/components/site-header";
 import { HomePage } from "@/pages/home";
 import { OpenSheetPage } from "@/pages/open-sheet";
+import { TeamAnalysisPage } from "@/pages/team-analysis";
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -25,7 +26,14 @@ const openSheetRoute = createRoute({
   component: OpenSheetPage,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, openSheetRoute]);
+const teamAnalysisRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/team-analysis",
+  staticData: { title: "Team Analysis" },
+  component: TeamAnalysisPage,
+});
+
+const routeTree = rootRoute.addChildren([homeRoute, openSheetRoute, teamAnalysisRoute]);
 
 export const router = createRouter({ routeTree });
 

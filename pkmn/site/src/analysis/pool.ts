@@ -4,13 +4,14 @@ import { STATS, type Member } from "@/analysis/member";
 
 export interface PoolFilters {
   gen: Gen;
+  speciesGen: Gen;
   noLegendary: boolean;
   noMythical: boolean;
   fullyEvolved: boolean;
   maxBst: number;
 }
 
-export const DEFAULT_FILTERS: PoolFilters = { gen: 9, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: 800 };
+export const DEFAULT_FILTERS: PoolFilters = { gen: 9, speciesGen: 9, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: 800 };
 
 export interface PoolMember {
   name: string;
@@ -69,10 +70,10 @@ function sameAsBase(gen: Gen, s: Species): boolean {
   );
 }
 
-function selectable(gen: Gen, s: Species): boolean {
+function selectable(gen: Gen, speciesGen: Gen, s: Species): boolean {
   return (
     available(s) &&
-    s.gen <= gen &&
+    s.gen <= Math.min(gen, speciesGen) &&
     !s.battleOnly &&
     !s.isMega &&
     !s.isPrimal &&
@@ -96,7 +97,7 @@ function exclusion(s: Species, f: PoolFilters): string | null {
 }
 
 export function legality(member: Member, f: PoolFilters): string | null {
-  if (member.introduced > f.gen) return `introduced in Gen ${member.introduced}`;
+  if (member.introduced > Math.min(f.gen, f.speciesGen)) return `introduced in Gen ${member.introduced}`;
   if (f.noLegendary && member.legendary) return "legendary";
   if (f.noMythical && member.mythical) return "mythical";
   if (member.bst > f.maxBst) return `BST ${member.bst} > ${f.maxBst}`;
@@ -134,7 +135,7 @@ export function buildPool(f: PoolFilters): Pool {
   const members: PoolMember[] = [];
   const excluded: Record<string, number> = {};
   for (const s of dexFor(f.gen).species.all()) {
-    if (!selectable(f.gen, s)) continue;
+    if (!selectable(f.gen, f.speciesGen, s)) continue;
     const why = exclusion(s, f);
     if (why) {
       excluded[why] = (excluded[why] ?? 0) + 1;

@@ -20,20 +20,12 @@ Verify manually: every decision in the discovery doc has a home under `docs/pkmn
 **Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/`, `pkmn/site/CLAUDE.md`
 **After:** pkmn/site: deploy on Workers Builds
 
-## pkmn/site: Team Analysis tool, Analyse view
-
-Add the `/team-analysis` route and its home-page card, the pool bar, the paste and team strip, and the Analyse view as the design draws it: archetype, checklist, graph with its selection panel, archetype map, speed tiers, members and matrices; usable on a phone.
-
-Verify manually: paste PokeGraph's Balance sample and see every panel of the design filled; change the generation and see percentiles and the archetype move; at 390 px wide nothing scrolls sideways but the matrices.
-**Touches:** `pkmn/site/src/team-analysis/`, `pkmn/site/src/router.tsx`, `pkmn/site/src/tools.ts`, `pkmn/site/package.json`
-
 ## pkmn/site: Team Analysis Pool and Compare views
 
 Add the Pool view (tiles, base-stat statistics, distribution, types, correlations, the sortable table) and the Compare view (2–4 teams, scoreboard, head-to-head, fingerprints, by-type tables) as the design draws them.
 
 Verify manually: the Pool view's counts change with the pool bar; comparing two sample teams shows the scoreboard with stars and the head-to-head in both directions.
 **Touches:** `pkmn/site/src/team-analysis/`
-**After:** pkmn/site: Team Analysis tool, Analyse view
 
 ## pkmn/site: the analysis in Open Sheet's Team view
 
@@ -41,4 +33,3 @@ Give Open Sheet's Team view the Analysis section of the design (Summary with arc
 
 Verify manually: a built team shows its archetype and checklist; "Open in Team Analysis" shows the same team analysed there; a team with an unknown species still analyses the rest.
 **Touches:** `pkmn/site/src/open-sheet/`
-**After:** pkmn/site: Team Analysis tool, Analyse view

@@ -27,7 +27,7 @@ describe("buildPool", () => {
   });
 
   it("filters legendaries, mythicals and base stat total", () => {
-    const pool = buildPool({ gen: 5, noLegendary: true, noMythical: true, fullyEvolved: true, maxBst: 500 });
+    const pool = buildPool({ gen: 5, speciesGen: 5, noLegendary: true, noMythical: true, fullyEvolved: true, maxBst: 500 });
     const set = names(pool);
     expect(set.has("Latios")).toBe(false);
     expect(set.has("Mew")).toBe(false);
@@ -45,5 +45,13 @@ describe("buildPool", () => {
     expect(pool.physShare.Fighting).toBeGreaterThan(0.5);
     expect(buildPool({ ...DEFAULT_FILTERS, gen: 3 }).physShare).toMatchObject({ Fighting: 1, Fire: 0 });
     expect(Object.keys(pool.physShare)).not.toContain("Fairy");
+  });
+
+  it("can hold species to an earlier generation than the data", () => {
+    const pool = buildPool({ ...DEFAULT_FILTERS, speciesGen: 5 });
+    const set = names(pool);
+    expect(set.has("Clefable")).toBe(true);
+    expect(set.has("Dragapult")).toBe(false);
+    expect(pool.members.find((m) => m.name === "Clefable")?.types).toEqual(["Fairy"]);
   });
 });
