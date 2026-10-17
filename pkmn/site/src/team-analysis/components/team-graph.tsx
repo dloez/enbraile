@@ -359,6 +359,7 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
   const positions = useRef<{ key: string; at: Map<string, { x: number; y: number }> } | null>(null);
   const [layers, setLayers] = useState<Record<Layer, boolean>>({ synergy: true, weak: false, resist: false, offense: false });
   const [layout, setLayout] = useState<LayoutName>("concentric");
+  const layoutRef = useRef<LayoutName>("concentric");
   const [minSynergy, setMinSynergy] = useState(0);
   const [labels, setLabels] = useState(false);
   const [selection, setSelection] = useState<Selection>(null);
@@ -384,7 +385,7 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
       });
       cy.fit(undefined, 30);
     } else {
-      cy.layout(layoutOptions(layout, false)).run();
+      cy.layout(layoutOptions(layoutRef.current, false)).run();
     }
     let pinned = false;
     const clear = () => {
@@ -430,11 +431,10 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
       cy.destroy();
       cyRef.current = null;
     };
-  }, [els, labels, teamKey, layout]);
+  }, [els, labels, teamKey]);
 
-  const relayout = () => {
-    positions.current = null;
-    cyRef.current?.layout(layoutOptions(layout, true)).run();
+  const relayout = (name: LayoutName) => {
+    cyRef.current?.layout(layoutOptions(name, true)).run();
   };
 
   const exportPng = () => {
@@ -465,8 +465,10 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
           <select
             value={layout}
             onChange={(e) => {
-              positions.current = null;
-              setLayout(e.target.value as LayoutName);
+              const name = e.target.value as LayoutName;
+              layoutRef.current = name;
+              setLayout(name);
+              relayout(name);
             }}
             className="bg-transparent text-foreground"
           >
@@ -493,7 +495,7 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
         <Toggle pressed={labels} onChange={setLabels}>
           Labels
         </Toggle>
-        <button type="button" onClick={relayout} className={buttonClass}>
+        <button type="button" onClick={() => relayout(layout)} className={buttonClass}>
           Re-layout
         </button>
         <button type="button" onClick={() => cyRef.current?.fit(undefined, 30)} className={buttonClass}>
