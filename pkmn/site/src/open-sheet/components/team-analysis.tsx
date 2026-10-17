@@ -63,7 +63,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
               <tr key={row.type} className={cn("border-t", row.hole && "bg-destructive-soft")}>
                 <td className="py-1 pl-1">
                   <span className="inline-flex items-center gap-1.5 font-semibold">
-                    <TypeDot type={row.type} className="size-2.25" />
+                    <TypeDot type={row.type} />
                     {row.type}
                     {row.hole && <span className="text-[11px] font-bold text-destructive">Hole</span>}
                   </span>
@@ -92,7 +92,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
               <span className="min-w-0 truncate font-semibold">{displayName(source.mon)}</span>
               {source.types.map((t) => (
                 <span key={t} className="inline-flex items-center gap-1 text-xs">
-                  <TypeDot type={t} className="size-2.25" />
+                  <TypeDot type={t} />
                   {t}
                 </span>
               ))}
@@ -110,7 +110,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
                 row.hitters.length > 0 ? "bg-muted" : "bg-destructive-soft text-destructive",
               )}
             >
-              <TypeDot type={row.type} className="size-2.25" />
+              <TypeDot type={row.type} />
               <span className="min-w-0 flex-1 truncate font-semibold">{row.type}</span>
               <span className="font-mono">{row.hitters.length}</span>
             </div>

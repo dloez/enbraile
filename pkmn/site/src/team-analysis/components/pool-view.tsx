@@ -171,7 +171,7 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
                   <span className="inline-flex gap-2.5">
                     {m.types.map((t) => (
                       <span key={t} className="inline-flex items-center gap-1.25">
-                        <TypeDot type={t} className="size-2" />
+                        <TypeDot type={t} />
                         {t}
                       </span>
                     ))}
@@ -258,7 +258,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
             {types.map((t) => (
               <div key={t.type} title={`${t.mono} mono-type`} className="grid min-h-6.5 grid-cols-[80px_minmax(0,1fr)_28px_40px] items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 font-semibold">
-                  <TypeDot type={t.type} className="size-2.25" />
+                  <TypeDot type={t.type} />
                   {t.type}
                 </span>
                 <span className="h-1.5 rounded-sm bg-secondary">

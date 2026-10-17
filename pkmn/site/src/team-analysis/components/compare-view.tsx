@@ -292,7 +292,7 @@ function ByType({ results }: { results: Result[] }) {
                 {types.map((t) => (
                   <th key={t} className="p-0.5 font-semibold text-muted-foreground">
                     <span className="inline-flex flex-col items-center gap-0.75">
-                      <TypeDot type={t} className="size-2.25" />
+                      <TypeDot type={t} />
                       {t.slice(0, 3)}
                     </span>
                   </th>

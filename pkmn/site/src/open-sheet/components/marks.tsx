@@ -1,3 +1,4 @@
+import { TYPE_ICONS } from "@/lib/type-icons";
 import { cn } from "@/lib/utils";
 
 export function UnknownMark({ className }: { className?: string }) {
@@ -30,13 +31,27 @@ function typeColour(type: string | null): string {
   return type ? `var(--type-${type.toLowerCase()}, var(--muted-foreground))` : "var(--muted-foreground)";
 }
 
+function TypeIcon({ type, className }: { type: string | null; className?: string }) {
+  const paths = type ? TYPE_ICONS[type] : undefined;
+  if (!paths) return <span className={cn("rounded-full bg-foreground", className)} />;
+  return (
+    <svg viewBox="0 0 512 512" className={cn("fill-foreground", className)}>
+      {paths.map((d) => (
+        <path key={d} fillRule="evenodd" d={d} />
+      ))}
+    </svg>
+  );
+}
+
 export function TypeDot({ type, className }: { type: string | null; className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={cn("inline-block size-2.5 flex-none rounded-full", className)}
+      className={cn("inline-grid size-4 flex-none place-items-center rounded-full", className)}
       style={{ background: typeColour(type) }}
-    />
+    >
+      <TypeIcon type={type} className="size-[62%]" />
+    </span>
   );
 }
 
@@ -52,7 +67,7 @@ export function TypeChip({ type }: { type: string }) {
 export function TypeSquare({ type }: { type: string | null }) {
   return (
     <span aria-hidden="true" className="grid size-6 place-items-center rounded-md" style={{ background: typeColour(type) }}>
-      <span className="size-2 rounded-full bg-foreground" />
+      <TypeIcon type={type} className="size-[62%]" />
     </span>
   );
 }

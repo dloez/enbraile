@@ -14,6 +14,8 @@ The [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) desi
 
 shadcn was initialised with its Nova preset on Radix, its palette replaced by the design's colours as the only theme. Colours are CSS variables in `src/index.css`'s `:root`, used through Tailwind tokens; the vendored components in `src/components/ui/` follow the same rule, and the scrim behind dialogs and sheets is a `--scrim` variable set to the design's `rgba(0,0,0,0.6)`, used as `bg-scrim`. The design's fonts (Chakra Petch, IBM Plex Sans, IBM Plex Mono) are bundled from Fontsource rather than loaded from Google Fonts, so the only runtime calls the site makes are for Showdown's sprites.
 
+Each type shows as its colour with a white symbol, from duiker101's [Pokémon Type SVG Icons](https://github.com/duiker101/pokemon-type-svg-icons), free for any use; the paths are bundled in `src/lib/type-icons.ts`, so no request goes out for them.
+
 The tab icon is a spiral notepad with a red and white Poké Ball drawn on it and a pencil writing on it: `public/favicon.svg`, plus `favicon-32.png` and `apple-touch-icon.png` rendered from it for browsers that take no SVG icon.
 
 ## Data and Storage

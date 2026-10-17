@@ -60,7 +60,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
           <div className="flex flex-wrap items-center gap-2.5">
             {(mon.showdownTypes ?? mon.types).map((t) => (
               <span key={t} className="inline-flex items-center gap-1.25 text-xs font-semibold">
-                <TypeDot type={t} className="size-2.25" />
+                <TypeDot type={t} />
                 {t}
               </span>
             ))}
@@ -147,7 +147,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
                   wrong && "border-destructive bg-destructive-soft",
                 )}
               >
-                <TypeDot type={move?.type ?? null} className="size-2.25" />
+                <TypeDot type={move?.type ?? null} />
                 <span className="min-w-0 flex-1 truncate">
                   {move ? move.name : "—"}
                   {move?.marked && <UnknownMark />}

@@ -3,6 +3,7 @@ import cytoscape, { type Core, type ElementDefinition, type LayoutOptions, type 
 import { typesIn } from "@/analysis/dex";
 import type { Member } from "@/analysis/member";
 import type { Analysis, SynergyEdge } from "@/analysis/team";
+import { typeIconSvg } from "@/lib/type-icons";
 import { TypeDot } from "@/open-sheet/components/marks";
 import { buttonClass, fieldClass, Toggle } from "@/team-analysis/components/controls";
 import { spriteOf } from "@/team-analysis/sprite";
@@ -37,6 +38,10 @@ function css(name: string): string {
 
 function typeColour(type: string): string {
   return css(`--type-${type.toLowerCase()}`) || css("--muted-foreground");
+}
+
+function typeIconUrl(type: string): string {
+  return `data:image/svg+xml;utf8,${encodeURIComponent(typeIconSvg(type, css("--foreground")))}`;
 }
 
 function layoutOptions(name: LayoutName, animate: boolean): LayoutOptions {
@@ -79,7 +84,7 @@ function elements(team: readonly Member[], a: Analysis, layers: Record<Layer, bo
       const cls = ["type"];
       if (layers.weak && d && d.unresisted && d.weak > 0) cls.push("danger");
       if (layers.offense && o?.uncovered) cls.push("gap");
-      els.push({ group: "nodes", data: { id: `t-${t}`, kind: "type", type: t, label: t, color: typeColour(t) }, classes: cls.join(" ") });
+      els.push({ group: "nodes", data: { id: `t-${t}`, kind: "type", type: t, label: t, color: typeColour(t), icon: typeIconUrl(t) }, classes: cls.join(" ") });
     }
   }
   if (layers.synergy) {
@@ -137,7 +142,15 @@ function elements(team: readonly Member[], a: Analysis, layers: Record<Layer, bo
   return els;
 }
 
-function style(withSprites: boolean): StylesheetJson {
+const SPRITE = {
+  "background-image": "data(img)",
+  "background-image-crossorigin": "null",
+  "background-fit": "contain",
+  "background-width": "90%",
+  "background-height": "90%",
+};
+
+function style(): StylesheetJson {
   const ink = css("--foreground");
   const ink2 = css("--muted-foreground");
   const ground = css("--muted");
@@ -161,15 +174,7 @@ function style(withSprites: boolean): StylesheetJson {
         width: 78,
         height: 78,
         "background-color": css("--cell"),
-        ...(withSprites
-          ? {
-              "background-image": "data(img)",
-              "background-image-crossorigin": "null",
-              "background-fit": "contain",
-              "background-width": "90%",
-              "background-height": "90%",
-            }
-          : {}),
+        ...SPRITE,
         "border-width": 4,
         "border-color": "data(ring)",
         "font-size": 13,
@@ -178,7 +183,18 @@ function style(withSprites: boolean): StylesheetJson {
     },
     {
       selector: "node.type",
-      style: { width: 30, height: 30, "background-color": "data(color)", "border-width": 2, "border-color": ground, "font-size": 10, color: ink2 },
+      style: {
+        width: 34,
+        height: 34,
+        "background-color": "data(color)",
+        "background-image": "data(icon)",
+        "background-width": "60%",
+        "background-height": "60%",
+        "border-width": 2,
+        "border-color": ground,
+        "font-size": 10,
+        color: ink2,
+      },
     },
     {
       selector: "node.type.danger",
@@ -248,7 +264,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
         {e.types.map((t) => (
           <div key={t} className="flex items-center justify-between rounded-lg border bg-muted px-2.5 py-2 text-[13px]">
             <span className="inline-flex items-center gap-1.5">
-              <TypeDot type={t} className="size-2.25" />
+              <TypeDot type={t} />
               {t}
             </span>
             <span className="font-mono text-xs">
@@ -289,7 +305,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
     return (
       <div className="flex flex-col gap-2.5 text-[13px]">
         <div className="inline-flex items-center gap-2 font-heading text-lg font-semibold">
-          <TypeDot type={t} className="size-3" />
+          <TypeDot type={t} className="size-5" />
           {t}
         </div>
         <div>
@@ -371,7 +387,7 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
     const cy = cytoscape({
       container: container.current,
       elements: els,
-      style: style(true),
+      style: style(),
       minZoom: 0.2,
       maxZoom: 3,
     });
@@ -440,9 +456,10 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
   const exportPng = () => {
     const cy = cyRef.current;
     if (!cy) return;
-    cy.style(style(false));
+    const mons = cy.nodes(".mon");
+    mons.style("background-image", "none");
     const href = cy.png({ full: true, scale: 2, bg: css("--muted") });
-    cy.style(style(true));
+    mons.removeStyle("background-image");
     const a = document.createElement("a");
     a.href = href;
     a.download = "team-graph.png";

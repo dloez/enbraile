@@ -44,7 +44,7 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
           <span className="flex flex-wrap gap-2.5 text-xs font-semibold">
             {member.types.map((t) => (
               <span key={t} className="inline-flex items-center gap-1.25">
-                <TypeDot type={t} className="size-2.25" />
+                <TypeDot type={t} />
                 {t}
               </span>
             ))}
@@ -106,7 +106,7 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
                 (mv.unknown || mv.notInGen) && "border-destructive text-destructive",
               )}
             >
-              <TypeDot type={mv.type} className="size-2.25" />
+              <TypeDot type={mv.type} />
               <span className="min-w-0 flex-1 truncate">{mv.name}</span>
               {tag && <span className="rounded-sm bg-accent px-1.5 text-[10px] font-semibold text-primary">{tag}</span>}
               <span className="font-mono text-[10px] text-muted-foreground">{CATEGORY[mv.category]}</span>
@@ -187,7 +187,7 @@ function Head({ types }: { types: readonly string[] }) {
         {types.map((t) => (
           <th key={t} scope="col" title={t} className="px-0.5 pb-1 text-[11px] font-semibold text-muted-foreground">
             <span className="inline-flex flex-col items-center gap-1">
-              <TypeDot type={t} className="size-3" />
+              <TypeDot type={t} className="size-5" />
               {t.slice(0, 3)}
             </span>
           </th>

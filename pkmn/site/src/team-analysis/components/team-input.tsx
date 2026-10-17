@@ -163,7 +163,7 @@ export function TeamInput({
                   <span className="flex flex-wrap justify-center gap-1.5 text-[11px] text-muted-foreground">
                     {m.types.map((t) => (
                       <span key={t} className="inline-flex items-center gap-1">
-                        <TypeDot type={t} className="size-2" />
+                        <TypeDot type={t} />
                         {t}
                       </span>
                     ))}
