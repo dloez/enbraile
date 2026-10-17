@@ -131,19 +131,16 @@ export function MemberCards({ team, analysis, legality }: { team: readonly Membe
 export type MatrixMode = "mult" | "weighted";
 
 function frac(v: number): string {
-  if (v === 0) return "0";
-  if (v === 0.125) return "⅛";
-  if (v === 0.25) return "¼";
-  if (v === 0.5) return "½";
-  return String(v);
+  return `×${v}`;
 }
 
 function multCell(v: number): string {
-  if (v >= 4) return "bg-destructive/40 text-foreground";
-  if (v > 1) return "bg-destructive-soft text-destructive";
-  if (v === 0) return "bg-accent text-primary";
+  if (v >= 4) return "bg-destructive/45 text-foreground font-semibold";
+  if (v > 1) return "bg-destructive-soft text-destructive font-semibold";
+  if (v === 0) return "bg-accent text-primary font-semibold";
+  if (v <= 0.25) return "bg-chart-2/35 text-foreground";
   if (v < 1) return "bg-chart-2/15 text-chart-2";
-  return "bg-background text-muted-foreground/50";
+  return "bg-muted text-muted-foreground/40";
 }
 
 function weightCell(v: number): string {
@@ -151,20 +148,46 @@ function weightCell(v: number): string {
   if (v >= 1.5) return "bg-chart-2/25 text-chart-2";
   if (v >= 1) return "bg-chart-2/10 text-chart-2";
   if (v >= 0.5) return "bg-destructive-soft text-destructive";
-  return "bg-destructive/40 text-foreground";
+  return "bg-destructive/45 text-foreground";
 }
 
 const f2 = (v: number) => (v >= 10 ? v.toFixed(1) : v.toFixed(2));
+
+const CELL = "h-9 min-w-13 rounded-md text-center font-mono text-[13px]";
+const STICKY = "sticky left-0 z-10 bg-card";
+
+function MemberHead({ member }: { member: Member }) {
+  const nick = member.set.nickname.trim();
+  return (
+    <th scope="row" className={cn(STICKY, "py-0.5 pr-3 text-left font-normal")}>
+      <span className="flex items-center gap-2">
+        <img src={spriteOf(member)} alt="" className="size-9 flex-none [image-rendering:pixelated]" />
+        <span className="flex min-w-0 flex-col leading-tight">
+          <span className="max-w-36 truncate text-[13px] font-semibold">{nick || member.species}</span>
+          {nick && <span className="max-w-36 truncate text-[11px] text-muted-foreground">{member.species}</span>}
+        </span>
+      </span>
+    </th>
+  );
+}
+
+function SummaryHead({ label }: { label: string }) {
+  return (
+    <th scope="row" className={cn(STICKY, "border-t pt-1.5 pr-3 text-left text-xs font-semibold text-muted-foreground")}>
+      {label}
+    </th>
+  );
+}
 
 function Head({ types }: { types: readonly string[] }) {
   return (
     <thead>
       <tr>
-        <th className="min-w-28" />
+        <th className={cn(STICKY, "min-w-40")} />
         {types.map((t) => (
-          <th key={t} className="p-0.5 text-[11px] font-semibold text-muted-foreground">
-            <span className="inline-flex flex-col items-center gap-0.75">
-              <TypeDot type={t} className="size-2.25" />
+          <th key={t} scope="col" title={t} className="px-0.5 pb-1 text-[11px] font-semibold text-muted-foreground">
+            <span className="inline-flex flex-col items-center gap-1">
+              <TypeDot type={t} className="size-3" />
               {t.slice(0, 3)}
             </span>
           </th>
@@ -174,10 +197,44 @@ function Head({ types }: { types: readonly string[] }) {
   );
 }
 
+function Legend({ items }: { items: readonly { swatch: string; label: string }[] }) {
+  return (
+    <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+      {items.map((i) => (
+        <span key={i.label} className="inline-flex items-center gap-1.5">
+          <span className={cn("size-3.5 rounded", i.swatch)} />
+          {i.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+const DEF_LEGEND = [
+  { swatch: "bg-destructive/45", label: "×4 weak" },
+  { swatch: "bg-destructive-soft", label: "×2 weak" },
+  { swatch: "bg-chart-2/15", label: "×0.5 resists" },
+  { swatch: "bg-chart-2/35", label: "×0.25 or less" },
+  { swatch: "bg-accent", label: "×0 immune" },
+];
+
+const OFF_LEGEND = [
+  { swatch: "bg-chart-2/15", label: "×2 or more: hits it super-effectively (● with STAB)" },
+  { swatch: "bg-muted", label: "×1 neutral" },
+  { swatch: "bg-destructive-soft", label: "below ×1: resisted or immune" },
+];
+
+const WEIGHT_LEGEND = [
+  { swatch: "bg-chart-2/40", label: "3.00 or more" },
+  { swatch: "bg-chart-2/25", label: "1.50–3.00" },
+  { swatch: "bg-chart-2/10", label: "1.00–1.50" },
+  { swatch: "bg-destructive-soft", label: "0.50–1.00" },
+  { swatch: "bg-destructive/45", label: "below 0.50" },
+];
+
 export function Matrices({ team, analysis, pool }: { team: readonly Member[]; analysis: Analysis; pool: Pool }) {
   const [mode, setMode] = useState<MatrixMode>("mult");
   const types = typesIn(analysis.gen);
-  const cell = "h-7.5 min-w-7.5 rounded-[5px] text-center font-mono text-xs";
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-wrap items-center gap-3">
@@ -198,76 +255,96 @@ export function Matrices({ team, analysis, pool }: { team: readonly Member[]; an
         aside={
           <span className="text-xs text-muted-foreground">
             {mode === "mult"
-              ? "damage taken, abilities counted"
-              : "effective bulk D: 1.00 = an average pool member taking a neutral hit"}
+              ? "damage each member takes from each attacking type, abilities counted"
+              : "effective bulk D against each attacking type: 1.00 = an average pool member taking a neutral hit"}
           </span>
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full border-separate border-spacing-0.5 text-xs">
+          <table className="w-full border-separate border-spacing-1 text-xs">
             <Head types={types} />
             <tbody>
               {team.map((m, i) => (
                 <tr key={i}>
-                  <th className="pr-2 text-left text-xs font-semibold whitespace-nowrap">{m.set.species}</th>
+                  <MemberHead member={m} />
                   {types.map((t) => {
                     const v = analysis.members[i].def[t];
-                    if (mode === "mult") return <td key={t} className={cn(cell, multCell(v))}>{v === 1 ? "" : frac(v)}</td>;
+                    if (mode === "mult")
+                      return (
+                        <td key={t} title={`${m.display} takes ×${v} from ${t}`} className={cn(CELL, multCell(v))}>
+                          {v === 1 ? "·" : frac(v)}
+                        </td>
+                      );
                     const d = defValue(m, t, v, pool);
-                    return <td key={t} className={cn(cell, weightCell(d))}>{f2(d)}</td>;
+                    return (
+                      <td key={t} title={`${m.display} vs ${t}: ×${v}, D ${f2(d)}`} className={cn(CELL, weightCell(d))}>
+                        {f2(d)}
+                      </td>
+                    );
                   })}
                 </tr>
               ))}
               <tr>
-                <th className="pt-1.5 text-left text-[11px] text-muted-foreground">Weak</th>
+                <SummaryHead label="Weak" />
                 {analysis.tDef.map((r) => (
                   <td
                     key={r.type}
+                    title={`${r.weak} weak to ${r.type}${r.unresisted && r.weak > 0 ? ", nobody resists it" : ""}`}
                     className={cn(
-                      cell,
-                      r.weak >= 3 || (r.unresisted && r.weak > 0) ? "bg-destructive/40 text-foreground" : "text-destructive",
+                      CELL,
+                      "border-t",
+                      r.weak >= 3 || (r.unresisted && r.weak > 0) ? "bg-destructive/45 text-foreground" : "text-destructive",
                     )}
                   >
-                    {r.weak || ""}
+                    {r.weak || "·"}
                   </td>
                 ))}
               </tr>
               <tr>
-                <th className="text-left text-[11px] text-muted-foreground">Resist</th>
+                <SummaryHead label="Resist" />
                 {analysis.tDef.map((r) => (
-                  <td key={r.type} className={cn(cell, "text-chart-2")}>
-                    {r.resist || ""}
+                  <td key={r.type} className={cn(CELL, "text-chart-2")}>
+                    {r.resist || "·"}
                   </td>
                 ))}
               </tr>
             </tbody>
           </table>
         </div>
+        <Legend items={mode === "mult" ? DEF_LEGEND : WEIGHT_LEGEND} />
+        <span className="text-xs text-muted-foreground">
+          The Weak row turns red when three or more members are weak to a type, or when nobody resists it.
+        </span>
       </Panel>
       <Panel
         title="Coverage"
         aside={
           <span className="text-xs text-muted-foreground">
             {mode === "mult"
-              ? "best multiplier of each member's damaging moves · ● STAB"
-              : "best hit O: 1.00 = a neutral 100 BP hit from an average pool attacker"}
+              ? "best multiplier of each member's damaging moves against each defending type"
+              : "best hit O against each defending type: 1.00 = a neutral 100 BP hit from an average pool attacker"}
           </span>
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full border-separate border-spacing-0.5 text-xs">
+          <table className="w-full border-separate border-spacing-1 text-xs">
             <Head types={types} />
             <tbody>
               {team.map((m, i) => (
                 <tr key={i}>
-                  <th className="pr-2 text-left text-xs font-semibold whitespace-nowrap">{m.set.species}</th>
+                  <MemberHead member={m} />
                   {types.map((t) => {
                     const o = analysis.offs[i][t];
-                    if (o.mult === null) return <td key={t} className={cn(cell, "bg-background")} />;
+                    if (o.mult === null)
+                      return (
+                        <td key={t} title={`${m.display} has no damaging move`} className={cn(CELL, "bg-muted text-muted-foreground/40")}>
+                          –
+                        </td>
+                      );
                     if (mode === "weighted") {
                       const hit = offValue(analysis.gen, m, t, pool);
                       return (
-                        <td key={t} title={hit.move?.name} className={cn(cell, weightCell(hit.O))}>
+                        <td key={t} title={`${hit.move?.name ?? "—"} vs ${t}: O ${f2(hit.O)}`} className={cn(CELL, weightCell(hit.O))}>
                           {f2(hit.O)}
                         </td>
                       );
@@ -276,13 +353,13 @@ export function Matrices({ team, analysis, pool }: { team: readonly Member[]; an
                     return (
                       <td
                         key={t}
-                        title={o.move?.name}
+                        title={`${o.move?.name ?? "—"} vs ${t}: ×${v}${o.stab ? ", STAB" : ""}`}
                         className={cn(
-                          cell,
-                          v > 1 ? "bg-chart-2/15 text-chart-2" : v < 1 ? "bg-destructive-soft text-destructive" : "bg-background text-muted-foreground/50",
+                          CELL,
+                          v > 1 ? "bg-chart-2/15 font-semibold text-chart-2" : v < 1 ? "bg-destructive-soft text-destructive" : "bg-muted text-muted-foreground/40",
                         )}
                       >
-                        {frac(v)}
+                        {v === 1 ? "·" : frac(v)}
                         {o.stab && v > 1 ? "●" : ""}
                       </td>
                     );
@@ -290,9 +367,13 @@ export function Matrices({ team, analysis, pool }: { team: readonly Member[]; an
                 </tr>
               ))}
               <tr>
-                <th className="pt-1.5 text-left text-[11px] text-muted-foreground">Hit SE</th>
+                <SummaryHead label="Hit SE" />
                 {analysis.tOff.map((r) => (
-                  <td key={r.type} className={cn(cell, r.se === 0 ? "bg-destructive/40 text-foreground" : "text-chart-2")}>
+                  <td
+                    key={r.type}
+                    title={`${r.se} member(s) hit ${r.type} super-effectively`}
+                    className={cn(CELL, "border-t", r.se === 0 ? "bg-destructive/45 text-foreground" : "text-chart-2")}
+                  >
                     {r.se}
                   </td>
                 ))}
@@ -300,6 +381,8 @@ export function Matrices({ team, analysis, pool }: { team: readonly Member[]; an
             </tbody>
           </table>
         </div>
+        <Legend items={mode === "mult" ? OFF_LEGEND : WEIGHT_LEGEND} />
+        <span className="text-xs text-muted-foreground">The Hit SE row turns red for a type nobody hits super-effectively.</span>
       </Panel>
     </div>
   );
