@@ -48,11 +48,19 @@ A: The species and formes Showdown lists for the pool's generation that it has n
 ## Surfaces
 
 **Q: What does it look like?**
-A: As the [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABaszfH) design in Claude Design: the Analyse view (pool bar, paste and team strip, archetype, checklist, graph with its selection panel, archetype map, speed tiers, members, matrices), the Pool view, the Compare view, Open Sheet's Team view with the Analysis section (Summary, Graph, Archetype, Members, Matrices, and a pool chip), and Analyse on a phone. It follows the site's single dark theme, fonts and tokens. Awaiting the owner's sign-off.
+A: As the [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABaszfH) design in Claude Design, signed off by the owner on 2026-10-17: the Analyse view (pool bar, paste and team strip, archetype, checklist, graph with its selection panel, archetype map, speed tiers, members, matrices), the Pool view, the Compare view, Open Sheet's Team view with the Analysis section (Summary, Graph, Archetype, Members, Matrices, and a pool chip), and Analyse on a phone. It follows the site's single dark theme, fonts and tokens.
 
-## Open
+**Q: What draws the graph and the charts?**
+A: Cytoscape.js, pinned, for the team graph: dragging, its layouts and PNG export. The radar, archetype map, histograms and bars are the site's own SVG components, coloured from the theme tokens.
+**Why:** the owner: the graph's drag and force layout are what a library buys; the charts are simple enough without one. _(2026-10-17)_
 
-- See [Open Questions](open-questions.md#team-analysis-pool-in-open-sheet), [graph and charts](open-questions.md#team-analysis-graph-and-charts) and [stored drafts](open-questions.md#team-analysis-stored-drafts).
+**Q: What does Team Analysis keep between visits?**
+A: The pasted team, the compare slots and the pool rules, in `localStorage`, per browser, as small drafts; a missing or unreadable draft starts empty.
+**Why:** the owner chose `localStorage` over a Dexie database. _(2026-10-17)_
+
+**Q: Which pool does Open Sheet's analysis rank a team against?**
+A: Showdown's Gen 9 data with species introduced up to Gen 5, fully evolved, no BST cap: Añil's roster under the rules league fights run. The pool chip names it and does not change it.
+**Why:** the owner. Fights are a Gen 9 Custom Game ([Open Sheet discovery](open-sheet-site-discovery.md#interfaces-and-integration)). _(2026-10-17)_
 
 ## References
 

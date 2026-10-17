@@ -20,28 +20,12 @@ Verify manually: every decision in the discovery doc has a home under `docs/pkmn
 **Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/`, `pkmn/site/CLAUDE.md`
 **After:** pkmn/site: deploy on Workers Builds
 
-## pkmn/site: sign off the Team Analysis design
-
-Review the [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABaszfH) design ([Surfaces](team-analysis-discovery.md#surfaces)) and answer the three Team Analysis entries in [Open Questions](open-questions.md#team-analysis-pool-in-open-sheet); record the sign-off and the answers in the discovery doc.
-
-Verify manually: the discovery doc's Surfaces answer no longer reads "Awaiting the owner's sign-off"; `open-questions.md` has no Team Analysis entry.
-**Touches:** `docs/work-in-progress/`
-**Needs the author:** the sign-off and the three answers are the owner's.
-
-## pkmn/site: port the comparison and damage calc
-
-Add PokeGraph's `compare.js` metrics (scoreboard, weighted weakness load, weighted defence and offence) and its head-to-head damage calc to `pkmn/site/src/analysis/`, with its stated simplifications (full HP, no weather, boosts or crits; variable-power and multi-hit moves skipped).
-
-Verify manually: `npm run gate` passes; for two sample teams the scoreboard and the head-to-head numbers match PokeGraph's under the same pool.
-**Touches:** `pkmn/site/src/analysis/`
-
 ## pkmn/site: Team Analysis tool, Analyse view
 
 Add the `/team-analysis` route and its home-page card, the pool bar, the paste and team strip, and the Analyse view as the design draws it: archetype, checklist, graph with its selection panel, archetype map, speed tiers, members and matrices; usable on a phone.
 
 Verify manually: paste PokeGraph's Balance sample and see every panel of the design filled; change the generation and see percentiles and the archetype move; at 390 px wide nothing scrolls sideways but the matrices.
 **Touches:** `pkmn/site/src/team-analysis/`, `pkmn/site/src/router.tsx`, `pkmn/site/src/tools.ts`, `pkmn/site/package.json`
-**After:** pkmn/site: sign off the Team Analysis design
 
 ## pkmn/site: Team Analysis Pool and Compare views
 
@@ -49,7 +33,7 @@ Add the Pool view (tiles, base-stat statistics, distribution, types, correlation
 
 Verify manually: the Pool view's counts change with the pool bar; comparing two sample teams shows the scoreboard with stars and the head-to-head in both directions.
 **Touches:** `pkmn/site/src/team-analysis/`
-**After:** pkmn/site: Team Analysis tool, Analyse view; pkmn/site: port the comparison and damage calc
+**After:** pkmn/site: Team Analysis tool, Analyse view
 
 ## pkmn/site: the analysis in Open Sheet's Team view
 
