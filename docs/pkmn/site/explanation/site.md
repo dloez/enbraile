@@ -14,6 +14,8 @@ The [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) desi
 
 shadcn was initialised with its Nova preset on Radix, its palette replaced by the design's colours as the only theme. Colours are CSS variables in `src/index.css`'s `:root`, used through Tailwind tokens; the vendored components in `src/components/ui/` follow the same rule, and the scrim behind dialogs and sheets is a `--scrim` variable set to the design's `rgba(0,0,0,0.6)`, used as `bg-scrim`. The design's fonts (Chakra Petch, IBM Plex Sans, IBM Plex Mono) are bundled from Fontsource rather than loaded from Google Fonts, so the only runtime calls the site makes are for Showdown's sprites.
 
+The tab icon is a Poké Ball in the theme's orange with a pencil across it: `public/favicon.svg`, plus `favicon-32.png` and `apple-touch-icon.png` rendered from it for browsers that take no SVG icon.
+
 ## Data and Storage
 
 Everything a reader imports or builds stays in their browser, in IndexedDB, per browser and device. Nothing goes to a server, and there are no accounts. Game data (names, descriptions, base stats, the type chart) is bundled from `@pkmn/dex`; no API is called at runtime. Sprites load from Showdown's sprite server, `play.pokemonshowdown.com`, through `@pkmn/img`'s URLs.
