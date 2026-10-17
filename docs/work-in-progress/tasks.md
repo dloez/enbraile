@@ -19,10 +19,3 @@ Move the lasting content of the [Site Discovery](open-sheet-site-discovery.md) i
 Verify manually: every decision in the discovery doc has a home under `docs/pkmn/site/`; `grep -rn open-sheet-site-discovery docs/ pkmn/` finds nothing; the Open Sheet and Site rows of `docs/pkmn/index.md` describe what is built and deployed.
 **Touches:** `docs/pkmn/`, `docs/index.md`, `docs/work-in-progress/`, `pkmn/site/CLAUDE.md`
 **After:** pkmn/site: deploy on Workers Builds
-
-## pkmn/site: the analysis in Open Sheet's Team view
-
-Give Open Sheet's Team view the Analysis section of the design (Summary with archetype and checklist beside the speed order, defence and coverage; Graph; Archetype; Members; Matrices; the pool chip) and the "Open in Team Analysis" button, which opens the team in Team Analysis.
-
-Verify manually: a built team shows its archetype and checklist; "Open in Team Analysis" shows the same team analysed there; a team with an unknown species still analyses the rest.
-**Touches:** `pkmn/site/src/open-sheet/`

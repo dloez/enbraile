@@ -62,6 +62,10 @@ A: The graph without sprites: the export swaps them for the members' type-colour
 A: The pasted team, the compare slots and the pool rules, in `localStorage`, per browser, as small drafts; a missing or unreadable draft starts empty.
 **Why:** the owner chose `localStorage` over a Dexie database. _(2026-10-17)_
 
+**Q: How does Open Sheet's Team view reach the analysis?**
+A: Through the team's Showdown text, the same one "Copy for Showdown" writes: the shared parser reads it in Gen 9, so members with an unknown species are left out as they are there, and IVs count as 31 with no EVs. "Open in Team Analysis" stores that text as Team Analysis's pasted team and opens `/team-analysis`, keeping its pool rules.
+**Why:** build choice: one path from an Open Sheet team to the module, already tested by the Showdown copy. _(2026-10-17)_
+
 **Q: Which pool does Open Sheet's analysis rank a team against?**
 A: Showdown's Gen 9 data with species introduced up to Gen 5, fully evolved, no BST cap: Añil's roster under the rules league fights run. The pool chip names it and does not change it.
 **Why:** the owner. Fights are a Gen 9 Custom Game ([Open Sheet discovery](open-sheet-site-discovery.md#interfaces-and-integration)). _(2026-10-17)_

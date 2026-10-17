@@ -22,7 +22,7 @@ export interface RadarSeries {
   dashed?: boolean;
 }
 
-export function Radar({ series, label, size = 280 }: { series: readonly RadarSeries[]; label: string; size?: number }) {
+export function Radar({ series, label, size = 240 }: { series: readonly RadarSeries[]; label: string; size?: number }) {
   return (
     <svg viewBox="-160 -112 320 224" role="img" aria-label={label} className="h-auto max-w-full flex-none" style={{ width: size }}>
       {[0.25, 0.5, 0.75, 1].map((r) => (
