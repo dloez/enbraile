@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { displayName, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
+import { displayName, fightStat, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
-import { TypeChip, TypeDot, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
+import { TypeChip, TypeDot, UnknownMark } from "@/open-sheet/components/marks";
 
 type Page = "info" | "stats" | "moves";
 
@@ -108,34 +108,53 @@ function Info({ mon }: { mon: Mon }) {
 
 function Stats({ mon }: { mon: Mon }) {
   const n = mon.nature;
+  const [atFifty, setAtFifty] = useState(false);
   return (
-    <div className="grid grid-cols-[36px_32px_1fr_76px] items-center gap-x-2 gap-y-2.5 sm:grid-cols-[40px_34px_1fr_84px] sm:gap-x-2.5">
-      <span />
-      <span className="text-xs text-muted-foreground">Base</span>
-      <span />
-      <span className="text-right text-xs text-muted-foreground">Lv 50</span>
-      {(mon.stats ?? []).map((s) => {
-        const up = n?.plus === s.stat && n.minus !== s.stat;
-        const down = n?.minus === s.stat && n.plus !== s.stat;
-        return (
-          <div key={s.stat} className="contents">
-            <span className={cn("font-semibold", up ? "text-primary" : down ? "text-chart-2" : "text-foreground")}>
-              {STAT_LABELS[s.stat]}
-            </span>
-            <span className="font-mono">{s.base}</span>
-            <span className="h-2 overflow-hidden rounded-sm bg-muted">
-              <span
-                className={cn("block h-2 rounded-sm", up ? "bg-primary" : down ? "bg-chart-2" : "bg-chart-3")}
-                style={{ width: `${Math.min(100, Math.round((s.base / 160) * 100))}%` }}
-              />
-            </span>
-            <span className="text-right font-mono">
-              {s.low}–{s.high}
-            </span>
-          </div>
-        );
-      })}
-    </div>
+    <>
+      <label className="flex min-h-10 cursor-pointer items-center gap-2 self-end text-[13px]">
+        <input
+          type="checkbox"
+          checked={atFifty}
+          onChange={(event) => setAtFifty(event.target.checked)}
+          className="size-4 accent-primary"
+        />
+        At Level 50
+      </label>
+      <div className="grid grid-cols-[34px_30px_1fr_24px_30px_64px] items-center gap-x-2 gap-y-2.5 sm:grid-cols-[40px_34px_1fr_28px_34px_76px] sm:gap-x-2.5">
+        <span />
+        <span className="text-xs text-muted-foreground">Base</span>
+        <span />
+        <span className="text-right text-xs text-muted-foreground">IV</span>
+        <span className="text-right text-xs text-muted-foreground">EV</span>
+        <span className="text-right text-xs text-muted-foreground">{atFifty ? "Lv 50" : `Lv ${mon.level ?? "?"}`}</span>
+        {(mon.stats ?? []).map((s) => {
+          const up = n?.plus === s.stat && n.minus !== s.stat;
+          const down = n?.minus === s.stat && n.plus !== s.stat;
+          return (
+            <div key={s.stat} className="contents">
+              <span className={cn("font-semibold", up ? "text-primary" : down ? "text-chart-2" : "text-foreground")}>
+                {STAT_LABELS[s.stat]}
+              </span>
+              <span className="font-mono">{s.base}</span>
+              <span className="h-2 overflow-hidden rounded-sm bg-muted">
+                <span
+                  className={cn("block h-2 rounded-sm", up ? "bg-primary" : down ? "bg-chart-2" : "bg-chart-3")}
+                  style={{ width: `${Math.min(100, Math.round((s.base / 160) * 100))}%` }}
+                />
+              </span>
+              <span className="text-right font-mono">{s.iv ?? "—"}</span>
+              <span className="text-right font-mono">{s.ev ?? "—"}</span>
+              <span className="text-right font-mono">{atFifty ? fightStat(s) : (s.current ?? "—")}</span>
+            </div>
+          );
+        })}
+      </div>
+      {atFifty && (
+        <p className="m-0 text-[13px] text-muted-foreground">
+          As in the league's Showdown fights: its IVs and nature, 1 EV in every stat.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -153,11 +172,10 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
   const q = query.trim().toLowerCase();
   const hit = (move: MoveInfo) =>
     !q || move.name.toLowerCase().includes(q) || (labels.get(move.id) ?? "").toLowerCase().includes(q);
-  const groups: [string, MoveInfo[], boolean][] = [
-    ["Current moves", learn.current, false],
-    ["Move Relearner", learn.relearner, false],
-    ["TMs", learn.tms, false],
-    ["Not checked yet", learn.unchecked, true],
+  const groups: [string, MoveInfo[]][] = [
+    ["Current moves", learn.current],
+    ["Move Relearner", learn.relearner],
+    ["TMs", learn.tms],
   ];
   return (
     <>
@@ -172,7 +190,7 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
           className="min-w-0 flex-1 bg-transparent outline-none"
         />
       </label>
-      {groups.map(([name, moves, unchecked]) => {
+      {groups.map(([name, moves]) => {
         const shown = moves.filter(hit);
         if (moves.length === 0 || (q && shown.length === 0)) return null;
         return (
@@ -181,11 +199,6 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
               <h3 className="m-0 text-[13px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{name}</h3>
               <span className="font-mono text-xs text-muted-foreground">{moves.length}</span>
             </div>
-            {unchecked && (
-              <p className="m-0 rounded-[10px] bg-destructive-soft px-2.75 py-2.25 text-[13px]">
-                The game has not checked these TMs against {mon.species.name} yet, so it may or may not learn them.
-              </p>
-            )}
             <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
               {shown.map((move) => (
                 <li
@@ -196,7 +209,6 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
                   <span className="min-w-0 truncate font-medium">
                     {move.name}
                     {move.marked && <UnknownMark />}
-                    {unchecked && <UncheckedMark />}
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">{moveMeta(move)}</span>
                   <span className="text-right font-mono text-xs text-muted-foreground">{labels.get(move.id) ?? ""}</span>

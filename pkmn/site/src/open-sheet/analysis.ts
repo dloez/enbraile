@@ -44,7 +44,7 @@ export function speedOrder(team: readonly Analysed[]): SpeedEntry[] {
   return team
     .map(({ slot, mon }) => {
       const spe = mon.stats?.find((s) => s.stat === "spe");
-      return { slot, mon, low: spe?.low ?? 0, high: spe?.high ?? 0 };
+      return { slot, mon, low: spe?.fight ?? spe?.low ?? 0, high: spe?.fight ?? spe?.high ?? 0 };
     })
     .sort((a, b) => b.high - a.high || b.low - a.low || a.slot - b.slot);
 }

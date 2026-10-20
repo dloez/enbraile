@@ -34,8 +34,7 @@ interface Target {
 function TargetButton({ target, move, onGive }: { target: Target; move?: string; onGive: (slot: number) => void }) {
   const name = displayName(target.mon);
   const no = target.can === "no";
-  const unchecked = target.can === "unchecked";
-  const label = no ? `${name} can't learn ${move}` : unchecked ? `${name} (not checked in game yet)` : name;
+  const label = no ? `${name} can't learn ${move}` : name;
   const button = (
     <button
       type="button"
@@ -43,20 +42,9 @@ function TargetButton({ target, move, onGive }: { target: Target; move?: string;
       aria-label={label}
       title={label}
       onClick={() => onGive(target.slot)}
-      className={cn(
-        "relative grid size-13 cursor-pointer place-items-center rounded-[10px] border bg-box outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-35",
-        unchecked && "border-destructive",
-      )}
+      className="relative grid size-13 cursor-pointer place-items-center rounded-[10px] border bg-box outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-35"
     >
       <MonSprite mon={target.mon} className="size-12" />
-      {unchecked && (
-        <span
-          aria-hidden="true"
-          className="absolute -top-1.25 -right-1.25 grid size-4.5 place-items-center rounded-full border border-destructive bg-destructive-soft text-[11px] font-bold text-destructive"
-        >
-          ?
-        </span>
-      )}
     </button>
   );
   if (target.can === undefined || target.can === null) return button;
@@ -64,7 +52,7 @@ function TargetButton({ target, move, onGive }: { target: Target; move?: string;
     <div className="flex w-16 flex-col items-center gap-1">
       {button}
       <span className={cn("text-center text-[11px]", no ? "text-muted-foreground" : "text-foreground")}>
-        {no ? "Can't learn" : unchecked ? "Not checked" : name}
+        {no ? "Can't learn" : name}
       </span>
     </div>
   );

@@ -176,8 +176,14 @@ function MemberCard({ sheet, slot, member, mon, props }: {
                 >
                   {STAT_LABELS[s.stat]}
                 </span>
-                <span className="font-mono text-xs">{s.high}</span>
-                <span className="font-mono text-[11px] text-muted-foreground">{s.low}</span>
+                {s.fight !== null ? (
+                  <span className="font-mono text-xs">{s.fight}</span>
+                ) : (
+                  <>
+                    <span className="font-mono text-xs">{s.high}</span>
+                    <span className="font-mono text-[11px] text-muted-foreground">{s.low}</span>
+                  </>
+                )}
                 <span className="font-mono text-[11px] text-muted-foreground/60">{s.base}</span>
               </div>
             );

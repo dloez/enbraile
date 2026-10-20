@@ -41,9 +41,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
               <span className="w-4 font-mono text-xs text-muted-foreground">{rank + 1}</span>
               <MonSprite mon={entry.mon} className="size-8" />
               <span className="min-w-0 flex-1 truncate">{displayName(entry.mon)}</span>
-              <span className="font-mono text-xs">
-                {entry.low}–{entry.high}
-              </span>
+              <span className="font-mono text-xs">{entry.low === entry.high ? entry.low : `${entry.low}–${entry.high}`}</span>
             </li>
           ))}
         </ol>

@@ -5,10 +5,13 @@
 
 import argparse
 import json
+import random
 import re
+import shutil
 import subprocess
 import sys
-from pathlib import Path
+import zipfile
+from pathlib import Path, PurePosixPath
 
 DATA = {
     "randomlocke_version": 1,
@@ -1918,8 +1921,12 @@ DATA = {
             "ROWAPBERRY": "rowapberry",
             "KEEBERRY": "keeberry",
             "MARANGABERRY": "marangaberry",
+            "BLACKAUGURITE": "blackaugurite",
+            "PEATBLOCK": "peatblock",
             "ADAMANTCRYSTAL": "adamantcrystal",
             "LUSTROUSGLOBE": "lustrousglobe",
+            "LEGENDPLATE": "legendplate",
+            "BLANKPLATE": "blankplate",
             "GRISEOUSCORE": "griseouscore",
             "AUSPICIOUSARMOR": "auspiciousarmor",
             "MALICIOUSARMOR": "maliciousarmor",
@@ -4989,6 +4996,859 @@ DATA = {
         "TM124": "DRAGONCHEER",
         "TM125": "ALLURINGVOICE",
     },
+    "move_types": {
+        "MEGAHORN": "bug",
+        "ATTACKORDER": "bug",
+        "BUGBUZZ": "bug",
+        "FIRSTIMPRESSION": "bug",
+        "POLLENPUFF": "bug",
+        "LEECHLIFE": "bug",
+        "LUNGE": "bug",
+        "XSCISSOR": "bug",
+        "SIGNALBEAM": "bug",
+        "SKITTERSMACK": "bug",
+        "UTURN": "bug",
+        "STEAMROLLER": "bug",
+        "BUGBITE": "bug",
+        "SILVERWIND": "bug",
+        "FELLSTINGER": "bug",
+        "STRUGGLEBUG": "bug",
+        "FURYCUTTER": "bug",
+        "PINMISSILE": "bug",
+        "TWINEEDLE": "bug",
+        "INFESTATION": "bug",
+        "DEFENDORDER": "bug",
+        "HEALORDER": "bug",
+        "POWDER": "bug",
+        "QUIVERDANCE": "bug",
+        "RAGEPOWDER": "bug",
+        "SPIDERWEB": "bug",
+        "STICKYWEB": "bug",
+        "STRINGSHOT": "bug",
+        "TAILGLOW": "bug",
+        "HYPERSPACEFURY": "dark",
+        "FOULPLAY": "dark",
+        "FIERYWRATH": "dark",
+        "DARKESTLARIAT": "dark",
+        "NIGHTDAZE": "dark",
+        "CRUNCH": "dark",
+        "DARKPULSE": "dark",
+        "FALSESURRENDER": "dark",
+        "JAWLOCK": "dark",
+        "THROATCHOP": "dark",
+        "WICKEDBLOW": "dark",
+        "LASHOUT": "dark",
+        "NIGHTSLASH": "dark",
+        "SUCKERPUNCH": "dark",
+        "KNOCKOFF": "dark",
+        "ASSURANCE": "dark",
+        "BITE": "dark",
+        "BRUTALSWING": "dark",
+        "FEINTATTACK": "dark",
+        "THIEF": "dark",
+        "SNARL": "dark",
+        "PAYBACK": "dark",
+        "PURSUIT": "dark",
+        "BEATUP": "dark",
+        "FLING": "dark",
+        "POWERTRIP": "dark",
+        "PUNISHMENT": "dark",
+        "DARKVOID": "dark",
+        "EMBARGO": "dark",
+        "FAKETEARS": "dark",
+        "FLATTER": "dark",
+        "HONECLAWS": "dark",
+        "MEMENTO": "dark",
+        "NASTYPLOT": "dark",
+        "OBSTRUCT": "dark",
+        "PARTINGSHOT": "dark",
+        "QUASH": "dark",
+        "SNATCH": "dark",
+        "SWITCHEROO": "dark",
+        "TAUNT": "dark",
+        "TOPSYTURVY": "dark",
+        "TORMENT": "dark",
+        "ETERNABEAM": "dragon",
+        "DRAGONENERGY": "dragon",
+        "ROAROFTIME": "dragon",
+        "DRACOMETEOR": "dragon",
+        "OUTRAGE": "dragon",
+        "CLANGINGSCALES": "dragon",
+        "COREENFORCER": "dragon",
+        "DRAGONRUSH": "dragon",
+        "DYNAMAXCANNON": "dragon",
+        "SPACIALREND": "dragon",
+        "DRAGONHAMMER": "dragon",
+        "DRAGONPULSE": "dragon",
+        "DRAGONCLAW": "dragon",
+        "BREAKINGSWIPE": "dragon",
+        "DRAGONBREATH": "dragon",
+        "DRAGONTAIL": "dragon",
+        "DRAGONDARTS": "dragon",
+        "DUALCHOP": "dragon",
+        "TWISTER": "dragon",
+        "SCALESHOT": "dragon",
+        "DRAGONRAGE": "dragon",
+        "CLANGOROUSSOUL": "dragon",
+        "DRAGONDANCE": "dragon",
+        "BOLTSTRIKE": "electric",
+        "VOLTTACKLE": "electric",
+        "ZAPCANNON": "electric",
+        "AURAWHEEL": "electric",
+        "THUNDER": "electric",
+        "FUSIONBOLT": "electric",
+        "PLASMAFISTS": "electric",
+        "THUNDERBOLT": "electric",
+        "WILDCHARGE": "electric",
+        "BOLTBEAK": "electric",
+        "DISCHARGE": "electric",
+        "OVERDRIVE": "electric",
+        "THUNDERCAGE": "electric",
+        "ZINGZAP": "electric",
+        "THUNDERPUNCH": "electric",
+        "RISINGVOLTAGE": "electric",
+        "VOLTSWITCH": "electric",
+        "PARABOLICCHARGE": "electric",
+        "SPARK": "electric",
+        "THUNDERFANG": "electric",
+        "SHOCKWAVE": "electric",
+        "ELECTROWEB": "electric",
+        "CHARGEBEAM": "electric",
+        "THUNDERSHOCK": "electric",
+        "NUZZLE": "electric",
+        "ELECTROBALL": "electric",
+        "CHARGE": "electric",
+        "EERIEIMPULSE": "electric",
+        "ELECTRICTERRAIN": "electric",
+        "ELECTRIFY": "electric",
+        "IONDELUGE": "electric",
+        "MAGNETRISE": "electric",
+        "MAGNETICFLUX": "electric",
+        "THUNDERWAVE": "electric",
+        "LIGHTOFRUIN": "fairy",
+        "FLEURCANNON": "fairy",
+        "MISTYEXPLOSION": "fairy",
+        "MOONBLAST": "fairy",
+        "PLAYROUGH": "fairy",
+        "STRANGESTEAM": "fairy",
+        "DAZZLINGGLEAM": "fairy",
+        "SPIRITBREAK": "fairy",
+        "DRAININGKISS": "fairy",
+        "DISARMINGVOICE": "fairy",
+        "FAIRYWIND": "fairy",
+        "NATURESMADNESS": "fairy",
+        "AROMATICMIST": "fairy",
+        "BABYDOLLEYES": "fairy",
+        "CHARM": "fairy",
+        "CRAFTYSHIELD": "fairy",
+        "DECORATE": "fairy",
+        "FAIRYLOCK": "fairy",
+        "FLORALHEALING": "fairy",
+        "FLOWERSHIELD": "fairy",
+        "GEOMANCY": "fairy",
+        "MISTYTERRAIN": "fairy",
+        "MOONLIGHT": "fairy",
+        "SWEETKISS": "fairy",
+        "FOCUSPUNCH": "fighting",
+        "METEORASSAULT": "fighting",
+        "HIGHJUMPKICK": "fighting",
+        "CLOSECOMBAT": "fighting",
+        "FOCUSBLAST": "fighting",
+        "SUPERPOWER": "fighting",
+        "CROSSCHOP": "fighting",
+        "DYNAMICPUNCH": "fighting",
+        "FLYINGPRESS": "fighting",
+        "HAMMERARM": "fighting",
+        "JUMPKICK": "fighting",
+        "SACREDSWORD": "fighting",
+        "THUNDEROUSKICK": "fighting",
+        "SECRETSWORD": "fighting",
+        "SKYUPPERCUT": "fighting",
+        "AURASPHERE": "fighting",
+        "BODYPRESS": "fighting",
+        "SUBMISSION": "fighting",
+        "BRICKBREAK": "fighting",
+        "DRAINPUNCH": "fighting",
+        "VITALTHROW": "fighting",
+        "WAKEUPSLAP": "fighting",
+        "LOWSWEEP": "fighting",
+        "CIRCLETHROW": "fighting",
+        "FORCEPALM": "fighting",
+        "REVENGE": "fighting",
+        "ROLLINGKICK": "fighting",
+        "STORMTHROW": "fighting",
+        "KARATECHOP": "fighting",
+        "MACHPUNCH": "fighting",
+        "POWERUPPUNCH": "fighting",
+        "ROCKSMASH": "fighting",
+        "VACUUMWAVE": "fighting",
+        "DOUBLEKICK": "fighting",
+        "ARMTHRUST": "fighting",
+        "TRIPLEKICK": "fighting",
+        "COUNTER": "fighting",
+        "FINALGAMBIT": "fighting",
+        "LOWKICK": "fighting",
+        "REVERSAL": "fighting",
+        "SEISMICTOSS": "fighting",
+        "BULKUP": "fighting",
+        "COACHING": "fighting",
+        "DETECT": "fighting",
+        "MATBLOCK": "fighting",
+        "NORETREAT": "fighting",
+        "OCTOLOCK": "fighting",
+        "QUICKGUARD": "fighting",
+        "VCREATE": "fire",
+        "BLASTBURN": "fire",
+        "ERUPTION": "fire",
+        "MINDBLOWN": "fire",
+        "SHELLTRAP": "fire",
+        "BLUEFLARE": "fire",
+        "BURNUP": "fire",
+        "OVERHEAT": "fire",
+        "FLAREBLITZ": "fire",
+        "PYROBALL": "fire",
+        "FIREBLAST": "fire",
+        "FUSIONFLARE": "fire",
+        "INFERNO": "fire",
+        "MAGMASTORM": "fire",
+        "SACREDFIRE": "fire",
+        "SEARINGSHOT": "fire",
+        "HEATWAVE": "fire",
+        "FLAMETHROWER": "fire",
+        "BLAZEKICK": "fire",
+        "FIERYDANCE": "fire",
+        "FIRELASH": "fire",
+        "FIREPLEDGE": "fire",
+        "LAVAPLUME": "fire",
+        "FIREPUNCH": "fire",
+        "MYSTICALFIRE": "fire",
+        "BURNINGJEALOUSY": "fire",
+        "FLAMEBURST": "fire",
+        "FIREFANG": "fire",
+        "FLAMEWHEEL": "fire",
+        "INCINERATE": "fire",
+        "FLAMECHARGE": "fire",
+        "EMBER": "fire",
+        "FIRESPIN": "fire",
+        "HEATCRASH": "fire",
+        "SUNNYDAY": "fire",
+        "WILLOWISP": "fire",
+        "SKYATTACK": "flying",
+        "BRAVEBIRD": "flying",
+        "DRAGONASCENT": "flying",
+        "HURRICANE": "flying",
+        "AEROBLAST": "flying",
+        "BEAKBLAST": "flying",
+        "FLY": "flying",
+        "BOUNCE": "flying",
+        "DRILLPECK": "flying",
+        "OBLIVIONWING": "flying",
+        "AIRSLASH": "flying",
+        "CHATTER": "flying",
+        "AERIALACE": "flying",
+        "AIRCUTTER": "flying",
+        "PLUCK": "flying",
+        "SKYDROP": "flying",
+        "WINGATTACK": "flying",
+        "ACROBATICS": "flying",
+        "DUALWINGBEAT": "flying",
+        "GUST": "flying",
+        "PECK": "flying",
+        "DEFOG": "flying",
+        "FEATHERDANCE": "flying",
+        "MIRRORMOVE": "flying",
+        "ROOST": "flying",
+        "TAILWIND": "flying",
+        "ASTRALBARRAGE": "ghost",
+        "SHADOWFORCE": "ghost",
+        "POLTERGEIST": "ghost",
+        "MOONGEISTBEAM": "ghost",
+        "PHANTOMFORCE": "ghost",
+        "SPECTRALTHIEF": "ghost",
+        "SHADOWBONE": "ghost",
+        "SHADOWBALL": "ghost",
+        "SPIRITSHACKLE": "ghost",
+        "SHADOWCLAW": "ghost",
+        "HEX": "ghost",
+        "OMINOUSWIND": "ghost",
+        "SHADOWPUNCH": "ghost",
+        "SHADOWSNEAK": "ghost",
+        "ASTONISH": "ghost",
+        "LICK": "ghost",
+        "NIGHTSHADE": "ghost",
+        "CONFUSERAY": "ghost",
+        "CURSE": "ghost",
+        "DESTINYBOND": "ghost",
+        "GRUDGE": "ghost",
+        "NIGHTMARE": "ghost",
+        "SPITE": "ghost",
+        "TRICKORTREAT": "ghost",
+        "FRENZYPLANT": "grass",
+        "LEAFSTORM": "grass",
+        "SOLARBLADE": "grass",
+        "PETALDANCE": "grass",
+        "POWERWHIP": "grass",
+        "SEEDFLARE": "grass",
+        "SOLARBEAM": "grass",
+        "WOODHAMMER": "grass",
+        "ENERGYBALL": "grass",
+        "LEAFBLADE": "grass",
+        "PETALBLIZZARD": "grass",
+        "APPLEACID": "grass",
+        "DRUMBEATING": "grass",
+        "GRASSPLEDGE": "grass",
+        "GRAVAPPLE": "grass",
+        "SEEDBOMB": "grass",
+        "GIGADRAIN": "grass",
+        "HORNLEECH": "grass",
+        "GRASSYGLIDE": "grass",
+        "TROPKICK": "grass",
+        "LEAFTORNADO": "grass",
+        "MAGICALLEAF": "grass",
+        "NEEDLEARM": "grass",
+        "RAZORLEAF": "grass",
+        "VINEWHIP": "grass",
+        "BRANCHPOKE": "grass",
+        "LEAFAGE": "grass",
+        "MEGADRAIN": "grass",
+        "SNAPTRAP": "grass",
+        "BULLETSEED": "grass",
+        "ABSORB": "grass",
+        "GRASSKNOT": "grass",
+        "AROMATHERAPY": "grass",
+        "COTTONGUARD": "grass",
+        "COTTONSPORE": "grass",
+        "FORESTSCURSE": "grass",
+        "GRASSWHISTLE": "grass",
+        "GRASSYTERRAIN": "grass",
+        "INGRAIN": "grass",
+        "JUNGLEHEALING": "grass",
+        "LEECHSEED": "grass",
+        "SLEEPPOWDER": "grass",
+        "SPIKYSHIELD": "grass",
+        "SPORE": "grass",
+        "STRENGTHSAP": "grass",
+        "STUNSPORE": "grass",
+        "SYNTHESIS": "grass",
+        "WORRYSEED": "grass",
+        "PRECIPICEBLADES": "ground",
+        "EARTHQUAKE": "ground",
+        "HIGHHORSEPOWER": "ground",
+        "EARTHPOWER": "ground",
+        "LANDSWRATH": "ground",
+        "THOUSANDARROWS": "ground",
+        "THOUSANDWAVES": "ground",
+        "DIG": "ground",
+        "DRILLRUN": "ground",
+        "STOMPINGTANTRUM": "ground",
+        "SCORCHINGSANDS": "ground",
+        "BONECLUB": "ground",
+        "MUDBOMB": "ground",
+        "BULLDOZE": "ground",
+        "MUDSHOT": "ground",
+        "BONEMERANG": "ground",
+        "SANDTOMB": "ground",
+        "BONERUSH": "ground",
+        "MUDSLAP": "ground",
+        "FISSURE": "ground",
+        "MAGNITUDE": "ground",
+        "MUDSPORT": "ground",
+        "ROTOTILLER": "ground",
+        "SANDATTACK": "ground",
+        "SHOREUP": "ground",
+        "SPIKES": "ground",
+        "FREEZESHOCK": "ice",
+        "ICEBURN": "ice",
+        "GLACIALLANCE": "ice",
+        "BLIZZARD": "ice",
+        "ICEHAMMER": "ice",
+        "ICEBEAM": "ice",
+        "ICICLECRASH": "ice",
+        "ICEPUNCH": "ice",
+        "FREEZEDRY": "ice",
+        "AURORABEAM": "ice",
+        "GLACIATE": "ice",
+        "ICEFANG": "ice",
+        "AVALANCHE": "ice",
+        "FROSTBREATH": "ice",
+        "ICYWIND": "ice",
+        "ICESHARD": "ice",
+        "POWDERSNOW": "ice",
+        "ICEBALL": "ice",
+        "ICICLESPEAR": "ice",
+        "TRIPLEAXEL": "ice",
+        "SHEERCOLD": "ice",
+        "AURORAVEIL": "ice",
+        "HAIL": "ice",
+        "HAZE": "ice",
+        "MIST": "ice",
+        "EXPLOSION": "normal",
+        "SELFDESTRUCT": "normal",
+        "GIGAIMPACT": "normal",
+        "HYPERBEAM": "normal",
+        "BOOMBURST": "normal",
+        "LASTRESORT": "normal",
+        "SKULLBASH": "normal",
+        "DOUBLEEDGE": "normal",
+        "HEADCHARGE": "normal",
+        "MEGAKICK": "normal",
+        "MULTIATTACK": "normal",
+        "TECHNOBLAST": "normal",
+        "THRASH": "normal",
+        "EGGBOMB": "normal",
+        "JUDGMENT": "normal",
+        "HYPERVOICE": "normal",
+        "REVELATIONDANCE": "normal",
+        "ROCKCLIMB": "normal",
+        "TAKEDOWN": "normal",
+        "UPROAR": "normal",
+        "BODYSLAM": "normal",
+        "EXTREMESPEED": "normal",
+        "HYPERFANG": "normal",
+        "MEGAPUNCH": "normal",
+        "RAZORWIND": "normal",
+        "SLAM": "normal",
+        "STRENGTH": "rock",
+        "TRIATTACK": "normal",
+        "CRUSHCLAW": "normal",
+        "RELICSONG": "normal",
+        "CHIPAWAY": "normal",
+        "DIZZYPUNCH": "normal",
+        "FACADE": "normal",
+        "HEADBUTT": "normal",
+        "RETALIATE": "normal",
+        "SECRETPOWER": "normal",
+        "SLASH": "normal",
+        "SMELLINGSALTS": "normal",
+        "HORNATTACK": "normal",
+        "STOMP": "normal",
+        "COVET": "normal",
+        "HIDDENPOWER": "normal",
+        "ROUND": "normal",
+        "SWIFT": "normal",
+        "VISEGRIP": "normal",
+        "CUT": "steel",
+        "RAPIDSPIN": "normal",
+        "SNORE": "normal",
+        "TERRAINPULSE": "normal",
+        "WEATHERBALL": "normal",
+        "ECHOEDVOICE": "normal",
+        "FAKEOUT": "normal",
+        "FALSESWIPE": "normal",
+        "HOLDBACK": "normal",
+        "PAYDAY": "normal",
+        "POUND": "normal",
+        "QUICKATTACK": "normal",
+        "SCRATCH": "normal",
+        "TACKLE": "normal",
+        "DOUBLEHIT": "normal",
+        "FEINT": "normal",
+        "TAILSLAP": "normal",
+        "RAGE": "normal",
+        "SPIKECANNON": "water",
+        "COMETPUNCH": "normal",
+        "FURYSWIPES": "normal",
+        "BARRAGE": "normal",
+        "BIND": "normal",
+        "DOUBLESLAP": "normal",
+        "FURYATTACK": "normal",
+        "WRAP": "normal",
+        "CONSTRICT": "normal",
+        "BIDE": "normal",
+        "CRUSHGRIP": "normal",
+        "ENDEAVOR": "normal",
+        "FLAIL": "normal",
+        "FRUSTRATION": "normal",
+        "GUILLOTINE": "normal",
+        "HORNDRILL": "normal",
+        "NATURALGIFT": "normal",
+        "PRESENT": "normal",
+        "RETURN": "normal",
+        "SONICBOOM": "normal",
+        "SPITUP": "normal",
+        "SUPERFANG": "normal",
+        "TRUMPCARD": "normal",
+        "WRINGOUT": "normal",
+        "ACUPRESSURE": "normal",
+        "AFTERYOU": "normal",
+        "ASSIST": "normal",
+        "ATTRACT": "normal",
+        "BATONPASS": "normal",
+        "BELLYDRUM": "normal",
+        "BESTOW": "normal",
+        "BLOCK": "normal",
+        "CAMOUFLAGE": "normal",
+        "CAPTIVATE": "normal",
+        "CELEBRATE": "normal",
+        "CONFIDE": "normal",
+        "CONVERSION": "normal",
+        "CONVERSION2": "normal",
+        "COPYCAT": "normal",
+        "COURTCHANGE": "normal",
+        "DEFENSECURL": "normal",
+        "DISABLE": "normal",
+        "DOUBLETEAM": "normal",
+        "ENCORE": "normal",
+        "ENDURE": "normal",
+        "ENTRAINMENT": "normal",
+        "FLASH": "normal",
+        "FOCUSENERGY": "normal",
+        "FOLLOWME": "normal",
+        "FORESIGHT": "normal",
+        "GLARE": "normal",
+        "GROWL": "normal",
+        "GROWTH": "normal",
+        "HAPPYHOUR": "normal",
+        "HARDEN": "normal",
+        "HEALBELL": "normal",
+        "HELPINGHAND": "normal",
+        "HOLDHANDS": "normal",
+        "HOWL": "normal",
+        "LASERFOCUS": "normal",
+        "LEER": "normal",
+        "LOCKON": "normal",
+        "LOVELYKISS": "normal",
+        "LUCKYCHANT": "normal",
+        "MEFIRST": "normal",
+        "MEANLOOK": "normal",
+        "METRONOME": "normal",
+        "MILKDRINK": "normal",
+        "MIMIC": "normal",
+        "MINDREADER": "normal",
+        "MINIMIZE": "normal",
+        "MORNINGSUN": "normal",
+        "NATUREPOWER": "normal",
+        "NOBLEROAR": "normal",
+        "ODORSLEUTH": "normal",
+        "PAINSPLIT": "normal",
+        "PERISHSONG": "normal",
+        "PLAYNICE": "normal",
+        "PROTECT": "normal",
+        "PSYCHUP": "normal",
+        "RECOVER": "normal",
+        "RECYCLE": "normal",
+        "REFLECTTYPE": "normal",
+        "REFRESH": "normal",
+        "ROAR": "normal",
+        "SAFEGUARD": "normal",
+        "SCARYFACE": "normal",
+        "SCREECH": "normal",
+        "SHARPEN": "normal",
+        "SHELLSMASH": "normal",
+        "SIMPLEBEAM": "normal",
+        "SING": "normal",
+        "SKETCH": "normal",
+        "SLACKOFF": "normal",
+        "SLEEPTALK": "normal",
+        "SMOKESCREEN": "normal",
+        "SOFTBOILED": "normal",
+        "SPLASH": "normal",
+        "SPOTLIGHT": "normal",
+        "STOCKPILE": "normal",
+        "STUFFCHEEKS": "normal",
+        "SUBSTITUTE": "normal",
+        "SUPERSONIC": "normal",
+        "SWAGGER": "normal",
+        "SWALLOW": "normal",
+        "SWEETSCENT": "normal",
+        "SWORDSDANCE": "normal",
+        "TAILWHIP": "normal",
+        "TEARFULLOOK": "normal",
+        "TEATIME": "normal",
+        "TEETERDANCE": "normal",
+        "TICKLE": "normal",
+        "TRANSFORM": "normal",
+        "WHIRLWIND": "normal",
+        "WISH": "normal",
+        "WORKUP": "normal",
+        "YAWN": "normal",
+        "BELCH": "poison",
+        "GUNKSHOT": "poison",
+        "SLUDGEWAVE": "poison",
+        "SHELLSIDEARM": "poison",
+        "SLUDGEBOMB": "poison",
+        "POISONJAB": "poison",
+        "CROSSPOISON": "poison",
+        "SLUDGE": "poison",
+        "VENOSHOCK": "poison",
+        "CLEARSMOG": "poison",
+        "POISONFANG": "poison",
+        "POISONTAIL": "poison",
+        "ACID": "poison",
+        "ACIDSPRAY": "poison",
+        "SMOG": "poison",
+        "POISONSTING": "poison",
+        "ACIDARMOR": "poison",
+        "BANEFULBUNKER": "poison",
+        "COIL": "poison",
+        "CORROSIVEGAS": "poison",
+        "GASTROACID": "poison",
+        "POISONGAS": "poison",
+        "POISONPOWDER": "poison",
+        "PURIFY": "poison",
+        "TOXIC": "poison",
+        "TOXICSPIKES": "poison",
+        "TOXICTHREAD": "poison",
+        "VENOMDRENCH": "poison",
+        "PRISMATICLASER": "psychic",
+        "PSYCHOBOOST": "psychic",
+        "FUTURESIGHT": "psychic",
+        "SYNCHRONOISE": "psychic",
+        "DREAMEATER": "psychic",
+        "PHOTONGEYSER": "psychic",
+        "PSYSTRIKE": "psychic",
+        "FREEZINGGLARE": "psychic",
+        "PSYCHIC": "psychic",
+        "PSYCHICFANGS": "psychic",
+        "EERIESPELL": "psychic",
+        "EXPANDINGFORCE": "psychic",
+        "EXTRASENSORY": "psychic",
+        "HYPERSPACEHOLE": "psychic",
+        "PSYSHOCK": "psychic",
+        "ZENHEADBUTT": "psychic",
+        "LUSTERPURGE": "psychic",
+        "MISTBALL": "psychic",
+        "PSYCHOCUT": "psychic",
+        "PSYBEAM": "psychic",
+        "HEARTSTAMP": "psychic",
+        "CONFUSION": "psychic",
+        "STOREDPOWER": "psychic",
+        "MIRRORCOAT": "psychic",
+        "PSYWAVE": "psychic",
+        "AGILITY": "psychic",
+        "ALLYSWITCH": "psychic",
+        "AMNESIA": "psychic",
+        "BARRIER": "psychic",
+        "CALMMIND": "psychic",
+        "COSMICPOWER": "psychic",
+        "GRAVITY": "psychic",
+        "GUARDSPLIT": "psychic",
+        "GUARDSWAP": "psychic",
+        "HEALBLOCK": "psychic",
+        "HEALPULSE": "psychic",
+        "HEALINGWISH": "psychic",
+        "HEARTSWAP": "psychic",
+        "HYPNOSIS": "psychic",
+        "IMPRISON": "psychic",
+        "INSTRUCT": "psychic",
+        "KINESIS": "psychic",
+        "LIGHTSCREEN": "psychic",
+        "LUNARDANCE": "psychic",
+        "MAGICCOAT": "psychic",
+        "MAGICPOWDER": "psychic",
+        "MAGICROOM": "psychic",
+        "MEDITATE": "psychic",
+        "MIRACLEEYE": "psychic",
+        "POWERSPLIT": "psychic",
+        "POWERSWAP": "psychic",
+        "POWERTRICK": "psychic",
+        "PSYCHICTERRAIN": "psychic",
+        "PSYCHOSHIFT": "psychic",
+        "REFLECT": "psychic",
+        "REST": "psychic",
+        "ROLEPLAY": "psychic",
+        "SKILLSWAP": "psychic",
+        "SPEEDSWAP": "psychic",
+        "TELEKINESIS": "psychic",
+        "TELEPORT": "psychic",
+        "TRICK": "psychic",
+        "TRICKROOM": "psychic",
+        "WONDERROOM": "psychic",
+        "HEADSMASH": "rock",
+        "ROCKWRECKER": "rock",
+        "METEORBEAM": "rock",
+        "DIAMONDSTORM": "rock",
+        "STONEEDGE": "rock",
+        "POWERGEM": "rock",
+        "ROCKSLIDE": "rock",
+        "ANCIENTPOWER": "rock",
+        "ROCKTOMB": "rock",
+        "ROCKTHROW": "rock",
+        "SMACKDOWN": "rock",
+        "ACCELEROCK": "rock",
+        "ROLLOUT": "rock",
+        "ROCKBLAST": "rock",
+        "ROCKPOLISH": "rock",
+        "SANDSTORM": "rock",
+        "STEALTHROCK": "rock",
+        "TARSHOT": "rock",
+        "WIDEGUARD": "rock",
+        "DOOMDESIRE": "steel",
+        "STEELBEAM": "steel",
+        "STEELROLLER": "steel",
+        "BEHEMOTHBASH": "steel",
+        "BEHEMOTHBLADE": "steel",
+        "IRONTAIL": "steel",
+        "SUNSTEELSTRIKE": "steel",
+        "METEORMASH": "steel",
+        "ANCHORSHOT": "steel",
+        "FLASHCANNON": "steel",
+        "IRONHEAD": "steel",
+        "SMARTSTRIKE": "steel",
+        "STEELWING": "steel",
+        "DOUBLEIRONBASH": "steel",
+        "MIRRORSHOT": "steel",
+        "MAGNETBOMB": "steel",
+        "GEARGRIND": "steel",
+        "METALCLAW": "steel",
+        "BULLETPUNCH": "steel",
+        "GYROBALL": "steel",
+        "HEAVYSLAM": "steel",
+        "METALBURST": "steel",
+        "AUTOTOMIZE": "steel",
+        "GEARUP": "steel",
+        "IRONDEFENSE": "steel",
+        "KINGSSHIELD": "steel",
+        "METALSOUND": "steel",
+        "SHIFTGEAR": "steel",
+        "HYDROCANNON": "water",
+        "WATERSPOUT": "water",
+        "HYDROPUMP": "water",
+        "ORIGINPULSE": "water",
+        "STEAMERUPTION": "water",
+        "CRABHAMMER": "water",
+        "AQUATAIL": "water",
+        "MUDDYWATER": "water",
+        "SPARKLINGARIA": "water",
+        "SURF": "water",
+        "FISHIOUSREND": "water",
+        "LIQUIDATION": "water",
+        "DIVE": "water",
+        "SCALD": "water",
+        "SNIPESHOT": "water",
+        "WATERPLEDGE": "water",
+        "WATERFALL": "water",
+        "RAZORSHELL": "water",
+        "BRINE": "water",
+        "BUBBLEBEAM": "water",
+        "OCTAZOOKA": "water",
+        "FLIPTURN": "water",
+        "WATERPULSE": "water",
+        "AQUAJET": "water",
+        "BUBBLE": "water",
+        "WATERGUN": "water",
+        "CLAMP": "water",
+        "WHIRLPOOL": "water",
+        "SURGINGSTRIKES": "water",
+        "WATERSHURIKEN": "water",
+        "AQUARING": "water",
+        "LIFEDEW": "water",
+        "RAINDANCE": "water",
+        "SOAK": "water",
+        "WATERSPORT": "water",
+        "WITHDRAW": "water",
+        "DIRECLAW": "poison",
+        "SPRINGTIDESTORM": "fairy",
+        "RAGINGFURY": "fire",
+        "WAVECRASH": "water",
+        "CHLOROBLAST": "grass",
+        "MOUNTAINGALE": "ice",
+        "HEADLONGRUSH": "ground",
+        "BARBBARRAGE": "poison",
+        "ESPERWING": "psychic",
+        "BITTERMALICE": "ghost",
+        "TRIPLEARROWS": "fighting",
+        "BLEAKWINDSTORM": "flying",
+        "WILDBOLTSTORM": "electric",
+        "SANDSEARSTORM": "ground",
+        "LUNARBLESSING": "psychic",
+        "PSYSHIELDBASH": "psychic",
+        "POWERSHIFT": "normal",
+        "STONEAXE": "rock",
+        "MYSTICALPOWER": "psychic",
+        "VICTORYDANCE": "fighting",
+        "SHELTER": "steel",
+        "INFERNALPARADE": "ghost",
+        "CEASELESSEDGE": "dark",
+        "TAKEHEART": "psychic",
+        "AQUACUTTER": "water",
+        "AQUASTEP": "water",
+        "ARMORCANNON": "fire",
+        "AXEKICK": "fighting",
+        "BITTERBLADE": "fire",
+        "BLAZINGTORQUE": "fire",
+        "CHILLINGWATER": "water",
+        "CHILLYRECEPTION": "ice",
+        "COLLISIONCOURSE": "fighting",
+        "COMBATTORQUE": "fighting",
+        "COMEUPPANCE": "dark",
+        "DOODLE": "normal",
+        "DOUBLESHOCK": "electric",
+        "ELECTRODRIFT": "electric",
+        "FILLETAWAY": "normal",
+        "FLOWERTRICK": "grass",
+        "GIGATONHAMMER": "steel",
+        "GLAIVERUSH": "dragon",
+        "HYPERDRILL": "normal",
+        "ICESPINNER": "ice",
+        "JETPUNCH": "water",
+        "KOWTOWCLEAVE": "dark",
+        "LASTRESPECTS": "ghost",
+        "LUMINACRASH": "psychic",
+        "MAGICALTORQUE": "fairy",
+        "MAKEITRAIN": "steel",
+        "MORTALSPIN": "poison",
+        "NOXIOUSTORQUE": "poison",
+        "ORDERUP": "dragon",
+        "POPULATIONBOMB": "normal",
+        "POUNCE": "bug",
+        "RAGEFIST": "ghost",
+        "RAGINGBULL": "normal",
+        "REVIVALBLESSING": "normal",
+        "RUINATION": "dark",
+        "SALTCURE": "rock",
+        "SHEDTAIL": "normal",
+        "SILKTRAP": "bug",
+        "SNOWSCAPE": "ice",
+        "SPICYEXTRACT": "grass",
+        "SPINOUT": "steel",
+        "TIDYUP": "normal",
+        "TORCHSONG": "fire",
+        "TRAILBLAZE": "grass",
+        "TRIPLEDIVE": "water",
+        "TWINBEAM": "psychic",
+        "WICKEDTORQUE": "dark",
+        "HYDROSTEAM": "water",
+        "PSYBLADE": "psychic",
+        "BLOODMOON": "normal",
+        "MATCHAGOTCHA": "grass",
+        "SYRUPBOMB": "grass",
+        "IVYCUDGEL": "grass",
+        "ELECTROSHOT": "electric",
+        "TERASTARSTORM": "normal",
+        "FICKLEBEAM": "dragon",
+        "BURNINGBULWARK": "fire",
+        "THUNDERCLAP": "electric",
+        "MIGHTYCLEAVE": "rock",
+        "TACHYONCUTTER": "steel",
+        "HARDPRESS": "steel",
+        "DRAGONCHEER": "dragon",
+        "ALLURINGVOICE": "fairy",
+        "TEMPERFLARE": "fire",
+        "SUPERCELLSLAM": "electric",
+        "PSYCHICNOISE": "psychic",
+        "UPPERHAND": "fighting",
+        "MALIGNANTCHAIN": "poison",
+        "TERABLAST": "normal",
+        "ESCALOFRIO": "ice",
+        "DESLIZAMIENTO": "ice",
+        "ATRAPAMOSCAS": "grass",
+        "TRIPLEHIT": "normal",
+        "EEVEEVOLLEY": "normal",
+        "BOUNCYBUBBLE": "water",
+        "BUZZYBUZZ": "electric",
+        "SIZZLYSLIDE": "fire",
+        "GLITZYGLOW": "psychic",
+        "BADDYBAD": "dark",
+        "SAPPYSEED": "grass",
+        "FREEZYFROST": "ice",
+        "SPARKLYSWIRL": "fairy",
+        "PIKAPAPOW": "electric",
+        "ZIPPYZAP": "electric",
+        "SPLISHYSPLASH": "water",
+        "FLOATYFALL": "flying",
+        "NIHILLIGHT": "dragon",
+    },
     "evolutions": {
         "BULBASAUR": [["IVYSAUR", "Level", 16]],
         "IVYSAUR": [["VENUSAUR", "Level", 32]],
@@ -5330,6 +6190,11 @@ GENDERS = {0: "M", 1: "F", 2: "N"}
 SHINY_CHANCE = 65
 ITEM_POCKETS = (1, 5)
 TM_POCKET = 4
+SAME_TYPE_TM_CHANCE = 70
+MAX_IV = 31
+SAVE_STATS = {"hp": "HP", "atk": "ATTACK", "def": "DEFENSE", "spa": "SPECIAL_ATTACK", "spd": "SPECIAL_DEFENSE", "spe": "SPEED"}
+STAT_FIELDS = {"hp": "totalhp", "atk": "attack", "def": "defense", "spa": "spatk", "spd": "spdef", "spe": "speed"}
+OTHER_TYPE_TM_CHANCE = 40
 
 
 class Symbol(str):
@@ -5488,6 +6353,55 @@ class MarshalReader:
         raise MarshalError(f"unsupported Marshal type {kind!r} at byte {self.pos - 1}")
 
 
+class MarshalWriter:
+    def __init__(self):
+        self.out = bytearray(b"\x04\x08")
+        self.symbols: dict[str, int] = {}
+
+    def dump(self, value) -> bytes:
+        self.write(value)
+        return bytes(self.out)
+
+    def integer(self, value: int):
+        if value == 0:
+            self.out.append(0)
+        elif value < 123:
+            self.out.append(value + 5)
+        else:
+            size = (value.bit_length() + 7) // 8
+            self.out.append(size)
+            self.out += value.to_bytes(size, "little")
+
+    def write(self, value):
+        if value is True:
+            self.out += b"T"
+        elif value is False:
+            self.out += b"F"
+        elif isinstance(value, Symbol):
+            if value in self.symbols:
+                self.out += b";"
+                self.integer(self.symbols[value])
+            else:
+                self.symbols[value] = len(self.symbols)
+                encoded = value.encode("utf-8")
+                self.out += b":"
+                self.integer(len(encoded))
+                self.out += encoded
+        elif isinstance(value, list):
+            self.out += b"["
+            self.integer(len(value))
+            for item in value:
+                self.write(item)
+        elif isinstance(value, dict):
+            self.out += b"{"
+            self.integer(len(value))
+            for key, item in value.items():
+                self.write(key)
+                self.write(item)
+        else:
+            raise MarshalError(f"cannot write {type(value).__name__}")
+
+
 def windows_appdata() -> list[Path]:
     try:
         echoed = subprocess.run(
@@ -5516,38 +6430,58 @@ def find_slots(folders: list[Path]) -> list[Path]:
     return sorted(slots, key=lambda path: (str(path.parent), int(SLOT.match(path.name).group(1))))
 
 
+def pick(labels: list[str]) -> int:
+    if len(labels) == 1:
+        return 0
+    for number, label in enumerate(labels, 1):
+        print(f"{number}. {label}")
+    while True:
+        try:
+            answer = input(f"Which save? [1-{len(labels)}] ").strip()
+        except EOFError:
+            sys.exit("No save picked. Point to one with --save PATH.")
+        if answer.isdigit() and 1 <= int(answer) <= len(labels):
+            return int(answer) - 1
+
+
 def pick_save() -> Path:
     folders = save_folders()
     slots = find_slots(folders)
     if not slots:
         looked = ", ".join(str(folder) for folder in folders) or "/mnt/c/Users/*/AppData/Roaming"
         sys.exit(f"No save found in {looked}. Point to one with --save PATH.")
-    if len(slots) == 1:
-        return slots[0]
-    for number, slot in enumerate(slots, 1):
-        print(f"{number}. {slot.stem} ({slot.parent})")
-    while True:
-        try:
-            answer = input(f"Which save? [1-{len(slots)}] ").strip()
-        except EOFError:
-            sys.exit("No save picked. Point to one with --save PATH.")
-        if answer.isdigit() and 1 <= int(answer) <= len(slots):
-            return slots[int(answer) - 1]
+    return slots[pick([f"{slot.stem} ({slot.parent})" for slot in slots])]
 
 
-def read_save(path: Path) -> dict:
-    try:
-        with path.open("rb") as handle:
-            data = handle.read()
-    except OSError as error:
-        sys.exit(f"Could not read {path}: {error}")
+def entry_name(entry: str) -> str:
+    return PurePosixPath(entry.replace("\\", "/")).name
+
+
+def pick_zip_save(archive: zipfile.ZipFile, path: Path) -> str:
+    slots = sorted(
+        (entry for entry in archive.namelist() if not entry.endswith("/") and SLOT.match(entry_name(entry))),
+        key=lambda entry: (entry[: -len(entry_name(entry))], int(SLOT.match(entry_name(entry)).group(1))),
+    )
+    if not slots:
+        sys.exit(f"No Partida N.rxdata save found in {path}.")
+    return slots[pick(slots)]
+
+
+def parse_save(data: bytes, label: str) -> dict:
     try:
         save = MarshalReader(data).load()
     except (MarshalError, IndexError, ValueError, UnicodeDecodeError) as error:
-        sys.exit(f"Could not read {path} ({error}). If the game was saving, let it finish and run this again.")
+        sys.exit(f"Could not read {label} ({error}). If the game was saving, let it finish and run this again.")
     if not isinstance(save, dict) or "player" not in save:
-        sys.exit(f"{path} is not a Pokémon Añil save.")
+        sys.exit(f"{label} is not a Pokémon Añil save.")
     return save
+
+
+def read_file(path: Path) -> bytes:
+    try:
+        return path.read_bytes()
+    except OSError as error:
+        sys.exit(f"Could not read {path}: {error}")
 
 
 def species_form(pokemon: RubyObject) -> str:
@@ -5652,6 +6586,21 @@ def missed_evolutions(game_id: str, pokemon: RubyObject, level: int | None, gend
     return missed
 
 
+def stat_table(values: dict) -> dict[str, int] | None:
+    return values if all(isinstance(value, int) for value in values.values()) else None
+
+
+def spreads(pokemon: RubyObject) -> tuple[dict | None, dict | None, dict | None]:
+    iv = pokemon.get("iv") if isinstance(pokemon.get("iv"), dict) else {}
+    ev = pokemon.get("ev") if isinstance(pokemon.get("ev"), dict) else {}
+    maxed = pokemon.get("ivMaxed") if isinstance(pokemon.get("ivMaxed"), dict) else {}
+    return (
+        stat_table({stat: MAX_IV if maxed.get(key) else iv.get(key) for stat, key in SAVE_STATS.items()}),
+        stat_table({stat: ev.get(key) for stat, key in SAVE_STATS.items()}),
+        stat_table({stat: pokemon.get(field) for stat, field in STAT_FIELDS.items()}),
+    )
+
+
 def hatched(pokemon) -> bool:
     return isinstance(pokemon, RubyObject) and (pokemon.get("steps_to_hatch") or 0) <= 0
 
@@ -5697,6 +6646,10 @@ def export_pokemon(pokemon: RubyObject, table: dict, capsules, moves: dict | Non
     for field, value in (("level", level), ("gender", gender), ("nature", nature)):
         if value is None:
             notices.append(f"The save has not filled in the {field} of {label}; exported without it.")
+    ivs, evs, stats = spreads(pokemon)
+    for field, value in (("IVs", ivs), ("EVs", evs), ("stats", stats)):
+        if value is None:
+            notices.append(f"The save has not filled in the {field} of {label}; exported without them.")
     for target, ways in missed_evolutions(game_id, pokemon, level, gender).items():
         notices.append(f"{label} has not evolved into {target} ({', '.join(ways)}).")
     exported = {
@@ -5709,6 +6662,9 @@ def export_pokemon(pokemon: RubyObject, table: dict, capsules, moves: dict | Non
         "ability": current,
         "abilities": named,
         "types": DATA["types"][game_id],
+        "ivs": ivs,
+        "evs": evs,
+        "stats": stats,
     }
     if moves is not None:
         exported["moves"] = learnable_moves(pokemon, moves, label, notices)
@@ -5779,27 +6735,53 @@ def move_id(move) -> str | None:
     return str(move) if move else None
 
 
-def tm_compatibility(save_path: Path, save: dict, metadata: RubyObject, notices: list[str]) -> dict[str, dict[str, bool]]:
+def side_file_name(save: dict) -> str:
     slot = save["player"].get("save_slot")
-    name = f"tm_compatibility_{re.sub(r'[^a-zA-Z0-9]', '_', str(slot))}.dat" if slot else "tm_compatibility.dat"
-    side = save_path.parent / name
+    return f"tm_compatibility_{re.sub(r'[^a-zA-Z0-9]', '_', str(slot))}.dat" if slot else "tm_compatibility.dat"
+
+
+def tm_compatibility(side: bytes | None, label: str, metadata: RubyObject, notices: list[str]) -> dict[str, list[list]]:
     raw = metadata.get("tm_compatibility_random")
-    if side.is_file():
+    if side is not None:
         try:
-            raw = MarshalReader(side.read_bytes()).load()
-        except (OSError, MarshalError, IndexError, ValueError, UnicodeDecodeError) as error:
-            notices.append(f"Could not read {side} ({error}); TM compatibility comes from the save instead.")
+            raw = MarshalReader(side).load()
+        except (MarshalError, IndexError, ValueError, UnicodeDecodeError) as error:
+            notices.append(f"Could not read {label} ({error}); TM compatibility comes from the save instead.")
     if not isinstance(raw, dict):
         return {}
     return {
-        str(species): {
-            move_id(entry[0]): bool(entry[1])
+        str(species): [
+            [move_id(entry[0]), bool(entry[1])]
             for entry in pairs
             if isinstance(entry, list) and len(entry) == 2 and move_id(entry[0])
-        }
+        ]
         for species, pairs in raw.items()
         if isinstance(pairs, list)
     }
+
+
+def roll_tms(compatibility: dict[str, list[list]], pokemon: list[RubyObject], save: dict, tm_map) -> int:
+    rolled = 0
+    for member in pokemon:
+        types = DATA["types"][species_form(member)]
+        pairs = compatibility.setdefault(str(member.get("species")), [])
+        checked = {move for move, _ in pairs}
+        for game_id in bag_tms(save):
+            move = tm_move(game_id, tm_map)
+            if move is None or move in checked:
+                continue
+            chance = SAME_TYPE_TM_CHANCE if DATA["move_types"].get(move) in types else OTHER_TYPE_TM_CHANCE
+            pairs.append([move, random.randrange(100) < chance])
+            checked.add(move)
+            rolled += 1
+    return rolled
+
+
+def side_file(compatibility: dict[str, list[list]]) -> bytes:
+    return MarshalWriter().dump({
+        Symbol(species): [[Symbol(move), compatible] for move, compatible in pairs]
+        for species, pairs in compatibility.items()
+    })
 
 
 def bag_tms(save: dict) -> list[str]:
@@ -5829,52 +6811,76 @@ def relearner_moves(pokemon: RubyObject, learnsets, per_form: bool, label: str, 
 def learnable_moves(pokemon: RubyObject, context: dict, label: str, notices: list[str]) -> dict:
     relearner = relearner_moves(pokemon, context["learnsets"], context["per_form"], label, notices)
     species = str(pokemon.get("species"))
-    rolled = context["compatibility"].get(species, {})
+    rolled = dict(context["compatibility"].get(species, []))
     current = [move for move in dict.fromkeys(move_id(move.get("id")) for move in pokemon.get("moves") or [] if isinstance(move, RubyObject)) if move]
     known = set(current)
     tms = []
-    unrolled = []
     for game_id in context["bag_tms"]:
         move = tm_move(game_id, context["tm_map"])
         if move is None or move in relearner or move in tms:
             continue
-        if move in known:
+        if move in known or rolled.get(move):
             tms.append(move)
-        elif move not in rolled:
-            unrolled.append(game_id)
-        elif rolled[move]:
-            tms.append(move)
-    if unrolled and species not in context["unrolled_species"]:
-        context["unrolled_species"].add(species)
-        notices.append(f"{species} is not fully rolled; open the move relearner for it in game, save, and run this again.")
-    unchecked = list(dict.fromkeys(tm_move(game_id, context["tm_map"]) for game_id in unrolled))
     names = DATA["showdown"]["moves"]
-    for move in dict.fromkeys(current + relearner + tms + unchecked):
+    for move in dict.fromkeys(current + relearner + tms):
         if move not in names:
             notices.append(f"Left out the move {move} of {label}: it has no Showdown ID.")
     return {
         "current": [names[move] for move in current if move in names],
         "relearner": [names[move] for move in relearner if move in names],
         "tms": [names[move] for move in tms if move in names],
-        "unchecked": [names[move] for move in unchecked if move in names],
     }
 
 
+def trainer_name(save: dict) -> str:
+    return str(save["player"].get("name") or "trainer").replace("/", "_")
+
+
 def output_path(save: dict, chosen: str | None) -> Path:
-    if chosen:
-        return Path(chosen)
-    trainer = str(save["player"].get("name") or "trainer").replace("/", "_")
-    return Path.cwd() / f"{trainer}-open-sheet.json"
+    return Path(chosen) if chosen else Path.cwd() / f"{trainer_name(save)}-open-sheet.json"
+
+
+def write_side_file(path: Path, data: bytes) -> Path | None:
+    backup = None
+    if path.is_file():
+        backup = path.with_name(f"{path.name}.bak")
+        shutil.copy2(path, backup)
+    path.write_bytes(data)
+    return backup
+
+
+def write_return_zip(source: Path, target: Path, side_entry: str, data: bytes | None):
+    with zipfile.ZipFile(source) as archive, zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as returned:
+        for info in archive.infolist():
+            if info.filename == side_entry and data is not None:
+                returned.writestr(info, data)
+            else:
+                returned.writestr(info, archive.read(info))
+        if data is not None and side_entry not in archive.namelist():
+            returned.writestr(side_entry, data)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export a Pokémon Añil save's shared Pokémon, items and TMs to JSON for an open-sheet fight.")
-    parser.add_argument("--save", help="the save file to read instead of picking a slot")
+    parser.add_argument("--save", help="the save file, or a zip of a player's save folder, to read instead of picking a slot")
     parser.add_argument("--out", help="where to write the JSON instead of <trainer>-open-sheet.json here")
     parser.add_argument("--moves", action="store_true", help="also export the moves each Pokémon knows and the ones it can learn at the move relearner and from the bag's TMs")
     arguments = parser.parse_args()
     save_path = Path(arguments.save).expanduser() if arguments.save else pick_save()
-    save = read_save(save_path)
+    archive_entry = None
+    if zipfile.is_zipfile(save_path):
+        with zipfile.ZipFile(save_path) as archive:
+            archive_entry = pick_zip_save(archive, save_path)
+            save_label = f"{archive_entry} in {save_path}"
+            save = parse_save(archive.read(archive_entry), save_label)
+            side_entry = archive_entry[: -len(entry_name(archive_entry))] + side_file_name(save)
+            side_label = f"{side_entry} in {save_path}"
+            side = archive.read(side_entry) if side_entry in archive.namelist() else None
+    else:
+        save = parse_save(read_file(save_path), str(save_path))
+        side_path = save_path.parent / side_file_name(save)
+        side_label = str(side_path)
+        side = read_file(side_path) if side_path.is_file() else None
     metadata = save.get("global_metadata")
     metadata = metadata if isinstance(metadata, RubyObject) else RubyObject("PokemonGlobalMetadata")
     randomized = save.get("randomized_data")
@@ -5882,22 +6888,25 @@ def main() -> None:
     table = table if isinstance(table, dict) else {}
     capsules = metadata.get("random_abs_pokes")
     notices: list[str] = []
+    tm_map = metadata.get("tm_move_map")
+    compatibility = tm_compatibility(side, side_label, metadata, notices)
+    seen = [pokemon for pokemon in fieldable_pokemon(save) if species_form(pokemon) in DATA["showdown"]["species"]]
+    rolled = roll_tms(compatibility, seen, save, tm_map)
     moves = None
     if arguments.moves:
         moves = {
             "learnsets": metadata.get("random_moves"),
             "per_form": bool(metadata.get("different_movesets_per_form")),
-            "compatibility": tm_compatibility(save_path, save, metadata, notices),
+            "compatibility": compatibility,
             "bag_tms": bag_tms(save),
-            "tm_map": metadata.get("tm_move_map"),
-            "unrolled_species": set(),
+            "tm_map": tm_map,
         }
     exported = [
         entry
         for entry in (export_pokemon(pokemon, table, capsules, moves, notices) for pokemon in fieldable_pokemon(save))
         if entry is not None
     ]
-    items, tms = export_items(save, metadata.get("tm_move_map"), notices)
+    items, tms = export_items(save, tm_map, notices)
     version = metadata.get("randomlocke_version")
     if version != DATA["randomlocke_version"]:
         notices.append(
@@ -5906,9 +6915,19 @@ def main() -> None:
         )
     out = output_path(save, arguments.out)
     out.write_text(json.dumps({"pokemon": exported, "items": items, "tms": tms}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    rolls = side_file(compatibility) if rolled else None
+    if archive_entry is not None:
+        returned = out.parent / f"{trainer_name(save)}-save.zip"
+        write_return_zip(save_path, returned, side_entry, rolls)
+        written = f"; rolled {rolled} TM checks into {returned}, the player's zip with {side_entry} updated" if rolled else f"; no TMs to roll, {returned} is the player's zip unchanged"
+    elif rolls is not None:
+        backup = write_side_file(Path(side_label), rolls)
+        written = f"; rolled {rolled} TM checks into {side_label}" + (f", backed up to {backup}" if backup else "")
+    else:
+        written = "; no TMs to roll"
     for notice in notices:
         print(notice)
-    print(f"Wrote {len(exported)} Pokémon, {len(items)} items and {len(tms)} TMs to {out}")
+    print(f"Wrote {len(exported)} Pokémon, {len(items)} items and {len(tms)} TMs to {out}{written}")
 
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ A: The module is `pkmn/site/src/analysis/`: `dex.ts` (generations, the 18 types,
 **Why:** those three functions take Open Sheet's members and slots; moving them into the module would make it depend on Open Sheet. _(2026-10-17)_
 
 **Q: Which abilities change a matchup?**
-A: One table for the site, PokeGraph's: Levitate and Earth Eater (Ground), Flash Fire and Well-Baked Body (Fire), Water Absorb and Storm Drain (Water), Volt Absorb, Lightning Rod and Motor Drive (Electric), Sap Sipper (Grass) as immunities; Dry Skin (immune to Water, ×1.25 from Fire); Thick Fat (Fire and Ice), Heatproof and Water Bubble (Fire) and Purifying Salt (Ghost) as halving; Fluffy (×2 from Fire); and Wonder Guard. An ability counts only from Gen 3 and in a generation that has it. Open Sheet reads it in Gen 9, which changes nothing there: the abilities it adds are Gen 7–9 ones, and the mod only rolls the 164 Gen 1–5 abilities ([Open Sheet Export](../pkmn/tools/explanation/open-sheet-export.md)).
+A: One table for the site, PokeGraph's: Levitate and Earth Eater (Ground), Flash Fire and Well-Baked Body (Fire), Water Absorb and Storm Drain (Water), Volt Absorb, Lightning Rod and Motor Drive (Electric), Sap Sipper (Grass) as immunities; Dry Skin (immune to Water, ×1.25 from Fire); Thick Fat (Fire and Ice), Heatproof and Water Bubble (Fire) and Purifying Salt (Ghost) as halving; Fluffy (×2 from Fire); and Wonder Guard. An ability counts only from Gen 3 and in a generation that has it. Open Sheet reads it in Gen 9, which changes nothing there: the abilities it adds are Gen 7–9 ones, and the mod only rolls the 164 Gen 1–5 abilities ([Open Sheet Export](../pkmn/games/anil/explanation/open-sheet-export.md)).
 **Why:** forced by that evidence: one table serves both places with no change to Open Sheet's results. _(2026-10-17)_
 
 **Q: Which Pokémon make up a pool?**
@@ -63,7 +63,7 @@ A: The pasted team, the compare slots and the pool rules, in `localStorage`, per
 **Why:** the owner chose `localStorage` over a Dexie database. _(2026-10-17)_
 
 **Q: How does Open Sheet's Team view reach the analysis?**
-A: Through the team's Showdown text, the same one "Copy for Showdown" writes: the shared parser reads it in Gen 9, so members with an unknown species are left out as they are there, and IVs count as 31 with the league's 1 EV in every stat, which changes no Level 50 stat. "Open in Team Analysis" stores that text as Team Analysis's pasted team and opens `/team-analysis`, keeping its pool rules.
+A: Through the team's Showdown text, the same one "Copy for Showdown" writes: the shared parser reads it in Gen 9, so members with an unknown species are left out as they are there, with the export's real IVs and the league's 1 EV in every stat, which changes no Level 50 stat. "Open in Team Analysis" stores that text as Team Analysis's pasted team and opens `/team-analysis`, keeping its pool rules.
 **Why:** build choice: one path from an Open Sheet team to the module, already tested by the Showdown copy. _(2026-10-17)_
 
 **Q: Which pool does Open Sheet's analysis rank a team against?**

@@ -138,6 +138,7 @@ def build(wonder: Path) -> dict:
     allowed = {line[0] for line in read_lines(data_dir / "species.txt")}
     species = read_marshal(wonder / GAME_DATA / "species.dat")
     items = read_marshal(wonder / GAME_DATA / "items.dat")
+    moves = read_marshal(wonder / GAME_DATA / "moves.dat")
     tm_moves = {
         game_id: symbol(attribute(item, "move"))
         for game_id, item in items.items()
@@ -151,6 +152,7 @@ def build(wonder: Path) -> dict:
         "fixed_abilities": fixed_abilities(wonder, species, showdown["species"]),
         "pockets": {game_id: attribute(item, "pocket") for game_id, item in items.items()},
         "tm_moves": tm_moves,
+        "move_types": {game_id: symbol(attribute(move, "type")).lower() for game_id, move in moves.items()},
         "evolutions": evolutions(species, allowed),
     }
 
@@ -198,7 +200,7 @@ def main() -> None:
     print(
         f"Randomlocke version {data['randomlocke_version']}; Showdown IDs: {counts}; "
         f"{len(data['types'])} species-form types, {len(data['fixed_abilities'])} with fixed abilities, {len(data['pockets'])} item pockets, "
-        f"{len(data['tm_moves'])} TM moves, {len(data['evolutions'])} species with "
+        f"{len(data['tm_moves'])} TM moves, {len(data['move_types'])} move types, {len(data['evolutions'])} species with "
         f"evolutions; written to {EXPORT}"
     )
 

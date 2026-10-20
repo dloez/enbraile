@@ -1,4 +1,4 @@
-import { Dex, type Species, type StatID } from "@pkmn/dex";
+import { Dex, type Species, type StatID, type StatsTable } from "@pkmn/dex";
 import { Icons, Sprites } from "@pkmn/img";
 import type { SheetItem, SheetPokemon, SheetTm } from "@/open-sheet/schema";
 
@@ -40,6 +40,10 @@ export interface Nature extends Named {
 export interface StatLine {
   stat: StatID;
   base: number;
+  iv: number | null;
+  ev: number | null;
+  current: number | null;
+  fight: number | null;
   low: number;
   high: number;
 }
@@ -57,6 +61,7 @@ export interface Mon {
   mismatch: boolean;
   filterTypes: string[];
   abilities: Ability[];
+  ivs: StatsTable | null;
   stats: StatLine[] | null;
   sprite: string | null;
   learnable: Learnable | null;
@@ -66,10 +71,9 @@ export interface Learnable {
   current: MoveInfo[];
   relearner: MoveInfo[];
   tms: MoveInfo[];
-  unchecked: MoveInfo[];
 }
 
-export type Learn = "yes" | "no" | "unchecked";
+export type Learn = "yes" | "no";
 
 export type Pocket = "items" | "berries";
 
@@ -152,19 +156,17 @@ function learnable(p: SheetPokemon): Learnable | null {
     current: p.moves.current.map(describeMove),
     relearner: p.moves.relearner.map(describeMove),
     tms: p.moves.tms.map(describeMove),
-    unchecked: p.moves.unchecked.map(describeMove),
   };
 }
 
 export function canLearn(mon: Mon, move: string): Learn | null {
   const l = mon.learnable;
   if (!l) return null;
-  if ([l.current, l.relearner, l.tms].some((list) => list.some((m) => m.id === move))) return "yes";
-  return l.unchecked.some((m) => m.id === move) ? "unchecked" : "no";
+  return [l.current, l.relearner, l.tms].some((list) => list.some((m) => m.id === move)) ? "yes" : "no";
 }
 
 export function learnCount(l: Learnable): number {
-  return new Set([l.current, l.relearner, l.tms, l.unchecked].flatMap((list) => list.map((m) => m.id))).size;
+  return new Set([l.current, l.relearner, l.tms].flatMap((list) => list.map((m) => m.id))).size;
 }
 
 export function tmLabels(tms: readonly SheetTm[]): Map<string, string> {
@@ -189,10 +191,15 @@ export function describePokemon(p: SheetPokemon, index: number): Mon {
     mismatch: showdownTypes !== null && showdownTypes.join("/") !== types.join("/"),
     filterTypes: showdownTypes ?? types,
     abilities: abilities(p),
+    ivs: p.ivs,
     stats: entry.exists
       ? STATS.map((stat) => ({
           stat,
           base: entry.baseStats[stat],
+          iv: p.ivs?.[stat] ?? null,
+          ev: p.evs?.[stat] ?? null,
+          current: p.stats?.[stat] ?? null,
+          fight: p.ivs ? statAt(stat, entry, p.ivs[stat], nat) : null,
           low: statAt(stat, entry, 0, nat),
           high: statAt(stat, entry, 31, nat),
         }))
@@ -235,6 +242,10 @@ export function describeTm(t: SheetTm): BagTm {
     accuracy: entry.accuracy === true ? null : entry.accuracy,
     desc: entry.shortDesc || entry.desc,
   };
+}
+
+export function fightStat(s: StatLine): string {
+  return s.fight !== null ? String(s.fight) : `${s.low}–${s.high}`;
 }
 
 export function displayName(mon: Mon): string {

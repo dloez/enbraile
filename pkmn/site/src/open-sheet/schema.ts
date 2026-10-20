@@ -2,6 +2,10 @@ import { z } from "zod";
 
 const id = z.string().min(1);
 
+const spread = z
+  .object({ hp: z.int(), atk: z.int(), def: z.int(), spa: z.int(), spd: z.int(), spe: z.int() })
+  .nullable();
+
 export const pokemonSchema = z.object({
   species: id,
   nickname: z.string().nullable(),
@@ -17,12 +21,14 @@ export const pokemonSchema = z.object({
     })
     .nullable(),
   types: z.array(id).min(1).max(2),
+  ivs: spread,
+  evs: spread,
+  stats: spread,
   moves: z
     .object({
       current: z.array(id).max(4),
       relearner: z.array(id),
       tms: z.array(id),
-      unchecked: z.array(id),
     })
     .optional(),
 });

@@ -1,6 +1,6 @@
 import { toID } from "@pkmn/dex";
 import { parsePaste } from "@/analysis/paste";
-import { currentAbility, describeItem, describeMove, displayName, type Mon } from "@/open-sheet/dex";
+import { currentAbility, describeItem, describeMove, displayName, STAT_LABELS, STATS, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import {
   emptySlots,
@@ -12,6 +12,14 @@ import {
 } from "@/open-sheet/team";
 
 export const LEAGUE_EVS = "EVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe";
+const MAX_IV = 31;
+
+function ivLine(mon: Mon): string | null {
+  const ivs = mon.ivs;
+  if (!ivs) return null;
+  const below = STATS.filter((stat) => ivs[stat] < MAX_IV).map((stat) => `${ivs[stat]} ${STAT_LABELS[stat]}`);
+  return below.length ? `IVs: ${below.join(" / ")}` : null;
+}
 
 function nameLine(member: Member, mon: Mon): string {
   const species = mon.species.name;
@@ -33,6 +41,8 @@ export function showdownMember(member: Member, mon: Mon): string {
   if (mon.shiny) lines.push("Shiny: Yes");
   lines.push(LEAGUE_EVS);
   if (mon.nature) lines.push(`${mon.nature.name} Nature`);
+  const ivs = ivLine(mon);
+  if (ivs) lines.push(ivs);
   for (const move of member.moves) if (move) lines.push(`- ${describeMove(move).name}`);
   return lines.join("\n");
 }

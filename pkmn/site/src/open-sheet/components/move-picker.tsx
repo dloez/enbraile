@@ -4,7 +4,7 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { describeTm, displayName, learnCount, MOVES, moveStats, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
-import { TypeSquare, UncheckedMark, UnknownMark } from "@/open-sheet/components/marks";
+import { TypeSquare, UnknownMark } from "@/open-sheet/components/marks";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface MovePickerProps {
@@ -17,10 +17,9 @@ interface MovePickerProps {
   onPick: (move: string | null) => void;
 }
 
-function MoveRow({ move, label, unchecked, current, onPick }: {
+function MoveRow({ move, label, current, onPick }: {
   move: MoveInfo;
   label?: string;
-  unchecked?: boolean;
   current: boolean;
   onPick: () => void;
 }) {
@@ -42,7 +41,6 @@ function MoveRow({ move, label, unchecked, current, onPick }: {
             <span className="min-w-0 flex-1 font-semibold">
               {move.name}
               {move.marked && <UnknownMark />}
-              {unchecked && <UncheckedMark />}
             </span>
             {label && <span className="font-mono text-xs text-muted-foreground sm:hidden">{label}</span>}
           </span>
@@ -77,16 +75,15 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
   const q = query.trim().toLowerCase();
   const hit = (name: string) => !q || name.toLowerCase().includes(q);
   const learn = mon.learnable;
-  const groups: [string, MoveInfo[], boolean][] = learn
+  const groups: [string, MoveInfo[]][] = learn
     ? [
-        ["Current moves", learn.current, false],
-        ["Move Relearner", learn.relearner, false],
-        ["TMs", learn.tms, false],
-        ["Not checked yet", learn.unchecked, true],
+        ["Current moves", learn.current],
+        ["Move Relearner", learn.relearner],
+        ["TMs", learn.tms],
       ]
     : [
-        ["TMs", tms.map((tm) => ({ ...tm.move, type: tm.type, category: tm.category, power: tm.power, accuracy: tm.accuracy, desc: tm.desc })), false],
-        ["All moves", [...MOVES], false],
+        ["TMs", tms.map((tm) => ({ ...tm.move, type: tm.type, category: tm.category, power: tm.power, accuracy: tm.accuracy, desc: tm.desc }))],
+        ["All moves", [...MOVES]],
       ];
   const learnTotal = learn ? learnCount(learn) : 0;
 
@@ -150,7 +147,7 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
               </li>
             </ul>
           )}
-          {groups.map(([name, moves, unchecked]) => {
+          {groups.map(([name, moves]) => {
             const shown = moves.filter((move) => hit(move.name) || hit(labels.get(move.id) ?? ""));
             if (shown.length === 0) return null;
             return (
@@ -160,7 +157,6 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
                     key={`${name}:${move.id}:${at}`}
                     move={move}
                     label={name === "All moves" ? undefined : labels.get(move.id)}
-                    unchecked={unchecked}
                     current={move.id === current}
                     onPick={() => pick(move.id)}
                   />

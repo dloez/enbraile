@@ -1,6 +1,6 @@
 # Open Sheet JSON
 
-What `pkmn/tools/export_data.py` writes: one UTF-8 JSON object, indented by two spaces. Why each field is there, and what is left out, is in [Open Sheet Export](../explanation/open-sheet-export.md). Every ID is a Showdown ID: the English Showdown name lowercased, with everything but letters and digits removed.
+What `pkmn/games/anil/export_data.py` writes: one UTF-8 JSON object, indented by two spaces. Why each field is there, and what is left out, is in [Open Sheet Export](../explanation/open-sheet-export.md). Every ID is a Showdown ID: the English Showdown name lowercased, with everything but letters and digits removed.
 
 ```json
 {
@@ -17,7 +17,10 @@ What `pkmn/tools/export_data.py` writes: one UTF-8 JSON object, indented by two 
         "base": ["thickfat", "icebody"],
         "hidden": ["oblivious"]
       },
-      "types": ["ice", "water"]
+      "types": ["ice", "water"],
+      "ivs": {"hp": 31, "atk": 4, "def": 22, "spa": 29, "spd": 17, "spe": 9},
+      "evs": {"hp": 12, "atk": 0, "def": 6, "spa": 40, "spd": 3, "spe": 8},
+      "stats": {"hp": 140, "atk": 63, "def": 75, "spa": 85, "spd": 66, "spe": 53}
     }
   ],
   "items": [{"item": "leftovers", "quantity": 2}],
@@ -50,7 +53,10 @@ There is no header: no trainer, badges, format version or export time.
 | `ability` | string or null | Its current ability; null, with a notice, when it cannot be worked out or has no Showdown ID |
 | `abilities` | object or null | The abilities it can have under the randomizer, as `base` and `hidden` arrays of IDs; null when the rolled abilities were not found |
 | `types` | array of strings | Its one or two types |
-| `moves` | object | Only with `--moves`: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks; `unchecked`, the moves of the bag's TMs the game has not checked against its species yet (with a notice). All four are arrays of move IDs, each move once |
+| `ivs` | object or null | Its IVs, 0 to 31, keyed `hp`, `atk`, `def`, `spa`, `spd`, `spe`; a Hyper-Trained stat counts 31; null, with a notice, when the save has not filled them in |
+| `evs` | object or null | Its EVs, keyed the same way; null, with a notice, when the save has not filled them in |
+| `stats` | object or null | Its stats at its own level as the game stores and shows them, keyed the same way; null, with a notice, when the save has not filled them in |
+| `moves` | object | Only with `--moves`: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks, every one of them rolled by then ([Rolling TMs](../explanation/open-sheet-export.md#rolling-tms)). All three are arrays of move IDs, each move once |
 
 ## `items[]`
 

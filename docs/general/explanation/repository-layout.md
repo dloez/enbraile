@@ -8,6 +8,7 @@ Enbraile holds every app and tool the group builds. Work is grouped first by cat
 |-------|------|-------|
 | Category | `<category>/` (e.g. `pkmn/`) | The category's projects, and a short `CLAUDE.md` that imports the category's docs index |
 | Project | `<category>/<project>/` (e.g. `pkmn/wonder/`) | The project's code, and a `CLAUDE.md` only when the project has rules of its own |
+| Game | `pkmn/games/<game>/` (e.g. `pkmn/games/anil/`) | Files tied to one series' game, such as the scripts that read its saves; what every series uses stays in a project |
 
 A category's or project's `CLAUDE.md` only adds to the root one; it never repeats it, and it holds no docs.
 
@@ -18,6 +19,7 @@ A category's or project's `CLAUDE.md` only adds to the root one; it never repeat
 | `docs/general/` | Conventions for every category: docs system, layout, tooling |
 | `docs/<category>/index.md` | The category's index: its domains and projects |
 | `docs/<category>/domains/<domain>/` | What the category's projects share: rules, facts |
+| `docs/pkmn/games/<game>/` | One series' game files, with the same three folders |
 | `docs/<category>/<project>/` | One project's design, with the usual `explanation/`, `how-to/` and `reference/` folders |
 | `docs/work-in-progress/` | The one queue, open questions, scope docs and plans for everything |
 
@@ -29,6 +31,7 @@ A fact belongs to the lowest level that every reader of it shares: a rule of the
 - **One docs tree at the root**, organised by category and project; code folders hold no docs. Root, category and project each owning a `docs/` was rejected. _(owner, 2026-10-15; replaces the same day's per-level docs)_
 - **One work queue and one open-questions tracker** for every category and project, in `docs/work-in-progress/`. **Why:** follows from the single tree. _(settled 2026-10-15)_
 - **One monorepo:** every category and project lives in the one Enbraile git repository; no project keeps a repository of its own. _(owner, 2026-10-15)_
+- **Pokémon series' files are grouped by game** in `pkmn/games/<game>/`, docs in `docs/pkmn/games/<game>/`, starting with `anil/` for the first series; shared projects such as the site stay at `pkmn/<project>/`. _(owner, 2026-10-20)_
 - **Wonder will live in `pkmn/wonder/`**, its docs in `docs/pkmn/wonder/`, but it is not migrated yet. _(owner, 2026-10-15)_
 
 ## Open
