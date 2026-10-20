@@ -5,7 +5,7 @@ Run `pkmn/site/` locally, check it, and get a change to `pkmn.enbraile.vip`. Why
 ## Prerequisites
 
 - Node.js with npm.
-- For a manual deploy only: a Wrangler login to the owner's Cloudflare account (`npx wrangler login`).
+- For rolling back: access to the owner's Vercel project.
 
 ## Steps
 
@@ -37,19 +37,14 @@ It runs `tsc -b` and `vitest run`, and must pass before a change is done.
 
 ### 4. Deploy
 
-Push to `main`. Workers Builds builds and deploys every push that touches `pkmn/site/`; a branch push gets a preview `workers.dev` URL. To deploy by hand instead:
-
-```sh
-npm run deploy
-```
-
-which builds and runs `wrangler deploy`.
+Push to `main`. Vercel builds and deploys every push that touches `pkmn/site/` to production, and a branch push gets a public preview URL, shown on the commit's GitHub status and in the Vercel dashboard. There is no manual deploy command.
 
 ### 5. Roll back
 
-Roll back to an earlier version of the `pkmn-site` Worker in the Cloudflare dashboard, or revert the commit and push, which redeploys.
+Use Instant Rollback on the previous production deployment in the Vercel dashboard, or revert the commit and push, which redeploys.
 
 ## Verification
 
 - `https://pkmn.enbraile.vip` serves the home page, and `/open-sheet` the tool.
+- `curl -sI https://pkmn.enbraile.vip` shows `server: Vercel`.
 - After a push, the page loads a new `/assets/index-*.js` bundle carrying the change.

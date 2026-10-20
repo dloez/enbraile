@@ -1,6 +1,6 @@
 # The pkmn Site
 
-The group's Pokémon web app, `pkmn/site/`, served at `pkmn.enbraile.vip`. It holds a home page listing the tools, [Open Sheet](open-sheet.md) at `/open-sheet` and Team Analysis at `/team-analysis` ([Team Analysis: Discovery](../../../work-in-progress/team-analysis-discovery.md)). More tools will join it over the series, and a Cloudflare Workers backend may follow. Running and deploying it is in [How to Run and Deploy the Site](../how-to/run-and-deploy-the-site.md). It was scoped with the owner on 2026-10-15.
+The group's Pokémon web app, `pkmn/site/`, served at `pkmn.enbraile.vip`. It holds a home page listing the tools, [Open Sheet](open-sheet.md) at `/open-sheet` and Team Analysis at `/team-analysis` ([Team Analysis: Discovery](../../../work-in-progress/team-analysis-discovery.md)). More tools will join it over the series, and a backend on Vercel Functions may follow. Running and deploying it is in [How to Run and Deploy the Site](../how-to/run-and-deploy-the-site.md). It was scoped with the owner on 2026-10-15.
 
 ## Stack
 
@@ -24,13 +24,13 @@ Everything a reader imports or builds stays in their browser, in IndexedDB, per 
 
 ## Hosting and Deploys
 
-A Cloudflare Worker with static assets, built with `@cloudflare/vite-plugin`, serves the site with single-page-application fallback. It is static only for now; the same Worker can take API routes when a backend comes, with no move to another product. `wrangler.jsonc` attaches `pkmn.enbraile.vip` as a custom domain (the `enbraile.vip` zone is on the owner's Cloudflare account) and sets `preview_urls`, so each branch's Preview gets a public `workers.dev` URL.
+Vercel serves the site from the owner's Hobby account: the Vite build's static `dist/`, with `pkmn/site/vercel.json` rewriting every path to `/index.html` so deep links load the single-page app. It is static only for now, and a backend would be Vercel Functions in the same project. `pkmn.enbraile.vip` is a DNS-only (grey-cloud) `CNAME` to the Vercel target in the `enbraile.vip` zone, which stays on the owner's Cloudflare account. If the record were proxied, traffic would go through Cloudflare's IPs again, which Spanish ISPs block during LaLiga matches.
 
-Cloudflare Workers Builds, connected to the GitHub repository in the Cloudflare dashboard, builds and deploys each push to `main` that touches `pkmn/site/`, with preview URLs for branches. There are no secrets in the repository. A bad deploy is undone by rolling back to an earlier Worker version in Cloudflare, or by reverting the commit, which redeploys.
+Vercel's Git integration, connected to the GitHub repository in the Vercel dashboard with root directory `pkmn/site`, builds and deploys each push to `main` that touches `pkmn/site/`. Pushes that touch nothing there are skipped, and each branch push gets a public preview URL (Vercel Authentication is off for previews). There are no secrets in the repository. A bad deploy is undone with Vercel's Instant Rollback to the previous production deployment, or by reverting the commit, which redeploys.
 
-The site is moving to Vercel ([Vercel Hosting: Discovery](../../../work-in-progress/vercel-hosting-discovery.md)). Until the move is done, Vercel's Git integration also builds each push that touches `pkmn/site/`, using `pkmn/site/vercel.json` for the single-page-app fallback. Production goes to the project's `vercel.app` URL, and branches get public preview URLs. `pkmn.enbraile.vip` stays on the Worker.
+Until the move finishes ([Vercel Hosting: Discovery](../../../work-in-progress/vercel-hosting-discovery.md)), the `pkmn-site` Cloudflare Worker still builds from the same pushes through Workers Builds, on its `workers.dev` URL only.
 
-The site logs nothing of its own: Cloudflare's built-in Workers analytics and logs cover the deploy, and import errors are shown to the reader.
+The site logs nothing of its own: Vercel's build and deployment logs cover the deploy, there is no Web Analytics, and import errors are shown to the reader.
 
 ## Decisions
 
@@ -40,4 +40,4 @@ The site logs nothing of its own: Cloudflare's built-in Workers analytics and lo
 - **The vendored shadcn components follow the theme rule,** with the dialog scrim as a `--scrim` variable. **Why:** delegated by the owner during an unattended run; the scaffold already replaced shadcn's palette and the design draws that scrim. _(settled 2026-10-16)_
 - **The Open Sheet Screens design, dark only, no explanatory labels, English, desktop-first.** _(owner, 2026-10-16)_
 - **Nothing is stored server-side:** imports and teams live in the reader's IndexedDB. _(owner, 2026-10-15)_
-- **Cloudflare Workers with static assets at `pkmn.enbraile.vip`, deployed by Workers Builds** on pushes to `main` touching `pkmn/site/`, with branch preview URLs. **Why:** the owner chose Cloudflare and the domain, and expects a Workers backend later. _(owner, 2026-10-15)_ Seen working on 2026-10-17: the bundle served at `pkmn.enbraile.vip` held code from the latest commit on `main`.
+- **Vercel at `pkmn.enbraile.vip`, deployed by Vercel's Git integration** on pushes to `main` touching `pkmn/site/`, with public branch previews, and DNS staying on Cloudflare as a DNS-only record. **Why:** Spanish ISPs block Cloudflare's IPs during LaLiga matches, taking the site down. Vercel was blocked once, in April 2025, and unblocked within days. The owner accepted that remaining risk to keep managed deploys rather than run a VPS. _(owner, 2026-10-20; replaces Cloudflare Workers, chosen 2026-10-15)_ Seen working on 2026-10-20: `pkmn.enbraile.vip` resolved to Vercel and returned `server: Vercel` with a Let's Encrypt certificate.
