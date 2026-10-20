@@ -9,7 +9,6 @@ Temporary, evolving content. Treat it as proposals, not settled decisions: it ma
 | [Open Questions](open-questions.md) | Tracker | Everything not yet decided |
 | [Tasks](tasks.md) | Queue | The ordered work queue for `/next-task` and `/work-queue` |
 | [Team Analysis: Discovery](team-analysis-discovery.md) | Scope | Bringing PokeGraph's team analysis into the site: a Team Analysis tool and a deeper analysis in Open Sheet |
-| [Vercel Hosting: Discovery](vercel-hosting-discovery.md) | Scope | Moving the pkmn site from a Cloudflare Worker to Vercel, away from LaLiga's match-day IP blocks |
 | [Open Sheet: Origin Conversation](open-sheet-origin-conversation.md) | Context | The Wonder session where the export was first discussed |
 
 ## Lifecycle

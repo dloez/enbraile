@@ -1,5 +1,3 @@
 node_modules/
 dist/
-.wrangler/
 *.tsbuildinfo
-.dev.vars*

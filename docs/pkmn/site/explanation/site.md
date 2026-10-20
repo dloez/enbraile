@@ -4,7 +4,7 @@ The group's Pokémon web app, `pkmn/site/`, served at `pkmn.enbraile.vip`. It ho
 
 ## Stack
 
-npm; Vite 8, React 19, TypeScript 7, Tailwind 4 and shadcn/ui; TanStack Router; zod 4; Dexie over IndexedDB; `@pkmn/dex` and `@pkmn/img` for Showdown's data and sprites. Every package is pinned exactly, at its latest stable version when it went in (the scaffold, 2026-10-16: vite 8.3.4, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, shadcn 4.21.5, @tanstack/react-router 1.170.44, vitest 5.0.5, @cloudflare/vite-plugin 1.64.0, wrangler 4.151.0, @pkmn/dex 0.10.11, @pkmn/img 0.3.4). The gate is `npm run gate`: `tsc -b` and `vitest run`.
+npm; Vite 8, React 19, TypeScript 7, Tailwind 4 and shadcn/ui; TanStack Router; zod 4; Dexie over IndexedDB; `@pkmn/dex` and `@pkmn/img` for Showdown's data and sprites. Every package is pinned exactly, at its latest stable version when it went in (the scaffold, 2026-10-16: vite 8.3.4, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, shadcn 4.21.5, @tanstack/react-router 1.170.44, vitest 5.0.5, @pkmn/dex 0.10.11, @pkmn/img 0.3.4). The gate is `npm run gate`: `tsc -b` and `vitest run`.
 
 Routes are declared in code in `src/router.tsx`, not with TanStack Router's file-based plugin: a handful of routes needs no generated route tree for `tsc` to check before a build. A tool gets its route there and its home-page card from `src/tools.ts`.
 
@@ -26,9 +26,7 @@ Everything a reader imports or builds stays in their browser, in IndexedDB, per 
 
 Vercel serves the site from the owner's Hobby account: the Vite build's static `dist/`, with `pkmn/site/vercel.json` rewriting every path to `/index.html` so deep links load the single-page app. It is static only for now, and a backend would be Vercel Functions in the same project. `pkmn.enbraile.vip` is a DNS-only (grey-cloud) `CNAME` to the Vercel target in the `enbraile.vip` zone, which stays on the owner's Cloudflare account. If the record were proxied, traffic would go through Cloudflare's IPs again, which Spanish ISPs block during LaLiga matches.
 
-Vercel's Git integration, connected to the GitHub repository in the Vercel dashboard with root directory `pkmn/site`, builds and deploys each push to `main` that touches `pkmn/site/`. Pushes that touch nothing there are skipped, and each branch push gets a public preview URL (Vercel Authentication is off for previews). There are no secrets in the repository. A bad deploy is undone with Vercel's Instant Rollback to the previous production deployment, or by reverting the commit, which redeploys.
-
-Until the move finishes ([Vercel Hosting: Discovery](../../../work-in-progress/vercel-hosting-discovery.md)), the `pkmn-site` Cloudflare Worker still builds from the same pushes through Workers Builds, on its `workers.dev` URL only.
+Vercel's Git integration, connected to the GitHub repository in the Vercel dashboard with root directory `pkmn/site`, builds and deploys each push to `main` that touches `pkmn/site/`. Pushes that touch nothing there are skipped, and each branch push gets a public preview URL (Vercel Authentication is off for previews). A preview or `vercel.app` URL is a different origin from `pkmn.enbraile.vip`, so its IndexedDB and `localStorage` start empty. There are no secrets in the repository. A bad deploy is undone with Vercel's Instant Rollback to the previous production deployment, or by reverting the commit, which redeploys.
 
 The site logs nothing of its own: Vercel's build and deployment logs cover the deploy, there is no Web Analytics, and import errors are shown to the reader.
 
@@ -41,3 +39,4 @@ The site logs nothing of its own: Vercel's build and deployment logs cover the d
 - **The Open Sheet Screens design, dark only, no explanatory labels, English, desktop-first.** _(owner, 2026-10-16)_
 - **Nothing is stored server-side:** imports and teams live in the reader's IndexedDB. _(owner, 2026-10-15)_
 - **Vercel at `pkmn.enbraile.vip`, deployed by Vercel's Git integration** on pushes to `main` touching `pkmn/site/`, with public branch previews, and DNS staying on Cloudflare as a DNS-only record. **Why:** Spanish ISPs block Cloudflare's IPs during LaLiga matches, taking the site down. Vercel was blocked once, in April 2025, and unblocked within days. The owner accepted that remaining risk to keep managed deploys rather than run a VPS. _(owner, 2026-10-20; replaces Cloudflare Workers, chosen 2026-10-15)_ Seen working on 2026-10-20: `pkmn.enbraile.vip` resolved to Vercel and returned `server: Vercel` with a Let's Encrypt certificate.
+- **Vercel's Git integration rather than a GitHub Action with the Vercel CLI; previews public; no Vercel Web Analytics.** **Why:** the Git integration works like the old Workers Builds and keeps tokens out of GitHub, public previews let friends open them without a Vercel account, and without analytics the only runtime calls the site makes are for sprites. _(owner, 2026-10-20)_
