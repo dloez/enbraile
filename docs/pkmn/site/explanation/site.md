@@ -28,6 +28,8 @@ A Cloudflare Worker with static assets, built with `@cloudflare/vite-plugin`, se
 
 Cloudflare Workers Builds, connected to the GitHub repository in the Cloudflare dashboard, builds and deploys each push to `main` that touches `pkmn/site/`, with preview URLs for branches. There are no secrets in the repository. A bad deploy is undone by rolling back to an earlier Worker version in Cloudflare, or by reverting the commit, which redeploys.
 
+The site is moving to Vercel ([Vercel Hosting: Discovery](../../../work-in-progress/vercel-hosting-discovery.md)). Until the move is done, Vercel's Git integration also builds each push that touches `pkmn/site/`, using `pkmn/site/vercel.json` for the single-page-app fallback. Production goes to the project's `vercel.app` URL, and branches get public preview URLs. `pkmn.enbraile.vip` stays on the Worker.
+
 The site logs nothing of its own: Cloudflare's built-in Workers analytics and logs cover the deploy, and import errors are shown to the reader.
 
 ## Decisions
