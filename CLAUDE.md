@@ -14,6 +14,7 @@
 
 - **No comments or docstrings**, except machine-read directives (linter, type-checker and formatter pragmas, shebangs). Refactor or move rationale to `docs/`.
 - **Greenfield:** no backwards-compatibility shims or deprecation layers.
+- **No tests**, in any category or project: no test files, test runners or test steps in a gate. Check a change by running it (owner, 2026-10-20).
 - Throwaway Python scripts: `uv run --with <pkg> python3 script.py`. Never `pip install`.
 
 ## Keeping Docs Current

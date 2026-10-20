@@ -33,7 +33,7 @@ Vite prints the local URL; Open Sheet is at `/open-sheet`. Imports and teams are
 npm run gate
 ```
 
-It runs `tsc -b` and `vitest run`, and must pass before a change is done.
+It runs `tsc -b`, and must pass before a change is done; the site has no tests, so check a change by running it (step 2).
 
 ### 4. Deploy
 

@@ -2,7 +2,7 @@
 
 Adds to the root and `pkmn/` `CLAUDE.md`; never repeats them. The site's docs live in `docs/pkmn/site/`, never under `pkmn/site/`: [The pkmn Site](../../docs/pkmn/site/explanation/site.md), [Open Sheet](../../docs/pkmn/site/explanation/open-sheet.md) and [How to Run and Deploy the Site](../../docs/pkmn/site/how-to/run-and-deploy-the-site.md).
 
-- **Gate:** `npm run gate` (`tsc -b` and `vitest run`), from `pkmn/site/`. It must pass before a change is done.
+- **Gate:** `npm run gate` (`tsc -b`), from `pkmn/site/`. It must pass before a change is done.
 - **Versions:** every package is pinned exactly (`.npmrc` sets `save-exact`); a new one goes in at its latest stable version, and `npm outdated` stays empty.
 - **Install scripts:** npm runs only those listed under `allowScripts` in `package.json`; approve a new one with `npm approve-scripts <pkg>`.
 - **Routes** are declared in code in `src/router.tsx`; a tool gets its route there and its card on the home page from `src/tools.ts`.

@@ -4,7 +4,7 @@ The group's Pokémon web app, `pkmn/site/`, served at `pkmn.enbraile.vip`. It ho
 
 ## Stack
 
-npm; Vite 8, React 19, TypeScript 7, Tailwind 4 and shadcn/ui; TanStack Router; zod 4; Dexie over IndexedDB; `@pkmn/dex` and `@pkmn/img` for Showdown's data and sprites. Every package is pinned exactly, at its latest stable version when it went in (the scaffold, 2026-10-16: vite 8.3.4, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, shadcn 4.21.5, @tanstack/react-router 1.170.44, vitest 5.0.5, @pkmn/dex 0.10.11, @pkmn/img 0.3.4). The gate is `npm run gate`: `tsc -b` and `vitest run`.
+npm; Vite 8, React 19, TypeScript 7, Tailwind 4 and shadcn/ui; TanStack Router; zod 4; Dexie over IndexedDB; `@pkmn/dex` and `@pkmn/img` for Showdown's data and sprites. Every package is pinned exactly, at its latest stable version when it went in (the scaffold, 2026-10-16: vite 8.3.4, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, shadcn 4.21.5, @tanstack/react-router 1.170.44, @pkmn/dex 0.10.11, @pkmn/img 0.3.4). The gate is `npm run gate`: `tsc -b`.
 
 Routes are declared in code in `src/router.tsx`, not with TanStack Router's file-based plugin: a handful of routes needs no generated route tree for `tsc` to check before a build. A tool gets its route there and its home-page card from `src/tools.ts`.
 
@@ -32,6 +32,7 @@ The site logs nothing of its own: Vercel's build and deployment logs cover the d
 
 ## Decisions
 
+- **No tests; the gate is `tsc -b` alone.** The site's vitest suite and vitest itself were removed. **Why:** the owner's rule for every project, in the root `CLAUDE.md`. _(owner, 2026-10-20)_
 - **One site for the group's Pokémon tools,** `pkmn/site/`, starting with Open Sheet at `/open-sheet` beside a home page listing the tools; its docs in `docs/pkmn/site/`. **Why:** the site will grow in depth over the series. _(owner, 2026-10-15)_
 - **Vite, React, TypeScript, Tailwind and shadcn at their latest versions, pinned exactly;** TanStack Router, zod, Dexie, `@pkmn/dex` and `@pkmn/img` alongside. **Why:** the owner chose the core stack to future-proof the site; the rest follows the owner's unlit and blink sites (`~/workspace/unlit/apps/web/`, `~/workspace/blink/`), confirmed by the owner. _(owner, 2026-10-15)_
 - **Routes in code, shadcn's Nova preset on Radix with the design's palette, Fontsource fonts, static assets with SPA fallback:** build choices made while scaffolding. **Why:** no generated route tree to check, and no runtime calls beyond sprites. _(settled 2026-10-16)_
