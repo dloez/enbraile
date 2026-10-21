@@ -23,22 +23,6 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 **Touches:** `docs/pkmn/series/1/`, `docs/work-in-progress/tasks.md`
 **Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
 
-## pkmn: cite the in-repo Randomlocke design from series 1's rulebook
-
-Series 1's rulebook still cites Wonder's `docs/subsystems/harness/explanation/randomlocke-design.md` (→ Showdown Export, Nuzlocke, Package Behaviour), which now lives in this repo as [Randomlocke Design](../pkmn/games/anil/explanation/randomlocke-design.md); the game facts entry's grep does not catch these citations.
-
-**Do:**
-- [ ] In `docs/pkmn/series/1/reference/rules.md`, replace every ``source: `docs/subsystems/harness/explanation/randomlocke-design.md` → …`` with a relative link to the matching section of `docs/pkmn/games/anil/explanation/randomlocke-design.md`, and reword the intro's "still in the docs of the tooling this rulebook was copied from" so it names only the game facts as still Wonder's.
-
-**Acceptance:**
-- Claude-run: `grep -n "docs/subsystems" docs/pkmn/series/` prints nothing; every relative link under `docs/pkmn/series/1/` resolves, anchors included.
-- Human-run: none.
-- Reuse: the section headings of `docs/pkmn/games/anil/explanation/randomlocke-design.md`.
-- Neighbors: `docs/pkmn/games/anil/explanation/open-sheet-export.md`, which already links series 1's rules this way.
-- Forbidden: changing a rule; touching the ``source: `docs/domains/game/…` `` citations (the game facts entry owns them).
-
-**Touches:** `docs/pkmn/series/1/reference/rules.md`
-
 ## pkmn/games/anil: launch the game with the bridge and read its state
 
 `anil install --harness` adds the bridge; `anil run` launches the game paused under it, and `anil state`, `eval`, `stack`, `shot`, `rng`, `showdown`, `control`, `speed`, `snapshot save|restore|list`, `replay` and `stop` work against it ([Surfaces](anil-tooling-discovery.md#surfaces)).
