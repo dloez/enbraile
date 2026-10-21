@@ -60,22 +60,6 @@ The rules guard refuses League entry below level 75 and items inside the League 
 **After:** pkmn: update series 1's rulebook with the latest changes
 **Needs the author:** are "everyone at 75 before the League" and "no items inside the League" series 1 rules? Keep the guard (and write them into the rulebook) or drop it?
 
-## pkmn/games/anil: log the rules engine to the session's harness log
-
-`anil.harness.rules` logs to `logging.getLogger("anil.harness.rules")` (`src/anil/harness/rules.py`), outside the `harness` logger that `launch.py` gives the session's `harness.log` handler, so guards, audits and freezes never reach `harness.log`, which [Runtime Design → Observability](../pkmn/games/anil/explanation/runtime-design.md#observability) says the harness logs to. Every other layer logs under `harness.*`, as Wonder's `harness.rules` did.
-
-**Do:**
-- [ ] Rename the logger to `harness.rules`, and the name in [Rules Engine Design → Observability](../pkmn/games/anil/explanation/rules-engine-design.md#observability).
-
-**Acceptance:**
-- Claude-run: the gate; with a game running, `uv run anil rules audit` adds its lines to `sessions/<id>/harness.log`.
-- Human-run: none.
-- Reuse: `src/anil/harness/launch.py`'s session log.
-- Neighbors: none.
-- Forbidden: changing what is logged.
-
-**Touches:** `pkmn/games/anil/src/anil/harness/rules.py`, `docs/pkmn/games/anil/explanation/rules-engine-design.md`
-
 ## pkmn/games/anil: bring the knowledge view's design over
 
 `anil.harness.knowledge` came over whole with the calc, but its design is still only Wonder's (`docs/subsystems/harness/explanation/knowledge-view-design.md`), which Damage Calc Design and Battle Layer Design cite as "Knowledge View Design (Wonder: …)"; the harness design belongs under `docs/pkmn/` ([Goal and Success](anil-tooling-discovery.md#goal-and-success)).

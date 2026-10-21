@@ -432,7 +432,7 @@ class Freeze:
     paste: str | None
 
 
-log = logging.getLogger("anil.harness.rules")
+log = logging.getLogger("harness.rules")
 
 
 def owned(state: GameState) -> list[Pokemon]:

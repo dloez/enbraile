@@ -19,6 +19,7 @@ from anil.harness.lock import (
     release,
     write_lock,
 )
+from anil.harness.session_log import attach_session_log
 from anil.harness.snapshot import SnapshotError, read_snapshot
 from anil.install.builds import Build
 from anil.install.deploy import game_dir, read_stamp
@@ -38,7 +39,6 @@ from anil.settings import Settings
 GAME_EXE = "Game.exe"
 HANDSHAKE_TIMEOUT_SECONDS = 60.0
 EPHEMERAL_RANGE_FILE = Path("/proc/sys/net/ipv4/ip_local_port_range")
-LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 DEFAULT_CLOCK = "2026-01-01T12:00"
 REAL_CLOCK = "real"
 SAVE_NAME = re.compile(r"[A-Za-z0-9_-]+")
@@ -124,20 +124,6 @@ def create_session(settings: Settings) -> tuple[str, Path]:
             continue
         return session, session_dir
     raise LaunchError(f"could not create a session directory under {settings.sessions}")
-
-
-class SessionLog(logging.FileHandler):
-    pass
-
-
-def attach_session_log(session_dir: Path) -> None:
-    harness_log = logging.getLogger("harness")
-    for previous in [each for each in harness_log.handlers if isinstance(each, SessionLog)]:
-        harness_log.removeHandler(previous)
-        previous.close()
-    handler = SessionLog(session_dir / "harness.log", encoding="utf-8")
-    handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    harness_log.addHandler(handler)
 
 
 def run(build: Build, settings: Settings, options: LaunchOptions) -> RunningGame:

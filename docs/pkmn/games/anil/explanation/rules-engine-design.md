@@ -54,7 +54,7 @@ What happens in game is counted in the save, where it can never disagree with th
 
 ## Observability
 
-Each `guard` and `run_audit` writes a `rules` record entry through `note` (`stage` `check` or `audit`), `run_freeze` one with `stage` `freeze`, and an allowed `fight` while a freeze is pending one with `stage` `forced`. The bridge writes `rules_bought` and `rules_shiny` entries itself, and `rules_sleep` too; replay skips all four kinds ([Runtime Design → Session Records and Replay](runtime-design.md#session-records-and-replay)). Guards, audits and freezes log to the `anil.harness.rules` logger, and the ledger's changes to the bridge log.
+Each `guard` and `run_audit` writes a `rules` record entry through `note` (`stage` `check` or `audit`), `run_freeze` one with `stage` `freeze`, and an allowed `fight` while a freeze is pending one with `stage` `forced`. The bridge writes `rules_bought` and `rules_shiny` entries itself, and `rules_sleep` too; replay skips all four kinds ([Runtime Design → Session Records and Replay](runtime-design.md#session-records-and-replay)). Guards and freezes log to the `harness.rules` logger, so to the session's `harness.log` ([Runtime Design → Investigation Commands](runtime-design.md#investigation-commands)); an audit logs nothing and leaves only its record entry. The ledger's changes go to the bridge log.
 
 ## Re-running and Rollback
 

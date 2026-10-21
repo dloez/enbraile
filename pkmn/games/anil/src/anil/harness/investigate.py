@@ -22,6 +22,7 @@ from anil.bridge.protocol import (
     StackResult,
 )
 from anil.harness.lock import live_lock
+from anil.harness.session_log import attach_session_log
 from anil.settings import Settings
 
 ATTACH_TIMEOUT_SECONDS = 5.0
@@ -136,6 +137,9 @@ def attach(settings: Settings, name: str, role: Role | None = None) -> Generator
     lock = live_lock(settings.lock_file)
     if lock is None or lock.game_pid is None:
         raise InvestigateError("no game is running; start one with `anil run`")
+    session_dir = settings.sessions / lock.session
+    if session_dir.is_dir():
+        attach_session_log(session_dir)
     try:
         client = BridgeClient.connect(
             settings.bridge_port, name=name, timeout=ATTACH_TIMEOUT_SECONDS
@@ -152,7 +156,7 @@ def attach(settings: Settings, name: str, role: Role | None = None) -> Generator
         yield Session(
             client,
             lock.session,
-            settings.sessions / lock.session,
+            session_dir,
             settings,
             handshake.event_seq,
         )

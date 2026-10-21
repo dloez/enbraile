@@ -48,7 +48,6 @@ from anil.harness.investigate import InvestigateError, Session, attach
 from anil.harness.knowledge import STORY, KnowledgeView
 from anil.harness.launch import (
     DEFAULT_CLOCK,
-    LOG_FORMAT,
     REAL_CLOCK,
     SEED_LIMIT,
     LaunchError,
@@ -125,6 +124,7 @@ from anil.harness.rules import (
     run_audit,
     run_freeze,
 )
+from anil.harness.session_log import LOG_FORMAT
 from anil.harness.showdown import export_party
 from anil.harness.snapshot import SnapshotError, SnapshotInfo, list_snapshots
 from anil.harness.snapshot import restore as restore_snapshot
