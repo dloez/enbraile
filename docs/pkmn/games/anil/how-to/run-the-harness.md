@@ -1,6 +1,6 @@
 # How to Run the Harness
 
-Launch Pokémon Añil under the bridge, read its state, take snapshots, play it by hand or drive it, and replay a session. How it works is in [Runtime Design](../explanation/runtime-design.md); facts verified on the game are in [Runtime Reference](../reference/runtime.md).
+Launch Pokémon Añil under the bridge, read its state, take snapshots, play it by hand or drive it, walk, talk and use its menus, look up its game data, and replay a session. How it works is in [Runtime Design](../explanation/runtime-design.md); facts verified on the game are in [Runtime Reference](../reference/runtime.md).
 
 ## Prerequisites
 
@@ -68,13 +68,25 @@ uv run anil snapshot list
 
 A name is never overwritten. `uv run anil run --snapshot NAME` boots a new game straight into one.
 
-### 6. Stop
+### 6. Walk, talk and use the menus
+
+```sh
+uv run anil go --map 4
+uv run anil go --event 4 5
+uv run anil interact 4 5
+```
+
+`anil go` walks the player to a tile (`MAP X Y`), onto a map (`--map MAP`) or to stand facing an event (`--event MAP EVENT`), and stops on anything it did not start, such as a wild battle, as `interrupted`. `anil interact MAP EVENT` presses C on the event the player faces and drives its dialog; `anil dialog` drives a dialog already open, after an interrupted walk or a `decision`. `--answer TEXT`, repeatable, answers the next choices or number inputs in order. `anil menu …` runs one menu verb (`continue`, `use`, `give`, `take`, `swap`, `choose`, `lens`, `vial`, `fly`, `exp-share`, `save`, `buy`, `sell`, `relearn`, `pc`); `uv run anil menu --help` lists them. Each prints the lines it saw, the outcome and the state changes, and exits 1 unless it ended as it should: `go` on `arrived`, `interact` and `dialog` on `finished` or `no_effect`, a menu verb on `finished`. The layers are in [Navigation Design](../explanation/navigation-design.md), [Dialog Design](../explanation/dialog-design.md) and [Menu Design](../explanation/menu-design.md).
+
+The world cache and the game database are built from `game/` on first use and rebuilt when the build, the reader or the mod changes; `uv run anil world` and `uv run anil db` build and count them (`--rebuild` forces it). `uv run anil db species PIKACHU`, `move`, `ability`, `item`, `type`, `status`, `trainer-type`, `trainer`, `matchup` and `locations` look facts up; with a game running, `uv run anil db random` reads what the randomizer has rolled, `uv run anil db check` compares the database with the live game, and `uv run anil nav check` compares the passability port with the game's own on the current map ([Game Database Design](../explanation/game-database-design.md)).
+
+### 7. Stop
 
 ```sh
 uv run anil stop
 ```
 
-### 7. Replay a session (optional)
+### 8. Replay a session (optional)
 
 ```sh
 uv run anil replay SESSION
@@ -87,6 +99,7 @@ relaunches the session from its starting save or snapshot, replays every recorde
 - `uv run anil run` prints `held until a driver attaches or anil control take hands the game over`, and `uv run anil state` answers at tick 1.
 - After `uv run anil control take`, the title screen moves and the game answers the keyboard.
 - `uv run anil snapshot save t && uv run anil snapshot restore t` on the overworld prints both lines with the same hash.
+- `uv run anil nav check` and `uv run anil db check` exit 0 on the overworld, and `uv run anil go --map M` to a neighbouring map prints `arrived`.
 - `uv run anil stop` prints `stopped session …`, and a second `uv run anil stop` prints `no game is running`.
 
 ## Troubleshooting

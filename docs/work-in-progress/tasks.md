@@ -23,24 +23,6 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 **Touches:** `docs/pkmn/series/1/`, `docs/work-in-progress/tasks.md`
 **Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
 
-## pkmn/games/anil: walk, talk and use the menus
-
-`anil go`, `interact`, `dialog`, `menu …`, `world`, `nav check` and `db …` drive the game through the world, its dialogs and menus, over the game database ([Surfaces](anil-tooling-discovery.md#surfaces)).
-
-**Do:**
-- [ ] Copy `harness/{navigate,world,dialog,menu,storage,gamedb,random,progression}.py` (with their data), with their CLI commands; `gamedb` uses `ID_SEPARATOR` from `src/anil/harness/state.py`, and replay's skip list loses the record kinds this entry brings.
-- [ ] Docs: Wonder's navigation, dialog, menu and game database designs into `docs/pkmn/games/anil/explanation/`, without agent references.
-
-**Acceptance:**
-- Claude-run: the gate; `uv run anil db check`, `uv run anil nav check`, and `uv run anil go` to a map in the opening while `anil run` is up.
-- Human-run: watch `anil go` walk the player and `anil interact` open a dialog in the game window.
-- Reuse: Wonder's modules, copied.
-- Neighbors: `src/anil/harness/state.py`.
-- Forbidden: `goals/`, `tools/`, any agent import.
-
-**Touches:** `pkmn/games/anil/src/`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-**After:** pkmn/games/anil: launch the game with the bridge and read its state
-
 ## pkmn/games/anil: fight battles with the damage calc
 
 `anil battle …` plays any in-game battle one command at a time, with the damage calc in its results ([Surfaces](anil-tooling-discovery.md#surfaces)).
@@ -82,7 +64,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 `anil check NAME|GROUP` proves each rule of the mod on the real game, as `wonder check` does ([Surfaces](anil-tooling-discovery.md#surfaces)).
 
 **Do:**
-- [ ] Copy `harness/check.py` with its groups, dropping checks of anything not migrated (the egg guard, real runs, the panel).
+- [ ] Copy the rest of Wonder's `harness/check.py` into `src/anil/harness/check.py` (which already holds the game-database check) with its groups, dropping checks of anything not migrated (the egg guard, real runs, the panel).
 - [ ] Docs: `docs/pkmn/games/anil/how-to/check-the-mod.md`; Wonder's randomlocke-design "How the Checks Run" section and its Checks decisions into `docs/pkmn/games/anil/explanation/randomlocke-design.md`; the root `CLAUDE.md`'s no-tests rule names `anil check` as a tool that runs the game, not a test runner.
 
 **Acceptance:**

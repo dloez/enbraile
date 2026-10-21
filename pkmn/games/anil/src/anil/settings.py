@@ -25,5 +25,13 @@ class Settings(BaseSettings):
         return self.data / "snapshots"
 
     @property
+    def world(self) -> Path:
+        return self.data / "world"
+
+    @property
+    def gamedb(self) -> Path:
+        return self.data / "gamedb"
+
+    @property
     def lock_file(self) -> Path:
         return self.data / "game.lock"
