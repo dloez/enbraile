@@ -60,22 +60,6 @@ The rules guard refuses League entry below level 75 and items inside the League 
 **After:** pkmn: update series 1's rulebook with the latest changes
 **Needs the author:** are "everyone at 75 before the League" and "no items inside the League" series 1 rules? Keep the guard (and write them into the rulebook) or drop it?
 
-## pkmn/games/anil: bring Añil's game facts over
-
-Wonder's verified facts about Añil (`docs/domains/game/`) move into `docs/pkmn/games/anil/`, so the tooling's docs cite this repo ([Games and Series](anil-tooling-discovery.md#games-and-series)).
-
-**Do:**
-- [ ] Copy `docs/domains/game/reference/*` and `explanation/game-setup.md` into `docs/pkmn/games/anil/`, dropping rules (now in series 1) and agent references; Wonder's `runtime.md` merges into the existing `docs/pkmn/games/anil/reference/runtime.md` (its sections not yet copied, such as Randomlocke Mod, Checks and Packages, without facts that describe only Wonder's panel, runs or agent), never replacing it. Repoint every "Wonder: `docs/domains/game/…`" and ``source: `docs/domains/game/…` `` citation in `docs/pkmn/`, including series 1's rulebook (whose `rules.md` also cites Wonder's runtime "Bridge Start", now in `docs/pkmn/games/anil/reference/runtime.md`).
-
-**Acceptance:**
-- Claude-run: `grep -rn "docs/domains/game" docs/pkmn/` prints nothing (series 1's rulebook cites game facts as ``source: `docs/domains/game/…` ``); every relative link under `docs/pkmn/` resolves. "Wonder:" citations of Wonder's harness designs, knowledge policy, architecture and competition docs are not game facts and may stay.
-- Human-run: none.
-- Reuse: Wonder's game docs, copied.
-- Neighbors: `docs/pkmn/games/anil/reference/open-sheet-json.md`.
-- Forbidden: rewriting facts; they were verified on the game.
-
-**Touches:** `docs/pkmn/`
-
 ## pkmn/games/anil: log the rules engine to the session's harness log
 
 `anil.harness.rules` logs to `logging.getLogger("anil.harness.rules")` (`src/anil/harness/rules.py`), outside the `harness` logger that `launch.py` gives the session's `harness.log` handler, so guards, audits and freezes never reach `harness.log`, which [Runtime Design → Observability](../pkmn/games/anil/explanation/runtime-design.md#observability) says the harness logs to. Every other layer logs under `harness.*`, as Wonder's `harness.rules` did.

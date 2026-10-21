@@ -1,6 +1,6 @@
 # Series 1 Rules
 
-The complete rulebook of series 1, the group's Randomlocke of Pokémon Añil: every rule that applies to a game started from the Randomlocke package, and the group's own rules. Each rule is a plain statement. The mod's configuration, the reasons behind it and its build choices are in [Randomlocke Design](../../../games/anil/explanation/randomlocke-design.md), cited as `source:` with a link to its section. The game facts and evidence behind a rule are still in the docs of Wonder, the tooling this rulebook was copied from; each is cited as `source:` with its path in Wonder's `docs/`, until the game facts move to `docs/pkmn/games/anil/`.
+The complete rulebook of series 1, the group's Randomlocke of Pokémon Añil: every rule that applies to a game started from the Randomlocke package, and the group's own rules. Each rule is a plain statement. The mod's configuration, the reasons behind it and its build choices are in [Randomlocke Design](../../../games/anil/explanation/randomlocke-design.md), cited as `source:` with a link to its section. The game facts and evidence behind a rule are in Añil's reference docs, such as [Runtime](../../../games/anil/reference/runtime.md), also cited as `source:` with a link to their section.
 
 Every rule before [The Group's Rules](#the-groups-rules) is set by the package itself, and no player option turns it off. A rule is verified in the running game unless it says **configured, not yet seen in game**; those are listed together under [Not Yet Seen in Game](#not-yet-seen-in-game).
 
@@ -8,18 +8,18 @@ The game is in Spanish. Quoted Spanish strings are exactly what the game shows, 
 
 ## The Package
 
-- **Everyone plays the same game:** Pokémon Añil v4.14 (Spanish) with the Randomlocke mod, version 1. The window title reads "Pokémon Añil Randomlocke v1" (source: `docs/domains/game/reference/runtime.md` → Packages).
-- **The rules apply to new games only.** A new game skips every mode menu: the difficulty, the visible-wild-Pokémon question and the PC's "Elegir modo de juego" ("Choose game mode") never ask anything. After the rival's name the player wakes in the bedroom with the "Libro de Reglas" (Rule Book) in the bag, and the PC's "Elegir modo de juego" only says the modes are fixed (source: `docs/domains/game/reference/runtime.md` → Randomlocke Mod).
-- **No starter-region question.** The game never asks which region's starters the laboratory offers ("Elige de qué generación quieres que sean los Pokémon Iniciales…", "Choose which generation you want the starter Pokémon to be from…"); the mod records Kanto silently, and the lab's three Poké Balls (map 29) offer the game's three random starters ([Randomizer](#randomizer); source: `docs/domains/game/reference/runtime.md` → Randomlocke Mod).
-- **A new game saves itself once.** When the player first wakes in the bedroom, the game saves, silently, into a new slot ("Partida N", the first free number) and never over an existing save. The random starters are in that save from the start, so the only way to get other starters is to play the intro again in another new game (source: `docs/domains/game/reference/runtime.md` → Randomlocke Mod).
-- **The base game must be unmodified.** At boot the mod checks it runs on the official v4.14 files; if not, a warning, "Aviso de la Randomlocke: …" ("Randomlocke warning: …"), appears before the title screen and the rules may not work (source: `docs/domains/game/reference/runtime.md` → Packages).
-- **No updates.** The game's update check is off, so the game never goes online for updates and never replaces itself; a fix comes as a new package. Discord Rich Presence is off (source: `docs/domains/game/reference/runtime.md` → Bridge Start).
-- **The party can be copied to Pokémon Showdown.** In the pause menu, Z ("[Z] Exportar a Showdown") copies the party, eggs and permafainted Pokémon left out, to the clipboard in Showdown's team format: every Pokémon at Level 50, with its nickname, gender, item, ability, nature, moves, its real IVs (only those below 31 listed) and 1 EV in every stat, under the English names Showdown's import recognises. If any of them has no Showdown name (Arceus's ??? form, or Añil's own species, items, abilities and moves), the game says which and copies nothing (source: `docs/domains/game/reference/runtime.md` → Randomlocke Mod; source: [Randomlocke Design → Showdown Export](../../../games/anil/explanation/randomlocke-design.md#showdown-export)).
-- **Saves** go to Añil's normal save folder, `%APPDATA%\Pokemon Anil`, shared with any normal Añil install (source: `docs/domains/game/reference/runtime.md` → Player and Engine); the package does not redirect players' saves.
+- **Everyone plays the same game:** Pokémon Añil v4.14 (Spanish) with the Randomlocke mod, version 1. The window title reads "Pokémon Añil Randomlocke v1" (source: [Runtime → Packages](../../../games/anil/reference/runtime.md#packages)).
+- **The rules apply to new games only.** A new game skips every mode menu: the difficulty, the visible-wild-Pokémon question and the PC's "Elegir modo de juego" ("Choose game mode") never ask anything. After the rival's name the player wakes in the bedroom with the "Libro de Reglas" (Rule Book) in the bag, and the PC's "Elegir modo de juego" only says the modes are fixed (source: [Runtime → Randomlocke Mod](../../../games/anil/reference/runtime.md#randomlocke-mod)).
+- **No starter-region question.** The game never asks which region's starters the laboratory offers ("Elige de qué generación quieres que sean los Pokémon Iniciales…", "Choose which generation you want the starter Pokémon to be from…"); the mod records Kanto silently, and the lab's three Poké Balls (map 29) offer the game's three random starters ([Randomizer](#randomizer); source: [Runtime → Randomlocke Mod](../../../games/anil/reference/runtime.md#randomlocke-mod)).
+- **A new game saves itself once.** When the player first wakes in the bedroom, the game saves, silently, into a new slot ("Partida N", the first free number) and never over an existing save. The random starters are in that save from the start, so the only way to get other starters is to play the intro again in another new game (source: [Runtime → Randomlocke Mod](../../../games/anil/reference/runtime.md#randomlocke-mod)).
+- **The base game must be unmodified.** At boot the mod checks it runs on the official v4.14 files; if not, a warning, "Aviso de la Randomlocke: …" ("Randomlocke warning: …"), appears before the title screen and the rules may not work (source: [Runtime → Packages](../../../games/anil/reference/runtime.md#packages)).
+- **No updates.** The game's update check is off, so the game never goes online for updates and never replaces itself; a fix comes as a new package. Discord Rich Presence is off (source: [Runtime → Bridge Start](../../../games/anil/reference/runtime.md#bridge-start)).
+- **The party can be copied to Pokémon Showdown.** In the pause menu, Z ("[Z] Exportar a Showdown") copies the party, eggs and permafainted Pokémon left out, to the clipboard in Showdown's team format: every Pokémon at Level 50, with its nickname, gender, item, ability, nature, moves, its real IVs (only those below 31 listed) and 1 EV in every stat, under the English names Showdown's import recognises. If any of them has no Showdown name (Arceus's ??? form, or Añil's own species, items, abilities and moves), the game says which and copies nothing (source: [Runtime → Randomlocke Mod](../../../games/anil/reference/runtime.md#randomlocke-mod); source: [Randomlocke Design → Showdown Export](../../../games/anil/explanation/randomlocke-design.md#showdown-export)).
+- **Saves** go to Añil's normal save folder, `%APPDATA%\Pokemon Anil`, shared with any normal Añil install (source: [Runtime → Player and Engine](../../../games/anil/reference/runtime.md#player-and-engine)); the package does not redirect players' saves.
 
 ## Nuzlocke
 
-Añil's Challenge Modes, with exactly these rules on: "Muerte Permanente" (permadeath), the three mart bans, "Una captura por mapa" (one capture per map) with "Cláusula Primer Pokémon" (first Pokémon clause) and the gift, shiny, duplicates and legendary clauses, "Motes Obligatorios" (mandatory nicknames) and "Modo de Combate Fijo" (Set battle style). Off: "Cláusula Vidas" (lives clause), "Cláusula Revivir" (revive clause), Permalocke and its slot recovery, "Cláusula sin Piedad" (no-mercy clause), "Bloqueo de Mochila" (bag lock) and "Sin Capturas" (no catching). How each rule behaves, with its evidence, is in source: `docs/domains/game/reference/nuzlocke.md`.
+Añil's Challenge Modes, with exactly these rules on: "Muerte Permanente" (permadeath), the three mart bans, "Una captura por mapa" (one capture per map) with "Cláusula Primer Pokémon" (first Pokémon clause) and the gift, shiny, duplicates and legendary clauses, "Motes Obligatorios" (mandatory nicknames) and "Modo de Combate Fijo" (Set battle style). Off: "Cláusula Vidas" (lives clause), "Cláusula Revivir" (revive clause), Permalocke and its slot recovery, "Cláusula sin Piedad" (no-mercy clause), "Bloqueo de Mochila" (bag lock) and "Sin Capturas" (no catching). How each rule behaves, with its evidence, is in source: [Nuzlocke](../../../games/anil/reference/nuzlocke.md).
 
 - **The challenge starts at the first Poké Ball.** The game announces it with "¡Tu desafío ha comenzado! ¡Buena suerte!" ("Your challenge has begun! Good luck!").
 - **Fainted means dead.** A Pokémon at 0 HP stays at 0 HP: Revive and Max Revive have no effect, and a Pokémon Center heals the living but not the fainted.
@@ -34,7 +34,7 @@ Añil's Challenge Modes, with exactly these rules on: "Muerte Permanente" (perma
 
 ## Randomizer
 
-Añil's randomizer in "Random Completo" (fully random) mode, progressive, with Gen 1–5 as its generations. What each part does in game, with its numbers and evidence, is in source: `docs/domains/game/reference/randomizer.md`; the evidence that the Gen 1–5 caps hold is in source: `docs/domains/game/reference/runtime.md` → Randomlocke Mod.
+Añil's randomizer in "Random Completo" (fully random) mode, progressive, with Gen 1–5 as its generations. What each part does in game, with its numbers and evidence, is in source: [Randomizer](../../../games/anil/reference/randomizer.md); the evidence that the Gen 1–5 caps hold is in source: [Runtime → Randomlocke Mod](../../../games/anil/reference/runtime.md#randomlocke-mod).
 
 - **Every Pokémon is random:** wild, trainer, gift and starter Pokémon all get a random species.
 - **Random Pokémon grow stronger with badges.** A random species is drawn from a base-stat-total window that rises with the badge count.
@@ -51,7 +51,7 @@ Añil's randomizer in "Random Completo" (fully random) mode, progressive, with G
 
 ## Gen 1–5 Limits
 
-Our additions to the randomizer. The evidence is in source: `docs/domains/game/reference/runtime.md` → Randomlocke Mod and source: `docs/domains/game/reference/runtime.md` → Checks.
+Our additions to the randomizer. The evidence is in source: [Runtime → Randomlocke Mod](../../../games/anil/reference/runtime.md#randomlocke-mod) and source: [Runtime → Checks](../../../games/anil/reference/runtime.md#checks).
 
 - **Only Gen 1–5 Pokémon.** Every random Pokémon (wild, trainer, gift and starter) is a Gen 1–5 species in one of its official Gen 1–5 forms: no regional, Primal, mega or fan forms, and none of Añil's own species. A starter's whole family is Gen 1–5. Forms the game sets later from a held item or in battle are left as the game sets them.
 - **No evolving into a later generation.** An evolution into a species after Gen 5 never happens: an Eevee given a Shiny Stone does not become Sylveon, and a Primeape never becomes Annihilape. Its other evolutions still work.
@@ -63,10 +63,10 @@ Our additions to the randomizer. The evidence is in source: `docs/domains/game/r
 
 ## Level Cap
 
-A hard cap, set by Añil's Level Caps EX plugin as shipped. How it holds, with its evidence, is in source: `docs/domains/game/reference/level-caps.md`.
+A hard cap, set by Añil's Level Caps EX plugin as shipped. How it holds, with its evidence, is in source: [Level Caps](../../../games/anil/reference/level-caps.md).
 
 - **No Pokémon can go above the cap.** At the cap, a Rare Candy has no effect and is not used up, and battle EXP stops; EXP that would cross the cap stops at the cap level.
-- **Trainers' Pokémon above the cap are brought down to it.** Seen at 0 badges (source: `docs/domains/game/reference/randomizer.md` → Trainers), and the same with the plugin's bypass switch on. That switch, named "Tienes Pokédex Nacional" ("You have the National Pokédex"), is never turned on by the game, and it lifts the cap neither for the player nor for trainers (source: `docs/domains/game/reference/level-caps.md`).
+- **Trainers' Pokémon above the cap are brought down to it.** Seen at 0 badges (source: [Randomizer → Trainers](../../../games/anil/reference/randomizer.md#trainers)), and the same with the plugin's bypass switch on. That switch, named "Tienes Pokédex Nacional" ("You have the National Pokédex"), is never turned on by the game, and it lifts the cap neither for the player nor for trainers (source: [Level Caps](../../../games/anil/reference/level-caps.md)).
 - **The cap rises with each badge:**
 
 | Progress | Level cap |
@@ -82,16 +82,16 @@ A hard cap, set by Añil's Level Caps EX plugin as shipped. How it holds, with i
 | 8th badge | 75 |
 | Game beaten | 100 |
 
-Every cap value was read in game, with the switch for that badge, or for beating the game, turned on by the tooling rather than earned in play; the Rare Candy and battle EXP were tested at the start cap only. Where the values come from is in source: `docs/domains/game/reference/level-caps.md`.
+Every cap value was read in game, with the switch for that badge, or for beating the game, turned on by the tooling rather than earned in play; the Rare Candy and battle EXP were tested at the start cap only. Where the values come from is in source: [Level Caps](../../../games/anil/reference/level-caps.md).
 
 - **Rare Candies ("Caramelos Raros") are free and unlimited** from the candy cups in every Pokémon Center ([Healing and Rare Candies](#healing-and-rare-candies)), and still stop at the cap. The only Rare Candy item ball, on Ruta 6 (map 18, event 18), goes through the randomizer and gives a random item.
 
 ## Battles Use Modern Rules
 
-Battles follow the Gen 9 mechanics that Pokémon Essentials implements, with Añil's own setting for snow, and with freeze as in the official games, even though every Pokémon, move and ability is from Gen 1–5. The evidence is in source: `docs/domains/game/reference/battle-mechanics.md`.
+Battles follow the Gen 9 mechanics that Pokémon Essentials implements, with Añil's own setting for snow, and with freeze as in the official games, even though every Pokémon, move and ability is from Gen 1–5. The evidence is in source: [Battle Mechanics](../../../games/anil/reference/battle-mechanics.md).
 
 - **The Fairy type exists, and the type chart is the modern one.** Fairy beats Fighting, Dragon and Dark; Dragon moves don't affect it; Poison and Steel beat it. Steel no longer resists Ghost or Dark. Clefairy and Togepi are Fairy, and Charm, Moonlight and Sweet Kiss are Fairy moves.
-- **Every Pokémon has its official types.** Añil had changed the types of 33 Gen 1–5 species, among them the Chikorita line (Grass/Fairy), Feraligatr (Water/Dragon) and Emboar (Fire/Dark). The Randomlocke puts them all back to the official types: the Chikorita line is pure Grass, Feraligatr pure Water and Emboar Fire/Fighting. Types that became official in Gen 6, such as Fairy, stay. The full list is in source: `docs/domains/game/reference/battle-mechanics.md` → Types.
+- **Every Pokémon has its official types.** Añil had changed the types of 33 Gen 1–5 species, among them the Chikorita line (Grass/Fairy), Feraligatr (Water/Dragon) and Emboar (Fire/Dark). The Randomlocke puts them all back to the official types: the Chikorita line is pure Grass, Feraligatr pure Water and Emboar Fire/Fighting. Types that became official in Gen 6, such as Fairy, stay. The full list is in source: [Battle Mechanics → Types](../../../games/anil/reference/battle-mechanics.md#types).
 - **Critical hits do 1.5× damage,** at a base chance of 1 in 24.
 - **Burn** costs 1/16 of max HP each turn and halves physical damage.
 - **Paralysis** halves Speed and stops the Pokémon 25% of the time (_read from the game's code, not yet seen in game_). Electric types can't be paralysed.
@@ -103,7 +103,7 @@ Battles follow the Gen 9 mechanics that Pokémon Essentials implements, with Añ
 
 ## Shinies
 
-How often shinies appear, as Añil makes them under the Randomlocke. The evidence is in source: `docs/domains/game/reference/shinies.md`. The group's limits on shinies are in [The Group's Rules → Rules in Every Battle](#rules-in-every-battle).
+How often shinies appear, as Añil makes them under the Randomlocke. The evidence is in source: [Shinies](../../../games/anil/reference/shinies.md). The group's limits on shinies are in [The Group's Rules → Rules in Every Battle](#rules-in-every-battle).
 
 - **A wild Pokémon is shiny about 1 in 500.** Añil gives every wild Pokémon two separate chances: the usual one, about 1 in 1,000, and one more of 1 in 1,000 from its visible-encounters add-on, which runs precisely because visible wild Pokémon are off. Out of 100,000 wild Pokémon made by the game, 198 were shiny.
 - **What that means for a run:** about 0.2 shinies per 100 wild battles, so roughly one in every 500 wild battles: a run fighting 300 wild battles meets one with a 45% chance, and 1,000 battles meet about two.
@@ -117,7 +117,7 @@ How often shinies appear, as Añil makes them under the Randomlocke. The evidenc
 
 ## IVs and EVs
 
-How Pokémon get their IVs and EVs, and every way to see or change them. The evidence is in source: `docs/domains/game/reference/ivs-evs.md`. The group's rules forbid changing EVs or IVs by any means ([The Group's Rules → Rules in Every Battle](#rules-in-every-battle)).
+How Pokémon get their IVs and EVs, and every way to see or change them. The evidence is in source: [IVs and EVs](../../../games/anil/reference/ivs-evs.md). The group's rules forbid changing EVs or IVs by any means ([The Group's Rules → Rules in Every Battle](#rules-in-every-battle)).
 
 - **Every Pokémon's IVs are random,** 0 to 31 in each stat: wild Pokémon, gifts, trades and the three starters. No wild Pokémon you can catch has fixed or guaranteed perfect IVs, and the randomizer doesn't change IVs or EVs.
 - **The summary shows exact IVs and EVs.** The second "Estadísticas" (Stats) page shows each stat as "EV/IV" and the "EVs totales" (total EVs) out of 510. There is no IV judge, and none is needed.
@@ -136,14 +136,14 @@ How Pokémon get their IVs and EVs, and every way to see or change them. The evi
 
 ## Healing and Rare Candies
 
-Healing outside the Pokémon Centers, and where Rare Candies come from. The evidence is in source: `docs/domains/game/reference/league.md`.
+Healing outside the Pokémon Centers, and where Rare Candies come from. The evidence is in source: [League, Pokévial and Candy Cups](../../../games/anil/reference/league.md).
 
 - **The Pokévial heals the party anywhere outside battle.** The "Pokévial", a free key item from Professor Oak's lab, fully heals the party, one charge per use, and does nothing in battle. It never revives a permafainted Pokémon. It starts with 1 charge and holds up to 5, one more for each of the four "Mejora del Pokévial" (Pokévial upgrade) pickups: Ruta 20, Ciudad Azulona, Islas Espuma and Ruta 24. Every Pokémon Center nurse refills it. The group allows it ([The Group's Rules → Healing and the League](#healing-and-the-league)). _Read from the game's code and data, not yet seen in game._
 - **Every Pokémon Center has a candy cup** ("Taza"): examined, it adds 100 Rare Candies to the bag, as often as wanted, with no message. There are 18: in the Pokémon Centers of Ciudad Verde (the first on the way), Ciudad Plateada, Ruta 3, Ciudad Celeste, Ciudad Carmín, Ruta 10 Norte, Pueblo Lavanda, Ciudad Azulona, Ciudad Azafrán, Ciudad Fucsia, Pueblo Marengo, Isla Canela, Ruta 25 Sur, Villa Ámbar, Villa Azabache and Villa Magenta, in the Pokémon League lobby, and in the Battle Tower ("Torre Batalla") in Ciudad Carmín. They are real Rare Candies, not random items. _Seen in game at the Ciudad Verde and League lobby cups; the other places are read from the game's data._
 
 ## The Pokémon League
 
-The Elite Four and the Champion in Ciudad Añil. The evidence is in source: `docs/domains/game/reference/league.md` → The Pokémon League.
+The Elite Four and the Champion in Ciudad Añil. The evidence is in source: [League, Pokévial and Candy Cups → The Pokémon League](../../../games/anil/reference/league.md#the-pokémon-league).
 
 - **No items in League battles.** Every Elite Four and Champion battle blocks the bag: choosing "Mochila" (Bag) shows "No se pueden usar objetos en este combate." ("Items can't be used in this battle."). _Seen in game against Lorelei; the other four battles are read from the game's data._
 - **No way back once in.** The gatekeeper's door leads into the Elite Four, and nothing there leads back to the lobby before the end; losing a battle whites out as anywhere else. The gatekeeper says healing items will be taken, but the game takes nothing.
@@ -155,7 +155,7 @@ Apart from the bag in Lorelei's battle, these League facts are read from the gam
 
 ## Locked Options
 
-Set at new game and out of the player's hands (source: `docs/domains/game/reference/runtime.md` → Randomlocke Mod).
+Set at new game and out of the player's hands (source: [Runtime → Randomlocke Mod](../../../games/anil/reference/runtime.md#randomlocke-mod)).
 
 - **Battle style is Set ("Fijo"):** no free switch after knocking out a trainer's Pokémon. It is gone from Options, and nothing in the game switches it to "Cambio" (Switch).
 - **Visible wild Pokémon in the overworld are off,** and the option is gone from Options, so nobody picks encounters by sight.
@@ -167,16 +167,16 @@ Set at new game and out of the player's hands (source: `docs/domains/game/refere
 
 Configured or read from the game's code, but not yet observed in the running game:
 
-- **The players package beyond its options.** Every rule above was verified on the tooling's copy, whose mod files are byte-identical to the players package; the owner checked by hand that a new game from the players package applies the visible options, without playing further (source: `docs/domains/game/reference/runtime.md` → Packages).
+- **The players package beyond its options.** Every rule above was verified on the tooling's copy, whose mod files are byte-identical to the players package; the owner checked by hand that a new game from the players package applies the visible options, without playing further (source: [Runtime → Packages](../../../games/anil/reference/runtime.md#packages)).
 - **Types and evolutions not randomized,** and **no shared seed** ([Randomizer](#randomizer)).
-- **Egg and tutor moves are not randomized** (source: `docs/domains/game/reference/randomizer.md` → Read from Code).
+- **Egg and tutor moves are not randomized** (source: [Randomizer → Read from Code](../../../games/anil/reference/randomizer.md#read-from-code)).
 - **Parts of the battle rules:** paralysis's 25% chance of not moving, how many turns sleep lasts, and a non-Fire thawing move thawing its target ([Battles Use Modern Rules](#battles-use-modern-rules)). The settings, chances and damage behind the rest were seen in a live battle; full turns were played only for freeze.
 - **Parts of the shiny facts:** how the Shiny Charm, the Shiny Potion and the four shiny gifts are obtained, and when the Battle Tower and the islands can be reached, are read from the game's data; the number-battled bonus is read from code; the catch chain was seen by calling its end-of-battle handler, not by fighting battles ([Shinies](#shinies)).
 - **Parts of the IV and EV facts:** buying Mochis, berries and power items, the punch-bag training, battle EVs at the level cap, Pokérus and the Macho Brace in battle, and breeding are read from the game's code and data, and when the Dojo Magenta, Pueblo Marengo and the Dojo Azafrán can be reached is not checked ([IVs and EVs](#ivs-and-evs)). The item effects were seen by using each item through the game's own code, not from the bag screen.
 - **What the difficulty modes change.** Completo is set, but what it and the other modes do beyond the switch they set was not checked (source: [Randomlocke Design → Package Behaviour](../../../games/anil/explanation/randomlocke-design.md#package-behaviour)).
-- **The Showdown export inside Showdown.** The copied text was checked against Showdown's documented team format and names, not pasted into Showdown's teambuilder (source: `docs/domains/game/reference/runtime.md` → Randomlocke Mod).
+- **The Showdown export inside Showdown.** The copied text was checked against Showdown's documented team format and names, not pasted into Showdown's teambuilder (source: [Runtime → Randomlocke Mod](../../../games/anil/reference/runtime.md#randomlocke-mod)).
 - **Parts of the healing, candy and League facts:** the Pokévial, the candy cups other than Ciudad Verde's and the League lobby's, and everything about the League but the blocked bag in Lorelei's battle are read from the game's code and data ([Healing and Rare Candies](#healing-and-rare-candies); [The Pokémon League](#the-pokémon-league)).
-- **Reaching the Hall of Fame and the credits in play.** The entry and the credits event were seen run by the tooling, the entry by script and the credits by moving the player onto their map, not reached by beating the champion (source: `docs/domains/game/reference/nuzlocke.md`).
+- **Reaching the Hall of Fame and the credits in play.** The entry and the credits event were seen run by the tooling, the entry by script and the credits by moving the player onto their map, not reached by beating the champion (source: [Nuzlocke](../../../games/anil/reference/nuzlocke.md)).
 
 ## The Group's Rules
 
@@ -214,7 +214,7 @@ Its last sentence, an optional weekly fight against an AI for an egg or the next
 
 ### Eggs
 
-- **Every new game has 16 eggs,** put by the mod in the last PC box, "Huevos". A league match win opens one, so with 8 league rounds at most 8 are ever opened. This is the group's "captura extra" (extra catch), not breeding. How the mod gives and hatches them is in source: `docs/domains/game/reference/nuzlocke.md` → Eggs.
+- **Every new game has 16 eggs,** put by the mod in the last PC box, "Huevos". A league match win opens one, so with 8 league rounds at most 8 are ever opened. This is the group's "captura extra" (extra catch), not breeding. How the mod gives and hatches them is in source: [Nuzlocke → Eggs](../../../games/anil/reference/nuzlocke.md#eggs).
 - **A win lets the player open one egg:** move it to the party and walk; it hatches after 100 steps. Eggs in the PC never hatch. Opening an egg is the player's word that they won; the mod does not count wins.
 - **An egg may be opened later, or never.** What hatches is drawn at the moment it hatches: a random Gen 1–5 Pokémon at level 1, from the randomizer's window for the player's badge count at that moment, shiny at the normal gift odds.
 - **An egg never uses a route's encounter,** received or hatched.
@@ -229,7 +229,7 @@ These apply to every battle, in the story (wild Pokémon, trainers, gyms, the Le
 - **No Item Clause.** The same item may be held by several Pokémon, as long as the one-of-each-shop-item rule below holds; the guide's advice when in doubt is not to buy it ("Ante las dudas, no lo compres"). _(owner, 2026-10-02)_
 - **At most one of each competitive item bought in a shop.** A held battle item bought from a Poké Mart — the type Gems, Focus Sash ("Banda Aguante"), Scope Lens ("Periscopio"), Wide Lens ("Lupa"), Zoom Lens ("Telescopio"), White Herb ("Hierba Blanca"), Power Herb ("Hierba Única"), King's Rock ("Roca del Rey"), Bright Powder ("Polvo Brillo"), Eject Button ("Botón Escape"), Red Card ("Tarjeta Roja"), the incenses and any other — is bought once at most per item. The game sets no limit: its marts sell any number the player can afford. Held battle berries (type-resist, pinch and the like) count too, and so does any shop, the Battle Point shops included. Items found or received are not limited by this rule. _(owner, 2026-10-02; berries and every shop 2026-10-04)_
 - **No breeding.** No Pokémon is left at the Day Care to get eggs. _(owner, 2026-10-02)_
-- **No changing EVs or IVs by any means.** EVs come only from normal battles, and IVs stay as each Pokémon has them. No item that raises, lowers or resets EVs or IVs (vitamins, Mochis, feathers, EV-reducing berries, "Chapas" (bottle-cap-style IV items), and the like), and no item or training that changes the EVs a battle gives (power items, the Macho Brace, the punch-bag training). Nature mints are allowed, since they change neither, and so is Pokérus: a Pokémon that catches it is used as normal, although the game doubles its battle EVs from then on. See source: `docs/domains/game/reference/ivs-evs.md`. _(owner, 2026-10-02; mints and Pokérus 2026-10-04)_
+- **No changing EVs or IVs by any means.** EVs come only from normal battles, and IVs stay as each Pokémon has them. No item that raises, lowers or resets EVs or IVs (vitamins, Mochis, feathers, EV-reducing berries, "Chapas" (bottle-cap-style IV items), and the like), and no item or training that changes the EVs a battle gives (power items, the Macho Brace, the punch-bag training). Nature mints are allowed, since they change neither, and so is Pokérus: a Pokémon that catches it is used as normal, although the game doubles its battle EVs from then on. See source: [IVs and EVs](../../../games/anil/reference/ivs-evs.md). _(owner, 2026-10-02; mints and Pokérus 2026-10-04)_
 - **At most 6 shinies,** from any source. If a seventh appears, it is not caught ("Si te sale el séptimo, no lo captures"). The rule no longer says "at a time" and no longer offers releasing one to make room. _(owner, 2026-10-02)_
 - **A player who owns a living shiny always has one in the party,** so every pokepaste includes one; if it dies, another living shiny from the PC takes its place. _(owner, 2026-10-02)_
 - **Legendaries and mythicals (such as Mew or Meloetta) may be caught but never used:** not in the party, not in any pokepaste. The legendary clause still keeps the map's encounter. _(owner, 2026-10-02: mythicals count as legendaries)_ A shiny legendary or mythical is never used either: it stays in the PC and does not count as the living shiny the party must hold. It is still a shiny, so it counts toward the 6. _(owner, 2026-10-03)_
@@ -237,7 +237,7 @@ These apply to every battle, in the story (wild Pokémon, trainers, gyms, the Le
 ### Healing and the League
 
 - **The Pokévial is allowed** ([Healing and Rare Candies](#healing-and-rare-candies)). _(owner, 2026-10-02)_
-- **No healing items on the visit that starts the challenge.** The game chooses its mart bans when the buy list opens, so on the visit whose Poké Balls start the challenge it would still sell healing items, bought before or after the balls in that list (source: `docs/domains/game/reference/nuzlocke.md`). The group's rule closes that gap: those healing items are not bought, and the Poké Balls are bought alone. _(owner, 2026-10-06)_
+- **No healing items on the visit that starts the challenge.** The game chooses its mart bans when the buy list opens, so on the visit whose Poké Balls start the challenge it would still sell healing items, bought before or after the balls in that list (source: [Nuzlocke](../../../games/anil/reference/nuzlocke.md)). The group's rule closes that gap: those healing items are not bought, and the Poké Balls are bought alone. _(owner, 2026-10-06)_
 - **The healing-items ban has no League exception:** the group does not lift the package's mart ban for the lobby's item mart, whose healing items the game keeps refusing. _(owner, 2026-10-02)_
 
 ### Final Tournament
