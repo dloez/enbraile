@@ -40,6 +40,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 
 **Touches:** `pkmn/games/anil/src/`, `docs/pkmn/games/anil/`, `CLAUDE.md`
 **After:** pkmn/games/anil: guard and audit the series rules
+**Needs the author:** the unattended pass of 2026-10-21 was stopped by Claude Code's auto-mode permission check after copying Wonder's 8,935-line `check.py` (later edits, lint and even reads in the worktree were denied as "Untrusted Code Integration" / "Irreversible Local Destruction"). Its partial copy, renamed but not linted, is on branch `wq/anil-check`. Allow this work (or run it attended with `/next-task`), and say whether to build on that branch or start over.
 
 ## pkmn/games/anil: keep or drop the League guard
 
