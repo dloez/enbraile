@@ -27,9 +27,9 @@ Decisions live, dated, in the `## Decisions` section of the owning explanation d
 
 ## Work in Progress
 
-Open questions, scope docs, and the work queue. Non-authoritative — see [lifecycle rules](work-in-progress/index.md).
+Open questions, scope docs, context, and the work queue. Non-authoritative — see [lifecycle rules](work-in-progress/index.md).
 
 - [Open Questions](work-in-progress/open-questions.md)
 - [Tasks](work-in-progress/tasks.md) — the work queue
-- [Team Analysis](work-in-progress/team-analysis-discovery.md) — PokeGraph's team analysis as a site tool and inside Open Sheet
 - [Añil Tooling](work-in-progress/anil-tooling-discovery.md) — Wonder's install, mod, bridge, harness and checks for Añil, without the agent
+- [Open Sheet: Origin Conversation](work-in-progress/open-sheet-origin-conversation.md) — the Wonder session where the export was first discussed

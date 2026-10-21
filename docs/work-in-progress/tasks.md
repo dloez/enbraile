@@ -110,20 +110,3 @@ The design-system cleanup moved every shared component into `src/components/`, b
 
 **Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
 **Needs the author:** does "no tool imports from another tool's folder" cover data hand-overs like `carryTeam`, or only UI?
-
-## pkmn/site: fold the Team Analysis scope into the site docs
-
-No entry links [Team Analysis: Discovery](team-analysis-discovery.md) any more, so its lasting content moves to its permanent place and it is deleted ([Lifecycle](index.md#lifecycle)). Permanent docs still cite it as their source (`docs/pkmn/site/explanation/site.md`, `open-sheet.md`, `docs/pkmn/index.md`'s Site row).
-
-**Do:**
-- [ ] Move every decision and fact of `team-analysis-discovery.md` not already in `docs/pkmn/site/` into its owning doc there (dated decisions in `site.md` or `open-sheet.md` → Decisions), then repoint every link to it and delete it.
-- [ ] Drop Team Analysis from the Work in Progress lists of `docs/index.md` and `docs/work-in-progress/index.md`.
-
-**Acceptance:**
-- Claude-run: `grep -rn "team-analysis-discovery" docs/ CLAUDE.md pkmn/ --include=*.md` prints nothing; every relative link under `docs/` resolves; the two Work in Progress lists name the same docs.
-- Human-run: none.
-- Reuse: `docs/pkmn/site/explanation/site.md` → Decisions.
-- Neighbors: `docs/pkmn/site/reference/design-system.md`.
-- Forbidden: changing code; restating a fact the site docs already own; turning a scope answer the owner did not give into a decision.
-
-**Touches:** `docs/work-in-progress/team-analysis-discovery.md`, `docs/work-in-progress/index.md`, `docs/index.md`, `docs/pkmn/index.md`, `docs/pkmn/site/`

@@ -1,6 +1,6 @@
 # The pkmn Site
 
-The group's Pokémon web app, `pkmn/site/`, served at `pkmn.enbraile.vip`. It holds a home page listing the tools, [Open Sheet](open-sheet.md) at `/open-sheet` and Team Analysis at `/team-analysis` ([Team Analysis: Discovery](../../../work-in-progress/team-analysis-discovery.md)). More tools will join it over the series, and a backend on Vercel Functions may follow. Running and deploying it is in [How to Run and Deploy the Site](../how-to/run-and-deploy-the-site.md). It was scoped with the owner on 2026-10-15.
+The group's Pokémon web app, `pkmn/site/`, served at `pkmn.enbraile.vip`. It holds a home page listing the tools, [Open Sheet](open-sheet.md) at `/open-sheet` and [Team Analysis](team-analysis.md) at `/team-analysis`. More tools will join it over the series, and a backend on Vercel Functions may follow. Running and deploying it is in [How to Run and Deploy the Site](../how-to/run-and-deploy-the-site.md). It was scoped with the owner on 2026-10-15.
 
 ## Stack
 
@@ -20,7 +20,7 @@ The tab icon is a spiral notepad with a red and white Poké Ball drawn on it and
 
 ## Data and Storage
 
-Everything a reader imports or builds stays in their browser, in IndexedDB, per browser and device. Nothing goes to a server, and there are no accounts. Game data (names, descriptions, base stats, the type chart) is bundled from `@pkmn/dex`; no API is called at runtime. Sprites load from Showdown's sprite server, `play.pokemonshowdown.com`, through `@pkmn/img`'s URLs.
+Everything a reader imports or builds stays in their browser, per browser and device: Open Sheet's in IndexedDB, Team Analysis's drafts in `localStorage`. Nothing goes to a server, and there are no accounts. Game data (names, descriptions, base stats, the type chart) is bundled from `@pkmn/dex`; no API is called at runtime. Sprites load from Showdown's sprite server, `play.pokemonshowdown.com`, through `@pkmn/img`'s URLs.
 
 ## Hosting and Deploys
 
@@ -44,6 +44,6 @@ The site logs nothing of its own: Vercel's build and deployment logs cover the d
 - **Tailwind's scales only for type and radius:** radii are `rounded-lg` (10px), never `rounded-[10px]`; 14px → `rounded-xl`, 20px → `rounded-2xl`, 7px → `rounded-md`, 5px and bare `rounded` → `rounded-sm`. Text 10px and 11px → `text-xs`, 13px → `text-sm`, 17px → `text-lg`, 22px and 26px → `text-2xl`, 30px → `text-3xl`, 34px → `text-4xl`. **Why:** the nearest step on the scale keeps the look while leaving one spelling per size. _(settled 2026-10-21)_
 - **One gutter and one width per page kind:** every page is a centred column with the header's `px-4 sm:px-8` (`src/components/page.ts`), `max-w-240` for a list page (home), `max-w-344` for a tool (Open Sheet as well as Team Analysis, so Open Sheet is no longer full width) and `max-w-180` for a message. _(settled 2026-10-21)_
 - **Duplicate colour tokens are aliases:** `chart-1` is `var(--primary)`, `chart-4` `var(--destructive)`, `secondary` `var(--cell)`, and likewise `popover`, `input`, `ring` and the `*-foreground` copies of `foreground`, each kept for its own role; the unused `chart-5` and `sidebar-*` tokens were dropped. _(settled 2026-10-21)_
-- **Nothing is stored server-side:** imports and teams live in the reader's IndexedDB. _(owner, 2026-10-15)_
+- **Nothing is stored server-side:** imports, teams and drafts live in the reader's browser. _(owner, 2026-10-15; Team Analysis's drafts since 2026-10-17)_
 - **Vercel at `pkmn.enbraile.vip`, deployed by Vercel's Git integration** on pushes to `main` touching `pkmn/site/`, with public branch previews, and DNS staying on Cloudflare as a DNS-only record. **Why:** Spanish ISPs block Cloudflare's IPs during LaLiga matches, taking the site down. Vercel was blocked once, in April 2025, and unblocked within days. The owner accepted that remaining risk to keep managed deploys rather than run a VPS. _(owner, 2026-10-20; replaces Cloudflare Workers, chosen 2026-10-15)_ Seen working on 2026-10-20: `pkmn.enbraile.vip` resolved to Vercel and returned `server: Vercel` with a Let's Encrypt certificate.
 - **Vercel's Git integration rather than a GitHub Action with the Vercel CLI; previews public; no Vercel Web Analytics.** **Why:** the Git integration works like the old Workers Builds and keeps tokens out of GitHub, public previews let friends open them without a Vercel account, and without analytics the only runtime calls the site makes are for sprites. _(owner, 2026-10-20)_
