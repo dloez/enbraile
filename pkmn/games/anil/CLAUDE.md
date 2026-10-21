@@ -1,0 +1,8 @@
+# pkmn/games/anil
+
+Adds to the root and `pkmn/` `CLAUDE.md`; never repeats them. Añil's docs live in `docs/pkmn/games/anil/`: [Runtime Design](../../../docs/pkmn/games/anil/explanation/runtime-design.md), [Randomlocke Design](../../../docs/pkmn/games/anil/explanation/randomlocke-design.md) and [How to Install the Game](../../../docs/pkmn/games/anil/how-to/install-the-game.md).
+
+- **Gate:** `uv run ruff check .`, `uv run ruff format --check .` and `uv run ty check`, from `pkmn/games/anil/`. It must pass before a change is done. `export_data.py` and `generate_export_data.py` are standalone scripts players run by URL, outside the `anil` project and its gate.
+- **Environment:** WSL2 with Windows interop and mirrored networking. Only the game runs on Windows, from the working copy on the Windows filesystem (`ANIL_GAME_DIR`, default `%USERPROFILE%\Documents\Pokemon\Pokemon Anil-enbraile`); nothing is installed there. The game window needs a Windows desktop session, and only a human sees it.
+- **Game files:** `game/` holds the game as downloaded and is gitignored; it never enters the repository, and nor do saves.
+- **Game changes are preloaded Ruby only,** in `src/anil/mod/`; the game's `Scripts.rxdata`, `PluginScripts.rxdata`, PBS and compiled data are never edited.

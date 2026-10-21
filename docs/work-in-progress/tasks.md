@@ -24,26 +24,6 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 **After:** pkmn: give series 1 its rulebook and record games against series
 **Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
 
-## pkmn/games/anil: install the game with the Randomlocke mod
-
-`uv run anil install` fetches the hash-checked Añil zip, extracts it into `pkmn/games/anil/game/`, and deploys it with the mod to the Windows working copy, so a new game there starts the Randomlocke ([Surfaces](anil-tooling-discovery.md#surfaces), [Data, Secrets and Config](anil-tooling-discovery.md#data-secrets-and-config)).
-
-**Do:**
-- [ ] Create the uv project `pkmn/games/anil/` (`pyproject.toml`, `src/anil/`, `anil` script, ruff and ty in a dev group, ruff config as Wonder's) and `pkmn/games/anil/CLAUDE.md` with the gate and the environment constraints.
-- [ ] Copy `packages/randomlocke` into `src/anil/mod/` and `harness/{builds,game_files,deploy,windows}.py` into `src/anil/install/`, with the renames and defaults of the discovery doc; deploy writes the mod layer only (no bridge yet), `GAME_ROOT` is `pkmn/games/anil/game/`.
-- [ ] `anil install [--build] [--no-cache] [--full]`: fetch then deploy.
-- [ ] Gitignore `pkmn/games/anil/game/`. `export_data.py` and `generate_export_data.py` stay at their paths.
-- [ ] Docs: `docs/pkmn/games/anil/explanation/` gets the install and mod design from Wonder's `runtime-design.md` (fetch, deploy, layers, stamp) and `randomlocke-design.md` (without the players/wonder zips), plus `how-to/install-the-game.md`; update `docs/pkmn/index.md`.
-
-**Acceptance:**
-- Claude-run: the gate from `pkmn/games/anil/`; `uv run anil install` twice (second run copies nothing); `grep -rn -i wonder pkmn/games/anil/src` prints nothing.
-- Human-run: open `%USERPROFILE%\Documents\Pokemon\Pokemon Anil-enbraile\Game.exe`, start a new game: the mode menus are skipped, the RULEBOOK item is in the bag, and box 50 holds 16 eggs.
-- Reuse: Wonder's `game_files.py`, `deploy.py`, `builds.py`, `windows.py` and `packages/randomlocke`, copied.
-- Neighbors: Wonder's `packages/harness` layout.
-- Forbidden: the bridge layer, `anil package`, any agent import, changes to Wonder.
-
-**Touches:** `pkmn/games/anil/pyproject.toml`, `pkmn/games/anil/uv.lock`, `pkmn/games/anil/src/`, `pkmn/games/anil/CLAUDE.md`, `.gitignore`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-
 ## pkmn/games/anil: generate the export's data from the repo
 
 `generate_export_data.py` reads the mod's data and version from `src/anil/mod/` and the game from `game/base/es-v4.14/`, so no Wonder checkout is needed ([Reuse](anil-tooling-discovery.md#reuse)).
@@ -141,7 +121,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 
 **Do:**
 - [ ] Copy `harness/check.py` with its groups, dropping checks of anything not migrated (the egg guard, real runs, the panel).
-- [ ] Docs: `docs/pkmn/games/anil/how-to/check-the-mod.md`; the root `CLAUDE.md`'s no-tests rule names `anil check` as a tool that runs the game, not a test runner.
+- [ ] Docs: `docs/pkmn/games/anil/how-to/check-the-mod.md`; Wonder's randomlocke-design "How the Checks Run" section and its Checks decisions into `docs/pkmn/games/anil/explanation/randomlocke-design.md`; the root `CLAUDE.md`'s no-tests rule names `anil check` as a tool that runs the game, not a test runner.
 
 **Acceptance:**
 - Claude-run: the gate; `uv run anil check all` passes, with the time it took; compare its check list with `wonder check all`'s and name every check dropped.

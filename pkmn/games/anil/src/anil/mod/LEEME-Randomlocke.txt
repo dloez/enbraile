@@ -1,0 +1,187 @@
+*POKÉMON AÑIL RANDOMLOCKE V1*
+
+¡Hola! Este archivo explica qué es el juego que has recibido, cómo instalarlo y empezar, y todas las reglas de la Randomlocke. Léelo con calma antes de empezar tu partida.
+
+Esta misma guía está también dentro de la carpeta del juego, en el archivo LEEME-Randomlocke.txt, por si quieres consultarla más adelante.
+
+*¿Qué es esto?*
+
+El archivo pokemon-anil-randomlocke-v1-es-v4.14-players.zip es *Pokémon Añil v4.14 (en español), con la Randomlocke ya configurada*. No tienes que elegir ningún modo ni tocar ninguna opción: todas las reglas vienen puestas y son las mismas para todos los jugadores.
+
+Cada partida nueva se aleatoriza por su cuenta, así que cada uno jugará con Pokémon, entrenadores y objetos distintos, pero con exactamente las mismas reglas.
+
+*Instalación (Windows)*
+
+1. *Descomprime el zip entero* en una carpeta de tu ordenador (por ejemplo, en Documentos). Dentro hay una carpeta llamada Pokemon Anil Randomlocke v1 con todo el juego. Extrae el zip completo: no abras el juego desde dentro del zip ni copies solo algunos archivos.
+2. Entra en esa carpeta y abre *Game.exe*.
+3. La ventana del juego debe llamarse *"Pokémon Añil Randomlocke v1"*. Si es así, todo está bien instalado.
+
+No hace falta instalar nada más.
+
+*Empezar la partida*
+
+- *Empieza una partida NUEVA.* Las reglas de la Randomlocke solo se aplican a partidas nuevas. No continúes una partida de otro Añil.
+- Pon tu nombre, elige tu aspecto y el nombre de tu rival como siempre.
+- *No aparecerá ningún menú de modos* (ni dificultad, ni Pokémon salvajes visibles, ni nada parecido), *ni se te preguntará de qué generación quieres que sean los iniciales.* Es normal: ya está todo elegido.
+- Tras el nombre del rival, *te despertarás en tu habitación* con el *Libro de Reglas* en la mochila. Ahí puedes consultar en cualquier momento las reglas activas.
+- *Al despertarte en tu habitación por primera vez, el juego se guarda solo* en una ranura nueva ("Partida N", el primer número libre). Nunca sobrescribe una partida que ya tengas. Desde ese momento tus tres iniciales aleatorios quedan fijados: la única forma de tener otros sería empezar otra partida nueva y repetir la introducción.
+- Las Poké Balls del laboratorio te dan los tres iniciales aleatorios de tu partida.
+- Si usas la opción *"Elegir modo de juego"* del PC de tu habitación, solo te dirá que los modos de esta partida ya están fijados por la Randomlocke y que las reglas están en el Libro de Reglas. Tampoco es un error.
+- El desafío empieza de verdad cuando consigues *tu primera Poké Ball*: el juego te avisará con el mensaje *"¡Tu desafío ha comenzado! ¡Buena suerte!"*.
+
+*Controles:* son los normales de Pokémon Añil. Si tienes dudas, consúltalos en la pantalla de controles del propio juego.
+
+*Exportar tu equipo a Pokémon Showdown*
+
+- Abre el menú de pausa y pulsa *Z* ("[Z] Exportar a Showdown", abajo a la izquierda). Tu equipo se copia al portapapeles en el formato de Pokémon Showdown. Los Huevos y los Pokémon muertos (debilitados) no se incluyen.
+- En Showdown, abre el editor de equipos (Teambuilder), crea un equipo nuevo, elige *Import from text or URL* y pega el texto con Ctrl+V.
+- Cada Pokémon se exporta a *nivel 50*, con su mote, su objeto, su habilidad, su naturaleza y sus movimientos, sus *IV reales* y *1 EV en cada estadística*.
+- Si algo de tu equipo no existe en Showdown, el juego te lo dice y no copia nada.
+
+*Partidas guardadas*
+
+- Las partidas se guardan en la *carpeta normal de Pokémon Añil*: %APPDATA%\Pokemon Anil (puedes pegar esa ruta en la barra de direcciones del Explorador de archivos para abrirla). Dentro de la carpeta del juego tienes un acceso directo, *Partida guardada*, para ir directamente.
+- *Esa carpeta es la misma que usa un Pokémon Añil normal.* Si también tienes Añil instalado aparte, las partidas de los dos aparecerán juntas. Ten cuidado de no sobrescribir una partida que quieras conservar, y usa para la Randomlocke una partida empezada desde este juego.
+
+*Actualizaciones*
+
+- Este juego *no se actualiza solo* y *no se conecta a internet* para buscar actualizaciones. Así las reglas no cambian a mitad de la competición. Tampoco muestra tu partida en Discord.
+- No actualices ni parchees el juego tú mismo. Si alguno de sus archivos no es el oficial, al abrirlo verás un aviso que empieza por *"Aviso de la Randomlocke"* antes de la pantalla de título, y las reglas podrían no funcionar. Si te sale, vuelve a descomprimir el zip que recibiste en una carpeta nueva.
+- Si hay que corregir algo, recibirás *un zip nuevo y completo* con instrucciones.
+
+━━━━━━━━━━
+
+*LAS REGLAS*
+
+Todo lo que viene a continuación lo aplica el propio juego: no hay ninguna opción para quitarlo.
+
+*Reglas Nuzlocke*
+
+Están activas exactamente estas reglas del modo desafío de Añil: *Muerte Permanente*, las tres prohibiciones de compra (*Compra de objetos curativos*, *Compra de objetos combate* y *Compra de vitaminas*, que impiden comprar esos objetos), *Una captura por mapa* con la *Cláusula Primer Pokémon* y las cláusulas *Regalos*, *Shiny*, *Duplicados* y *Legendarios*, *Motes Obligatorios* y *Modo de Combate Fijo*.
+
+En la práctica:
+
+- *El desafío empieza con la primera Poké Ball* ("¡Tu desafío ha comenzado! ¡Buena suerte!").
+- *Debilitado = muerto.* Un Pokémon que llega a 0 PS se queda a 0 PS. Revivir y Revivir Máximo no tienen efecto, y el Centro Pokémon cura a los vivos pero no a los debilitados.
+- *No puedes comprar objetos de curación, objetos de combate (como el Ataque X) ni vitaminas.* Si lo intentas en una tienda, el juego te avisa con un mensaje y no te cobra nada.
+- *Para curarte:* el Centro Pokémon sigue curando a tu equipo (menos a los debilitados), y puedes usar los objetos de curación que encuentres o te regalen. Solo está prohibido comprarlos.
+- *El Pokévial está permitido:* cura a todo el equipo fuera de combate (no revive a los debilitados) y se recarga gratis en cualquier Centro Pokémon.
+- *Solo cuenta el primer encuentro de cada mapa.* El primer combate contra un Pokémon salvaje en un mapa gasta el encuentro de ese mapa, tanto si lo capturas como si huyes. Después, el juego no te dejará lanzar Poké Balls a salvajes en ese mapa ("¡La regla "Cláusula Primer Pokémon" te impide atrapar un Pokémon en un mapa en el que ya tuviste un encuentro!").
+- *No gastan el encuentro del mapa:* los Pokémon regalados, los shiny, los Pokémon de una familia evolutiva que ya tienes y los legendarios. Para los duplicados cuenta lo registrado como capturado en la Pokédex: aunque el único miembro de esa familia que tenías haya muerto o lo hayas liberado, la familia sigue contando como tuya, así que encontrarte otro de ella no gasta el encuentro.
+- *Todo Pokémon debe llevar mote.* Al capturar o recibir un Pokémon se abre directamente la pantalla de nombre, y no se acepta el nombre de su especie (ni en mayúsculas ni en minúsculas).
+- *Perder un combate no revive a nadie.* Los vivos se curan; los debilitados siguen debilitados.
+- *Si se debilita todo tu equipo pero tienes Pokémon vivos en el PC,* el juego abre el PC y no te deja salir hasta que tengas un Pokémon vivo en el equipo.
+- *Si no te queda ningún Pokémon vivo en ningún sitio,* el juego dice "¡Has perdido el desafío!" y lo registra. A partir de ahí se desactivan las reglas del desafío, todos tus Pokémon reviven y la partida sigue como una normal. Para la competición, eso te deja fuera (lo tienes en las reglas del grupo, al final de esta guía).
+- *Ganar la Liga no termina el desafío.* Al entrar en el Salón de la Fama y ver los créditos, el juego registra tu victoria, pero todas las reglas siguen activas después, también la Muerte Permanente: los Pokémon debilitados siguen sin poder revivir, aunque la descripción de esa regla en el juego diga "hasta pasarte la liga".
+
+*Aleatorizador (Random Completo)*
+
+- *Todos los Pokémon son aleatorios:* salvajes, de entrenadores, regalados e iniciales.
+- *Los Pokémon aleatorios son más fuertes cuantas más medallas tengas.*
+- *Tres iniciales aleatorios,* cada uno la primera fase de una familia con al menos dos evoluciones, y de tres familias distintas.
+- *Los Pokémon salvajes de cada mapa son fijos.* La tabla de un mapa se sortea la primera vez que aparece un salvaje allí y después ya no cambia. Se mantienen los niveles y las probabilidades de cada hueco, y cada hueco recibe una especie de fuerza parecida. Los salvajes pueden llevar objetos aleatorios.
+- *Los movimientos que aprenden son aleatorios,* a los mismos niveles que los originales, con preferencia por movimientos de su propio tipo, sin repetidos y sin movimientos de KO en un golpe. Los que se aprenden a niveles bajos tienen poca potencia, y los que se aprenden a niveles altos nunca son movimientos flojos de principio de juego (como Placaje o Ascuas).
+- *Las habilidades son totalmente aleatorias,* pero fijas para cada especie.
+- *Los equipos de los entrenadores son aleatorios y se recuerdan:* un entrenador siempre tiene el mismo equipo. Sus objetos equipados también son aleatorios.
+- *Los objetos son aleatorios:* los que encuentras o te dan, y los que pueden llevar los Pokémon regalados.
+- *Las MT son aleatorias:* el movimiento que enseña cada MT, qué Pokémon pueden aprenderla y las MT que venden las tres tiendas de MT (Centro Comercial, Ruta 14 y Liga Pokémon).
+- *No se aleatorizan* los tipos ni las evoluciones.
+
+*Límites de generación (solo 1.ª a 5.ª generación)*
+
+- *Solo Pokémon de las generaciones 1 a 5,* en sus formas oficiales de esas generaciones: nada de formas regionales, primigenias, megaevoluciones ni formas inventadas, y ninguna especie propia de Añil. Las familias de los iniciales son enteras de las generaciones 1 a 5. Las formas que un Pokémon toma después, con un objeto equipado o en combate, funcionan como siempre.
+- *Ningún Pokémon evoluciona a una especie de la 6.ª generación o posterior.* Por ejemplo, un Eevee con Piedra Día no se convierte en Sylveon y un Primeape nunca se convierte en Annihilape. Sus demás evoluciones funcionan con normalidad.
+- *Solo movimientos de las generaciones 1 a 5.* Los movimientos propios de Añil no aparecen.
+- *Si a un tipo se le acaban los movimientos,* se usa uno de cualquier otro tipo (algunos tipos, como Hada, tienen muy pocos movimientos en esas generaciones).
+- *Solo habilidades de las generaciones 3 a 5,* también las que da el objeto que cambia la habilidad al azar. Las habilidades propias de Añil no aparecen.
+- *Los legendarios y singulares siguen en el juego.* Puedes capturarlos, pero las reglas del grupo no permiten usarlos (al final de esta guía).
+- *No hay Megaevolución.* Ni tú ni los entrenadores podéis megaevolucionar, aunque se lleve una Megapiedra y se tenga el Mega Aro. Las Megapiedras siguen existiendo como objetos, y los entrenadores que las llevaban las siguen llevando.
+
+*Nivel máximo (level cap)*
+
+Hay un *nivel máximo estricto* que sube con cada medalla:
+
+- Al empezar (sin medallas): nivel 14
+- 1.ª medalla: nivel 23
+- 2.ª medalla: nivel 30
+- 3.ª medalla: nivel 39
+- 4.ª medalla: nivel 49
+- 5.ª medalla: nivel 54
+- 6.ª medalla: nivel 59
+- 7.ª medalla: nivel 66
+- 8.ª medalla: nivel 75
+- Juego terminado: nivel 100
+
+- *Ningún Pokémon puede pasar del nivel máximo.* Al llegar a él, los Caramelos Raros no tienen efecto (no se gastan) y los combates dejan de darle experiencia. La experiencia que le haría pasar del nivel máximo se queda en ese nivel.
+- *Caramelos Raros:* en todos los Centros Pokémon (y también en la Liga Pokémon y la Torre Batalla) hay una taza; cada vez que la examinas te da 100 Caramelos Raros. La primera está en el Centro Pokémon de Ciudad Verde. Son la forma fija de conseguirlos: los objetos que encuentras por el mapa son aleatorios, así que la Poké Ball de Caramelo Raro de la Ruta 6 te dará otro objeto.
+- Los Pokémon de los entrenadores que estén por encima del nivel máximo bajan a ese nivel.
+
+*Combates: reglas de la 9.ª generación*
+
+Aunque todos los Pokémon, movimientos y habilidades son de la 1.ª a la 5.ª generación, *los combates funcionan como en los juegos oficiales de la 9.ª generación*: tipos oficiales actuales de cada Pokémon (incluido el tipo Hada), tabla de tipos, estados alterados (congelación, parálisis, sueño, etc.), golpes críticos y climas (con nevada en lugar de granizo). Si conoces las reglas de Escarlata y Púrpura, ya sabes cómo funcionan.
+
+*Shinies*
+
+- *Un Pokémon salvaje es shiny aproximadamente 1 de cada 500.* Es como funciona Añil con los Pokémon salvajes visibles desactivados: a la probabilidad normal del juego (1 entre 1.000) se suma otra de 1 entre 1.000.
+- *Cuántos verás:* unos 0,2 shinies por cada 100 combates contra salvajes. Con 300 combates hay alrededor de un 45 % de probabilidades de ver uno; con 1.000, unos dos.
+- *Cadenas:* derrotar o capturar seguidos Pokémon de la misma especie mejora la probabilidad extra de esa especie cada 10 seguidos, hasta 1 entre 200 a partir de 40 (en total, cerca de 1 entre 170). Una especie distinta reinicia la cadena; huir o perder no la rompe.
+- *Combatir a menudo contra una especie también ayuda un poco:* tras 50 combates contra una especie, sus salvajes tienen una pequeña probabilidad extra de ser shiny.
+- *El Amuleto Iris no se puede conseguir:* Oak solo lo da con la Pokédex Nacional completa, y en la Randomlocke solo aparecen especies de la 1.ª a la 5.ª generación.
+- *La Poción Brillante hace shiny al siguiente Pokémon salvaje.* Se compra en la tienda de la Torre Batalla por 80 PB y también puede salir como objeto aleatorio.
+- *Pokémon regalados e iniciales:* shiny 1 de cada 1.000, sin probabilidad extra. Cuatro regalos de las islas son siempre shiny, con especie aleatoria: los de Bill, Cintia, Mirto y Máximo.
+- *Los Pokémon de los entrenadores nunca son shiny.*
+- *Un shiny nunca gasta el encuentro del mapa,* así que siempre lo puedes capturar.
+
+*IV y EV*
+
+- *Los IV de cada Pokémon son aleatorios,* de 0 a 31 en cada estadística: salvajes, regalados, intercambiados e iniciales. Ningún salvaje tiene IV fijos ni perfectos garantizados, y el aleatorizador no cambia los IV ni los EV.
+- *Puedes ver los IV y EV exactos* en la segunda página *"Estadísticas"* del resumen de cada Pokémon: cada estadística aparece como "EV/IV", con los *"EVs totales"* sobre 510.
+- *Los EV funcionan como en los juegos oficiales:* hasta 252 por estadística y 510 en total, y al derrotar a un Pokémon reciben sus EV todos los que ganan experiencia de él, también con el Repartir Exp y al estar en el nivel máximo.
+- *Los Pokémon de los entrenadores tienen los IV y EV de su nivel original,* aunque el nivel máximo los baje.
+- *No hay entrenamiento extremo* para subir los IV.
+- En el juego hay objetos y entrenamientos que cambian los IV y los EV (vitaminas, plumas, chapas, bayas que bajan EV, etc.), y esos objetos pueden salir como objetos aleatorios. Con la crianza también se heredan IV. *Las reglas del grupo prohíben usar todo esto* (lo tienes al final de esta guía).
+
+*Opciones bloqueadas*
+
+- *Estilo de combate: Fijo.* Al debilitar al Pokémon de un entrenador no se te pregunta si quieres cambiar de Pokémon. La opción no aparece en el menú de Opciones y no se puede cambiar a "Cambio".
+- *Pokémon salvajes visibles por el mapa: desactivados.* La opción tampoco aparece en Opciones.
+- *Dificultad: Completo.*
+- *El resto de opciones* (animaciones de combate, velocidad, etc.) son las normales de Añil y puedes cambiarlas a tu gusto.
+
+━━━━━━━━━━
+
+*Reglas del grupo (no las aplica el juego)*
+
+Estas reglas no las controla el juego (salvo que te da los Huevos y que la exportación deja fuera a los muertos): cada jugador se compromete a cumplirlas.
+
+*Juego limpio*
+
+- *No te aproveches de nada.* Guardar es normal, pero no recargues la partida ni reinicies el juego para cambiar algo que ya ha pasado: un Pokémon muerto, un combate perdido, un encuentro, un objeto o lo que sale de un Huevo. Lo que pasa, pasa.
+- *No uses bugs ni fallos del juego* que te den ventaja (duplicar objetos, saltarte un combate, esquivar una regla, etc.). Ante la duda, no lo hagas.
+
+*Liga, combates y huevos*
+
+- *La liga del grupo:* hay una jornada por cada gimnasio, 8 en total. Los emparejamientos se anuncian los viernes. En las 5 primeras jornadas siempre te toca alguien contra quien aún no has jugado; las 3 últimas son totalmente al azar.
+- *Cada combate es al mejor de 3 (Bo3) en Pokémon Showdown,* en el formato *"[Gen 9] Custom Game"*, con la vista previa de equipos activada y las cláusulas de abajo.
+- *No hay fecha límite:* jugáis cuando os venga bien a los dos. Tampoco hay límite de gimnasios por semana: puedes ir por delante en la historia, porque cada jornada se juega con el equipo que guardaste en su gimnasio.
+- *Puntos:* ganar el Bo3 da 1 punto; perderlo, 0. Si dos jugadores empatan a puntos, queda por delante el que ganó el combate entre ellos.
+- *Tu pokepaste:* justo después de ganar cada gimnasio, y antes de capturar nada nuevo, exporta tu equipo a Showdown (como se explica arriba) (puedes subirlo a pokepast.es para guardarlos más fácilmente). Antes de exportar puedes reorganizar el equipo en el PC. Ese pokepaste queda fijado para el combate de liga de ese gimnasio. Lleva hasta 6 Pokémon vivos; si tienes menos, juegas con los que tengas.
+- *Huevos:* al empezar la partida tienes *16 Huevos* en la última caja del PC, llamada "Huevos". Cada victoria en la liga te deja abrir uno: muévelo a tu equipo y camina; eclosiona a los 100 pasos. En el PC no eclosionan.
+- *Lo que sale de un Huevo* es un Pokémon aleatorio de nivel 1, más fuerte cuantas más medallas tengas en el momento de abrirlo. Puedes guardar los Huevos que ganes para abrirlos más adelante, o no abrirlos nunca. Un Huevo nunca gasta el encuentro de una ruta.
+- *No recargues la partida para cambiar lo que sale de un Huevo.*
+- *Si de un Huevo sale un legendario o un singular, no se puede usar,* como cualquier legendario.
+- *Abrir un Huevo es tu palabra de que ganaste:* el juego no cuenta las victorias.
+- *Torneo final:* entran los que terminen la historia sin haber perdido el desafío. Los cruces salen de los puntos de la liga: primero contra último, segundo contra penúltimo, y así. Bo3, con el mismo formato y las mismas cláusulas. Tu equipo es el pokepaste que hagas justo después de ganar la Liga Pokémon, igual que tras un gimnasio. No hay vetos.
+- *Si pierdes el desafío* ("¡Has perdido el desafío!"), quedas fuera de la liga y del torneo. Tus combates de liga pendientes cuentan como derrotas (cada rival se lleva el punto), y los Pokémon que el juego revive después no cuentan.
+- *Como máximo una unidad de cada objeto competitivo comprado en tienda.* Los objetos que un Pokémon lleva equipado en combate (gemas, Banda Aguante, Periscopio, Lupa, Hierba Blanca, inciensos, etc.) solo se pueden comprar una vez cada uno. El juego no lo limita: es responsabilidad de cada jugador.
+- *No se permite la crianza.* No dejes Pokémon en la Guardería para conseguir Huevos.
+- *No se permite modificar los EV ni los IV de ninguna forma.* Los EV solo se consiguen combatiendo con normalidad, y los IV son los que trae cada Pokémon. No uses objetos que suban, bajen o reinicien los EV o los IV (vitaminas, plumas, bayas que bajan EV, chapas, etc.), ni objetos o entrenamientos que cambien los EV que se ganan en combate.
+- *Como máximo 6 shinies,* vengan de donde vengan. Si te sale el séptimo, no lo captures.
+- *Los legendarios y los singulares (como Mew o Meloetta) se pueden capturar, pero nunca usar:* ni en el equipo ni en ningún pokepaste. Capturarlos no gasta el encuentro del mapa.
+
+*Reglas en todos los combates*
+
+Valen en todos los combates: en la historia (salvajes, entrenadores, gimnasios y la Liga Pokémon) y en Showdown.
+
+- *Cláusulas:* Species (en Showdown, no puedes llevar dos Pokémon de la misma especie), Sleep (no puedes dormir a más de un Pokémon rival a la vez), OHKO (nada de movimientos que debilitan de un golpe) y Evasion Moves (nada de movimientos que suben la evasión). No hay Item Clause (puedes repetir un mismo item en varios Pokémons siempre y cuando no rompas la regla de comprar más de un objeto del mismo tipo. Ante las dudas, no lo compres).
+- *Si tienes algún shiny vivo, siempre debes llevar uno en el equipo,* así que todos tus pokepastes llevarán uno. Si muere, lo sustituye otro shiny vivo del PC.

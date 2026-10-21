@@ -1,0 +1,3075 @@
+species BULBASAUR Bulbasaur
+species IVYSAUR Ivysaur
+species VENUSAUR Venusaur
+species CHARMANDER Charmander
+species CHARMELEON Charmeleon
+species CHARIZARD Charizard
+species SQUIRTLE Squirtle
+species WARTORTLE Wartortle
+species BLASTOISE Blastoise
+species CATERPIE Caterpie
+species METAPOD Metapod
+species BUTTERFREE Butterfree
+species WEEDLE Weedle
+species KAKUNA Kakuna
+species BEEDRILL Beedrill
+species PIDGEY Pidgey
+species PIDGEOTTO Pidgeotto
+species PIDGEOT Pidgeot
+species RATTATA Rattata
+species RATICATE Raticate
+species SPEAROW Spearow
+species FEAROW Fearow
+species EKANS Ekans
+species ARBOK Arbok
+species PIKACHU Pikachu
+species RAICHU Raichu
+species SANDSHREW Sandshrew
+species SANDSLASH Sandslash
+species NIDORANfE Nidoran-F
+species NIDORINA Nidorina
+species NIDOQUEEN Nidoqueen
+species NIDORANmA Nidoran-M
+species NIDORINO Nidorino
+species NIDOKING Nidoking
+species CLEFAIRY Clefairy
+species CLEFABLE Clefable
+species VULPIX Vulpix
+species NINETALES Ninetales
+species JIGGLYPUFF Jigglypuff
+species WIGGLYTUFF Wigglytuff
+species ZUBAT Zubat
+species GOLBAT Golbat
+species ODDISH Oddish
+species GLOOM Gloom
+species VILEPLUME Vileplume
+species PARAS Paras
+species PARASECT Parasect
+species VENONAT Venonat
+species VENOMOTH Venomoth
+species DIGLETT Diglett
+species DUGTRIO Dugtrio
+species MEOWTH Meowth
+species PERSIAN Persian
+species PSYDUCK Psyduck
+species GOLDUCK Golduck
+species MANKEY Mankey
+species PRIMEAPE Primeape
+species GROWLITHE Growlithe
+species ARCANINE Arcanine
+species POLIWAG Poliwag
+species POLIWHIRL Poliwhirl
+species POLIWRATH Poliwrath
+species ABRA Abra
+species KADABRA Kadabra
+species ALAKAZAM Alakazam
+species MACHOP Machop
+species MACHOKE Machoke
+species MACHAMP Machamp
+species BELLSPROUT Bellsprout
+species WEEPINBELL Weepinbell
+species VICTREEBEL Victreebel
+species TENTACOOL Tentacool
+species TENTACRUEL Tentacruel
+species GEODUDE Geodude
+species GRAVELER Graveler
+species GOLEM Golem
+species PONYTA Ponyta
+species RAPIDASH Rapidash
+species SLOWPOKE Slowpoke
+species SLOWBRO Slowbro
+species MAGNEMITE Magnemite
+species MAGNETON Magneton
+species FARFETCHD Farfetch’d
+species DODUO Doduo
+species DODRIO Dodrio
+species SEEL Seel
+species DEWGONG Dewgong
+species GRIMER Grimer
+species MUK Muk
+species SHELLDER Shellder
+species CLOYSTER Cloyster
+species GASTLY Gastly
+species HAUNTER Haunter
+species GENGAR Gengar
+species ONIX Onix
+species DROWZEE Drowzee
+species HYPNO Hypno
+species KRABBY Krabby
+species KINGLER Kingler
+species VOLTORB Voltorb
+species ELECTRODE Electrode
+species EXEGGCUTE Exeggcute
+species EXEGGUTOR Exeggutor
+species CUBONE Cubone
+species MAROWAK Marowak
+species HITMONLEE Hitmonlee
+species HITMONCHAN Hitmonchan
+species LICKITUNG Lickitung
+species KOFFING Koffing
+species WEEZING Weezing
+species RHYHORN Rhyhorn
+species RHYDON Rhydon
+species CHANSEY Chansey
+species TANGELA Tangela
+species KANGASKHAN Kangaskhan
+species HORSEA Horsea
+species SEADRA Seadra
+species GOLDEEN Goldeen
+species SEAKING Seaking
+species STARYU Staryu
+species STARMIE Starmie
+species MRMIME Mr. Mime
+species SCYTHER Scyther
+species JYNX Jynx
+species ELECTABUZZ Electabuzz
+species MAGMAR Magmar
+species PINSIR Pinsir
+species TAUROS Tauros
+species MAGIKARP Magikarp
+species GYARADOS Gyarados
+species LAPRAS Lapras
+species DITTO Ditto
+species EEVEE Eevee
+species VAPOREON Vaporeon
+species JOLTEON Jolteon
+species FLAREON Flareon
+species PORYGON Porygon
+species OMANYTE Omanyte
+species OMASTAR Omastar
+species KABUTO Kabuto
+species KABUTOPS Kabutops
+species AERODACTYL Aerodactyl
+species SNORLAX Snorlax
+species ARTICUNO Articuno
+species ZAPDOS Zapdos
+species MOLTRES Moltres
+species DRATINI Dratini
+species DRAGONAIR Dragonair
+species DRAGONITE Dragonite
+species MEWTWO Mewtwo
+species MEW Mew
+species CHIKORITA Chikorita
+species BAYLEEF Bayleef
+species MEGANIUM Meganium
+species CYNDAQUIL Cyndaquil
+species QUILAVA Quilava
+species TYPHLOSION Typhlosion
+species TOTODILE Totodile
+species CROCONAW Croconaw
+species FERALIGATR Feraligatr
+species SENTRET Sentret
+species FURRET Furret
+species HOOTHOOT Hoothoot
+species NOCTOWL Noctowl
+species LEDYBA Ledyba
+species LEDIAN Ledian
+species SPINARAK Spinarak
+species ARIADOS Ariados
+species CROBAT Crobat
+species CHINCHOU Chinchou
+species LANTURN Lanturn
+species PICHU Pichu
+species CLEFFA Cleffa
+species IGGLYBUFF Igglybuff
+species TOGEPI Togepi
+species TOGETIC Togetic
+species NATU Natu
+species XATU Xatu
+species MAREEP Mareep
+species FLAAFFY Flaaffy
+species AMPHAROS Ampharos
+species BELLOSSOM Bellossom
+species MARILL Marill
+species AZUMARILL Azumarill
+species SUDOWOODO Sudowoodo
+species POLITOED Politoed
+species HOPPIP Hoppip
+species SKIPLOOM Skiploom
+species JUMPLUFF Jumpluff
+species AIPOM Aipom
+species SUNKERN Sunkern
+species SUNFLORA Sunflora
+species YANMA Yanma
+species WOOPER Wooper
+species QUAGSIRE Quagsire
+species ESPEON Espeon
+species UMBREON Umbreon
+species MURKROW Murkrow
+species SLOWKING Slowking
+species MISDREAVUS Misdreavus
+species UNOWN Unown
+species WOBBUFFET Wobbuffet
+species GIRAFARIG Girafarig
+species PINECO Pineco
+species FORRETRESS Forretress
+species DUNSPARCE Dunsparce
+species GLIGAR Gligar
+species STEELIX Steelix
+species SNUBBULL Snubbull
+species GRANBULL Granbull
+species QWILFISH Qwilfish
+species SCIZOR Scizor
+species SHUCKLE Shuckle
+species HERACROSS Heracross
+species SNEASEL Sneasel
+species TEDDIURSA Teddiursa
+species URSARING Ursaring
+species SLUGMA Slugma
+species MAGCARGO Magcargo
+species SWINUB Swinub
+species PILOSWINE Piloswine
+species CORSOLA Corsola
+species REMORAID Remoraid
+species OCTILLERY Octillery
+species DELIBIRD Delibird
+species MANTINE Mantine
+species SKARMORY Skarmory
+species HOUNDOUR Houndour
+species HOUNDOOM Houndoom
+species KINGDRA Kingdra
+species PHANPY Phanpy
+species DONPHAN Donphan
+species PORYGON2 Porygon2
+species STANTLER Stantler
+species SMEARGLE Smeargle
+species TYROGUE Tyrogue
+species HITMONTOP Hitmontop
+species SMOOCHUM Smoochum
+species ELEKID Elekid
+species MAGBY Magby
+species MILTANK Miltank
+species BLISSEY Blissey
+species RAIKOU Raikou
+species ENTEI Entei
+species SUICUNE Suicune
+species LARVITAR Larvitar
+species PUPITAR Pupitar
+species TYRANITAR Tyranitar
+species LUGIA Lugia
+species HOOH Ho-Oh
+species CELEBI Celebi
+species TREECKO Treecko
+species GROVYLE Grovyle
+species SCEPTILE Sceptile
+species TORCHIC Torchic
+species COMBUSKEN Combusken
+species BLAZIKEN Blaziken
+species MUDKIP Mudkip
+species MARSHTOMP Marshtomp
+species SWAMPERT Swampert
+species POOCHYENA Poochyena
+species MIGHTYENA Mightyena
+species ZIGZAGOON Zigzagoon
+species LINOONE Linoone
+species WURMPLE Wurmple
+species SILCOON Silcoon
+species BEAUTIFLY Beautifly
+species CASCOON Cascoon
+species DUSTOX Dustox
+species LOTAD Lotad
+species LOMBRE Lombre
+species LUDICOLO Ludicolo
+species SEEDOT Seedot
+species NUZLEAF Nuzleaf
+species SHIFTRY Shiftry
+species TAILLOW Taillow
+species SWELLOW Swellow
+species WINGULL Wingull
+species PELIPPER Pelipper
+species RALTS Ralts
+species KIRLIA Kirlia
+species GARDEVOIR Gardevoir
+species SURSKIT Surskit
+species MASQUERAIN Masquerain
+species SHROOMISH Shroomish
+species BRELOOM Breloom
+species SLAKOTH Slakoth
+species VIGOROTH Vigoroth
+species SLAKING Slaking
+species NINCADA Nincada
+species NINJASK Ninjask
+species SHEDINJA Shedinja
+species WHISMUR Whismur
+species LOUDRED Loudred
+species EXPLOUD Exploud
+species MAKUHITA Makuhita
+species HARIYAMA Hariyama
+species AZURILL Azurill
+species NOSEPASS Nosepass
+species SKITTY Skitty
+species DELCATTY Delcatty
+species SABLEYE Sableye
+species MAWILE Mawile
+species ARON Aron
+species LAIRON Lairon
+species AGGRON Aggron
+species MEDITITE Meditite
+species MEDICHAM Medicham
+species ELECTRIKE Electrike
+species MANECTRIC Manectric
+species PLUSLE Plusle
+species MINUN Minun
+species VOLBEAT Volbeat
+species ILLUMISE Illumise
+species ROSELIA Roselia
+species GULPIN Gulpin
+species SWALOT Swalot
+species CARVANHA Carvanha
+species SHARPEDO Sharpedo
+species WAILMER Wailmer
+species WAILORD Wailord
+species NUMEL Numel
+species CAMERUPT Camerupt
+species TORKOAL Torkoal
+species SPOINK Spoink
+species GRUMPIG Grumpig
+species SPINDA Spinda
+species TRAPINCH Trapinch
+species VIBRAVA Vibrava
+species FLYGON Flygon
+species CACNEA Cacnea
+species CACTURNE Cacturne
+species SWABLU Swablu
+species ALTARIA Altaria
+species ZANGOOSE Zangoose
+species SEVIPER Seviper
+species LUNATONE Lunatone
+species SOLROCK Solrock
+species BARBOACH Barboach
+species WHISCASH Whiscash
+species CORPHISH Corphish
+species CRAWDAUNT Crawdaunt
+species BALTOY Baltoy
+species CLAYDOL Claydol
+species LILEEP Lileep
+species CRADILY Cradily
+species ANORITH Anorith
+species ARMALDO Armaldo
+species FEEBAS Feebas
+species MILOTIC Milotic
+species CASTFORM Castform
+species KECLEON Kecleon
+species SHUPPET Shuppet
+species BANETTE Banette
+species DUSKULL Duskull
+species DUSCLOPS Dusclops
+species TROPIUS Tropius
+species CHIMECHO Chimecho
+species ABSOL Absol
+species WYNAUT Wynaut
+species SNORUNT Snorunt
+species GLALIE Glalie
+species SPHEAL Spheal
+species SEALEO Sealeo
+species WALREIN Walrein
+species CLAMPERL Clamperl
+species HUNTAIL Huntail
+species GOREBYSS Gorebyss
+species RELICANTH Relicanth
+species LUVDISC Luvdisc
+species BAGON Bagon
+species SHELGON Shelgon
+species SALAMENCE Salamence
+species BELDUM Beldum
+species METANG Metang
+species METAGROSS Metagross
+species REGIROCK Regirock
+species REGICE Regice
+species REGISTEEL Registeel
+species LATIAS Latias
+species LATIOS Latios
+species KYOGRE Kyogre
+species GROUDON Groudon
+species RAYQUAZA Rayquaza
+species JIRACHI Jirachi
+species DEOXYS Deoxys
+species TURTWIG Turtwig
+species GROTLE Grotle
+species TORTERRA Torterra
+species CHIMCHAR Chimchar
+species MONFERNO Monferno
+species INFERNAPE Infernape
+species PIPLUP Piplup
+species PRINPLUP Prinplup
+species EMPOLEON Empoleon
+species STARLY Starly
+species STARAVIA Staravia
+species STARAPTOR Staraptor
+species BIDOOF Bidoof
+species BIBAREL Bibarel
+species KRICKETOT Kricketot
+species KRICKETUNE Kricketune
+species SHINX Shinx
+species LUXIO Luxio
+species LUXRAY Luxray
+species BUDEW Budew
+species ROSERADE Roserade
+species CRANIDOS Cranidos
+species RAMPARDOS Rampardos
+species SHIELDON Shieldon
+species BASTIODON Bastiodon
+species BURMY Burmy
+species WORMADAM Wormadam
+species MOTHIM Mothim
+species COMBEE Combee
+species VESPIQUEN Vespiquen
+species PACHIRISU Pachirisu
+species BUIZEL Buizel
+species FLOATZEL Floatzel
+species CHERUBI Cherubi
+species CHERRIM Cherrim
+species SHELLOS Shellos
+species GASTRODON Gastrodon
+species AMBIPOM Ambipom
+species DRIFLOON Drifloon
+species DRIFBLIM Drifblim
+species BUNEARY Buneary
+species LOPUNNY Lopunny
+species MISMAGIUS Mismagius
+species HONCHKROW Honchkrow
+species GLAMEOW Glameow
+species PURUGLY Purugly
+species CHINGLING Chingling
+species STUNKY Stunky
+species SKUNTANK Skuntank
+species BRONZOR Bronzor
+species BRONZONG Bronzong
+species BONSLY Bonsly
+species MIMEJR Mime Jr.
+species HAPPINY Happiny
+species CHATOT Chatot
+species SPIRITOMB Spiritomb
+species GIBLE Gible
+species GABITE Gabite
+species GARCHOMP Garchomp
+species MUNCHLAX Munchlax
+species RIOLU Riolu
+species LUCARIO Lucario
+species HIPPOPOTAS Hippopotas
+species HIPPOWDON Hippowdon
+species SKORUPI Skorupi
+species DRAPION Drapion
+species CROAGUNK Croagunk
+species TOXICROAK Toxicroak
+species CARNIVINE Carnivine
+species FINNEON Finneon
+species LUMINEON Lumineon
+species MANTYKE Mantyke
+species SNOVER Snover
+species ABOMASNOW Abomasnow
+species WEAVILE Weavile
+species MAGNEZONE Magnezone
+species LICKILICKY Lickilicky
+species RHYPERIOR Rhyperior
+species TANGROWTH Tangrowth
+species ELECTIVIRE Electivire
+species MAGMORTAR Magmortar
+species TOGEKISS Togekiss
+species YANMEGA Yanmega
+species LEAFEON Leafeon
+species GLACEON Glaceon
+species GLISCOR Gliscor
+species MAMOSWINE Mamoswine
+species PORYGONZ Porygon-Z
+species GALLADE Gallade
+species PROBOPASS Probopass
+species DUSKNOIR Dusknoir
+species FROSLASS Froslass
+species ROTOM Rotom
+species UXIE Uxie
+species MESPRIT Mesprit
+species AZELF Azelf
+species DIALGA Dialga
+species PALKIA Palkia
+species HEATRAN Heatran
+species REGIGIGAS Regigigas
+species GIRATINA Giratina
+species CRESSELIA Cresselia
+species PHIONE Phione
+species MANAPHY Manaphy
+species DARKRAI Darkrai
+species SHAYMIN Shaymin
+species ARCEUS Arceus
+species VICTINI Victini
+species SNIVY Snivy
+species SERVINE Servine
+species SERPERIOR Serperior
+species TEPIG Tepig
+species PIGNITE Pignite
+species EMBOAR Emboar
+species OSHAWOTT Oshawott
+species DEWOTT Dewott
+species SAMUROTT Samurott
+species PATRAT Patrat
+species WATCHOG Watchog
+species LILLIPUP Lillipup
+species HERDIER Herdier
+species STOUTLAND Stoutland
+species PURRLOIN Purrloin
+species LIEPARD Liepard
+species PANSAGE Pansage
+species SIMISAGE Simisage
+species PANSEAR Pansear
+species SIMISEAR Simisear
+species PANPOUR Panpour
+species SIMIPOUR Simipour
+species MUNNA Munna
+species MUSHARNA Musharna
+species PIDOVE Pidove
+species TRANQUILL Tranquill
+species UNFEZANT Unfezant
+species BLITZLE Blitzle
+species ZEBSTRIKA Zebstrika
+species ROGGENROLA Roggenrola
+species BOLDORE Boldore
+species GIGALITH Gigalith
+species WOOBAT Woobat
+species SWOOBAT Swoobat
+species DRILBUR Drilbur
+species EXCADRILL Excadrill
+species AUDINO Audino
+species TIMBURR Timburr
+species GURDURR Gurdurr
+species CONKELDURR Conkeldurr
+species TYMPOLE Tympole
+species PALPITOAD Palpitoad
+species SEISMITOAD Seismitoad
+species THROH Throh
+species SAWK Sawk
+species SEWADDLE Sewaddle
+species SWADLOON Swadloon
+species LEAVANNY Leavanny
+species VENIPEDE Venipede
+species WHIRLIPEDE Whirlipede
+species SCOLIPEDE Scolipede
+species COTTONEE Cottonee
+species WHIMSICOTT Whimsicott
+species PETILIL Petilil
+species LILLIGANT Lilligant
+species BASCULIN Basculin
+species SANDILE Sandile
+species KROKOROK Krokorok
+species KROOKODILE Krookodile
+species DARUMAKA Darumaka
+species DARMANITAN Darmanitan
+species MARACTUS Maractus
+species DWEBBLE Dwebble
+species CRUSTLE Crustle
+species SCRAGGY Scraggy
+species SCRAFTY Scrafty
+species SIGILYPH Sigilyph
+species YAMASK Yamask
+species COFAGRIGUS Cofagrigus
+species TIRTOUGA Tirtouga
+species CARRACOSTA Carracosta
+species ARCHEN Archen
+species ARCHEOPS Archeops
+species TRUBBISH Trubbish
+species GARBODOR Garbodor
+species ZORUA Zorua
+species ZOROARK Zoroark
+species MINCCINO Minccino
+species CINCCINO Cinccino
+species GOTHITA Gothita
+species GOTHORITA Gothorita
+species GOTHITELLE Gothitelle
+species SOLOSIS Solosis
+species DUOSION Duosion
+species REUNICLUS Reuniclus
+species DUCKLETT Ducklett
+species SWANNA Swanna
+species VANILLITE Vanillite
+species VANILLISH Vanillish
+species VANILLUXE Vanilluxe
+species DEERLING Deerling
+species SAWSBUCK Sawsbuck
+species EMOLGA Emolga
+species KARRABLAST Karrablast
+species ESCAVALIER Escavalier
+species FOONGUS Foongus
+species AMOONGUSS Amoonguss
+species FRILLISH Frillish
+species JELLICENT Jellicent
+species ALOMOMOLA Alomomola
+species JOLTIK Joltik
+species GALVANTULA Galvantula
+species FERROSEED Ferroseed
+species FERROTHORN Ferrothorn
+species KLINK Klink
+species KLANG Klang
+species KLINKLANG Klinklang
+species TYNAMO Tynamo
+species EELEKTRIK Eelektrik
+species EELEKTROSS Eelektross
+species ELGYEM Elgyem
+species BEHEEYEM Beheeyem
+species LITWICK Litwick
+species LAMPENT Lampent
+species CHANDELURE Chandelure
+species AXEW Axew
+species FRAXURE Fraxure
+species HAXORUS Haxorus
+species CUBCHOO Cubchoo
+species BEARTIC Beartic
+species CRYOGONAL Cryogonal
+species SHELMET Shelmet
+species ACCELGOR Accelgor
+species STUNFISK Stunfisk
+species MIENFOO Mienfoo
+species MIENSHAO Mienshao
+species DRUDDIGON Druddigon
+species GOLETT Golett
+species GOLURK Golurk
+species PAWNIARD Pawniard
+species BISHARP Bisharp
+species BOUFFALANT Bouffalant
+species RUFFLET Rufflet
+species BRAVIARY Braviary
+species VULLABY Vullaby
+species MANDIBUZZ Mandibuzz
+species HEATMOR Heatmor
+species DURANT Durant
+species DEINO Deino
+species ZWEILOUS Zweilous
+species HYDREIGON Hydreigon
+species LARVESTA Larvesta
+species VOLCARONA Volcarona
+species COBALION Cobalion
+species TERRAKION Terrakion
+species VIRIZION Virizion
+species TORNADUS Tornadus
+species THUNDURUS Thundurus
+species RESHIRAM Reshiram
+species ZEKROM Zekrom
+species LANDORUS Landorus
+species KYUREM Kyurem
+species KELDEO Keldeo
+species MELOETTA Meloetta
+species GENESECT Genesect
+species CHESPIN Chespin
+species QUILLADIN Quilladin
+species CHESNAUGHT Chesnaught
+species FENNEKIN Fennekin
+species BRAIXEN Braixen
+species DELPHOX Delphox
+species FROAKIE Froakie
+species FROGADIER Frogadier
+species GRENINJA Greninja
+species BUNNELBY Bunnelby
+species DIGGERSBY Diggersby
+species FLETCHLING Fletchling
+species FLETCHINDER Fletchinder
+species TALONFLAME Talonflame
+species SCATTERBUG Scatterbug
+species SPEWPA Spewpa
+species VIVILLON Vivillon
+species LITLEO Litleo
+species PYROAR Pyroar
+species FLABEBE Flabebe
+species FLOETTE Floette
+species FLORGES Florges
+species SKIDDO Skiddo
+species GOGOAT Gogoat
+species PANCHAM Pancham
+species PANGORO Pangoro
+species FURFROU Furfrou
+species ESPURR Espurr
+species MEOWSTIC Meowstic
+species HONEDGE Honedge
+species DOUBLADE Doublade
+species AEGISLASH Aegislash
+species SPRITZEE Spritzee
+species AROMATISSE Aromatisse
+species SWIRLIX Swirlix
+species SLURPUFF Slurpuff
+species INKAY Inkay
+species MALAMAR Malamar
+species BINACLE Binacle
+species BARBARACLE Barbaracle
+species SKRELP Skrelp
+species DRAGALGE Dragalge
+species CLAUNCHER Clauncher
+species CLAWITZER Clawitzer
+species HELIOPTILE Helioptile
+species HELIOLISK Heliolisk
+species TYRUNT Tyrunt
+species TYRANTRUM Tyrantrum
+species AMAURA Amaura
+species AURORUS Aurorus
+species SYLVEON Sylveon
+species HAWLUCHA Hawlucha
+species DEDENNE Dedenne
+species CARBINK Carbink
+species GOOMY Goomy
+species SLIGGOO Sliggoo
+species GOODRA Goodra
+species KLEFKI Klefki
+species PHANTUMP Phantump
+species TREVENANT Trevenant
+species PUMPKABOO Pumpkaboo
+species GOURGEIST Gourgeist
+species BERGMITE Bergmite
+species AVALUGG Avalugg
+species NOIBAT Noibat
+species NOIVERN Noivern
+species XERNEAS Xerneas
+species YVELTAL Yveltal
+species ZYGARDE Zygarde
+species DIANCIE Diancie
+species HOOPA Hoopa
+species VOLCANION Volcanion
+species ROWLET Rowlet
+species DARTRIX Dartrix
+species DECIDUEYE Decidueye
+species LITTEN Litten
+species TORRACAT Torracat
+species INCINEROAR Incineroar
+species POPPLIO Popplio
+species BRIONNE Brionne
+species PRIMARINA Primarina
+species PIKIPEK Pikipek
+species TRUMBEAK Trumbeak
+species TOUCANNON Toucannon
+species YUNGOOS Yungoos
+species GUMSHOOS Gumshoos
+species GRUBBIN Grubbin
+species CHARJABUG Charjabug
+species VIKAVOLT Vikavolt
+species CRABRAWLER Crabrawler
+species CRABOMINABLE Crabominable
+species ORICORIO Oricorio
+species CUTIEFLY Cutiefly
+species RIBOMBEE Ribombee
+species ROCKRUFF Rockruff
+species LYCANROC Lycanroc
+species WISHIWASHI Wishiwashi
+species MAREANIE Mareanie
+species TOXAPEX Toxapex
+species MUDBRAY Mudbray
+species MUDSDALE Mudsdale
+species DEWPIDER Dewpider
+species ARAQUANID Araquanid
+species FOMANTIS Fomantis
+species LURANTIS Lurantis
+species MORELULL Morelull
+species SHIINOTIC Shiinotic
+species SALANDIT Salandit
+species SALAZZLE Salazzle
+species STUFFUL Stufful
+species BEWEAR Bewear
+species BOUNSWEET Bounsweet
+species STEENEE Steenee
+species TSAREENA Tsareena
+species COMFEY Comfey
+species ORANGURU Oranguru
+species PASSIMIAN Passimian
+species WIMPOD Wimpod
+species GOLISOPOD Golisopod
+species SANDYGAST Sandygast
+species PALOSSAND Palossand
+species PYUKUMUKU Pyukumuku
+species TYPENULL Type: Null
+species SILVALLY Silvally
+species MINIOR Minior
+species KOMALA Komala
+species TURTONATOR Turtonator
+species TOGEDEMARU Togedemaru
+species MIMIKYU Mimikyu
+species BRUXISH Bruxish
+species DRAMPA Drampa
+species DHELMISE Dhelmise
+species JANGMOO Jangmo-o
+species HAKAMOO Hakamo-o
+species KOMMOO Kommo-o
+species TAPUKOKO Tapu Koko
+species TAPULELE Tapu Lele
+species TAPUBULU Tapu Bulu
+species TAPUFINI Tapu Fini
+species COSMOG Cosmog
+species COSMOEM Cosmoem
+species SOLGALEO Solgaleo
+species LUNALA Lunala
+species NIHILEGO Nihilego
+species BUZZWOLE Buzzwole
+species PHEROMOSA Pheromosa
+species XURKITREE Xurkitree
+species CELESTEELA Celesteela
+species KARTANA Kartana
+species GUZZLORD Guzzlord
+species NECROZMA Necrozma
+species MAGEARNA Magearna
+species MARSHADOW Marshadow
+species POIPOLE Poipole
+species NAGANADEL Naganadel
+species STAKATAKA Stakataka
+species BLACEPHALON Blacephalon
+species ZERAORA Zeraora
+species MELTAN Meltan
+species MELMETAL Melmetal
+species GROOKEY Grookey
+species THWACKEY Thwackey
+species RILLABOOM Rillaboom
+species SCORBUNNY Scorbunny
+species RABOOT Raboot
+species CINDERACE Cinderace
+species SOBBLE Sobble
+species DRIZZILE Drizzile
+species INTELEON Inteleon
+species SKWOVET Skwovet
+species GREEDENT Greedent
+species ROOKIDEE Rookidee
+species CORVISQUIRE Corvisquire
+species CORVIKNIGHT Corviknight
+species BLIPBUG Blipbug
+species DOTTLER Dottler
+species ORBEETLE Orbeetle
+species NICKIT Nickit
+species THIEVUL Thievul
+species GOSSIFLEUR Gossifleur
+species ELDEGOSS Eldegoss
+species WOOLOO Wooloo
+species DUBWOOL Dubwool
+species CHEWTLE Chewtle
+species DREDNAW Drednaw
+species YAMPER Yamper
+species BOLTUND Boltund
+species ROLYCOLY Rolycoly
+species CARKOL Carkol
+species COALOSSAL Coalossal
+species APPLIN Applin
+species FLAPPLE Flapple
+species APPLETUN Appletun
+species SILICOBRA Silicobra
+species SANDACONDA Sandaconda
+species CRAMORANT Cramorant
+species ARROKUDA Arrokuda
+species BARRASKEWDA Barraskewda
+species TOXEL Toxel
+species TOXTRICITY Toxtricity
+species SIZZLIPEDE Sizzlipede
+species CENTISKORCH Centiskorch
+species CLOBBOPUS Clobbopus
+species GRAPPLOCT Grapploct
+species SINISTEA Sinistea
+species POLTEAGEIST Polteageist
+species HATENNA Hatenna
+species HATTREM Hattrem
+species HATTERENE Hatterene
+species IMPIDIMP Impidimp
+species MORGREM Morgrem
+species GRIMMSNARL Grimmsnarl
+species OBSTAGOON Obstagoon
+species PERRSERKER Perrserker
+species CURSOLA Cursola
+species SIRFETCHD Sirfetch’d
+species MRRIME Mr. Rime
+species RUNERIGUS Runerigus
+species MILCERY Milcery
+species ALCREMIE Alcremie
+species FALINKS Falinks
+species PINCURCHIN Pincurchin
+species SNOM Snom
+species FROSMOTH Frosmoth
+species STONJOURNER Stonjourner
+species EISCUE Eiscue
+species INDEEDEE Indeedee
+species MORPEKO Morpeko
+species CUFANT Cufant
+species COPPERAJAH Copperajah
+species DRACOZOLT Dracozolt
+species ARCTOZOLT Arctozolt
+species DRACOVISH Dracovish
+species ARCTOVISH Arctovish
+species DURALUDON Duraludon
+species DREEPY Dreepy
+species DRAKLOAK Drakloak
+species DRAGAPULT Dragapult
+species ZACIAN Zacian
+species ZAMAZENTA Zamazenta
+species ETERNATUS Eternatus
+species KUBFU Kubfu
+species URSHIFU Urshifu
+species ZARUDE Zarude
+species REGIELEKI Regieleki
+species REGIDRAGO Regidrago
+species GLASTRIER Glastrier
+species SPECTRIER Spectrier
+species CALYREX Calyrex
+species WYRDEER Wyrdeer
+species KLEAVOR Kleavor
+species URSALUNA Ursaluna
+species BASCULEGION Basculegion
+species SNEASLER Sneasler
+species OVERQWIL Overqwil
+species ENAMORUS Enamorus
+species SPRIGATITO Sprigatito
+species FLORAGATO Floragato
+species MEOWSCARADA Meowscarada
+species FUECOCO Fuecoco
+species CROCALOR Crocalor
+species SKELEDIRGE Skeledirge
+species QUAXLY Quaxly
+species QUAXWELL Quaxwell
+species QUAQUAVAL Quaquaval
+species LECHONK Lechonk
+species OINKOLOGNE Oinkologne
+species TAROUNTULA Tarountula
+species SPIDOPS Spidops
+species NYMBLE Nymble
+species LOKIX Lokix
+species PAWMI Pawmi
+species PAWMO Pawmo
+species PAWMOT Pawmot
+species TANDEMAUS Tandemaus
+species MAUSHOLD Maushold
+species FIDOUGH Fidough
+species DACHSBUN Dachsbun
+species SMOLIV Smoliv
+species DOLLIV Dolliv
+species ARBOLIVA Arboliva
+species SQUAWKABILLY Squawkabilly
+species NACLI Nacli
+species NACLSTACK Naclstack
+species GARGANACL Garganacl
+species CHARCADET Charcadet
+species ARMAROUGE Armarouge
+species CERULEDGE Ceruledge
+species TADBULB Tadbulb
+species BELLIBOLT Bellibolt
+species WATTREL Wattrel
+species KILOWATTREL Kilowattrel
+species MASCHIFF Maschiff
+species MABOSSTIFF Mabosstiff
+species SHROODLE Shroodle
+species GRAFAIAI Grafaiai
+species BRAMBLIN Bramblin
+species BRAMBLEGHAST Brambleghast
+species TOEDSCOOL Toedscool
+species TOEDSCRUEL Toedscruel
+species KLAWF Klawf
+species CAPSAKID Capsakid
+species SCOVILLAIN Scovillain
+species RELLOR Rellor
+species RABSCA Rabsca
+species FLITTLE Flittle
+species ESPATHRA Espathra
+species TINKATINK Tinkatink
+species TINKATUFF Tinkatuff
+species TINKATON Tinkaton
+species WIGLETT Wiglett
+species WUGTRIO Wugtrio
+species BOMBIRDIER Bombirdier
+species FINIZEN Finizen
+species PALAFIN Palafin
+species VAROOM Varoom
+species REVAVROOM Revavroom
+species CYCLIZAR Cyclizar
+species ORTHWORM Orthworm
+species GLIMMET Glimmet
+species GLIMMORA Glimmora
+species GREAVARD Greavard
+species HOUNDSTONE Houndstone
+species FLAMIGO Flamigo
+species CETODDLE Cetoddle
+species CETITAN Cetitan
+species VELUZA Veluza
+species DONDOZO Dondozo
+species TATSUGIRI Tatsugiri
+species ANNIHILAPE Annihilape
+species CLODSIRE Clodsire
+species FARIGIRAF Farigiraf
+species DUDUNSPARCE Dudunsparce
+species KINGAMBIT Kingambit
+species GREATTUSK Great Tusk
+species SCREAMTAIL Scream Tail
+species BRUTEBONNET Brute Bonnet
+species FLUTTERMANE Flutter Mane
+species SLITHERWING Slither Wing
+species SANDYSHOCKS Sandy Shocks
+species IRONTREADS Iron Treads
+species IRONBUNDLE Iron Bundle
+species IRONHANDS Iron Hands
+species IRONJUGULIS Iron Jugulis
+species IRONMOTH Iron Moth
+species IRONTHORNS Iron Thorns
+species FRIGIBAX Frigibax
+species ARCTIBAX Arctibax
+species BAXCALIBUR Baxcalibur
+species GIMMIGHOUL Gimmighoul
+species GHOLDENGO Gholdengo
+species WOCHIEN Wo-Chien
+species CHIENPAO Chien-Pao
+species TINGLU Ting-Lu
+species CHIYU Chi-Yu
+species ROARINGMOON Roaring Moon
+species IRONVALIANT Iron Valiant
+species KORAIDON Koraidon
+species MIRAIDON Miraidon
+species WALKINGWAKE Walking Wake
+species IRONLEAVES Iron Leaves
+species DIPPLIN Dipplin
+species POLTCHAGEIST Poltchageist
+species SINISTCHA Sinistcha
+species OKIDOGI Okidogi
+species MUNKIDORI Munkidori
+species FEZANDIPITI Fezandipiti
+species OGERPON Ogerpon
+species ARCHALUDON Archaludon
+species HYDRAPPLE Hydrapple
+species GOUGINGFIRE Gouging Fire
+species RAGINGBOLT Raging Bolt
+species IRONBOULDER Iron Boulder
+species IRONCROWN Iron Crown
+species TERAPAGOS Terapagos
+species PECHARUNT Pecharunt
+species PICHU_2 Pichu-Spiky-Eared
+species UNOWN_1 Unown-B
+species UNOWN_2 Unown-C
+species UNOWN_3 Unown-D
+species UNOWN_4 Unown-E
+species UNOWN_5 Unown-F
+species UNOWN_6 Unown-G
+species UNOWN_7 Unown-H
+species UNOWN_8 Unown-I
+species UNOWN_9 Unown-J
+species UNOWN_10 Unown-K
+species UNOWN_11 Unown-L
+species UNOWN_12 Unown-M
+species UNOWN_13 Unown-N
+species UNOWN_14 Unown-O
+species UNOWN_15 Unown-P
+species UNOWN_16 Unown-Q
+species UNOWN_17 Unown-R
+species UNOWN_18 Unown-S
+species UNOWN_19 Unown-T
+species UNOWN_20 Unown-U
+species UNOWN_21 Unown-V
+species UNOWN_22 Unown-W
+species UNOWN_23 Unown-X
+species UNOWN_24 Unown-Y
+species UNOWN_25 Unown-Z
+species UNOWN_26 Unown-Question
+species UNOWN_27 Unown-Exclamation
+species CASTFORM_1 Castform-Sunny
+species CASTFORM_2 Castform-Rainy
+species CASTFORM_3 Castform-Snowy
+species DEOXYS_1 Deoxys-Attack
+species DEOXYS_2 Deoxys-Defense
+species DEOXYS_3 Deoxys-Speed
+species BURMY_1 Burmy-Sandy
+species BURMY_2 Burmy-Trash
+species WORMADAM_1 Wormadam-Sandy
+species WORMADAM_2 Wormadam-Trash
+species CHERRIM_1 Cherrim-Sunshine
+species SHELLOS_1 Shellos-East
+species GASTRODON_1 Gastrodon-East
+species ROTOM_1 Rotom-Heat
+species ROTOM_2 Rotom-Wash
+species ROTOM_3 Rotom-Frost
+species ROTOM_4 Rotom-Fan
+species ROTOM_5 Rotom-Mow
+species GIRATINA_1 Giratina-Origin
+species SHAYMIN_1 Shaymin-Sky
+species DARMANITAN_1 Darmanitan-Zen
+species DEERLING_1 Deerling-Summer
+species DEERLING_2 Deerling-Autumn
+species DEERLING_3 Deerling-Winter
+species SAWSBUCK_1 Sawsbuck-Summer
+species SAWSBUCK_2 Sawsbuck-Autumn
+species SAWSBUCK_3 Sawsbuck-Winter
+species TORNADUS_1 Tornadus-Therian
+species THUNDURUS_1 Thundurus-Therian
+species LANDORUS_1 Landorus-Therian
+species KYUREM_1 Kyurem-White
+species KYUREM_2 Kyurem-Black
+species KELDEO_1 Keldeo-Resolute
+species MELOETTA_1 Meloetta-Pirouette
+species GENESECT_1 Genesect-Shock
+species GENESECT_2 Genesect-Burn
+species GENESECT_3 Genesect-Chill
+species GENESECT_4 Genesect-Douse
+species BASCULIN_2 Basculin
+species BASCULIN_3 Basculin-Blue-Striped
+species ARCEUS_1 Arceus-Fighting
+species ARCEUS_2 Arceus-Flying
+species ARCEUS_3 Arceus-Poison
+species ARCEUS_4 Arceus-Ground
+species ARCEUS_5 Arceus-Rock
+species ARCEUS_6 Arceus-Bug
+species ARCEUS_7 Arceus-Ghost
+species ARCEUS_8 Arceus-Steel
+species ARCEUS_10 Arceus-Fire
+species ARCEUS_11 Arceus-Water
+species ARCEUS_12 Arceus-Grass
+species ARCEUS_13 Arceus-Electric
+species ARCEUS_14 Arceus-Psychic
+species ARCEUS_15 Arceus-Ice
+species ARCEUS_16 Arceus-Dragon
+species ARCEUS_17 Arceus-Dark
+species ARCEUS_18 Arceus-Fairy
+items REPEL Repel
+items SUPERREPEL Super Repel
+items MAXREPEL Max Repel
+items BLACKFLUTE Black Flute
+items WHITEFLUTE White Flute
+items HONEY Honey
+items REDSHARD Red Shard
+items YELLOWSHARD Yellow Shard
+items BLUESHARD Blue Shard
+items GREENSHARD Green Shard
+items FIRESTONE Fire Stone
+items THUNDERSTONE Thunder Stone
+items WATERSTONE Water Stone
+items LEAFSTONE Leaf Stone
+items MOONSTONE Moon Stone
+items SUNSTONE Sun Stone
+items DUSKSTONE Dusk Stone
+items DAWNSTONE Dawn Stone
+items SHINYSTONE Shiny Stone
+items ICESTONE Ice Stone
+items SWEETAPPLE Sweet Apple
+items TARTAPPLE Tart Apple
+items CRACKEDPOT Cracked Pot
+items CHIPPEDPOT Chipped Pot
+items GALARICACUFF Galarica Cuff
+items GALARICAWREATH Galarica Wreath
+items REDAPRICORN Red Apricorn
+items YELLOWAPRICORN Yellow Apricorn
+items BLUEAPRICORN Blue Apricorn
+items GREENAPRICORN Green Apricorn
+items PINKAPRICORN Pink Apricorn
+items WHITEAPRICORN White Apricorn
+items BLACKAPRICORN Black Apricorn
+items HELIXFOSSIL Helix Fossil
+items DOMEFOSSIL Dome Fossil
+items OLDAMBER Old Amber
+items ROOTFOSSIL Root Fossil
+items CLAWFOSSIL Claw Fossil
+items SKULLFOSSIL Skull Fossil
+items ARMORFOSSIL Armor Fossil
+items COVERFOSSIL Cover Fossil
+items PLUMEFOSSIL Plume Fossil
+items JAWFOSSIL Jaw Fossil
+items SAILFOSSIL Sail Fossil
+items FOSSILIZEDBIRD Fossilized Bird
+items FOSSILIZEDFISH Fossilized Fish
+items FOSSILIZEDDRAKE Fossilized Drake
+items FOSSILIZEDDINO Fossilized Dino
+items PRETTYFEATHER Pretty Feather
+items TINYMUSHROOM Tiny Mushroom
+items BIGMUSHROOM Big Mushroom
+items BALMMUSHROOM Balm Mushroom
+items PEARL Pearl
+items BIGPEARL Big Pearl
+items PEARLSTRING Pearl String
+items STARDUST Stardust
+items STARPIECE Star Piece
+items COMETSHARD Comet Shard
+items NUGGET Nugget
+items BIGNUGGET Big Nugget
+items HEARTSCALE Heart Scale
+items SLOWPOKETAIL Slowpoke Tail
+items RAREBONE Rare Bone
+items RELICCOPPER Relic Copper
+items RELICSILVER Relic Silver
+items RELICGOLD Relic Gold
+items RELICVASE Relic Vase
+items RELICBAND Relic Band
+items RELICSTATUE Relic Statue
+items RELICCROWN Relic Crown
+items GROWTHMULCH Growth Mulch
+items DAMPMULCH Damp Mulch
+items STABLEMULCH Stable Mulch
+items GOOEYMULCH Gooey Mulch
+items SHOALSALT Shoal Salt
+items SHOALSHELL Shoal Shell
+items ODDKEYSTONE Odd Keystone
+items REDNECTAR Red Nectar
+items YELLOWNECTAR Yellow Nectar
+items PINKNECTAR Pink Nectar
+items PURPLENECTAR Purple Nectar
+items AIRBALLOON Air Balloon
+items BRIGHTPOWDER Bright Powder
+items EVIOLITE Eviolite
+items FLOATSTONE Float Stone
+items DESTINYKNOT Destiny Knot
+items ROCKYHELMET Rocky Helmet
+items ASSAULTVEST Assault Vest
+items SAFETYGOGGLES Safety Goggles
+items PROTECTIVEPADS Protective Pads
+items HEAVYDUTYBOOTS Heavy-Duty Boots
+items UTILITYUMBRELLA Utility Umbrella
+items EJECTBUTTON Eject Button
+items EJECTPACK Eject Pack
+items REDCARD Red Card
+items SHEDSHELL Shed Shell
+items SMOKEBALL Smoke Ball
+items LUCKYEGG Lucky Egg
+items EXPSHARE Exp. Share
+items AMULETCOIN Amulet Coin
+items SOOTHEBELL Soothe Bell
+items CLEANSETAG Cleanse Tag
+items CHOICEBAND Choice Band
+items CHOICESPECS Choice Specs
+items CHOICESCARF Choice Scarf
+items HEATROCK Heat Rock
+items DAMPROCK Damp Rock
+items SMOOTHROCK Smooth Rock
+items ICYROCK Icy Rock
+items TERRAINEXTENDER Terrain Extender
+items LIGHTCLAY Light Clay
+items GRIPCLAW Grip Claw
+items BINDINGBAND Binding Band
+items BIGROOT Big Root
+items BLACKSLUDGE Black Sludge
+items LEFTOVERS Leftovers
+items SHELLBELL Shell Bell
+items MENTALHERB Mental Herb
+items WHITEHERB White Herb
+items POWERHERB Power Herb
+items ABSORBBULB Absorb Bulb
+items CELLBATTERY Cell Battery
+items LUMINOUSMOSS Luminous Moss
+items SNOWBALL Snowball
+items WEAKNESSPOLICY Weakness Policy
+items BLUNDERPOLICY Blunder Policy
+items THROATSPRAY Throat Spray
+items ADRENALINEORB Adrenaline Orb
+items ROOMSERVICE Room Service
+items ELECTRICSEED Electric Seed
+items GRASSYSEED Grassy Seed
+items MISTYSEED Misty Seed
+items PSYCHICSEED Psychic Seed
+items LIFEORB Life Orb
+items EXPERTBELT Expert Belt
+items METRONOME Metronome
+items MUSCLEBAND Muscle Band
+items WISEGLASSES Wise Glasses
+items RAZORCLAW Razor Claw
+items SCOPELENS Scope Lens
+items WIDELENS Wide Lens
+items ZOOMLENS Zoom Lens
+items KINGSROCK King’s Rock
+items RAZORFANG Razor Fang
+items LAGGINGTAIL Lagging Tail
+items QUICKCLAW Quick Claw
+items FOCUSBAND Focus Band
+items FOCUSSASH Focus Sash
+items FLAMEORB Flame Orb
+items TOXICORB Toxic Orb
+items STICKYBARB Sticky Barb
+items IRONBALL Iron Ball
+items RINGTARGET Ring Target
+items MACHOBRACE Macho Brace
+items POWERWEIGHT Power Weight
+items POWERBRACER Power Bracer
+items POWERBELT Power Belt
+items POWERLENS Power Lens
+items POWERBAND Power Band
+items POWERANKLET Power Anklet
+items LAXINCENSE Lax Incense
+items FULLINCENSE Full Incense
+items LUCKINCENSE Luck Incense
+items PUREINCENSE Pure Incense
+items SEAINCENSE Sea Incense
+items WAVEINCENSE Wave Incense
+items ROSEINCENSE Rose Incense
+items ODDINCENSE Odd Incense
+items ROCKINCENSE Rock Incense
+items CHARCOAL Charcoal
+items MYSTICWATER Mystic Water
+items MAGNET Magnet
+items MIRACLESEED Miracle Seed
+items NEVERMELTICE Never-Melt Ice
+items BLACKBELT Black Belt
+items POISONBARB Poison Barb
+items SOFTSAND Soft Sand
+items SHARPBEAK Sharp Beak
+items TWISTEDSPOON Twisted Spoon
+items SILVERPOWDER Silver Powder
+items HARDSTONE Hard Stone
+items SPELLTAG Spell Tag
+items DRAGONFANG Dragon Fang
+items BLACKGLASSES Black Glasses
+items METALCOAT Metal Coat
+items SILKSCARF Silk Scarf
+items FLAMEPLATE Flame Plate
+items SPLASHPLATE Splash Plate
+items ZAPPLATE Zap Plate
+items MEADOWPLATE Meadow Plate
+items ICICLEPLATE Icicle Plate
+items FISTPLATE Fist Plate
+items TOXICPLATE Toxic Plate
+items EARTHPLATE Earth Plate
+items SKYPLATE Sky Plate
+items MINDPLATE Mind Plate
+items INSECTPLATE Insect Plate
+items STONEPLATE Stone Plate
+items SPOOKYPLATE Spooky Plate
+items DRACOPLATE Draco Plate
+items DREADPLATE Dread Plate
+items IRONPLATE Iron Plate
+items PIXIEPLATE Pixie Plate
+items FIREGEM Fire Gem
+items WATERGEM Water Gem
+items ELECTRICGEM Electric Gem
+items GRASSGEM Grass Gem
+items ICEGEM Ice Gem
+items FIGHTINGGEM Fighting Gem
+items POISONGEM Poison Gem
+items GROUNDGEM Ground Gem
+items FLYINGGEM Flying Gem
+items PSYCHICGEM Psychic Gem
+items BUGGEM Bug Gem
+items ROCKGEM Rock Gem
+items GHOSTGEM Ghost Gem
+items DRAGONGEM Dragon Gem
+items DARKGEM Dark Gem
+items STEELGEM Steel Gem
+items FAIRYGEM Fairy Gem
+items NORMALGEM Normal Gem
+items LIGHTBALL Light Ball
+items LUCKYPUNCH Lucky Punch
+items METALPOWDER Metal Powder
+items QUICKPOWDER Quick Powder
+items THICKCLUB Thick Club
+items LEEK Leek
+items SOULDEW Soul Dew
+items DEEPSEATOOTH Deep Sea Tooth
+items DEEPSEASCALE Deep Sea Scale
+items ADAMANTORB Adamant Orb
+items LUSTROUSORB Lustrous Orb
+items GRISEOUSORB Griseous Orb
+items RUSTEDSWORD Rusted Sword
+items RUSTEDSHIELD Rusted Shield
+items DOUSEDRIVE Douse Drive
+items SHOCKDRIVE Shock Drive
+items BURNDRIVE Burn Drive
+items CHILLDRIVE Chill Drive
+items FIREMEMORY Fire Memory
+items WATERMEMORY Water Memory
+items ELECTRICMEMORY Electric Memory
+items GRASSMEMORY Grass Memory
+items ICEMEMORY Ice Memory
+items FIGHTINGMEMORY Fighting Memory
+items POISONMEMORY Poison Memory
+items GROUNDMEMORY Ground Memory
+items FLYINGMEMORY Flying Memory
+items PSYCHICMEMORY Psychic Memory
+items BUGMEMORY Bug Memory
+items ROCKMEMORY Rock Memory
+items GHOSTMEMORY Ghost Memory
+items DRAGONMEMORY Dragon Memory
+items DARKMEMORY Dark Memory
+items STEELMEMORY Steel Memory
+items FAIRYMEMORY Fairy Memory
+items EVERSTONE Everstone
+items DRAGONSCALE Dragon Scale
+items UPGRADE Upgrade
+items DUBIOUSDISC Dubious Disc
+items PROTECTOR Protector
+items ELECTIRIZER Electirizer
+items MAGMARIZER Magmarizer
+items REAPERCLOTH Reaper Cloth
+items PRISMSCALE Prism Scale
+items OVALSTONE Oval Stone
+items WHIPPEDDREAM Whipped Dream
+items SACHET Sachet
+items STRAWBERRYSWEET Strawberry Sweet
+items LOVESWEET Love Sweet
+items BERRYSWEET Berry Sweet
+items CLOVERSWEET Clover Sweet
+items FLOWERSWEET Flower Sweet
+items STARSWEET Star Sweet
+items RIBBONSWEET Ribbon Sweet
+items CHARIZARDITEX Charizardite X
+items CHARIZARDITEY Charizardite Y
+items BEEDRILLITE Beedrillite
+items PIDGEOTITE Pidgeotite
+items ALAKAZITE Alakazite
+items SLOWBRONITE Slowbronite
+items KANGASKHANITE Kangaskhanite
+items PINSIRITE Pinsirite
+items GYARADOSITE Gyaradosite
+items AERODACTYLITE Aerodactylite
+items MEWTWONITEX Mewtwonite X
+items MEWTWONITEY Mewtwonite Y
+items AMPHAROSITE Ampharosite
+items STEELIXITE Steelixite
+items SCIZORITE Scizorite
+items HERACRONITE Heracronite
+items HOUNDOOMINITE Houndoominite
+items TYRANITARITE Tyranitarite
+items SCEPTILITE Sceptilite
+items BLAZIKENITE Blazikenite
+items SWAMPERTITE Swampertite
+items GARDEVOIRITE Gardevoirite
+items SABLENITE Sablenite
+items MAWILITE Mawilite
+items AGGRONITE Aggronite
+items MEDICHAMITE Medichamite
+items MANECTITE Manectite
+items SHARPEDONITE Sharpedonite
+items CAMERUPTITE Cameruptite
+items ALTARIANITE Altarianite
+items BANETTITE Banettite
+items ABSOLITE Absolite
+items GLALITITE Glalitite
+items SALAMENCITE Salamencite
+items METAGROSSITE Metagrossite
+items LATIASITE Latiasite
+items LATIOSITE Latiosite
+items LOPUNNITE Lopunnite
+items GARCHOMPITE Garchompite
+items LUCARIONITE Lucarionite
+items ABOMASITE Abomasite
+items GALLADITE Galladite
+items AUDINITE Audinite
+items DIANCITE Diancite
+items REDORB Red Orb
+items BLUEORB Blue Orb
+items POTION Potion
+items SUPERPOTION Super Potion
+items HYPERPOTION Hyper Potion
+items MAXPOTION Max Potion
+items FULLRESTORE Full Restore
+items SACREDASH Sacred Ash
+items AWAKENING Awakening
+items ANTIDOTE Antidote
+items BURNHEAL Burn Heal
+items PARALYZEHEAL Paralyze Heal
+items ICEHEAL Ice Heal
+items FULLHEAL Full Heal
+items PEWTERCRUNCHIES Pewter Crunchies
+items RAGECANDYBAR Rage Candy Bar
+items LAVACOOKIE Lava Cookie
+items OLDGATEAU Old Gateau
+items CASTELIACONE Casteliacone
+items LUMIOSEGALETTE Lumiose Galette
+items SHALOURSABLE Shalour Sable
+items BIGMALASADA Big Malasada
+items REVIVE Revive
+items MAXREVIVE Max Revive
+items BERRYJUICE Berry Juice
+items SWEETHEART Sweet Heart
+items FRESHWATER Fresh Water
+items SODAPOP Soda Pop
+items LEMONADE Lemonade
+items MOOMOOMILK Moomoo Milk
+items ENERGYPOWDER Energy Powder
+items ENERGYROOT Energy Root
+items HEALPOWDER Heal Powder
+items REVIVALHERB Revival Herb
+items MAXHONEY Max Honey
+items ETHER Ether
+items MAXETHER Max Ether
+items ELIXIR Elixir
+items MAXELIXIR Max Elixir
+items PPUP PP Up
+items PPMAX PP Max
+items HPUP HP Up
+items PROTEIN Protein
+items IRON Iron
+items CALCIUM Calcium
+items ZINC Zinc
+items CARBOS Carbos
+items HEALTHFEATHER Health Feather
+items MUSCLEFEATHER Muscle Feather
+items RESISTFEATHER Resist Feather
+items GENIUSFEATHER Genius Feather
+items CLEVERFEATHER Clever Feather
+items SWIFTFEATHER Swift Feather
+items LONELYMINT Lonely Mint
+items ADAMANTMINT Adamant Mint
+items NAUGHTYMINT Naughty Mint
+items BRAVEMINT Brave Mint
+items BOLDMINT Bold Mint
+items IMPISHMINT Impish Mint
+items LAXMINT Lax Mint
+items RELAXEDMINT Relaxed Mint
+items MODESTMINT Modest Mint
+items MILDMINT Mild Mint
+items RASHMINT Rash Mint
+items QUIETMINT Quiet Mint
+items CALMMINT Calm Mint
+items GENTLEMINT Gentle Mint
+items CAREFULMINT Careful Mint
+items SASSYMINT Sassy Mint
+items TIMIDMINT Timid Mint
+items HASTYMINT Hasty Mint
+items JOLLYMINT Jolly Mint
+items NAIVEMINT Naive Mint
+items SERIOUSMINT Serious Mint
+items EXPCANDYXS Exp. Candy XS
+items EXPCANDYS Exp. Candy S
+items EXPCANDYM Exp. Candy M
+items EXPCANDYL Exp. Candy L
+items EXPCANDYXL Exp. Candy XL
+items RARECANDY Rare Candy
+items POKEBALL Poke Ball
+items GREATBALL Great Ball
+items ULTRABALL Ultra Ball
+items MASTERBALL Master Ball
+items SAFARIBALL Safari Ball
+items SPORTBALL Sport Ball
+items NETBALL Net Ball
+items DIVEBALL Dive Ball
+items NESTBALL Nest Ball
+items REPEATBALL Repeat Ball
+items TIMERBALL Timer Ball
+items LUXURYBALL Luxury Ball
+items PREMIERBALL Premier Ball
+items DUSKBALL Dusk Ball
+items HEALBALL Heal Ball
+items QUICKBALL Quick Ball
+items CHERISHBALL Cherish Ball
+items FASTBALL Fast Ball
+items LEVELBALL Level Ball
+items LUREBALL Lure Ball
+items HEAVYBALL Heavy Ball
+items LOVEBALL Love Ball
+items FRIENDBALL Friend Ball
+items MOONBALL Moon Ball
+items DREAMBALL Dream Ball
+items BEASTBALL Beast Ball
+items TM01 TM01
+items TM02 TM02
+items TM03 TM03
+items TM04 TM04
+items TM05 TM05
+items TM06 TM06
+items TM07 TM07
+items TM08 TM08
+items TM09 TM09
+items TM10 TM10
+items TM11 TM11
+items TM12 TM12
+items TM13 TM13
+items TM14 TM14
+items TM15 TM15
+items TM16 TM16
+items TM17 TM17
+items TM18 TM18
+items TM19 TM19
+items TM20 TM20
+items TM21 TM21
+items TM22 TM22
+items TM23 TM23
+items TM24 TM24
+items TM25 TM25
+items TM26 TM26
+items TM27 TM27
+items TM28 TM28
+items TM29 TM29
+items TM30 TM30
+items TM31 TM31
+items TM32 TM32
+items TM33 TM33
+items TM34 TM34
+items TM35 TM35
+items TM36 TM36
+items TM37 TM37
+items TM38 TM38
+items TM39 TM39
+items TM40 TM40
+items TM41 TM41
+items TM42 TM42
+items TM43 TM43
+items TM44 TM44
+items TM45 TM45
+items TM46 TM46
+items TM47 TM47
+items TM48 TM48
+items TM49 TM49
+items TM50 TM50
+items TM51 TM51
+items TM52 TM52
+items TM53 TM53
+items TM54 TM54
+items TM55 TM55
+items TM56 TM56
+items TM57 TM57
+items TM58 TM58
+items TM59 TM59
+items TM60 TM60
+items TM61 TM61
+items TM62 TM62
+items TM63 TM63
+items TM64 TM64
+items TM65 TM65
+items TM66 TM66
+items TM67 TM67
+items TM68 TM68
+items TM69 TM69
+items TM70 TM70
+items TM71 TM71
+items TM72 TM72
+items TM73 TM73
+items TM74 TM74
+items TM75 TM75
+items TM76 TM76
+items TM77 TM77
+items TM78 TM78
+items TM79 TM79
+items TM80 TM80
+items TM81 TM81
+items TM82 TM82
+items TM83 TM83
+items TM84 TM84
+items TM85 TM85
+items TM86 TM86
+items TM87 TM87
+items TM88 TM88
+items TM89 TM89
+items TM90 TM90
+items TM91 TM91
+items TM92 TM92
+items TM93 TM93
+items TM94 TM94
+items TM95 TM95
+items TM96 TM96
+items TM97 TM97
+items TM98 TM98
+items TM99 TM99
+items TM100 TM100
+items TM101 TM101
+items TM102 TM102
+items TM103 TM103
+items TM104 TM104
+items TM105 TM105
+items TM106 TM106
+items TM107 TM107
+items TM108 TM108
+items TM109 TM109
+items TM110 TM110
+items TM111 TM111
+items TM112 TM112
+items TM113 TM113
+items TM114 TM114
+items TM115 TM115
+items TM116 TM116
+items TM117 TM117
+items TM118 TM118
+items TM119 TM119
+items TM120 TM120
+items TM121 TM121
+items TM122 TM122
+items TM123 TM123
+items TM124 TM124
+items TM125 TM125
+items HM01 HM01
+items HM02 HM02
+items HM03 HM03
+items HM04 HM04
+items HM05 HM05
+items HM06 HM06
+items CHERIBERRY Cheri Berry
+items CHESTOBERRY Chesto Berry
+items PECHABERRY Pecha Berry
+items RAWSTBERRY Rawst Berry
+items ASPEARBERRY Aspear Berry
+items LEPPABERRY Leppa Berry
+items ORANBERRY Oran Berry
+items PERSIMBERRY Persim Berry
+items LUMBERRY Lum Berry
+items SITRUSBERRY Sitrus Berry
+items FIGYBERRY Figy Berry
+items WIKIBERRY Wiki Berry
+items MAGOBERRY Mago Berry
+items AGUAVBERRY Aguav Berry
+items IAPAPABERRY Iapapa Berry
+items RAZZBERRY Razz Berry
+items BLUKBERRY Bluk Berry
+items NANABBERRY Nanab Berry
+items WEPEARBERRY Wepear Berry
+items PINAPBERRY Pinap Berry
+items POMEGBERRY Pomeg Berry
+items KELPSYBERRY Kelpsy Berry
+items QUALOTBERRY Qualot Berry
+items HONDEWBERRY Hondew Berry
+items GREPABERRY Grepa Berry
+items TAMATOBERRY Tamato Berry
+items CORNNBERRY Cornn Berry
+items MAGOSTBERRY Magost Berry
+items RABUTABERRY Rabuta Berry
+items NOMELBERRY Nomel Berry
+items SPELONBERRY Spelon Berry
+items PAMTREBERRY Pamtre Berry
+items WATMELBERRY Watmel Berry
+items DURINBERRY Durin Berry
+items BELUEBERRY Belue Berry
+items OCCABERRY Occa Berry
+items PASSHOBERRY Passho Berry
+items WACANBERRY Wacan Berry
+items RINDOBERRY Rindo Berry
+items YACHEBERRY Yache Berry
+items CHOPLEBERRY Chople Berry
+items KEBIABERRY Kebia Berry
+items SHUCABERRY Shuca Berry
+items COBABERRY Coba Berry
+items PAYAPABERRY Payapa Berry
+items TANGABERRY Tanga Berry
+items CHARTIBERRY Charti Berry
+items KASIBBERRY Kasib Berry
+items HABANBERRY Haban Berry
+items COLBURBERRY Colbur Berry
+items BABIRIBERRY Babiri Berry
+items ROSELIBERRY Roseli Berry
+items CHILANBERRY Chilan Berry
+items LIECHIBERRY Liechi Berry
+items GANLONBERRY Ganlon Berry
+items SALACBERRY Salac Berry
+items PETAYABERRY Petaya Berry
+items APICOTBERRY Apicot Berry
+items LANSATBERRY Lansat Berry
+items STARFBERRY Starf Berry
+items ENIGMABERRY Enigma Berry
+items MICLEBERRY Micle Berry
+items CUSTAPBERRY Custap Berry
+items JABOCABERRY Jaboca Berry
+items ROWAPBERRY Rowap Berry
+items KEEBERRY Kee Berry
+items MARANGABERRY Maranga Berry
+items GRASSMAIL Grass Mail
+items FLAMEMAIL Flame Mail
+items BUBBLEMAIL Bubble Mail
+items BLOOMMAIL Bloom Mail
+items TUNNELMAIL Tunnel Mail
+items STEELMAIL Steel Mail
+items HEARTMAIL Heart Mail
+items SNOWMAIL Snow Mail
+items SPACEMAIL Space Mail
+items AIRMAIL Air Mail
+items MOSAICMAIL Mosaic Mail
+items BRICKMAIL Brick Mail
+items XATTACK X Attack
+items XATTACK2 X Attack 2
+items XATTACK3 X Attack 3
+items XATTACK6 X Attack 6
+items XDEFENSE X Defense
+items XDEFENSE2 X Defense 2
+items XDEFENSE3 X Defense 3
+items XDEFENSE6 X Defense 6
+items XSPATK X Sp. Atk
+items XSPATK2 X Sp. Atk 2
+items XSPATK3 X Sp. Atk 3
+items XSPATK6 X Sp. Atk 6
+items XSPDEF X Sp. Def
+items XSPDEF2 X Sp. Def 2
+items XSPDEF3 X Sp. Def 3
+items XSPDEF6 X Sp. Def 6
+items XSPEED X Speed
+items XSPEED2 X Speed 2
+items XSPEED3 X Speed 3
+items XSPEED6 X Speed 6
+items XACCURACY X Accuracy
+items XACCURACY2 X Accuracy 2
+items XACCURACY3 X Accuracy 3
+items XACCURACY6 X Accuracy 6
+items MAXMUSHROOMS Max Mushrooms
+items DIREHIT Dire Hit
+items DIREHIT2 Dire Hit 2
+items DIREHIT3 Dire Hit 3
+items GUARDSPEC Guard Spec.
+items RESETURGE Reset Urge
+items ABILITYURGE Ability Urge
+items ITEMURGE Item Urge
+items ITEMDROP Item Drop
+items BLUEFLUTE Blue Flute
+items YELLOWFLUTE Yellow Flute
+items REDFLUTE Red Flute
+items POKEDOLL Poke Doll
+items FLUFFYTAIL Fluffy Tail
+items POKETOY Poke Toy
+items BICYCLE Bicycle
+items OLDROD Old Rod
+items GOODROD Good Rod
+items SUPERROD Super Rod
+items DOWSINGMACHINE Dowsing Machine
+items POKERADAR Poke Radar
+items TOWNMAP Town Map
+items ESCAPEROPE Escape Rope
+items COINCASE Coin Case
+items POKEFLUTE Poke Flute
+items SOOTSACK Soot Sack
+items SILPHSCOPE Silph Scope
+items DEVONSCOPE Devon Scope
+items SQUIRTBOTTLE Squirt Bottle
+items SPRAYDUCK Sprayduck
+items WAILMERPAIL Wailmer Pail
+items SPRINKLOTAD Sprinklotad
+items GRACIDEA Gracidea
+items REVEALGLASS Reveal Glass
+items PRISONBOTTLE Prison Bottle
+items ROTOMCATALOG Rotom Catalog
+items ZYGARDECUBE Zygarde Cube
+items DNASPLICERS DNA Splicers
+items REINSOFUNITY Reins of Unity
+items OVALCHARM Oval Charm
+items SHINYCHARM Shiny Charm
+items CATCHINGCHARM Catching Charm
+items EXPCHARM Exp. Charm
+items MEGARING Mega Ring
+items POKEMONBOXLINK Pokemon Box Link
+items AURORATICKET AuroraTicket
+items OLDSEAMAP Old Sea Map
+items BLACKAUGURITE Black Augurite
+items PEATBLOCK Peat Block
+items LINKINGCORD Linking Cord
+items ADAMANTCRYSTAL Adamant Crystal
+items LUSTROUSGLOBE Lustrous Globe
+items LEGENDPLATE Legend Plate
+items BLANKPLATE Blank Plate
+items GRISEOUSCORE Griseous Core
+items AUSPICIOUSARMOR Auspicious Armor
+items MALICIOUSARMOR Malicious Armor
+items SCROLLOFDARKNESS Scroll of Darkness
+items SCROLLOFWATERS Scroll of Waters
+items LEADERSCREST Leader’s Crest
+items BOOSTERENERGY Booster Energy
+items ABILITYSHIELD Ability Shield
+items CLEARAMULET Clear Amulet
+items MIRRORHERB Mirror Herb
+items PUNCHINGGLOVE Punching Glove
+items COVERTCLOAK Covert Cloak
+items LOADEDDICE Loaded Dice
+items GIMMIGHOULCOIN Gimmighoul Coin
+items TINYBAMBOOSHOOT Tiny Bamboo Shoot
+items BIGBAMBOOSHOOT Big Bamboo Shoot
+items SCARLETBOOK Scarlet Book
+items VIOLETBOOK Violet Book
+items HEALTHMOCHI Health Mochi
+items MUSCLEMOCHI Muscle Mochi
+items RESISTMOCHI Resist Mochi
+items GENIUSMOCHI Genius Mochi
+items CLEVERMOCHI Clever Mochi
+items SWIFTMOCHI Swift Mochi
+items FRESHSTARTMOCHI Fresh Start Mochi
+items FAIRYFEATHER Fairy Feather
+items SYRUPYAPPLE Syrupy Apple
+items UNREMARKABLETEACUP Unremarkable Teacup
+items MASTERPIECETEACUP Masterpiece Teacup
+items WELLSPRINGMASK Wellspring Mask
+items HEARTHFLAMEMASK Hearthflame Mask
+items CORNERSTONEMASK Cornerstone Mask
+items TEALMASK Teal Mask
+items METALALLOY Metal Alloy
+items METEORITE Meteorite
+items VICTREEBELITE Victreebelite
+items CHESNAUGHTITE Chesnaughtite
+items DELPHOXITE Delphoxite
+items GRENINJITE Greninjite
+items CLEFABLITE Clefablite
+items STARMINITE Starminite
+items MEGANIUMITE Meganiumite
+items FERALIGITE Feraligite
+items SKARMORITE Skarmorite
+items FROSLASSITE Froslassite
+items EMBOARITE Emboarite
+items EXCADRITE Excadrite
+items SCOLIPITE Scolipite
+items EELEKTROSSITE Eelektrossite
+items SCRAFTINITE Scraftinite
+items CHANDELURITE Chandelurite
+items PYROARITE Pyroarite
+items MALAMARITE Malamarite
+items BARBARACITE Barbaracite
+items DRAGALGITE Dragalgite
+items DRAMPANITE Drampanite
+items FALINKSITE Falinksite
+items ZYGARDITE Zygardite
+items FLOETTITE Floettite
+items GARCHOMPITEZ Garchompite Z
+items ABSOLITEZ Absolite Z
+items LUCARIONITEZ Lucarionite Z
+items SCOVILLAINITE Scovillainite
+items CRABOMINITE Crabominite
+items STARAPTITE Staraptite
+items GOLURKITE Golurkite
+items DARKRANITE Darkranite
+items TATSUGIRINITE Tatsugirinite
+items MAGEARNITE Magearnite
+items GOLISOPITE Golisopite
+items MEOWSTICITE Meowsticite
+items HEATRANITE Heatranite
+items GLIMMORANITE Glimmoranite
+items BAXCALIBRITE Baxcalibrite
+items CHIMECHITE Chimechite
+items ZERAORITE Zeraorite
+items RULEBOOK Rule Book
+abilities STENCH Stench
+abilities DRIZZLE Drizzle
+abilities SPEEDBOOST Speed Boost
+abilities BATTLEARMOR Battle Armor
+abilities STURDY Sturdy
+abilities DAMP Damp
+abilities LIMBER Limber
+abilities SANDVEIL Sand Veil
+abilities STATIC Static
+abilities VOLTABSORB Volt Absorb
+abilities WATERABSORB Water Absorb
+abilities OBLIVIOUS Oblivious
+abilities CLOUDNINE Cloud Nine
+abilities COMPOUNDEYES Compound Eyes
+abilities INSOMNIA Insomnia
+abilities COLORCHANGE Color Change
+abilities IMMUNITY Immunity
+abilities FLASHFIRE Flash Fire
+abilities SHIELDDUST Shield Dust
+abilities OWNTEMPO Own Tempo
+abilities SUCTIONCUPS Suction Cups
+abilities INTIMIDATE Intimidate
+abilities SHADOWTAG Shadow Tag
+abilities ROUGHSKIN Rough Skin
+abilities WONDERGUARD Wonder Guard
+abilities LEVITATE Levitate
+abilities EFFECTSPORE Effect Spore
+abilities SYNCHRONIZE Synchronize
+abilities CLEARBODY Clear Body
+abilities NATURALCURE Natural Cure
+abilities LIGHTNINGROD Lightning Rod
+abilities SERENEGRACE Serene Grace
+abilities SWIFTSWIM Swift Swim
+abilities CHLOROPHYLL Chlorophyll
+abilities ILLUMINATE Illuminate
+abilities TRACE Trace
+abilities HUGEPOWER Huge Power
+abilities POISONPOINT Poison Point
+abilities INNERFOCUS Inner Focus
+abilities MAGMAARMOR Magma Armor
+abilities WATERVEIL Water Veil
+abilities MAGNETPULL Magnet Pull
+abilities SOUNDPROOF Soundproof
+abilities RAINDISH Rain Dish
+abilities SANDSTREAM Sand Stream
+abilities PRESSURE Pressure
+abilities THICKFAT Thick Fat
+abilities EARLYBIRD Early Bird
+abilities FLAMEBODY Flame Body
+abilities RUNAWAY Run Away
+abilities KEENEYE Keen Eye
+abilities HYPERCUTTER Hyper Cutter
+abilities PICKUP Pickup
+abilities TRUANT Truant
+abilities HUSTLE Hustle
+abilities CUTECHARM Cute Charm
+abilities PLUS Plus
+abilities MINUS Minus
+abilities FORECAST Forecast
+abilities STICKYHOLD Sticky Hold
+abilities SHEDSKIN Shed Skin
+abilities GUTS Guts
+abilities MARVELSCALE Marvel Scale
+abilities LIQUIDOOZE Liquid Ooze
+abilities OVERGROW Overgrow
+abilities BLAZE Blaze
+abilities TORRENT Torrent
+abilities SWARM Swarm
+abilities ROCKHEAD Rock Head
+abilities DROUGHT Drought
+abilities ARENATRAP Arena Trap
+abilities VITALSPIRIT Vital Spirit
+abilities WHITESMOKE White Smoke
+abilities PUREPOWER Pure Power
+abilities SHELLARMOR Shell Armor
+abilities AIRLOCK Air Lock
+abilities TANGLEDFEET Tangled Feet
+abilities MOTORDRIVE Motor Drive
+abilities RIVALRY Rivalry
+abilities STEADFAST Steadfast
+abilities SNOWCLOAK Snow Cloak
+abilities GLUTTONY Gluttony
+abilities ANGERPOINT Anger Point
+abilities UNBURDEN Unburden
+abilities HEATPROOF Heatproof
+abilities SIMPLE Simple
+abilities DRYSKIN Dry Skin
+abilities DOWNLOAD Download
+abilities IRONFIST Iron Fist
+abilities POISONHEAL Poison Heal
+abilities ADAPTABILITY Adaptability
+abilities SKILLLINK Skill Link
+abilities HYDRATION Hydration
+abilities SOLARPOWER Solar Power
+abilities QUICKFEET Quick Feet
+abilities NORMALIZE Normalize
+abilities SNIPER Sniper
+abilities MAGICGUARD Magic Guard
+abilities NOGUARD No Guard
+abilities STALL Stall
+abilities TECHNICIAN Technician
+abilities LEAFGUARD Leaf Guard
+abilities KLUTZ Klutz
+abilities MOLDBREAKER Mold Breaker
+abilities SUPERLUCK Super Luck
+abilities AFTERMATH Aftermath
+abilities ANTICIPATION Anticipation
+abilities FOREWARN Forewarn
+abilities UNAWARE Unaware
+abilities TINTEDLENS Tinted Lens
+abilities FILTER Filter
+abilities SLOWSTART Slow Start
+abilities SCRAPPY Scrappy
+abilities STORMDRAIN Storm Drain
+abilities ICEBODY Ice Body
+abilities SOLIDROCK Solid Rock
+abilities SNOWWARNING Snow Warning
+abilities HONEYGATHER Honey Gather
+abilities FRISK Frisk
+abilities RECKLESS Reckless
+abilities MULTITYPE Multitype
+abilities FLOWERGIFT Flower Gift
+abilities BADDREAMS Bad Dreams
+abilities PICKPOCKET Pickpocket
+abilities SHEERFORCE Sheer Force
+abilities CONTRARY Contrary
+abilities UNNERVE Unnerve
+abilities DEFIANT Defiant
+abilities DEFEATIST Defeatist
+abilities CURSEDBODY Cursed Body
+abilities HEALER Healer
+abilities FRIENDGUARD Friend Guard
+abilities WEAKARMOR Weak Armor
+abilities HEAVYMETAL Heavy Metal
+abilities LIGHTMETAL Light Metal
+abilities MULTISCALE Multiscale
+abilities TOXICBOOST Toxic Boost
+abilities FLAREBOOST Flare Boost
+abilities HARVEST Harvest
+abilities TELEPATHY Telepathy
+abilities MOODY Moody
+abilities OVERCOAT Overcoat
+abilities POISONTOUCH Poison Touch
+abilities REGENERATOR Regenerator
+abilities BIGPECKS Big Pecks
+abilities SANDRUSH Sand Rush
+abilities WONDERSKIN Wonder Skin
+abilities ANALYTIC Analytic
+abilities ILLUSION Illusion
+abilities IMPOSTER Imposter
+abilities INFILTRATOR Infiltrator
+abilities MUMMY Mummy
+abilities MOXIE Moxie
+abilities JUSTIFIED Justified
+abilities RATTLED Rattled
+abilities MAGICBOUNCE Magic Bounce
+abilities SAPSIPPER Sap Sipper
+abilities PRANKSTER Prankster
+abilities SANDFORCE Sand Force
+abilities IRONBARBS Iron Barbs
+abilities ZENMODE Zen Mode
+abilities VICTORYSTAR Victory Star
+abilities TURBOBLAZE Turboblaze
+abilities TERAVOLT Teravolt
+abilities AROMAVEIL Aroma Veil
+abilities FLOWERVEIL Flower Veil
+abilities CHEEKPOUCH Cheek Pouch
+abilities PROTEAN Protean
+abilities FURCOAT Fur Coat
+abilities MAGICIAN Magician
+abilities BULLETPROOF Bulletproof
+abilities COMPETITIVE Competitive
+abilities STRONGJAW Strong Jaw
+abilities REFRIGERATE Refrigerate
+abilities SWEETVEIL Sweet Veil
+abilities STANCECHANGE Stance Change
+abilities GALEWINGS Gale Wings
+abilities MEGALAUNCHER Mega Launcher
+abilities GRASSPELT Grass Pelt
+abilities SYMBIOSIS Symbiosis
+abilities TOUGHCLAWS Tough Claws
+abilities PIXILATE Pixilate
+abilities GOOEY Gooey
+abilities AERILATE Aerilate
+abilities PARENTALBOND Parental Bond
+abilities DARKAURA Dark Aura
+abilities FAIRYAURA Fairy Aura
+abilities AURABREAK Aura Break
+abilities PRIMORDIALSEA Primordial Sea
+abilities DESOLATELAND Desolate Land
+abilities DELTASTREAM Delta Stream
+abilities STAMINA Stamina
+abilities WIMPOUT Wimp Out
+abilities EMERGENCYEXIT Emergency Exit
+abilities WATERCOMPACTION Water Compaction
+abilities MERCILESS Merciless
+abilities SHIELDSDOWN Shields Down
+abilities STAKEOUT Stakeout
+abilities WATERBUBBLE Water Bubble
+abilities STEELWORKER Steelworker
+abilities BERSERK Berserk
+abilities SLUSHRUSH Slush Rush
+abilities LONGREACH Long Reach
+abilities LIQUIDVOICE Liquid Voice
+abilities TRIAGE Triage
+abilities GALVANIZE Galvanize
+abilities SURGESURFER Surge Surfer
+abilities SCHOOLING Schooling
+abilities DISGUISE Disguise
+abilities BATTLEBOND Battle Bond
+abilities POWERCONSTRUCT Power Construct
+abilities CORROSION Corrosion
+abilities COMATOSE Comatose
+abilities QUEENLYMAJESTY Queenly Majesty
+abilities INNARDSOUT Innards Out
+abilities DANCER Dancer
+abilities BATTERY Battery
+abilities FLUFFY Fluffy
+abilities DAZZLING Dazzling
+abilities SOULHEART Soul-Heart
+abilities TANGLINGHAIR Tangling Hair
+abilities RECEIVER Receiver
+abilities POWEROFALCHEMY Power of Alchemy
+abilities BEASTBOOST Beast Boost
+abilities RKSSYSTEM RKS System
+abilities ELECTRICSURGE Electric Surge
+abilities PSYCHICSURGE Psychic Surge
+abilities MISTYSURGE Misty Surge
+abilities GRASSYSURGE Grassy Surge
+abilities FULLMETALBODY Full Metal Body
+abilities SHADOWSHIELD Shadow Shield
+abilities PRISMARMOR Prism Armor
+abilities NEUROFORCE Neuroforce
+abilities INTREPIDSWORD Intrepid Sword
+abilities DAUNTLESSSHIELD Dauntless Shield
+abilities LIBERO Libero
+abilities BALLFETCH Ball Fetch
+abilities COTTONDOWN Cotton Down
+abilities PROPELLERTAIL Propeller Tail
+abilities MIRRORARMOR Mirror Armor
+abilities GULPMISSILE Gulp Missile
+abilities STALWART Stalwart
+abilities STEAMENGINE Steam Engine
+abilities PUNKROCK Punk Rock
+abilities SANDSPIT Sand Spit
+abilities ICESCALES Ice Scales
+abilities RIPEN Ripen
+abilities ICEFACE Ice Face
+abilities POWERSPOT Power Spot
+abilities MIMICRY Mimicry
+abilities SCREENCLEANER Screen Cleaner
+abilities STEELYSPIRIT Steely Spirit
+abilities PERISHBODY Perish Body
+abilities WANDERINGSPIRIT Wandering Spirit
+abilities GORILLATACTICS Gorilla Tactics
+abilities NEUTRALIZINGGAS Neutralizing Gas
+abilities PASTELVEIL Pastel Veil
+abilities HUNGERSWITCH Hunger Switch
+abilities QUICKDRAW Quick Draw
+abilities UNSEENFIST Unseen Fist
+abilities CURIOUSMEDICINE Curious Medicine
+abilities TRANSISTOR Transistor
+abilities DRAGONSMAW Dragon’s Maw
+abilities CHILLINGNEIGH Chilling Neigh
+abilities GRIMNEIGH Grim Neigh
+abilities ANGERSHELL Anger Shell
+abilities ARMORTAIL Armor Tail
+abilities BEADSOFRUIN Beads of Ruin
+abilities COMMANDER Commander
+abilities COSTAR Costar
+abilities CUDCHEW Cud Chew
+abilities EARTHEATER Earth Eater
+abilities ELECTROMORPHOSIS Electromorphosis
+abilities GOODASGOLD Good as Gold
+abilities GUARDDOG Guard Dog
+abilities HADRONENGINE Hadron Engine
+abilities LINGERINGAROMA Lingering Aroma
+abilities MYCELIUMMIGHT Mycelium Might
+abilities OPPORTUNIST Opportunist
+abilities ORICHALCUMPULSE Orichalcum Pulse
+abilities PROTOSYNTHESIS Protosynthesis
+abilities PURIFYINGSALT Purifying Salt
+abilities QUARKDRIVE Quark Drive
+abilities ROCKYPAYLOAD Rocky Payload
+abilities SEEDSOWER Seed Sower
+abilities SHARPNESS Sharpness
+abilities SUPREMEOVERLORD Supreme Overlord
+abilities SWORDOFRUIN Sword of Ruin
+abilities TABLETSOFRUIN Tablets of Ruin
+abilities THERMALEXCHANGE Thermal Exchange
+abilities TOXICDEBRIS Toxic Debris
+abilities VESSELOFRUIN Vessel of Ruin
+abilities WELLBAKEDBODY Well-Baked Body
+abilities WINDPOWER Wind Power
+abilities WINDRIDER Wind Rider
+abilities ZEROTOHERO Zero to Hero
+abilities SUPERSWEETSYRUP Supersweet Syrup
+abilities HOSPITALITY Hospitality
+abilities TOXICCHAIN Toxic Chain
+abilities MINDSEYE Mind’s Eye
+abilities EMBODYASPECT Embody Aspect
+abilities POISONPUPPETEER Poison Puppeteer
+abilities TERASHIFT Tera Shift
+abilities TERASHELL Tera Shell
+abilities TERAFORMZERO Teraform Zero
+moves MEGAHORN Megahorn
+moves ATTACKORDER Attack Order
+moves BUGBUZZ Bug Buzz
+moves FIRSTIMPRESSION First Impression
+moves POLLENPUFF Pollen Puff
+moves LEECHLIFE Leech Life
+moves LUNGE Lunge
+moves XSCISSOR X-Scissor
+moves SIGNALBEAM Signal Beam
+moves SKITTERSMACK Skitter Smack
+moves UTURN U-turn
+moves STEAMROLLER Steamroller
+moves BUGBITE Bug Bite
+moves SILVERWIND Silver Wind
+moves FELLSTINGER Fell Stinger
+moves STRUGGLEBUG Struggle Bug
+moves FURYCUTTER Fury Cutter
+moves PINMISSILE Pin Missile
+moves TWINEEDLE Twineedle
+moves INFESTATION Infestation
+moves DEFENDORDER Defend Order
+moves HEALORDER Heal Order
+moves POWDER Powder
+moves QUIVERDANCE Quiver Dance
+moves RAGEPOWDER Rage Powder
+moves SPIDERWEB Spider Web
+moves STICKYWEB Sticky Web
+moves STRINGSHOT String Shot
+moves TAILGLOW Tail Glow
+moves HYPERSPACEFURY Hyperspace Fury
+moves FOULPLAY Foul Play
+moves FIERYWRATH Fiery Wrath
+moves DARKESTLARIAT Darkest Lariat
+moves NIGHTDAZE Night Daze
+moves CRUNCH Crunch
+moves DARKPULSE Dark Pulse
+moves FALSESURRENDER False Surrender
+moves JAWLOCK Jaw Lock
+moves THROATCHOP Throat Chop
+moves WICKEDBLOW Wicked Blow
+moves LASHOUT Lash Out
+moves NIGHTSLASH Night Slash
+moves SUCKERPUNCH Sucker Punch
+moves KNOCKOFF Knock Off
+moves ASSURANCE Assurance
+moves BITE Bite
+moves BRUTALSWING Brutal Swing
+moves FEINTATTACK Feint Attack
+moves THIEF Thief
+moves SNARL Snarl
+moves PAYBACK Payback
+moves PURSUIT Pursuit
+moves BEATUP Beat Up
+moves FLING Fling
+moves POWERTRIP Power Trip
+moves PUNISHMENT Punishment
+moves DARKVOID Dark Void
+moves EMBARGO Embargo
+moves FAKETEARS Fake Tears
+moves FLATTER Flatter
+moves HONECLAWS Hone Claws
+moves MEMENTO Memento
+moves NASTYPLOT Nasty Plot
+moves OBSTRUCT Obstruct
+moves PARTINGSHOT Parting Shot
+moves QUASH Quash
+moves SNATCH Snatch
+moves SWITCHEROO Switcheroo
+moves TAUNT Taunt
+moves TOPSYTURVY Topsy-Turvy
+moves TORMENT Torment
+moves ETERNABEAM Eternabeam
+moves DRAGONENERGY Dragon Energy
+moves ROAROFTIME Roar of Time
+moves DRACOMETEOR Draco Meteor
+moves OUTRAGE Outrage
+moves CLANGINGSCALES Clanging Scales
+moves COREENFORCER Core Enforcer
+moves DRAGONRUSH Dragon Rush
+moves DYNAMAXCANNON Dynamax Cannon
+moves SPACIALREND Spacial Rend
+moves DRAGONHAMMER Dragon Hammer
+moves DRAGONPULSE Dragon Pulse
+moves DRAGONCLAW Dragon Claw
+moves BREAKINGSWIPE Breaking Swipe
+moves DRAGONBREATH Dragon Breath
+moves DRAGONTAIL Dragon Tail
+moves DRAGONDARTS Dragon Darts
+moves DUALCHOP Dual Chop
+moves TWISTER Twister
+moves SCALESHOT Scale Shot
+moves DRAGONRAGE Dragon Rage
+moves CLANGOROUSSOUL Clangorous Soul
+moves DRAGONDANCE Dragon Dance
+moves BOLTSTRIKE Bolt Strike
+moves VOLTTACKLE Volt Tackle
+moves ZAPCANNON Zap Cannon
+moves AURAWHEEL Aura Wheel
+moves THUNDER Thunder
+moves FUSIONBOLT Fusion Bolt
+moves PLASMAFISTS Plasma Fists
+moves THUNDERBOLT Thunderbolt
+moves WILDCHARGE Wild Charge
+moves BOLTBEAK Bolt Beak
+moves DISCHARGE Discharge
+moves OVERDRIVE Overdrive
+moves THUNDERCAGE Thunder Cage
+moves ZINGZAP Zing Zap
+moves THUNDERPUNCH Thunder Punch
+moves RISINGVOLTAGE Rising Voltage
+moves VOLTSWITCH Volt Switch
+moves PARABOLICCHARGE Parabolic Charge
+moves SPARK Spark
+moves THUNDERFANG Thunder Fang
+moves SHOCKWAVE Shock Wave
+moves ELECTROWEB Electroweb
+moves CHARGEBEAM Charge Beam
+moves THUNDERSHOCK Thunder Shock
+moves NUZZLE Nuzzle
+moves ELECTROBALL Electro Ball
+moves CHARGE Charge
+moves EERIEIMPULSE Eerie Impulse
+moves ELECTRICTERRAIN Electric Terrain
+moves ELECTRIFY Electrify
+moves IONDELUGE Ion Deluge
+moves MAGNETRISE Magnet Rise
+moves MAGNETICFLUX Magnetic Flux
+moves THUNDERWAVE Thunder Wave
+moves LIGHTOFRUIN Light of Ruin
+moves FLEURCANNON Fleur Cannon
+moves MISTYEXPLOSION Misty Explosion
+moves MOONBLAST Moonblast
+moves PLAYROUGH Play Rough
+moves STRANGESTEAM Strange Steam
+moves DAZZLINGGLEAM Dazzling Gleam
+moves SPIRITBREAK Spirit Break
+moves DRAININGKISS Draining Kiss
+moves DISARMINGVOICE Disarming Voice
+moves FAIRYWIND Fairy Wind
+moves NATURESMADNESS Nature’s Madness
+moves AROMATICMIST Aromatic Mist
+moves BABYDOLLEYES Baby-Doll Eyes
+moves CHARM Charm
+moves CRAFTYSHIELD Crafty Shield
+moves DECORATE Decorate
+moves FAIRYLOCK Fairy Lock
+moves FLORALHEALING Floral Healing
+moves FLOWERSHIELD Flower Shield
+moves GEOMANCY Geomancy
+moves MISTYTERRAIN Misty Terrain
+moves MOONLIGHT Moonlight
+moves SWEETKISS Sweet Kiss
+moves FOCUSPUNCH Focus Punch
+moves METEORASSAULT Meteor Assault
+moves HIGHJUMPKICK High Jump Kick
+moves CLOSECOMBAT Close Combat
+moves FOCUSBLAST Focus Blast
+moves SUPERPOWER Superpower
+moves CROSSCHOP Cross Chop
+moves DYNAMICPUNCH Dynamic Punch
+moves FLYINGPRESS Flying Press
+moves HAMMERARM Hammer Arm
+moves JUMPKICK Jump Kick
+moves SACREDSWORD Sacred Sword
+moves THUNDEROUSKICK Thunderous Kick
+moves SECRETSWORD Secret Sword
+moves SKYUPPERCUT Sky Uppercut
+moves AURASPHERE Aura Sphere
+moves BODYPRESS Body Press
+moves SUBMISSION Submission
+moves BRICKBREAK Brick Break
+moves DRAINPUNCH Drain Punch
+moves VITALTHROW Vital Throw
+moves WAKEUPSLAP Wake-Up Slap
+moves LOWSWEEP Low Sweep
+moves CIRCLETHROW Circle Throw
+moves FORCEPALM Force Palm
+moves REVENGE Revenge
+moves ROLLINGKICK Rolling Kick
+moves STORMTHROW Storm Throw
+moves KARATECHOP Karate Chop
+moves MACHPUNCH Mach Punch
+moves POWERUPPUNCH Power-Up Punch
+moves ROCKSMASH Rock Smash
+moves VACUUMWAVE Vacuum Wave
+moves DOUBLEKICK Double Kick
+moves ARMTHRUST Arm Thrust
+moves TRIPLEKICK Triple Kick
+moves COUNTER Counter
+moves FINALGAMBIT Final Gambit
+moves LOWKICK Low Kick
+moves REVERSAL Reversal
+moves SEISMICTOSS Seismic Toss
+moves BULKUP Bulk Up
+moves COACHING Coaching
+moves DETECT Detect
+moves MATBLOCK Mat Block
+moves NORETREAT No Retreat
+moves OCTOLOCK Octolock
+moves QUICKGUARD Quick Guard
+moves VCREATE V-create
+moves BLASTBURN Blast Burn
+moves ERUPTION Eruption
+moves MINDBLOWN Mind Blown
+moves SHELLTRAP Shell Trap
+moves BLUEFLARE Blue Flare
+moves BURNUP Burn Up
+moves OVERHEAT Overheat
+moves FLAREBLITZ Flare Blitz
+moves PYROBALL Pyro Ball
+moves FIREBLAST Fire Blast
+moves FUSIONFLARE Fusion Flare
+moves INFERNO Inferno
+moves MAGMASTORM Magma Storm
+moves SACREDFIRE Sacred Fire
+moves SEARINGSHOT Searing Shot
+moves HEATWAVE Heat Wave
+moves FLAMETHROWER Flamethrower
+moves BLAZEKICK Blaze Kick
+moves FIERYDANCE Fiery Dance
+moves FIRELASH Fire Lash
+moves FIREPLEDGE Fire Pledge
+moves LAVAPLUME Lava Plume
+moves FIREPUNCH Fire Punch
+moves MYSTICALFIRE Mystical Fire
+moves BURNINGJEALOUSY Burning Jealousy
+moves FLAMEBURST Flame Burst
+moves FIREFANG Fire Fang
+moves FLAMEWHEEL Flame Wheel
+moves INCINERATE Incinerate
+moves FLAMECHARGE Flame Charge
+moves EMBER Ember
+moves FIRESPIN Fire Spin
+moves HEATCRASH Heat Crash
+moves SUNNYDAY Sunny Day
+moves WILLOWISP Will-O-Wisp
+moves SKYATTACK Sky Attack
+moves BRAVEBIRD Brave Bird
+moves DRAGONASCENT Dragon Ascent
+moves HURRICANE Hurricane
+moves AEROBLAST Aeroblast
+moves BEAKBLAST Beak Blast
+moves FLY Fly
+moves BOUNCE Bounce
+moves DRILLPECK Drill Peck
+moves OBLIVIONWING Oblivion Wing
+moves AIRSLASH Air Slash
+moves CHATTER Chatter
+moves AERIALACE Aerial Ace
+moves AIRCUTTER Air Cutter
+moves PLUCK Pluck
+moves SKYDROP Sky Drop
+moves WINGATTACK Wing Attack
+moves ACROBATICS Acrobatics
+moves DUALWINGBEAT Dual Wingbeat
+moves GUST Gust
+moves PECK Peck
+moves DEFOG Defog
+moves FEATHERDANCE Feather Dance
+moves MIRRORMOVE Mirror Move
+moves ROOST Roost
+moves TAILWIND Tailwind
+moves ASTRALBARRAGE Astral Barrage
+moves SHADOWFORCE Shadow Force
+moves POLTERGEIST Poltergeist
+moves MOONGEISTBEAM Moongeist Beam
+moves PHANTOMFORCE Phantom Force
+moves SPECTRALTHIEF Spectral Thief
+moves SHADOWBONE Shadow Bone
+moves SHADOWBALL Shadow Ball
+moves SPIRITSHACKLE Spirit Shackle
+moves SHADOWCLAW Shadow Claw
+moves HEX Hex
+moves OMINOUSWIND Ominous Wind
+moves SHADOWPUNCH Shadow Punch
+moves SHADOWSNEAK Shadow Sneak
+moves ASTONISH Astonish
+moves LICK Lick
+moves NIGHTSHADE Night Shade
+moves CONFUSERAY Confuse Ray
+moves CURSE Curse
+moves DESTINYBOND Destiny Bond
+moves GRUDGE Grudge
+moves NIGHTMARE Nightmare
+moves SPITE Spite
+moves TRICKORTREAT Trick-or-Treat
+moves FRENZYPLANT Frenzy Plant
+moves LEAFSTORM Leaf Storm
+moves SOLARBLADE Solar Blade
+moves PETALDANCE Petal Dance
+moves POWERWHIP Power Whip
+moves SEEDFLARE Seed Flare
+moves SOLARBEAM Solar Beam
+moves WOODHAMMER Wood Hammer
+moves ENERGYBALL Energy Ball
+moves LEAFBLADE Leaf Blade
+moves PETALBLIZZARD Petal Blizzard
+moves APPLEACID Apple Acid
+moves DRUMBEATING Drum Beating
+moves GRASSPLEDGE Grass Pledge
+moves GRAVAPPLE Grav Apple
+moves SEEDBOMB Seed Bomb
+moves GIGADRAIN Giga Drain
+moves HORNLEECH Horn Leech
+moves GRASSYGLIDE Grassy Glide
+moves TROPKICK Trop Kick
+moves LEAFTORNADO Leaf Tornado
+moves MAGICALLEAF Magical Leaf
+moves NEEDLEARM Needle Arm
+moves RAZORLEAF Razor Leaf
+moves VINEWHIP Vine Whip
+moves BRANCHPOKE Branch Poke
+moves LEAFAGE Leafage
+moves MEGADRAIN Mega Drain
+moves SNAPTRAP Snap Trap
+moves BULLETSEED Bullet Seed
+moves ABSORB Absorb
+moves GRASSKNOT Grass Knot
+moves AROMATHERAPY Aromatherapy
+moves COTTONGUARD Cotton Guard
+moves COTTONSPORE Cotton Spore
+moves FORESTSCURSE Forest’s Curse
+moves GRASSWHISTLE Grass Whistle
+moves GRASSYTERRAIN Grassy Terrain
+moves INGRAIN Ingrain
+moves JUNGLEHEALING Jungle Healing
+moves LEECHSEED Leech Seed
+moves SLEEPPOWDER Sleep Powder
+moves SPIKYSHIELD Spiky Shield
+moves SPORE Spore
+moves STRENGTHSAP Strength Sap
+moves STUNSPORE Stun Spore
+moves SYNTHESIS Synthesis
+moves WORRYSEED Worry Seed
+moves PRECIPICEBLADES Precipice Blades
+moves EARTHQUAKE Earthquake
+moves HIGHHORSEPOWER High Horsepower
+moves EARTHPOWER Earth Power
+moves LANDSWRATH Land’s Wrath
+moves THOUSANDARROWS Thousand Arrows
+moves THOUSANDWAVES Thousand Waves
+moves DIG Dig
+moves DRILLRUN Drill Run
+moves STOMPINGTANTRUM Stomping Tantrum
+moves SCORCHINGSANDS Scorching Sands
+moves BONECLUB Bone Club
+moves MUDBOMB Mud Bomb
+moves BULLDOZE Bulldoze
+moves MUDSHOT Mud Shot
+moves BONEMERANG Bonemerang
+moves SANDTOMB Sand Tomb
+moves BONERUSH Bone Rush
+moves MUDSLAP Mud-Slap
+moves FISSURE Fissure
+moves MAGNITUDE Magnitude
+moves MUDSPORT Mud Sport
+moves ROTOTILLER Rototiller
+moves SANDATTACK Sand Attack
+moves SHOREUP Shore Up
+moves SPIKES Spikes
+moves FREEZESHOCK Freeze Shock
+moves ICEBURN Ice Burn
+moves GLACIALLANCE Glacial Lance
+moves BLIZZARD Blizzard
+moves ICEHAMMER Ice Hammer
+moves ICEBEAM Ice Beam
+moves ICICLECRASH Icicle Crash
+moves ICEPUNCH Ice Punch
+moves FREEZEDRY Freeze-Dry
+moves AURORABEAM Aurora Beam
+moves GLACIATE Glaciate
+moves ICEFANG Ice Fang
+moves AVALANCHE Avalanche
+moves FROSTBREATH Frost Breath
+moves ICYWIND Icy Wind
+moves ICESHARD Ice Shard
+moves POWDERSNOW Powder Snow
+moves ICEBALL Ice Ball
+moves ICICLESPEAR Icicle Spear
+moves TRIPLEAXEL Triple Axel
+moves SHEERCOLD Sheer Cold
+moves AURORAVEIL Aurora Veil
+moves HAIL Hail
+moves HAZE Haze
+moves MIST Mist
+moves EXPLOSION Explosion
+moves SELFDESTRUCT Self-Destruct
+moves GIGAIMPACT Giga Impact
+moves HYPERBEAM Hyper Beam
+moves BOOMBURST Boomburst
+moves LASTRESORT Last Resort
+moves SKULLBASH Skull Bash
+moves DOUBLEEDGE Double-Edge
+moves HEADCHARGE Head Charge
+moves MEGAKICK Mega Kick
+moves MULTIATTACK Multi-Attack
+moves TECHNOBLAST Techno Blast
+moves THRASH Thrash
+moves EGGBOMB Egg Bomb
+moves JUDGMENT Judgment
+moves HYPERVOICE Hyper Voice
+moves REVELATIONDANCE Revelation Dance
+moves ROCKCLIMB Rock Climb
+moves TAKEDOWN Take Down
+moves UPROAR Uproar
+moves BODYSLAM Body Slam
+moves EXTREMESPEED Extreme Speed
+moves HYPERFANG Hyper Fang
+moves MEGAPUNCH Mega Punch
+moves RAZORWIND Razor Wind
+moves SLAM Slam
+moves STRENGTH Strength
+moves TRIATTACK Tri Attack
+moves CRUSHCLAW Crush Claw
+moves RELICSONG Relic Song
+moves CHIPAWAY Chip Away
+moves DIZZYPUNCH Dizzy Punch
+moves FACADE Facade
+moves HEADBUTT Headbutt
+moves RETALIATE Retaliate
+moves SECRETPOWER Secret Power
+moves SLASH Slash
+moves SMELLINGSALTS Smelling Salts
+moves HORNATTACK Horn Attack
+moves STOMP Stomp
+moves COVET Covet
+moves HIDDENPOWER Hidden Power
+moves ROUND Round
+moves SWIFT Swift
+moves VISEGRIP Vise Grip
+moves CUT Cut
+moves RAPIDSPIN Rapid Spin
+moves SNORE Snore
+moves TERRAINPULSE Terrain Pulse
+moves WEATHERBALL Weather Ball
+moves ECHOEDVOICE Echoed Voice
+moves FAKEOUT Fake Out
+moves FALSESWIPE False Swipe
+moves HOLDBACK Hold Back
+moves PAYDAY Pay Day
+moves POUND Pound
+moves QUICKATTACK Quick Attack
+moves SCRATCH Scratch
+moves TACKLE Tackle
+moves DOUBLEHIT Double Hit
+moves FEINT Feint
+moves TAILSLAP Tail Slap
+moves RAGE Rage
+moves SPIKECANNON Spike Cannon
+moves COMETPUNCH Comet Punch
+moves FURYSWIPES Fury Swipes
+moves BARRAGE Barrage
+moves BIND Bind
+moves DOUBLESLAP Double Slap
+moves FURYATTACK Fury Attack
+moves WRAP Wrap
+moves CONSTRICT Constrict
+moves BIDE Bide
+moves CRUSHGRIP Crush Grip
+moves ENDEAVOR Endeavor
+moves FLAIL Flail
+moves FRUSTRATION Frustration
+moves GUILLOTINE Guillotine
+moves HORNDRILL Horn Drill
+moves NATURALGIFT Natural Gift
+moves PRESENT Present
+moves RETURN Return
+moves SONICBOOM Sonic Boom
+moves SPITUP Spit Up
+moves SUPERFANG Super Fang
+moves TRUMPCARD Trump Card
+moves WRINGOUT Wring Out
+moves ACUPRESSURE Acupressure
+moves AFTERYOU After You
+moves ASSIST Assist
+moves ATTRACT Attract
+moves BATONPASS Baton Pass
+moves BELLYDRUM Belly Drum
+moves BESTOW Bestow
+moves BLOCK Block
+moves CAMOUFLAGE Camouflage
+moves CAPTIVATE Captivate
+moves CELEBRATE Celebrate
+moves CONFIDE Confide
+moves CONVERSION Conversion
+moves CONVERSION2 Conversion 2
+moves COPYCAT Copycat
+moves COURTCHANGE Court Change
+moves DEFENSECURL Defense Curl
+moves DISABLE Disable
+moves DOUBLETEAM Double Team
+moves ENCORE Encore
+moves ENDURE Endure
+moves ENTRAINMENT Entrainment
+moves FLASH Flash
+moves FOCUSENERGY Focus Energy
+moves FOLLOWME Follow Me
+moves FORESIGHT Foresight
+moves GLARE Glare
+moves GROWL Growl
+moves GROWTH Growth
+moves HAPPYHOUR Happy Hour
+moves HARDEN Harden
+moves HEALBELL Heal Bell
+moves HELPINGHAND Helping Hand
+moves HOLDHANDS Hold Hands
+moves HOWL Howl
+moves LASERFOCUS Laser Focus
+moves LEER Leer
+moves LOCKON Lock-On
+moves LOVELYKISS Lovely Kiss
+moves LUCKYCHANT Lucky Chant
+moves MEFIRST Me First
+moves MEANLOOK Mean Look
+moves METRONOME Metronome
+moves MILKDRINK Milk Drink
+moves MIMIC Mimic
+moves MINDREADER Mind Reader
+moves MINIMIZE Minimize
+moves MORNINGSUN Morning Sun
+moves NATUREPOWER Nature Power
+moves NOBLEROAR Noble Roar
+moves ODORSLEUTH Odor Sleuth
+moves PAINSPLIT Pain Split
+moves PERISHSONG Perish Song
+moves PLAYNICE Play Nice
+moves PROTECT Protect
+moves PSYCHUP Psych Up
+moves RECOVER Recover
+moves RECYCLE Recycle
+moves REFLECTTYPE Reflect Type
+moves REFRESH Refresh
+moves ROAR Roar
+moves SAFEGUARD Safeguard
+moves SCARYFACE Scary Face
+moves SCREECH Screech
+moves SHARPEN Sharpen
+moves SHELLSMASH Shell Smash
+moves SIMPLEBEAM Simple Beam
+moves SING Sing
+moves SKETCH Sketch
+moves SLACKOFF Slack Off
+moves SLEEPTALK Sleep Talk
+moves SMOKESCREEN Smokescreen
+moves SOFTBOILED Soft-Boiled
+moves SPLASH Splash
+moves SPOTLIGHT Spotlight
+moves STOCKPILE Stockpile
+moves STUFFCHEEKS Stuff Cheeks
+moves SUBSTITUTE Substitute
+moves SUPERSONIC Supersonic
+moves SWAGGER Swagger
+moves SWALLOW Swallow
+moves SWEETSCENT Sweet Scent
+moves SWORDSDANCE Swords Dance
+moves TAILWHIP Tail Whip
+moves TEARFULLOOK Tearful Look
+moves TEATIME Teatime
+moves TEETERDANCE Teeter Dance
+moves TICKLE Tickle
+moves TRANSFORM Transform
+moves WHIRLWIND Whirlwind
+moves WISH Wish
+moves WORKUP Work Up
+moves YAWN Yawn
+moves BELCH Belch
+moves GUNKSHOT Gunk Shot
+moves SLUDGEWAVE Sludge Wave
+moves SHELLSIDEARM Shell Side Arm
+moves SLUDGEBOMB Sludge Bomb
+moves POISONJAB Poison Jab
+moves CROSSPOISON Cross Poison
+moves SLUDGE Sludge
+moves VENOSHOCK Venoshock
+moves CLEARSMOG Clear Smog
+moves POISONFANG Poison Fang
+moves POISONTAIL Poison Tail
+moves ACID Acid
+moves ACIDSPRAY Acid Spray
+moves SMOG Smog
+moves POISONSTING Poison Sting
+moves ACIDARMOR Acid Armor
+moves BANEFULBUNKER Baneful Bunker
+moves COIL Coil
+moves CORROSIVEGAS Corrosive Gas
+moves GASTROACID Gastro Acid
+moves POISONGAS Poison Gas
+moves POISONPOWDER Poison Powder
+moves PURIFY Purify
+moves TOXIC Toxic
+moves TOXICSPIKES Toxic Spikes
+moves TOXICTHREAD Toxic Thread
+moves VENOMDRENCH Venom Drench
+moves PRISMATICLASER Prismatic Laser
+moves PSYCHOBOOST Psycho Boost
+moves FUTURESIGHT Future Sight
+moves SYNCHRONOISE Synchronoise
+moves DREAMEATER Dream Eater
+moves PHOTONGEYSER Photon Geyser
+moves PSYSTRIKE Psystrike
+moves FREEZINGGLARE Freezing Glare
+moves PSYCHIC Psychic
+moves PSYCHICFANGS Psychic Fangs
+moves EERIESPELL Eerie Spell
+moves EXPANDINGFORCE Expanding Force
+moves EXTRASENSORY Extrasensory
+moves HYPERSPACEHOLE Hyperspace Hole
+moves PSYSHOCK Psyshock
+moves ZENHEADBUTT Zen Headbutt
+moves LUSTERPURGE Luster Purge
+moves MISTBALL Mist Ball
+moves PSYCHOCUT Psycho Cut
+moves PSYBEAM Psybeam
+moves HEARTSTAMP Heart Stamp
+moves CONFUSION Confusion
+moves STOREDPOWER Stored Power
+moves MIRRORCOAT Mirror Coat
+moves PSYWAVE Psywave
+moves AGILITY Agility
+moves ALLYSWITCH Ally Switch
+moves AMNESIA Amnesia
+moves BARRIER Barrier
+moves CALMMIND Calm Mind
+moves COSMICPOWER Cosmic Power
+moves GRAVITY Gravity
+moves GUARDSPLIT Guard Split
+moves GUARDSWAP Guard Swap
+moves HEALBLOCK Heal Block
+moves HEALPULSE Heal Pulse
+moves HEALINGWISH Healing Wish
+moves HEARTSWAP Heart Swap
+moves HYPNOSIS Hypnosis
+moves IMPRISON Imprison
+moves INSTRUCT Instruct
+moves KINESIS Kinesis
+moves LIGHTSCREEN Light Screen
+moves LUNARDANCE Lunar Dance
+moves MAGICCOAT Magic Coat
+moves MAGICPOWDER Magic Powder
+moves MAGICROOM Magic Room
+moves MEDITATE Meditate
+moves MIRACLEEYE Miracle Eye
+moves POWERSPLIT Power Split
+moves POWERSWAP Power Swap
+moves POWERTRICK Power Trick
+moves PSYCHICTERRAIN Psychic Terrain
+moves PSYCHOSHIFT Psycho Shift
+moves REFLECT Reflect
+moves REST Rest
+moves ROLEPLAY Role Play
+moves SKILLSWAP Skill Swap
+moves SPEEDSWAP Speed Swap
+moves TELEKINESIS Telekinesis
+moves TELEPORT Teleport
+moves TRICK Trick
+moves TRICKROOM Trick Room
+moves WONDERROOM Wonder Room
+moves HEADSMASH Head Smash
+moves ROCKWRECKER Rock Wrecker
+moves METEORBEAM Meteor Beam
+moves DIAMONDSTORM Diamond Storm
+moves STONEEDGE Stone Edge
+moves POWERGEM Power Gem
+moves ROCKSLIDE Rock Slide
+moves ANCIENTPOWER Ancient Power
+moves ROCKTOMB Rock Tomb
+moves ROCKTHROW Rock Throw
+moves SMACKDOWN Smack Down
+moves ACCELEROCK Accelerock
+moves ROLLOUT Rollout
+moves ROCKBLAST Rock Blast
+moves ROCKPOLISH Rock Polish
+moves SANDSTORM Sandstorm
+moves STEALTHROCK Stealth Rock
+moves TARSHOT Tar Shot
+moves WIDEGUARD Wide Guard
+moves DOOMDESIRE Doom Desire
+moves STEELBEAM Steel Beam
+moves STEELROLLER Steel Roller
+moves BEHEMOTHBASH Behemoth Bash
+moves BEHEMOTHBLADE Behemoth Blade
+moves IRONTAIL Iron Tail
+moves SUNSTEELSTRIKE Sunsteel Strike
+moves METEORMASH Meteor Mash
+moves ANCHORSHOT Anchor Shot
+moves FLASHCANNON Flash Cannon
+moves IRONHEAD Iron Head
+moves SMARTSTRIKE Smart Strike
+moves STEELWING Steel Wing
+moves DOUBLEIRONBASH Double Iron Bash
+moves MIRRORSHOT Mirror Shot
+moves MAGNETBOMB Magnet Bomb
+moves GEARGRIND Gear Grind
+moves METALCLAW Metal Claw
+moves BULLETPUNCH Bullet Punch
+moves GYROBALL Gyro Ball
+moves HEAVYSLAM Heavy Slam
+moves METALBURST Metal Burst
+moves AUTOTOMIZE Autotomize
+moves GEARUP Gear Up
+moves IRONDEFENSE Iron Defense
+moves KINGSSHIELD King’s Shield
+moves METALSOUND Metal Sound
+moves SHIFTGEAR Shift Gear
+moves HYDROCANNON Hydro Cannon
+moves WATERSPOUT Water Spout
+moves HYDROPUMP Hydro Pump
+moves ORIGINPULSE Origin Pulse
+moves STEAMERUPTION Steam Eruption
+moves CRABHAMMER Crabhammer
+moves AQUATAIL Aqua Tail
+moves MUDDYWATER Muddy Water
+moves SPARKLINGARIA Sparkling Aria
+moves SURF Surf
+moves FISHIOUSREND Fishious Rend
+moves LIQUIDATION Liquidation
+moves DIVE Dive
+moves SCALD Scald
+moves SNIPESHOT Snipe Shot
+moves WATERPLEDGE Water Pledge
+moves WATERFALL Waterfall
+moves RAZORSHELL Razor Shell
+moves BRINE Brine
+moves BUBBLEBEAM Bubble Beam
+moves OCTAZOOKA Octazooka
+moves FLIPTURN Flip Turn
+moves WATERPULSE Water Pulse
+moves AQUAJET Aqua Jet
+moves BUBBLE Bubble
+moves WATERGUN Water Gun
+moves CLAMP Clamp
+moves WHIRLPOOL Whirlpool
+moves SURGINGSTRIKES Surging Strikes
+moves WATERSHURIKEN Water Shuriken
+moves AQUARING Aqua Ring
+moves LIFEDEW Life Dew
+moves RAINDANCE Rain Dance
+moves SOAK Soak
+moves WATERSPORT Water Sport
+moves WITHDRAW Withdraw
+moves DIRECLAW Dire Claw
+moves SPRINGTIDESTORM Springtide Storm
+moves RAGINGFURY Raging Fury
+moves WAVECRASH Wave Crash
+moves CHLOROBLAST Chloroblast
+moves MOUNTAINGALE Mountain Gale
+moves HEADLONGRUSH Headlong Rush
+moves BARBBARRAGE Barb Barrage
+moves ESPERWING Esper Wing
+moves BITTERMALICE Bitter Malice
+moves TRIPLEARROWS Triple Arrows
+moves BLEAKWINDSTORM Bleakwind Storm
+moves WILDBOLTSTORM Wildbolt Storm
+moves SANDSEARSTORM Sandsear Storm
+moves LUNARBLESSING Lunar Blessing
+moves PSYSHIELDBASH Psyshield Bash
+moves POWERSHIFT Power Shift
+moves STONEAXE Stone Axe
+moves MYSTICALPOWER Mystical Power
+moves VICTORYDANCE Victory Dance
+moves SHELTER Shelter
+moves INFERNALPARADE Infernal Parade
+moves CEASELESSEDGE Ceaseless Edge
+moves TAKEHEART Take Heart
+moves AQUACUTTER Aqua Cutter
+moves AQUASTEP Aqua Step
+moves ARMORCANNON Armor Cannon
+moves AXEKICK Axe Kick
+moves BITTERBLADE Bitter Blade
+moves BLAZINGTORQUE Blazing Torque
+moves CHILLINGWATER Chilling Water
+moves CHILLYRECEPTION Chilly Reception
+moves COLLISIONCOURSE Collision Course
+moves COMBATTORQUE Combat Torque
+moves COMEUPPANCE Comeuppance
+moves DOODLE Doodle
+moves DOUBLESHOCK Double Shock
+moves ELECTRODRIFT Electro Drift
+moves FILLETAWAY Fillet Away
+moves FLOWERTRICK Flower Trick
+moves GIGATONHAMMER Gigaton Hammer
+moves GLAIVERUSH Glaive Rush
+moves HYPERDRILL Hyper Drill
+moves ICESPINNER Ice Spinner
+moves JETPUNCH Jet Punch
+moves KOWTOWCLEAVE Kowtow Cleave
+moves LASTRESPECTS Last Respects
+moves LUMINACRASH Lumina Crash
+moves MAGICALTORQUE Magical Torque
+moves MAKEITRAIN Make It Rain
+moves MORTALSPIN Mortal Spin
+moves NOXIOUSTORQUE Noxious Torque
+moves ORDERUP Order Up
+moves POPULATIONBOMB Population Bomb
+moves POUNCE Pounce
+moves RAGEFIST Rage Fist
+moves RAGINGBULL Raging Bull
+moves REVIVALBLESSING Revival Blessing
+moves RUINATION Ruination
+moves SALTCURE Salt Cure
+moves SHEDTAIL Shed Tail
+moves SILKTRAP Silk Trap
+moves SNOWSCAPE Snowscape
+moves SPICYEXTRACT Spicy Extract
+moves SPINOUT Spin Out
+moves TIDYUP Tidy Up
+moves TORCHSONG Torch Song
+moves TRAILBLAZE Trailblaze
+moves TRIPLEDIVE Triple Dive
+moves TWINBEAM Twin Beam
+moves WICKEDTORQUE Wicked Torque
+moves HYDROSTEAM Hydro Steam
+moves PSYBLADE Psyblade
+moves BLOODMOON Blood Moon
+moves MATCHAGOTCHA Matcha Gotcha
+moves SYRUPBOMB Syrup Bomb
+moves IVYCUDGEL Ivy Cudgel
+moves ELECTROSHOT Electro Shot
+moves TERASTARSTORM Tera Starstorm
+moves FICKLEBEAM Fickle Beam
+moves BURNINGBULWARK Burning Bulwark
+moves THUNDERCLAP Thunderclap
+moves MIGHTYCLEAVE Mighty Cleave
+moves TACHYONCUTTER Tachyon Cutter
+moves HARDPRESS Hard Press
+moves DRAGONCHEER Dragon Cheer
+moves ALLURINGVOICE Alluring Voice
+moves TEMPERFLARE Temper Flare
+moves SUPERCELLSLAM Supercell Slam
+moves PSYCHICNOISE Psychic Noise
+moves UPPERHAND Upper Hand
+moves MALIGNANTCHAIN Malignant Chain
+moves TERABLAST Tera Blast
+moves BOUNCYBUBBLE Bouncy Bubble
+moves BUZZYBUZZ Buzzy Buzz
+moves SIZZLYSLIDE Sizzly Slide
+moves GLITZYGLOW Glitzy Glow
+moves BADDYBAD Baddy Bad
+moves SAPPYSEED Sappy Seed
+moves FREEZYFROST Freezy Frost
+moves SPARKLYSWIRL Sparkly Swirl
+moves PIKAPAPOW Pika Papow
+moves ZIPPYZAP Zippy Zap
+moves SPLISHYSPLASH Splishy Splash
+moves FLOATYFALL Floaty Fall
+natures HARDY Hardy
+natures BOLD Bold
+natures MODEST Modest
+natures CALM Calm
+natures TIMID Timid
+natures LONELY Lonely
+natures DOCILE Docile
+natures MILD Mild
+natures GENTLE Gentle
+natures HASTY Hasty
+natures ADAMANT Adamant
+natures IMPISH Impish
+natures BASHFUL Bashful
+natures CAREFUL Careful
+natures RASH Rash
+natures JOLLY Jolly
+natures NAUGHTY Naughty
+natures LAX Lax
+natures QUIRKY Quirky
+natures NAIVE Naive
+natures BRAVE Brave
+natures RELAXED Relaxed
+natures QUIET Quiet
+natures SASSY Sassy
+natures SERIOUS Serious

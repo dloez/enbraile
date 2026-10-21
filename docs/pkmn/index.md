@@ -23,7 +23,7 @@ What belongs to one game (`games/<game>/`): its code in `pkmn/games/<game>/`, it
 
 | Game | Series | Description |
 |------|--------|-------------|
-| Añil | 1 | Pokémon Añil's scripts, in `pkmn/games/anil/`. The Open Sheet export: [explanation](games/anil/explanation/open-sheet-export.md), [JSON reference](games/anil/reference/open-sheet-json.md), [how to run and share it](games/anil/how-to/run-the-open-sheet-export.md) |
+| Añil | 1 | Pokémon Añil's tooling, in `pkmn/games/anil/`. The `anil` command installs the game with the Randomlocke mod: [runtime design](games/anil/explanation/runtime-design.md), [Randomlocke design](games/anil/explanation/randomlocke-design.md), [how to install the game](games/anil/how-to/install-the-game.md). The Open Sheet export: [explanation](games/anil/explanation/open-sheet-export.md), [JSON reference](games/anil/reference/open-sheet-json.md), [how to run and share it](games/anil/how-to/run-the-open-sheet-export.md) |
 
 ## Projects
 
