@@ -60,22 +60,6 @@ The rules guard refuses League entry below level 75 and items inside the League 
 **After:** pkmn: update series 1's rulebook with the latest changes
 **Needs the author:** are "everyone at 75 before the League" and "no items inside the League" series 1 rules? Keep the guard (and write them into the rulebook) or drop it?
 
-## pkmn/games/anil: bring the knowledge view's design over
-
-`anil.harness.knowledge` came over whole with the calc, but its design is still only Wonder's (`docs/subsystems/harness/explanation/knowledge-view-design.md`), which Damage Calc Design and Battle Layer Design cite as "Knowledge View Design (Wonder: …)"; the harness design belongs under `docs/pkmn/` ([Goal and Success](anil-tooling-discovery.md#goal-and-success)).
-
-**Do:**
-- [ ] Copy it into `docs/pkmn/games/anil/explanation/knowledge-view-design.md` as the other layer docs were copied (a provenance line, names `anil`, sessions named as Wonder's), without its Panel section and agent references; repoint every "Knowledge View Design (Wonder: …)" citation in `docs/pkmn/`; add it to `docs/pkmn/index.md`'s Añil row and `pkmn/games/anil/CLAUDE.md`'s doc list.
-
-**Acceptance:**
-- Claude-run: ``grep -rn "Wonder: `docs/subsystems/harness/explanation/knowledge-view-design" docs/pkmn/`` prints nothing; every relative link under `docs/pkmn/` resolves; the doc's names match `src/anil/harness/knowledge.py`.
-- Human-run: none.
-- Reuse: Wonder's doc, copied; `docs/pkmn/games/anil/explanation/damage-calc-design.md` → The Knowledge View.
-- Neighbors: `docs/pkmn/games/anil/explanation/battle-layer-design.md`.
-- Forbidden: changing code; rewriting decisions.
-
-**Touches:** `docs/pkmn/games/anil/explanation/`, `docs/pkmn/index.md`, `pkmn/games/anil/CLAUDE.md`
-
 ## pkmn/games/anil: fold the Añil tooling scope into the game's docs
 
 Once no entry links [Añil Tooling: Discovery](anil-tooling-discovery.md), its lasting content moves to its permanent place and it is deleted ([Lifecycle](index.md#lifecycle)). Runtime Design → Project Layout cites "the discovery's renames".
