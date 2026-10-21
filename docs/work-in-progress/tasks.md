@@ -21,17 +21,32 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 - Forbidden: changing code; guessing a rule not given by the owner.
 
 **Touches:** `docs/pkmn/series/1/`, `docs/work-in-progress/tasks.md`
-**After:** pkmn: give series 1 its rulebook and record games against series
 **Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
+
+## pkmn: cite the in-repo Randomlocke design from series 1's rulebook
+
+Series 1's rulebook still cites Wonder's `docs/subsystems/harness/explanation/randomlocke-design.md` (→ Showdown Export, Nuzlocke, Package Behaviour), which now lives in this repo as [Randomlocke Design](../pkmn/games/anil/explanation/randomlocke-design.md); the game facts entry's grep does not catch these citations.
+
+**Do:**
+- [ ] In `docs/pkmn/series/1/reference/rules.md`, replace every ``source: `docs/subsystems/harness/explanation/randomlocke-design.md` → …`` with a relative link to the matching section of `docs/pkmn/games/anil/explanation/randomlocke-design.md`, and reword the intro's "still in the docs of the tooling this rulebook was copied from" so it names only the game facts as still Wonder's.
+
+**Acceptance:**
+- Claude-run: `grep -n "docs/subsystems" docs/pkmn/series/` prints nothing; every relative link under `docs/pkmn/series/1/` resolves, anchors included.
+- Human-run: none.
+- Reuse: the section headings of `docs/pkmn/games/anil/explanation/randomlocke-design.md`.
+- Neighbors: `docs/pkmn/games/anil/explanation/open-sheet-export.md`, which already links series 1's rules this way.
+- Forbidden: changing a rule; touching the ``source: `docs/domains/game/…` `` citations (the game facts entry owns them).
+
+**Touches:** `docs/pkmn/series/1/reference/rules.md`
 
 ## pkmn/games/anil: launch the game with the bridge and read its state
 
-`anil install --harness` adds the bridge; `anil run` launches the game paused under it, and `anil state`, `eval`, `stack`, `shot`, `rng`, `control`, `speed`, `snapshot save|restore|list`, `replay` and `stop` work against it ([Surfaces](anil-tooling-discovery.md#surfaces)).
+`anil install --harness` adds the bridge; `anil run` launches the game paused under it, and `anil state`, `eval`, `stack`, `shot`, `rng`, `showdown`, `control`, `speed`, `snapshot save|restore|list`, `replay` and `stop` work against it ([Surfaces](anil-tooling-discovery.md#surfaces)).
 
 **Do:**
 - [ ] Copy `packages/bridge` into `src/anil/bridge/` without `wonder_run.rb` and its hooks, renamed (`AnilBridge`, `anil_*.rb`); deploy's bridge layer behind `--harness`, with frame sync off.
 - [ ] Copy `harness/{settings,lock,launch,investigate,context,state,changes,steps,snapshot,replay,showdown}.py` into `src/anil/harness/`, without `--real`, takeover, the panel and agent settings; the CLI commands above in `src/anil/cli.py`, with `cli/state_text.py`.
-- [ ] Docs: the bridge, launch, state, snapshot and replay parts of Wonder's `runtime-design.md` and the matching facts of `domains/game/reference/runtime.md` into `docs/pkmn/games/anil/`, with `how-to/run-the-harness.md`.
+- [ ] Docs: the bridge, launch, state, snapshot and replay parts of Wonder's `runtime-design.md` and the matching facts of `domains/game/reference/runtime.md` into `docs/pkmn/games/anil/`, with `how-to/run-the-harness.md`; rewrite the decisions in `runtime-design.md` that say the bridge is not here yet ("The overlay is layered", "Frame sync stays as shipped without the bridge", "No running-game check yet"), and `--harness` in `how-to/install-the-game.md` and `pkmn/games/anil/CLAUDE.md`'s doc list.
 
 **Acceptance:**
 - Claude-run: the gate; `uv run anil install --harness`, `uv run anil run`, `uv run anil state` prints the party, `uv run anil snapshot save t && uv run anil snapshot restore t`, `uv run anil stop`.
@@ -40,8 +55,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 - Neighbors: `src/anil/install/`.
 - Forbidden: `panel`, `runs`, `memory`, pydantic-ai, any import of `agent` or `arena`.
 
-**Touches:** `pkmn/games/anil/src/`, `pkmn/games/anil/pyproject.toml`, `pkmn/games/anil/uv.lock`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-**After:** pkmn/games/anil: install the game with the Randomlocke mod
+**Touches:** `pkmn/games/anil/src/`, `pkmn/games/anil/pyproject.toml`, `pkmn/games/anil/uv.lock`, `pkmn/games/anil/CLAUDE.md`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
 
 ## pkmn/games/anil: walk, talk and use the menus
 
@@ -95,7 +109,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 - Forbidden: `runs`, rounds, pastes, Wonder fights.
 
 **Touches:** `pkmn/games/anil/src/`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-**After:** pkmn/games/anil: fight battles with the damage calc; pkmn: give series 1 its rulebook and record games against series
+**After:** pkmn/games/anil: fight battles with the damage calc
 
 ## pkmn/games/anil: check the mod against the live game
 
@@ -134,10 +148,10 @@ Wonder's verified facts about Añil (`docs/domains/game/`) move into `docs/pkmn/
 
 ## pkmn/site: decide on Team Analysis's explanatory legends
 
-Team Analysis's compare-view legends carry explanatory lines (e.g. "shaded: best switch-in below 1.00 weighted bulk"), which the site's "no helper text" rule forbids ([Design System](../pkmn/site/reference/design-system.md)).
+Team Analysis's compare-view legends carry explanatory lines (e.g. "shaded: best switch-in below 1.00 weighted bulk"), which the site's "no helper text" rule forbids ([Design System](../pkmn/site/reference/design-system.md)). The pool view has one of the same kind: "Shading is the percentile in the pool. L legendary, M mythical." (`src/team-analysis/components/pool-view.tsx`).
 
 **Do:**
-- [ ] Ask the owner whether the legends stay as an exception or go; record the answer in `docs/pkmn/site/explanation/site.md` → Decisions and apply it.
+- [ ] Ask the owner whether the legends stay as an exception or go; record the answer in `docs/pkmn/site/explanation/site.md` → Decisions and apply it; if they stay, name the exception in `design-system.md`'s "No helper text" rule.
 
 **Acceptance:**
 - Claude-run: `npm run gate`.
@@ -146,15 +160,15 @@ Team Analysis's compare-view legends carry explanatory lines (e.g. "shaded: best
 - Neighbors: none.
 - Forbidden: removing a legend's key (colours, symbols) along with its prose.
 
-**Touches:** `pkmn/site/src/team-analysis/`, `docs/pkmn/site/explanation/site.md`
-**Needs the author:** do the compare legends' explanations stay as an exception to "no helper text", or go?
+**Touches:** `pkmn/site/src/team-analysis/`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/reference/design-system.md`
+**Needs the author:** do the compare legends' explanations stay as an exception to "no helper text", or go? And the pool view's shading line?
 
 ## pkmn/site: decide whether tools may import each other's data
 
-The design-system cleanup moved every shared component into `src/components/`, but Open Sheet still imports `carryTeam` from `src/team-analysis/drafts.ts` to hand a team over to Team Analysis. The cleanup read "no tool imports from another tool's folder" as covering UI only ([site.md → Decisions](../pkmn/site/explanation/site.md#decisions)).
+The design-system cleanup moved every shared component into `src/components/`, but Open Sheet still imports `carryTeam` from `src/team-analysis/drafts.ts` to hand a team over to Team Analysis. The cleanup read "no tool imports from another tool's folder" as covering UI only ([site.md → Decisions](../pkmn/site/explanation/site.md#decisions)), and that decision ("One shared version of each UI piece") is written as settled 2026-10-21 although the owner has not answered.
 
 **Do:**
-- [ ] Ask the owner; if the rule covers every import, move the hand-over into a shared module (e.g. `src/lib/`), and record the answer in `docs/pkmn/site/explanation/site.md` → Decisions and `design-system.md`.
+- [ ] Ask the owner; if the rule covers every import, move the hand-over into a shared module (e.g. `src/lib/`), and record the answer in `docs/pkmn/site/explanation/site.md` → Decisions, rewriting the "One shared version of each UI piece" entry, and `design-system.md`.
 
 **Acceptance:**
 - Claude-run: `npm run gate` from `pkmn/site/`; `grep -rn "@/team-analysis\|@/open-sheet" pkmn/site/src/open-sheet pkmn/site/src/team-analysis` matches the decision.
@@ -165,3 +179,20 @@ The design-system cleanup moved every shared component into `src/components/`, b
 
 **Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
 **Needs the author:** does "no tool imports from another tool's folder" cover data hand-overs like `carryTeam`, or only UI?
+
+## pkmn/site: fold the Team Analysis scope into the site docs
+
+No entry links [Team Analysis: Discovery](team-analysis-discovery.md) any more, so its lasting content moves to its permanent place and it is deleted ([Lifecycle](index.md#lifecycle)). Permanent docs still cite it as their source (`docs/pkmn/site/explanation/site.md`, `open-sheet.md`, `docs/pkmn/index.md`'s Site row).
+
+**Do:**
+- [ ] Move every decision and fact of `team-analysis-discovery.md` not already in `docs/pkmn/site/` into its owning doc there (dated decisions in `site.md` or `open-sheet.md` → Decisions), then repoint every link to it and delete it.
+- [ ] Drop Team Analysis from the Work in Progress lists of `docs/index.md` and `docs/work-in-progress/index.md`.
+
+**Acceptance:**
+- Claude-run: `grep -rn "team-analysis-discovery" docs/ CLAUDE.md pkmn/ --include=*.md` prints nothing; every relative link under `docs/` resolves; the two Work in Progress lists name the same docs.
+- Human-run: none.
+- Reuse: `docs/pkmn/site/explanation/site.md` → Decisions.
+- Neighbors: `docs/pkmn/site/reference/design-system.md`.
+- Forbidden: changing code; restating a fact the site docs already own; turning a scope answer the owner did not give into a decision.
+
+**Touches:** `docs/work-in-progress/team-analysis-discovery.md`, `docs/work-in-progress/index.md`, `docs/index.md`, `docs/pkmn/index.md`, `docs/pkmn/site/`
