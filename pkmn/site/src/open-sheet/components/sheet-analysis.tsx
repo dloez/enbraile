@@ -7,11 +7,11 @@ import type { Mon } from "@/open-sheet/dex";
 import { showdownTeam } from "@/open-sheet/showdown";
 import type { Slots } from "@/open-sheet/team";
 import { TeamAnalysis } from "@/open-sheet/components/team-analysis";
-import { ArchetypeCard, Checklist } from "@/team-analysis/components/archetype";
-import { ArchetypeMap } from "@/team-analysis/components/charts";
-import { Segmented } from "@/team-analysis/components/controls";
-import { Matrices, MemberCards } from "@/team-analysis/components/members";
-import { TeamGraph } from "@/team-analysis/components/team-graph";
+import { ArchetypeCard, Checklist } from "@/components/analysis/archetype";
+import { ArchetypeMap } from "@/components/analysis/charts";
+import { Segmented } from "@/components/controls";
+import { Matrices, MemberCards } from "@/components/analysis/members";
+import { TeamGraph } from "@/components/analysis/team-graph";
 
 export const SHEET_POOL: PoolFilters = { gen: 9, speciesGen: 5, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: 800 };
 

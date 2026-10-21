@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { canLearn, describeItem, describeTm, displayName, type BagItem, type BagTm, type Learn, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { heldCount, memberMon, type Slots } from "@/open-sheet/team";
-import { TypeSquare, UnknownMark } from "@/open-sheet/components/marks";
+import { TypeSquare, UnknownMark } from "@/components/marks";
 import { MonSprite } from "@/open-sheet/components/summary";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -42,7 +42,7 @@ function TargetButton({ target, move, onGive }: { target: Target; move?: string;
       aria-label={label}
       title={label}
       onClick={() => onGive(target.slot)}
-      className="relative grid size-13 cursor-pointer place-items-center rounded-[10px] border bg-box outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-35"
+      className="relative grid size-13 cursor-pointer place-items-center rounded-lg border bg-box outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-35"
     >
       <MonSprite mon={target.mon} className="size-12" />
     </button>
@@ -51,7 +51,7 @@ function TargetButton({ target, move, onGive }: { target: Target; move?: string;
   return (
     <div className="flex w-16 flex-col items-center gap-1">
       {button}
-      <span className={cn("text-center text-[11px]", no ? "text-muted-foreground" : "text-foreground")}>
+      <span className={cn("text-center text-xs", no ? "text-muted-foreground" : "text-foreground")}>
         {no ? "Can't learn" : name}
       </span>
     </div>
@@ -73,7 +73,7 @@ function Row({ icon, name, marked, sub, desc, qty, spent, usable, open, targets,
   onGive: (slot: number) => void;
 }) {
   return (
-    <li className={cn("rounded-[10px] border-b", open && "bg-muted")}>
+    <li className={cn("rounded-lg border-b", open && "bg-muted")}>
       <button
         type="button"
         disabled={!usable}
@@ -88,11 +88,11 @@ function Row({ icon, name, marked, sub, desc, qty, spent, usable, open, targets,
             {marked && <UnknownMark />}
           </span>
           {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
-          {desc && <span className="text-[13px] text-muted-foreground">{desc}</span>}
+          {desc && <span className="text-sm text-muted-foreground">{desc}</span>}
         </span>
         <span
           className={cn(
-            "text-right font-mono text-[13px] whitespace-nowrap",
+            "text-right font-mono text-sm whitespace-nowrap",
             spent ? "text-destructive" : "text-muted-foreground",
           )}
         >
@@ -162,7 +162,7 @@ export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, on
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        className="top-auto bottom-0 flex h-[90svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-[20px] rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-180 sm:-translate-y-1/2 sm:rounded-2xl"
+        className="top-auto bottom-0 flex h-[90svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-2xl rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-180 sm:-translate-y-1/2 sm:rounded-2xl"
       >
         <div className="flex flex-none items-center gap-3 pt-3 pr-2 pl-4.5">
           <DialogTitle className="min-w-0 flex-1 truncate font-heading text-xl leading-normal font-bold">

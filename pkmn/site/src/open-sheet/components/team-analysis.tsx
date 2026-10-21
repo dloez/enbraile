@@ -1,19 +1,10 @@
-import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Panel } from "@/components/controls";
 import { displayName, type Mon } from "@/open-sheet/dex";
 import type { Slots } from "@/open-sheet/team";
 import { analysed, defensiveChart, offensiveCoverage, speedOrder } from "@/open-sheet/analysis";
-import { TypeDot } from "@/open-sheet/components/marks";
+import { TypeDot } from "@/components/marks";
 import { MonSprite } from "@/open-sheet/components/summary";
-
-function Panel({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
-  return (
-    <section aria-label={title} className={cn("flex min-w-0 flex-col gap-3 rounded-2xl border bg-card p-3.5", className)}>
-      <h3 className="m-0 font-heading text-base font-semibold">{title}</h3>
-      {children}
-    </section>
-  );
-}
 
 function Count({ value, className }: { value: number; className: string }) {
   return <span className={cn("font-mono text-xs", value === 0 ? "text-muted-foreground/40" : className)}>{value}</span>;
@@ -37,7 +28,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
       <Panel title="Speed order">
         <ol className="m-0 flex list-none flex-col gap-1.5 p-0">
           {speed.map((entry, rank) => (
-            <li key={entry.slot} className="flex items-center gap-2.5 rounded-lg bg-muted px-2.5 py-1.5 text-[13px]">
+            <li key={entry.slot} className="flex items-center gap-2.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm">
               <span className="w-4 font-mono text-xs text-muted-foreground">{rank + 1}</span>
               <MonSprite mon={entry.mon} className="size-8" />
               <span className="min-w-0 flex-1 truncate">{displayName(entry.mon)}</span>
@@ -47,7 +38,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
         </ol>
       </Panel>
       <Panel title="Defence">
-        <table className="w-full border-collapse text-[13px]">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="text-xs text-muted-foreground">
               <th className="py-1 text-left font-semibold">Type</th>
@@ -63,7 +54,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
                   <span className="inline-flex items-center gap-1.5 font-semibold">
                     <TypeDot type={row.type} />
                     {row.type}
-                    {row.hole && <span className="text-[11px] font-bold text-destructive">Hole</span>}
+                    {row.hole && <span className="text-xs font-bold text-destructive">Hole</span>}
                   </span>
                 </td>
                 <td className="py-1 text-center">
@@ -86,7 +77,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
       <Panel title="Coverage" className="lg:col-span-2 xl:col-span-1">
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {sources.map((source) => (
-            <li key={source.slot} className="flex flex-wrap items-center gap-2 text-[13px]">
+            <li key={source.slot} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="min-w-0 truncate font-semibold">{displayName(source.mon)}</span>
               {source.types.map((t) => (
                 <span key={t} className="inline-flex items-center gap-1 text-xs">
@@ -94,7 +85,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
                   {t}
                 </span>
               ))}
-              {source.stab && <span className="text-[11px] text-muted-foreground">STAB</span>}
+              {source.stab && <span className="text-xs text-muted-foreground">STAB</span>}
             </li>
           ))}
         </ul>

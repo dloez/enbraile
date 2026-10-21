@@ -7,7 +7,7 @@ export function UnknownMark({ className }: { className?: string }) {
       role="img"
       aria-label="Not in Showdown's data"
       title="Not in Showdown's data"
-      className={cn("ml-2 text-[11px] font-bold text-destructive", className)}
+      className={cn("ml-2 text-xs font-bold text-destructive", className)}
     >
       ?
     </span>

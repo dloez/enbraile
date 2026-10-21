@@ -1,4 +1,6 @@
 import { CircleAlert } from "lucide-react";
+import { messageWidth } from "@/components/page";
+import { cn } from "@/lib/utils";
 
 export interface Refused {
   fileName: string;
@@ -21,7 +23,7 @@ export function Refusal({ fileName, reason }: Refused) {
   return (
     <div
       role="alert"
-      className="mx-auto flex w-full max-w-180 items-center gap-3 rounded-xl border border-destructive bg-destructive-soft px-4 py-3.5"
+      className={cn(messageWidth, "flex items-center gap-3 rounded-xl border border-destructive bg-destructive-soft px-4 py-3.5")}
     >
       <CircleAlert className="size-5 flex-none text-destructive" aria-hidden="true" />
       <span className="min-w-0 break-words">

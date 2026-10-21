@@ -55,11 +55,11 @@ export function PasteDialog({ sheet, mons, open, onOpenChange, onImport }: Paste
             }}
             rows={12}
             spellCheck={false}
-            className="min-h-60 w-full resize-y rounded-lg border bg-muted p-2.5 font-mono text-[13px] text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="min-h-60 w-full resize-y rounded-lg border bg-muted p-2.5 font-mono text-sm text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         )}
         {outcome && (
-          <div role="status" className="flex flex-col gap-1.5 text-[13px]">
+          <div role="status" className="flex flex-col gap-1.5 text-sm">
             <p className="m-0 font-semibold">
               {outcome.added > 0
                 ? `Imported ${outcome.added} Pokémon into a new team. Left out:`

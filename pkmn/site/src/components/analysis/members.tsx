@@ -4,9 +4,9 @@ import { dexFor, typesIn } from "@/analysis/dex";
 import { MOVE_TAGS, STATS, type Member, type MoveTag } from "@/analysis/member";
 import type { Pool } from "@/analysis/pool";
 import { defValue, offValue, type Analysis } from "@/analysis/team";
-import { TypeDot } from "@/open-sheet/components/marks";
-import { Panel, Segmented } from "@/team-analysis/components/controls";
-import { spriteOf } from "@/team-analysis/sprite";
+import { TypeDot } from "@/components/marks";
+import { Panel, Segmented } from "@/components/controls";
+import { spriteOf } from "@/analysis/sprite";
 
 const STAT_LABEL = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as const;
 
@@ -55,19 +55,19 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
         </div>
         <span className="flex flex-col items-end gap-0.5">
           <span className="font-mono text-base">{member.bst}</span>
-          <span className="text-[10px] text-muted-foreground">BST · P{Math.round(a.pct.bst * 100)}</span>
+          <span className="text-xs text-muted-foreground">BST · P{Math.round(a.pct.bst * 100)}</span>
         </span>
       </div>
       {illegal && <p className="m-0 px-3 pt-2 text-xs font-semibold text-destructive">Not in this pool: {illegal}</p>}
       <div className="flex flex-wrap gap-1.5 px-3 pt-2.5">
         {a.roles.map((r) => (
-          <span key={r} className="rounded-full bg-secondary px-2 py-0.75 text-[11px] font-semibold text-chart-3">
+          <span key={r} className="rounded-full bg-secondary px-2 py-0.75 text-xs font-semibold text-chart-3">
             {r}
           </span>
         ))}
       </div>
       <div className="flex flex-col gap-1.25 px-3 py-2.5">
-        <div className="grid grid-cols-[34px_34px_minmax(0,1fr)_30px_38px] gap-2 text-[10px] text-muted-foreground">
+        <div className="grid grid-cols-[34px_34px_minmax(0,1fr)_30px_38px] gap-2 text-xs text-muted-foreground">
           <span />
           <span>Base</span>
           <span>Percentile in pool</span>
@@ -88,7 +88,7 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
                   style={{ width: `${p * 100}%` }}
                 />
               </span>
-              <span className="text-right font-mono text-[11px] text-muted-foreground">{Math.round(p * 100)}</span>
+              <span className="text-right font-mono text-xs text-muted-foreground">{Math.round(p * 100)}</span>
               <span className="text-right font-mono">{member.stats[k]}</span>
             </div>
           );
@@ -108,8 +108,8 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
             >
               <TypeDot type={mv.type} />
               <span className="min-w-0 flex-1 truncate">{mv.name}</span>
-              {tag && <span className="rounded-sm bg-accent px-1.5 text-[10px] font-semibold text-primary">{tag}</span>}
-              <span className="font-mono text-[10px] text-muted-foreground">{CATEGORY[mv.category]}</span>
+              {tag && <span className="rounded-sm bg-accent px-1.5 text-xs font-semibold text-primary">{tag}</span>}
+              <span className="font-mono text-xs text-muted-foreground">{CATEGORY[mv.category]}</span>
             </li>
           );
         })}
@@ -153,7 +153,7 @@ function weightCell(v: number): string {
 
 const f2 = (v: number) => (v >= 10 ? v.toFixed(1) : v.toFixed(2));
 
-const CELL = "h-9 min-w-13 rounded-md text-center font-mono text-[13px]";
+const CELL = "h-9 min-w-13 rounded-md text-center font-mono text-sm";
 const STICKY = "sticky left-0 z-10 bg-card";
 
 function MemberHead({ member }: { member: Member }) {
@@ -163,8 +163,8 @@ function MemberHead({ member }: { member: Member }) {
       <span className="flex items-center gap-2">
         <img src={spriteOf(member)} alt="" className="size-9 flex-none [image-rendering:pixelated]" />
         <span className="flex min-w-0 flex-col leading-tight">
-          <span className="max-w-36 truncate text-[13px] font-semibold">{nick || member.species}</span>
-          {nick && <span className="max-w-36 truncate text-[11px] text-muted-foreground">{member.species}</span>}
+          <span className="max-w-36 truncate text-sm font-semibold">{nick || member.species}</span>
+          {nick && <span className="max-w-36 truncate text-xs text-muted-foreground">{member.species}</span>}
         </span>
       </span>
     </th>
@@ -185,7 +185,7 @@ function Head({ types }: { types: readonly string[] }) {
       <tr>
         <th className={cn(STICKY, "min-w-40")} />
         {types.map((t) => (
-          <th key={t} scope="col" title={t} className="px-0.5 pb-1 text-[11px] font-semibold text-muted-foreground">
+          <th key={t} scope="col" title={t} className="px-0.5 pb-1 text-xs font-semibold text-muted-foreground">
             <span className="inline-flex flex-col items-center gap-1">
               <TypeDot type={t} className="size-5" />
               {t.slice(0, 3)}
@@ -202,7 +202,7 @@ function Legend({ items }: { items: readonly { swatch: string; label: string }[]
     <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
       {items.map((i) => (
         <span key={i.label} className="inline-flex items-center gap-1.5">
-          <span className={cn("size-3.5 rounded", i.swatch)} />
+          <span className={cn("size-3.5 rounded-sm", i.swatch)} />
           {i.label}
         </span>
       ))}
@@ -238,7 +238,7 @@ export function Matrices({ team, analysis, pool }: { team: readonly Member[]; an
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="m-0 font-heading text-[22px] font-semibold">Matrices</h2>
+        <h2 className="m-0 font-heading text-2xl font-semibold">Matrices</h2>
         <div className="flex-1" />
         <Segmented
           label="Matrix values"

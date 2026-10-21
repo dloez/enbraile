@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function Panel({
@@ -37,7 +38,7 @@ export function Segmented<T extends string | number>({
   className?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn("inline-flex gap-0.5 rounded-[10px] border bg-muted p-0.75", className)}>
+    <div role="radiogroup" aria-label={label} className={cn("inline-flex gap-0.5 rounded-lg border bg-muted p-0.75", className)}>
       {options.map((o) => (
         <button
           key={String(o.value)}
@@ -46,7 +47,7 @@ export function Segmented<T extends string | number>({
           aria-checked={o.value === value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "min-h-9 flex-1 cursor-pointer rounded-[7px] px-3.5 text-[13px] font-semibold whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+            "min-h-9 flex-1 cursor-pointer rounded-md px-3.5 text-sm font-semibold whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
             o.value === value ? "bg-secondary text-foreground" : "text-muted-foreground",
           )}
         >
@@ -77,10 +78,7 @@ export function Toggle({
       disabled={disabled}
       title={title}
       onClick={() => onChange(!pressed)}
-      className={cn(
-        "inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50",
-        pressed ? "border-primary bg-accent text-primary" : "bg-card text-foreground",
-      )}
+      className={cn(buttonVariants({ variant: "outline" }), pressed && "border-primary bg-accent text-primary")}
     >
       {children}
     </button>
@@ -88,14 +86,12 @@ export function Toggle({
 }
 
 export const fieldClass =
-  "flex min-h-10 min-w-0 items-center gap-2 rounded-lg border bg-muted px-2.5 text-[13px] text-foreground";
+  "flex min-h-10 min-w-0 items-center gap-2 rounded-lg border bg-muted px-2.5 text-sm text-foreground";
 
-export const buttonClass =
-  "inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border bg-card px-3 text-[13px] font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50";
+export const buttonClass = buttonVariants({ variant: "outline" });
 
-export const primaryClass =
-  "inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50";
+export const primaryClass = buttonVariants();
 
-export function pct(v: number): string {
-  return `${Math.round(v * 100)}%`;
-}
+export const iconButtonClass = buttonVariants({ variant: "outline", size: "icon" });
+
+export const quietIconClass = buttonVariants({ variant: "ghost", size: "icon-sm" });

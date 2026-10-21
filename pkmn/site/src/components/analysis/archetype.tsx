@@ -1,7 +1,11 @@
 import { Check, CircleAlert, Info, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ARCHETYPES, FEATURES, type Analysis, type CheckLevel, type Features } from "@/analysis/team";
-import { Panel, pct } from "@/team-analysis/components/controls";
+import { Panel } from "@/components/controls";
+
+function pct(v: number): string {
+  return `${Math.round(v * 100)}%`;
+}
 
 const RADIUS = 78;
 
@@ -45,7 +49,7 @@ export function Radar({ series, label, size = 240 }: { series: readonly RadarSer
             x={x.toFixed(1)}
             y={(y + 3).toFixed(1)}
             textAnchor={Math.abs(x) < 4 ? "middle" : x > 0 ? "start" : "end"}
-            className="fill-chart-3 text-[10px]"
+            className="fill-chart-3 text-xs"
           >
             {f.label}
           </text>
@@ -63,14 +67,14 @@ export function ArchetypeCard({ analysis }: { analysis: Analysis }) {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex min-w-0 flex-1 basis-56 flex-col gap-2.5">
           <div className="flex items-baseline gap-2.5">
-            <span className="font-heading text-[34px] leading-none font-bold text-primary">{top.name}</span>
+            <span className="font-heading text-4xl leading-none font-bold text-primary">{top.name}</span>
             <span className="font-mono text-lg">{pct(top.pct)}</span>
           </div>
           {analysis.archetype.map((a, i) => (
-            <div key={a.name} className="grid grid-cols-[112px_minmax(0,1fr)_40px] items-center gap-2 text-[13px]">
+            <div key={a.name} className="grid grid-cols-[112px_minmax(0,1fr)_40px] items-center gap-2 text-sm">
               <span>{a.name}</span>
-              <span className="h-2 overflow-hidden rounded bg-secondary">
-                <span className={cn("block h-2 rounded", i === 0 ? "bg-primary" : "bg-chart-3")} style={{ width: pct(a.pct) }} />
+              <span className="h-2 overflow-hidden rounded-sm bg-secondary">
+                <span className={cn("block h-2 rounded-sm", i === 0 ? "bg-primary" : "bg-chart-3")} style={{ width: pct(a.pct) }} />
               </span>
               <span className="text-right font-mono text-xs">{pct(a.pct)}</span>
             </div>
@@ -84,7 +88,7 @@ export function ArchetypeCard({ analysis }: { analysis: Analysis }) {
           ]}
         />
       </div>
-      <p className="m-0 text-[13px] leading-normal text-chart-3">{proto.blurb}</p>
+      <p className="m-0 text-sm leading-normal text-chart-3">{proto.blurb}</p>
       <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
         {proto.wants.map((w) => (
           <li key={w} className="rounded-full bg-secondary px-2.5 py-1 text-xs text-chart-3">
@@ -125,7 +129,7 @@ export function Checklist({ analysis, limit }: { analysis: Analysis; limit?: num
           const l = LEVEL[c.level];
           const Icon = l.icon;
           return (
-            <li key={c.text} className={cn("flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-[13px] leading-normal", l.box)}>
+            <li key={c.text} className={cn("flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-sm leading-normal", l.box)}>
               <span className={cn("mt-px grid size-4.5 flex-none place-items-center rounded-full text-background", l.mark)}>
                 <Icon className="size-3" strokeWidth={3} aria-label={l.label} />
               </span>

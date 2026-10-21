@@ -1,6 +1,6 @@
 import { GENS, type Gen } from "@/analysis/dex";
 import type { Pool, PoolFilters } from "@/analysis/pool";
-import { fieldClass, Segmented, Toggle } from "@/team-analysis/components/controls";
+import { fieldClass, Segmented, Toggle } from "@/components/controls";
 
 export function PoolBar({
   filters,
@@ -34,7 +34,7 @@ export function PoolBar({
       <Toggle pressed={filters.fullyEvolved} onChange={(fullyEvolved) => set({ fullyEvolved })}>
         Fully evolved
       </Toggle>
-      <label className="flex items-center gap-2.5 text-[13px] text-muted-foreground">
+      <label className="flex items-center gap-2.5 text-sm text-muted-foreground">
         Max BST
         <input
           type="range"
@@ -59,7 +59,7 @@ export function PoolBar({
           className={`${fieldClass} w-20 font-mono`}
         />
       </label>
-      <span className="text-[13px] text-muted-foreground" title={excluded || undefined}>
+      <span className="text-sm text-muted-foreground" title={excluded || undefined}>
         <span className="font-mono text-foreground">{pool.size}</span> Pokémon in the pool
       </span>
     </section>

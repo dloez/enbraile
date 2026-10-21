@@ -4,9 +4,9 @@ import { typesIn } from "@/analysis/dex";
 import type { Member } from "@/analysis/member";
 import type { Metric, Pool, PoolMember } from "@/analysis/pool";
 import { BASE_STATS, correlations, describe, histogram, typeBreakdown } from "@/analysis/stats";
-import { TypeDot } from "@/open-sheet/components/marks";
-import { fieldClass, Panel, Segmented, Toggle } from "@/team-analysis/components/controls";
-import { spriteOf, spriteOfName } from "@/team-analysis/sprite";
+import { TypeDot } from "@/components/marks";
+import { fieldClass, Panel, Segmented, Toggle } from "@/components/controls";
+import { spriteOf, spriteOfName } from "@/analysis/sprite";
 
 const LABEL: Record<string, string> = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe", bst: "BST", phys: "Phys bulk", spec: "Spec bulk" };
 
@@ -23,7 +23,7 @@ function Tile({ label, value, sub, sprite }: { label: string; value: string; sub
       <span className="text-xs font-semibold text-muted-foreground">{label}</span>
       <span className="flex items-center gap-2">
         {sprite && <img src={sprite} alt="" className="-my-1.5 size-10 [image-rendering:pixelated]" />}
-        <span className="font-mono text-[26px] font-medium">{value}</span>
+        <span className="font-mono text-2xl font-medium">{value}</span>
       </span>
       <span className="truncate text-xs text-muted-foreground">{sub}</span>
     </div>
@@ -60,7 +60,7 @@ function Histogram({ pool, team }: { pool: Pool; team: readonly Member[] }) {
           />
         ))}
         <span className="absolute top-0 bottom-5.5 border-l-2 border-dashed border-chart-3" style={{ left: x(median) }} />
-        <span className="absolute -top-0.5 translate-x-1.5 text-[11px] text-muted-foreground" style={{ left: x(median) }}>
+        <span className="absolute -top-0.5 translate-x-1.5 text-xs text-muted-foreground" style={{ left: x(median) }}>
           median {Math.round(median)}
         </span>
         {team.map((m, i) => {
@@ -76,8 +76,8 @@ function Histogram({ pool, team }: { pool: Pool; team: readonly Member[] }) {
             />
           );
         })}
-        <span className="absolute bottom-0 left-0 font-mono text-[10px] text-muted-foreground">{Math.round(min)}</span>
-        <span className="absolute right-0 bottom-0 font-mono text-[10px] text-muted-foreground">{Math.round(top)}</span>
+        <span className="absolute bottom-0 left-0 font-mono text-xs text-muted-foreground">{Math.round(min)}</span>
+        <span className="absolute right-0 bottom-0 font-mono text-xs text-muted-foreground">{Math.round(top)}</span>
       </div>
     </Panel>
   );
@@ -101,7 +101,7 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
       });
   }, [pool, query, type, teamOnly, teamIds, sort]);
   const column = (key: SortKey, label: string) => (
-    <th key={key} className="border-b px-2 py-1.5 text-right text-[11px] font-semibold text-muted-foreground first:text-left">
+    <th key={key} className="border-b px-2 py-1.5 text-right text-xs font-semibold text-muted-foreground first:text-left">
       <button
         type="button"
         onClick={() => setSort({ key, desc: sort.key === key ? !sort.desc : key !== "name" })}
@@ -151,7 +151,7 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
           <thead className="sticky top-0 bg-card">
             <tr>
               {column("name", "Pokémon")}
-              <th className="border-b px-2 py-1.5 text-left text-[11px] font-semibold text-muted-foreground">Types</th>
+              <th className="border-b px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground">Types</th>
               {BASE_STATS.map((k) => column(k, LABEL[k]))}
               {column("bst", "BST")}
             </tr>
@@ -163,8 +163,8 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
                   <span className="inline-flex items-center gap-2">
                     <img src={spriteOfName(m.name)} alt="" loading="lazy" className="-my-1.5 size-8 [image-rendering:pixelated]" />
                     <span className="font-semibold">{m.name}</span>
-                    {m.legendary && <span className="text-[10px] text-muted-foreground">L</span>}
-                    {m.mythical && <span className="text-[10px] text-muted-foreground">M</span>}
+                    {m.legendary && <span className="text-xs text-muted-foreground">L</span>}
+                    {m.mythical && <span className="text-xs text-muted-foreground">M</span>}
                   </span>
                 </td>
                 <td className="px-2 py-1">
@@ -205,7 +205,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
   const names = (ms: PoolMember[]) => (ms.length > 2 ? `${ms[0].name} and ${ms.length - 1} more` : ms.map((m) => m.name).join(", "));
 
   if (pool.size === 0) {
-    return <p className="m-0 rounded-2xl border bg-card p-6 text-[13px] text-muted-foreground">No Pokémon match this pool.</p>;
+    return <p className="m-0 rounded-2xl border bg-card p-6 text-sm text-muted-foreground">No Pokémon match this pool.</p>;
   }
 
   return (
@@ -225,7 +225,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
               <thead>
                 <tr>
                   {["", "Mean", "SD", "Min", "P10", "P25", "Median", "P75", "P90", "Max"].map((h) => (
-                    <th key={h} className="border-b px-2 py-1.5 text-right text-[11px] font-semibold text-muted-foreground first:text-left">
+                    <th key={h} className="border-b px-2 py-1.5 text-right text-xs font-semibold text-muted-foreground first:text-left">
                       {h}
                     </th>
                   ))}
@@ -281,7 +281,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
                 <tr>
                   <th />
                   {BASE_STATS.map((k) => (
-                    <th key={k} className="px-1.5 text-[11px] font-semibold text-muted-foreground">
+                    <th key={k} className="px-1.5 text-xs font-semibold text-muted-foreground">
                       {LABEL[k]}
                     </th>
                   ))}
@@ -290,11 +290,11 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
               <tbody>
                 {r.map((row, i) => (
                   <tr key={i}>
-                    <th className="pr-1.5 text-left text-[11px] text-muted-foreground">{LABEL[BASE_STATS[i]]}</th>
+                    <th className="pr-1.5 text-left text-xs text-muted-foreground">{LABEL[BASE_STATS[i]]}</th>
                     {row.map((v, j) => (
                       <td
                         key={j}
-                        className="h-8.5 w-14.5 rounded-[5px] text-center font-mono"
+                        className="h-8.5 w-14.5 rounded-sm text-center font-mono"
                         style={{
                           background: `color-mix(in oklch, ${v >= 0 ? "var(--chart-2)" : "var(--primary)"} ${Math.round(Math.abs(v) * 60)}%, transparent)`,
                         }}

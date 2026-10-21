@@ -28,30 +28,30 @@ Add `{ name: "My Tool", to: "/my-tool" }` to `src/tools.ts`. The home page rende
 
 ### 3. Write the page
 
-Put the page component in `src/pages/my-tool.tsx` and the tool's own code in `src/my-tool/` (`components/` for its UI). The page returns its own `<main>`:
+Put the page component in `src/pages/my-tool.tsx` and the tool's own code in `src/my-tool/` (`components/` for its UI). The page returns its own `<main>`, on the page column for its kind from `src/components/page.ts` ([Layout Shell](../reference/design-system.md#layout-shell)), `toolPage` for a tool:
 
 ```tsx
 export function MyToolPage() {
   return (
-    <main className="mx-auto flex w-full max-w-344 flex-1 flex-col gap-4.5 px-4 pt-5 pb-10 sm:px-6">
+    <main className={cn(toolPage, "gap-4.5 pt-5 pb-10")}>
       …
     </main>
   );
 }
 ```
 
-Pick the width and gutters from [Layout Shell](../reference/design-system.md#layout-shell): a column page like Team Analysis's above, or a full-width tool view like Open Sheet's.
+The column carries the width and the gutter; nothing inside the page adds its own. A component another tool also needs goes in `src/components/`, never imported from the other tool's folder.
 
 ### 4. Build the UI from what exists
 
 In this order:
 
-1. A shared component from [Components → Shared](../reference/design-system.md#shared): `Panel` for titled cards, `Segmented` for view switches, `Toggle`, `fieldClass`/`buttonClass`/`primaryClass`, the type marks, `Dialog` and `Sheet`.
+1. A shared component from [Components → Shared](../reference/design-system.md#shared): `Panel` for titled cards, `Segmented` for view switches, `Toggle`, `Button` or `primaryClass`/`buttonClass`/`iconButtonClass`/`quietIconClass` for buttons, `fieldClass`, the type marks, the analysis panels, `Dialog` and `Sheet`.
 2. A documented [pattern](../reference/design-system.md#patterns), copied from the component that shows it.
 3. A shadcn component, added with `npx shadcn@<pinned version> add <component>` into `src/components/ui/` and brought onto the theme's tokens.
 4. Only then something new.
 
-Colours come from the [tokens](../reference/design-system.md#colour-tokens) only: orange (`primary`) for the one main action and for selection, `chart-2` for the good side of a comparison, `destructive` for errors and the bad side. Use the heading font for titles and mono for numbers. Write no helper text explaining the UI.
+Colours come from the [tokens](../reference/design-system.md#colour-tokens) only: orange (`primary`) for the one main action and for selection, `chart-2` for the good side of a comparison, `destructive` for errors and the bad side. Use the heading font for titles and mono for numbers, text sizes and radii from Tailwind's scale only ([Typography](../reference/design-system.md#typography), [Radius, Spacing, Shadow](../reference/design-system.md#radius-spacing-shadow)). Write no helper text explaining the UI.
 
 ### 5. Update the design system in the same change
 

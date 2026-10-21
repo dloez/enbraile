@@ -1,8 +1,8 @@
 import type { Member } from "@/analysis/member";
 import type { Pool } from "@/analysis/pool";
 import { ARCHETYPES, type Analysis, type ArchetypeName } from "@/analysis/team";
-import { Panel } from "@/team-analysis/components/controls";
-import { spriteOf } from "@/team-analysis/sprite";
+import { Panel } from "@/components/controls";
+import { spriteOf } from "@/analysis/sprite";
 
 const at = (v: number) => `${(Math.max(0, Math.min(1, v)) * 100).toFixed(1)}%`;
 
@@ -29,7 +29,7 @@ export function ArchetypeMap({ team, analysis, pool }: { team: readonly Member[]
               style={{ left: at(p.bulk), bottom: at(p.offense) }}
             >
               <span className="size-3 rotate-45 border-2 border-muted-foreground" />
-              <span className="text-[11px] whitespace-nowrap text-muted-foreground">{name}</span>
+              <span className="text-xs whitespace-nowrap text-muted-foreground">{name}</span>
             </span>
           );
         })}
@@ -56,8 +56,8 @@ export function ArchetypeMap({ team, analysis, pool }: { team: readonly Member[]
         >
           Team average
         </span>
-        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[11px] text-muted-foreground">Bulk →</span>
-        <span className="absolute top-1/2 -left-6 -rotate-90 text-[11px] text-muted-foreground">Offense →</span>
+        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">Bulk →</span>
+        <span className="absolute top-1/2 -left-6 -rotate-90 text-xs text-muted-foreground">Offense →</span>
       </div>
     </Panel>
   );
@@ -80,7 +80,7 @@ export function SpeedTiers({ team, pool }: { team: readonly Member[]; pool: Pool
     <Panel title="Speed tiers" aside={<span className="text-xs text-muted-foreground">final Speed</span>}>
       <ol className="m-0 flex list-none flex-col gap-2 p-0">
         {order.map(({ m, i }) => (
-          <li key={i} className="grid grid-cols-[40px_minmax(0,104px)_minmax(0,1fr)_44px] items-center gap-2 text-[13px]">
+          <li key={i} className="grid grid-cols-[40px_minmax(0,104px)_minmax(0,1fr)_44px] items-center gap-2 text-sm">
             <img src={spriteOf(m)} alt="" className="size-10 [image-rendering:pixelated]" />
             <span className="truncate">{m.set.species}</span>
             <span className="h-3 rounded-sm bg-secondary">

@@ -1,6 +1,8 @@
 import { useState, type DragEvent } from "react";
 import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { primaryClass } from "@/components/controls";
+import { messageWidth } from "@/components/page";
 
 export function DropZone({ onFiles }: { onFiles: (files: File[]) => void }) {
   const [over, setOver] = useState(false);
@@ -22,7 +24,8 @@ export function DropZone({ onFiles }: { onFiles: (files: File[]) => void }) {
       onDragLeave={() => setOver(false)}
       onDrop={drop}
       className={cn(
-        "mx-auto flex w-full max-w-180 flex-col items-center gap-4.5 rounded-[20px] border-2 border-dashed bg-card px-6 py-16 text-center transition-colors",
+        messageWidth,
+        "flex flex-col items-center gap-4.5 rounded-2xl border-2 border-dashed bg-card px-6 py-16 text-center transition-colors",
         over && "border-primary",
       )}
     >
@@ -30,7 +33,7 @@ export function DropZone({ onFiles }: { onFiles: (files: File[]) => void }) {
         <Upload className="size-7.5" aria-hidden="true" />
       </div>
       <span className="font-heading text-2xl font-semibold">Drop an export here</span>
-      <label className="relative inline-flex min-h-11 cursor-pointer items-center rounded-[10px] bg-primary px-4.5 py-3 font-semibold text-primary-foreground focus-within:ring-3 focus-within:ring-ring/50">
+      <label className={cn(primaryClass, "relative focus-within:ring-3 focus-within:ring-ring/50")}>
         Choose a file
         <input
           type="file"

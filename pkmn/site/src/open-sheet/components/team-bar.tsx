@@ -2,18 +2,16 @@ import { useState } from "react";
 import { ClipboardPaste, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StoredTeam } from "@/open-sheet/db";
+import { iconButtonClass, Segmented } from "@/components/controls";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 
 export type View = "pc" | "team";
 
-const VIEWS: [View, string][] = [
-  ["pc", "PC"],
-  ["team", "Team"],
+const VIEWS: readonly { value: View; label: string }[] = [
+  { value: "pc", label: "PC" },
+  { value: "team", label: "Team" },
 ];
-
-const toolButton =
-  "grid size-10 flex-none cursor-pointer place-items-center rounded-lg border bg-card outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 interface TeamBarProps {
   view: View;
@@ -59,23 +57,7 @@ export function TeamBar({ view, onView, teams, team, onPick, onCreate, onDuplica
 
   return (
     <>
-      <div role="tablist" aria-label="View" className="flex rounded-[10px] bg-muted p-0.75">
-        {VIEWS.map(([id, name]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={view === id}
-            onClick={() => onView(id)}
-            className={cn(
-              "min-h-9.5 cursor-pointer rounded-lg px-4.5 py-2 font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-              view === id ? "bg-cell-hi text-foreground" : "text-muted-foreground",
-            )}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
+      <Segmented label="View" options={VIEWS} value={view} onChange={onView} />
       {renaming ? (
         <TeamName
           team={team}
@@ -100,10 +82,10 @@ export function TeamBar({ view, onView, teams, team, onPick, onCreate, onDuplica
           </select>
         </label>
       )}
-      <button type="button" aria-label="New team" title="New team" onClick={onCreate} className={toolButton}>
+      <button type="button" aria-label="New team" title="New team" onClick={onCreate} className={iconButtonClass}>
         <Plus className="size-4" aria-hidden="true" />
       </button>
-      <button type="button" aria-label="Duplicate team" title="Duplicate team" onClick={onDuplicate} className={toolButton}>
+      <button type="button" aria-label="Duplicate team" title="Duplicate team" onClick={onDuplicate} className={iconButtonClass}>
         <Copy className="size-4" aria-hidden="true" />
       </button>
       <button
@@ -111,11 +93,11 @@ export function TeamBar({ view, onView, teams, team, onPick, onCreate, onDuplica
         aria-label="Import from Showdown"
         title="Import from Showdown"
         onClick={onPaste}
-        className={toolButton}
+        className={iconButtonClass}
       >
         <ClipboardPaste className="size-4" aria-hidden="true" />
       </button>
-      <button type="button" aria-label="Rename team" title="Rename team" onClick={() => setRenaming(true)} className={toolButton}>
+      <button type="button" aria-label="Rename team" title="Rename team" onClick={() => setRenaming(true)} className={iconButtonClass}>
         <Pencil className="size-4" aria-hidden="true" />
       </button>
       <button
@@ -123,7 +105,7 @@ export function TeamBar({ view, onView, teams, team, onPick, onCreate, onDuplica
         aria-label="Delete team"
         title="Delete team"
         onClick={() => setDeleting(true)}
-        className={cn(toolButton, "text-destructive")}
+        className={cn(iconButtonClass, "text-destructive")}
       >
         <Trash2 className="size-4" aria-hidden="true" />
       </button>

@@ -3,14 +3,16 @@ import { buildTeam } from "@/analysis/member";
 import { parsePaste } from "@/analysis/paste";
 import { buildPool, legality } from "@/analysis/pool";
 import { analyze } from "@/analysis/team";
-import { ArchetypeCard, Checklist } from "@/team-analysis/components/archetype";
-import { ArchetypeMap, SpeedTiers } from "@/team-analysis/components/charts";
-import { Segmented } from "@/team-analysis/components/controls";
-import { MemberCards, Matrices } from "@/team-analysis/components/members";
+import { ArchetypeCard, Checklist } from "@/components/analysis/archetype";
+import { ArchetypeMap, SpeedTiers } from "@/components/analysis/charts";
+import { Segmented } from "@/components/controls";
+import { toolPage } from "@/components/page";
+import { cn } from "@/lib/utils";
+import { MemberCards, Matrices } from "@/components/analysis/members";
 import { PoolBar } from "@/team-analysis/components/pool-bar";
 import { CompareView } from "@/team-analysis/components/compare-view";
 import { PoolView } from "@/team-analysis/components/pool-view";
-import { TeamGraph } from "@/team-analysis/components/team-graph";
+import { TeamGraph } from "@/components/analysis/team-graph";
 import { TeamInput, teamStatus } from "@/team-analysis/components/team-input";
 import { loadDrafts, saveDrafts, type Drafts } from "@/team-analysis/drafts";
 
@@ -42,7 +44,7 @@ export function TeamAnalysisPage() {
   const top = analysis?.archetype[0];
 
   return (
-    <main className="mx-auto flex w-full max-w-344 flex-1 flex-col gap-4.5 px-4 pt-5 pb-10 sm:px-6">
+    <main className={cn(toolPage, "gap-4.5 pt-5 pb-10")}>
       <div className="flex flex-wrap items-center gap-3">
         <Segmented label="Views" options={VIEWS} value={view} onChange={setView} />
       </div>
@@ -79,7 +81,7 @@ export function TeamAnalysisPage() {
                 <ArchetypeMap team={built.team} analysis={analysis} pool={pool} />
                 <SpeedTiers team={built.team} pool={pool} />
               </div>
-              <h2 className="m-0 mt-1.5 font-heading text-[22px] font-semibold">Members</h2>
+              <h2 className="m-0 mt-1.5 font-heading text-2xl font-semibold">Members</h2>
               <MemberCards team={built.team} analysis={analysis} legality={legal} />
               <Matrices team={built.team} analysis={analysis} pool={pool} />
             </>

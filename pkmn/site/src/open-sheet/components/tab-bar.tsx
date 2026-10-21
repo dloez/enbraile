@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CircleAlert, Pencil, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { quietIconClass } from "@/components/controls";
 import type { OpenTab } from "@/open-sheet/db";
 
 interface TabBarProps {
@@ -12,9 +13,6 @@ interface TabBarProps {
   onClose: (id: number) => void;
   onImport: () => void;
 }
-
-const iconButton =
-  "grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-cell hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 outline-none";
 
 function TabName({ tab, onRename }: { tab: OpenTab; onRename: (name: string) => void }) {
   const [draft, setDraft] = useState(tab.name);
@@ -36,7 +34,7 @@ function TabName({ tab, onRename }: { tab: OpenTab; onRename: (name: string) => 
         if (event.key === "Enter") commit();
         if (event.key === "Escape") onRename(tab.name);
       }}
-      className="w-36 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="w-36 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
     />
   );
 }
@@ -47,7 +45,7 @@ export function TabBar({ tabs, activeId, staleIds, onPick, onRename, onClose, on
   return (
     <nav
       aria-label="Imported sheets"
-      className="flex flex-none items-end gap-1 overflow-x-auto border-b px-4 pt-2 sm:px-8"
+      className="flex flex-none items-end gap-1 overflow-x-auto border-b pt-2"
     >
       {tabs.map((tab) => {
         const active = tab.id === activeId;
@@ -56,7 +54,7 @@ export function TabBar({ tabs, activeId, staleIds, onPick, onRename, onClose, on
           <div
             key={tab.id}
             className={cn(
-              "-mb-px flex flex-none items-center gap-1 rounded-t-[10px] border border-b-0",
+              "-mb-px flex flex-none items-center gap-1 rounded-t-lg border border-b-0",
               active ? "border-border bg-background" : "border-transparent",
             )}
           >
@@ -77,7 +75,7 @@ export function TabBar({ tabs, activeId, staleIds, onPick, onRename, onClose, on
                 onClick={() => onPick(tab.id)}
                 onDoubleClick={() => setRenaming(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 py-2.25 pl-3.5 font-mono text-[13px] font-medium outline-none focus-visible:underline",
+                  "flex items-center gap-1.5 py-2.25 pl-3.5 font-mono text-sm font-medium outline-none focus-visible:underline",
                   active ? "pr-1 text-foreground" : "pr-3.5 text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -88,11 +86,11 @@ export function TabBar({ tabs, activeId, staleIds, onPick, onRename, onClose, on
             {active && (
               <span className="flex items-center gap-0.5 pr-1.5">
                 {renaming !== tab.id && (
-                  <button type="button" aria-label="Rename tab" title="Rename tab" onClick={() => setRenaming(tab.id)} className={iconButton}>
+                  <button type="button" aria-label="Rename tab" title="Rename tab" onClick={() => setRenaming(tab.id)} className={quietIconClass}>
                     <Pencil className="size-3.5" aria-hidden="true" />
                   </button>
                 )}
-                <button type="button" aria-label="Close tab" title="Close tab" onClick={() => onClose(tab.id)} className={iconButton}>
+                <button type="button" aria-label="Close tab" title="Close tab" onClick={() => onClose(tab.id)} className={quietIconClass}>
                   <X className="size-4" aria-hidden="true" />
                 </button>
               </span>

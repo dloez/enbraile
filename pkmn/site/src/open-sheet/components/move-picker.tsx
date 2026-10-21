@@ -4,7 +4,7 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { describeTm, displayName, learnCount, MOVES, moveStats, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
-import { TypeSquare, UnknownMark } from "@/open-sheet/components/marks";
+import { TypeSquare, UnknownMark } from "@/components/marks";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface MovePickerProps {
@@ -31,7 +31,7 @@ function MoveRow({ move, label, current, onPick }: {
         aria-pressed={current}
         onClick={onPick}
         className={cn(
-          "grid min-h-14 w-full cursor-pointer grid-cols-[24px_minmax(0,1fr)] items-start gap-x-3 rounded-[10px] px-2.5 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:grid-cols-[24px_minmax(0,1fr)_auto] sm:items-center",
+          "grid min-h-14 w-full cursor-pointer grid-cols-[24px_minmax(0,1fr)] items-start gap-x-3 rounded-lg px-2.5 py-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:grid-cols-[24px_minmax(0,1fr)_auto] sm:items-center",
           current ? "bg-cell-hi" : "hover:bg-cell",
         )}
       >
@@ -45,7 +45,7 @@ function MoveRow({ move, label, current, onPick }: {
             {label && <span className="font-mono text-xs text-muted-foreground sm:hidden">{label}</span>}
           </span>
           {stats && <span className="font-mono text-xs text-muted-foreground sm:hidden">{stats}</span>}
-          {move.desc && <span className="text-[13px] text-muted-foreground">{move.desc}</span>}
+          {move.desc && <span className="text-sm text-muted-foreground">{move.desc}</span>}
         </span>
         <span className="hidden flex-col items-end gap-0.5 font-mono text-xs whitespace-nowrap text-muted-foreground sm:flex">
           <span>{stats}</span>
@@ -59,7 +59,7 @@ function MoveRow({ move, label, current, onPick }: {
 function Group({ name, count, children }: { name: string; count?: number; children: ReactNode }) {
   return (
     <section aria-label={name} className="flex flex-col gap-0.5">
-      <h3 className="m-0 px-2.5 pt-2 pb-1 text-[13px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+      <h3 className="m-0 px-2.5 pt-2 pb-1 text-sm font-semibold tracking-[0.06em] text-muted-foreground uppercase">
         {name}
         {count !== undefined && <span className="ml-2 font-mono font-normal tracking-normal">{count}</span>}
       </h3>
@@ -103,7 +103,7 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        className="top-auto bottom-0 flex h-[94svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-[20px] rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-190 sm:-translate-y-1/2 sm:rounded-2xl"
+        className="top-auto bottom-0 flex h-[94svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-2xl rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-190 sm:-translate-y-1/2 sm:rounded-2xl"
       >
         <div className="flex flex-none items-center gap-3 pt-3 pr-2 pl-4.5">
           <DialogTitle className="min-w-0 flex-1 truncate font-heading text-xl leading-normal font-bold">{title}</DialogTitle>

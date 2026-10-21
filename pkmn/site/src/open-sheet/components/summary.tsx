@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { displayName, fightStat, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
-import { TypeChip, TypeDot, UnknownMark } from "@/open-sheet/components/marks";
+import { TypeChip, TypeDot, UnknownMark } from "@/components/marks";
 
 type Page = "info" | "stats" | "moves";
 
@@ -73,13 +73,13 @@ function Info({ mon }: { mon: Mon }) {
         ))}
       </dl>
       {mon.mismatch && mon.showdownTypes && (
-        <p className="m-0 rounded-[10px] bg-destructive-soft px-3 py-2.5 text-[13px]">
+        <p className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm">
           Save: {mon.types.join(" / ")} · Showdown: {mon.showdownTypes.join(" / ")}
         </p>
       )}
       {mon.abilities.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h3 className="m-0 text-[13px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">Ability</h3>
+          <h3 className="m-0 text-sm font-semibold tracking-[0.06em] text-muted-foreground uppercase">Ability</h3>
           {mon.abilities.map((a) => (
             <div
               key={a.id}
@@ -97,7 +97,7 @@ function Info({ mon }: { mon: Mon }) {
                   {a.current ? "Current" : a.hidden ? "Hidden" : ""}
                 </span>
               </div>
-              {a.desc && <span className="text-[13px] text-muted-foreground">{a.desc}</span>}
+              {a.desc && <span className="text-sm text-muted-foreground">{a.desc}</span>}
             </div>
           ))}
         </div>
@@ -111,7 +111,7 @@ function Stats({ mon }: { mon: Mon }) {
   const [atFifty, setAtFifty] = useState(false);
   return (
     <>
-      <label className="flex min-h-10 cursor-pointer items-center gap-2 self-end text-[13px]">
+      <label className="flex min-h-10 cursor-pointer items-center gap-2 self-end text-sm">
         <input
           type="checkbox"
           checked={atFifty}
@@ -150,7 +150,7 @@ function Stats({ mon }: { mon: Mon }) {
         })}
       </div>
       {atFifty && (
-        <p className="m-0 text-[13px] text-muted-foreground">
+        <p className="m-0 text-sm text-muted-foreground">
           As in the league's Showdown fights: its IVs and nature, 1 EV in every stat.
         </p>
       )}
@@ -196,7 +196,7 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
         return (
           <section key={name} aria-label={name} className="flex flex-col gap-1.5">
             <div className="flex items-baseline gap-2">
-              <h3 className="m-0 text-[13px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{name}</h3>
+              <h3 className="m-0 text-sm font-semibold tracking-[0.06em] text-muted-foreground uppercase">{name}</h3>
               <span className="font-mono text-xs text-muted-foreground">{moves.length}</span>
             </div>
             <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
@@ -225,12 +225,12 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
 export function SummaryHead({ mon, title }: { mon: Mon; title: (text: string) => ReactNode }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-3.5">
-      <div className="grid size-20 flex-none place-items-center rounded-[14px] bg-box sm:size-24">
+      <div className="grid size-20 flex-none place-items-center rounded-xl bg-box sm:size-24">
         <MonSprite mon={mon} className="size-20 sm:size-24" />
       </div>
       <div className="flex min-w-0 flex-col gap-1 sm:gap-1.25">
         {title(displayName(mon))}
-        <span className="text-[13px] text-muted-foreground sm:text-sm">{subtitle(mon)}</span>
+        <span className="text-sm text-muted-foreground">{subtitle(mon)}</span>
         <div className="flex flex-wrap gap-1.5">
           {mon.types.map((t) => (
             <TypeChip key={t} type={t} />

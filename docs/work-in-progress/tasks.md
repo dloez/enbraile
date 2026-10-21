@@ -170,26 +170,6 @@ Wonder's verified facts about Añil (`docs/domains/game/`) move into `docs/pkmn/
 **Touches:** `docs/pkmn/`
 **After:** pkmn/games/anil: check the mod against the live game
 
-## pkmn/site: make the code follow one design system
-
-The design-system pass found the site building the same things several ways ([Design System](../pkmn/site/reference/design-system.md)). One shared version of each, so new pages have one thing to reuse.
-
-**Do:**
-- [ ] Move the shared UI out of the tools' folders into `src/components/`: `Panel`, `Segmented`, `Toggle`, `fieldClass`, `buttonClass`, `primaryClass` (now in `src/team-analysis/components/controls.tsx`) and the type marks (`src/open-sheet/components/marks.tsx`); no tool imports from another tool's folder.
-- [ ] Remove the duplicates: Open Sheet's own `Panel` in its `team-analysis.tsx`; its PC/Team switch becomes `Segmented`; hand-built buttons and the shadcn `Button` share one size and style.
-- [ ] One radius spelling (`rounded-lg` or `rounded-[10px]`, not both); text sizes on one scale, mapping the off-scale ones (10, 11, 13, 17, 22, 26, 30, 34px) to it; one page width per page kind and one gutter (today `px-4 sm:px-8` against `px-3 sm:px-6`).
-- [ ] Drop unused tokens (`chart-5`, `sidebar-*`) and alias the duplicates (`chart-1`/`primary`, `chart-4`/`destructive`, `cell`/`secondary`) or keep them with a distinct role.
-- [ ] Update `design-system.md` and `add-a-page-to-the-site.md` to the result, with the choices made recorded as dated decisions in `docs/pkmn/site/explanation/site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` from `pkmn/site/`; `grep -rn "team-analysis/components\|open-sheet/components" pkmn/site/src --include=*.tsx` shows no import across tools; `grep -rn "rounded-\[10px\]" pkmn/site/src` or `rounded-lg` prints nothing, whichever was dropped.
-- Human-run: `npm run dev`; open `/`, `/open-sheet` (import an export, switch PC/Team, open a dialog) and `/team-analysis` (paste a team, open Pool and Compare) on desktop and at phone width: everything looks as before apart from the unified sizes, and nothing breaks.
-- Reuse: `src/components/ui/` (shadcn) and the tokens in `src/index.css`.
-- Neighbors: `src/components/site-header.tsx`.
-- Forbidden: raw colours; new tokens without a role; changing behaviour; the compare legends' text (the next entry).
-
-**Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
-
 ## pkmn/site: decide on Team Analysis's explanatory legends
 
 Team Analysis's compare-view legends carry explanatory lines (e.g. "shaded: best switch-in below 1.00 weighted bulk"), which the site's "no helper text" rule forbids ([Design System](../pkmn/site/reference/design-system.md)).
@@ -205,5 +185,4 @@ Team Analysis's compare-view legends carry explanatory lines (e.g. "shaded: best
 - Forbidden: removing a legend's key (colours, symbols) along with its prose.
 
 **Touches:** `pkmn/site/src/team-analysis/`, `docs/pkmn/site/explanation/site.md`
-**After:** pkmn/site: make the code follow one design system
 **Needs the author:** do the compare legends' explanations stay as an exception to "no helper text", or go?

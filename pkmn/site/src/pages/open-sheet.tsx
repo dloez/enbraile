@@ -1,6 +1,8 @@
 import { useMemo, useState, type DragEvent } from "react";
 import { addImport, closeTab, renameTab, replaceImport, useOpenTabs, type OpenTab } from "@/open-sheet/db";
 import { checkSheet, readSheet, type Checked } from "@/open-sheet/schema";
+import { messageWidth, toolPage } from "@/components/page";
+import { cn } from "@/lib/utils";
 import { DropZone } from "@/open-sheet/components/drop-zone";
 import { Pc } from "@/open-sheet/components/pc";
 import { Refusal, type Refused } from "@/open-sheet/components/refusal";
@@ -33,7 +35,7 @@ function checkTab(tab: OpenTab): Checked {
 
 function ImportView({ stale, onFiles }: { stale?: Refused; onFiles: (files: File[]) => void }) {
   return (
-    <main className="flex flex-1 flex-col gap-4 px-4 py-10 sm:px-8">
+    <main className="flex flex-1 flex-col gap-4 py-10">
       {stale && <Refusal {...stale} />}
       <DropZone onFiles={onFiles} />
     </main>
@@ -53,14 +55,14 @@ export function OpenSheetPage() {
 
   if (tabs === null) {
     return (
-      <main className="flex-1 px-4 py-10 sm:px-8">
-        <p role="alert" className="mx-auto max-w-180 text-destructive">
+      <main className={cn(toolPage, "py-10")}>
+        <p role="alert" className={cn(messageWidth, "text-destructive")}>
           This browser will not let the site store imports.
         </p>
       </main>
     );
   }
-  if (!tabs) return <main className="flex-1" />;
+  if (!tabs) return <main className={toolPage} />;
 
   const chosen = view?.kind === "tab" ? tabs.find((tab) => tab.id === view.id) : undefined;
   const active = view?.kind === "import" ? undefined : (chosen ?? tabs[0]);
@@ -100,7 +102,7 @@ export function OpenSheetPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col" onDragOver={(event) => event.preventDefault()} onDrop={pageDrop}>
+    <div className={toolPage} onDragOver={(event) => event.preventDefault()} onDrop={pageDrop}>
       {tabs.length > 0 && (
         <TabBar
           tabs={tabs}
@@ -116,7 +118,7 @@ export function OpenSheetPage() {
         />
       )}
       {refused.length > 0 && (
-        <div className="flex flex-col gap-4 px-4 pt-6 sm:px-8">
+        <div className="flex flex-col gap-4 pt-6">
           {refused.map((r, index) => (
             <Refusal key={index} {...r} />
           ))}

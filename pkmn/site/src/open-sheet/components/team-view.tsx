@@ -6,7 +6,8 @@ import { canLearn, currentAbility, describeItem, describeMove, displayName, STAT
 import type { Sheet } from "@/open-sheet/schema";
 import { MINI_SETA, memberMon, quantityOf, setasNeeded, type Member, type Slots } from "@/open-sheet/team";
 import { ItemIcon } from "@/open-sheet/components/bag";
-import { TypeDot, UnknownMark } from "@/open-sheet/components/marks";
+import { buttonClass } from "@/components/controls";
+import { TypeDot, UnknownMark } from "@/components/marks";
 import { SheetAnalysis } from "@/open-sheet/components/sheet-analysis";
 import { MovePicker } from "@/open-sheet/components/move-picker";
 import { MonSprite } from "@/open-sheet/components/summary";
@@ -27,7 +28,7 @@ interface TeamViewProps {
   onAdd: () => void;
 }
 
-const field = "flex min-h-10.5 min-w-0 items-center gap-2 rounded-lg border bg-muted text-[13px]";
+const field = "flex min-h-10.5 min-w-0 items-center gap-2 rounded-lg border bg-muted text-sm";
 
 function MemberCard({ sheet, slot, member, mon, props }: {
   sheet: Sheet;
@@ -158,7 +159,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
           })}
         </div>
         {unlearnable.length > 0 && (
-          <p className="m-0 text-[13px] text-destructive">
+          <p className="m-0 text-sm text-destructive">
             {name} can't learn {unlearnable.join(", ")} in this save.
           </p>
         )}
@@ -170,7 +171,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
               <div key={s.stat} className="flex flex-col items-center gap-px pt-1.5">
                 <span
                   className={cn(
-                    "text-[11px] font-semibold",
+                    "text-xs font-semibold",
                     up ? "text-primary" : down ? "text-chart-2" : "text-muted-foreground",
                   )}
                 >
@@ -181,10 +182,10 @@ function MemberCard({ sheet, slot, member, mon, props }: {
                 ) : (
                   <>
                     <span className="font-mono text-xs">{s.high}</span>
-                    <span className="font-mono text-[11px] text-muted-foreground">{s.low}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{s.low}</span>
                   </>
                 )}
-                <span className="font-mono text-[11px] text-muted-foreground/60">{s.base}</span>
+                <span className="font-mono text-xs text-muted-foreground/60">{s.base}</span>
               </div>
             );
           })}
@@ -214,7 +215,7 @@ function OpenInAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon[] })
         carryTeam(text);
         void navigate({ to: "/team-analysis" });
       }}
-      className="ml-auto inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-card px-3 font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50"
+      className={cn(buttonClass, "ml-auto")}
     >
       <ChartNetwork className="size-4" aria-hidden="true" />
       Open in Team Analysis
@@ -242,7 +243,7 @@ function CopyButton({ slots, mons }: { slots: Slots; mons: readonly Mon[] }) {
           () => setCopied("failed"),
         )
       }
-      className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-card px-3 font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50"
+      className={buttonClass}
     >
       {copied === "copied" ? (
         <ClipboardCheck className="size-4 text-primary" aria-hidden="true" />
@@ -261,13 +262,13 @@ export function TeamView(props: TeamViewProps) {
   const short = needed > owned;
 
   return (
-    <div className="flex flex-col gap-4.5 px-3 pt-1 pb-3 sm:px-6 sm:pb-6">
+    <div className="flex flex-col gap-4.5 pt-1 pb-3 sm:pb-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="m-0 font-heading text-[26px] font-bold">{name}</h2>
+        <h2 className="m-0 font-heading text-2xl font-bold">{name}</h2>
         <span
           title="Mini Setas"
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-2.75 py-1.25 text-[13px] font-semibold",
+            "inline-flex items-center gap-1.5 rounded-full px-2.75 py-1.25 text-sm font-semibold",
             short ? "bg-destructive-soft text-destructive" : "bg-accent text-primary",
           )}
         >

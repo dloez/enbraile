@@ -8,11 +8,11 @@ import { parsePaste } from "@/analysis/paste";
 import type { Pool } from "@/analysis/pool";
 import { SAMPLES } from "@/analysis/samples";
 import { analyze, type Analysis } from "@/analysis/team";
-import { TypeDot } from "@/open-sheet/components/marks";
-import { Radar } from "@/team-analysis/components/archetype";
-import { buttonClass, fieldClass, Panel, primaryClass, Segmented } from "@/team-analysis/components/controls";
+import { TypeDot } from "@/components/marks";
+import { Radar } from "@/components/analysis/archetype";
+import { buttonClass, fieldClass, Panel, primaryClass, Segmented } from "@/components/controls";
 import { MAX_TEAMS, MIN_TEAMS, type CompareSlot } from "@/team-analysis/drafts";
-import { spriteOf } from "@/team-analysis/sprite";
+import { spriteOf } from "@/analysis/sprite";
 
 const SERIES = [
   { text: "text-chart-1", bg: "bg-chart-1", border: "border-chart-1", stroke: "stroke-chart-1", fill: "fill-chart-1/15" },
@@ -104,7 +104,7 @@ function Scoreboard({ results, pool }: { results: Result[]; pool: Pool }) {
   return (
     <Panel title="Scoreboard" aside={<span className="text-xs text-muted-foreground">★ best on each metric, none on a tie</span>}>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-[13px]">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
               <th className="border-b px-2.5 py-1.75 text-left text-xs font-semibold text-muted-foreground">Metric</th>
@@ -120,7 +120,7 @@ function Scoreboard({ results, pool }: { results: Result[]; pool: Pool }) {
               if ("group" in row)
                 return (
                   <tr key={row.group}>
-                    <td colSpan={results.length + 1} className="px-2.5 pt-3.5 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                    <td colSpan={results.length + 1} className="px-2.5 pt-3.5 pb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       {row.group}
                     </td>
                   </tr>
@@ -191,7 +191,7 @@ function HeadToHead({ results, gen }: { results: Result[]; gen: Pool["filters"][
                 <span className={SERIES[i].text}>{results[i].name}</span> <span className="text-muted-foreground">→</span>{" "}
                 <span className={SERIES[j].text}>{results[j].name}</span>
               </span>
-              <span className="font-mono text-[30px] leading-none font-medium">{p.mean.toFixed(0)}%</span>
+              <span className="font-mono text-3xl leading-none font-medium">{p.mean.toFixed(0)}%</span>
               <span className="text-xs text-muted-foreground">mean pressure</span>
               <span className="flex gap-3 text-xs">
                 <span>
@@ -220,11 +220,11 @@ function HeadToHead({ results, gen }: { results: Result[]; gen: Pool["filters"][
               <img src={spriteOf(x.def)} alt="" className="size-10 [image-rendering:pixelated]" />
               <span className="flex min-w-0 flex-col">
                 <span className="truncate font-semibold">{x.def.set.species}</span>
-                <span className="truncate text-[11px] text-muted-foreground">
+                <span className="truncate text-xs text-muted-foreground">
                   {x.by && x.move ? `${x.by.set.species} · ${x.move.name}${x.mult !== 1 ? ` ×${x.mult}` : ""}` : "no damaging move"}
                 </span>
               </span>
-              <span className="relative h-3.5 overflow-hidden rounded bg-secondary" title={verdict(x)}>
+              <span className="relative h-3.5 overflow-hidden rounded-sm bg-secondary" title={verdict(x)}>
                 <span className={cn("absolute inset-y-0 left-0", x.min >= OHKO ? "bg-primary" : x.max < WALL ? "bg-muted-foreground/50" : "bg-chart-3")} style={{ width: `${lo}%` }} />
                 <span className={cn("absolute inset-y-0 opacity-45", x.min >= OHKO ? "bg-primary" : "bg-chart-3")} style={{ left: `${lo}%`, width: `${hi - lo}%` }} />
                 <span className="absolute inset-y-0 left-1/2 border-l border-dashed border-muted-foreground" />
@@ -275,7 +275,7 @@ function ByType({ results }: { results: Result[] }) {
                   return (
                     <span key={i} className="flex items-center gap-2">
                       <span className={cn("h-2.5 rounded-sm", SERIES[i].bg)} style={{ width: `${(v / maxStat) * 85}%` }} />
-                      <span className="font-mono text-[11px]">{v}</span>
+                      <span className="font-mono text-xs">{v}</span>
                     </span>
                   );
                 })}
@@ -285,7 +285,7 @@ function ByType({ results }: { results: Result[] }) {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border-separate border-spacing-0.5 text-[11px]">
+          <table className="w-full border-separate border-spacing-0.5 text-xs">
             <thead>
               <tr>
                 <th />
@@ -311,7 +311,7 @@ function ByType({ results }: { results: Result[] }) {
                         <td
                           key={t}
                           title={`Best switch-in: ${r.team[d.best.idx].set.species}, D ${d.best.D.toFixed(2)}`}
-                          className={cn("h-10 min-w-7.5 rounded-[5px] text-center font-mono leading-tight", d.best.D < 1 ? "bg-destructive-soft" : "bg-background")}
+                          className={cn("h-10 min-w-7.5 rounded-sm text-center font-mono leading-tight", d.best.D < 1 ? "bg-destructive-soft" : "bg-background")}
                         >
                           <span className="text-destructive">{d.weak || "·"}</span>
                           <br />
@@ -325,7 +325,7 @@ function ByType({ results }: { results: Result[] }) {
                       <td
                         key={t}
                         title={o.bestO.move ? `${r.team[o.bestO.idx].set.species}: ${o.bestO.move.name}, O ${o.bestO.O.toFixed(2)}` : "no damaging move"}
-                        className={cn("h-10 min-w-7.5 rounded-[5px] text-center font-mono leading-tight", o.se === 0 ? "bg-destructive-soft" : "bg-background")}
+                        className={cn("h-10 min-w-7.5 rounded-sm text-center font-mono leading-tight", o.se === 0 ? "bg-destructive-soft" : "bg-background")}
                       >
                         <span className="text-chart-2">{o.se}</span>
                         <br />
@@ -410,8 +410,8 @@ export function CompareView({
         <button type="button" onClick={() => onSlots(editing)} disabled={!dirty && ready} className={primaryClass}>
           Compare
         </button>
-        {failures.length > 0 && <span className="text-[13px] text-destructive">Not found: {failures.join(", ")}.</span>}
-        {!ready && <span className="text-[13px] text-muted-foreground">Give at least two teams a Pokémon each, then compare.</span>}
+        {failures.length > 0 && <span className="text-sm text-destructive">Not found: {failures.join(", ")}.</span>}
+        {!ready && <span className="text-sm text-muted-foreground">Give at least two teams a Pokémon each, then compare.</span>}
       </div>
       {ready && (
         <>
@@ -420,7 +420,7 @@ export function CompareView({
               <div key={i} className={cn("flex min-w-0 flex-col gap-2 rounded-2xl border border-t-3 bg-card p-3", SERIES[i].border)}>
                 <div className="flex items-center gap-2">
                   <span className={cn("min-w-0 flex-1 truncate font-heading text-base font-semibold", SERIES[i].text)}>{r.name}</span>
-                  <span className="rounded-full bg-secondary px-2.5 py-0.75 text-[11px] font-semibold text-chart-3">
+                  <span className="rounded-full bg-secondary px-2.5 py-0.75 text-xs font-semibold text-chart-3">
                     {r.analysis.archetype[0].name} {Math.round(r.analysis.archetype[0].pct * 100)}%
                   </span>
                 </div>

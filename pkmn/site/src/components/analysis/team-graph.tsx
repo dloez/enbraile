@@ -4,9 +4,9 @@ import { typesIn } from "@/analysis/dex";
 import type { Member } from "@/analysis/member";
 import type { Analysis, SynergyEdge } from "@/analysis/team";
 import { typeIconSvg } from "@/lib/type-icons";
-import { TypeDot } from "@/open-sheet/components/marks";
-import { buttonClass, fieldClass, Toggle } from "@/team-analysis/components/controls";
-import { spriteOf } from "@/team-analysis/sprite";
+import { TypeDot } from "@/components/marks";
+import { buttonClass, fieldClass, Toggle } from "@/components/controls";
+import { spriteOf } from "@/analysis/sprite";
 
 export type Layer = "synergy" | "weak" | "resist" | "offense";
 
@@ -249,7 +249,7 @@ function style(): StylesheetJson {
 
 function Detail({ team, analysis, selection }: { team: readonly Member[]; analysis: Analysis; selection: Selection }) {
   if (!selection) {
-    return <p className="m-0 text-[13px] text-muted-foreground">Hover or tap a Pokémon, a type or a link.</p>;
+    return <p className="m-0 text-sm text-muted-foreground">Hover or tap a Pokémon, a type or a link.</p>;
   }
   if (selection.kind === "synergy") {
     const there = analysis.edges.find((e) => e.from === selection.from && e.to === selection.to);
@@ -262,7 +262,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
           {cover.set.species} covers {covered.set.species}
         </span>
         {e.types.map((t) => (
-          <div key={t} className="flex items-center justify-between rounded-lg border bg-muted px-2.5 py-2 text-[13px]">
+          <div key={t} className="flex items-center justify-between rounded-lg border bg-muted px-2.5 py-2 text-sm">
             <span className="inline-flex items-center gap-1.5">
               <TypeDot type={t} />
               {t}
@@ -303,7 +303,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
     const list = (pred: (i: number) => boolean) =>
       team.filter((_, i) => pred(i)).map((m) => m.set.species).join(", ") || "—";
     return (
-      <div className="flex flex-col gap-2.5 text-[13px]">
+      <div className="flex flex-col gap-2.5 text-sm">
         <div className="inline-flex items-center gap-2 font-heading text-lg font-semibold">
           <TypeDot type={t} className="size-5" />
           {t}
@@ -339,7 +339,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
   const ma = analysis.members[selection.index];
   const types = typesIn(analysis.gen);
   return (
-    <div className="flex flex-col gap-2.5 text-[13px]">
+    <div className="flex flex-col gap-2.5 text-sm">
       <div className="flex items-center gap-2.5">
         <img src={spriteOf(m)} alt="" className="size-14 [image-rendering:pixelated]" />
         <div className="flex flex-col">
@@ -496,7 +496,7 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
             ))}
           </select>
         </label>
-        <label className="flex items-center gap-2 text-[13px] text-muted-foreground">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Min synergy
           <input
             type="range"

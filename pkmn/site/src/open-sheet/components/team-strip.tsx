@@ -15,7 +15,7 @@ export function TeamStrip({ slots, mons, selected, onPick }: TeamStripProps) {
   return (
     <section
       aria-label="Team"
-      className="mx-3 grid flex-none grid-cols-[repeat(6,minmax(48px,1fr))] gap-1.5 overflow-x-auto rounded-[14px] bg-box p-2 sm:mx-6 sm:grid-cols-[repeat(6,minmax(120px,1fr))] sm:gap-2 sm:p-2.5"
+      className="grid flex-none grid-cols-[repeat(6,minmax(48px,1fr))] gap-1.5 overflow-x-auto rounded-xl bg-box p-2 sm:grid-cols-[repeat(6,minmax(120px,1fr))] sm:gap-2 sm:p-2.5"
     >
       {slots.map((member, slot) => {
         const mon = memberMon(member, mons);
@@ -25,7 +25,7 @@ export function TeamStrip({ slots, mons, selected, onPick }: TeamStripProps) {
               key={slot}
               role="img"
               aria-label="Empty slot"
-              className="h-14 rounded-[10px] border-2 border-dashed border-cell-hi sm:h-18"
+              className="h-14 rounded-lg border-2 border-dashed border-cell-hi sm:h-18"
             />
           );
         }
@@ -39,7 +39,7 @@ export function TeamStrip({ slots, mons, selected, onPick }: TeamStripProps) {
             aria-label={displayName(mon)}
             aria-pressed={active}
             className={cn(
-              "relative flex h-14 min-w-0 cursor-pointer items-center gap-2 rounded-[10px] border-2 px-0 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-18 sm:px-2",
+              "relative flex h-14 min-w-0 cursor-pointer items-center gap-2 rounded-lg border-2 px-0 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-18 sm:px-2",
               active ? "border-primary bg-cell-hi" : "border-transparent bg-cell",
             )}
           >

@@ -13,7 +13,7 @@ The visual system of `pkmn/site/`: its tokens, type, layout shell, components an
 
 ## Colour Tokens
 
-All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through `@theme inline`.
+All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through `@theme inline`. A token that shares another's colour but has a role of its own is declared as an alias (`--popover: var(--card)`), so each colour is written once.
 
 ### Surfaces
 
@@ -21,12 +21,12 @@ All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through
 |-------|-------|------|
 | `background` | `#111216` | Page background; the active tab, which merges into the page |
 | `card` | `#191b21` | The header bar, cards, panels, the summary aside, dialogs and sheets (passed as `bg-card`) |
-| `popover` | `#191b21` | shadcn's dialog and sheet default surface; same as `card` |
-| `muted` | `#0d0e12` | Inset wells: segmented-control tracks, inputs (`fieldClass`), bar tracks, inline rename fields |
+| `popover` | `var(--card)` | shadcn's dialog and sheet default surface |
+| `muted` | `#0d0e12` | Inset wells: segmented-control tracks, inputs (`fieldClass`), Open Sheet's stat-bar tracks, inline rename fields |
 | `box` | `#1d2030` | The PC box and team strip: the slate-blue container a grid of cells sits in; icon tiles |
 | `cell` | `#272b3d` | A cell inside a box (PC slot, search field and select in the box); icon-button hover |
-| `cell-hi` | `#363c56` | A selected cell; the active PC/Team switch; empty team slot outline |
-| `secondary` | `#272b3d` | Active segment in `Segmented`; pill tags |
+| `cell-hi` | `#363c56` | A selected cell (PC, team strip, move picker); empty team slot outline |
+| `secondary` | `var(--cell)` | Active segment in `Segmented`; pill tags; the analysis panels' bar tracks and the pool histogram's bars |
 | `accent` | `#33231a` | Orange-tinted fill for a chosen option: the current ability, a pressed `Toggle` |
 | `scrim` | `rgba(0,0,0,0.6)` | Behind dialogs and sheets (`bg-scrim`) |
 
@@ -34,10 +34,10 @@ All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through
 
 | Token | Value | Role |
 |-------|-------|------|
-| `foreground` | `#e8e9ee` | Body text; also `card-`, `popover-`, `secondary-`, `accent-foreground` |
+| `foreground` | `#e8e9ee` | Body text; `card-`, `popover-`, `secondary-` and `accent-foreground` are aliases of it |
 | `muted-foreground` | `#9a9dab` | Secondary text: labels, counts, inactive tabs, table headers. Faded with `/40`–`/60` for zero values |
-| `border` | `#2a2d37` | Every border (set as the default border colour in `@layer base`); `input` is the same |
-| `ring` | `#f28c4b` | Focus ring, always used as `ring-3 ring-ring/50` |
+| `border` | `#2a2d37` | Every border (set as the default border colour in `@layer base`); `input` is an alias of it |
+| `ring` | `var(--primary)` | Focus ring, always used as `ring-3 ring-ring/50` |
 
 ### Signal colours
 
@@ -47,15 +47,12 @@ All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through
 | `primary-foreground` | `#1c0b02` | Text on `primary` |
 | `destructive` | `#ff8a80` | Errors, refusals, unknown marks (`?`), weaknesses, delete actions |
 | `destructive-soft` | `#3a1c1d` | Fill behind an error or a weakness cell |
-| `chart-1` | `#f28c4b` | Series 1; equals `primary` |
+| `chart-1` | `var(--primary)` | Series 1 |
 | `chart-2` | `#8db8f5` | Blue: the "good for us" side: resistances, super-effective coverage, a nature's lowered stat, speed bars, series 2 |
 | `chart-3` | `#c9cbd6` | Neutral grey: ordinary bars, coverage lines, tag text, series 3 |
-| `chart-4` | `#ff8a80` | Series 4; equals `destructive` |
-| `chart-5` | `#9a9dab` | Unused; equals `muted-foreground` |
+| `chart-4` | `var(--destructive)` | Series 4 |
 
 Scales of one hue are built with opacity on the token (`bg-chart-2/10`, `/15`, `/25`, `/35`, `/40`; `bg-destructive/45`) or, for a continuous value, `color-mix(in oklch, var(--chart-2) N%, transparent)`.
-
-`sidebar-*` tokens exist because shadcn's preset declares them; nothing uses them.
 
 ### Types
 
@@ -71,18 +68,21 @@ Fonts are bundled from Fontsource and exposed as Tailwind families:
 | `font-sans` (default) | IBM Plex Sans | 400, 500, 600 | Everything else |
 | `font-mono` | IBM Plex Mono | 400, 500 | Numbers (levels, stats, IVs/EVs, counts), file names, tab names, the domain in the header |
 
-Sizes as used (Tailwind's scale plus fixed pixel sizes from the design):
+Sizes are Tailwind's scale only, no pixel sizes:
 
 | Size | Where |
 |------|-------|
-| `text-[34px]` → `sm:text-5xl`, bold | A page's `h1` (home) |
-| `text-[22px]`, semibold–bold | Section `h2`, the summary's name, home cards |
-| `text-[17px]`, semibold, `tracking-[0.04em]` | Box titles ("PC 56") |
+| `text-4xl`, bold | A page's `h1` (home, `sm:text-5xl` on wide screens); the archetype's name |
+| `text-3xl` | A head-to-head's big percentage |
+| `text-2xl`, semibold–bold | Section `h2` (a team's name, "Members"), the summary's name, home cards, the drop zone's line, big stat values |
+| `text-xl` | The site name, the phone summary's name, the Bag's and move picker's titles, an `h3` over a section of panels |
+| `text-lg` | Dialog titles, member card and graph node names, box titles ("PC 56", with `tracking-[0.04em]`) |
 | `text-base` heading, semibold | Panel `h3`, the header's page title |
-| `text-[13px]` | Controls (buttons, segments, fields), tab names, secondary body text |
-| `text-xs` | Table cells, chips, small labels |
-| `text-[11px]` / `text-[10px]` | Cell overlays (level, name), pills, chart labels |
-| `text-[13px] font-semibold tracking-[0.06em] uppercase text-muted-foreground` | Small group headings inside a card ("ABILITY") |
+| `text-sm` | Controls (buttons, segments, fields), tab names, secondary body text |
+| `text-xs` | Table cells, chips, small labels, cell overlays (level, name), pills, chart labels |
+| `text-sm font-semibold tracking-[0.06em] uppercase text-muted-foreground` | Small group headings inside a card ("ABILITY") |
+
+The one exception is the team graph's Cytoscape canvas (`src/components/analysis/team-graph.tsx`), which sets its labels' `font-size` in pixels (9–13) since Tailwind's classes cannot reach it.
 
 Weights: `font-semibold` is the default emphasis; `font-bold` only for headings and marks.
 
@@ -92,12 +92,14 @@ Weights: `font-semibold` is the default emphasis; `font-bold` only for headings 
 
 | Radius | Used on |
 |--------|---------|
-| `rounded-2xl` | Cards, panels, the PC box, the summary aside, home cards |
-| `rounded-xl` | Inner cards (ability rows), refusals, empty-slot placeholders, dialogs |
-| `rounded-lg` / `rounded-[10px]` | Buttons, fields, selects, segmented tracks, PC cells |
-| `rounded-md` | Icon buttons, item icons, type squares |
+| `rounded-2xl` | Cards, panels, the PC box, the summary aside, home cards, the drop zone, a bottom sheet's top corners |
+| `rounded-xl` | Inner cards (ability rows), refusals, empty-slot placeholders, dialogs, the team strip |
+| `rounded-lg` | Buttons, fields, selects, segmented tracks, PC cells, file tabs' top corners |
+| `rounded-md` | Quiet icon buttons, segments inside a track, item icons, type squares |
+| `rounded-sm` | Bar tracks and fills, small tags, compare matrix cells |
 | `rounded-full` | Type dots and chips, pills |
-| `rounded-[20px]` | The drop zone; a bottom sheet's top corners |
+
+Radii come from this scale only, never as pixel values in brackets.
 
 Spacing is Tailwind's 0.25rem scale, quarter steps allowed (`gap-3.5`, `py-2.25`). Common: `gap-2`/`gap-2.5` inside controls and rows, `gap-3.5`–`gap-4.5` between cards, `p-3.5` inside a panel.
 
@@ -105,20 +107,20 @@ No shadows in site components; surfaces are separated by fill (`background` → 
 
 ## Layout Shell
 
-- **Root** (`src/router.tsx`): a `flex min-h-svh flex-col` column holding `SiteHeader` and the route's `<Outlet />`. Each page renders its own `<main className="flex-1 …">`.
+- **Root** (`src/router.tsx`): a `flex min-h-svh flex-col` column holding `SiteHeader` and the route's `<Outlet />`. Each page renders its own `<main>`.
 - **Header** (`src/components/site-header.tsx`): `h-14`, `bg-card`, bottom border, `px-4 sm:px-8`. The site name `pkmn` (heading, bold) with `.enbraile.vip` (mono, muted) links home; after a `/`, the page title from the route's `staticData.title`. No other navigation.
-- **Page gutters:** `px-4 sm:px-8` for page-level content (home, import, tab bar); full-width tool views use `px-3 sm:px-6`.
-- **Widths:**
+- **Page column** (`src/components/page.ts`): every page is a centred column with the header's gutter, `px-4 sm:px-8`, and one width per page kind:
 
-  | Width | Used for |
-  |-------|----------|
-  | `max-w-240` (60rem) | Home's content column |
-  | `max-w-344` (86rem) | Team Analysis's page column |
-  | Full width | Open Sheet's PC and team views |
-  | `max-w-180` (45rem) | A single message or form in a page: drop zone, refusal, storage error |
+  | Class | Width | Page kind |
+  |-------|-------|-----------|
+  | `listPage` | `max-w-240` (60rem) | A page listing links: home |
+  | `toolPage` | `max-w-344` (86rem) | A tool: Open Sheet (its tab bar, PC and team views) and Team Analysis |
+  | `messageWidth` | `max-w-180` (45rem) | A single message or form inside a page: drop zone, refusal, storage error |
+
+  The page's own spacing (`gap-…`, `py-…`) is added with `cn(toolPage, "…")`; nothing inside a page adds a gutter of its own.
 
 - **Breakpoints:** Tailwind's. `sm` (40rem) is the phone/desktop switch for gutters, sizes and grid columns; `lg` (64rem) splits a page into side-by-side cards (`lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]`) and, through `useMediaQuery("(min-width: 64rem)")` (`src/hooks/use-media-query.ts`), swaps a sticky side aside for a bottom sheet below it.
-- **Phone rules:** grids collapse to one column; a detail pane becomes a bottom `Sheet` (`side="bottom"`, `max-h-[90svh]`, `rounded-t-[20px]`); wide tables and tab bars scroll horizontally (`overflow-x-auto`) with a sticky first column; touch targets are at least `min-h-10`, primary actions `min-h-11`.
+- **Phone rules:** grids collapse to one column; a detail pane becomes a bottom `Sheet` (`side="bottom"`, `max-h-[90svh]`, `rounded-t-2xl`); wide tables and tab bars scroll horizontally (`overflow-x-auto`) with a sticky first column; touch targets are at least `min-h-10`.
 
 ## Components
 
@@ -126,35 +128,38 @@ No shadows in site components; surfaces are separated by fill (`background` → 
 
 | Component | Path | Use |
 |-----------|------|-----|
-| `Button` | `src/components/ui/button.tsx` | shadcn button; used inside dialogs (`variant="outline"` to cancel, `"destructive"` to delete, default to confirm) |
+| `Button`, `buttonVariants` | `src/components/ui/button.tsx` | The one button style, vendored from shadcn and resized to the site: every button is `min-h-10 rounded-lg px-3.5 text-sm font-semibold` (`size="default"`), `size-10` (`"icon"`) or `size-7 rounded-md` (`"icon-sm"`). Variants: `default` (orange fill), `outline` (`border bg-card`), `destructive` (`bg-destructive-soft text-destructive`), `ghost` (muted text, `hover:bg-cell`). In dialogs: `outline` to cancel, `destructive` to delete, default to confirm |
 | `Dialog` | `src/components/ui/dialog.tsx` | Modal on `bg-scrim`; pass `className="bg-card"`; title in `font-heading text-lg font-bold`; `aria-describedby={undefined}` when there is no description |
 | `Sheet` | `src/components/ui/sheet.tsx` | Bottom sheet for a phone's detail pane (imported as `BottomSheet` in the PC) |
 | `SiteHeader` | `src/components/site-header.tsx` | The header; reads `staticData.title` |
-| `TypeDot`, `TypeChip`, `TypeSquare`, `UnknownMark` | `src/open-sheet/components/marks.tsx` | A type as its colour with the white symbol (dot 16px, chip with name, square 24px); `?` in `destructive` for anything Showdown lacks. Used by both tools |
-| `Panel` | `src/team-analysis/components/controls.tsx` | A titled card: `rounded-2xl border bg-card p-3.5`, `h3` in heading, optional `aside` |
-| `Segmented` | same | A `radiogroup` of options on a `bg-muted` track; the chosen one `bg-secondary` |
-| `Toggle` | same | An on/off button; on is `border-primary bg-accent text-primary` |
-| `fieldClass`, `buttonClass`, `primaryClass` | same | Class strings for a field (`bg-muted`), an outlined button (`bg-card`) and the orange action button, all `min-h-10 rounded-lg text-[13px]` |
-| `MonSprite` | `src/open-sheet/components/summary.tsx` | A sheet Pokémon's sprite, or a muted `?` |
-| `ItemIcon` | `src/open-sheet/components/bag.tsx` | An item's 24px icon from Showdown's item sheet |
+| `listPage`, `toolPage`, `messageWidth` | `src/components/page.ts` | The page column classes ([Layout Shell](#layout-shell)) |
+| `TypeDot`, `TypeChip`, `TypeSquare`, `UnknownMark` | `src/components/marks.tsx` | A type as its colour with the white symbol (dot 16px, chip with name, square 24px); `?` in `destructive` for anything Showdown lacks |
+| `Panel` | `src/components/controls.tsx` | A titled card: `rounded-2xl border bg-card p-3.5`, `h3` in heading, optional `aside` |
+| `Segmented` | same | A `radiogroup` of options on a `bg-muted` track; the chosen one `bg-secondary`. Every view switch, Open Sheet's PC/Team included |
+| `Toggle` | same | An on/off `outline` button; on is `border-primary bg-accent text-primary` |
+| `fieldClass` | same | A field: `min-h-10 rounded-lg border bg-muted text-sm` |
+| `primaryClass`, `buttonClass`, `iconButtonClass`, `quietIconClass` | same | `buttonVariants` for a hand-built `<button>` or `<label>`: the orange action, the outlined button, the outlined `size-10` icon button, the quiet `size-7` icon button |
+| `ArchetypeCard`, `Checklist`, `ArchetypeMap`, `SpeedTiers`, `MemberCards`, `Matrices`, `TeamGraph` | `src/components/analysis/` | Team analysis panels, shown by Team Analysis and by Open Sheet's team view; sprites from `src/analysis/sprite.ts` |
+
+A tool's own components stay in `src/<tool>/components/` (Open Sheet's `MonSprite` in `summary.tsx`, `ItemIcon` in `bag.tsx`), and no tool imports another tool's components: what two tools show goes in `src/components/`.
 
 ### Patterns
 
 - **Card:** `rounded-2xl border bg-card`, padded `p-3.5` (panels) or `px-5 py-4.5` (home links). A link card turns `hover:border-primary` and ends in an orange `ArrowRight`.
-- **Box and cells** (the Pokémon PC look): a `bg-box rounded-2xl` (or `rounded-[14px]`) container with a heading-font title and count, holding a responsive grid (`grid-cols-[repeat(auto-fill,minmax(72px,1fr))] sm:…minmax(112px,1fr)`) of square `bg-cell rounded-[10px]` buttons. Selected: `border-2 border-primary bg-cell-hi`. A cell overlays the level (mono, top-left), a `?` mark (top-right) and the name (bottom, hidden on phones).
-- **Primary action:** orange fill, `bg-primary text-primary-foreground font-semibold`, `rounded-[10px]`/`rounded-lg`, `min-h-10`–`min-h-11`. One per view (Bag, Add to team, Choose a file, Analyse).
-- **Secondary action:** outlined, `border bg-card` (`buttonClass`); icon-only tool buttons are `size-10 rounded-lg border bg-card` with `aria-label` and `title`. Destructive tools add `text-destructive`.
-- **Quiet icon button:** `size-7 rounded-md text-muted-foreground hover:bg-cell hover:text-foreground` (tab rename/close).
+- **Box and cells** (the Pokémon PC look): a `bg-box rounded-2xl` (the team strip `rounded-xl`) container with a heading-font title and count, holding a responsive grid (`grid-cols-[repeat(auto-fill,minmax(72px,1fr))] sm:…minmax(112px,1fr)`) of square `bg-cell rounded-lg` buttons. Selected: `border-2 border-primary bg-cell-hi`. A cell overlays the level (mono, top-left), a `?` mark (top-right) and the name (bottom, hidden on phones).
+- **Primary action:** `primaryClass` (or `<Button>`): orange fill, `bg-primary text-primary-foreground`. One per view (Bag, Add to team, Choose a file, Analyse).
+- **Secondary action:** `buttonClass` (or `<Button variant="outline">`), outlined `border bg-card`; icon-only tool buttons are `iconButtonClass` with `aria-label` and `title`. Destructive tools add `text-destructive`.
+- **Quiet icon button:** `quietIconClass`, `size-7 rounded-md text-muted-foreground hover:bg-cell hover:text-foreground` (tab rename/close, dialog and sheet close).
 - **Focus:** every interactive element `outline-none focus-visible:ring-3 focus-visible:ring-ring/50`.
-- **Tabs (file tabs):** a bottom-bordered `nav` of mono 13px tabs; the active one `rounded-t-[10px] border border-b-0 bg-background`, merging into the page; actions appear on the active tab only; an orange `+` ends the row.
-- **View switch:** `Segmented` (or Open Sheet's PC/Team `tablist`, same track with `bg-cell-hi` for the chosen view).
+- **Tabs (file tabs):** a bottom-bordered `nav` of mono `text-sm` tabs; the active one `rounded-t-lg border border-b-0 bg-background`, merging into the page; actions appear on the active tab only; an orange `+` ends the row.
+- **View switch:** `Segmented`.
 - **Search and filter:** a `label` wrapping a `Search` icon and a borderless input on `bg-cell` (inside a box) or `fieldClass` (elsewhere), `min-h-10`; a native `select` styled the same.
 - **Definition list:** `dl` grid with a fixed label column (`grid-cols-[90px_1fr] sm:grid-cols-[96px_1fr]`), `dt` muted, `dd font-medium`.
 - **Stat bars:** a label coloured by nature (raised `text-primary`, lowered `text-chart-2`), the value in mono, an `h-2 rounded-sm bg-muted` track with a fill in `primary` / `chart-2` / `chart-3`, scaled to 160 base.
 - **Effectiveness and heat cells:** `chart-2` tints for good, `destructive-soft`/`destructive` for bad, `muted` with faded text for neutral; legends are swatches with short labels.
 - **Pills and chips:** `rounded-full bg-secondary px-2.5 py-1 text-xs text-chart-3` for tags; `TypeChip` for types.
-- **Empty slot / empty state:** a dashed outline (`border-2 border-dashed`, `border-cell-hi` inside a box), muted text if any, `rounded-[10px]`–`rounded-xl`; clickable ones open the action that fills them.
-- **Drop zone:** `max-w-180` dashed card, `rounded-[20px]`, an icon tile on `bg-box`, a heading line and an orange file button; the border turns `primary` while dragging over.
+- **Empty slot / empty state:** a dashed outline (`border-2 border-dashed`, `border-cell-hi` inside a box), muted text if any, `rounded-lg`–`rounded-xl`; clickable ones open the action that fills them.
+- **Drop zone:** `messageWidth` dashed card, `rounded-2xl`, an icon tile on `bg-box`, a heading line and an orange file button (`primaryClass` on a `label`); the border turns `primary` while dragging over.
 - **Errors:** an `alert` row, `rounded-xl border border-destructive bg-destructive-soft`, a `CircleAlert` in `destructive`, file names and code in mono. A whole-page failure is a plain `text-destructive` paragraph.
 - **Sticky aside:** on wide screens a detail pane is `sticky top-4 w-100 max-h-[calc(100svh-2rem)] rounded-2xl border bg-card`, its footer action above a top border.
 
