@@ -30,6 +30,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 **Do:**
 - [ ] Copy the rest of Wonder's `harness/check.py` into `src/anil/harness/check.py` (which already holds the game-database check) with its groups, dropping checks of anything not migrated (the egg guard, real runs, the panel).
 - [ ] Docs: `docs/pkmn/games/anil/how-to/check-the-mod.md`; Wonder's randomlocke-design "How the Checks Run" section and its Checks decisions into `docs/pkmn/games/anil/explanation/randomlocke-design.md`; the root `CLAUDE.md`'s no-tests rule names `anil check` as a tool that runs the game, not a test runner.
+- [ ] Update the lines that say `anil check` is not here yet: Damage Calc Design → Checks ("Neither is in `anil.harness.check` yet", and its `wonder check calc` / `calc-moves`), Runtime Design → Project Layout (the `anil.harness.check` seam) and the Runtime Reference's intro (`check` among the commands `anil` does not have yet).
 
 **Acceptance:**
 - Claude-run: the gate; `uv run anil check all` passes, with the time it took; compare its check list with `wonder check all`'s and name every check dropped.
@@ -39,7 +40,6 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 - Forbidden: pytest or any runner; wiring `anil check` into the gate.
 
 **Touches:** `pkmn/games/anil/src/`, `docs/pkmn/games/anil/`, `CLAUDE.md`
-**After:** pkmn/games/anil: guard and audit the series rules
 **Needs the author:** the unattended pass of 2026-10-21 was stopped by Claude Code's auto-mode permission check after copying Wonder's 8,935-line `check.py` (later edits, lint and even reads in the worktree were denied as "Untrusted Code Integration" / "Irreversible Local Destruction"). Its partial copy, renamed but not linted, is on branch `wq/anil-check`. Allow this work (or run it attended with `/next-task`), and say whether to build on that branch or start over.
 
 ## pkmn/games/anil: keep or drop the League guard
@@ -47,7 +47,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 The rules guard refuses League entry below level 75 and items inside the League ([Rules Engine Design → Coverage](../pkmn/games/anil/explanation/rules-engine-design.md#coverage)), which were Wonder's own rules; series 1's rulebook does not carry them.
 
 **Do:**
-- [ ] With the owner's answer, keep the guard and add the rules to `docs/pkmn/series/1/reference/rules.md`, or drop `LEAGUE_RULE`, `league_refusal`, `league_item_refusal` and the `league` blocks from `src/anil/harness/rules.py` and the doc's rows.
+- [ ] With the owner's answer, keep the guard and add the rules to `docs/pkmn/series/1/reference/rules.md`, or drop `LEAGUE_RULE`, `league_refusal`, `league_item_refusal` and the `league` blocks from `src/anil/harness/rules.py` and the doc's rows (and any League case `anil check` has by then in `src/anil/harness/check.py`).
 
 **Acceptance:**
 - Claude-run: the gate; `uv run anil rules check walk --map 172` below 75 matches the answer.
@@ -56,7 +56,7 @@ The rules guard refuses League entry below level 75 and items inside the League 
 - Neighbors: none.
 - Forbidden: deciding without the owner.
 
-**Touches:** `pkmn/games/anil/src/anil/harness/rules.py`, `docs/pkmn/games/anil/explanation/rules-engine-design.md`, `docs/pkmn/series/1/`
+**Touches:** `pkmn/games/anil/src/anil/harness/rules.py`, `pkmn/games/anil/src/anil/harness/check.py`, `docs/pkmn/games/anil/explanation/rules-engine-design.md`, `docs/pkmn/series/1/`
 **After:** pkmn: update series 1's rulebook with the latest changes
 **Needs the author:** are "everyone at 75 before the League" and "no items inside the League" series 1 rules? Keep the guard (and write them into the rulebook) or drop it?
 
@@ -65,17 +65,83 @@ The rules guard refuses League entry below level 75 and items inside the League 
 Wonder's verified facts about Añil (`docs/domains/game/`) move into `docs/pkmn/games/anil/`, so the tooling's docs cite this repo ([Games and Series](anil-tooling-discovery.md#games-and-series)).
 
 **Do:**
-- [ ] Copy `docs/domains/game/reference/*` and `explanation/game-setup.md` into `docs/pkmn/games/anil/`, dropping rules (now in series 1) and agent references; repoint every "Wonder: `docs/domains/game/…`" and ``source: `docs/domains/game/…` `` citation in `docs/pkmn/`, including series 1's rulebook (whose `rules.md` also cites Wonder's runtime "Bridge Start", now in `docs/pkmn/games/anil/reference/runtime.md`).
+- [ ] Copy `docs/domains/game/reference/*` and `explanation/game-setup.md` into `docs/pkmn/games/anil/`, dropping rules (now in series 1) and agent references; Wonder's `runtime.md` merges into the existing `docs/pkmn/games/anil/reference/runtime.md` (its sections not yet copied, such as Randomlocke Mod, Checks and Packages, without facts that describe only Wonder's panel, runs or agent), never replacing it. Repoint every "Wonder: `docs/domains/game/…`" and ``source: `docs/domains/game/…` `` citation in `docs/pkmn/`, including series 1's rulebook (whose `rules.md` also cites Wonder's runtime "Bridge Start", now in `docs/pkmn/games/anil/reference/runtime.md`).
 
 **Acceptance:**
-- Claude-run: `grep -rn "Wonder:\|docs/domains/game" docs/pkmn/` prints nothing (series 1's rulebook cites game facts as ``source: `docs/domains/game/…` ``); every relative link under `docs/pkmn/` resolves.
+- Claude-run: `grep -rn "docs/domains/game" docs/pkmn/` prints nothing (series 1's rulebook cites game facts as ``source: `docs/domains/game/…` ``); every relative link under `docs/pkmn/` resolves. "Wonder:" citations of Wonder's harness designs, knowledge policy, architecture and competition docs are not game facts and may stay.
 - Human-run: none.
 - Reuse: Wonder's game docs, copied.
 - Neighbors: `docs/pkmn/games/anil/reference/open-sheet-json.md`.
 - Forbidden: rewriting facts; they were verified on the game.
 
 **Touches:** `docs/pkmn/`
-**After:** pkmn/games/anil: check the mod against the live game
+
+## pkmn/games/anil: log the rules engine to the session's harness log
+
+`anil.harness.rules` logs to `logging.getLogger("anil.harness.rules")` (`src/anil/harness/rules.py`), outside the `harness` logger that `launch.py` gives the session's `harness.log` handler, so guards, audits and freezes never reach `harness.log`, which [Runtime Design → Observability](../pkmn/games/anil/explanation/runtime-design.md#observability) says the harness logs to. Every other layer logs under `harness.*`, as Wonder's `harness.rules` did.
+
+**Do:**
+- [ ] Rename the logger to `harness.rules`, and the name in [Rules Engine Design → Observability](../pkmn/games/anil/explanation/rules-engine-design.md#observability).
+
+**Acceptance:**
+- Claude-run: the gate; with a game running, `uv run anil rules audit` adds its lines to `sessions/<id>/harness.log`.
+- Human-run: none.
+- Reuse: `src/anil/harness/launch.py`'s session log.
+- Neighbors: none.
+- Forbidden: changing what is logged.
+
+**Touches:** `pkmn/games/anil/src/anil/harness/rules.py`, `docs/pkmn/games/anil/explanation/rules-engine-design.md`
+
+## pkmn/games/anil: clear stale and Wonder-only lines from the runtime and layer docs
+
+Lines landed in sequence that no longer hold, or that point at Wonder's agent, which the scope leaves out ([Scope Edges](anil-tooling-discovery.md#scope-edges)).
+
+**Do:**
+- [ ] `docs/pkmn/games/anil/reference/runtime.md`: the intro still lists `go`, `interact`, `dialog`, `menu`, `battle` and `db` among the commands `anil` "does not have yet" (leave `check` to the check entry); drop the Move and faint lines' "The run memory reads a death's cause…" sentence (run memory is the agent's); Sound's "The design is in Runtime Design → Panel (Wonder…)" points at [Runtime Design → Sound](../pkmn/games/anil/explanation/runtime-design.md#sound) instead.
+- [ ] The `## Open` items of `dialog-design.md`, `menu-design.md` and `navigation-design.md`, and navigation's "as the pending design point on context ownership … recommends", cite Wonder's open questions (Pending design points), whose part left open is the agent's (planner wake-up, goals); drop them, `## Open` reading "None."
+- [ ] Runtime Design → Project Layout's "Wonder Guard, Wonder Skin and Wonder Room keep their names" says `grep -rn -i wonder pkmn/games/anil/src` prints the mod data and `anil_events.rb` "and nothing else"; `calc.py` (`WONDERGUARD`, `WonderRoom`, `WONDERSKIN`, `WONDER_SKIN_ACCURACY`) has since joined them.
+
+**Acceptance:**
+- Claude-run: `grep -rn "run memory\|Pending design points\|→ Panel (Wonder" docs/pkmn/games/anil/` prints nothing; `grep -rn -i wonder pkmn/games/anil/src` prints only what Runtime Design names; every relative link under `docs/pkmn/` resolves.
+- Human-run: none.
+- Reuse: none.
+- Neighbors: `docs/pkmn/games/anil/explanation/rules-engine-design.md`.
+- Forbidden: changing code; dropping a fact verified on the game.
+
+**Touches:** `docs/pkmn/games/anil/reference/runtime.md`, `docs/pkmn/games/anil/explanation/runtime-design.md`, `docs/pkmn/games/anil/explanation/dialog-design.md`, `docs/pkmn/games/anil/explanation/menu-design.md`, `docs/pkmn/games/anil/explanation/navigation-design.md`
+
+## pkmn/games/anil: bring the knowledge view's design over
+
+`anil.harness.knowledge` came over whole with the calc, but its design is still only Wonder's (`docs/subsystems/harness/explanation/knowledge-view-design.md`), which Damage Calc Design and Battle Layer Design cite as "Knowledge View Design (Wonder: …)"; the harness design belongs under `docs/pkmn/` ([Goal and Success](anil-tooling-discovery.md#goal-and-success)).
+
+**Do:**
+- [ ] Copy it into `docs/pkmn/games/anil/explanation/knowledge-view-design.md` as the other layer docs were copied (a provenance line, names `anil`, sessions named as Wonder's), without its Panel section and agent references; repoint every "Knowledge View Design (Wonder: …)" citation in `docs/pkmn/`; add it to `docs/pkmn/index.md`'s Añil row and `pkmn/games/anil/CLAUDE.md`'s doc list.
+
+**Acceptance:**
+- Claude-run: ``grep -rn "Wonder: `docs/subsystems/harness/explanation/knowledge-view-design" docs/pkmn/`` prints nothing; every relative link under `docs/pkmn/` resolves; the doc's names match `src/anil/harness/knowledge.py`.
+- Human-run: none.
+- Reuse: Wonder's doc, copied; `docs/pkmn/games/anil/explanation/damage-calc-design.md` → The Knowledge View.
+- Neighbors: `docs/pkmn/games/anil/explanation/battle-layer-design.md`.
+- Forbidden: changing code; rewriting decisions.
+
+**Touches:** `docs/pkmn/games/anil/explanation/`, `docs/pkmn/index.md`, `pkmn/games/anil/CLAUDE.md`
+
+## pkmn/games/anil: fold the Añil tooling scope into the game's docs
+
+Once no entry links [Añil Tooling: Discovery](anil-tooling-discovery.md), its lasting content moves to its permanent place and it is deleted ([Lifecycle](index.md#lifecycle)). Runtime Design → Project Layout cites "the discovery's renames".
+
+**Do:**
+- [ ] Move every answer of `anil-tooling-discovery.md` not already in `docs/pkmn/` or `docs/general/` into its owning doc's Decisions, dated as the scope dates it; repoint every mention of it, then delete it and drop it from the Work in Progress lists of `docs/index.md` and `docs/work-in-progress/index.md`.
+
+**Acceptance:**
+- Claude-run: `grep -rn "anil-tooling-discovery\|the discovery's" docs/ CLAUDE.md pkmn/ --include=*.md` prints nothing; every relative link under `docs/` resolves; the two Work in Progress lists name the same docs.
+- Human-run: from a clean clone, walk the scope's "When is it done?": `anil install`, a new game starting the Randomlocke, `anil install --harness`, `anil run`, `anil state`, `anil go`, `anil battle …`, `anil rules …`, `anil check all`.
+- Reuse: `docs/pkmn/games/anil/explanation/runtime-design.md` → Decisions.
+- Neighbors: `docs/general/explanation/repository-layout.md`.
+- Forbidden: changing code; turning a scope answer the owner did not give into a decision.
+
+**Touches:** `docs/work-in-progress/anil-tooling-discovery.md`, `docs/work-in-progress/index.md`, `docs/index.md`, `docs/pkmn/`, `docs/general/`
+**After:** pkmn/games/anil: check the mod against the live game; pkmn/games/anil: bring Añil's game facts over; pkmn/games/anil: clear stale and Wonder-only lines from the runtime and layer docs; pkmn/games/anil: bring the knowledge view's design over
 
 ## pkmn/site: decide on Team Analysis's explanatory legends
 
@@ -110,3 +176,19 @@ The design-system cleanup moved every shared component into `src/components/`, b
 
 **Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
 **Needs the author:** does "no tool imports from another tool's folder" cover data hand-overs like `carryTeam`, or only UI?
+
+## pkmn/site: one owner for the matchup-ability table
+
+Open Sheet's Team page still lists the matchup abilities as its own "hand-kept list" of Gen 3–5 ones ([Open Sheet → The Team Page](../pkmn/site/explanation/open-sheet.md#the-team-page)) and its Decisions keep "the hand-kept Gen 3–5 matchup abilities" as a 2026-10-16 build choice, while [Team Analysis → Data](../pkmn/site/explanation/team-analysis.md#data) owns the site's one table since 2026-10-17 ("One matchup-ability table for the site, PokeGraph's").
+
+**Do:**
+- [ ] In `open-sheet.md`, replace the list with a link to Team Analysis → Data, keeping what is Open Sheet's own (read in Gen 9, only Gen 1–5 abilities occur), and rewrite the "analysis rules" decision to say the abilities come from the shared table since 2026-10-17.
+
+**Acceptance:**
+- Claude-run: `npm run gate` from `pkmn/site/`; the abilities are listed in `team-analysis.md` alone; every relative link under `docs/pkmn/site/` resolves.
+- Human-run: none.
+- Reuse: `docs/pkmn/site/explanation/team-analysis.md` → Data.
+- Neighbors: none.
+- Forbidden: changing code; changing a decision's substance.
+
+**Touches:** `docs/pkmn/site/explanation/open-sheet.md`
