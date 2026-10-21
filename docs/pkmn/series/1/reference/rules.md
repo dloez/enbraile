@@ -190,31 +190,32 @@ Its last sentence, an optional weekly fight against an AI for an egg or the next
 
 ### Fair Play
 
-- **No exploiting.** Saving is normal, but nobody reloads a save or restarts the game to change something that already happened: a death, a lost battle, an encounter, an item, an egg's hatch. What happens, stays. _(owner, 2026-10-02)_
+- **No exploiting.** Saving is normal, but nobody reloads a save or restarts the game to change something that already happened: a death, a lost battle, an encounter, an item, an egg's hatch. What happens, stays. _(owner, 2026-10-02)_ The one exception is in the postgame ([The Postgame](#the-postgame)).
 - **No bugs or glitches** that give an advantage (duplicating items, skipping a battle, dodging a rule and the like). When in doubt, don't ("Ante la duda, no lo hagas"). _(owner, 2026-10-02)_
 - **Guides are allowed.** Anyone may look up guides to Añil's mechanics and items. _(owner, 2026-10-04)_
 
 ### The League
 
-- **One league round per gym, 8 in all,** among the 6 players. _(owner, 2026-10-02)_ Pairings are announced on Fridays. In the first 5 rounds each player meets an opponent they have not fought yet; the last 3 rounds are fully random. With 6 players, the first 5 rounds cover every opponent.
+- **Five league rounds, after gyms 1, 2, 3, 5 and 7,** among the 6 players. Gyms 4, 6 and 8 open no round. _(owner, 2026-10-22; replaces one round per gym, 8 in all)_ Pairings are announced on Fridays, and in every round each player meets an opponent they have not fought yet, so the 5 rounds cover every opponent once.
 - **Every match is a Bo3 on Pokémon Showdown,** "[Gen 9] Custom Game", with Species Clause, Sleep Clause, OHKO Clause and Evasion Moves Clause, and team preview on. Custom Game accepts the export's Level 50 Gen 1–5 teams.
+- **The two players may agree to change their match's rules.** The format and clauses above are the default; a pair may play their league match under other rules only if both agree. _(owner, 2026-10-22)_
 - **Before a match each player knows the other's box sheet, not their team:** every species they own, each one's possible abilities (base and hidden, not which one it has), their item bag and their TMs. Moves, the chosen ability and which 6 they bring are seen only in battle and at team preview. _(owner, 2026-10-17)_
 - **Each clause means what Smogon's clause of that name means,** and nothing more: Evasion Moves Clause bans only evasion-raising moves such as Double Team and Minimize, so evasion items like Bright Powder and Lax Incense stay legal, as no Evasion Items Clause is set. _(owner, 2026-10-17)_
 - **The team is the player's frozen pokepaste for that gym:** up to 6 living Pokémon. A player with fewer alive, early on or after losses, brings what they have.
 - **No deadline.** A match is played whenever the two players agree, always with the pokepastes frozen at its gym, so a player may be several gyms ahead in the story.
 - **No gym cap.** The story has no weekly limit on gyms; the frozen pokepastes keep the rounds fair.
 - **Points:** a Bo3 win gives 1 point, a loss 0.
-- **Ties:** on equal points, the winner of the match between the tied players ranks higher. Two players who met twice and split 1–1, or three tied in a loop, have no rule yet ([Open Questions → League tie edges](../../../../work-in-progress/open-questions.md#league-tie-edges)).
+- **Ties:** on equal points, the winner of the match between the tied players ranks higher. Three tied in a loop have no rule yet ([Open Questions → League tie edges](../../../../work-in-progress/open-questions.md#league-tie-edges)).
 
 ### Pokepastes
 
 - **A pokepaste is the pause menu's Showdown export** ([The Package](#the-package)): Level 50, the real IVs, 1 EV in every stat, nicknames. Posting it to pokepast.es is optional, a way to keep the pastes easy to find. _(owner, 2026-10-02)_
-- **Made right after beating each gym,** before catching anything new or levelling up. The player may rearrange the party at the PC first, then exports. That pokepaste is frozen for that gym's league match. _(owner, 2026-10-04: no levelling up)_
+- **Made right after beating each gym that opens a round** (1, 2, 3, 5 and 7), before catching anything new or levelling up. The player may rearrange the party at the PC first, then exports. That pokepaste is frozen for that gym's league match. _(owner, 2026-10-04: no levelling up)_
 - **Only living Pokémon.** The export already leaves out permafainted Pokémon and eggs.
 
 ### Eggs
 
-- **Every new game has 16 eggs,** put by the mod in the last PC box, "Huevos". A league match win opens one, so with 8 league rounds at most 8 are ever opened. This is the group's "captura extra" (extra catch), not breeding. How the mod gives and hatches them is in source: [Nuzlocke → Eggs](../../../games/anil/reference/nuzlocke.md#eggs).
+- **Every new game has 16 eggs,** put by the mod in the last PC box, "Huevos". A league match win opens one, and the Pokémon League opens up to 6 more ([The Pokémon League](#the-pokémon-league-1)), so at most 11 are ever opened. This is the group's "captura extra" (extra catch), not breeding. How the mod gives and hatches them is in source: [Nuzlocke → Eggs](../../../games/anil/reference/nuzlocke.md#eggs).
 - **A win lets the player open one egg:** move it to the party and walk; it hatches after 100 steps. Eggs in the PC never hatch. Opening an egg is the player's word that they won; the mod does not count wins.
 - **An egg may be opened later, or never.** What hatches is drawn at the moment it hatches: a random Gen 1–5 Pokémon at level 1, from the randomizer's window for the player's badge count at that moment, shiny at the normal gift odds.
 - **An egg never uses a route's encounter,** received or hatched.
@@ -231,8 +232,23 @@ These apply to every battle, in the story (wild Pokémon, trainers, gyms, the Le
 - **No breeding.** No Pokémon is left at the Day Care to get eggs. _(owner, 2026-10-02)_
 - **No changing EVs or IVs by any means.** EVs come only from normal battles, and IVs stay as each Pokémon has them. No item that raises, lowers or resets EVs or IVs (vitamins, Mochis, feathers, EV-reducing berries, "Chapas" (bottle-cap-style IV items), and the like), and no item or training that changes the EVs a battle gives (power items, the Macho Brace, the punch-bag training). Nature mints are allowed, since they change neither, and so is Pokérus: a Pokémon that catches it is used as normal, although the game doubles its battle EVs from then on. See source: [IVs and EVs](../../../games/anil/reference/ivs-evs.md). _(owner, 2026-10-02; mints and Pokérus 2026-10-04)_
 - **At most 6 shinies,** from any source. If a seventh appears, it is not caught ("Si te sale el séptimo, no lo captures"). The rule no longer says "at a time" and no longer offers releasing one to make room. _(owner, 2026-10-02)_
-- **A player who owns a living shiny always has one in the party,** so every pokepaste includes one; if it dies, another living shiny from the PC takes its place. _(owner, 2026-10-02)_
+- **A player who owns a living shiny always has one in the party,** so every pokepaste includes one; if it dies, another living shiny from the PC takes its place. _(owner, 2026-10-02)_ The rule is held strictly, and players should try to keep their shinies alive. _(owner, 2026-10-22)_
 - **Legendaries and mythicals (such as Mew or Meloetta) may be caught but never used:** not in the party, not in any pokepaste. The legendary clause still keeps the map's encounter. _(owner, 2026-10-02: mythicals count as legendaries)_ A shiny legendary or mythical is never used either: it stays in the PC and does not count as the living shiny the party must hold. It is still a shiny, so it counts toward the 6. _(owner, 2026-10-03)_
+
+### The Pokémon League
+
+The Elite Four ("Alto Mando") and the rival at the end of the story ([The Pokémon League](#the-pokémon-league) has the game's side).
+
+- **The League may be reattempted as often as the player likes.** A Pokémon that dies in the League stays dead for every later attempt. _(owner, 2026-10-22)_
+- **Pokémon that died in the League come back for the final tournament,** whether the player beat the League or not: they count as alive in the export the tournament uses. They are never used in the League again. _(owner, 2026-10-22)_
+- **The League opens up to 6 eggs:** one for each Elite Four member beaten and two for beating the rival, each once, so 6 for beating the League. _(owner, 2026-10-22)_
+
+### The Postgame
+
+- **The islands are closed.** The postgame islands are not played. _(owner, 2026-10-22)_
+- **Items can still be searched for** with the Añil map; how has no rule yet ([Open Questions → Items with the Añil map](../../../../work-in-progress/open-questions.md#items-with-the-añil-map)). _(owner, 2026-10-22)_
+- **The legendary sidequest may be played until it turns to Sinnoh's legendaries.** Its Pokémon are rolled by the randomizer, so each may or may not be a legendary; the player fights each, and once it is beaten the game lets them catch it. Catching stops when the guide of the sidequest says it is time for Sinnoh's legendaries, after Deoxys. A legendary caught there falls under the legendary rule: caught, never used, and a shiny one still counts toward the 6 shinies. _(owner, 2026-10-22)_
+- **Saving and quitting to save a Pokémon is allowed in the postgame,** an exception to [Fair Play](#fair-play): a player may quit without saving and reload so that a Pokémon does not die. _(owner, 2026-10-22)_
 
 ### Healing and the League
 
@@ -242,9 +258,11 @@ These apply to every battle, in the story (wild Pokémon, trainers, gyms, the Le
 
 ### Final Tournament
 
-- **Who:** the players who finished the story and did not lose the challenge. _(owner, 2026-10-02)_
-- **Bracket:** seeded by league points, first against last, second against second-to-last, and so on. Bo3, in the league's format and clauses.
-- **Team:** a pokepaste made right after beating the League, the same way as after a gym: up to 6 living Pokémon. No bans.
+- **Who:** the players who finished the story and did not lose the challenge. _(owner, 2026-10-02)_ Beating the League is not required: a player who never beats it still plays. _(owner, 2026-10-22)_
+- **Open sheet.** Each player exports their whole PC with the [Open Sheet export](../../../games/anil/how-to/run-the-open-sheet-export.md) (every living Pokémon with its moves, stats, items and TMs) when they decide they are done playing, and that export is their sheet for the whole tournament. Before a match each player knows the other's full sheet, and each builds a team from their own. No bans. _(owner, 2026-10-22; replaces a pokepaste made right after beating the League)_
+- **First round, seeded by league points:** first against last (1–6), second against fifth (2–5), third against fourth (3–4). First and second are placed in opposite halves of the bracket, so they can only meet in the final. Bo3, in the league's format and clauses. _(owner, 2026-10-22)_
+- **The losers' triangular.** The 3 first-round losers play a triangular ("formato triangular") among themselves, and its winner returns to the winners' bracket. _(owner, 2026-10-22)_ How the triangular is played has no rule yet ([Open Questions → The losers' triangular](../../../../work-in-progress/open-questions.md#the-losers-triangular)).
+- **Semifinals and final.** The triangular's winner meets the winner of the lower half's first-round match (2–5); the upper half's two winners (1–6 and 3–4) meet each other; the two semifinal winners play the final. _(owner, 2026-10-22)_
 
 ### Losing the Challenge
 

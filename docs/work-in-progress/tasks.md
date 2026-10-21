@@ -4,25 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn: update series 1's rulebook with the latest changes
-
-The group's rules have changed since Wonder's rulebook was written; series 1's rulebook takes those changes.
-
-**Do:**
-- [ ] Get the list of changes from the owner, rule by rule.
-- [ ] Apply them to `docs/pkmn/series/1/` (rules, dictionary, format), each change dated in the owning doc's Decisions.
-- [ ] Note every change the mod (`pkmn/games/anil/src/anil/mod/`), the rules guard or `anil check` enforces, as a new entry in this queue; this entry changes docs only.
-
-**Acceptance:**
-- Claude-run: every link under `docs/pkmn/series/1/` resolves; each change appears in the rulebook and in a dated decision.
-- Human-run: read the updated rulebook and confirm it is the one you play.
-- Reuse: `docs/pkmn/series/1/` from the entry before.
-- Neighbors: none.
-- Forbidden: changing code; guessing a rule not given by the owner.
-
-**Touches:** `docs/pkmn/series/1/`, `docs/work-in-progress/tasks.md`
-**Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
-
 ## pkmn/games/anil: check the mod against the live game
 
 `anil check NAME|GROUP` proves each rule of the mod on the real game, as `wonder check` does ([Surfaces](anil-tooling-discovery.md#surfaces)).
@@ -57,7 +38,6 @@ The rules guard refuses League entry below level 75 and items inside the League 
 - Forbidden: deciding without the owner.
 
 **Touches:** `pkmn/games/anil/src/anil/harness/rules.py`, `pkmn/games/anil/src/anil/harness/check.py`, `docs/pkmn/games/anil/explanation/rules-engine-design.md`, `docs/pkmn/series/1/`
-**After:** pkmn: update series 1's rulebook with the latest changes
 **Needs the author:** are "everyone at 75 before the League" and "no items inside the League" series 1 rules? Keep the guard (and write them into the rulebook) or drop it?
 
 ## pkmn/games/anil: fold the Añil tooling scope into the game's docs
