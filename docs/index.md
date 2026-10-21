@@ -32,3 +32,4 @@ Open questions, scope docs, and the work queue. Non-authoritative — see [lifec
 - [Open Questions](work-in-progress/open-questions.md)
 - [Tasks](work-in-progress/tasks.md) — the work queue
 - [Team Analysis](work-in-progress/team-analysis-discovery.md) — PokeGraph's team analysis as a site tool and inside Open Sheet
+- [Añil Tooling](work-in-progress/anil-tooling-discovery.md) — Wonder's install, mod, bridge, harness and checks for Añil, without the agent

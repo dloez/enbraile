@@ -9,6 +9,7 @@ Temporary, evolving content. Treat it as proposals, not settled decisions: it ma
 | [Open Questions](open-questions.md) | Tracker | Everything not yet decided |
 | [Tasks](tasks.md) | Queue | The ordered work queue for `/next-task` and `/work-queue` |
 | [Team Analysis: Discovery](team-analysis-discovery.md) | Scope | Bringing PokeGraph's team analysis into the site: a Team Analysis tool and a deeper analysis in Open Sheet |
+| [Añil Tooling: Discovery](anil-tooling-discovery.md) | Scope | Wonder's tooling for Añil in `pkmn/games/anil/` and series 1's rulebook |
 | [Open Sheet: Origin Conversation](open-sheet-origin-conversation.md) | Context | The Wonder session where the export was first discussed |
 
 ## Lifecycle
