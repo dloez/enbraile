@@ -1,6 +1,6 @@
 # World Reference
 
-The static world as the build's data files hold it and as navigation reads it, verified on the build we play with our own tooling. The reader and its cache are `packages/harness/src/harness/world.py` (`wonder world`); the design is [Navigation Design](../explanation/navigation-design.md), with the reader's build choices under [Decisions → World Cache](../explanation/navigation-design.md#world-cache). Its facts were verified with Wonder's harness and are kept as recorded there; [Runtime](runtime.md) maps Wonder's commands, modules and paths to `anil`'s.
+The static world as the build's data files hold it and as navigation reads it, verified on the build we play with our own tooling. The reader and its cache are `src/anil/harness/world.py` (`anil world`); the design is [Navigation Design](../explanation/navigation-design.md), with the reader's build choices under [Decisions → World Cache](../explanation/navigation-design.md#world-cache). Its facts were verified with Wonder's harness and are kept as recorded there; [Runtime](runtime.md) maps Wonder's commands, modules and paths to `anil`'s.
 
 ## Data Files
 

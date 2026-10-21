@@ -1,6 +1,6 @@
 # Game Data Reference
 
-The build's compiled GameData files for species, moves, abilities, items, types, trainer types and trainers, the statuses its scripts register, and what the game holds once the Randomlocke mod is loaded. All of it was verified on the build we play with our own tooling. The reader and its cache are `packages/harness/src/harness/gamedb.py` (`wonder db`). The design is [Game Database Design](../explanation/game-database-design.md). Its facts were verified with Wonder's harness and are kept as recorded there; [Runtime](runtime.md) maps Wonder's commands, modules and paths to `anil`'s.
+The build's compiled GameData files for species, moves, abilities, items, types, trainer types and trainers, the statuses its scripts register, and what the game holds once the Randomlocke mod is loaded. All of it was verified on the build we play with our own tooling. The reader and its cache are `src/anil/harness/gamedb.py` (`anil db`). The design is [Game Database Design](../explanation/game-database-design.md). Its facts were verified with Wonder's harness and are kept as recorded there; [Runtime](runtime.md) maps Wonder's commands, modules and paths to `anil`'s.
 
 ## Data Files
 

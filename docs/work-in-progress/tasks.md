@@ -60,23 +60,6 @@ The rules guard refuses League entry below level 75 and items inside the League 
 **After:** pkmn: update series 1's rulebook with the latest changes
 **Needs the author:** are "everyone at 75 before the League" and "no items inside the League" series 1 rules? Keep the guard (and write them into the rulebook) or drop it?
 
-## pkmn/games/anil: point the knowledge view and reference intros at `anil`'s code
-
-Two leftovers of the facts and knowledge-view moves describe Wonder's code as `anil`'s. Knowledge View Design's Decisions still settle `wonder know` as the view's command (`knowledge-view-design.md:139`, and `:132`'s "`wonder know` shows what a model would see") while its Interfaces says those commands "do not come over" (`:118`). The intros of three references name Wonder's Python paths as the current reader, which the Runtime Reference's intro does not map: `state.md:3` ("the harness models are `packages/harness/src/harness/state.py`"), `world.md:3` (`packages/harness/src/harness/world.py`, `wonder world`) and `game-data.md:3` (`packages/harness/src/harness/gamedb.py`, `wonder db`); `anil`'s are `src/anil/harness/{state,world,gamedb}.py`, `anil state`, `anil world` and `anil db`.
-
-**Do:**
-- [ ] `docs/pkmn/games/anil/explanation/knowledge-view-design.md`: rewrite the `wonder know` decision to say what is true now (the commands stay in Wonder, as Interfaces says), dated 2026-10-21, and drop `:132`'s `wonder know` clause.
-- [ ] `docs/pkmn/games/anil/reference/state.md`, `world.md`, `game-data.md`: point each intro's "reader"/"models" sentence at `anil`'s module and command; leave every "Verified … with `wonder …` (`packages/…`)" line as recorded.
-
-**Acceptance:**
-- Claude-run: `grep -n "wonder know" docs/pkmn/games/anil/explanation/knowledge-view-design.md` prints only Interfaces' "do not come over" line (and Wonder citations); `sed -n 3p` of the three references names `src/anil/harness/`; every relative link under `docs/pkmn/` resolves.
-- Human-run: none.
-- Reuse: [Runtime Design → Project Layout](../pkmn/games/anil/explanation/runtime-design.md#project-layout).
-- Neighbors: `docs/pkmn/games/anil/explanation/damage-calc-design.md`.
-- Forbidden: changing code; rewriting a fact verified on the game.
-
-**Touches:** `docs/pkmn/games/anil/explanation/knowledge-view-design.md`, `docs/pkmn/games/anil/reference/state.md`, `docs/pkmn/games/anil/reference/world.md`, `docs/pkmn/games/anil/reference/game-data.md`
-
 ## pkmn/games/anil: fold the Añil tooling scope into the game's docs
 
 Once no entry links [Añil Tooling: Discovery](anil-tooling-discovery.md), its lasting content moves to its permanent place and it is deleted ([Lifecycle](index.md#lifecycle)). Runtime Design → Project Layout cites "the discovery's renames".
