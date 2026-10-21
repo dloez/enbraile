@@ -142,19 +142,3 @@ The design-system cleanup moved every shared component into `src/components/`, b
 
 **Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
 **Needs the author:** does "no tool imports from another tool's folder" cover data hand-overs like `carryTeam`, or only UI?
-
-## pkmn/site: one owner for the matchup-ability table
-
-Open Sheet's Team page still lists the matchup abilities as its own "hand-kept list" of Gen 3–5 ones ([Open Sheet → The Team Page](../pkmn/site/explanation/open-sheet.md#the-team-page)) and its Decisions keep "the hand-kept Gen 3–5 matchup abilities" as a 2026-10-16 build choice, while [Team Analysis → Data](../pkmn/site/explanation/team-analysis.md#data) owns the site's one table since 2026-10-17 ("One matchup-ability table for the site, PokeGraph's").
-
-**Do:**
-- [ ] In `open-sheet.md`, replace the list with a link to Team Analysis → Data, keeping what is Open Sheet's own (read in Gen 9, only Gen 1–5 abilities occur), and rewrite the "analysis rules" decision to say the abilities come from the shared table since 2026-10-17.
-
-**Acceptance:**
-- Claude-run: `npm run gate` from `pkmn/site/`; the abilities are listed in `team-analysis.md` alone; every relative link under `docs/pkmn/site/` resolves.
-- Human-run: none.
-- Reuse: `docs/pkmn/site/explanation/team-analysis.md` → Data.
-- Neighbors: none.
-- Forbidden: changing code; changing a decision's substance.
-
-**Touches:** `docs/pkmn/site/explanation/open-sheet.md`
