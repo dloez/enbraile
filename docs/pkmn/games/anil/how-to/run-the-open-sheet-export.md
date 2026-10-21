@@ -59,10 +59,10 @@ uv run https://raw.githubusercontent.com/dloez/enbraile/main/pkmn/games/anil/exp
 
 ## Refreshing the Shipped Data
 
-Only when the game build, Wonder's data or Showdown's item list changes, the owner regenerates the data embedded in the script, reading a Wonder checkout (default `~/workspace/wonder`) and downloading Showdown's `data/items.ts`, so it needs a network connection:
+Only when the game build, the mod's data (`pkmn/games/anil/src/anil/mod/`) or Showdown's item list changes, the owner regenerates the data embedded in the script. It reads the mod and the game files in `pkmn/games/anil/game/`, which [How to Install the Game](install-the-game.md) fetches, and downloads Showdown's `data/items.ts`, so it needs a network connection:
 
 ```sh
-uv run pkmn/games/anil/generate_export_data.py [WONDER]
+uv run pkmn/games/anil/generate_export_data.py
 ```
 
 It rewrites the `DATA` dict in `export_data.py`, and nothing when the data is unchanged. Commit and push it to reach the raw URL.

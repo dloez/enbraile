@@ -11,12 +11,13 @@ from urllib.request import urlopen
 
 from rubymarshal.reader import load
 
-EXPORT = Path(__file__).with_name("export_data.py")
-DEFAULT_WONDER = Path.home() / "workspace" / "wonder"
-RANDOMLOCKE = Path("packages/randomlocke/src/randomlocke")
-GAME_DATA = Path("game/base/es-v4.14/Data")
-RANDOMIZER_CONFIG = Path(
-    "game/extracted/es-v4.14/plugins/Random Pokemon & Moves + Randomizer EX (Abilities)/000_Config.rb"
+ROOT = Path(__file__).parent
+EXPORT = ROOT / "export_data.py"
+MOD = ROOT / "src" / "anil" / "mod"
+MOD_DATA = MOD / "data"
+GAME_DATA = ROOT / "game" / "base" / "es-v4.14" / "Data"
+RANDOMIZER_CONFIG = (
+    ROOT / "game" / "extracted" / "es-v4.14" / "plugins" / "Random Pokemon & Moves + Randomizer EX (Abilities)" / "000_Config.rb"
 )
 SHOWDOWN_KINDS = ("species", "abilities", "items", "moves", "natures")
 SHOWDOWN_TYPES = {
@@ -46,9 +47,9 @@ def read_lines(path: Path) -> list[list[str]]:
     return [line.split() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def showdown_ids(wonder: Path) -> dict[str, dict[str, str]]:
+def showdown_ids() -> dict[str, dict[str, str]]:
     tables: dict[str, dict[str, str]] = {kind: {} for kind in SHOWDOWN_KINDS}
-    text = (wonder / RANDOMLOCKE / "data" / "showdown.txt").read_text(encoding="utf-8")
+    text = (MOD_DATA / "showdown.txt").read_text(encoding="utf-8")
     for line in text.splitlines():
         kind, game_id, name = line.split(" ", 2)
         tables[kind][game_id] = showdown_id(name)
@@ -72,11 +73,11 @@ def modeled_names(names: dict[str, str], tm_moves: dict[str, str], modeled: set[
     }
 
 
-def randomlocke_version(wonder: Path) -> int:
-    source = (wonder / RANDOMLOCKE / "sources.py").read_text(encoding="utf-8")
+def randomlocke_version() -> int:
+    source = (MOD / "sources.py").read_text(encoding="utf-8")
     match = re.search(r"^VERSION = (\d+)$", source, re.MULTILINE)
     if not match:
-        sys.exit("no VERSION in Wonder's randomlocke sources.py")
+        sys.exit(f"no VERSION in {MOD / 'sources.py'}")
     return int(match.group(1))
 
 
@@ -85,8 +86,8 @@ def read_marshal(path: Path) -> dict:
         return {symbol(key): value for key, value in load(handle).items()}
 
 
-def fixed_abilities(wonder: Path, species: dict, named: dict[str, str]) -> dict[str, dict[str, list[str]]]:
-    config = (wonder / RANDOMIZER_CONFIG).read_text(encoding="utf-8")
+def fixed_abilities(species: dict, named: dict[str, str]) -> dict[str, dict[str, list[str]]]:
+    config = RANDOMIZER_CONFIG.read_text(encoding="utf-8")
     match = re.search(r"SPECIES_WITHOUT_RANDOM_ABS\s*=\s*\[([^\]]*)\]", config)
     if not match:
         sys.exit(f"no SPECIES_WITHOUT_RANDOM_ABS in {RANDOMIZER_CONFIG}")
@@ -131,14 +132,13 @@ def evolutions(species: dict, allowed: set[str]) -> dict[str, list[list]]:
     return evolutions
 
 
-def build(wonder: Path) -> dict:
-    showdown = showdown_ids(wonder)
-    data_dir = wonder / RANDOMLOCKE / "data"
-    mod_types = {line[0]: line[1:] for line in read_lines(data_dir / "types.txt")}
-    allowed = {line[0] for line in read_lines(data_dir / "species.txt")}
-    species = read_marshal(wonder / GAME_DATA / "species.dat")
-    items = read_marshal(wonder / GAME_DATA / "items.dat")
-    moves = read_marshal(wonder / GAME_DATA / "moves.dat")
+def build() -> dict:
+    showdown = showdown_ids()
+    mod_types = {line[0]: line[1:] for line in read_lines(MOD_DATA / "types.txt")}
+    allowed = {line[0] for line in read_lines(MOD_DATA / "species.txt")}
+    species = read_marshal(GAME_DATA / "species.dat")
+    items = read_marshal(GAME_DATA / "items.dat")
+    moves = read_marshal(GAME_DATA / "moves.dat")
     tm_moves = {
         game_id: symbol(attribute(item, "move"))
         for game_id, item in items.items()
@@ -146,10 +146,10 @@ def build(wonder: Path) -> dict:
     }
     showdown["items"] = modeled_names(showdown["items"], tm_moves, modeled_items())
     return {
-        "randomlocke_version": randomlocke_version(wonder),
+        "randomlocke_version": randomlocke_version(),
         "showdown": showdown,
         "types": species_types(species, mod_types, showdown["species"]),
-        "fixed_abilities": fixed_abilities(wonder, species, showdown["species"]),
+        "fixed_abilities": fixed_abilities(species, showdown["species"]),
         "pockets": {game_id: attribute(item, "pocket") for game_id, item in items.items()},
         "tm_moves": tm_moves,
         "move_types": {game_id: symbol(attribute(move, "type")).lower() for game_id, move in moves.items()},
@@ -188,8 +188,7 @@ def render(data: dict) -> str:
 
 
 def main() -> None:
-    wonder = Path(sys.argv[1]).expanduser() if len(sys.argv) > 1 else DEFAULT_WONDER
-    data = build(wonder)
+    data = build()
     script = EXPORT.read_text(encoding="utf-8")
     if not BLOCK.search(script):
         sys.exit(f"no DATA block in {EXPORT}")
@@ -201,7 +200,7 @@ def main() -> None:
         f"Randomlocke version {data['randomlocke_version']}; Showdown IDs: {counts}; "
         f"{len(data['types'])} species-form types, {len(data['fixed_abilities'])} with fixed abilities, {len(data['pockets'])} item pockets, "
         f"{len(data['tm_moves'])} TM moves, {len(data['move_types'])} move types, {len(data['evolutions'])} species with "
-        f"evolutions; written to {EXPORT}"
+        f"evolutions; {'written to' if updated != script else 'unchanged:'} {EXPORT}"
     )
 
 

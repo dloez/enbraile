@@ -24,24 +24,6 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 **After:** pkmn: give series 1 its rulebook and record games against series
 **Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
 
-## pkmn/games/anil: generate the export's data from the repo
-
-`generate_export_data.py` reads the mod's data and version from `src/anil/mod/` and the game from `game/base/es-v4.14/`, so no Wonder checkout is needed ([Reuse](anil-tooling-discovery.md#reuse)).
-
-**Do:**
-- [ ] Point `generate_export_data.py` at the in-repo paths; drop the Wonder argument.
-- [ ] Regenerate `export_data.py`; update `docs/pkmn/games/anil/how-to/run-the-open-sheet-export.md` and every doc citing "Wonder's data" for the export.
-
-**Acceptance:**
-- Claude-run: `uv run pkmn/games/anil/generate_export_data.py`; `git diff --stat pkmn/games/anil/export_data.py` shows no data change against the Wonder-generated one; `grep -n wonder pkmn/games/anil/generate_export_data.py` prints nothing.
-- Human-run: run the export on your save as the how-to says; the file opens in Open Sheet as before.
-- Reuse: the mod's `data/` and `sources.py` in `src/anil/mod/`.
-- Neighbors: none.
-- Forbidden: moving `export_data.py` (players run it from its raw GitHub URL).
-
-**Touches:** `pkmn/games/anil/generate_export_data.py`, `pkmn/games/anil/export_data.py`, `docs/pkmn/games/anil/`
-**After:** pkmn/games/anil: install the game with the Randomlocke mod
-
 ## pkmn/games/anil: launch the game with the bridge and read its state
 
 `anil install --harness` adds the bridge; `anil run` launches the game paused under it, and `anil state`, `eval`, `stack`, `shot`, `rng`, `control`, `speed`, `snapshot save|restore|list`, `replay` and `stop` work against it ([Surfaces](anil-tooling-discovery.md#surfaces)).
