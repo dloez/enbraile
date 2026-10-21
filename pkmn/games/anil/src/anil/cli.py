@@ -9,6 +9,24 @@ import click
 
 from anil.bridge.client import BridgeError
 from anil.bridge.protocol import Role, SpeedPreset
+from anil.harness import calc
+from anil.harness.battle import BattleChanges, BattleResult, continue_battle
+from anil.harness.battle import fight as battle_fight
+from anil.harness.battle import item as battle_item
+from anil.harness.battle import run as battle_run
+from anil.harness.battle import store as battle_store
+from anil.harness.battle import switch as battle_switch
+from anil.harness.calc import (
+    BattleCalc,
+    Chance,
+    DamageRange,
+    HitsToKO,
+    KnockOut,
+    MoveCalc,
+    Order,
+    Span,
+    ThreatCalc,
+)
 from anil.harness.changes import StateChanges
 from anil.harness.check import CheckError, run_gamedb_check
 from anil.harness.dialog import DialogResult, continue_dialog, interact
@@ -27,6 +45,7 @@ from anil.harness.gamedb import (
 from anil.harness.gamedb import counts as gamedb_counts
 from anil.harness.gamedb import species as gamedb_species
 from anil.harness.investigate import InvestigateError, Session, attach
+from anil.harness.knowledge import STORY, KnowledgeView
 from anil.harness.launch import (
     DEFAULT_CLOCK,
     LOG_FORMAT,
@@ -81,10 +100,19 @@ from anil.harness.showdown import export_party
 from anil.harness.snapshot import SnapshotError, SnapshotInfo, list_snapshots
 from anil.harness.snapshot import restore as restore_snapshot
 from anil.harness.snapshot import save as save_snapshot
-from anil.harness.state import ID_SEPARATOR, GameState, StateError, read_state
+from anil.harness.state import (
+    ID_SEPARATOR,
+    Battle,
+    GameState,
+    StateError,
+    read_badges,
+    read_battle,
+    read_reveals,
+    read_state,
+)
 from anil.harness.storage import OpError, parse_op, pc
 from anil.harness.world import WorldError, counts, open_world, world_path
-from anil.install.builds import BUILDS, DEFAULT_BUILD
+from anil.install.builds import BUILDS, DEFAULT_BUILD, Build
 from anil.install.deploy import DeployError, deploy
 from anil.install.game_files import GameFilesError, fetch
 from anil.install.windows import InteropError
@@ -876,6 +904,313 @@ def menu_pc(ops: tuple[str, ...]) -> None:
     except OpError as error:
         raise click.UsageError(str(error)) from error
     show_menu(lambda driver: pc(driver, parsed, click.echo))
+
+
+@anil.group()
+@BUILD_OPTION
+@click.pass_context
+def battle(context: click.Context, build_name: str) -> None:
+    context.obj = BUILDS[build_name]
+
+
+@battle.command("continue")
+@click.pass_obj
+def battle_continue(build: Build) -> None:
+    show_battle(build, lambda driver: continue_battle(driver, click.echo))
+
+
+@battle.command("fight")
+@click.argument("move")
+@click.option("--target", type=click.IntRange(0, 5), default=None)
+@click.pass_obj
+def battle_fight_command(build: Build, move: str, target: int | None) -> None:
+    show_battle(build, lambda driver: battle_fight(driver, move.upper(), target, click.echo))
+
+
+@battle.command("run")
+@click.pass_obj
+def battle_run_command(build: Build) -> None:
+    show_battle(build, lambda driver: battle_run(driver, click.echo))
+
+
+@battle.command("switch")
+@click.argument("slot", type=click.IntRange(0, 5))
+@click.pass_obj
+def battle_switch_command(build: Build, slot: int) -> None:
+    show_battle(build, lambda driver: battle_switch(driver, slot, click.echo))
+
+
+@battle.command("item")
+@click.argument("item")
+@click.option("--pokemon", type=click.IntRange(0, 5), default=None)
+@click.option("--move", default=None)
+@click.option("--target", type=click.IntRange(0, 5), default=None)
+@click.pass_obj
+def battle_item_command(
+    build: Build, item: str, pokemon: int | None, move: str | None, target: int | None
+) -> None:
+    named = None if move is None else move.upper()
+    show_battle(
+        build,
+        lambda driver: battle_item(driver, item.upper(), pokemon, named, target, click.echo),
+    )
+
+
+@battle.command("store")
+@click.argument("place")
+@click.option(
+    "--bag/--keep-item",
+    default=None,
+    help="Whether the held item of the Pokémon sent to a box goes to the bag.",
+)
+@click.pass_obj
+def battle_store_command(build: Build, place: str, bag: bool | None) -> None:
+    slot = store_place(place)
+    show_battle(build, lambda driver: battle_store(driver, slot, bag, click.echo))
+
+
+@battle.command("calc")
+@click.pass_obj
+def battle_calc_command(build: Build) -> None:
+    connection = battle_gamedb(build)
+    try:
+        with closing(connection), drive(Settings(), "anil battle") as driver:
+            found = read_battle(driver.session).value
+            lines = calc_lines(battle_calc(connection, driver.session, found))
+    except INVESTIGATION_ERRORS as error:
+        raise click.ClickException(str(error)) from error
+    for line in lines:
+        click.echo(line)
+
+
+def store_place(place: str) -> int | None:
+    if place.lower() == "pc":
+        return None
+    if place.isdigit() and int(place) < 6:
+        return int(place)
+    raise click.UsageError(f"PLACE is 'pc' or a party slot from 0 to 5, not {place!r}")
+
+
+BATTLE_SUCCESS = frozenset({"finished", "decision"})
+COMMAND_DECISION = "command"
+
+
+def battle_gamedb(build: Build) -> sqlite3.Connection:
+    try:
+        return open_gamedb(build, Settings())
+    except (GameDbError, OSError) as error:
+        raise click.ClickException(str(error)) from error
+
+
+def show_battle(build: Build, verb: Callable[[Driver], BattleResult]) -> None:
+    connection = battle_gamedb(build)
+    try:
+        with closing(connection), drive(Settings(), "anil battle") as driver:
+            result = verb(driver)
+            annotation = None
+            decision = result.decision
+            if (
+                decision is not None
+                and decision.kind == COMMAND_DECISION
+                and result.battle_after is not None
+            ):
+                annotation = battle_calc(connection, driver.session, result.battle_after)
+    except INVESTIGATION_ERRORS as error:
+        raise click.ClickException(str(error)) from error
+    for line in battle_lines(result) + calc_lines(annotation):
+        click.echo(line)
+    if result.outcome not in BATTLE_SUCCESS:
+        raise SystemExit(1)
+
+
+def battle_calc(
+    connection: sqlite3.Connection, session: Session, found: Battle | None
+) -> BattleCalc | str | None:
+    if found is None:
+        return None
+    view = KnowledgeView(STORY, connection)
+    try:
+        known = view.battle(found, read_reveals(session).value)
+        return calc.annotate(connection, known, read_badges(session), view.random(session))
+    except Exception as error:
+        logging.getLogger("harness.calc").exception("the damage calc failed")
+        return f"the damage calc failed: {type(error).__name__}: {error}"
+
+
+def calc_lines(annotation: BattleCalc | str | None) -> list[str]:
+    if annotation is None:
+        return []
+    if isinstance(annotation, str):
+        return [f"  calc: {annotation}"]
+    lines = ["  calc:"]
+    for own in annotation.ours:
+        lines.append(f"    battler {own.battler}, ours:")
+        lines += [f"      {move_calc_text(move)}" for move in own.moves]
+    for foe in annotation.foes:
+        lines.append(f"    battler {foe.battler}, foe:")
+        lines += [f"      not modelled: {name}" for name in foe.not_modelled]
+        lines += [f"      {threat_calc_text(threat)}" for threat in foe.threats]
+    return lines
+
+
+def move_calc_text(found: MoveCalc) -> str:
+    spread = f" (spread over {list(found.targets)})" if found.spread else ""
+    parts = [f"{found.move} -> battler {found.target}{spread}"]
+    if found.damage is not None:
+        parts.append(damage_text(found.damage))
+    if found.hits_to_ko is not None:
+        parts.append(hits_text(found.hits_to_ko))
+    parts.append(f"accuracy {chance_text(found.accuracy.chance)}")
+    if found.critical is not None:
+        parts.append(f"crit {chance_text(found.critical.chance)}")
+    if found.order is not None:
+        parts.append(order_text(found.order))
+    named = (
+        *found.accuracy.not_modelled,
+        *(() if found.critical is None else found.critical.not_modelled),
+        *(() if found.order is None else found.order.not_modelled),
+        *(() if found.hits_to_ko is None else found.hits_to_ko.not_modelled),
+    )
+    return "; ".join(parts) + not_modelled_text(named)
+
+
+def threat_calc_text(found: ThreatCalc) -> str:
+    parts = [
+        f"{found.source} {found.move} -> battler {found.target}",
+        damage_text(found.damage),
+        hits_text(found.hits_to_ko),
+        f"accuracy {chance_text(found.accuracy.chance)}",
+    ]
+    if found.order is not None:
+        parts.append(order_text(found.order))
+    named = (
+        *found.accuracy.not_modelled,
+        *found.hits_to_ko.not_modelled,
+        *(() if found.order is None else found.order.not_modelled),
+    )
+    return "; ".join(parts) + not_modelled_text(named)
+
+
+def damage_text(found: DamageRange) -> str:
+    if found.immune is not None:
+        return f"{found.type} {found.category}, immune: {found.immune}"
+    if found.fails:
+        return f"{found.type} {found.category}, fails"
+    text = (
+        f"{found.type} {found.category} x{found.effectiveness:g}, "
+        f"{span_text(found.damage)} HP ({span_text(found.percent)}%), "
+        f"crit {span_text(found.crit_damage)} HP ({span_text(found.crit_percent)}%)"
+    )
+    if found.hits != Span.exact(1):
+        text += f", {span_text(found.hits)} hits"
+    if found.recoil is not None:
+        text += f", recoil {span_text(found.recoil)} HP"
+    if found.crash is not None:
+        text += f", crash {span_text(found.crash)} HP"
+    if found.substitute is not None:
+        text += f", substitute {found.substitute} HP"
+    for risk in found.risks:
+        note = f", {risk.note}" if risk.note else ""
+        text += f", if {risk.name}: {span_text(risk.damage)} HP ({span_text(risk.percent)}%){note}"
+    return text + not_modelled_text(found.not_modelled)
+
+
+def hits_text(found: HitsToKO) -> str:
+    return f"KO in {knock_out_text(found.plain)} hits ({knock_out_text(found.crit)} all crits)"
+
+
+def knock_out_text(found: KnockOut) -> str:
+    if found.fewest is None:
+        return "no"
+    if found.most is None:
+        return f"{found.fewest}+"
+    if found.fewest == found.most:
+        return str(found.fewest)
+    return f"{found.fewest}-{found.most}"
+
+
+def order_text(found: Order) -> str:
+    room = ", trick room" if found.trick_room else ""
+    reasons = f" ({', '.join(found.reasons)})" if found.reasons else ""
+    return (
+        f"first: {found.first}{reasons}, priority {span_text(found.user_priority)} "
+        f"vs {span_text(found.target_priority)}, speed {span_text(found.user_speed)} "
+        f"vs {span_text(found.target_speed)}{room}"
+    )
+
+
+def span_text(found: Span) -> str:
+    if found.low == found.high:
+        return str(found.low)
+    return f"{found.low}-{found.high}"
+
+
+def chance_text(found: Chance) -> str:
+    low, high = f"{found.low:.1%}", f"{found.high:.1%}"
+    return low if low == high else f"{low}-{high}"
+
+
+def not_modelled_text(named: tuple[str, ...]) -> str:
+    unique = list(dict.fromkeys(named))
+    return f" [not modelled: {', '.join(unique)}]" if unique else ""
+
+
+def battle_lines(result: BattleResult) -> list[str]:
+    lines = [
+        f"tick {result.tick}: {result.outcome}: {result.reason}",
+        (
+            f"  {len(result.transcript)} lines over {result.tick - result.started} ticks, "
+            f"{len(result.events)} events"
+        ),
+    ]
+    decision = result.decision
+    if decision is not None:
+        lines.append(
+            f"  decision: {decision.kind} for battler {decision.battler} on turn {decision.turn}, "
+            f"{decision.prompt!r}: {decision.commands}"
+        )
+        if decision.kind == "full_party":
+            held = ", ".join(f"slot {slot} {item}" for slot, item in decision.held.items())
+            lines.append(
+                f"    caught {decision.caught} holding {decision.caught_item}; "
+                f"party slots {decision.slots}, holding {held or 'nothing'}"
+            )
+        elif decision.kind != COMMAND_DECISION:
+            lines.append(f"    party slots that can come in: {decision.slots}")
+        lines += [
+            f"    move {move.id} ({move.name}) {move.pp}/{move.total_pp} PP"
+            for move in decision.moves
+        ]
+    if result.outcome in ("handoff", "stuck", "refused"):
+        context = result.context
+        screen = f" ({context.screen})" if context.screen else ""
+        lines.append(f"  context {context.name}{screen} at {context.frame}")
+        lines += [f"  payload {payload}" for payload in context.payloads]
+    if result.outcome == "stuck":
+        lines += [f"  frame {frame}" for frame in result.frames]
+    return lines + battle_changes_lines(result.battle_changes) + changes_lines(result.changes)
+
+
+def battle_changes_lines(changes: BattleChanges) -> list[str]:
+    if changes.empty:
+        return []
+    lines = ["  battle changes:"]
+    for name, value in (
+        ("turn", changes.turn),
+        ("weather", changes.weather),
+        ("terrain", changes.terrain),
+    ):
+        if value is not None:
+            lines.append(f"    {name}: {value.before} -> {value.after}")
+    for battler in changes.battlers:
+        lines.append(f"    battler {battler.index}: {battler.change} {battler.species}")
+        lines += [
+            f"      {name}: {value.before} -> {value.after}"
+            for name, value in battler.fields.items()
+        ]
+    if changes.ended:
+        lines.append("    the battle ended")
+    return lines
 
 
 def parse_orders(items: tuple[str, ...]) -> list[tuple[str, int]]:

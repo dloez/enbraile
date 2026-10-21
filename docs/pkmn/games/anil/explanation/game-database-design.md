@@ -14,7 +14,7 @@ What the game loads is not what its files hold. The mod restores the official ty
 
 In: the core battle data, the trainers and the locations listed above, and the live reads of what this run's randomizer has rolled, for its own side, its opponents and its TM marts ([Live Reads](#live-reads)).
 
-Out: damage and threat calculation, the rules engine, megas (the Randomlocke bans them), Shadow Pokémon, contests, battle facilities and cups, the phone, berry plants, ribbons, dungeons and Pokémon metrics: the first two are other harness parts that consume these lookups (Damage Calc Design (Wonder: `docs/subsystems/harness/explanation/damage-calc-design.md`), Rules Engine Design (Wonder: `docs/subsystems/harness/explanation/rules-engine-design.md`)), and the Randomlocke never uses the rest. Wild encounter slots stay in the world cache that navigation reads ([Navigation Design](navigation-design.md)).
+Out: damage and threat calculation, the rules engine, megas (the Randomlocke bans them), Shadow Pokémon, contests, battle facilities and cups, the phone, berry plants, ribbons, dungeons and Pokémon metrics: the first two are other harness parts that consume these lookups ([Damage Calc Design](damage-calc-design.md), Rules Engine Design (Wonder: `docs/subsystems/harness/explanation/rules-engine-design.md`)), and the Randomlocke never uses the rest. Wild encounter slots stay in the world cache that navigation reads ([Navigation Design](navigation-design.md)).
 
 The database never makes the game roll anything early: a trainer's team, a map's wild table or a species' learnset is read only once the game has rolled it on its own, and before then only its PBS base data is known. A fact an opponent keeps hidden until it shows it in battle is tagged `opponent_hidden`.
 

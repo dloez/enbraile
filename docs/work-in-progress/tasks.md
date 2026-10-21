@@ -23,24 +23,6 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 **Touches:** `docs/pkmn/series/1/`, `docs/work-in-progress/tasks.md`
 **Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
 
-## pkmn/games/anil: fight battles with the damage calc
-
-`anil battle …` plays any in-game battle one command at a time, with the damage calc in its results ([Surfaces](anil-tooling-discovery.md#surfaces)).
-
-**Do:**
-- [ ] Copy `harness/{battle,calc,knowledge,team}.py` and their CLI commands, as they are apart from the renames.
-- [ ] Docs: Wonder's battle layer and damage calc designs into `docs/pkmn/games/anil/explanation/`.
-
-**Acceptance:**
-- Claude-run: the gate; from a snapshot at a wild battle, `uv run anil battle fight <move>` prints the calc and the battle diff.
-- Human-run: watch the move play in the game window.
-- Reuse: Wonder's modules, copied.
-- Neighbors: `src/anil/harness/menu.py`.
-- Forbidden: the agent's battle policy or pilots.
-
-**Touches:** `pkmn/games/anil/src/`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-**After:** pkmn/games/anil: walk, talk and use the menus
-
 ## pkmn/games/anil: guard and audit the series rules
 
 `anil rules check …`, `audit` and `freeze` refuse and audit actions against the rules, with the bridge's rules hooks, without the egg guard ([Data, Secrets and Config](anil-tooling-discovery.md#data-secrets-and-config)).

@@ -61,7 +61,7 @@ In `event` and `transition` the step presses nothing and advances up to `WAIT_TI
 
 ### Handoff
 
-A handoff stops on the first tick a battle exists (`AnilBridge.battle`, set by the `pbStartBattle` hook), before any battle text, and on the first tick of any `menu`, `special`, `unknown` or battle context, touching nothing. Everything in a battle, its intro text included, belongs to the battle layer, whose `continue_battle` drives it on (Battle Layer Design (Wonder: `docs/subsystems/harness/explanation/battle-layer-design.md`)). An `unknown` stack is logged to `unknown_contexts.jsonl`; screens met while verifying got [context table](../reference/runtime.md#context-table) lines.
+A handoff stops on the first tick a battle exists (`AnilBridge.battle`, set by the `pbStartBattle` hook), before any battle text, and on the first tick of any `menu`, `special`, `unknown` or battle context, touching nothing. Everything in a battle, its intro text included, belongs to the battle layer, whose `continue_battle` drives it on ([Battle Layer Design](battle-layer-design.md)). An `unknown` stack is logged to `unknown_contexts.jsonl`; screens met while verifying got [context table](../reference/runtime.md#context-table) lines.
 
 ## Transcript
 

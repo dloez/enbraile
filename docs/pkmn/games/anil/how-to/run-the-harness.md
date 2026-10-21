@@ -1,6 +1,6 @@
 # How to Run the Harness
 
-Launch Pokémon Añil under the bridge, read its state, take snapshots, play it by hand or drive it, walk, talk and use its menus, look up its game data, and replay a session. How it works is in [Runtime Design](../explanation/runtime-design.md); facts verified on the game are in [Runtime Reference](../reference/runtime.md).
+Launch Pokémon Añil under the bridge, read its state, take snapshots, play it by hand or drive it, walk, talk and use its menus, fight its battles with the damage calc, look up its game data, and replay a session. How it works is in [Runtime Design](../explanation/runtime-design.md); facts verified on the game are in [Runtime Reference](../reference/runtime.md).
 
 ## Prerequisites
 
@@ -80,13 +80,23 @@ uv run anil interact 4 5
 
 The world cache and the game database are built from `game/` on first use and rebuilt when the build, the reader or the mod changes; `uv run anil world` and `uv run anil db` build and count them (`--rebuild` forces it). `uv run anil db species PIKACHU`, `move`, `ability`, `item`, `type`, `status`, `trainer-type`, `trainer`, `matchup` and `locations` look facts up; with a game running, `uv run anil db random` reads what the randomizer has rolled, `uv run anil db check` compares the database with the live game, and `uv run anil nav check` compares the passability port with the game's own on the current map ([Game Database Design](../explanation/game-database-design.md)).
 
-### 7. Stop
+### 7. Fight battles
+
+```sh
+uv run anil battle continue
+uv run anil battle fight TACKLE
+uv run anil battle calc
+```
+
+When a walk or a dialog ends `interrupted` or `handoff` at a battle, `anil battle continue` drives it to the next point that needs you: a command menu, a replacement, a prompt chain or the battle's end. Each verb answers one decision: `fight MOVE [--target N]`, `run`, `switch SLOT`, `item ITEM [--pokemon SLOT] [--move MOVE] [--target N]` and `store pc|SLOT [--bag|--keep-item]` for a catch with the party full; `uv run anil battle --help` lists them. Each prints the lines it saw, the outcome, the battle's changes and the state changes, and exits 1 unless it ended `finished` or `decision`. At a command menu it then prints the damage calc: for each of our moves the damage into each target with and without critical hits, the hits to KO, the accuracy, the critical hit's chance and who moves first, and each foe's revealed and assumed threats; `anil battle calc` prints it without acting. A prompt chain mid-battle (a level-up, a new move, the naming screen after a catch) is `anil menu continue`'s, after which `anil battle continue` goes on. `--build NAME` goes before the verb. The layer and the calc are in [Battle Layer Design](../explanation/battle-layer-design.md) and [Damage Calc Design](../explanation/damage-calc-design.md).
+
+### 8. Stop
 
 ```sh
 uv run anil stop
 ```
 
-### 8. Replay a session (optional)
+### 9. Replay a session (optional)
 
 ```sh
 uv run anil replay SESSION
@@ -100,6 +110,7 @@ relaunches the session from its starting save or snapshot, replays every recorde
 - After `uv run anil control take`, the title screen moves and the game answers the keyboard.
 - `uv run anil snapshot save t && uv run anil snapshot restore t` on the overworld prints both lines with the same hash.
 - `uv run anil nav check` and `uv run anil db check` exit 0 on the overworld, and `uv run anil go --map M` to a neighbouring map prints `arrived`.
+- In a wild battle, `uv run anil battle fight MOVE` at the command menu prints the turn's lines, the battle changes and, at the next command menu, a `calc:` block whose damage range holds the HP the foe lost.
 - `uv run anil stop` prints `stopped session …`, and a second `uv run anil stop` prints `no game is running`.
 
 ## Troubleshooting
