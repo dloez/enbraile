@@ -4,7 +4,7 @@ module AnilBridge
   OWNER_BUTTONS = ["DOWN", "LEFT", "RIGHT", "UP", "A", "B", "C", "X", "Y", "Z", "L", "R", "SHIFT", "CTRL", "ALT", "F5", "F6", "F7", "F8", "F9"]
   KEY_QUERIES = [:press_key, :trigger_key, :repeat_key]
   DIGEST_DEPTH = 8
-  BRIDGE_KINDS = ["advance", "input", "eval", "control", "speed", "snapshot", "restore", "event"]
+  BRIDGE_KINDS = ["advance", "input", "eval", "control", "speed", "snapshot", "restore", "event", "rules_bought", "rules_shiny"]
   NOTE_KIND = /\A[a-z][a-z_]*\z/
 
   @record = nil

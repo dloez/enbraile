@@ -12,6 +12,7 @@ PRELOAD_ORDER = (
     "anil_record.rb",
     "anil_events.rb",
     "anil_snapshot.rb",
+    "anil_rules.rb",
     "anil_bridge.rb",
 )
 VERSION_FILE = "anil_version.rb"

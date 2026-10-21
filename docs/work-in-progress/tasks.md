@@ -23,24 +23,6 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 **Touches:** `docs/pkmn/series/1/`, `docs/work-in-progress/tasks.md`
 **Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
 
-## pkmn/games/anil: guard and audit the series rules
-
-`anil rules check …`, `audit` and `freeze` refuse and audit actions against the rules, with the bridge's rules hooks, without the egg guard ([Data, Secrets and Config](anil-tooling-discovery.md#data-secrets-and-config)).
-
-**Do:**
-- [ ] Copy `harness/rules.py` without `EGG_RULE`, `egg_refusal` and any `runs` import; `wonder_rules.rb` as `anil_rules.rb`, putting `rules_bought` and `rules_shiny` back into `BRIDGE_KINDS` in `anil_record.rb` and filling the state's rules ledger; the CLI commands.
-- [ ] Docs: Wonder's rules engine design into `docs/pkmn/games/anil/explanation/`, linking series 1's rulebook.
-
-**Acceptance:**
-- Claude-run: the gate; `uv run anil rules audit` on a running game prints the ledger; `grep -n -i "egg\|wonder fight" pkmn/games/anil/src/anil/harness/rules.py` shows no egg guard.
-- Human-run: buy a banned mart item through `anil menu` and see it refused, naming the rule.
-- Reuse: Wonder's `rules.py`, copied.
-- Neighbors: `src/anil/harness/battle.py`.
-- Forbidden: `runs`, rounds, pastes, Wonder fights.
-
-**Touches:** `pkmn/games/anil/src/`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-**After:** pkmn/games/anil: fight battles with the damage calc
-
 ## pkmn/games/anil: check the mod against the live game
 
 `anil check NAME|GROUP` proves each rule of the mod on the real game, as `wonder check` does ([Surfaces](anil-tooling-discovery.md#surfaces)).
@@ -58,6 +40,24 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 
 **Touches:** `pkmn/games/anil/src/`, `docs/pkmn/games/anil/`, `CLAUDE.md`
 **After:** pkmn/games/anil: guard and audit the series rules
+
+## pkmn/games/anil: keep or drop the League guard
+
+The rules guard refuses League entry below level 75 and items inside the League ([Rules Engine Design → Coverage](../pkmn/games/anil/explanation/rules-engine-design.md#coverage)), which were Wonder's own rules; series 1's rulebook does not carry them.
+
+**Do:**
+- [ ] With the owner's answer, keep the guard and add the rules to `docs/pkmn/series/1/reference/rules.md`, or drop `LEAGUE_RULE`, `league_refusal`, `league_item_refusal` and the `league` blocks from `src/anil/harness/rules.py` and the doc's rows.
+
+**Acceptance:**
+- Claude-run: the gate; `uv run anil rules check walk --map 172` below 75 matches the answer.
+- Human-run: none.
+- Reuse: `src/anil/harness/rules.py`.
+- Neighbors: none.
+- Forbidden: deciding without the owner.
+
+**Touches:** `pkmn/games/anil/src/anil/harness/rules.py`, `docs/pkmn/games/anil/explanation/rules-engine-design.md`, `docs/pkmn/series/1/`
+**After:** pkmn: update series 1's rulebook with the latest changes
+**Needs the author:** are "everyone at 75 before the League" and "no items inside the League" series 1 rules? Keep the guard (and write them into the rulebook) or drop it?
 
 ## pkmn/games/anil: bring Añil's game facts over
 

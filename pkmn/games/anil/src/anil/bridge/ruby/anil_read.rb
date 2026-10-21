@@ -248,6 +248,7 @@ module AnilBridge
     install_event_hooks
     install_stamp_hooks
     install_save_refusal
+    install_rules_hooks
   end
 
   def self.read(request)

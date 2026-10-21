@@ -341,6 +341,7 @@ class Ledger(BaseModel):
     bought: dict[str, int]
     shinies: list[int]
     sleep: dict[int, str]
+    frozen: list[int]
 
 
 class GameState(BaseModel):
@@ -785,12 +786,13 @@ def reveals(raw: Raw) -> Reveals:
 
 def ledger(raw: Raw) -> Ledger:
     if raw is None:
-        return Ledger(bought={}, shinies=[], sleep={})
+        return Ledger(bought={}, shinies=[], sleep={}, frozen=[])
     store = dict(entries(raw))
     return Ledger(
         bought=dict(entries(store["bought"])) if store.get("bought") is not None else {},
         shinies=list(store.get("shinies") or []),
         sleep=dict(entries(store["sleep"])) if store.get("sleep") is not None else {},
+        frozen=list(store.get("frozen") or []),
     )
 
 

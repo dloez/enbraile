@@ -96,6 +96,35 @@ from anil.harness.random import (
     read_random,
 )
 from anil.harness.replay import ReplayError, replay
+from anil.harness.rules import (
+    Action,
+    Audit,
+    BattleItem,
+    Buy,
+    ContinueBattle,
+    ContinueDialog,
+    ContinueMenu,
+    Fight,
+    Fly,
+    GiveItem,
+    Interact,
+    Pc,
+    RulesError,
+    Run,
+    Save,
+    Sell,
+    SetExpShare,
+    Store,
+    Swap,
+    Switch,
+    TakeItem,
+    UseItem,
+    Vial,
+    Walk,
+    guard,
+    run_audit,
+    run_freeze,
+)
 from anil.harness.showdown import export_party
 from anil.harness.snapshot import SnapshotError, SnapshotInfo, list_snapshots
 from anil.harness.snapshot import restore as restore_snapshot
@@ -1353,6 +1382,227 @@ def changes_lines(changes: StateChanges) -> list[str]:
         ("self switch", changes.self_switches),
     ):
         lines += [f"    {title} {flag.id}: {flag.before} -> {flag.after}" for flag in found]
+    return lines
+
+
+@anil.group("rules")
+@BUILD_OPTION
+@click.pass_context
+def rules(context: click.Context, build_name: str) -> None:
+    try:
+        connection = open_gamedb(BUILDS[build_name], Settings())
+    except (GameDbError, OSError) as error:
+        raise click.ClickException(str(error)) from error
+    context.obj = context.with_resource(closing(connection))
+
+
+@rules.group("check")
+def rules_check() -> None:
+    pass
+
+
+def show_verdict(connection: sqlite3.Connection, action: Action) -> None:
+    try:
+        verdict = ask("anil rules check", lambda session: guard(session, connection, action))
+    except (RulesError, GameDbError) as error:
+        raise click.ClickException(str(error)) from error
+    if verdict.allowed:
+        click.echo("allowed")
+        return
+    click.echo(f"refused by {verdict.rule}: {verdict.reason}")
+    raise SystemExit(1)
+
+
+@rules_check.command("buy")
+@click.argument("items", nargs=-1, required=True)
+@click.pass_obj
+def rules_check_buy(connection: sqlite3.Connection, items: tuple[str, ...]) -> None:
+    show_verdict(connection, Buy(tuple(parse_orders(items))))
+
+
+@rules_check.command("use")
+@click.argument("item")
+@click.argument("slot", type=click.IntRange(0, 5))
+@click.pass_obj
+def rules_check_use(connection: sqlite3.Connection, item: str, slot: int) -> None:
+    show_verdict(connection, UseItem(item.upper(), slot))
+
+
+@rules_check.command("give")
+@click.argument("item")
+@click.argument("slot", type=click.IntRange(0, 5))
+@click.pass_obj
+def rules_check_give(connection: sqlite3.Connection, item: str, slot: int) -> None:
+    show_verdict(connection, GiveItem(item.upper(), slot))
+
+
+@rules_check.command("take")
+@click.argument("slot", type=click.IntRange(0, 5))
+@click.pass_obj
+def rules_check_take(connection: sqlite3.Connection, slot: int) -> None:
+    show_verdict(connection, TakeItem(slot))
+
+
+@rules_check.command("swap")
+@click.argument("a", type=click.IntRange(0, 5))
+@click.argument("b", type=click.IntRange(0, 5))
+@click.pass_obj
+def rules_check_swap(connection: sqlite3.Connection, a: int, b: int) -> None:
+    show_verdict(connection, Swap(a, b))
+
+
+@rules_check.command("vial")
+@click.pass_obj
+def rules_check_vial(connection: sqlite3.Connection) -> None:
+    show_verdict(connection, Vial())
+
+
+@rules_check.command("pc")
+@click.argument("ops", nargs=-1, required=True)
+@click.pass_obj
+def rules_check_pc(connection: sqlite3.Connection, ops: tuple[str, ...]) -> None:
+    try:
+        parsed = tuple(parse_op(op) for op in ops)
+    except OpError as error:
+        raise click.UsageError(str(error)) from error
+    show_verdict(connection, Pc(parsed))
+
+
+@rules_check.command("interact")
+@click.argument("map_id", metavar="MAP", type=int)
+@click.argument("event_id", metavar="EVENT", type=int)
+@click.pass_obj
+def rules_check_interact(connection: sqlite3.Connection, map_id: int, event_id: int) -> None:
+    show_verdict(connection, Interact(map_id, event_id))
+
+
+@rules_check.command("walk")
+@click.option("--map", "map_id", type=int, default=None, help="The map the walk ends on.")
+@click.pass_obj
+def rules_check_walk(connection: sqlite3.Connection, map_id: int | None) -> None:
+    show_verdict(connection, Walk(map_id))
+
+
+@rules_check.command("dialog")
+@click.pass_obj
+def rules_check_dialog(connection: sqlite3.Connection) -> None:
+    show_verdict(connection, ContinueDialog())
+
+
+@rules_check.command("menu")
+@click.pass_obj
+def rules_check_menu(connection: sqlite3.Connection) -> None:
+    show_verdict(connection, ContinueMenu())
+
+
+@rules_check.command("save")
+@click.pass_obj
+def rules_check_save(connection: sqlite3.Connection) -> None:
+    show_verdict(connection, Save())
+
+
+@rules_check.command("sell")
+@click.argument("items", nargs=-1, required=True)
+@click.pass_obj
+def rules_check_sell(connection: sqlite3.Connection, items: tuple[str, ...]) -> None:
+    show_verdict(connection, Sell(tuple(parse_orders(items))))
+
+
+@rules_check.command("exp-share")
+@click.argument("slot", type=click.IntRange(0, 5))
+@click.argument("state", type=click.Choice(["on", "off"]))
+@click.pass_obj
+def rules_check_exp_share(connection: sqlite3.Connection, slot: int, state: str) -> None:
+    show_verdict(connection, SetExpShare(slot, state == "on"))
+
+
+@rules_check.command("fly")
+@click.argument("town")
+@click.pass_obj
+def rules_check_fly(connection: sqlite3.Connection, town: str) -> None:
+    show_verdict(connection, Fly(town))
+
+
+@rules_check.command("battle")
+@click.pass_obj
+def rules_check_battle(connection: sqlite3.Connection) -> None:
+    show_verdict(connection, ContinueBattle())
+
+
+@rules_check.command("run")
+@click.pass_obj
+def rules_check_run(connection: sqlite3.Connection) -> None:
+    show_verdict(connection, Run())
+
+
+@rules_check.command("switch")
+@click.argument("slot", type=click.IntRange(0, 5))
+@click.pass_obj
+def rules_check_switch(connection: sqlite3.Connection, slot: int) -> None:
+    show_verdict(connection, Switch(slot))
+
+
+@rules_check.command("item")
+@click.argument("item")
+@click.pass_obj
+def rules_check_item(connection: sqlite3.Connection, item: str) -> None:
+    show_verdict(connection, BattleItem(item.upper()))
+
+
+@rules_check.command("fight")
+@click.argument("move")
+@click.pass_obj
+def rules_check_fight(connection: sqlite3.Connection, move: str) -> None:
+    show_verdict(connection, Fight(move.upper()))
+
+
+@rules_check.command("store")
+@click.argument("place")
+@click.pass_obj
+def rules_check_store(connection: sqlite3.Connection, place: str) -> None:
+    show_verdict(connection, Store(store_place(place)))
+
+
+@rules.command("audit")
+@click.pass_obj
+def rules_audit(connection: sqlite3.Connection) -> None:
+    try:
+        found = ask("anil rules audit", lambda session: run_audit(session, connection))
+    except (RulesError, GameDbError) as error:
+        raise click.ClickException(str(error)) from error
+    for line in audit_lines(found):
+        click.echo(line)
+    if any(obligation.blocking for obligation in found.obligations):
+        raise SystemExit(1)
+
+
+@rules.command("freeze")
+@click.pass_obj
+def rules_freeze(connection: sqlite3.Connection) -> None:
+    try:
+        found = ask("anil rules freeze", lambda session: run_freeze(session, connection))
+    except (RulesError, GameDbError) as error:
+        raise click.ClickException(str(error)) from error
+    if not found.verdict.allowed:
+        click.echo(f"refused by {found.verdict.rule}: {found.verdict.reason}")
+        raise SystemExit(1)
+    click.echo(f"gym {found.gym}'s paste frozen")
+    click.echo(found.paste or "", nl=False)
+
+
+def audit_lines(found: Audit) -> list[str]:
+    lines = [f"tick {found.tick}: {len(found.obligations)} obligations"]
+    for obligation in found.obligations:
+        blocks = ", ".join(obligation.blocks) if obligation.blocks else "nothing"
+        lines.append(f"  {obligation.duty} ({obligation.rule}): {obligation.reason}")
+        lines.append(f"    blocks {blocks}")
+    lines.append(f"shinies {len(found.shinies)} counted: {found.shinies}")
+    if found.excess:
+        lines.append(f"  past the 6th: {found.excess}")
+    bought = ", ".join(f"{item} {count}" for item, count in found.competitive.items())
+    lines.append(f"competitive items bought: {bought or 'none'}")
+    pending = f", gym {found.pending}'s due" if found.pending is not None else ", none due"
+    lines.append(f"badges {found.badges}, pastes frozen {found.frozen}{pending}")
     return lines
 
 
