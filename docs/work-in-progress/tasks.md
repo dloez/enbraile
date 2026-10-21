@@ -4,24 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn: give series 1 its rulebook and record games against series
-
-Series 1's rulebook and format move from Wonder into `docs/pkmn/series/1/`, without Wonder fights, and the layout learns what a series is ([Games and Series](anil-tooling-discovery.md#games-and-series)).
-
-**Do:**
-- [ ] Copy Wonder's `docs/domains/competition/` (`reference/rules.md`, `reference/dictionary.md`, `explanation/competition-format.md`) into `docs/pkmn/series/1/`, rewritten for the group: every Wonder fight, Wonder's run and Wonder's role removed; an egg opens on a league win only. Game-only facts it cites point to Wonder's docs until the game facts entry lands.
-- [ ] `docs/general/explanation/repository-layout.md`: add series (`docs/pkmn/series/<n>/`, numbered, one rulebook per series, a game may be replayed) and the dated decisions from the discovery doc; close "Shared Pokémon material before Wonder moves" in `open-questions.md` as [Recording Decisions](../general/how-to/write-documentation.md#recording-decisions) says.
-- [ ] `docs/pkmn/index.md`: a Series section with series 1; drop "Wonder" from the category's description where it implies the group's rules.
-
-**Acceptance:**
-- Claude-run: `grep -rni wonder docs/pkmn/series/` prints nothing; every link in the new docs resolves.
-- Human-run: read `docs/pkmn/series/1/reference/rules.md` and confirm it is the rulebook you play, eggs opening on league wins.
-- Reuse: Wonder's competition docs, copied, never moved.
-- Neighbors: `docs/pkmn/games/anil/` for folder shape.
-- Forbidden: editing anything in `~/workspace/wonder`; a separate game rulebook.
-
-**Touches:** `docs/pkmn/series/`, `docs/pkmn/index.md`, `docs/general/explanation/repository-layout.md`, `docs/work-in-progress/open-questions.md`
-
 ## pkmn: update series 1's rulebook with the latest changes
 
 The group's rules have changed since Wonder's rulebook was written; series 1's rulebook takes those changes.
@@ -176,10 +158,10 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 Wonder's verified facts about Añil (`docs/domains/game/`) move into `docs/pkmn/games/anil/`, so the tooling's docs cite this repo ([Games and Series](anil-tooling-discovery.md#games-and-series)).
 
 **Do:**
-- [ ] Copy `docs/domains/game/reference/*` and `explanation/game-setup.md` into `docs/pkmn/games/anil/`, dropping rules (now in series 1) and agent references; repoint every "Wonder: `docs/domains/game/…`" citation in `docs/pkmn/`.
+- [ ] Copy `docs/domains/game/reference/*` and `explanation/game-setup.md` into `docs/pkmn/games/anil/`, dropping rules (now in series 1) and agent references; repoint every "Wonder: `docs/domains/game/…`" and ``source: `docs/domains/game/…` `` citation in `docs/pkmn/`, including series 1's rulebook.
 
 **Acceptance:**
-- Claude-run: `grep -rn "Wonder:" docs/pkmn/` prints nothing; every relative link under `docs/pkmn/` resolves.
+- Claude-run: `grep -rn "Wonder:\|docs/domains/game" docs/pkmn/` prints nothing (series 1's rulebook cites game facts as ``source: `docs/domains/game/…` ``); every relative link under `docs/pkmn/` resolves.
 - Human-run: none.
 - Reuse: Wonder's game docs, copied.
 - Neighbors: `docs/pkmn/games/anil/reference/open-sheet-json.md`.
