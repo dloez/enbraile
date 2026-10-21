@@ -23,30 +23,12 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 **Touches:** `docs/pkmn/series/1/`, `docs/work-in-progress/tasks.md`
 **Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
 
-## pkmn/games/anil: launch the game with the bridge and read its state
-
-`anil install --harness` adds the bridge; `anil run` launches the game paused under it, and `anil state`, `eval`, `stack`, `shot`, `rng`, `showdown`, `control`, `speed`, `snapshot save|restore|list`, `replay` and `stop` work against it ([Surfaces](anil-tooling-discovery.md#surfaces)).
-
-**Do:**
-- [ ] Copy `packages/bridge` into `src/anil/bridge/` without `wonder_run.rb` and its hooks, renamed (`AnilBridge`, `anil_*.rb`); deploy's bridge layer behind `--harness`, with frame sync off.
-- [ ] Copy `harness/{settings,lock,launch,investigate,context,state,changes,steps,snapshot,replay,showdown}.py` into `src/anil/harness/`, without `--real`, takeover, the panel and agent settings; the CLI commands above in `src/anil/cli.py`, with `cli/state_text.py`.
-- [ ] Docs: the bridge, launch, state, snapshot and replay parts of Wonder's `runtime-design.md` and the matching facts of `domains/game/reference/runtime.md` into `docs/pkmn/games/anil/`, with `how-to/run-the-harness.md`; rewrite the decisions in `runtime-design.md` that say the bridge is not here yet ("The overlay is layered", "Frame sync stays as shipped without the bridge", "No running-game check yet"), and `--harness` in `how-to/install-the-game.md` and `pkmn/games/anil/CLAUDE.md`'s doc list.
-
-**Acceptance:**
-- Claude-run: the gate; `uv run anil install --harness`, `uv run anil run`, `uv run anil state` prints the party, `uv run anil snapshot save t && uv run anil snapshot restore t`, `uv run anil stop`.
-- Human-run: during `anil run`, the game window opens, and after `anil control` hands over, you can play it.
-- Reuse: Wonder's bridge and harness modules, copied.
-- Neighbors: `src/anil/install/`.
-- Forbidden: `panel`, `runs`, `memory`, pydantic-ai, any import of `agent` or `arena`.
-
-**Touches:** `pkmn/games/anil/src/`, `pkmn/games/anil/pyproject.toml`, `pkmn/games/anil/uv.lock`, `pkmn/games/anil/CLAUDE.md`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-
 ## pkmn/games/anil: walk, talk and use the menus
 
 `anil go`, `interact`, `dialog`, `menu …`, `world`, `nav check` and `db …` drive the game through the world, its dialogs and menus, over the game database ([Surfaces](anil-tooling-discovery.md#surfaces)).
 
 **Do:**
-- [ ] Copy `harness/{navigate,world,dialog,menu,storage,gamedb,random,progression}.py` (with their data), with their CLI commands.
+- [ ] Copy `harness/{navigate,world,dialog,menu,storage,gamedb,random,progression}.py` (with their data), with their CLI commands; `gamedb` uses `ID_SEPARATOR` from `src/anil/harness/state.py`, and replay's skip list loses the record kinds this entry brings.
 - [ ] Docs: Wonder's navigation, dialog, menu and game database designs into `docs/pkmn/games/anil/explanation/`, without agent references.
 
 **Acceptance:**
@@ -82,7 +64,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 `anil rules check …`, `audit` and `freeze` refuse and audit actions against the rules, with the bridge's rules hooks, without the egg guard ([Data, Secrets and Config](anil-tooling-discovery.md#data-secrets-and-config)).
 
 **Do:**
-- [ ] Copy `harness/rules.py` without `EGG_RULE`, `egg_refusal` and any `runs` import; `wonder_rules.rb` as `anil_rules.rb`; the CLI commands.
+- [ ] Copy `harness/rules.py` without `EGG_RULE`, `egg_refusal` and any `runs` import; `wonder_rules.rb` as `anil_rules.rb`, putting `rules_bought` and `rules_shiny` back into `BRIDGE_KINDS` in `anil_record.rb` and filling the state's rules ledger; the CLI commands.
 - [ ] Docs: Wonder's rules engine design into `docs/pkmn/games/anil/explanation/`, linking series 1's rulebook.
 
 **Acceptance:**
@@ -118,7 +100,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 Wonder's verified facts about Añil (`docs/domains/game/`) move into `docs/pkmn/games/anil/`, so the tooling's docs cite this repo ([Games and Series](anil-tooling-discovery.md#games-and-series)).
 
 **Do:**
-- [ ] Copy `docs/domains/game/reference/*` and `explanation/game-setup.md` into `docs/pkmn/games/anil/`, dropping rules (now in series 1) and agent references; repoint every "Wonder: `docs/domains/game/…`" and ``source: `docs/domains/game/…` `` citation in `docs/pkmn/`, including series 1's rulebook.
+- [ ] Copy `docs/domains/game/reference/*` and `explanation/game-setup.md` into `docs/pkmn/games/anil/`, dropping rules (now in series 1) and agent references; repoint every "Wonder: `docs/domains/game/…`" and ``source: `docs/domains/game/…` `` citation in `docs/pkmn/`, including series 1's rulebook (whose `rules.md` also cites Wonder's runtime "Bridge Start", now in `docs/pkmn/games/anil/reference/runtime.md`).
 
 **Acceptance:**
 - Claude-run: `grep -rn "Wonder:\|docs/domains/game" docs/pkmn/` prints nothing (series 1's rulebook cites game facts as ``source: `docs/domains/game/…` ``); every relative link under `docs/pkmn/` resolves.

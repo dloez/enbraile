@@ -10,6 +10,8 @@ from pathlib import Path, PureWindowsPath
 
 from pydantic import BaseModel
 
+from anil.bridge.sources import bridge_hash, preload_scripts, ruby_sources, version_source
+from anil.harness.lock import live_lock
 from anil.install.builds import Build
 from anil.install.game_files import PROJECT_ROOT, GamePaths, Reporter, remove_tree
 from anil.install.windows import to_linux, user_profile
@@ -40,6 +42,7 @@ class DeployStamp(BaseModel):
     build: str
     base_complete: bool
     commit: str | None = None
+    bridge_hash: str | None = None
     overlay: dict[str, str] = {}
     deployed_at: str | None = None
 
@@ -78,24 +81,37 @@ def project_commit() -> str:
 
 
 def deploy(
-    build: Build, paths: GamePaths, settings: Settings, *, full: bool, report: Reporter
+    build: Build,
+    paths: GamePaths,
+    settings: Settings,
+    *,
+    full: bool,
+    harness: bool,
+    report: Reporter,
 ) -> DeployStamp:
+    running = live_lock(settings.lock_file)
+    if running is not None:
+        raise DeployError(
+            f"a game is running (session {running.session}); stop it with `anil stop` first"
+        )
     target = game_dir(settings)
     stamp = read_stamp(target)
     if full or stamp is None or stamp.build != build.name or not stamp.base_complete:
         copy_base(build, paths.base, target, stamp, report)
     else:
         report(f"base for {build.name} already in {target}")
-    overlay = write_overlay(paths.base, target, report)
+    overlay = write_overlay(build, paths.base, target, harness=harness, report=report)
     stamp = DeployStamp(
         build=build.name,
         base_complete=True,
         commit=project_commit(),
+        bridge_hash=bridge_hash() if harness else None,
         overlay=overlay,
         deployed_at=datetime.now(UTC).isoformat(timespec="seconds"),
     )
     write_stamp(target, stamp)
-    report(f"stamp written: build {stamp.build}, commit {stamp.commit}")
+    bridge = f", bridge {stamp.bridge_hash}" if harness else ", no bridge"
+    report(f"stamp written: build {stamp.build}, commit {stamp.commit}{bridge}")
     return stamp
 
 
@@ -122,6 +138,14 @@ def mod_layer() -> OverlayLayer:
     return OverlayLayer("randomlocke", mod_files(), mod_preload_scripts())
 
 
+def bridge_layer(build: Build) -> OverlayLayer:
+    sources = ruby_sources()
+    bridge_files = {source.name: source.content for source in sources}
+    version = version_source(build.name, sources)
+    bridge_files[version.name] = version.content
+    return OverlayLayer("bridge", bridge_files, preload_scripts())
+
+
 def overlay_files(
     base: Path, layers: list[OverlayLayer], *, frame_sync_off: bool
 ) -> dict[str, bytes]:
@@ -137,8 +161,11 @@ def overlay_files(
     return files
 
 
-def write_overlay(base: Path, target: Path, report: Reporter) -> dict[str, str]:
-    files = overlay_files(base, [mod_layer()], frame_sync_off=False)
+def write_overlay(
+    build: Build, base: Path, target: Path, *, harness: bool, report: Reporter
+) -> dict[str, str]:
+    layers = [mod_layer(), bridge_layer(build)] if harness else [mod_layer()]
+    files = overlay_files(base, layers, frame_sync_off=harness)
     written = 0
     for name, content in files.items():
         path = target / name

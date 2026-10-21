@@ -34,10 +34,11 @@ The first run copies the archive into `game/archives/`, unpacks it into `game/ba
 - `--full` copies the base to the working copy again, for a broken working copy.
 - `--no-cache` ignores `game/` and copies the archive from Downloads afresh.
 - `--build` picks another build from the build table; `es-v4.14` is the only one.
+- `--harness` adds the bridge, so `anil run` can launch and drive the game ([How to Run the Harness](run-the-harness.md)); a later install without it stops preloading the bridge, whose files stay in the working copy unused.
 
 ### 3. Start a new game
 
-Open `Game.exe` in the working copy and start a **new** game. Saves go to Añil's own folder, `%APPDATA%\Pokemon Anil`, beside any other Añil install's saves; the new game saves itself once into a new slot and never over an existing one.
+Open `Game.exe` in the working copy and start a **new** game. After an install with `--harness`, a game started this way refuses to save; play it through `anil run` instead. Saves go to Añil's own folder, `%APPDATA%\Pokemon Anil`, beside any other Añil install's saves; the new game saves itself once into a new slot and never over an existing one.
 
 ## Verification
 

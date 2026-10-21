@@ -1,13 +1,14 @@
 [project]
 name = "anil"
 version = "0.1.0"
-description = "Installs Pokémon Añil with the group's Randomlocke mod"
+description = "Installs, runs and drives Pokémon Añil with the group's Randomlocke mod"
 authors = [
     { name = "David Lopez Saez", email = "40007435+dloez@users.noreply.github.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.1",
+    "pillow>=12.3.0",
     "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
     "rubymarshal>=1.2.10",
