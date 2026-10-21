@@ -22,7 +22,7 @@ The group's rules have changed since Wonder's rulebook was written; series 1's r
 
 **Touches:** `docs/pkmn/series/1/`, `docs/work-in-progress/tasks.md`
 **After:** pkmn: give series 1 its rulebook and record games against series
-**Needs the author:** which rules changed, and how?
+**Needs the author:** which rules changed, and how? Also: are the two League rules dated 2026-10-17 (the opponent's box sheet is known before a match; clauses mean Smogon's) settled? They came from uncommitted edits in Wonder's working tree. And with eggs opening on league wins only, at most 8 of the mod's 16 eggs can open: does the egg count change?
 
 ## pkmn/games/anil: install the game with the Randomlocke mod
 
