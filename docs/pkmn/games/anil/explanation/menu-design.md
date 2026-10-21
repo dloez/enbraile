@@ -170,4 +170,4 @@ Each call writes `menu` entries to `record.jsonl` through `note`, with a `stage`
 
 ## Open
 
-- Who owns each context outside dialog's and this layer's: see Pending design points (Wonder: `docs/work-in-progress/open-questions.md` → Pending design points) (context ownership).
+- None.

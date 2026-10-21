@@ -76,24 +76,6 @@ The rules guard refuses League entry below level 75 and items inside the League 
 
 **Touches:** `pkmn/games/anil/src/anil/harness/rules.py`, `docs/pkmn/games/anil/explanation/rules-engine-design.md`
 
-## pkmn/games/anil: clear stale and Wonder-only lines from the runtime and layer docs
-
-Lines landed in sequence that no longer hold, or that point at Wonder's agent, which the scope leaves out ([Scope Edges](anil-tooling-discovery.md#scope-edges)).
-
-**Do:**
-- [ ] `docs/pkmn/games/anil/reference/runtime.md`: the intro still lists `go`, `interact`, `dialog`, `menu`, `battle` and `db` among the commands `anil` "does not have yet" (leave `check` to the check entry); drop the Move and faint lines' "The run memory reads a death's cause…" sentence (run memory is the agent's); Sound's "The design is in Runtime Design → Panel (Wonder…)" points at [Runtime Design → Sound](../pkmn/games/anil/explanation/runtime-design.md#sound) instead.
-- [ ] The `## Open` items of `dialog-design.md`, `menu-design.md` and `navigation-design.md`, and navigation's "as the pending design point on context ownership … recommends", cite Wonder's open questions (Pending design points), whose part left open is the agent's (planner wake-up, goals); drop them, `## Open` reading "None."
-- [ ] Runtime Design → Project Layout's "Wonder Guard, Wonder Skin and Wonder Room keep their names" says `grep -rn -i wonder pkmn/games/anil/src` prints the mod data and `anil_events.rb` "and nothing else"; `calc.py` (`WONDERGUARD`, `WonderRoom`, `WONDERSKIN`, `WONDER_SKIN_ACCURACY`) has since joined them.
-
-**Acceptance:**
-- Claude-run: `grep -rn "run memory\|Pending design points\|→ Panel (Wonder" docs/pkmn/games/anil/` prints nothing; `grep -rn -i wonder pkmn/games/anil/src` prints only what Runtime Design names; every relative link under `docs/pkmn/` resolves.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: `docs/pkmn/games/anil/explanation/rules-engine-design.md`.
-- Forbidden: changing code; dropping a fact verified on the game.
-
-**Touches:** `docs/pkmn/games/anil/reference/runtime.md`, `docs/pkmn/games/anil/explanation/runtime-design.md`, `docs/pkmn/games/anil/explanation/dialog-design.md`, `docs/pkmn/games/anil/explanation/menu-design.md`, `docs/pkmn/games/anil/explanation/navigation-design.md`
-
 ## pkmn/games/anil: bring the knowledge view's design over
 
 `anil.harness.knowledge` came over whole with the calc, but its design is still only Wonder's (`docs/subsystems/harness/explanation/knowledge-view-design.md`), which Damage Calc Design and Battle Layer Design cite as "Knowledge View Design (Wonder: …)"; the harness design belongs under `docs/pkmn/` ([Goal and Success](anil-tooling-discovery.md#goal-and-success)).

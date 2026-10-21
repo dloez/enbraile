@@ -133,4 +133,4 @@ Each call writes `dialog` entries to `record.jsonl` through `note`, with a `stag
 
 ## Open
 
-- Who owns each context the dialog layer hands off, beyond the menu layer's prompt chains and screens ([Menu Design](menu-design.md)) — see Pending design points (Wonder: `docs/work-in-progress/open-questions.md` → Pending design points) (context ownership).
+- None.

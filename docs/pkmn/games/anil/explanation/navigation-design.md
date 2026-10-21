@@ -56,7 +56,7 @@ A walk ends:
 - `unreachable`, naming the missing edge type, the unmet condition, the closed story gate or the story scene a route would cross ([Story Gates](#story-gates)), or a Cut tree the route crosses, with how to cut it (`tree_blocks`);
 - `refused` when the context is not the overworld at the start, checked before the live world read (at the title there is no player to read), so it carries no position.
 
-Navigation never presses through anything it did not start. Interruptions belong to their owners (battle subsystem, menu scripts), as the pending design point on context ownership (Wonder: `docs/work-in-progress/open-questions.md` → Pending design points) recommends. Calling it again replans from wherever the player is.
+Navigation never presses through anything it did not start. Interruptions belong to their owners (battle subsystem, menu scripts). Calling it again replans from wherever the player is.
 
 ## Commands
 
@@ -187,4 +187,4 @@ Each call writes `nav` entries to `record.jsonl` through the bridge's `note` req
 
 ## Open
 
-- Who owns each interruption navigation reports — see Pending design points (Wonder: `docs/work-in-progress/open-questions.md` → Pending design points) (context ownership).
+- None.
