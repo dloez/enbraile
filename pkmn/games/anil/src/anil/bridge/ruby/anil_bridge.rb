@@ -308,7 +308,7 @@ module AnilBridge
     raise ArgumentError, "eval needs a source string" unless source.is_a?(String)
     started = @tick
     begin
-      value = eval(source, TOPLEVEL_BINDING, "anil_eval", 1)
+      value = eval(source, TOPLEVEL_BINDING.eval("proc { binding }").call, "anil_eval", 1)
       result = { "class" => value.class.name, "inspect" => value.inspect }
     rescue Exception => raised
       record_eval(client, started, source, nil, "#{raised.class}: #{raised.message}")

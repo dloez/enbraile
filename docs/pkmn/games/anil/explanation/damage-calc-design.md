@@ -40,7 +40,7 @@ In every order the `user` is our battler, so `user` first means we move first. O
 
 ## Checks
 
-`wonder check calc` holds the Python formula against the game's `pbCalcDamage` at every roll, with and without a critical hit, for every case it builds, and the accuracy, critical-hit chance, turn order, targets and end of round against the game's draws and classes; `wonder check calc-moves` holds the assumed moves against the randomizer's draws (Wonder's `harness.check`). Each prints the Python and the game's values per case. Neither is in `anil.harness.check` yet.
+`anil check calc` holds the Python formula against the game's `pbCalcDamage` at every roll, with and without a critical hit, for every case it builds, and the accuracy, critical-hit chance, turn order, targets and end of round against the game's draws and classes; `anil check calc-moves` holds the assumed moves against the randomizer's draws (`anil.harness.check`, [Randomlocke Design → How the Checks Run](randomlocke-design.md#how-the-checks-run)). Each prints the Python and the game's values per case.
 
 ## Observability
 

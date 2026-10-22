@@ -28,7 +28,7 @@ from anil.harness.calc import (
     ThreatCalc,
 )
 from anil.harness.changes import StateChanges
-from anil.harness.check import CheckError, run_gamedb_check
+from anil.harness.check import CHECK_NAMES, CheckError, run_checks, run_gamedb_check
 from anil.harness.dialog import DialogResult, continue_dialog, interact
 from anil.harness.drive import DriveError, Driver, control, drive, set_speed
 from anil.harness.gamedb import (
@@ -1604,6 +1604,22 @@ def audit_lines(found: Audit) -> list[str]:
     pending = f", gym {found.pending}'s due" if found.pending is not None else ", none due"
     lines.append(f"badges {found.badges}, pastes frozen {found.frozen}{pending}")
     return lines
+
+
+@anil.command("check")
+@click.argument("names", nargs=-1, required=True, type=click.Choice(CHECK_NAMES))
+def check_command(names: tuple[str, ...]) -> None:
+    try:
+        results = run_checks(Settings(), list(names), click.echo)
+    except (CheckError, *INVESTIGATION_ERRORS, ReplayError, LaunchError) as error:
+        raise click.ClickException(str(error)) from error
+    failed = [result.name for result in results if not result.passed]
+    click.echo(
+        f"{len(results) - len(failed)} of {len(results)} checks passed"
+        + (f"; failed: {', '.join(failed)}" if failed else "")
+    )
+    if failed:
+        raise SystemExit(1)
 
 
 @anil.group()

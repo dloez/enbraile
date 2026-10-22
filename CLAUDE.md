@@ -14,7 +14,7 @@
 
 - **No comments or docstrings**, except machine-read directives (linter, type-checker and formatter pragmas, shebangs). Refactor or move rationale to `docs/`.
 - **Greenfield:** no backwards-compatibility shims or deprecation layers.
-- **No tests**, in any category or project: no test files, test runners or test steps in a gate. Check a change by running it (owner, 2026-10-20).
+- **No tests**, in any category or project: no test files, test runners or test steps in a gate. Check a change by running it (owner, 2026-10-20). Añil's `anil check` is such a run, not a test runner: it drives the real game and prints what it saw ([Randomlocke Design → How the Checks Run](docs/pkmn/games/anil/explanation/randomlocke-design.md#how-the-checks-run)).
 - Throwaway Python scripts: `uv run --with <pkg> python3 script.py`. Never `pip install`.
 
 ## Keeping Docs Current
@@ -33,7 +33,7 @@ Workflow: `/scope` → scope doc + tasks → `/next-task` or `/work-queue`.
 
 ## Commit & PR Conventions
 
-- Lowercase, single-line, present tense: `<area>: <short description>` (e.g. `pkmn: add randomlocke rules`). Body only if genuinely complex.
+- Lowercase, single-line, present tense: `<category>: <short description>` (e.g. `pkmn: add randomlocke rules`). The prefix is the category alone, never a project or game path (`pkmn:`, not `pkmn/games/anil:`). Body only if genuinely complex.
 - No agent signatures or co-author trailers, in commits or PRs.
 - Never force push.
 - Never commit secrets.

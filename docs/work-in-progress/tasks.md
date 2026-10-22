@@ -4,25 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/games/anil: check the mod against the live game
-
-`anil check NAME|GROUP` proves each rule of the mod on the real game, as `wonder check` does ([Surfaces](anil-tooling-discovery.md#surfaces)).
-
-**Do:**
-- [ ] Copy the rest of Wonder's `harness/check.py` into `src/anil/harness/check.py` (which already holds the game-database check) with its groups, dropping checks of anything not migrated (the egg guard, real runs, the panel).
-- [ ] Docs: `docs/pkmn/games/anil/how-to/check-the-mod.md`; Wonder's randomlocke-design "How the Checks Run" section and its Checks decisions into `docs/pkmn/games/anil/explanation/randomlocke-design.md`; the root `CLAUDE.md`'s no-tests rule names `anil check` as a tool that runs the game, not a test runner.
-- [ ] Update the lines that say `anil check` is not here yet: Damage Calc Design → Checks ("Neither is in `anil.harness.check` yet", and its `wonder check calc` / `calc-moves`), Runtime Design → Project Layout (the `anil.harness.check` seam) and the Runtime Reference's intro (`check` among the commands `anil` does not have yet).
-
-**Acceptance:**
-- Claude-run: the gate; `uv run anil check all` passes, with the time it took; compare its check list with `wonder check all`'s and name every check dropped.
-- Human-run: none beyond reading the dropped-check list.
-- Reuse: Wonder's `check.py`, copied.
-- Neighbors: `src/anil/harness/rules.py`.
-- Forbidden: pytest or any runner; wiring `anil check` into the gate.
-
-**Touches:** `pkmn/games/anil/src/`, `docs/pkmn/games/anil/`, `CLAUDE.md`
-**Needs the author:** the unattended pass of 2026-10-21 was stopped by Claude Code's auto-mode permission check after copying Wonder's 8,935-line `check.py` (later edits, lint and even reads in the worktree were denied as "Untrusted Code Integration" / "Irreversible Local Destruction"). Its partial copy, renamed but not linted, is on branch `wq/anil-check`. Allow this work (or run it attended with `/next-task`), and say whether to build on that branch or start over.
-
 ## pkmn/games/anil: keep or drop the League guard
 
 The rules guard refuses League entry below level 75 and items inside the League ([Rules Engine Design → Coverage](../pkmn/games/anil/explanation/rules-engine-design.md#coverage)), which were Wonder's own rules; series 1's rulebook does not carry them.
@@ -55,7 +36,6 @@ Once no entry links [Añil Tooling: Discovery](anil-tooling-discovery.md), its l
 - Forbidden: changing code; turning a scope answer the owner did not give into a decision.
 
 **Touches:** `docs/work-in-progress/anil-tooling-discovery.md`, `docs/work-in-progress/index.md`, `docs/index.md`, `docs/pkmn/`, `docs/general/`
-**After:** pkmn/games/anil: check the mod against the live game
 
 ## pkmn/site: decide on Team Analysis's explanatory legends
 
