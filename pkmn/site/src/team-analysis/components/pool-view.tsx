@@ -307,7 +307,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
               </tbody>
             </table>
           </div>
-          <span className="text-xs text-muted-foreground">Pearson r across the pool: blue rise together, orange trade off.</span>
+          <span className="text-xs text-muted-foreground">Pearson r across the pool: green rise together, cyan trade off.</span>
         </Panel>
       </div>
       <PoolTable pool={pool} team={team} />

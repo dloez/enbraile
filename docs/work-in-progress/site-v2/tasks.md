@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## The pool's correlation key and the team graph's labels follow the new look
-
-The restyle left two pieces on the old look. The pool view's correlation key reads "blue rise together, orange trade off" (`src/team-analysis/components/pool-view.tsx:310`), but its cells now shade positive values with `chart-2` (green) and negative ones with `primary` (cyan) (`pool-view.tsx:299`, `src/index.css`). The team graph's node labels ask for "IBM Plex Sans" (`src/components/analysis/team-graph.tsx:164`), a face the restyle removed, so Cytoscape falls back to the browser's sans-serif instead of Nunito. Two site doc lines also trail the code: [The pkmn Site](../../pkmn/site/explanation/site.md) → Hosting and Deploys says "The site logs nothing of its own" and names only Vercel's build and deployment logs, where the API's failures land in Vercel's function logs ([Logs?](discovery.md#observability-and-verification)); its Stack section says `tsconfig.api.json` covers `api/` and `scripts/`, and it covers `shared/` too.
-
-**Do:**
-- [ ] The correlation key names the colours its cells draw, still a key and not an explanation ([Design System](../../pkmn/site/reference/design-system.md) → No helper text).
-- [ ] The graph's label font is the site's running-text face, Nunito.
-- [ ] `site.md`: the logs line names Vercel's function logs for the API; the `tsconfig.api.json` line names `shared/`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `git grep -n "IBM Plex\|orange" -- pkmn/site/src` finds nothing; through `verify-site`, open `/team-analysis`, the Pool view, and screenshot the correlation matrix with its key, and the Graph with its node labels.
-- Human-run: none.
-- Reuse: the tokens in `src/index.css`; the font stack in its `@theme inline` (`--font-sans`).
-- Neighbors: the compare and pool legends cut to keys on 2026-10-22 (`site.md` → Decisions, "Legends are keys").
-- Forbidden: a raw colour or font name that is not the site's own; prose on how the correlation is computed.
-
-**Touches:** `pkmn/site/src/team-analysis/components/pool-view.tsx`, `pkmn/site/src/components/analysis/team-graph.tsx`, `docs/pkmn/site/explanation/site.md`
-
 ## Admins sign in and keep games on production
 
 Nothing of the server side has reached `pkmn.enbraile.vip` yet: `main` is six commits ahead of `origin/main` (2026-10-22), and `https://pkmn.enbraile.vip/api/games` answers `200` with the single-page app rather than `401`. The closed entries "Admins sign in at /admin" and "Admins create games and upload their files" left their owner-run steps and production checks undone: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 (Neon branches, the B2 bucket with its CORS rule and key, the Vercel variables, migrating each branch, `admin:create`), then step 7. Every module of the API reads its variables when it loads (`api/_lib/env.ts`, `db.ts`, `files.ts`), so a push before step 6 deploys an API whose every route fails. Several things the docs state about Vercel have only been seen locally: that `vercel.json`'s `/api/(.*)` rewrite reaches the Hono app's `/api` routes, that Vercel's function build compiles `api/index.ts` with the project's TypeScript 7 and its import from `shared/`, that `pg`'s pool holds up against Neon's pooled connection string, that a preview with `BETTER_AUTH_URL` unset signs an admin in ([site.md](../../pkmn/site/explanation/site.md) → Hosting and Deploys), and that B2 takes a browser `PUT` of a ~600 MB zip through the signed `Content-Length` and the CORS rule, from production and from a `*.vercel.app` preview.

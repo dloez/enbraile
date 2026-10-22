@@ -161,7 +161,7 @@ function style(): StylesheetJson {
         label: "data(label)",
         color: ink,
         "font-size": 11,
-        "font-family": "IBM Plex Sans, sans-serif",
+        "font-family": getComputedStyle(document.body).fontFamily,
         "text-valign": "bottom",
         "text-margin-y": 5,
         "text-outline-color": ground,
