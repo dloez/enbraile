@@ -72,7 +72,7 @@ It runs `tsc -b`, and must pass before a change is done; the site has no tests, 
 
 ### 6. Set up production (once)
 
-In the Vercel dashboard, add Neon from the Vercel Marketplace (free tier) to the project, and in Neon keep a production branch and a `dev` branch.
+In the Vercel dashboard, add Neon from the Vercel Marketplace (free tier) to the project, named `pkmn-site`, in the region `aws-eu-central-1` (Frankfurt), where `vercel.json` runs the function (`fra1`); in Neon keep a production branch and a `dev` branch. The integration may add its own `DATABASE_URL` and branch per preview: keep the variables as in the table below.
 
 In Backblaze B2, make a private bucket and an application key limited to it, with read and write access. Give the bucket a CORS rule so browsers can upload to it and download from it straight: allowed origins `https://pkmn.enbraile.vip` and `https://*.vercel.app` for previews, operations `s3_put`, `s3_get` and `s3_head`, headers `*`, exposed header `ETag`. The bucket's S3 endpoint is shown on its page (`https://s3.<region>.backblazeb2.com`), and the region is the part after `s3.`.
 
