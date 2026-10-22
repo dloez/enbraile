@@ -22,7 +22,7 @@ A category's or project's `CLAUDE.md` only adds to the root one; it never repeat
 | `docs/pkmn/games/<game>/` | One game's facts and tooling, with the same three folders |
 | `docs/pkmn/series/<n>/` | One series' rulebook: its rules, dictionary and format, with the same three folders |
 | `docs/<category>/<project>/` | One project's design, with the usual `explanation/`, `how-to/` and `reference/` folders |
-| `docs/work-in-progress/` | The one queue, open questions, scope docs and plans for everything |
+| `docs/work-in-progress/` | Work in progress for everything, laid out as the `/scope` skill says |
 
 A fact belongs to the lowest level that every reader of it shares: a rule of a series serves every Pokémon tool, so it lives in that series' rulebook, not under one project.
 
@@ -34,7 +34,7 @@ A game is the build the group plays and its tooling (`pkmn/games/<game>/`, `docs
 
 - **Docs follow Wonder's conventions** (Diataxis, dated decisions, open questions, a task queue, path-scoped rules in `.claude/rules/`), not Unlit's. **Why:** the owner's choice; Wonder is the first project to move here. _(owner, 2026-10-15)_
 - **One docs tree at the root**, organised by category and project; code folders hold no docs. Root, category and project each owning a `docs/` was rejected. _(owner, 2026-10-15; replaces the same day's per-level docs)_
-- **One work queue and one open-questions tracker** for every category and project, in `docs/work-in-progress/`. **Why:** follows from the single tree. _(settled 2026-10-15)_
+- **One work-in-progress dir for every category and project,** `docs/work-in-progress/`, laid out as the `/scope` skill's work-in-progress layout says, which this repo never restates. **Why:** the owner, so the layout changes with the skills alone and the repo, its docs and the skills never disagree. _(owner, 2026-10-22; replaces one root task queue and open-questions tracker, settled 2026-10-15)_
 - **One monorepo:** every category and project lives in the one Enbraile git repository; no project keeps a repository of its own. _(owner, 2026-10-15)_
 - **Pokémon series' files are grouped by game** in `pkmn/games/<game>/`, docs in `docs/pkmn/games/<game>/`, starting with `anil/` for the first series; shared projects such as the site stay at `pkmn/<project>/`. _(owner, 2026-10-20)_
 - **A game and a series are different things:** a game is the build and its tooling, a series one playthrough of it by the group; a game may be replayed in a later series. **Why:** the owner: "we may replay games". _(owner, 2026-10-21)_

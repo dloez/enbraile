@@ -45,7 +45,7 @@ This project uses the [Diataxis](https://diataxis.fr/) framework with three docu
 | A rule every agent session needs | `CLAUDE.md` (brief; rationale in `docs/`) |
 | A rule only work in one category or project needs | That folder's `CLAUDE.md` (brief; rationale in `docs/`) |
 | A rule that only applies to some paths | `.claude/rules/<topic>.md` with `paths:` frontmatter |
-| A milestone, scope (discovery) doc, plan, task, or open question | `docs/work-in-progress/` |
+| An idea being scoped, a task, or an open question | `docs/work-in-progress/`, laid out as the `/scope` skill says |
 
 Docs never live inside a code folder. A fact belongs to the lowest level every reader of it shares ([Repository Layout](../explanation/repository-layout.md)).
 
@@ -53,9 +53,9 @@ Docs never live inside a code folder. A fact belongs to the lowest level every r
 
 - A decision lives in the `## Decisions` section of the explanation doc that owns the topic, not in a separate log.
 - Each entry: **Decided** (what), **Why** (only if the reason is actually known — don't invent one), and the date it was settled.
-- An open item is never written as a decision, and never resolved silently in code. It goes in [Open Questions](../../work-in-progress/open-questions.md), naming its owner doc, and the owner doc links to it from its `## Open` section.
+- An open item is never written as a decision, and never resolved silently in code. It goes in `docs/work-in-progress/` as the `/scope` skill's layout says, naming its owner doc, and the owner doc links to it from its `## Open` section.
 - **Forced by evidence, not asked:** when a measurement or a verified fact leaves only one workable option, the agent records it as a dated decision in the owner doc, citing the evidence, and carries on; it never becomes an open question or a `**Needs the author:**` entry. This holds even when it widens a settled decision. The report names it so the owner can overturn it. Ask only when two or more options are really viable and choosing between them changes what the product is.
-- **Closing an open question:** ask the user, record the decision (dated) in the owner doc's `## Decisions`, remove the entry from `open-questions.md`, and fix every link that pointed at its anchor (`grep -rn '#<anchor>' docs/`).
+- **Closing an open question:** ask the user, record the decision (dated) in the owner doc's `## Decisions`, remove its entry from `docs/work-in-progress/`, and fix every link that pointed at its anchor (`grep -rn '#<anchor>' docs/`).
 - When a decision changes, rewrite the entry to say what is true now and note the date; git holds the history.
 
 ## Single Source per Fact
@@ -119,7 +119,7 @@ Each domain folder (`docs/<category>/domains/<domain>/`):
 
 ## Open
 
-- See [Open Questions](../../work-in-progress/open-questions.md#{anchor}).
+- See [{Question}](../../work-in-progress/{file}.md#{anchor}).
 ```
 
 ### how-to/*.md
@@ -144,4 +144,4 @@ Each domain folder (`docs/<category>/domains/<domain>/`):
 
 ## Work-in-Progress Lifecycle
 
-See [Work in Progress](../../work-in-progress/index.md#lifecycle).
+See [Work in Progress](../../work-in-progress/index.md).

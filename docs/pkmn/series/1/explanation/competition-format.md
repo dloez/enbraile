@@ -40,6 +40,6 @@ Players who finished the story and never lost the challenge, whether or not they
 
 ## Open
 
-- [League tie edges](../../../../work-in-progress/open-questions.md#league-tie-edges)
-- [The losers' triangular](../../../../work-in-progress/open-questions.md#the-losers-triangular)
-- [Items with the Añil map](../../../../work-in-progress/open-questions.md#items-with-the-añil-map)
+- [League tie edges](../../../../work-in-progress/backlog.md#league-tie-edges)
+- [The losers' triangular](../../../../work-in-progress/backlog.md#the-losers-triangular)
+- [Items with the Añil map](../../../../work-in-progress/backlog.md#items-with-the-añil-map)

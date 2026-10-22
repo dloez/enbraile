@@ -205,7 +205,7 @@ Its last sentence, an optional weekly fight against an AI for an egg or the next
 - **No deadline.** A match is played whenever the two players agree, always with the pokepastes frozen at its gym, so a player may be several gyms ahead in the story.
 - **No gym cap.** The story has no weekly limit on gyms; the frozen pokepastes keep the rounds fair.
 - **Points:** a Bo3 win gives 1 point, a loss 0.
-- **Ties:** on equal points, the winner of the match between the tied players ranks higher. Three tied in a loop have no rule yet ([Open Questions → League tie edges](../../../../work-in-progress/open-questions.md#league-tie-edges)).
+- **Ties:** on equal points, the winner of the match between the tied players ranks higher. Three tied in a loop have no rule yet ([Backlog → League tie edges](../../../../work-in-progress/backlog.md#league-tie-edges)).
 
 ### Pokepastes
 
@@ -246,7 +246,7 @@ The Elite Four ("Alto Mando") and the rival at the end of the story ([The Pokém
 ### The Postgame
 
 - **The islands are closed.** The postgame islands are not played. _(owner, 2026-10-22)_
-- **Items can still be searched for** with the Añil map; how has no rule yet ([Open Questions → Items with the Añil map](../../../../work-in-progress/open-questions.md#items-with-the-añil-map)). _(owner, 2026-10-22)_
+- **Items can still be searched for** with the Añil map; how has no rule yet ([Backlog → Items with the Añil map](../../../../work-in-progress/backlog.md#items-with-the-añil-map)). _(owner, 2026-10-22)_
 - **The legendary sidequest may be played until it turns to Sinnoh's legendaries.** Its Pokémon are rolled by the randomizer, so each may or may not be a legendary; the player fights each, and once it is beaten the game lets them catch it. Catching stops when the guide of the sidequest says it is time for Sinnoh's legendaries, after Deoxys. A legendary caught there falls under the legendary rule: caught, never used, and a shiny one still counts toward the 6 shinies. _(owner, 2026-10-22)_
 - **Saving and quitting to save a Pokémon is allowed in the postgame,** an exception to [Fair Play](#fair-play): a player may quit without saving and reload so that a Pokémon does not die. _(owner, 2026-10-22)_
 
@@ -261,7 +261,7 @@ The Elite Four ("Alto Mando") and the rival at the end of the story ([The Pokém
 - **Who:** the players who finished the story and did not lose the challenge. _(owner, 2026-10-02)_ Beating the League is not required: a player who never beats it still plays. _(owner, 2026-10-22)_
 - **Open sheet.** Each player exports their whole PC with the [Open Sheet export](../../../games/anil/how-to/run-the-open-sheet-export.md) (every living Pokémon with its moves, stats, items and TMs) when they decide they are done playing, and that export is their sheet for the whole tournament. Before a match each player knows the other's full sheet, and each builds a team from their own. No bans. _(owner, 2026-10-22; replaces a pokepaste made right after beating the League)_
 - **First round, seeded by league points:** first against last (1–6), second against fifth (2–5), third against fourth (3–4). First and second are placed in opposite halves of the bracket, so they can only meet in the final. Bo3, in the league's format and clauses. _(owner, 2026-10-22)_
-- **The losers' triangular.** The 3 first-round losers play a triangular ("formato triangular") among themselves, and its winner returns to the winners' bracket. _(owner, 2026-10-22)_ How the triangular is played has no rule yet ([Open Questions → The losers' triangular](../../../../work-in-progress/open-questions.md#the-losers-triangular)).
+- **The losers' triangular.** The 3 first-round losers play a triangular ("formato triangular") among themselves, and its winner returns to the winners' bracket. _(owner, 2026-10-22)_ How the triangular is played has no rule yet ([Backlog → The losers' triangular](../../../../work-in-progress/backlog.md#the-losers-triangular)).
 - **Semifinals and final.** The triangular's winner meets the winner of the lower half's first-round match (2–5); the upper half's two winners (1–6 and 3–4) meet each other; the two semifinal winners play the final. _(owner, 2026-10-22)_
 
 ### Losing the Challenge

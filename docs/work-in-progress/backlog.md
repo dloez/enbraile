@@ -1,10 +1,30 @@
-# Tasks
+# Backlog
 
-The work queue, written by `/scope` or added directly, and worked with `/next-task` (one entry) or `/work-queue` (unattended). The top entry is the highest priority. Entries are identified by heading, never numbered. Each entry ends with its scheduling lines: `**Touches:**`, the repo-relative paths it will edit (a trailing `/` for a directory, `*` to run alone), and `**After:**`, the headings of entries that must land first, separated by `;` and left out when there are none. `/work-queue` runs entries side by side when their `**Touches:**` do not overlap. Marker lines come last: an entry marked `**Needs the author:**` waits on the owner and is skipped by unattended runs, and `**Attempted once:**` records a failed unattended pass.
+Laid out as the `/scope` skill's work-in-progress layout says. An entry's heading starts with its category or project (e.g. `pkmn/site: …`).
 
-One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
+## Questions
 
-## pkmn/site: decide on Team Analysis's explanatory legends
+### League tie edges
+
+On equal league points, the winner of the match between the tied players ranks higher. Since the 5 rounds pair each opponent once (2026-10-22), only three players tied in a loop have no rule yet.
+
+Owner: [Series 1 → Competition Format](../pkmn/series/1/explanation/competition-format.md).
+
+### The losers' triangular
+
+The 3 first-round losers of series 1's final tournament play a triangular, and its winner returns to the semifinals. How it is played has no rule yet: each pair once, and in what match format; and who goes through on a three-way tie.
+
+Owner: [Series 1 → Competition Format](../pkmn/series/1/explanation/competition-format.md).
+
+### Items with the Añil map
+
+In series 1's postgame the islands are closed, but players may keep searching for items with the Añil map. How that works is to be settled with the owner.
+
+Owner: [Series 1 → Competition Format](../pkmn/series/1/explanation/competition-format.md).
+
+## Tasks
+
+### pkmn/site: decide on Team Analysis's explanatory legends
 
 Team Analysis's compare-view legends carry explanatory lines (e.g. "shaded: best switch-in below 1.00 weighted bulk"), which the site's "no helper text" rule forbids ([Design System](../pkmn/site/reference/design-system.md)). The pool view has one of the same kind: "Shading is the percentile in the pool. L legendary, M mythical." (`src/team-analysis/components/pool-view.tsx`).
 
@@ -21,7 +41,7 @@ Team Analysis's compare-view legends carry explanatory lines (e.g. "shaded: best
 **Touches:** `pkmn/site/src/team-analysis/`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/reference/design-system.md`
 **Needs the author:** do the compare legends' explanations stay as an exception to "no helper text", or go? And the pool view's shading line?
 
-## pkmn/site: decide whether tools may import each other's data
+### pkmn/site: decide whether tools may import each other's data
 
 The design-system cleanup moved every shared component into `src/components/`, but Open Sheet still imports `carryTeam` from `src/team-analysis/drafts.ts` to hand a team over to Team Analysis. The cleanup read "no tool imports from another tool's folder" as covering UI only ([site.md → Decisions](../pkmn/site/explanation/site.md#decisions)), and that decision ("One shared version of each UI piece") is written as settled 2026-10-21 although the owner has not answered.
 
@@ -37,3 +57,9 @@ The design-system cleanup moved every shared component into `src/components/`, b
 
 **Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
 **Needs the author:** does "no tool imports from another tool's folder" cover data hand-overs like `carryTeam`, or only UI?
+
+## Ideas
+
+### pkmn/site: series hubs
+
+The home page lists the series, each series has a hub at `/series/<n>`, and Open Sheet and Team Analysis sit under it ([Site → Decisions](../pkmn/site/explanation/site.md#decisions)). What a hub shows is not decided.

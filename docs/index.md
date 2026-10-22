@@ -10,7 +10,7 @@ This documentation follows the [Diataxis](https://diataxis.fr/) framework. We us
 - **How-to** (`how-to/`): Problem-oriented. Step-by-step recipes.
 - **Reference** (`reference/`): Information-oriented. Quick-lookup facts, dictionaries, rules.
 
-Decisions live, dated, in the `## Decisions` section of the owning explanation doc; undecided items live in [Open Questions](work-in-progress/open-questions.md). Each fact has one owning doc. Before writing or editing docs, read [How to Write Documentation](general/how-to/write-documentation.md).
+Decisions live, dated, in the `## Decisions` section of the owning explanation doc; undecided items live in [Work in Progress](work-in-progress/index.md). Each fact has one owning doc. Before writing or editing docs, read [How to Write Documentation](general/how-to/write-documentation.md).
 
 ## General
 
@@ -27,8 +27,6 @@ Decisions live, dated, in the `## Decisions` section of the owning explanation d
 
 ## Work in Progress
 
-Open questions, scope docs, context, and the work queue. Non-authoritative — see [lifecycle rules](work-in-progress/index.md).
+Open questions, scoped ideas and their tasks. Non-authoritative — see [Work in Progress](work-in-progress/index.md).
 
-- [Open Questions](work-in-progress/open-questions.md)
-- [Tasks](work-in-progress/tasks.md) — the work queue
-- [Open Sheet: Origin Conversation](work-in-progress/open-sheet-origin-conversation.md) — the Wonder session where the export was first discussed
+- [Backlog](work-in-progress/backlog.md) — open questions, one-off tasks and unscoped ideas
