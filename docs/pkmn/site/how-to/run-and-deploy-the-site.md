@@ -41,6 +41,7 @@ Copy `.env.example` to `.env.local` (untracked). Its values fit the local stack;
 - `BETTER_AUTH_URL`: `http://localhost:5173`, the Vite dev URL.
 - `API_PORT`: the port the API listens on behind Vite, 8787.
 - `DEV_SIGN_IN`: `1` turns on the dev-only test sign-in ([How to Verify the Site](verify-the-site.md)). Never set it anywhere but a local `.env.local`.
+- `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`: the file store; the example's point at the local MinIO and its `pkmn-site` bucket. With a second stack's `MINIO_PORT`, match the port in `S3_ENDPOINT`.
 
 Then apply the migrations and seed the known state:
 
@@ -49,7 +50,7 @@ npm run db:migrate
 npm run seed
 ```
 
-`seed` makes the admin `admin` with the password `admin-password` and the test players Red, Blue and Leaf, skipping any already there, and refuses a `DATABASE_URL` whose host is not `localhost` or `127.0.0.1`. To make a real admin instead, `npm run admin:create <name>` asks for the password twice; it refuses a name already taken and a password under 8 characters. Every script reads `.env.local`; a variable already set in the shell wins over it.
+`seed` makes the admin `admin` with the password `admin-password`, the test players Red, Blue and Leaf, and the game "Pokémon Añil + Randomlocke" with a small stand-in zip put in the bucket, skipping any already there, and refuses a `DATABASE_URL` or `S3_ENDPOINT` whose host is not `localhost` or `127.0.0.1`. To make a real admin instead, `npm run admin:create <name>` asks for the password twice; it refuses a name already taken and a password under 8 characters. Every script reads `.env.local`; a variable already set in the shell wins over it.
 
 After changing `api/_lib/schema.ts`, write the next migration with `npm run db:generate`, check the migrations with `npx drizzle-kit check`, and commit the new files in `drizzle/`. A migration only goes forward: to undo a change, generate another.
 
@@ -59,7 +60,7 @@ After changing `api/_lib/schema.ts`, write the next migration with `npm run db:g
 npm run dev
 ```
 
-Vite starts the API itself (`scripts/dev-api.ts` under `tsx watch`, on `API_PORT`, restarting on changes), proxies `/api` to it, prints the local URL, and stops the API when it stops. Open Sheet is at `/open-sheet`, and admins sign in at `/admin`. Imports and teams are stored in that browser's IndexedDB for the dev origin.
+Vite starts the API itself (`scripts/dev-api.ts` under `tsx watch`, on `API_PORT`, restarting on changes), proxies `/api` to it, prints the local URL, and stops the API when it stops. Open Sheet is at `/open-sheet`, admins sign in at `/admin`, and the games are at `/admin/games`. Imports and teams are stored in that browser's IndexedDB for the dev origin.
 
 ### 5. Run the gate
 
@@ -71,13 +72,19 @@ It runs `tsc -b`, and must pass before a change is done; the site has no tests, 
 
 ### 6. Set up production (once)
 
-In the Vercel dashboard, add Neon from the Vercel Marketplace (free tier) to the project, and in Neon keep a production branch and a `dev` branch. Set the project's environment variables:
+In the Vercel dashboard, add Neon from the Vercel Marketplace (free tier) to the project, and in Neon keep a production branch and a `dev` branch.
+
+In Backblaze B2, make a private bucket and an application key limited to it, with read and write access. Give the bucket a CORS rule so browsers can upload to it and download from it straight: allowed origins `https://pkmn.enbraile.vip` and `https://*.vercel.app` for previews, operations `s3_put`, `s3_get` and `s3_head`, headers `*`, exposed header `ETag`. The bucket's S3 endpoint is shown on its page (`https://s3.<region>.backblazeb2.com`), and the region is the part after `s3.`.
+
+Set the project's environment variables:
 
 | Variable | Production | Preview |
 |----------|------------|---------|
 | `DATABASE_URL` | the production branch's pooled connection string | the `dev` branch's |
 | `BETTER_AUTH_SECRET` | a random secret | another random secret |
 | `BETTER_AUTH_URL` | `https://pkmn.enbraile.vip` | unset |
+| `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET` | the B2 bucket's endpoint, region and name | the same |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | the application key's ID and key | the same |
 
 `API_PORT` and `DEV_SIGN_IN` stay unset in Vercel: without `DEV_SIGN_IN` the test sign-in does not exist. Then migrate each branch and make the admins, running step 3's `db:migrate` and `admin:create` with that branch's `DATABASE_URL` set in the shell.
 
@@ -94,5 +101,6 @@ Use Instant Rollback on the previous production deployment in the Vercel dashboa
 - `https://pkmn.enbraile.vip` serves the home page, and `/open-sheet` the tool.
 - `/admin` signs an admin in with the password `admin:create` set, refuses a wrong one with "Wrong username or password", and signs out.
 - `curl -s -o /dev/null -w '%{http_code}' 'https://pkmn.enbraile.vip/api/auth/dev/sign-in?username=x'` prints `404`.
+- At `/admin/games`, an admin creates a game, uploads its zip, sees its size and date after a reload, and downloads a file of the same size; `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/games` prints `401`.
 - `curl -sI https://pkmn.enbraile.vip` shows `server: Vercel`.
 - After a push, the page loads a new `/assets/index-*.js` bundle carrying the change.

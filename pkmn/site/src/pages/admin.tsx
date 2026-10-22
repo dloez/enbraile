@@ -1,14 +1,24 @@
-import { type FormEvent, useState } from "react";
-import { buttonClass, fieldClass, Panel } from "@/components/controls";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
+import { type FormEvent, type ReactNode, useState } from "react";
+import { buttonClass, fieldClass, liftCardClass, Panel } from "@/components/controls";
 import { listPage, messageWidth } from "@/components/page";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-export function AdminPage() {
+export function AdminGate({ children }: { children: ReactNode }) {
   const { data, isPending } = authClient.useSession();
   if (isPending) return <main className={listPage} />;
-  if (data?.user.admin) return <AdminHome />;
+  if (data?.user.admin) return children;
   return <AdminSignIn />;
+}
+
+export function AdminPage() {
+  return (
+    <AdminGate>
+      <AdminHome />
+    </AdminGate>
+  );
 }
 
 function AdminHome() {
@@ -29,6 +39,12 @@ function AdminHome() {
         >
           Sign out
         </button>
+      </div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <Link to="/admin/games" className={cn(liftCardClass, "flex items-center gap-3 px-5 py-4.5")}>
+          <span className="flex-1 font-heading text-4xl">Games</span>
+          <ArrowRight className="size-6 text-primary" aria-hidden="true" />
+        </Link>
       </div>
     </main>
   );

@@ -45,7 +45,7 @@ select u.username, u.admin, s.created_at from session s join "user" u on u.id = 
 docker compose exec -T minio sh -c 'mc alias set l http://localhost:9000 minioadmin minioadmin >/dev/null && mc ls --recursive l/pkmn-site'
 ```
 
-`mc stat` and `mc cat` on a `l/pkmn-site/<key>` path show one object.
+`mc stat` and `mc cat` on a `l/pkmn-site/<key>` path show one object. A game's zip is under `games/<game id>/`, and the `game` table's `file_key` names the current one.
 
 ### 5. Reset
 

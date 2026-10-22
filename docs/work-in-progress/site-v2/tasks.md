@@ -58,24 +58,6 @@ Discord sign-in through Better Auth; a signed-in player who is not allowed sees 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** Design the sign-in and waiting pages
 
-## Admins create games and upload their files
-
-An admin creates a game, uploads its zip straight from the browser to Backblaze B2 through a presigned URL, and sees it listed with its size and upload date; replacing the file is a new upload ([Where do files live?](discovery.md#data-stack-and-config)).
-
-**Do:**
-- [ ] The B2 bucket and key (owner-run); the AWS S3 SDK, pinned; presigned upload and download routes, admin-only for games.
-- [ ] The games table and migration; the admin games page.
-- [ ] Extend `npm run seed` with a game and a small stand-in zip in the local bucket.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `npx drizzle-kit check`.
-- Human-run: as admin, create "Pokémon Añil + Randomlocke" and upload the package zip from `pkmn/games/anil/game/archives/`; reload and see it listed; download it from the admin page and check its size matches.
-- Reuse: the admin pages and auth from the entries above.
-- Neighbors: `src/open-sheet/components/drop-zone.tsx` for picking a file.
-- Forbidden: file bodies through a Vercel Function; public bucket URLs.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## Admins create and start series; players land on the current one
 
 The series form (number, name, game, players from the allowlist, milestones, Markdown rules with "copy from series"), the start checklist, and the draft → running → finished states ([Accounts and Access](discovery.md#accounts-and-access)). Each series gets a background scene from a fixed set (a night sky and a daytime route so far), each animated. `/series` lists the series on their scenes, and a player lands on the running series' page as signed off ([Pages](discovery.md#pages)): the scene header with the name and the game's box and download, the League placeholder, the Trainers table with its rows opening into PC, Teams and snapshot tiles, and the rules. Series 1 is created through it, its rules pasted from `docs/pkmn/series/1/reference/rules.md`. The home page's tool list gives way to this page for signed-in players.
@@ -94,7 +76,7 @@ The series form (number, name, game, players from the allowlist, milestones, Mar
 - Forbidden: rules enforced in team building; raw HTML in rendered rules; the boards' sample data; a series switcher on the series page; Fainted or Lives tiles (open in [Backlog → how does the site gather each trainer's data?](../backlog.md#pkmnsite-how-does-the-site-gather-each-trainers-data)).
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Players sign in with Discord and admins keep the allowlist, Admins create games and upload their files
+**After:** Players sign in with Discord and admins keep the allowlist
 
 ## Players upload their save zip as a snapshot
 
