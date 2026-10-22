@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { username } from "better-auth/plugins/username";
 import { db } from "./db.js";
+import { devSignIn } from "./dev-sign-in.js";
 import { requireEnv } from "./env.js";
 import * as schema from "./schema.js";
 
@@ -16,5 +17,5 @@ export const auth = betterAuth({
       admin: { type: "boolean", required: false, defaultValue: false, input: false },
     },
   },
-  plugins: [username()],
+  plugins: [username(), ...(process.env.DEV_SIGN_IN === "1" ? [devSignIn()] : [])],
 });

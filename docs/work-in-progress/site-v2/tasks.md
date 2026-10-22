@@ -38,25 +38,6 @@ The rest of the screens, desktop and phone, in the signed-off look ([Pages → D
 **Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** sign-off on these screens.
 
-## Run the whole site locally and drive it in a browser
-
-The verification setup ([Observability and Verification](discovery.md#observability-and-verification)): `docker compose` with Postgres and MinIO, one `npm run dev` for Vite and the Hono API, the dev-only test sign-in, Playwright MCP in `.mcp.json`, and a `verify-site` skill with its how-to doc, so every later entry is checked from the database to the browser.
-
-**Do:**
-- [ ] `pkmn/site/compose.yaml` (Postgres, MinIO, latest stable images, pinned); `.env.example` for local; migrations run against it.
-- [ ] The dev-only test sign-in behind its flag; `npm run seed` (an admin, test players, a game with a small stand-in zip, series 1), which later entries extend to upload snapshots from `pkmn/site/saves/`.
-- [ ] Playwright MCP, pinned, in `.mcp.json` with `WAYLAND_DISPLAY=""`; `.playwright-mcp/` gitignored.
-- [ ] `.claude/skills/verify-site/SKILL.md` and `docs/pkmn/site/how-to/verify-the-site.md`: start the stack, sign in as a test player or admin, drive a flow, read the database and the bucket, reset; listed in `docs/pkmn/index.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; from a clean clone, `docker compose up -d`, migrations, `npm run dev`, then through Playwright MCP sign in as admin at `/admin` and as a test player, take a screenshot of each, and read both sessions back from Postgres; `docker compose down -v` and the same again.
-- Human-run: none.
-- Reuse: the API and auth from "Admins sign in at /admin".
-- Neighbors: unlit's `docs/general/how-to/setup-playwright-mcp.md` and `.claude/skills/verify-ui/` (`~/workspace/unlit/`), for shape, not versions.
-- Forbidden: test files, a test runner or a gate step; the test sign-in reachable when its flag is unset; versions copied from unlit.
-
-**Touches:** `pkmn/site/compose.yaml`, `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/package.json`, `.mcp.json`, `.gitignore`, `.claude/skills/verify-site/`, `docs/pkmn/site/how-to/`, `docs/pkmn/index.md`
-
 ## Players sign in with Discord and admins keep the allowlist
 
 Discord sign-in through Better Auth; a signed-in player who is not allowed sees the waiting page, an allowed one an empty home. The admin's allowlist page lists everyone who has signed in and allows or removes them.
@@ -75,7 +56,7 @@ Discord sign-in through Better Auth; a signed-in player who is not allowed sees 
 - Forbidden: an admin account linked to Discord; admin powers on a Discord session.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Run the whole site locally and drive it in a browser, Design the sign-in and waiting pages
+**After:** Design the sign-in and waiting pages
 
 ## Admins create games and upload their files
 
@@ -84,6 +65,7 @@ An admin creates a game, uploads its zip straight from the browser to Backblaze 
 **Do:**
 - [ ] The B2 bucket and key (owner-run); the AWS S3 SDK, pinned; presigned upload and download routes, admin-only for games.
 - [ ] The games table and migration; the admin games page.
+- [ ] Extend `npm run seed` with a game and a small stand-in zip in the local bucket.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `npx drizzle-kit check`.
@@ -93,7 +75,6 @@ An admin creates a game, uploads its zip straight from the browser to Backblaze 
 - Forbidden: file bodies through a Vercel Function; public bucket URLs.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Run the whole site locally and drive it in a browser
 
 ## Admins create and start series; players land on the current one
 
@@ -101,6 +82,7 @@ The series form (number, name, game, players from the allowlist, milestones, Mar
 
 **Do:**
 - [ ] Series, series players and milestones tables and migration; the admin series list, form and checklist; starting and finishing a series.
+- [ ] Extend `npm run seed` with series 1 on the seeded game, its test players in it.
 - [ ] The scene component: the night sky and the daytime route as pixel SVG, their stepped animations, still under `prefers-reduced-motion`; the scene picker in the series form.
 - [ ] `/series` and `/series/<n>` as in the frozen boards, the Series tab, and the landing redirect; the game's download for players of a linked series; the Markdown rules rendered (a pinned Markdown renderer, no raw HTML).
 

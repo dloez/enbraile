@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@0.0.83", "--browser", "chromium", "--headless", "--isolated", "--output-dir", ".playwright-mcp"],
+      "env": {
+        "WAYLAND_DISPLAY": ""
+      }
+    }
+  }
+}
