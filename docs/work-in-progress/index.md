@@ -9,3 +9,4 @@ Its layout and lifecycle are the `/scope` skill's work-in-progress layout (`~/.c
 | Document | Kind | Description |
 |----------|------|-------------|
 | [Backlog](backlog.md) | Backlog | Open questions, one-off tasks and unscoped ideas that belong to no scoped idea |
+| [Site v2](site-v2/discovery.md) | Idea | pkmn/site: accounts, games, series and snapshots, and team building in place of the tools ([tasks](site-v2/tasks.md)) |
