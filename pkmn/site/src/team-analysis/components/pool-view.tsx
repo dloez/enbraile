@@ -190,7 +190,7 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
           </tbody>
         </table>
       </div>
-      <span className="text-xs text-muted-foreground">Shading is the percentile in the pool. L legendary, M mythical.</span>
+      <span className="text-xs text-muted-foreground">shaded: percentile · L legendary · M mythical</span>
     </Panel>
   );
 }

@@ -6,7 +6,7 @@ The visual system of `pkmn/site/`: its tokens, type, layout shell, components an
 
 - **One dark theme.** `index.html` sets `class="dark"` and `color-scheme: dark`; there is no light theme and no theme switch.
 - **Tokens only.** Every colour comes from a CSS variable in `src/index.css`'s `:root`, used through its Tailwind token (`bg-card`, `text-primary`, `border-cell-hi`…) or, where a class cannot reach it (inline `style`, canvas, SVG built in code), as `var(--name)`. No hex, `rgb()` or Tailwind palette classes (`bg-red-500`) in components.
-- **No helper text** explaining the UI. Labels name things; they do not instruct.
+- **No helper text** explaining the UI. Labels name things; they do not instruct. A legend is a key only: each colour, shading or symbol and the few words it stands for, never prose on how it is computed.
 - **English UI**, with Showdown's names.
 - **Desktop-first, every view usable on a phone.**
 - **No runtime calls** beyond Showdown's sprites: fonts are bundled from Fontsource, type icons from `src/lib/type-icons.ts`.

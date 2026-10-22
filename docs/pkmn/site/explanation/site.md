@@ -32,6 +32,7 @@ The site logs nothing of its own: Vercel's build and deployment logs cover the d
 
 ## Decisions
 
+- **Legends are keys, not explanations.** Team Analysis's compare and pool legends were cut to their keys ("weak / resist · shaded: no switch-in", "super-effective · shaded: none", "shaded: percentile · L legendary · M mythical"), and [Design System](../reference/design-system.md)'s "No helper text" rule names legends as keys only. **Why:** the owner; the keys are needed to read the cells, the prose on how they are computed is helper text. _(owner, 2026-10-22)_
 - **No tests; the gate is `tsc -b` alone.** The site's vitest suite and vitest itself were removed. **Why:** the owner's rule for every project, in the root `CLAUDE.md`. _(owner, 2026-10-20)_
 - **One site for the group's Pokémon tools,** `pkmn/site/`, starting with Open Sheet at `/open-sheet` beside a home page listing the tools; its docs in `docs/pkmn/site/`. **Why:** the site will grow in depth over the series. _(owner, 2026-10-15)_
 - **Vite, React, TypeScript, Tailwind and shadcn at their latest versions, pinned exactly;** TanStack Router, zod, Dexie, `@pkmn/dex` and `@pkmn/img` alongside. **Why:** the owner chose the core stack to future-proof the site; the rest follows the owner's unlit and blink sites (`~/workspace/unlit/apps/web/`, `~/workspace/blink/`), confirmed by the owner. _(owner, 2026-10-15)_

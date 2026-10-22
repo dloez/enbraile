@@ -343,11 +343,11 @@ function ByType({ results }: { results: Result[] }) {
         <span className="text-xs text-muted-foreground">
           {side === "def" ? (
             <>
-              <span className="text-destructive">weak</span> over <span className="text-chart-2">resist</span> per type; shaded: best switch-in below 1.00 weighted bulk
+              <span className="text-destructive">weak</span> / <span className="text-chart-2">resist</span> · shaded: no switch-in
             </>
           ) : (
             <>
-              members hitting the type <span className="text-chart-2">super-effectively</span> over the best weighted hit; shaded: nothing super-effective
+              <span className="text-chart-2">super-effective</span> · shaded: none
             </>
           )}
         </span>
