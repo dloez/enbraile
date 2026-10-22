@@ -4,22 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/games/anil: fold the Añil tooling scope into the game's docs
-
-Once no entry links [Añil Tooling: Discovery](anil-tooling-discovery.md), its lasting content moves to its permanent place and it is deleted ([Lifecycle](index.md#lifecycle)). Runtime Design → Project Layout cites "the discovery's renames".
-
-**Do:**
-- [ ] Move every answer of `anil-tooling-discovery.md` not already in `docs/pkmn/` or `docs/general/` into its owning doc's Decisions, dated as the scope dates it; repoint every mention of it, then delete it and drop it from the Work in Progress lists of `docs/index.md` and `docs/work-in-progress/index.md`.
-
-**Acceptance:**
-- Claude-run: `grep -rn "anil-tooling-discovery\|the discovery's" docs/ CLAUDE.md pkmn/ --include=*.md` prints nothing; every relative link under `docs/` resolves; the two Work in Progress lists name the same docs.
-- Human-run: from a clean clone, walk the scope's "When is it done?": `anil install`, a new game starting the Randomlocke, `anil install --harness`, `anil run`, `anil state`, `anil go`, `anil battle …`, `anil rules …`, `anil check all`.
-- Reuse: `docs/pkmn/games/anil/explanation/runtime-design.md` → Decisions.
-- Neighbors: `docs/general/explanation/repository-layout.md`.
-- Forbidden: changing code; turning a scope answer the owner did not give into a decision.
-
-**Touches:** `docs/work-in-progress/anil-tooling-discovery.md`, `docs/work-in-progress/index.md`, `docs/index.md`, `docs/pkmn/`, `docs/general/`
-
 ## pkmn/site: decide on Team Analysis's explanatory legends
 
 Team Analysis's compare-view legends carry explanatory lines (e.g. "shaded: best switch-in below 1.00 weighted bulk"), which the site's "no helper text" rule forbids ([Design System](../pkmn/site/reference/design-system.md)). The pool view has one of the same kind: "Shading is the percentile in the pool. L legendary, M mythical." (`src/team-analysis/components/pool-view.tsx`).
