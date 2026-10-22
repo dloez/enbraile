@@ -22,14 +22,12 @@ const homeRoute = createRoute({
 const openSheetRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/open-sheet",
-  staticData: { title: "Open Sheet" },
   component: OpenSheetPage,
 });
 
 const teamAnalysisRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/team-analysis",
-  staticData: { title: "Team Analysis" },
   component: TeamAnalysisPage,
 });
 
@@ -40,8 +38,5 @@ export const router = createRouter({ routeTree });
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
-  }
-  interface StaticDataRouteOption {
-    title?: string;
   }
 }

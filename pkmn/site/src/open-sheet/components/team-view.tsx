@@ -46,7 +46,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
   const unlearnable = member.moves.flatMap((id) => (id && canLearn(mon, id) === "no" ? [describeMove(id).name] : []));
 
   return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card">
+    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card">
       <div className="flex items-center gap-3 bg-box p-3">
         <button
           type="button"
@@ -57,7 +57,7 @@ function MemberCard({ sheet, slot, member, mon, props }: {
           <MonSprite mon={mon} className="size-16" />
         </button>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="truncate font-heading text-lg font-semibold">{name}</span>
+          <span className="truncate font-heading text-2xl">{name}</span>
           <div className="flex flex-wrap items-center gap-2.5">
             {(mon.showdownTypes ?? mon.types).map((t) => (
               <span key={t} className="inline-flex items-center gap-1.25 text-xs font-semibold">
@@ -178,14 +178,14 @@ function MemberCard({ sheet, slot, member, mon, props }: {
                   {STAT_LABELS[s.stat]}
                 </span>
                 {s.fight !== null ? (
-                  <span className="font-mono text-xs">{s.fight}</span>
+                  <span className="tabular-nums text-xs">{s.fight}</span>
                 ) : (
                   <>
-                    <span className="font-mono text-xs">{s.high}</span>
-                    <span className="font-mono text-xs text-muted-foreground">{s.low}</span>
+                    <span className="tabular-nums text-xs">{s.high}</span>
+                    <span className="tabular-nums text-xs text-muted-foreground">{s.low}</span>
                   </>
                 )}
-                <span className="font-mono text-xs text-muted-foreground/60">{s.base}</span>
+                <span className="tabular-nums text-xs text-muted-foreground/60">{s.base}</span>
               </div>
             );
           })}
@@ -264,7 +264,7 @@ export function TeamView(props: TeamViewProps) {
   return (
     <div className="flex flex-col gap-4.5 pt-1 pb-3 sm:pb-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="m-0 font-heading text-2xl font-bold">{name}</h2>
+        <h2 className="m-0 font-heading text-4xl">{name}</h2>
         <span
           title="Mini Setas"
           className={cn(
@@ -272,7 +272,7 @@ export function TeamView(props: TeamViewProps) {
             short ? "bg-destructive-soft text-destructive" : "bg-accent text-primary",
           )}
         >
-          <span className="font-mono">
+          <span className="tabular-nums">
             {needed}/{owned}
           </span>
           Mini Seta
@@ -285,7 +285,7 @@ export function TeamView(props: TeamViewProps) {
           const mon = memberMon(member, mons);
           if (!member || !mon) {
             return (
-              <article key={slot} className="flex min-w-0 flex-col rounded-2xl border bg-card">
+              <article key={slot} className="flex min-w-0 flex-col rounded-2xl border-3 bg-card">
                 <button
                   type="button"
                   onClick={props.onAdd}

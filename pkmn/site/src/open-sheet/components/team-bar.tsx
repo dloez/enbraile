@@ -111,9 +111,9 @@ export function TeamBar({ view, onView, teams, team, onPick, onCreate, onDuplica
       </button>
       <Dialog open={deleting} onOpenChange={setDeleting}>
         <DialogContent aria-describedby={undefined} className="bg-card sm:max-w-sm">
-          <DialogTitle className="font-heading text-lg font-bold">Delete {team.name}?</DialogTitle>
+          <DialogTitle className="font-heading text-2xl">Delete {team.name}?</DialogTitle>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleting(false)}>
+            <Button onClick={() => setDeleting(false)}>
               Cancel
             </Button>
             <Button

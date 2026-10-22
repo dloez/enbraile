@@ -43,7 +43,7 @@ export function PasteDialog({ sheet, mons, open, onOpenChange, onImport }: Paste
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogContent aria-describedby={undefined} className="bg-card sm:max-w-lg">
-        <DialogTitle className="font-heading text-lg font-bold">Import from Showdown</DialogTitle>
+        <DialogTitle className="font-heading text-2xl">Import from Showdown</DialogTitle>
         {!done && (
           <textarea
             autoFocus
@@ -55,7 +55,7 @@ export function PasteDialog({ sheet, mons, open, onOpenChange, onImport }: Paste
             }}
             rows={12}
             spellCheck={false}
-            className="min-h-60 w-full resize-y rounded-lg border bg-muted p-2.5 font-mono text-sm text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="min-h-60 w-full resize-y rounded-lg border bg-muted p-2.5 tabular-nums text-sm text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           />
         )}
         {outcome && (
@@ -81,7 +81,7 @@ export function PasteDialog({ sheet, mons, open, onOpenChange, onImport }: Paste
             <Button onClick={() => close(false)}>Done</Button>
           ) : (
             <>
-              <Button variant="outline" onClick={() => close(false)}>
+              <Button onClick={() => close(false)}>
                 Cancel
               </Button>
               <Button disabled={text.trim() === ""} onClick={() => void submit()}>

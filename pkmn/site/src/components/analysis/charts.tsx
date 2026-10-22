@@ -86,7 +86,7 @@ export function SpeedTiers({ team, pool }: { team: readonly Member[]; pool: Pool
             <span className="h-3 rounded-sm bg-secondary">
               <span className="block h-3 rounded-sm bg-chart-2" style={{ width: `${(m.stats.spe / top) * 100}%` }} />
             </span>
-            <span className="text-right font-mono">{m.stats.spe}</span>
+            <span className="text-right tabular-nums">{m.stats.spe}</span>
           </li>
         ))}
       </ol>
@@ -95,7 +95,7 @@ export function SpeedTiers({ team, pool }: { team: readonly Member[]; pool: Pool
         {benchmarks.map((b) => (
           <div key={b.label} className="flex justify-between text-xs">
             <span className="text-muted-foreground">{b.label}</span>
-            <span className="font-mono">{b.v}</span>
+            <span className="tabular-nums">{b.v}</span>
           </div>
         ))}
       </div>

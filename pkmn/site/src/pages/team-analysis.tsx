@@ -81,7 +81,7 @@ export function TeamAnalysisPage() {
                 <ArchetypeMap team={built.team} analysis={analysis} pool={pool} />
                 <SpeedTiers team={built.team} pool={pool} />
               </div>
-              <h2 className="m-0 mt-1.5 font-heading text-2xl font-semibold">Members</h2>
+              <h2 className="m-0 mt-1.5 font-heading text-4xl">Members</h2>
               <MemberCards team={built.team} analysis={analysis} legality={legal} />
               <Matrices team={built.team} analysis={analysis} pool={pool} />
             </>

@@ -17,7 +17,7 @@ const GENDERS = { M: "Male", F: "Female", N: "Genderless" } as const;
 export function MonSprite({ mon, className }: { mon: Mon; className?: string }) {
   if (!mon.sprite) {
     return (
-      <span aria-hidden="true" className={cn("grid place-items-center font-heading text-2xl text-muted-foreground", className)}>
+      <span aria-hidden="true" className={cn("grid place-items-center font-heading text-3xl text-muted-foreground", className)}>
         ?
       </span>
     );
@@ -79,7 +79,7 @@ function Info({ mon }: { mon: Mon }) {
       )}
       {mon.abilities.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h3 className="m-0 text-sm font-semibold tracking-[0.06em] text-muted-foreground uppercase">Ability</h3>
+          <h3 className="m-0 font-heading text-xl text-muted-foreground">Ability</h3>
           {mon.abilities.map((a) => (
             <div
               key={a.id}
@@ -135,16 +135,16 @@ function Stats({ mon }: { mon: Mon }) {
               <span className={cn("font-semibold", up ? "text-primary" : down ? "text-chart-2" : "text-foreground")}>
                 {STAT_LABELS[s.stat]}
               </span>
-              <span className="font-mono">{s.base}</span>
+              <span className="tabular-nums">{s.base}</span>
               <span className="h-2 overflow-hidden rounded-sm bg-muted">
                 <span
                   className={cn("block h-2 rounded-sm", up ? "bg-primary" : down ? "bg-chart-2" : "bg-chart-3")}
                   style={{ width: `${Math.min(100, Math.round((s.base / 160) * 100))}%` }}
                 />
               </span>
-              <span className="text-right font-mono">{s.iv ?? "—"}</span>
-              <span className="text-right font-mono">{s.ev ?? "—"}</span>
-              <span className="text-right font-mono">{atFifty ? fightStat(s) : (s.current ?? "—")}</span>
+              <span className="text-right tabular-nums">{s.iv ?? "—"}</span>
+              <span className="text-right tabular-nums">{s.ev ?? "—"}</span>
+              <span className="text-right tabular-nums">{atFifty ? fightStat(s) : (s.current ?? "—")}</span>
             </div>
           );
         })}
@@ -196,8 +196,8 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
         return (
           <section key={name} aria-label={name} className="flex flex-col gap-1.5">
             <div className="flex items-baseline gap-2">
-              <h3 className="m-0 text-sm font-semibold tracking-[0.06em] text-muted-foreground uppercase">{name}</h3>
-              <span className="font-mono text-xs text-muted-foreground">{moves.length}</span>
+              <h3 className="m-0 font-heading text-xl text-muted-foreground">{name}</h3>
+              <span className="tabular-nums text-xs text-muted-foreground">{moves.length}</span>
             </div>
             <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
               {shown.map((move) => (
@@ -210,8 +210,8 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
                     {move.name}
                     {move.marked && <UnknownMark />}
                   </span>
-                  <span className="font-mono text-xs text-muted-foreground">{moveMeta(move)}</span>
-                  <span className="text-right font-mono text-xs text-muted-foreground">{labels.get(move.id) ?? ""}</span>
+                  <span className="tabular-nums text-xs text-muted-foreground">{moveMeta(move)}</span>
+                  <span className="text-right tabular-nums text-xs text-muted-foreground">{labels.get(move.id) ?? ""}</span>
                 </li>
               ))}
             </ul>

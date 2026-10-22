@@ -36,13 +36,13 @@ export function SheetAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mo
   return (
     <section aria-label="Analysis" className="flex flex-col gap-3.5">
       <div className="flex flex-wrap items-center gap-3">
-        <h3 className="m-0 font-heading text-xl font-semibold">Analysis</h3>
+        <h3 className="m-0 font-heading text-2xl">Analysis</h3>
         <Segmented label="Analysis view" options={VIEWS} value={view} onChange={setView} className="max-w-full overflow-x-auto" />
         <span
           title="Showdown's Gen 9 data, species up to Gen 5, fully evolved"
           className="ml-auto rounded-full border bg-card px-2.5 py-1.5 text-xs font-semibold text-chart-3"
         >
-          Pool · Gen 1–5 species · fully evolved · <span className="font-mono">{pool.size}</span>
+          Pool · Gen 1–5 species · fully evolved · <span className="tabular-nums">{pool.size}</span>
         </span>
       </div>
       {view === "summary" && (

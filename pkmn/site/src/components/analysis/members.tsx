@@ -34,13 +34,13 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
   const a = analysis.members[index];
   const nature = dexFor(analysis.gen).natures.get(member.set.nature);
   return (
-    <article className={cn("flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card", illegal && "border-destructive")}>
+    <article className={cn("flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card", illegal && "border-destructive")}>
       <div className="flex items-center gap-3 bg-box p-3">
         <span className="grid size-16 flex-none place-items-center rounded-xl bg-cell">
           <img src={spriteOf(member)} alt="" className="size-16 [image-rendering:pixelated]" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="truncate font-heading text-lg font-semibold">{member.display}</span>
+          <span className="truncate font-heading text-2xl">{member.display}</span>
           <span className="flex flex-wrap gap-2.5 text-xs font-semibold">
             {member.types.map((t) => (
               <span key={t} className="inline-flex items-center gap-1.25">
@@ -54,7 +54,7 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
           </span>
         </div>
         <span className="flex flex-col items-end gap-0.5">
-          <span className="font-mono text-base">{member.bst}</span>
+          <span className="tabular-nums text-base">{member.bst}</span>
           <span className="text-xs text-muted-foreground">BST · P{Math.round(a.pct.bst * 100)}</span>
         </span>
       </div>
@@ -81,15 +81,15 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
           return (
             <div key={k} className="grid grid-cols-[34px_34px_minmax(0,1fr)_30px_38px] items-center gap-2 text-xs">
               <span className={cn("font-semibold", up ? "text-primary" : down ? "text-chart-2" : "text-muted-foreground")}>{STAT_LABEL[k]}</span>
-              <span className="font-mono">{member.base[k]}</span>
+              <span className="tabular-nums">{member.base[k]}</span>
               <span className="h-1.5 rounded-sm bg-secondary">
                 <span
                   className={cn("block h-1.5 rounded-sm", p >= 0.75 ? "bg-primary" : p >= 0.4 ? "bg-chart-3" : "bg-muted-foreground/60")}
                   style={{ width: `${p * 100}%` }}
                 />
               </span>
-              <span className="text-right font-mono text-xs text-muted-foreground">{Math.round(p * 100)}</span>
-              <span className="text-right font-mono">{member.stats[k]}</span>
+              <span className="text-right tabular-nums text-xs text-muted-foreground">{Math.round(p * 100)}</span>
+              <span className="text-right tabular-nums">{member.stats[k]}</span>
             </div>
           );
         })}
@@ -109,7 +109,7 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
               <TypeDot type={mv.type} />
               <span className="min-w-0 flex-1 truncate">{mv.name}</span>
               {tag && <span className="rounded-sm bg-accent px-1.5 text-xs font-semibold text-primary">{tag}</span>}
-              <span className="font-mono text-xs text-muted-foreground">{CATEGORY[mv.category]}</span>
+              <span className="tabular-nums text-xs text-muted-foreground">{CATEGORY[mv.category]}</span>
             </li>
           );
         })}
@@ -153,7 +153,7 @@ function weightCell(v: number): string {
 
 const f2 = (v: number) => (v >= 10 ? v.toFixed(1) : v.toFixed(2));
 
-const CELL = "h-9 min-w-13 rounded-md text-center font-mono text-sm";
+const CELL = "h-9 min-w-13 rounded-md text-center tabular-nums text-sm";
 const STICKY = "sticky left-0 z-10 bg-card";
 
 function MemberHead({ member }: { member: Member }) {
@@ -238,7 +238,7 @@ export function Matrices({ team, analysis, pool }: { team: readonly Member[]; an
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="m-0 font-heading text-2xl font-semibold">Matrices</h2>
+        <h2 className="m-0 font-heading text-4xl">Matrices</h2>
         <div className="flex-1" />
         <Segmented
           label="Matrix values"

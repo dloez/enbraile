@@ -20,7 +20,7 @@ Sprites are Showdown's Gen 5 static set, which fits the Gen 1–5 roster, shiny 
 
 ## Importing and Storage
 
-A file is dropped onto the page or chosen with a file picker, read in the browser and validated by the zod schema in `src/open-sheet/schema.ts`, which mirrors the JSON reference and ignores keys it does not know, so a field added to the export does not mark old imports. A file that fails is refused above whatever view is open, naming the first failing field by its JSON path, set in mono after the file name: "MIRAMEEE-open-sheet.json has no pokemon list", "… has no pokemon[0].species". Each import opens a new tab named after the file (`MIRAMEEE-open-sheet.json` → `MIRAMEEE`), renamable. Nothing is uploaded.
+A file is dropped onto the page or chosen with a file picker, read in the browser and validated by the zod schema in `src/open-sheet/schema.ts`, which mirrors the JSON reference and ignores keys it does not know, so a field added to the export does not mark old imports. A file that fails is refused above whatever view is open, naming the first failing field by its JSON path after the file name: "MIRAMEEE-open-sheet.json has no pokemon list", "… has no pokemon[0].species". Each import opens a new tab named after the file (`MIRAMEEE-open-sheet.json` → `MIRAMEEE`), renamable. Nothing is uploaded.
 
 The Dexie database `open-sheet` holds an `imports` table (file name, import time, the validated JSON) and a `tabs` table (name, position, its import) since version 1, and a `teams` table since version 2. Each tab has its own import; closing a tab deletes it with its teams. The tab last opened, picked or imported is remembered in `localStorage` (`open-sheet:tab`) and reopened on the next visit, falling back to the first tab when it is gone.
 

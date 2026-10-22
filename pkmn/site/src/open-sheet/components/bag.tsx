@@ -92,7 +92,7 @@ function Row({ icon, name, marked, sub, desc, qty, spent, usable, open, targets,
         </span>
         <span
           className={cn(
-            "text-right font-mono text-sm whitespace-nowrap",
+            "text-right tabular-nums text-sm whitespace-nowrap",
             spent ? "text-destructive" : "text-muted-foreground",
           )}
         >
@@ -165,7 +165,7 @@ export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, on
         className="top-auto bottom-0 flex h-[90svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-2xl rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-180 sm:-translate-y-1/2 sm:rounded-2xl"
       >
         <div className="flex flex-none items-center gap-3 pt-3 pr-2 pl-4.5">
-          <DialogTitle className="min-w-0 flex-1 truncate font-heading text-xl leading-normal font-bold">
+          <DialogTitle className="min-w-0 flex-1 truncate font-heading text-2xl leading-normal">
             {giveMon ? `Bag → ${displayName(giveMon)}` : "Bag"}
           </DialogTitle>
           {giveMon && <MonSprite mon={giveMon} className="size-10" />}

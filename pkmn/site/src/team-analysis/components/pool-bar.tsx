@@ -17,8 +17,8 @@ export function PoolBar({
     .join(" · ");
 
   return (
-    <section aria-label="Pool" className="flex flex-wrap items-center gap-3.5 rounded-2xl border bg-card px-3.5 py-2.5">
-      <span className="font-heading text-sm font-semibold">Pool</span>
+    <section aria-label="Pool" className="flex flex-wrap items-center gap-3.5 rounded-2xl border-3 bg-card px-3.5 py-2.5">
+      <span className="font-heading text-lg">Pool</span>
       <Segmented
         label="Generation"
         options={GENS.map((g) => ({ value: g, label: g }))}
@@ -56,11 +56,11 @@ export function PoolBar({
             const v = Number(e.target.value);
             if (Number.isFinite(v)) set({ maxBst: Math.min(800, Math.max(150, v)) });
           }}
-          className={`${fieldClass} w-20 font-mono`}
+          className={`${fieldClass} w-20 tabular-nums`}
         />
       </label>
       <span className="text-sm text-muted-foreground" title={excluded || undefined}>
-        <span className="font-mono text-foreground">{pool.size}</span> Pokémon in the pool
+        <span className="tabular-nums text-foreground">{pool.size}</span> Pokémon in the pool
       </span>
     </section>
   );

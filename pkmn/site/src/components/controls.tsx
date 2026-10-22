@@ -14,9 +14,9 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section aria-label={title} className={cn("flex min-w-0 flex-col gap-3 rounded-2xl border bg-card p-3.5", className)}>
+    <section aria-label={title} className={cn("flex min-w-0 flex-col gap-3 rounded-2xl border-3 bg-card p-4", className)}>
       <div className="flex flex-wrap items-center gap-2.5">
-        <h3 className="m-0 font-heading text-base font-semibold">{title}</h3>
+        <h3 className="m-0 font-heading text-2xl">{title}</h3>
         {aside}
       </div>
       {children}
@@ -47,8 +47,8 @@ export function Segmented<T extends string | number>({
           aria-checked={o.value === value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "min-h-9 flex-1 cursor-pointer rounded-md px-3.5 text-sm font-semibold whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-            o.value === value ? "bg-secondary text-foreground" : "text-muted-foreground",
+            "min-h-9 flex-1 cursor-pointer rounded-md px-3.5 font-heading text-xl whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+            o.value === value ? "bg-red text-white" : "text-subtle hover:bg-face hover:text-white",
           )}
         >
           {o.label}
@@ -78,7 +78,7 @@ export function Toggle({
       disabled={disabled}
       title={title}
       onClick={() => onChange(!pressed)}
-      className={cn(buttonVariants({ variant: "outline" }), pressed && "border-primary bg-accent text-primary")}
+      className={cn(buttonVariants(), pressed && "bg-primary text-primary-foreground hover:bg-primary")}
     >
       {children}
     </button>
@@ -88,10 +88,11 @@ export function Toggle({
 export const fieldClass =
   "flex min-h-10 min-w-0 items-center gap-2 rounded-lg border bg-muted px-2.5 text-sm text-foreground";
 
-export const buttonClass = buttonVariants({ variant: "outline" });
+export const buttonClass = buttonVariants();
 
-export const primaryClass = buttonVariants();
-
-export const iconButtonClass = buttonVariants({ variant: "outline", size: "icon" });
+export const iconButtonClass = buttonVariants({ size: "icon" });
 
 export const quietIconClass = buttonVariants({ variant: "ghost", size: "icon-sm" });
+
+export const liftCardClass =
+  "rounded-2xl border-4 border-cell bg-card text-foreground outline-none transition-[translate,box-shadow,border-color] duration-120 ease-[steps(2)] hover:-translate-y-1 hover:border-primary hover:shadow-[0_8px_0_0_var(--drop)] focus-visible:-translate-y-1 focus-visible:border-primary focus-visible:shadow-[0_8px_0_0_var(--drop)] motion-reduce:transition-none";

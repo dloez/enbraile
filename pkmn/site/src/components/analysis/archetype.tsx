@@ -67,8 +67,8 @@ export function ArchetypeCard({ analysis }: { analysis: Analysis }) {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex min-w-0 flex-1 basis-56 flex-col gap-2.5">
           <div className="flex items-baseline gap-2.5">
-            <span className="font-heading text-4xl leading-none font-bold text-primary">{top.name}</span>
-            <span className="font-mono text-lg">{pct(top.pct)}</span>
+            <span className="font-heading text-5xl leading-none text-primary">{top.name}</span>
+            <span className="tabular-nums text-lg">{pct(top.pct)}</span>
           </div>
           {analysis.archetype.map((a, i) => (
             <div key={a.name} className="grid grid-cols-[112px_minmax(0,1fr)_40px] items-center gap-2 text-sm">
@@ -76,7 +76,7 @@ export function ArchetypeCard({ analysis }: { analysis: Analysis }) {
               <span className="h-2 overflow-hidden rounded-sm bg-secondary">
                 <span className={cn("block h-2 rounded-sm", i === 0 ? "bg-primary" : "bg-chart-3")} style={{ width: pct(a.pct) }} />
               </span>
-              <span className="text-right font-mono text-xs">{pct(a.pct)}</span>
+              <span className="text-right tabular-nums text-xs">{pct(a.pct)}</span>
             </div>
           ))}
         </div>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Member } from "@/analysis/member";
 import { SAMPLES } from "@/analysis/samples";
 import { TypeDot } from "@/components/marks";
-import { buttonClass, fieldClass, primaryClass, Toggle } from "@/components/controls";
+import { buttonClass, fieldClass, Toggle } from "@/components/controls";
 import { spriteOf } from "@/analysis/sprite";
 
 export interface TeamStatus {
@@ -82,7 +82,7 @@ export function TeamInput({
   ].filter((n): n is string => typeof n === "string");
 
   return (
-    <section aria-label="Team" className="grid grid-cols-1 gap-4 rounded-2xl border bg-card p-3.5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+    <section aria-label="Team" className="grid grid-cols-1 gap-4 rounded-2xl border-3 bg-card p-3.5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-col gap-2.5">
         <label htmlFor="paste" className="text-xs font-semibold text-muted-foreground">
           Showdown team
@@ -96,10 +96,10 @@ export function TeamInput({
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onAnalyse(draft);
           }}
           placeholder={"Latios @ Life Orb\nAbility: Levitate\nLevel: 50\nTimid Nature\n- Draco Meteor\n- Psyshock"}
-          className="h-40 resize-y rounded-lg border bg-muted p-2.5 font-mono text-xs leading-normal text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-40 resize-y rounded-lg border bg-muted p-2.5 tabular-nums text-xs leading-normal text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => onAnalyse(draft)} disabled={!draft.trim()} className={primaryClass}>
+          <button type="button" onClick={() => onAnalyse(draft)} disabled={!draft.trim()} className={buttonClass}>
             Analyse
           </button>
           <label className={cn(fieldClass, "pr-1.5")}>
@@ -137,7 +137,7 @@ export function TeamInput({
       </div>
       <div className="flex min-w-0 flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-2.5">
-          <h2 className="m-0 font-heading text-2xl font-bold">Team</h2>
+          <h2 className="m-0 font-heading text-4xl">Team</h2>
           {archetype && <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-primary">{archetype}</span>}
           <CopyButton text={committed} />
         </div>

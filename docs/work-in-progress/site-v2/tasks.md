@@ -2,26 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands.
 
-## Restyle the site in the new look
-
-The signed-off look ([Look](../../pkmn/site/explanation/site.md#look)) replaces the Open Sheet look on every page that exists today (home, Open Sheet, Team Analysis), so every later entry builds in it ([Pages → Design](discovery.md#pages)).
-
-**Do:**
-- [ ] The palette as tokens in `src/index.css`, read from the frozen boards (navy ground and panels, slate borders, red, cyan, yellow, the player colours); Jersey 10 and Nunito from Fontsource, pinned.
-- [ ] The header: the pixel Poké Ball linking home, the tabs on the red line with the open one joined to it. Until the series pages exist, PC opens Open Sheet and Teams opens Team Analysis; Series gets its tab with its entry.
-- [ ] The shared pieces: the quiet pixel-face button, the panel, the lift-on-hover card, the boxed player badge, the pixel icons as one component.
-- [ ] Rewrite `docs/pkmn/site/reference/design-system.md` for the new tokens and pieces, and drop "Until the restyle lands" from `site.md` → Look.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `git diff main -- pkmn/site/src ':!pkmn/site/src/index.css' | grep -nE '^\+.*#[0-9a-fA-F]{3,8}\b'` finds no raw colour added outside the tokens; `git grep -n "fonts.googleapis" -- pkmn/site/src pkmn/site/index.html` finds nothing.
-- Human-run: run the site locally and open `/`, `/open-sheet` and `/team-analysis`: the navy look, the pixel face in headings and tabs, the new header with PC and Teams tabs, the open tab red; the same at phone width, nothing cut off or unreadable.
-- Reuse: `pkmn/site/design/series.dc.html` and `pkmn/site/design/series-list.dc.html` for every colour, size and radius; `src/components/site-header.tsx`, `src/components/controls.tsx`, `src/components/page.ts`.
-- Neighbors: `src/index.css`.
-- Forbidden: fonts or anything else loaded at runtime beyond sprites; raw colours in components; a light theme; helper text; the boards' sample data.
-
-**Touches:** `pkmn/site/src/`, `pkmn/site/index.html`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`
-**Attempted once:** the validator's second round failed on the docked Summary title (`pc.tsx`) against the design-system type table; the fix is in but unvalidated. Work kept on branch `wq/restyle-site-new-look`.
-
 ## Design the sign-in and waiting pages
 
 The Discord sign-in page and the page a signed-in player not yet allowed sees, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)).
@@ -76,7 +56,6 @@ The first server-side piece: Vercel Functions in `pkmn/site/api/`, Neon through 
 - Forbidden: a sign-up route for admins; secrets in the repo; down migrations.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/package.json`, `pkmn/site/drizzle/`, `pkmn/site/vercel.json`, `docs/pkmn/site/`
-**After:** Restyle the site in the new look
 
 ## Run the whole site locally and drive it in a browser
 

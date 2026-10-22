@@ -34,7 +34,7 @@ function TabName({ tab, onRename }: { tab: OpenTab; onRename: (name: string) => 
         if (event.key === "Enter") commit();
         if (event.key === "Escape") onRename(tab.name);
       }}
-      className="w-36 rounded-sm bg-muted px-1.5 py-0.5 font-mono text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="w-36 rounded-sm bg-muted px-1.5 py-0.5 font-heading text-xl outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
     />
   );
 }
@@ -75,7 +75,7 @@ export function TabBar({ tabs, activeId, staleIds, onPick, onRename, onClose, on
                 onClick={() => onPick(tab.id)}
                 onDoubleClick={() => setRenaming(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 py-2.25 pl-3.5 font-mono text-sm font-medium outline-none focus-visible:underline",
+                  "flex items-center gap-1.5 py-1.5 pl-3.5 font-heading text-xl outline-none focus-visible:underline",
                   active ? "pr-1 text-foreground" : "pr-3.5 text-muted-foreground hover:text-foreground",
                 )}
               >

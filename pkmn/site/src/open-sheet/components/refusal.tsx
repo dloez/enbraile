@@ -10,7 +10,7 @@ export interface Refused {
 function Reason({ text }: { text: string }) {
   return text.split("`").map((part, index) =>
     index % 2 === 1 ? (
-      <span key={index} className="font-mono">
+      <span key={index}>
         {part}
       </span>
     ) : (
@@ -27,7 +27,7 @@ export function Refusal({ fileName, reason }: Refused) {
     >
       <CircleAlert className="size-5 flex-none text-destructive" aria-hidden="true" />
       <span className="min-w-0 break-words">
-        <span className="font-mono">{fileName}</span> <Reason text={reason} />.
+        {fileName} <Reason text={reason} />.
       </span>
     </div>
   );

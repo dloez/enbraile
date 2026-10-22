@@ -10,7 +10,7 @@ import { SAMPLES } from "@/analysis/samples";
 import { analyze, type Analysis } from "@/analysis/team";
 import { TypeDot } from "@/components/marks";
 import { Radar } from "@/components/analysis/archetype";
-import { buttonClass, fieldClass, Panel, primaryClass, Segmented } from "@/components/controls";
+import { buttonClass, fieldClass, Panel, Segmented } from "@/components/controls";
 import { MAX_TEAMS, MIN_TEAMS, type CompareSlot } from "@/team-analysis/drafts";
 import { spriteOf } from "@/analysis/sprite";
 
@@ -45,7 +45,7 @@ function SlotEditor({
 }) {
   const s = SERIES[index];
   return (
-    <section aria-label={slot.name} className={cn("flex min-w-0 flex-col gap-2.5 rounded-2xl border border-t-3 bg-card p-3.5", s.border)}>
+    <section aria-label={slot.name} className={cn("flex min-w-0 flex-col gap-2.5 rounded-2xl border-3 bg-card p-3.5", s.border)}>
       <div className="flex items-center gap-2">
         <span className={cn("size-3 flex-none rounded-full", s.bg)} aria-hidden="true" />
         <input
@@ -53,7 +53,7 @@ function SlotEditor({
           maxLength={40}
           aria-label="Team name"
           onChange={(e) => onChange({ ...slot, name: e.target.value })}
-          className="min-w-0 flex-1 bg-transparent font-heading text-lg font-semibold outline-none"
+          className="min-w-0 flex-1 bg-transparent font-heading text-2xl outline-none"
         />
         {canRemove && (
           <button type="button" onClick={onRemove} aria-label={`Remove ${slot.name}`} className="grid size-9 cursor-pointer place-items-center rounded-lg text-muted-foreground">
@@ -67,7 +67,7 @@ function SlotEditor({
         aria-label={`${slot.name} as Showdown text`}
         onChange={(e) => onChange({ ...slot, text: e.target.value })}
         placeholder="Paste a Showdown team"
-        className="h-32 resize-y rounded-lg border bg-muted p-2.5 font-mono text-xs text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="h-32 resize-y rounded-lg border bg-muted p-2.5 tabular-nums text-xs text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       />
       <div className="flex flex-wrap gap-2">
         <label className={cn(fieldClass, "pr-1.5")}>
@@ -120,7 +120,7 @@ function Scoreboard({ results, pool }: { results: Result[]; pool: Pool }) {
               if ("group" in row)
                 return (
                   <tr key={row.group}>
-                    <td colSpan={results.length + 1} className="px-2.5 pt-3.5 pb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                    <td colSpan={results.length + 1} className="px-2.5 pt-3.5 pb-1 font-heading text-lg text-muted-foreground">
                       {row.group}
                     </td>
                   </tr>
@@ -133,7 +133,7 @@ function Scoreboard({ results, pool }: { results: Result[]; pool: Pool }) {
                     {row.hint && <span className="ml-1 text-muted-foreground">?</span>}
                   </td>
                   {metrics.map((m, i) => (
-                    <td key={i} className={cn("px-2.5 py-1.75 text-right font-mono whitespace-nowrap", win[i] && SERIES[i].text)}>
+                    <td key={i} className={cn("px-2.5 py-1.75 text-right tabular-nums whitespace-nowrap", win[i] && SERIES[i].text)}>
                       {win[i] && "★ "}
                       {format(m[row.k], row.fmt)}
                     </td>
@@ -146,7 +146,7 @@ function Scoreboard({ results, pool }: { results: Result[]; pool: Pool }) {
             <tr>
               <td className="px-2.5 py-2 font-semibold">Stars</td>
               {wins.map((w, i) => (
-                <td key={i} className={cn("px-2.5 py-2 text-right font-mono font-semibold", SERIES[i].text)}>
+                <td key={i} className={cn("px-2.5 py-2 text-right tabular-nums font-semibold", SERIES[i].text)}>
                   {w}
                 </td>
               ))}
@@ -191,17 +191,17 @@ function HeadToHead({ results, gen }: { results: Result[]; gen: Pool["filters"][
                 <span className={SERIES[i].text}>{results[i].name}</span> <span className="text-muted-foreground">→</span>{" "}
                 <span className={SERIES[j].text}>{results[j].name}</span>
               </span>
-              <span className="font-mono text-3xl leading-none font-medium">{p.mean.toFixed(0)}%</span>
+              <span className="tabular-nums text-3xl leading-none font-medium">{p.mean.toFixed(0)}%</span>
               <span className="text-xs text-muted-foreground">mean pressure</span>
               <span className="flex gap-3 text-xs">
                 <span>
-                  <span className="font-mono">{p.ohko}</span> <span className="text-muted-foreground">OHKO</span>
+                  <span className="tabular-nums">{p.ohko}</span> <span className="text-muted-foreground">OHKO</span>
                 </span>
                 <span>
-                  <span className="font-mono">{p.twohko}</span> <span className="text-muted-foreground">2HKO</span>
+                  <span className="tabular-nums">{p.twohko}</span> <span className="text-muted-foreground">2HKO</span>
                 </span>
                 <span>
-                  <span className="font-mono">{p.walls}</span> <span className="text-muted-foreground">walls it</span>
+                  <span className="tabular-nums">{p.walls}</span> <span className="text-muted-foreground">walls it</span>
                 </span>
               </span>
             </button>
@@ -229,7 +229,7 @@ function HeadToHead({ results, gen }: { results: Result[]; gen: Pool["filters"][
                 <span className={cn("absolute inset-y-0 opacity-45", x.min >= OHKO ? "bg-primary" : "bg-chart-3")} style={{ left: `${lo}%`, width: `${hi - lo}%` }} />
                 <span className="absolute inset-y-0 left-1/2 border-l border-dashed border-muted-foreground" />
               </span>
-              <span className="text-right font-mono">
+              <span className="text-right tabular-nums">
                 {x.min.toFixed(0)}–{x.max.toFixed(0)}%
               </span>
             </li>
@@ -275,7 +275,7 @@ function ByType({ results }: { results: Result[] }) {
                   return (
                     <span key={i} className="flex items-center gap-2">
                       <span className={cn("h-2.5 rounded-sm", SERIES[i].bg)} style={{ width: `${(v / maxStat) * 85}%` }} />
-                      <span className="font-mono text-xs">{v}</span>
+                      <span className="tabular-nums text-xs">{v}</span>
                     </span>
                   );
                 })}
@@ -311,7 +311,7 @@ function ByType({ results }: { results: Result[] }) {
                         <td
                           key={t}
                           title={`Best switch-in: ${r.team[d.best.idx].set.species}, D ${d.best.D.toFixed(2)}`}
-                          className={cn("h-10 min-w-7.5 rounded-sm text-center font-mono leading-tight", d.best.D < 1 ? "bg-destructive-soft" : "bg-background")}
+                          className={cn("h-10 min-w-7.5 rounded-sm text-center tabular-nums leading-tight", d.best.D < 1 ? "bg-destructive-soft" : "bg-background")}
                         >
                           <span className="text-destructive">{d.weak || "·"}</span>
                           <br />
@@ -325,7 +325,7 @@ function ByType({ results }: { results: Result[] }) {
                       <td
                         key={t}
                         title={o.bestO.move ? `${r.team[o.bestO.idx].set.species}: ${o.bestO.move.name}, O ${o.bestO.O.toFixed(2)}` : "no damaging move"}
-                        className={cn("h-10 min-w-7.5 rounded-sm text-center font-mono leading-tight", o.se === 0 ? "bg-destructive-soft" : "bg-background")}
+                        className={cn("h-10 min-w-7.5 rounded-sm text-center tabular-nums leading-tight", o.se === 0 ? "bg-destructive-soft" : "bg-background")}
                       >
                         <span className="text-chart-2">{o.se}</span>
                         <br />
@@ -399,7 +399,7 @@ export function CompareView({
           <button
             type="button"
             onClick={() => setEditing([...editing, { name: `Team ${String.fromCharCode(65 + editing.length)}`, text: "" }])}
-            className="flex min-h-33 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed text-sm font-semibold text-muted-foreground"
+            className="flex min-h-33 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-3 border-dashed text-sm font-semibold text-muted-foreground"
           >
             + Add team
             <span className="text-xs font-normal">paste, sample or the current team</span>
@@ -407,7 +407,7 @@ export function CompareView({
         )}
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={() => onSlots(editing)} disabled={!dirty && ready} className={primaryClass}>
+        <button type="button" onClick={() => onSlots(editing)} disabled={!dirty && ready} className={buttonClass}>
           Compare
         </button>
         {failures.length > 0 && <span className="text-sm text-destructive">Not found: {failures.join(", ")}.</span>}
@@ -417,9 +417,9 @@ export function CompareView({
         <>
           <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
             {results.map((r, i) => (
-              <div key={i} className={cn("flex min-w-0 flex-col gap-2 rounded-2xl border border-t-3 bg-card p-3", SERIES[i].border)}>
+              <div key={i} className={cn("flex min-w-0 flex-col gap-2 rounded-2xl border-3 bg-card p-3", SERIES[i].border)}>
                 <div className="flex items-center gap-2">
-                  <span className={cn("min-w-0 flex-1 truncate font-heading text-base font-semibold", SERIES[i].text)}>{r.name}</span>
+                  <span className={cn("min-w-0 flex-1 truncate font-heading text-xl", SERIES[i].text)}>{r.name}</span>
                   <span className="rounded-full bg-secondary px-2.5 py-0.75 text-xs font-semibold text-chart-3">
                     {r.analysis.archetype[0].name} {Math.round(r.analysis.archetype[0].pct * 100)}%
                   </span>

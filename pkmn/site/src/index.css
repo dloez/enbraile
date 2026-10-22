@@ -1,20 +1,39 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource/chakra-petch/600.css";
-@import "@fontsource/chakra-petch/700.css";
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/jersey-10/400.css";
+@import "@fontsource/nunito/400.css";
+@import "@fontsource/nunito/500.css";
+@import "@fontsource/nunito/600.css";
+@import "@fontsource/nunito/700.css";
+@import "@fontsource/nunito/800.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: 'Chakra Petch', sans-serif;
-    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-    --font-mono: 'IBM Plex Mono', monospace;
+    --font-heading: 'Jersey 10', sans-serif;
+    --font-sans: 'Nunito', system-ui, sans-serif;
+    --color-ink: var(--ink);
+    --color-red: var(--red);
+    --color-cyan: var(--cyan);
+    --color-yellow: var(--yellow);
+    --color-white: var(--white);
+    --color-subtle: var(--subtle);
+    --color-face: var(--face);
+    --color-face-hi: var(--face-hi);
+    --color-edge: var(--edge);
+    --color-drop: var(--drop);
+    --color-dot: var(--dot);
+    --color-player-1: var(--player-1);
+    --color-player-2: var(--player-2);
+    --color-player-3: var(--player-3);
+    --color-player-4: var(--player-4);
+    --color-player-5: var(--player-5);
+    --color-player-6: var(--player-6);
+    --color-pixel-rim: var(--pixel-rim);
+    --color-pixel-red: var(--pixel-red);
+    --color-pixel-case: var(--pixel-case);
+    --color-pixel-notch: var(--pixel-notch);
     --color-scrim: var(--scrim);
     --color-box: var(--box);
     --color-cell: var(--cell);
@@ -53,34 +72,56 @@
 
 :root {
     color-scheme: dark;
-    --background: #111216;
-    --foreground: #e8e9ee;
-    --card: #191b21;
+    --ink: #10141d;
+    --background: #161b26;
+    --dot: #232b3c;
+    --foreground: #eef1f7;
+    --white: #ffffff;
+    --card: #222a3b;
     --card-foreground: var(--foreground);
     --popover: var(--card);
     --popover-foreground: var(--foreground);
-    --primary: #f28c4b;
-    --primary-foreground: #1c0b02;
+    --red: #d93a30;
+    --cyan: #5ad1f0;
+    --yellow: #ffd34d;
+    --green: #7be08a;
+    --primary: var(--cyan);
+    --primary-foreground: var(--ink);
     --secondary: var(--cell);
     --secondary-foreground: var(--foreground);
-    --muted: #0d0e12;
-    --muted-foreground: #9a9dab;
-    --accent: #33231a;
+    --muted: var(--ink);
+    --muted-foreground: #a3acbf;
+    --subtle: #c3cad8;
+    --accent: color-mix(in srgb, var(--cyan) 22%, var(--card));
     --accent-foreground: var(--foreground);
-    --destructive: #ff8a80;
-    --destructive-soft: #3a1c1d;
-    --border: #2a2d37;
+    --destructive: #ff6a5e;
+    --destructive-soft: color-mix(in srgb, var(--destructive) 20%, var(--card));
+    --border: #343f58;
     --input: var(--border);
-    --ring: var(--primary);
-    --chart-1: var(--primary);
-    --chart-2: #8db8f5;
-    --chart-3: #c9cbd6;
+    --ring: var(--cyan);
+    --chart-1: var(--cyan);
+    --chart-2: var(--green);
+    --chart-3: var(--subtle);
     --chart-4: var(--destructive);
     --radius: 0.625rem;
-    --box: #1d2030;
-    --cell: #272b3d;
-    --cell-hi: #363c56;
+    --box: #1b2232;
+    --cell: #2c3549;
+    --cell-hi: #44506d;
+    --face: rgba(255, 255, 255, 0.1);
+    --face-hi: rgba(255, 255, 255, 0.18);
+    --edge: rgba(0, 0, 0, 0.35);
+    --drop: #0a0d14;
     --scrim: rgba(0, 0, 0, 0.6);
+    --player-1: var(--yellow);
+    --player-2: var(--cyan);
+    --player-3: var(--green);
+    --player-4: #ff8a80;
+    --player-5: #c39bff;
+    --player-6: #ffb347;
+    --pixel-rim: #4a5470;
+    --pixel-red: #e3403a;
+    --pixel-case: #3a4150;
+    --pixel-notch: #2c3240;
     --type-normal: #9fa19f;
     --type-fire: #e62829;
     --type-water: #2980ef;
@@ -107,8 +148,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px);
+    background-size: 20px 20px;
   }
   html {
     @apply font-sans;
+    font-synthesis: none;
   }
 }

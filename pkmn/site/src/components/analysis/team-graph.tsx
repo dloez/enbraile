@@ -267,7 +267,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
               <TypeDot type={t} />
               {t}
             </span>
-            <span className="font-mono text-xs">
+            <span className="tabular-nums text-xs">
               ×{analysis.members[e.to].def[t]} · D {e.perType[t].toFixed(2)}
             </span>
           </div>
@@ -278,16 +278,16 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
       <div className="flex flex-col gap-3.5">
         <div className="flex items-center gap-2">
           <img src={spriteOf(a)} alt="" className="size-12 [image-rendering:pixelated]" />
-          <span className="font-mono text-lg text-primary">{back ? "⇄" : "→"}</span>
+          <span className="tabular-nums text-lg text-primary">{back ? "⇄" : "→"}</span>
           <img src={spriteOf(b)} alt="" className="size-12 [image-rendering:pixelated]" />
         </div>
         <div>
-          <div className="font-heading text-lg font-semibold">
+          <div className="font-heading text-2xl">
             {a.set.species} {back ? "⇄" : "→"} {b.set.species}
           </div>
           <div className="text-xs text-muted-foreground">
             {back ? "Mutual core" : "One-way cover"} · weighted synergy{" "}
-            <span className="font-mono text-foreground">{((there?.score ?? 0) + (back?.score ?? 0)).toFixed(2)}</span>
+            <span className="tabular-nums text-foreground">{((there?.score ?? 0) + (back?.score ?? 0)).toFixed(2)}</span>
           </div>
         </div>
         {there && side(there, b, a)}
@@ -304,7 +304,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
       team.filter((_, i) => pred(i)).map((m) => m.set.species).join(", ") || "—";
     return (
       <div className="flex flex-col gap-2.5 text-sm">
-        <div className="inline-flex items-center gap-2 font-heading text-lg font-semibold">
+        <div className="inline-flex items-center gap-2 font-heading text-2xl">
           <TypeDot type={t} className="size-5" />
           {t}
         </div>
@@ -319,7 +319,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
         {d && (
           <div>
             <span className="text-muted-foreground">Best switch-in: </span>
-            {team[d.best.idx].set.species} <span className="font-mono">D {d.best.D.toFixed(2)}</span>
+            {team[d.best.idx].set.species} <span className="tabular-nums">D {d.best.D.toFixed(2)}</span>
           </div>
         )}
         <div>
@@ -329,7 +329,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
         {o?.bestO.move && (
           <div>
             <span className="text-muted-foreground">Best hit: </span>
-            {team[o.bestO.idx].set.species}'s {o.bestO.move.name} <span className="font-mono">O {o.bestO.O.toFixed(2)}</span>
+            {team[o.bestO.idx].set.species}'s {o.bestO.move.name} <span className="tabular-nums">O {o.bestO.O.toFixed(2)}</span>
           </div>
         )}
       </div>
@@ -343,7 +343,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
       <div className="flex items-center gap-2.5">
         <img src={spriteOf(m)} alt="" className="size-14 [image-rendering:pixelated]" />
         <div className="flex flex-col">
-          <span className="font-heading text-lg font-semibold">{m.display}</span>
+          <span className="font-heading text-2xl">{m.display}</span>
           <span className="text-xs text-muted-foreground">{ma.roles.join(" · ")}</span>
         </div>
       </div>
@@ -467,9 +467,9 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
   };
 
   return (
-    <section aria-label="Graph" className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card">
+    <section aria-label="Graph" className="flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card">
       <div className="flex flex-wrap items-center gap-2.5 border-b px-3.5 py-3">
-        <h3 className="m-0 mr-1.5 font-heading text-base font-semibold">Graph</h3>
+        <h3 className="m-0 mr-1.5 font-heading text-2xl">Graph</h3>
         {LAYERS.map((l) => (
           <Toggle key={l.key} pressed={layers[l.key]} onChange={(on) => setLayers({ ...layers, [l.key]: on })}>
             <span className={l.swatch} aria-hidden="true" />
@@ -507,7 +507,7 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
             onChange={(e) => setMinSynergy(Number(e.target.value))}
             className="w-24 accent-primary"
           />
-          <span className="w-7 font-mono text-foreground">{minSynergy.toFixed(1)}</span>
+          <span className="w-7 tabular-nums text-foreground">{minSynergy.toFixed(1)}</span>
         </label>
         <Toggle pressed={labels} onChange={setLabels}>
           Labels

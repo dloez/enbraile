@@ -42,12 +42,12 @@ function MoveRow({ move, label, current, onPick }: {
               {move.name}
               {move.marked && <UnknownMark />}
             </span>
-            {label && <span className="font-mono text-xs text-muted-foreground sm:hidden">{label}</span>}
+            {label && <span className="tabular-nums text-xs text-muted-foreground sm:hidden">{label}</span>}
           </span>
-          {stats && <span className="font-mono text-xs text-muted-foreground sm:hidden">{stats}</span>}
+          {stats && <span className="tabular-nums text-xs text-muted-foreground sm:hidden">{stats}</span>}
           {move.desc && <span className="text-sm text-muted-foreground">{move.desc}</span>}
         </span>
-        <span className="hidden flex-col items-end gap-0.5 font-mono text-xs whitespace-nowrap text-muted-foreground sm:flex">
+        <span className="hidden flex-col items-end gap-0.5 tabular-nums text-xs whitespace-nowrap text-muted-foreground sm:flex">
           <span>{stats}</span>
           {label && <span>{label}</span>}
         </span>
@@ -59,9 +59,9 @@ function MoveRow({ move, label, current, onPick }: {
 function Group({ name, count, children }: { name: string; count?: number; children: ReactNode }) {
   return (
     <section aria-label={name} className="flex flex-col gap-0.5">
-      <h3 className="m-0 px-2.5 pt-2 pb-1 text-sm font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+      <h3 className="m-0 px-2.5 pt-2 pb-1 font-heading text-xl text-muted-foreground">
         {name}
-        {count !== undefined && <span className="ml-2 font-mono font-normal tracking-normal">{count}</span>}
+        {count !== undefined && <span className="ml-2 tabular-nums font-normal tracking-normal">{count}</span>}
       </h3>
       <ul className="m-0 flex list-none flex-col gap-0.5 p-0">{children}</ul>
     </section>
@@ -106,7 +106,7 @@ export function MovePicker({ sheet, mon, title, current, open, onOpenChange, onP
         className="top-auto bottom-0 flex h-[94svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-2xl rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-190 sm:-translate-y-1/2 sm:rounded-2xl"
       >
         <div className="flex flex-none items-center gap-3 pt-3 pr-2 pl-4.5">
-          <DialogTitle className="min-w-0 flex-1 truncate font-heading text-xl leading-normal font-bold">{title}</DialogTitle>
+          <DialogTitle className="min-w-0 flex-1 truncate font-heading text-2xl leading-normal">{title}</DialogTitle>
           <DialogPrimitive.Close
             aria-label="Close"
             className="grid size-11 cursor-pointer place-items-center rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"

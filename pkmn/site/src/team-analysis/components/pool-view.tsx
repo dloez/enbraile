@@ -19,11 +19,11 @@ const n0 = (v: number) => (v >= 1000 ? Math.round(v).toLocaleString("en") : v >=
 
 function Tile({ label, value, sub, sprite }: { label: string; value: string; sub: string; sprite?: string }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 rounded-2xl border bg-card px-3.5 py-3">
+    <div className="flex min-w-0 flex-col gap-1 rounded-2xl border-3 bg-card px-3.5 py-3">
       <span className="text-xs font-semibold text-muted-foreground">{label}</span>
       <span className="flex items-center gap-2">
         {sprite && <img src={sprite} alt="" className="-my-1.5 size-10 [image-rendering:pixelated]" />}
-        <span className="font-mono text-2xl font-medium">{value}</span>
+        <span className="tabular-nums text-2xl font-medium">{value}</span>
       </span>
       <span className="truncate text-xs text-muted-foreground">{sub}</span>
     </div>
@@ -76,8 +76,8 @@ function Histogram({ pool, team }: { pool: Pool; team: readonly Member[] }) {
             />
           );
         })}
-        <span className="absolute bottom-0 left-0 font-mono text-xs text-muted-foreground">{Math.round(min)}</span>
-        <span className="absolute right-0 bottom-0 font-mono text-xs text-muted-foreground">{Math.round(top)}</span>
+        <span className="absolute bottom-0 left-0 tabular-nums text-xs text-muted-foreground">{Math.round(min)}</span>
+        <span className="absolute right-0 bottom-0 tabular-nums text-xs text-muted-foreground">{Math.round(top)}</span>
       </div>
     </Panel>
   );
@@ -114,7 +114,7 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
   );
   const shade = (k: Metric, v: number) => ({ background: `color-mix(in oklch, var(--chart-2) ${Math.round(pool.pct(k, v) * 45)}%, transparent)` });
   return (
-    <Panel title="Pokémon" aside={<span className="ml-auto font-mono text-xs text-muted-foreground">{rows.length}</span>}>
+    <Panel title="Pokémon" aside={<span className="ml-auto tabular-nums text-xs text-muted-foreground">{rows.length}</span>}>
       <div className="flex flex-wrap items-center gap-2.5">
         <label className={cn(fieldClass, "w-56")}>
           <span className="text-muted-foreground">Search</span>
@@ -178,11 +178,11 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
                   </span>
                 </td>
                 {BASE_STATS.map((k) => (
-                  <td key={k} className="px-2 py-1 text-right font-mono" style={shade(k, m.st[k])}>
+                  <td key={k} className="px-2 py-1 text-right tabular-nums" style={shade(k, m.st[k])}>
                     {mode === "value" ? m.st[k] : Math.round(pool.pct(k, m.st[k]) * 100)}
                   </td>
                 ))}
-                <td className="px-2 py-1 text-right font-mono" style={shade("bst", m.bst)}>
+                <td className="px-2 py-1 text-right tabular-nums" style={shade("bst", m.bst)}>
                   {mode === "value" ? m.bst : Math.round(pool.pct("bst", m.bst) * 100)}
                 </td>
               </tr>
@@ -205,7 +205,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
   const names = (ms: PoolMember[]) => (ms.length > 2 ? `${ms[0].name} and ${ms.length - 1} more` : ms.map((m) => m.name).join(", "));
 
   if (pool.size === 0) {
-    return <p className="m-0 rounded-2xl border bg-card p-6 text-sm text-muted-foreground">No Pokémon match this pool.</p>;
+    return <p className="m-0 rounded-2xl border-3 bg-card p-6 text-sm text-muted-foreground">No Pokémon match this pool.</p>;
   }
 
   return (
@@ -238,7 +238,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
                     <tr key={k} className="border-b border-border/50">
                       <td className="px-2 py-1.5 font-semibold whitespace-nowrap">{LABEL[k]}</td>
                       {[d.mean, d.sd, d.min, d.p10, d.p25, d.median, d.p75, d.p90, d.max].map((v, i) => (
-                        <td key={i} className="px-2 py-1.5 text-right font-mono">
+                        <td key={i} className="px-2 py-1.5 text-right tabular-nums">
                           {n0(v)}
                         </td>
                       ))}
@@ -267,8 +267,8 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
                     style={{ width: `${(t.count / topCount) * 100}%`, background: `var(--type-${t.type.toLowerCase()})` }}
                   />
                 </span>
-                <span className="text-right font-mono">{t.count}</span>
-                <span className="text-right font-mono text-muted-foreground">{Math.round(t.meanBst)}</span>
+                <span className="text-right tabular-nums">{t.count}</span>
+                <span className="text-right tabular-nums text-muted-foreground">{Math.round(t.meanBst)}</span>
               </div>
             ))}
           </div>
@@ -294,7 +294,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
                     {row.map((v, j) => (
                       <td
                         key={j}
-                        className="h-8.5 w-14.5 rounded-sm text-center font-mono"
+                        className="h-8.5 w-14.5 rounded-sm text-center tabular-nums"
                         style={{
                           background: `color-mix(in oklch, ${v >= 0 ? "var(--chart-2)" : "var(--primary)"} ${Math.round(Math.abs(v) * 60)}%, transparent)`,
                         }}

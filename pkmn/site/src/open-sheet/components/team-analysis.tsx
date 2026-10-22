@@ -7,7 +7,7 @@ import { TypeDot } from "@/components/marks";
 import { MonSprite } from "@/open-sheet/components/summary";
 
 function Count({ value, className }: { value: number; className: string }) {
-  return <span className={cn("font-mono text-xs", value === 0 ? "text-muted-foreground/40" : className)}>{value}</span>;
+  return <span className={cn("tabular-nums text-xs", value === 0 ? "text-muted-foreground/40" : className)}>{value}</span>;
 }
 
 export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon[] }) {
@@ -29,10 +29,10 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
         <ol className="m-0 flex list-none flex-col gap-1.5 p-0">
           {speed.map((entry, rank) => (
             <li key={entry.slot} className="flex items-center gap-2.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm">
-              <span className="w-4 font-mono text-xs text-muted-foreground">{rank + 1}</span>
+              <span className="w-4 tabular-nums text-xs text-muted-foreground">{rank + 1}</span>
               <MonSprite mon={entry.mon} className="size-8" />
               <span className="min-w-0 flex-1 truncate">{displayName(entry.mon)}</span>
-              <span className="font-mono text-xs">{entry.low === entry.high ? entry.low : `${entry.low}–${entry.high}`}</span>
+              <span className="tabular-nums text-xs">{entry.low === entry.high ? entry.low : `${entry.low}–${entry.high}`}</span>
             </li>
           ))}
         </ol>
@@ -101,7 +101,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
             >
               <TypeDot type={row.type} />
               <span className="min-w-0 flex-1 truncate font-semibold">{row.type}</span>
-              <span className="font-mono">{row.hitters.length}</span>
+              <span className="tabular-nums">{row.hitters.length}</span>
             </div>
           ))}
         </div>
