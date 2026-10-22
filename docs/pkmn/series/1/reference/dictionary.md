@@ -9,9 +9,9 @@
 | Dead Pokémon | A Pokémon that fainted during the run. Can't be used in the story or in PvP, except one lost in the Pokémon League, which comes back for the final tournament | |
 | Lives | Extra chances after a wipe or death. Series 1 has none | |
 | League Round | One round of 1v1 best-of-three matches between two of the 6 players, after gyms 1, 2, 3, 5 and 7, played on Pokémon Showdown; a win gives 1 point | Jornada de liga |
-| League Points | Points from league wins (1 per win); they rank players and seed the final tournament | |
+| League Points | Points from league wins (1 per win) and from the best Pokémon League try (1 per combat won); they rank players and seed the final tournament | |
 | Pokepaste | A player's team, exported from the game's pause menu right after beating a gym that opens a league round (posting it to pokepast.es is optional); frozen for that round's matches | |
-| Egg | One of the 16 eggs the mod gives every new game, opened by a league match win or by beating an Elite Four member (one) or the rival (two); the extra catch | Huevo, captura extra |
+| Egg | One of the 16 eggs the mod gives every new game, opened by a league match win or by each combat won in the best Pokémon League try; the extra catch | Huevo, captura extra |
 | Series | One playthrough of a game by the group under its own rulebook, identified by number; series 1 is Pokémon Añil ([Repository Layout → Games and Series](../../../../general/explanation/repository-layout.md#games-and-series)) | |
 | Bo3 | Best of three games | |
 | Final Tournament | End-of-series open-sheet PvP among the players who finished the story without losing the challenge, from each player's whole-PC export | |

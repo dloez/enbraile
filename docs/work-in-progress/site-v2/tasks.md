@@ -2,23 +2,60 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands.
 
-## Design the new screens in Claude Design
+## Restyle the site in the new look
 
-The owner chose a design pass before building ([Pages](discovery.md#pages)). Mock, in the site's look and on its design system, the sign-in page, the waiting-to-be-added page, the series page (game download, players with their latest snapshot, upload, the player's teams, the rules), the PC page with its snapshot picker, the upload flow (slot and milestone pick), the team list, the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and the admin pages (admin sign-in, allowlist, games with their upload, the series form with players, milestones, Markdown rules with "copy from series", and the start checklist). Desktop and phone.
+The signed-off look ([Look](../../pkmn/site/explanation/site.md#look)) replaces the Open Sheet look on every page that exists today (home, Open Sheet, Team Analysis), so every later entry builds in it ([Pages → Design](discovery.md#pages)).
 
 **Do:**
-- [ ] Build the screens in Claude Design from `docs/pkmn/site/reference/design-system.md` and the Open Sheet and Team Analysis screens.
-- [ ] Get the owner's sign-off; record it, with the design's link, in `docs/pkmn/site/explanation/site.md` → Look and Decisions.
+- [ ] The palette as tokens in `src/index.css`, read from the frozen boards (navy ground and panels, slate borders, red, cyan, yellow, the player colours); Jersey 10 and Nunito from Fontsource, pinned.
+- [ ] The header: the pixel Poké Ball linking home, the tabs on the red line with the open one joined to it. Until the series pages exist, PC opens Open Sheet and Teams opens Team Analysis; Series gets its tab with its entry.
+- [ ] The shared pieces: the quiet pixel-face button, the panel, the lift-on-hover card, the boxed player badge, the pixel icons as one component.
+- [ ] Rewrite `docs/pkmn/site/reference/design-system.md` for the new tokens and pieces, and drop "Until the restyle lands" from `site.md` → Look.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `git diff main -- pkmn/site/src ':!pkmn/site/src/index.css' | grep -nE '^\+.*#[0-9a-fA-F]{3,8}\b'` finds no raw colour added outside the tokens; `git grep -n "fonts.googleapis" -- pkmn/site/src pkmn/site/index.html` finds nothing.
+- Human-run: run the site locally and open `/`, `/open-sheet` and `/team-analysis`: the navy look, the pixel face in headings and tabs, the new header with PC and Teams tabs, the open tab red; the same at phone width, nothing cut off or unreadable.
+- Reuse: `pkmn/site/design/series.dc.html` and `pkmn/site/design/series-list.dc.html` for every colour, size and radius; `src/components/site-header.tsx`, `src/components/controls.tsx`, `src/components/page.ts`.
+- Neighbors: `src/index.css`.
+- Forbidden: fonts or anything else loaded at runtime beyond sprites; raw colours in components; a light theme; helper text; the boards' sample data.
+
+**Touches:** `pkmn/site/src/`, `pkmn/site/index.html`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`
+
+## Design the sign-in and waiting pages
+
+The Discord sign-in page and the page a signed-in player not yet allowed sees, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)).
+
+**Do:**
+- [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
+- [ ] Get the owner's sign-off; copy the signed-off boards into `pkmn/site/design/` and record the sign-off in `docs/pkmn/site/explanation/site.md` → Look and Decisions.
 
 **Acceptance:**
 - Claude-run: none (no code).
-- Human-run: the owner opens the design and signs it off, or lists changes.
-- Reuse: [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1), [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABaszfH).
-- Neighbors: `docs/pkmn/site/reference/design-system.md`.
-- Forbidden: new colours or components outside the design system without naming them as additions; helper text.
+- Human-run: the owner opens the boards and signs them off, or lists changes.
+- Reuse: the frozen boards in `pkmn/site/design/`.
+- Neighbors: the canvas's earlier phone sign-in board.
+- Forbidden: colours or pieces outside the look without naming them as additions; helper text.
 
-**Touches:** `docs/pkmn/site/explanation/site.md`
-**Needs the author:** sign-off on the new screens.
+**Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
+**Needs the author:** sign-off on the sign-in and waiting pages.
+
+## Design the upload flow, the PC page, the team list and the team builder
+
+The rest of the screens, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the upload flow (where it starts, the slot and milestone pick), the PC page with its snapshot picker, the team list, the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and phone layouts of the series list and series page. The PC, bag and team views carry their content over from Open Sheet and Team Analysis.
+
+**Do:**
+- [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
+- [ ] Get the owner's sign-off; copy the signed-off boards into `pkmn/site/design/` and record the sign-off in `docs/pkmn/site/explanation/site.md` → Look and Decisions.
+
+**Acceptance:**
+- Claude-run: none (no code).
+- Human-run: the owner opens the boards and signs them off, or lists changes.
+- Reuse: the frozen boards in `pkmn/site/design/`; [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) and [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABaszfH) for what each view holds.
+- Neighbors: the canvas's PC board.
+- Forbidden: colours or pieces outside the look without naming them as additions; helper text.
+
+**Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
+**Needs the author:** sign-off on these screens.
 
 ## Admins sign in at /admin
 
@@ -26,7 +63,7 @@ The first server-side piece: Vercel Functions in `pkmn/site/api/`, Neon through 
 
 **Do:**
 - [ ] Add Hono, Drizzle, drizzle-kit and Better Auth at their latest stable versions, pinned; the schema and first migration; `.env.example` naming every variable.
-- [ ] The auth API route, the admin script (password prompted, never an argument), and the `/admin` sign-in and home in the signed-off design.
+- [ ] The auth API route, the admin script (password prompted, never an argument), and the `/admin` sign-in and home, built in the look from its shared pieces (admin pages have no design of their own).
 - [ ] Neon production and `dev` branches and Vercel environment variables (owner-run).
 - [ ] Rewrite `site.md`'s Data and Storage and Hosting sections and the "Nothing is stored server-side" decision; add local setup (`.env.local`, migrations, `admin:create`) to `run-and-deploy-the-site.md`.
 
@@ -38,7 +75,7 @@ The first server-side piece: Vercel Functions in `pkmn/site/api/`, Neon through 
 - Forbidden: a sign-up route for admins; secrets in the repo; down migrations.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/package.json`, `pkmn/site/drizzle/`, `pkmn/site/vercel.json`, `docs/pkmn/site/`
-**After:** Design the new screens in Claude Design
+**After:** Restyle the site in the new look
 
 ## Run the whole site locally and drive it in a browser
 
@@ -66,7 +103,7 @@ Discord sign-in through Better Auth; a signed-in player who is not allowed sees 
 
 **Do:**
 - [ ] The Discord provider (owner-run: the Discord application, its redirect URIs for production and localhost, its secrets in Vercel).
-- [ ] An `allowed` flag on players, the admin allowlist page, the waiting page, the site header's avatar and sign-out.
+- [ ] An `allowed` flag on players, the admin allowlist page, the waiting page, the site header's sign-out.
 - [ ] Every API route but sign-in refuses players not allowed.
 
 **Acceptance:**
@@ -78,7 +115,7 @@ Discord sign-in through Better Auth; a signed-in player who is not allowed sees 
 - Forbidden: an admin account linked to Discord; admin powers on a Discord session.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Run the whole site locally and drive it in a browser
+**After:** Run the whole site locally and drive it in a browser, Design the sign-in and waiting pages
 
 ## Admins create games and upload their files
 
@@ -100,18 +137,19 @@ An admin creates a game, uploads its zip straight from the browser to Backblaze 
 
 ## Admins create and start series; players land on the current one
 
-The series form (number, name, game, players from the allowlist, milestones, Markdown rules with "copy from series"), the start checklist, and the draft → running → finished states ([Accounts and Access](discovery.md#accounts-and-access)). A player lands on the running series' page: its name and game with a download button, its milestones, its players, its rules, and a series switcher for the series they play. Series 1 is created through it, its rules pasted from `docs/pkmn/series/1/reference/rules.md`. The home page's tool list gives way to this page for signed-in players.
+The series form (number, name, game, players from the allowlist, milestones, Markdown rules with "copy from series"), the start checklist, and the draft → running → finished states ([Accounts and Access](discovery.md#accounts-and-access)). Each series gets a background scene from a fixed set (a night sky and a daytime route so far), each animated. `/series` lists the series on their scenes, and a player lands on the running series' page as signed off ([Pages](discovery.md#pages)): the scene header with the name and the game's box and download, the League placeholder, the Trainers table with its rows opening into PC, Teams and snapshot tiles, and the rules. Series 1 is created through it, its rules pasted from `docs/pkmn/series/1/reference/rules.md`. The home page's tool list gives way to this page for signed-in players.
 
 **Do:**
 - [ ] Series, series players and milestones tables and migration; the admin series list, form and checklist; starting and finishing a series.
-- [ ] `/series/<n>` and the landing redirect; the game's download for players of a linked series; the Markdown rules rendered (a pinned Markdown renderer, no raw HTML).
+- [ ] The scene component: the night sky and the daytime route as pixel SVG, their stepped animations, still under `prefers-reduced-motion`; the scene picker in the series form.
+- [ ] `/series` and `/series/<n>` as in the frozen boards, the Series tab, and the landing redirect; the game's download for players of a linked series; the Markdown rules rendered (a pinned Markdown renderer, no raw HTML).
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `npx drizzle-kit check`.
-- Human-run: as admin, make a draft series and see the checklist list what is missing; fill it in item by item until "Start" enables; start it. As an allowed player of it, sign in and land on its page, read its rules, download its game. As an allowed player not in it, see no download. Make a second draft by "copy from series 1" and see the rules copied.
-- Reuse: the games and allowlist from the entries above; `src/components/controls.tsx`.
+- Human-run: as admin, make a draft series and see the checklist list what is missing; fill it in item by item until "Start" enables; start it. As an allowed player of it, sign in and land on its page, read its rules, download its game. As an allowed player not in it, see no download. Make a second draft by "copy from series 1" and see the rules copied. Open `/series`: each series on its moving scene, the running one marked playing now; hover a banner and see it lift. On the series page, open a trainer's row and see their PC, Teams and snapshot tiles; turn on reduced motion and see the scenes stand still.
+- Reuse: `pkmn/site/design/series-list.dc.html` and `pkmn/site/design/series.dc.html`; the games and allowlist from the entries above; the restyle's shared pieces.
 - Neighbors: `src/pages/home.tsx`.
-- Forbidden: rules enforced in team building; raw HTML in rendered rules.
+- Forbidden: rules enforced in team building; raw HTML in rendered rules; the boards' sample data; a series switcher on the series page; Fainted or Lives tiles (open in [Backlog → how does the site gather each trainer's data?](../backlog.md#pkmnsite-how-does-the-site-gather-each-trainers-data)).
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** Players sign in with Discord and admins keep the allowlist, Admins create games and upload their files
@@ -133,7 +171,7 @@ The export ported to TypeScript in the site, run in a Vercel Function on the sav
 - Forbidden: Python in the site's functions; offering the rolled zip back.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/games/anil/generate_export_data.py`, `docs/pkmn/games/anil/`, `docs/pkmn/site/`
-**After:** Admins create and start series; players land on the current one
+**After:** Admins create and start series; players land on the current one, Design the upload flow, the PC page, the team list and the team builder
 
 ## Retire export_data.py
 

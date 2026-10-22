@@ -10,9 +10,20 @@ Routes are declared in code in `src/router.tsx`, not with TanStack Router's file
 
 ## Look
 
-The [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) design in Claude Design, signed off by the owner on 2026-10-16, set the look: one dark theme, charcoal with a slate-blue PC and orange for actions, and no light theme. No helper text explaining the UI. The UI is in English, since Showdown's names are. Desktop-first, with every view usable on a phone.
+The [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) design in Claude Design sets the look the whole site moves to. The owner signed off its series list, series page and site header on 2026-10-22; its other screens are still being designed on the same canvas. It replaces the look the [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) design set on 2026-10-16 (charcoal, a slate-blue PC, orange for actions) everywhere, the PC and team views included, as each screen is designed and built. Frozen copies of the signed-off boards are in `pkmn/site/design/` (`series-list.dc.html`, `series.dc.html`): builders read them for exact colours, sizes and spacing, and they never change; a later revision is signed off on the canvas and copied in again. Their trainer numbers and names are sample data, and their Google Fonts link stands for the bundled fonts.
 
-That look is now the site's design system, kept in the repository: the code (`src/index.css`'s tokens, the shell, the shared components) is its source of truth, and the [Site Design System](../reference/design-system.md) describes it, changing in the same commit as the code does. A new page follows [How to Add a Page to the Site](../how-to/add-a-page-to-the-site.md).
+The look is a Gen 4–5 game screen, kept readable:
+
+- **One dark theme,** a deep navy ground with a faint dot grid, navy panels with 3px slate borders and rounded corners. No light theme.
+- **Two typefaces:** Jersey 10, a pixel face, for headings, labels, tabs, buttons and numbers; Nunito for running text.
+- **Pixel art drawn in code** as crisp-edged SVG: the Poké Ball home mark, the icons (flag, monitor, people, download arrow, cartridge) and the series scenes.
+- **A scene per series.** Each series has a background scene from a fixed set (so far a night sky and a daytime route), picked by the admin in the series form. Every scene moves a little in stepped, game-like animation: the night sky's stars, sparkles and lit windows blink; the route's clouds drift and its flowers blink. Under `prefers-reduced-motion` they stand still.
+- **The header:** the Poké Ball links home; tabs Series · PC · Teams (· Admin for admins) sit on the header's red bottom line, the open one filled red and joined to it; sign-out at the right, and no profile.
+- **Players are boxed, never round:** a rounded-square badge with the player's initial, a dark border and a ring in the player's own colour.
+- **Quiet controls:** buttons are translucent, in the pixel face, with a dark bottom edge; whatever is clickable as a whole (a series banner, a trainer's PC or Teams tile) lifts and takes a cyan border on hover. Red marks where you are, cyan what you can act on, yellow you and winners.
+- No helper text explaining the UI. The UI is in English, since Showdown's names are. Desktop-first, with every view usable on a phone.
+
+Until the restyle lands, the code still carries the Open Sheet look. The site's design system is kept in the repository: the code (`src/index.css`'s tokens, the shell, the shared components) is its source of truth, and the [Site Design System](../reference/design-system.md) describes it, changing in the same commit as the code does. A new page follows [How to Add a Page to the Site](../how-to/add-a-page-to-the-site.md).
 
 shadcn was initialised with its Nova preset on Radix, its palette replaced by the design's colours as the only theme, and its vendored components in `src/components/ui/` follow the same token rule. The design's fonts are bundled from Fontsource rather than loaded from Google Fonts, and the type icons come from duiker101's [Pokémon Type SVG Icons](https://github.com/duiker101/pokemon-type-svg-icons), free for any use, bundled in `src/lib/type-icons.ts`, so the only runtime calls the site makes are for Showdown's sprites.
 
@@ -32,6 +43,9 @@ The site logs nothing of its own: Vercel's build and deployment logs cover the d
 
 ## Decisions
 
+- **The Site v2 Screens look replaces the Open Sheet look everywhere,** the PC and team views included, screen by screen as each is designed; signed off first for the series list, the series page and the header. **Why:** the owner. _(owner, 2026-10-22; replaces the Open Sheet Screens design as the site's look)_
+- **Signed-off boards are frozen in `pkmn/site/design/`.** A Claude Design canvas can only be read at its current version and keeps changing while design goes on, so each signed-off board is copied into the repository for the builders, and a revision is copied in again after its own sign-off. **Why:** the build runs in another session while design continues. _(owner, 2026-10-22)_
+- **Each series has an animated background scene from a fixed set,** picked by the admin. **Why:** the owner. _(owner, 2026-10-22)_
 - **Legends are keys, not explanations.** Team Analysis's compare and pool legends were cut to their keys ("weak / resist · shaded: no switch-in", "super-effective · shaded: none", "shaded: percentile · L legendary · M mythical"), and [Design System](../reference/design-system.md)'s "No helper text" rule names legends as keys only. **Why:** the owner; the keys are needed to read the cells, the prose on how they are computed is helper text. _(owner, 2026-10-22)_
 - **No tests; the gate is `tsc -b` alone.** The site's vitest suite and vitest itself were removed. **Why:** the owner's rule for every project, in the root `CLAUDE.md`. _(owner, 2026-10-20)_
 - **One site for the group's Pokémon tools,** `pkmn/site/`, starting with Open Sheet at `/open-sheet` beside a home page listing the tools; its docs in `docs/pkmn/site/`. **Why:** the site will grow in depth over the series. _(owner, 2026-10-15)_

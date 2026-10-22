@@ -204,8 +204,8 @@ Its last sentence, an optional weekly fight against an AI for an egg or the next
 - **The team is the player's frozen pokepaste for that gym:** up to 6 living Pokémon. A player with fewer alive, early on or after losses, brings what they have.
 - **No deadline.** A match is played whenever the two players agree, always with the pokepastes frozen at its gym, so a player may be several gyms ahead in the story.
 - **No gym cap.** The story has no weekly limit on gyms; the frozen pokepastes keep the rounds fair.
-- **Points:** a Bo3 win gives 1 point, a loss 0.
-- **Ties:** on equal points, the player with fewer Pokémon fainted across all their league games ranks higher; if still level, the most wins in the matches among the tied players (for two, the winner of their match); if still level, as three tied in a loop can be, a random draw. _(owner, 2026-10-22; replaces head-to-head alone)_
+- **Points:** a Bo3 win gives 1 point, a loss 0, and each combat won in the player's best Pokémon League try gives 1 more ([The Pokémon League](#the-pokémon-league-1)). _(owner, 2026-10-22; replaces Bo3 wins only)_
+- **Ties:** on equal points, the most wins in the matches among the tied players ranks higher; if still level, the better game difference (Bo3 games won minus lost); if still level, the better Pokémon difference (the opponents' Pokémon fainted minus their own); if still level, a random draw. _(owner, 2026-10-22; replaces fewer Pokémon fainted first)_
 
 ### Pokepastes
 
@@ -215,7 +215,7 @@ Its last sentence, an optional weekly fight against an AI for an egg or the next
 
 ### Eggs
 
-- **Every new game has 16 eggs,** put by the mod in the last PC box, "Huevos". A league match win opens one, and the Pokémon League opens up to 6 more ([The Pokémon League](#the-pokémon-league-1)), so at most 11 are ever opened. This is the group's "captura extra" (extra catch), not breeding. How the mod gives and hatches them is in source: [Nuzlocke → Eggs](../../../games/anil/reference/nuzlocke.md#eggs).
+- **Every new game has 16 eggs,** put by the mod in the last PC box, "Huevos". A league match win opens one, and the Pokémon League opens up to 5 more ([The Pokémon League](#the-pokémon-league-1)), so at most 10 are ever opened. This is the group's "captura extra" (extra catch), not breeding. How the mod gives and hatches them is in source: [Nuzlocke → Eggs](../../../games/anil/reference/nuzlocke.md#eggs).
 - **A win lets the player open one egg:** move it to the party and walk; it hatches after 100 steps. Eggs in the PC never hatch. Opening an egg is the player's word that they won; the mod does not count wins.
 - **An egg may be opened later, or never.** What hatches is drawn at the moment it hatches: a random Gen 1–5 Pokémon at level 1, from the randomizer's window for the player's badge count at that moment, shiny at the normal gift odds.
 - **An egg never uses a route's encounter,** received or hatched.
@@ -241,7 +241,7 @@ The Elite Four ("Alto Mando") and the rival at the end of the story ([The Pokém
 
 - **The League may be reattempted as often as the player likes.** A Pokémon that dies in the League stays dead for every later attempt. _(owner, 2026-10-22)_
 - **Pokémon that died in the League come back for the final tournament,** whether the player beat the League or not: they count as alive in the export the tournament uses. They are never used in the League again. _(owner, 2026-10-22)_
-- **The League opens up to 6 eggs:** one for each Elite Four member beaten and two for beating the rival, each once, so 6 for beating the League. _(owner, 2026-10-22)_
+- **The best try counts.** A try is the League's five combats: the four Elite Four members, then the rival. The try with the most combats won, the earlier one on a tie, gives 1 league point and opens 1 egg for each combat it won, so at most 5 of each. _(owner, 2026-10-22; replaces one egg per Elite Four member and two for the rival)_
 
 ### The Postgame
 
@@ -261,7 +261,7 @@ The Elite Four ("Alto Mando") and the rival at the end of the story ([The Pokém
 - **Who:** the players who finished the story and did not lose the challenge. _(owner, 2026-10-02)_ Beating the League is not required: a player who never beats it still plays. _(owner, 2026-10-22)_
 - **Open sheet.** Each player exports their whole PC with the [Open Sheet export](../../../games/anil/how-to/run-the-open-sheet-export.md) (every living Pokémon with its moves, stats, items and TMs) when they decide they are done playing, and that export is their sheet for the whole tournament. Before a match each player knows the other's full sheet, and each builds a team from their own. No bans. _(owner, 2026-10-22; replaces a pokepaste made right after beating the League)_
 - **First round, seeded by league points:** first against last (1–6), second against fifth (2–5), third against fourth (3–4). First and second are placed in opposite halves of the bracket, so they can only meet in the final. Bo3, in the league's format and clauses. _(owner, 2026-10-22)_
-- **The losers' triangular.** The 3 first-round losers play a triangular ("formato triangular") among themselves, and its winner returns to the winners' bracket. _(owner, 2026-10-22)_ Each pair plays once, a Bo3 in the league's format and clauses, and the player who wins both of their matches goes through. If all three finish 1–1, the one with fewer Pokémon fainted across the triangular's games goes through; if still level, a random draw. _(owner, 2026-10-22)_
+- **The losers' triangular.** The 3 first-round losers play a triangular ("formato triangular") among themselves, and its winner returns to the winners' bracket. _(owner, 2026-10-22)_ Each pair plays once, a Bo3 in the league's format and clauses, and the player who wins both of their matches goes through. On equal wins, as in a 1–1–1 loop, the league's tie-breaks decide among the triangular's own matches: head-to-head, then game difference, then Pokémon difference; if still level, the higher league seed goes through. _(owner, 2026-10-22; replaces fewer Pokémon fainted, then a random draw)_
 - **Semifinals and final.** The triangular's winner meets the winner of the lower half's first-round match (2–5); the upper half's two winners (1–6 and 3–4) meet each other; the two semifinal winners play the final. _(owner, 2026-10-22)_
 
 ### Losing the Challenge
