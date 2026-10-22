@@ -20,6 +20,7 @@ The signed-off look ([Look](../../pkmn/site/explanation/site.md#look)) replaces 
 - Forbidden: fonts or anything else loaded at runtime beyond sprites; raw colours in components; a light theme; helper text; the boards' sample data.
 
 **Touches:** `pkmn/site/src/`, `pkmn/site/index.html`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`
+**Attempted once:** the validator's second round failed on the docked Summary title (`pc.tsx`) against the design-system type table; the fix is in but unvalidated. Work kept on branch `wq/restyle-site-new-look`.
 
 ## Design the sign-in and waiting pages
 
