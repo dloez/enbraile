@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
+import { AdminPage } from "@/pages/admin";
 import { HomePage } from "@/pages/home";
 import { OpenSheetPage } from "@/pages/open-sheet";
 import { TeamAnalysisPage } from "@/pages/team-analysis";
@@ -31,7 +32,13 @@ const teamAnalysisRoute = createRoute({
   component: TeamAnalysisPage,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, openSheetRoute, teamAnalysisRoute]);
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: AdminPage,
+});
+
+const routeTree = rootRoute.addChildren([homeRoute, openSheetRoute, teamAnalysisRoute, adminRoute]);
 
 export const router = createRouter({ routeTree });
 

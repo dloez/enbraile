@@ -9,7 +9,7 @@ The visual system of `pkmn/site/`: its tokens, type, layout shell, components an
 - **No helper text** explaining the UI. Labels name things; they do not instruct. A legend is a key only: each colour, shading or symbol and the few words it stands for, never prose on how it is computed.
 - **English UI**, with Showdown's names.
 - **Desktop-first, every view usable on a phone.**
-- **No runtime calls** beyond Showdown's sprites: fonts are bundled from Fontsource, type icons from `src/lib/type-icons.ts`, pixel art drawn in code.
+- **No outside runtime calls** beyond Showdown's sprites (the site's own `/api` aside): fonts are bundled from Fontsource, type icons from `src/lib/type-icons.ts`, pixel art drawn in code.
 - **Red marks where you are, cyan what you can act on, yellow you and winners.**
 
 ## Colour Tokens

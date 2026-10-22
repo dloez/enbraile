@@ -4,5 +4,6 @@
 docs/personal/
 pkmn/site/saves/
 .env
+.env.local
 __pycache__/
 pkmn/games/anil/game/

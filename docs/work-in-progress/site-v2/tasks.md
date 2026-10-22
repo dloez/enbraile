@@ -38,25 +38,6 @@ The rest of the screens, desktop and phone, in the signed-off look ([Pages → D
 **Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** sign-off on these screens.
 
-## Admins sign in at /admin
-
-The first server-side piece: Vercel Functions in `pkmn/site/api/`, Neon through Drizzle with its first migration, and Better Auth with username and password ([Data, Stack and Config](discovery.md#data-stack-and-config), [Accounts and Access](discovery.md#accounts-and-access)). `npm run admin:create <name>` makes an admin; `/admin` signs one in and shows an empty admin home with sign-out. Replaces the decision "Nothing is stored server-side".
-
-**Do:**
-- [ ] Add Hono, Drizzle, drizzle-kit and Better Auth at their latest stable versions, pinned; the schema and first migration; `.env.example` naming every variable.
-- [ ] The auth API route, the admin script (password prompted, never an argument), and the `/admin` sign-in and home, built in the look from its shared pieces (admin pages have no design of their own).
-- [ ] Neon production and `dev` branches and Vercel environment variables (owner-run).
-- [ ] Rewrite `site.md`'s Data and Storage and Hosting sections and the "Nothing is stored server-side" decision; add local setup (`.env.local`, migrations, `admin:create`) to `run-and-deploy-the-site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `npx drizzle-kit check`; `git grep -n "DATABASE_URL=\|BETTER_AUTH_SECRET=" -- ':!.env.example'` finds nothing.
-- Human-run: run `npm run admin:create owner` against the `dev` branch, sign in at `/admin` locally with it, sign out, see a wrong password refused; then the same on production after its migration.
-- Reuse: `src/components/controls.tsx`, `src/components/page.ts`, `src/router.tsx`.
-- Neighbors: `src/pages/home.tsx`.
-- Forbidden: a sign-up route for admins; secrets in the repo; down migrations.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/package.json`, `pkmn/site/drizzle/`, `pkmn/site/vercel.json`, `docs/pkmn/site/`
-
 ## Run the whole site locally and drive it in a browser
 
 The verification setup ([Observability and Verification](discovery.md#observability-and-verification)): `docker compose` with Postgres and MinIO, one `npm run dev` for Vite and the Hono API, the dev-only test sign-in, Playwright MCP in `.mcp.json`, and a `verify-site` skill with its how-to doc, so every later entry is checked from the database to the browser.
@@ -75,7 +56,6 @@ The verification setup ([Observability and Verification](discovery.md#observabil
 - Forbidden: test files, a test runner or a gate step; the test sign-in reachable when its flag is unset; versions copied from unlit.
 
 **Touches:** `pkmn/site/compose.yaml`, `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/package.json`, `.mcp.json`, `.gitignore`, `.claude/skills/verify-site/`, `docs/pkmn/site/how-to/`, `docs/pkmn/index.md`
-**After:** Admins sign in at /admin
 
 ## Players sign in with Discord and admins keep the allowlist
 
