@@ -4,23 +4,6 @@ The work queue, written by `/scope` or added directly, and worked with `/next-ta
 
 One queue for every category and project; an entry's heading starts with its category or project (e.g. `pkmn/wonder: …`).
 
-## pkmn/games/anil: keep or drop the League guard
-
-The rules guard refuses League entry below level 75 and items inside the League ([Rules Engine Design → Coverage](../pkmn/games/anil/explanation/rules-engine-design.md#coverage)), which were Wonder's own rules; series 1's rulebook does not carry them.
-
-**Do:**
-- [ ] With the owner's answer, keep the guard and add the rules to `docs/pkmn/series/1/reference/rules.md`, or drop `LEAGUE_RULE`, `league_refusal`, `league_item_refusal` and the `league` blocks from `src/anil/harness/rules.py` and the doc's rows (and any League case `anil check` has by then in `src/anil/harness/check.py`).
-
-**Acceptance:**
-- Claude-run: the gate; `uv run anil rules check walk --map 172` below 75 matches the answer.
-- Human-run: none.
-- Reuse: `src/anil/harness/rules.py`.
-- Neighbors: none.
-- Forbidden: deciding without the owner.
-
-**Touches:** `pkmn/games/anil/src/anil/harness/rules.py`, `pkmn/games/anil/src/anil/harness/check.py`, `docs/pkmn/games/anil/explanation/rules-engine-design.md`, `docs/pkmn/series/1/`
-**Needs the author:** are "everyone at 75 before the League" and "no items inside the League" series 1 rules? Keep the guard (and write them into the rulebook) or drop it?
-
 ## pkmn/games/anil: fold the Añil tooling scope into the game's docs
 
 Once no entry links [Añil Tooling: Discovery](anil-tooling-discovery.md), its lasting content moves to its permanent place and it is deleted ([Lifecycle](index.md#lifecycle)). Runtime Design → Project Layout cites "the discovery's renames".

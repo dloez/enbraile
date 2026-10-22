@@ -180,9 +180,6 @@ COMPETITIVE_ITEMS = frozenset(
 
 DAY_CARE_DEPOSIT = (49, 4)
 PUNCH_BAG_EVENTS = frozenset({(117, 19), (117, 20)})
-LEAGUE_GATE = (132, 16)
-LEAGUE_MAPS = frozenset({172, 173})
-LEAGUE_LEVEL = 75
 SHINY_LIMIT = 6
 LEGENDARY_FLAGS = frozenset({"Legendary", "Mythical"})
 BALL_FLAG = "PokeBall"
@@ -205,7 +202,6 @@ SHOP_RULE = "At most one of each competitive item bought"
 HEALING_RULE = "Marts don't sell healing items"
 EV_RULE = "No changing EVs or IVs"
 BREEDING_RULE = "No breeding"
-LEAGUE_RULE = "The League"
 LEGENDARY_RULE = "Legendaries and mythicals are never used"
 SHINY_LIMIT_RULE = "At most 6 shinies"
 SHINY_PARTY_RULE = "A living shiny always in the party"
@@ -215,7 +211,7 @@ EVASION_RULE = "Evasion Moves Clause"
 PASTE_RULE = "A pokepaste made right after each gym"
 SPECIES_RULE = "Species Clause"
 
-type Blocked = Literal["walk", "interact", "league", "freeze"]
+type Blocked = Literal["walk", "interact", "freeze"]
 BATTLE_STARTERS: tuple[Blocked, ...] = ("walk", "interact")
 
 
@@ -499,10 +495,6 @@ def shiny_refusal(
     return Verdict(False, SHINY_PARTY_RULE, "it would leave no living shiny in the party")
 
 
-def in_league(state: GameState) -> bool:
-    return state.position is not None and state.position.map_id in LEAGUE_MAPS
-
-
 def badges(state: GameState) -> int:
     return 0 if state.trainer is None else sum(state.trainer.badges)
 
@@ -530,7 +522,7 @@ def audit(facts: Facts) -> list[Obligation]:
                 "freeze the paste",
                 PASTE_RULE,
                 f"{badges(state)} badges and {facts.frozen} pastes frozen: gym {gym}'s is due",
-                ("league",),
+                (),
             )
         )
     for slot, pokemon in enumerate(state.party):
@@ -552,7 +544,7 @@ def audit(facts: Facts) -> list[Obligation]:
                     "deposit at the next PC",
                     LEGENDARY_RULE,
                     f"{reason}, in party slot {slot}",
-                    ("league", "freeze"),
+                    ("freeze",),
                 )
             )
     first = lead(state.party)
@@ -601,34 +593,6 @@ def blocked(facts: Facts, kind: Blocked) -> Verdict | None:
                 f"{obligation.duty} first: {obligation.reason}",
             )
     return None
-
-
-def league_refusal(facts: Facts) -> Verdict:
-    under = [
-        f"{name_of(pokemon)} (level {pokemon.level})"
-        for pokemon in facts.state.party
-        if living(pokemon) and pokemon.level < LEAGUE_LEVEL
-    ]
-    if under:
-        return Verdict(
-            False,
-            LEAGUE_RULE,
-            f"every living party member must be at level {LEAGUE_LEVEL}: " + ", ".join(under),
-        )
-    standing = [obligation for obligation in audit(facts) if obligation.blocking]
-    if standing:
-        return Verdict(
-            False,
-            LEAGUE_RULE,
-            f"{standing[0].duty} first: {standing[0].reason}",
-        )
-    return ALLOWED
-
-
-def league_item_refusal(facts: Facts, what: str) -> Verdict | None:
-    if not in_league(facts.state):
-        return None
-    return Verdict(False, LEAGUE_RULE, f"no {what} inside the League")
 
 
 def check_buy(facts: Facts, action: Buy) -> Verdict:
@@ -700,10 +664,6 @@ def check_interact(facts: Facts, action: Interact) -> Verdict:
         return Verdict(False, BREEDING_RULE, "no Pokémon is left at the Day Care")
     if event in PUNCH_BAG_EVENTS:
         return Verdict(False, EV_RULE, "the punch-bag training changes EVs")
-    if event == LEAGUE_GATE:
-        verdict = league_refusal(facts)
-        if not verdict.allowed:
-            return verdict
     if event in facts.gifts:
         verdict = freeze_refusal(facts, "Pokémon gift")
         if verdict is not None:
@@ -718,10 +678,6 @@ def check_dialog(facts: Facts) -> Verdict:
         if state.command is None or state.position is None
         else (state.position.map_id, state.command.event_id)
     )
-    if event == LEAGUE_GATE:
-        verdict = league_refusal(facts)
-        if not verdict.allowed:
-            return verdict
     if event in facts.gifts:
         verdict = freeze_refusal(facts, "Pokémon gift")
         if verdict is not None:
@@ -730,10 +686,6 @@ def check_dialog(facts: Facts) -> Verdict:
 
 
 def check_walk(facts: Facts, action: Walk) -> Verdict:
-    if action.map_id in LEAGUE_MAPS and not in_league(facts.state):
-        verdict = league_refusal(facts)
-        if not verdict.allowed:
-            return verdict
     return blocked(facts, "walk") or ALLOWED
 
 
@@ -896,15 +848,11 @@ def check(action: Action, facts: Facts) -> Verdict:
                 frozen = freeze_refusal(facts, "levelling")
                 if frozen is not None:
                     return frozen
-            return league_item_refusal(facts, "items") or ALLOWED
+            return ALLOWED
         case GiveItem(item=item):
             if item.upper() in EV_HELD_ITEMS:
                 return Verdict(False, EV_RULE, f"{item} changes the EVs a battle gives")
-            return league_item_refusal(facts, "items") or ALLOWED
-        case TakeItem():
-            return league_item_refusal(facts, "items") or ALLOWED
-        case Vial():
-            return league_item_refusal(facts, "Pokévial") or ALLOWED
+            return ALLOWED
         case Swap():
             return check_swap(facts, action)
         case Pc():
@@ -916,7 +864,15 @@ def check(action: Action, facts: Facts) -> Verdict:
         case ContinueDialog():
             return check_dialog(facts)
         case (
-            ContinueMenu() | Save() | Sell() | SetExpShare() | ContinueBattle() | Run() | Relearn()
+            TakeItem()
+            | Vial()
+            | ContinueMenu()
+            | Save()
+            | Sell()
+            | SetExpShare()
+            | ContinueBattle()
+            | Run()
+            | Relearn()
         ):
             return ALLOWED
         case Fly():
