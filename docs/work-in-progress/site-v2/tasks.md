@@ -8,6 +8,7 @@ The rest of the screens, desktop and phone, in the signed-off look ([Pages → D
 
 **Do:**
 - [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
+- [ ] Bring the upload boards (on the canvas, liked by the owner, 2026-10-23) in line with the data model ([Model](discovery.md#model), [Snapshots In](discovery.md#snapshots-in)): the milestone preselected from the save, the rolled zip's download on the saved step, no upload for players of an automatic series, the admin overrides on the rows. The owner wants the product designed before more screens, so this comes before the PC page, the team list and the team builder.
 - [ ] Get the owner's sign-off; copy the signed-off boards into `pkmn/site/design/` and record the sign-off in `docs/pkmn/site/explanation/site.md` → Look and Decisions.
 
 **Acceptance:**
@@ -59,10 +60,10 @@ Discord sign-in through Better Auth, on the sign-in page; a signed-in player who
 
 ## Admins create and start series; players land on the current one
 
-The series form (number, name, game, players from the allowlist, milestones, Markdown rules with "copy from series"), the start checklist, and the draft → running → finished states ([Accounts and Access](discovery.md#accounts-and-access)). Each series gets a background scene from a fixed set (a night sky and a daytime route so far), each animated. `/series` lists the series on their scenes, and a player lands on the running series' page as signed off ([Pages](discovery.md#pages)): the scene header with the name and the game's box and download, the League placeholder, the Trainers table with its rows opening into PC, Teams and snapshot tiles, and the rules. Series 1 is created through it, its rules pasted from `docs/pkmn/series/1/reference/rules.md`. The home page's tool list gives way to this page for signed-in players.
+The series form (number, name, game, ingestion mode, players from the allowlist, milestones, Markdown rules with "copy from series"), the start checklist, and the draft → running → finished states ([Accounts and Access](discovery.md#accounts-and-access)). Each series gets a background scene from a fixed set (a night sky and a daytime route so far), each animated. `/series` lists the series on their scenes, and a player lands on the running series' page as signed off ([Pages](discovery.md#pages)): the scene header with the name and the game's box and download, the League placeholder, the Trainers table with its rows opening into PC, Teams and snapshot tiles, and the rules. Series 1 is created through it, its rules pasted from `docs/pkmn/series/1/reference/rules.md`. The home page's tool list gives way to this page for signed-in players.
 
 **Do:**
-- [ ] Series, series players and milestones tables and migration; the admin series list, form and checklist; starting and finishing a series.
+- [ ] Series (with its ingestion mode, manual or automatic, [How does a save reach the site?](discovery.md#snapshots-in)), series players and milestones tables and migration; the admin series list, form and checklist; starting and finishing a series.
 - [ ] Extend `npm run seed` with series 1 on the seeded game, its test players in it.
 - [ ] The scene component: the night sky and the daytime route as pixel SVG, their stepped animations, still under `prefers-reduced-motion`; the scene picker in the series form.
 - [ ] `/series` and `/series/<n>` as in the frozen boards, the Series tab, and the landing redirect; the game's download for players of a linked series; the Markdown rules rendered (a pinned Markdown renderer, no raw HTML).
@@ -73,31 +74,66 @@ The series form (number, name, game, players from the allowlist, milestones, Mar
 - Human-run: as admin, make a draft series and see the checklist list what is missing; fill it in item by item until "Start" enables; start it. As an allowed player of it, sign in and land on its page, read its rules, download its game. As an allowed player not in it, see no download. Make a second draft by "copy from series 1" and see the rules copied. Open `/series`: each series on its moving scene, the running one marked playing now; hover a banner and see it lift. On the series page, open a trainer's row and see their PC, Teams and snapshot tiles; turn on reduced motion and see the scenes stand still.
 - Reuse: `pkmn/site/design/series-list.dc.html` and `pkmn/site/design/series.dc.html`; the games from `api/_lib/games.ts` and `shared/games.ts`, and `downloadUrl` in `api/_lib/files.ts` for the players' download; the allowlist from the entry above; `Panel` and `liftCardClass` in `src/components/controls.tsx`, `PlayerBadge`, `PixelIcon`.
 - Neighbors: `src/pages/home.tsx`.
-- Forbidden: rules enforced in team building; raw HTML in rendered rules; the boards' sample data; a series switcher on the series page; Fainted or Lives tiles (open in [Backlog → how does the site gather each trainer's data?](../backlog.md#pkmnsite-how-does-the-site-gather-each-trainers-data)).
+- Forbidden: rules enforced in team building; raw HTML in rendered rules; the boards' sample data; a series switcher on the series page; a Lives tile (open in [Backlog → where do a trainer's lives come from?](../backlog.md#pkmnsite-where-do-a-trainers-lives-come-from)).
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
 **After:** Players sign in with Discord and admins keep the allowlist
 
 ## Players upload their save zip as a snapshot
 
-The export ported to TypeScript in the site, run in a Vercel Function on the save zip the browser put in B2 ([Snapshots In](discovery.md#snapshots-in), [The export?](discovery.md#data-stack-and-config)). `generate_export_data.py` writes the export's data as JSON for the site; the port reads the zip, lists its `Partida N.rxdata` slots, and exports with moves always and the TM rolls thrown away. The player picks the slot and milestone on their row of the series page; the row then shows the snapshot with its Pokémon count. Uploading again to a milestone replaces it. An admin can upload for any player.
+The export ported to TypeScript in the site, run in a Vercel Function on the save zip the browser put in B2 ([Snapshots In](discovery.md#snapshots-in), [The export?](discovery.md#data-stack-and-config)), through the one pipeline every ingestion mode shares: raw save stored, exported, snapshot. `generate_export_data.py` writes the export's data as JSON for the site; the port reads the zip, lists its `Partida N.rxdata` slots, and exports with moves always. A snapshot holds everything the save holds at its milestone ([What does a snapshot hold?](discovery.md#model)), not only today's export. The player picks the slot on their row of the series page and the milestone, suggested from the save's badges and Hall of Fame; the row then shows the snapshot with its Pokémon count and its Fainted tile. Uploading again to a milestone replaces it. An admin can upload for any player. In an automatic series the players see no upload. This entry rolls missing TMs in memory as the export does; keeping them is the entry below.
 
 **Do:**
-- [ ] `generate_export_data.py` writes the data JSON into the site; port the Ruby Marshal reader, slot pick, abilities, moves and items.
-- [ ] Saves and snapshots tables and migration; the zip kept in B2 under its snapshot; the upload flow; a failed export shows its reason.
+- [ ] Locate play time and the Pokédex's seen and owned in a real save, and record them in [State](../../pkmn/games/anil/reference/state.md).
+- [ ] `generate_export_data.py` writes the data JSON into the site; port the Ruby Marshal reader, slot pick, abilities, moves and items, and add what the export leaves out: fainted Pokémon (species, nickname, level), all 8 bag pockets, the trainer (name, ID, money, badges), the party and its levels, play time, the Pokédex, used first-encounter routes.
+- [ ] Saves and snapshots tables and migration; the zip kept in B2 under its snapshot; the upload flow with the milestone suggestion; a failed export shows its reason; no upload for players of an automatic series.
 - [ ] Extend `npm run seed` with a snapshot for a test player, uploaded from a save zip in `pkmn/site/saves/` when one is there ([Local data to check with?](discovery.md#observability-and-verification)).
-- [ ] Move [Open Sheet JSON](../../pkmn/games/anil/reference/open-sheet-json.md) to be the snapshot format's reference.
+- [ ] Move [Open Sheet JSON](../../pkmn/games/anil/reference/open-sheet-json.md) to be the snapshot format's reference, widened to the snapshot's contents.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; for a save zip the owner provides, the port's JSON equals `uv run pkmn/games/anil/export_data.py --save <zip> --moves` except for TM rolls (`diff` after stripping rolled entries).
-- Human-run: upload your series 1 zip as "Post-League" and see the count on your row; upload it again and see one snapshot, replaced; as admin, upload another player's zip for them; upload a zip without a save and read its refusal.
+- Claude-run: `npm run gate`; for a save zip the owner provides, the port's output for the fields the Python export writes equals `uv run pkmn/games/anil/export_data.py --save <zip> --moves` except for TM rolls (`diff` after stripping rolled entries); its fainted list, pockets, trainer, party, play time and Pokédex match what `wonder eval` reads from the same save.
+- Human-run: upload your series 1 zip, see "Post-League" suggested, keep it, and see the count and the Fainted tile on your row; upload it again and see one snapshot, replaced; as admin, upload another player's zip for them; upload a zip without a save and read its refusal.
 - Reuse: `pkmn/site/src/open-sheet/schema.ts` (the export's zod schema); the games' multipart upload (`startUpload`, `partUrl`, `completeUpload`, `abortUpload` and `objectSize` in `api/_lib/files.ts`, the `/upload`, `/upload/part` and `/file` routes in `api/_lib/games.ts`, `uploadParts` in `shared/upload.ts`, `putPart` in `src/lib/api.ts`).
 - Neighbors: `pkmn/games/anil/export_data.py`.
-- Forbidden: Python in the site's functions; offering the rolled zip back.
+- Forbidden: Python in the site's functions; an endpoint for automatic ingestion; a pipeline that assumes the manual upload.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `pkmn/games/anil/generate_export_data.py`, `docs/pkmn/games/anil/`, `docs/pkmn/site/`, `docs/pkmn/index.md`
 **After:** Admins create and start series; players land on the current one; Design the upload flow, the PC page, the team list and the team builder
 
+## Keep each save's TM rolls and hand the rolled zip back
+
+The TMs a snapshot rolled are kept and reused on every later export of that save, and the player can download their zip back with the slot's `tm_compatibility_<slot>.dat` holding them ([TM rolls the export makes?](discovery.md#snapshots-in)). A later upload whose save lacks rolls the site made was never put back: its snapshot says so and offers the download again.
+
+**Do:**
+- [ ] The save's rolls stored with it; the port seeded with them before rolling what is still missing.
+- [ ] The rolled zip built as `export_data.py --save` builds it (the player's zip entry for entry, the side file replaced or added) and offered on the saved step and the snapshot; the "not put back" note.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, upload a save zip twice and see the second snapshot's TM moves equal the first's; download the rolled zip, and read its side file back with the port's Marshal reader holding the snapshot's rolls.
+- Human-run: download your rolled zip, extract it with the game closed, load and save in game, upload again, and see no "not put back" note.
+- Reuse: the port's Marshal reader and writer; `downloadUrl` in `api/_lib/files.ts`.
+- Neighbors: [Open Sheet Export → Rolling TMs](../../pkmn/games/anil/explanation/open-sheet-export.md#rolling-tms).
+- Forbidden: rolling a pair again that the site already rolled for the save; writing the save itself.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`, `docs/pkmn/games/anil/`
+**After:** Players upload their save zip as a snapshot
+
+## Admins set save-derived values by hand and manage any snapshot
+
+An admin can set any value derived from a save by hand (progress, the fainted count, a snapshot's milestone), and upload, replace, delete or move any snapshot for any player ([Admin overrides?](discovery.md#model), [How does a save reach the site?](discovery.md#snapshots-in)). Each value records its source, from the save or set by hand (by whom and when), and a value set by hand wins until an admin clears it.
+
+**Do:**
+- [ ] The source of each derived value in the schema and migration; override, clear, delete and move routes, admin-only; the overrides on the series page's rows.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `npx drizzle-kit check`; through `verify-site`, as admin, set a player's fainted count, upload a new save for them and see the set count kept, clear it and see the save's; move a snapshot to another milestone; delete one; as a player, see no override controls and get `403` from the routes.
+- Human-run: as admin on production, correct a snapshot's milestone and see it on the series page.
+- Reuse: `requireAdmin` in `api/_lib/admin.ts`; the snapshot tables from the save-zip entry.
+- Neighbors: the series page's Trainers table.
+- Forbidden: a value set by hand overwritten by a later save; an override without who set it and when.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
+**After:** Players upload their save zip as a snapshot
 ## Retire export_data.py
 
 Players upload on the site now, so the Python export and its CLI go, `--moves` with them ([The export?](discovery.md#data-stack-and-config)).
@@ -114,7 +150,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: a stub or redirect left for the old script.
 
 **Touches:** `pkmn/games/anil/`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-**After:** Players upload their save zip as a snapshot
+**After:** Keep each save's TM rolls and hand the rolled zip back
 
 ## Browse any player's PC at any snapshot
 

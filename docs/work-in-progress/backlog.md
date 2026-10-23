@@ -4,9 +4,9 @@ Laid out as the `/scope` skill's work-in-progress layout says. An entry's headin
 
 ## Questions
 
-### pkmn/site: how does the site gather each trainer's data?
+### pkmn/site: where do a trainer's lives come from?
 
-The series page's trainer panel wants per-trainer data the site has no source for yet: Pokémon fainted (the save export leaves permafainted Pokémon out), lives (series 1 plays without them, a later series may not), alongside what snapshots already give (the PC, the bag, TMs). Today one series reads Añil saves through one export; a later series may run on another game, another mod or another way of reporting. How the site takes in trainer data has to allow several ingestion paths, one per series or game, rather than assume today's export. Raised in the site v2 design pass ([Site v2 → Snapshots In](site-v2/discovery.md#snapshots-in)). _(owner, 2026-10-22)_
+The series page's trainer panel wants a trainer's lives, for a series that plays with a lives clause (series 1 plays without one), and nothing gives them yet. The rest of what the panel wants now comes from the snapshot, fainted Pokémon included, through a per-series ingestion mode ([Site v2 → Model](site-v2/discovery.md#model), [Snapshots In](site-v2/discovery.md#snapshots-in), 2026-10-23). Raised in the site v2 design pass. _(owner, 2026-10-22)_
 
 ## Tasks
 
