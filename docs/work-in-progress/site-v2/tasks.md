@@ -2,31 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET`, `POST`, `PUT` or `DELETE` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Bring the site docs in line with the track and the progress set by hand
-
-Three landings of 2026-10-23 each wrote their own decision and left an earlier one false. The admin overrides (`1ce7c3e`) made a trainer's progress the hand value when set, else the latest snapshot's milestone (`progress` in `api/_lib/series-data.ts`), and the track, the phone row and the profile's Reached all read it; the track's landing (`3709376`) made the row's tiles and the PC tile follow the shown snapshot; the profile (`5b0cd60`) split the phone row's head into a profile link and a button. [The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots) already says what is true; these say otherwise:
-
-- `site.md`, the player's profile's build choices: "Reached in `yellow` when the latest snapshot sits at the series' last milestone", while `reachedEnd` in `api/_lib/profiles.ts` compares the progress, hand value first; and "from the rest of its head, the latest milestone and the chevron", while the phone row's button shows `trainer.progress` (`src/pages/series.tsx`).
-- `site.md`, the series pages' phone build choices: the phone track's `role="img"` "named for the trainer, their latest milestone and their snapshots' milestones"; its label names `trainer.progress`.
-- `site.md`, the track's build choices: "the fill from the first node's centre to the latest's"; `Track` fills to the progress's node.
-- `site.md`, the PC page's build choices: "the latest snapshot shown when `?snapshot=` is absent, which is how the PC tile and the PC tab link"; the PC tile now links with `?snapshot=` the shown snapshot, and only the PC tab and the player's series page's PC button open the latest.
-- `site.md`, the snapshot upload's build choices: "the row's 'At <milestone>' and tiles reading the latest snapshot"; they read the shown one, the latest until another is picked.
-- `design-system.md`, the series page's Trainers table below `sm`: "each row is one `min-h-13` button holding the badge …, the name …"; the badge and name are a link to the profile, and the button holds the progress and the chevron.
-- `docs/pkmn/index.md`, the Site row: no mention of the player's profile, the player's series page or the admin overrides.
-- `discovery.md`, The progress track?: "It shows the trainer at their latest snapshot", beside its own Admin overrides? answer that a hand value wins; say the track shows their progress.
-
-**Do:**
-- [ ] Rewrite each passage above to say what the code does, keeping each decision's date and adding none.
-
-**Acceptance:**
-- Claude-run: `grep -n "latest snapshot sits\|the latest milestone and the chevron\|their latest milestone and their snapshots\|to the latest's\|which is how the PC tile\|tiles reading the latest snapshot" docs/pkmn/site/explanation/site.md` finds nothing; each rewritten passage read against `api/_lib/profiles.ts`, `api/_lib/series-data.ts` and `src/pages/series.tsx`; every link in the touched docs resolves.
-- Human-run: none.
-- Reuse: [The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots), the passages' owner.
-- Neighbors: `1cba46e`, the last docs sync.
-- Forbidden: code changes; a new decision; rewording a decision the owner dated as theirs.
-
-**Touches:** `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/reference/design-system.md`, `docs/pkmn/index.md`, `docs/work-in-progress/site-v2/discovery.md`
-
 ## Design the team list, the team builder and the PC's summary
 
 The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare), and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards.
