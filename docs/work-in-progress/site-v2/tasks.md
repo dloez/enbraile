@@ -2,28 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET`, `POST`, `PUT` or `DELETE` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Bring the design system in line with the old exports' warnings
-
-The old exports' landing (`e87655d`) drew three amber pieces that [Design System](../../pkmn/site/reference/design-system.md) does not list, and left two of its passages short of what the code does:
-- `design-system.md:63`, the `warning` token: "its border and icon (a snapshot about to be replaced)"; it is now also the text of the series row's and the PC page's "Export missing" line (`text-sm font-bold text-warning`, `src/pages/series.tsx`, `src/pages/pc.tsx`), the done step's "Missing:" chip's border, icon and text, and the file row's `zip` icon for an export (`src/components/upload-dialog.tsx`).
-- `design-system.md:223`, the Warning pattern, names only the boxed row; the line and the done step's chips (`rounded-full border border-warning px-3 py-1 text-sm font-bold text-warning` with a `TriangleAlert`, and the grey `rounded-full bg-cell … text-subtle` skipped chip, `ExportGaps`) are not there.
-- `design-system.md:190`, `UploadDialog`: the file row's `zip` icon is always `primary` and the done step holds no export chips.
-- `design-system.md:173`, the phone's open row: it ends at the Upload button; the "Export missing" line under it (`col-span-2`) is missing.
-
-[The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots) and the old exports' build choices already say what is true.
-
-**Do:**
-- [ ] Rewrite each passage above to say what the code does, keeping each decision's date and adding none.
-
-**Acceptance:**
-- Claude-run: each rewritten passage read against `src/pages/series.tsx`, `src/pages/pc.tsx` and `src/components/upload-dialog.tsx`; `grep -n "Export missing\|ExportGaps" docs/pkmn/site/reference/design-system.md` finds the line and the chips; every link in the touched doc resolves.
-- Human-run: none.
-- Reuse: [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the old exports' build choices, the passages' owner.
-- Neighbors: `7bba9aa`, the last docs sync.
-- Forbidden: code changes; a new decision; rewording a decision the owner dated as theirs.
-
-**Touches:** `docs/pkmn/site/reference/design-system.md`
-
 ## Design the team list, the team builder and the PC's summary
 
 The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare), and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards.
