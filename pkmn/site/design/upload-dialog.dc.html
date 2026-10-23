@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Upload a snapshot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#161b26}
+.up-btn:not(:disabled):hover{background:rgba(255,255,255,0.18)!important}
+.up-go:not(:disabled):hover{background:#ef5148!important}
+.up-x:hover{background:rgba(255,255,255,0.1)!important;color:#ffffff!important}
+.up-drop:hover,.up-drop:focus-within{border-color:#5ad1f0!important}
+.up-slot:not([aria-checked="true"]):not(:disabled):hover{border-color:#5ad1f0!important}
+.up-ms:not([aria-checked="true"]):not(:disabled):hover{background:#344059!important;color:#ffffff!important}
+.up-file:focus-within{outline:3px solid rgba(90,209,240,0.5)}
+@keyframes up-dot{0%{opacity:0.2}100%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.up-dots span{animation:none!important;opacity:1!important}}
+</style>
+</helmet>
+<div role="dialog" aria-labelledby="up-title" style="width: 100%; max-width: 600px; margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; padding: 22px 24px 24px; background: #222a3b; border: 3px solid #343f58; border-bottom-width: {{bottomEdge}}; border-radius: {{radius}}; color: #eef1f7; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45">
+
+<div style="display: flex; align-items: center; gap: 14px">
+<sc-if value="{{forOther}}" hint-placeholder-val="{{ false }}">
+<span aria-hidden="true" style="flex: none; width: 40px; height: 40px; box-sizing: border-box; border-radius: 8px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{who.colour}}; background: {{who.colour}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #10141d">{{who.initial}}</span>
+</sc-if>
+<h2 id="up-title" style="flex: 1; min-width: 0; margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 38px; line-height: 0.9">{{title}}</h2>
+<button type="button" class="up-x" aria-label="Close" title="Close" onClick="{{close}}" style="flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+
+<sc-if value="{{onDrop}}" hint-placeholder-val="{{ true }}">
+<label class="up-drop" style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 36px 24px 32px; border: 3px dashed #44506d; border-radius: 18px; background: #1b2232; cursor: pointer">
+<span aria-hidden="true" style="width: 72px; height: 72px; border-radius: 14px; background: #10141d; display: grid; place-items: center"><svg width="40" height="40" viewBox="0 0 10 10" shape-rendering="crispEdges"><path d="M4 1h2v1H4zM3 2h4v1H3zM2 3h6v1H2zM4 4h2v4H4zM1 9h8v1H1z" fill="#5ad1f0"></path></svg></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 32px; line-height: 1; text-align: center">Drop a save zip or an export</span>
+<span class="up-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 18px 4px; box-sizing: border-box; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px">Choose file</span>
+<input type="file" accept=".zip,.json" onChange="{{pickFile}}" style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden">
+</label>
+</sc-if>
+
+<sc-if value="{{showFile}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; background: #1b2232; border-radius: 14px">
+<div style="display: flex; align-items: center; gap: 14px">
+<span aria-hidden="true" style="flex: none; width: 44px; height: 44px; border-radius: 10px; background: #10141d; display: grid; place-items: center"><svg width="24" height="24" viewBox="0 0 10 10" shape-rendering="crispEdges"><path d="M1 0h6v1H1zM7 1h1v1H7zM8 2h1v8H8zM1 9h7v1H1zM1 1h1v8H1z" fill="#a3acbf"></path><path d="M4 1h1v1H4zM5 2h1v1H5zM4 3h1v1H4zM5 4h1v1H5zM4 5h2v2H4z" fill="{{fileTint}}"></path></svg></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{fileName}}</span>
+<span style="font-size: 14px; color: #a3acbf; font-variant-numeric: tabular-nums">{{fileSize}}</span>
+</span>
+<span style="flex: none; display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: {{fileInk}}; font-variant-numeric: tabular-nums">
+<sc-if value="{{fileOk}}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M8 1h2v2H8zM7 3h2v2H7zM6 5h2v2H6zM4 7h3v2H4zM2 5h2v2H2zM0 3h2v2H0z" fill="currentColor"></path></svg></sc-if>
+{{fileState}}
+</span>
+</div>
+<sc-if value="{{showBar}}" hint-placeholder-val="{{ true }}">
+<span role="progressbar" aria-label="Upload" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pct}}" style="position: relative; display: block; height: 16px; border-radius: 4px; background: #10141d; overflow: hidden">
+<span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{pct}}%; background: {{barFill}}; transition: width 0.14s steps(2)"></span>
+<span aria-hidden="true" style="position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, transparent 0 14px, #10141d 14px 17px)"></span>
+</span>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{showAlert}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid #ff6a5e; border-radius: 14px; background: #4e3742">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff6a5e" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5v.5"></path></svg>
+<span style="font-weight: 700">{{alertText}}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{showSlots}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span id="up-slot" style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1; color: #a3acbf">Slot</span>
+<div role="radiogroup" aria-labelledby="up-slot" style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{slots}}" as="s" hint-placeholder-count="3">
+<button type="button" class="up-slot" role="radio" aria-checked="{{s.on}}" disabled="{{locked}}" onClick="{{s.pick}}" style="display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 0 16px; box-sizing: border-box; border-radius: 12px; border: 3px solid {{s.line}}; background: {{s.bg}}; color: #eef1f7; font: inherit; text-align: left; cursor: {{cursor}}">
+<span aria-hidden="true" style="flex: none; width: 22px; height: 22px; box-sizing: border-box; border-radius: 5px; border: 3px solid {{s.ring}}; display: grid; place-items: center"><span style="width: 8px; height: 8px; background: {{s.dot}}"></span></span>
+<span style="flex: 1; font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 1">{{s.name}}</span>
+<span style="font-size: 14px; color: #a3acbf; font-variant-numeric: tabular-nums">{{s.when}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{showMs}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="display: flex; align-items: center; gap: 10px">
+<span id="up-ms" style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1; color: #a3acbf">Milestone</span>
+<sc-if value="{{suggested}}" hint-placeholder-val="{{ false }}"><span style="padding: 2px 10px; border-radius: 999px; background: #2c3549; color: #c3cad8; font-size: 13px; font-weight: 700">{{suggestText}}</span></sc-if>
+</span>
+<div role="radiogroup" aria-labelledby="up-ms" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{milestones}}" as="m" hint-placeholder-count="10">
+<button type="button" class="up-ms" role="radio" aria-checked="{{m.on}}" aria-label="{{m.label}}" disabled="{{locked}}" onClick="{{m.pick}}" style="position: relative; min-height: 48px; padding: 0 8px; border: none; border-radius: 8px; background: {{m.bg}}; color: {{m.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 23px; white-space: nowrap; cursor: {{cursor}}">{{m.name}}<sc-if value="{{m.has}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: {{m.mark}}"></span></sc-if></button>
+</sc-for>
+</div>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #a3acbf"><span aria-hidden="true" style="width: 7px; height: 7px; background: #a3acbf"></span>Has a snapshot</span>
+<sc-if value="{{replacing}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid #ffc878; border-radius: 14px; background: #3b3530">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffc878" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M12 3l10 18H2z"></path><path d="M12 10v4.5M12 17.5v.5"></path></svg>
+<span style="font-weight: 700; color: #ffe2b8">{{replaceText}}</span>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{onDone}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 18px 0 6px">
+<span aria-hidden="true" style="width: 76px; height: 76px; border-radius: 16px; background: #1b2232; border: 3px solid #343f58; box-sizing: border-box; display: grid; place-items: center"><svg width="40" height="40" viewBox="0 0 10 10" shape-rendering="crispEdges"><path d="M8 1h2v2H8zM7 3h2v2H7zM6 5h2v2H6zM4 7h3v2H4zM2 5h2v2H2zM0 3h2v2H0z" fill="#7be08a"></path></svg></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 46px; line-height: 0.9; text-align: center">{{doneTitle}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 1; color: #c3cad8; font-variant-numeric: tabular-nums">{{doneCount}}</span>
+<sc-if value="{{showRolls}}" hint-placeholder-val="{{ false }}">
+<div style="align-self: stretch; display: flex; align-items: center; gap: 14px; margin-top: 8px; padding: 12px 12px 12px 16px; background: #1b2232; border-radius: 14px">
+<span style="flex: 1; display: flex; flex-direction: column">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1">37 TM rolls</span>
+<span style="font-size: 14px; color: #a3acbf">tm_compatibility_Partida_1.dat</span>
+</span>
+<a href="#" class="up-btn" style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px 4px; box-sizing: border-box; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; text-decoration: none"><svg width="16" height="16" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h2v4H4zM2 5h6v1H2zM3 6h4v1H3zM4 7h2v1H4zM1 9h8v1H1z" fill="#5ad1f0"></path></svg>Download zip</a>
+</div>
+</sc-if>
+<sc-if value="{{json}}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px">
+<span style="display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; border: 1px solid #ffc878; color: #ffc878; font-size: 14px; font-weight: 700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v4.5M12 17.5v.5"></path></svg>Missing: IVs, EVs, stats · moves</span>
+<span style="padding: 4px 12px; border-radius: 999px; background: #2c3549; color: #c3cad8; font-size: 14px; font-weight: 700">1 skipped</span>
+</span>
+</sc-if>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px">
+<sc-if value="{{showCancel}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="up-x" onClick="{{close}}" style="min-height: 52px; padding: 0 16px 4px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">Cancel</button>
+</sc-if>
+<sc-if value="{{showSave}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="up-go" disabled="{{saveOff}}" onClick="{{save}}" style="min-height: 52px; padding: 0 22px 4px; border: none; border-radius: 8px; background: {{saveBg}}; color: {{saveInk}}; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 26px; cursor: {{saveCursor}}">{{saveLabel}}</button>
+</sc-if>
+<sc-if value="{{exporting}}" hint-placeholder-val="{{ false }}">
+<button type="button" disabled="{{ true }}" style="display: flex; align-items: center; gap: 2px; min-height: 52px; padding: 0 22px 4px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 26px">Exporting<span class="up-dots" aria-hidden="true" style="display: inline-flex"><span style="animation: up-dot 0.4s steps(2) 0s infinite alternate">.</span><span style="animation: up-dot 0.4s steps(2) 0.2s infinite alternate">.</span><span style="animation: up-dot 0.4s steps(2) 0.4s infinite alternate">.</span></span></button>
+</sc-if>
+<sc-if value="{{showRetry}}" hint-placeholder-val="{{ false }}">
+<label class="up-btn up-file" style="position: relative; display: flex; align-items: center; min-height: 52px; padding: 0 18px 4px; box-sizing: border-box; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">Choose another file<input type="file" accept=".zip,.json" onChange="{{pickFile}}" style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden"></label>
+<button type="button" class="up-go" onClick="{{retry}}" style="min-height: 52px; padding: 0 22px 4px; border: none; border-radius: 8px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 26px; cursor: pointer">Retry</button>
+</sc-if>
+<sc-if value="{{showRefused}}" hint-placeholder-val="{{ false }}">
+<label class="up-go up-file" style="position: relative; display: flex; align-items: center; min-height: 52px; padding: 0 22px 4px; box-sizing: border-box; border-radius: 8px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 26px; cursor: pointer">Choose another file<input type="file" accept=".zip,.json" onChange="{{pickFile}}" style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden"></label>
+</sc-if>
+<sc-if value="{{onDone}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="up-btn" onClick="{{close}}" style="min-height: 52px; padding: 0 18px 4px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">Close</button>
+<a href="Pc.dc.html" class="up-go" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 22px 4px; box-sizing: border-box; border-radius: 8px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none">Open PC<svg width="9" height="13" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="currentColor"></path></svg></a>
+</sc-if>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"enum","options":["file","uploading","pick","replace","exporting","done","doneJson","uploadFailed","refused"],"default":"file"},"outcome":{"editor":"enum","options":["works","upload fails","no save in zip"],"default":"works"},"sheet":{"editor":"boolean","default":false},"who":{"editor":null},"onClose":{"editor":null},"onSaved":{"editor":null},"$preview":{"width":600,"height":460}}'>
+const MS = ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 4', 'Gym 5', 'Gym 6', 'Gym 7', 'Gym 8', 'League', 'Tournament'];
+const PEOPLE = {
+  you: {name: 'Dloez', initial: 'D', colour: '#ffd34d', you: true, snaps: {'Gym 1': 31, 'Gym 2': 36, 'Gym 3': 40, 'Gym 5': 44, 'Gym 7': 47}},
+  vicky: {name: 'Vicky', initial: 'V', colour: '#5ad1f0', you: false, snaps: {'Gym 1': 33, 'Gym 2': 38, 'Gym 3': 41, 'Gym 5': 48, 'Gym 7': 52}}
+};
+const SLOTS = [
+  {name: 'Partida 1', when: 'Saved 21 Oct, 23:14'},
+  {name: 'Partida 2', when: 'Saved 2 Sep, 18:02'},
+  {name: 'Partida 3', when: 'Saved 2 Sep, 17:40'}
+];
+const ZIP = {fileName: 'Añil saves.zip', fileSize: '4.2 MB', json: false};
+const JSON_FILE = {fileName: 'Vicky-open-sheet.json', fileSize: '310 KB', json: true};
+const PRESETS = {
+  file: {step: 'file'},
+  uploading: Object.assign({step: 'uploading', pct: 62, ms: 'Gym 8'}, ZIP),
+  pick: Object.assign({step: 'pick', pct: 100, slot: 0, ms: 'Gym 8'}, ZIP),
+  replace: Object.assign({step: 'pick', pct: 100, slot: 0, ms: 'Gym 7'}, ZIP),
+  exporting: Object.assign({step: 'exporting', pct: 100, slot: 0, ms: 'Gym 8'}, ZIP),
+  done: Object.assign({step: 'done', pct: 100, slot: 0, ms: 'Gym 8'}, ZIP),
+  doneJson: Object.assign({step: 'done', pct: 100, ms: 'League', player: 'vicky'}, JSON_FILE),
+  uploadFailed: Object.assign({step: 'uploadFailed', pct: 38, ms: 'Gym 8'}, ZIP),
+  refused: Object.assign({step: 'refused', pct: 100}, ZIP)
+};
+const SUGGEST = {ms: 'Gym 8', text: 'From the save · 8 badges'};
+const KEYS = ['step', 'pct', 'slot', 'ms', 'fileName', 'fileSize', 'json', 'retried', 'n', 'replaced'];
+function size(b) { return b < 1048576 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1048576).toFixed(1) + ' MB'; }
+class Component extends DCLogic {
+  preset() { return PRESETS[this.props.step] || PRESETS.file; }
+  st(k, f) { const s = this.state || {}; if (s[k] !== undefined) return s[k]; const p = this.preset(); return p[k] !== undefined ? p[k] : f; }
+  componentDidMount() { this.timer = setInterval(() => this.tick(), 140); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  reset() { const blank = {}; KEYS.forEach((k) => { blank[k] = undefined; }); this.setState(blank); }
+  tick() {
+    const step = this.st('step');
+    const out = this.props.outcome || 'works';
+    if (step === 'uploading' && (this.state || {}).live) {
+      const pct = Math.min(100, this.st('pct', 0) + 9);
+      if (out === 'upload fails' && !this.st('retried') && pct >= 38) { this.setState({step: 'uploadFailed', pct: 38}); return; }
+      if (pct >= 100) {
+        if (out === 'no save in zip' && !this.st('json')) { this.setState({step: 'refused', pct: 100}); return; }
+        this.setState({step: 'pick', pct: 100, ms: this.st('ms', null) || (this.st('json') ? null : SUGGEST.ms)});
+        return;
+      }
+      this.setState({pct});
+    } else if (step === 'exporting' && (this.state || {}).live) {
+      const n = this.st('n', 0) + 1;
+      if (n > 12) {
+        this.setState({step: 'done', n: 0});
+        if (this.props.onSaved) this.props.onSaved(this.st('ms'));
+      } else this.setState({n});
+    }
+  }
+  renderVals() {
+    const who = this.props.who || PEOPLE[this.st('player', 'you')];
+    const step = this.st('step');
+    const json = !!this.st('json');
+    const ms = this.st('ms', null);
+    const slot = this.st('slot', null);
+    const pct = this.st('pct', 0);
+    const has = (m) => who.snaps[m] !== undefined;
+    const locked = step === 'exporting';
+    const msVisible = step === 'uploading' || step === 'pick' || step === 'exporting';
+    const ready = step === 'pick' && !!ms && (json || slot !== null);
+    const replaced = this.st('replaced', !!ms && has(ms));
+    const forOther = !who.you;
+    const pickFile = (e) => {
+      const f = e && e.target && e.target.files && e.target.files[0];
+      const name = f ? f.name : ZIP.fileName;
+      this.setState({live: true, step: 'uploading', pct: 0, n: 0, retried: false, fileName: name, fileSize: f ? size(f.size) : ZIP.fileSize, json: /\.json$/i.test(name), slot: null, ms: this.st('ms', null)});
+    };
+    return {
+      who, forOther, title: forOther ? 'Upload for ' + who.name : 'Upload snapshot',
+      radius: this.props.sheet ? '18px 18px 0 0' : '14px', bottomEdge: this.props.sheet ? '0' : '3px',
+      close: () => { if (this.props.onClose) this.props.onClose(); else this.reset(); },
+      pickFile,
+      onDrop: step === 'file',
+      showFile: step !== 'file' && step !== 'done',
+      fileName: this.st('fileName', ''), fileSize: this.st('fileSize', ''),
+      fileTint: json ? '#ffc878' : '#5ad1f0',
+      fileOk: step !== 'uploading' && step !== 'uploadFailed',
+      fileState: step === 'uploading' ? pct + '%' : (step === 'uploadFailed' ? 'Failed' : 'Uploaded'),
+      fileInk: step === 'uploading' ? '#eef1f7' : (step === 'uploadFailed' ? '#ff6a5e' : '#7be08a'),
+      showBar: step === 'uploading' || step === 'uploadFailed', pct, barFill: step === 'uploadFailed' ? '#ff6a5e' : '#5ad1f0',
+      showAlert: step === 'uploadFailed' || step === 'refused',
+      alertText: step === 'refused' ? 'No Partida save in this zip' : 'The upload could not reach the file store',
+      showSlots: !json && (step === 'pick' || step === 'exporting'),
+      locked, cursor: locked ? 'default' : 'pointer',
+      slots: SLOTS.map((s, i) => {
+        const on = slot === i;
+        return {name: s.name, when: s.when, on, line: on ? '#5ad1f0' : '#343f58', bg: on ? 'rgba(90,209,240,0.12)' : '#1b2232', ring: on ? '#5ad1f0' : '#44506d', dot: on ? '#5ad1f0' : 'transparent', pick: () => this.setState({slot: i})};
+      }),
+      showMs: msVisible,
+      milestones: MS.map((m) => {
+        const on = ms === m;
+        return {name: m, label: has(m) ? m + ', has a snapshot' : m, on, has: has(m), mark: on ? '#ffffff' : '#a3acbf', bg: on ? '#d93a30' : '#2c3549', fg: on ? '#ffffff' : '#c3cad8', pick: () => this.setState({ms: m})};
+      }),
+      suggested: !json && ms === SUGGEST.ms && (step === 'pick' || step === 'exporting'),
+      suggestText: SUGGEST.text,
+      showRolls: !json,
+      replacing: msVisible && !!ms && has(ms),
+      replaceText: ms && has(ms) ? 'Replaces ' + ms + ' · ' + who.snaps[ms] + ' Pokémon' : '',
+      showCancel: step !== 'done',
+      showSave: step === 'uploading' || step === 'pick',
+      saveOff: !ready, saveBg: ready ? '#d93a30' : 'rgba(255,255,255,0.1)', saveInk: ready ? '#ffffff' : '#6b7489', saveCursor: ready ? 'pointer' : 'default',
+      saveLabel: !ms ? 'Save' : (has(ms) ? 'Replace ' + ms : 'Save as ' + ms),
+      save: () => { if (ready) this.setState({live: true, step: 'exporting', n: 0, replaced: has(ms)}); },
+      exporting: step === 'exporting',
+      showRetry: step === 'uploadFailed',
+      retry: () => this.setState({live: true, step: 'uploading', retried: true}),
+      showRefused: step === 'refused',
+      onDone: step === 'done', json,
+      doneTitle: (ms || '') + (replaced ? ' replaced' : ' saved'),
+      doneCount: (json ? 49 : 52) + ' Pokémon'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -24,11 +24,15 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 .trow:hover .chev{border-color:#5ad1f0!important}
 .snap:hover{background:#5ad1f0!important;color:#10141d!important}
 .trow:hover .tname{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:3px}
+.node:not([aria-pressed="true"]):hover{border-color:rgba(90,209,240,0.6)!important}
+.seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
+.field:focus-within{border-color:#5ad1f0!important}
+select option{background:#10141d;color:#eef1f7}
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
 .tab:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}.out:hover{color:#ffffff!important;background:#222a3b!important}
 </style>
 </helmet>
-<div style="width: 100%; min-height: {{h}}px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+<div style="position: relative; width: 100%; min-height: {{h}}px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
 
 <header style="flex: none; height: 64px; display: flex; align-items: center; gap: 28px; padding: 0 32px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
 <a href="Main.dc.html" aria-label="Home" style="flex: none; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 8px">
@@ -79,10 +83,31 @@ Download
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 36px; color: #ffd34d">Work in progress</span>
 </div>
 </section>
-<h2 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 38px">Trainers</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+<h2 style="flex: 1; margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 38px">Trainers</h2>
+<sc-if value="{{onRecords}}" hint-placeholder-val="{{ false }}">
+<label class="field" style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 14px; box-sizing: border-box; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">At</span>
+<select value="{{recAt}}" onChange="{{pickRecAt}}" style="border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 23px; outline: none; cursor: pointer">
+<sc-for list="{{recOptions}}" as="o" hint-placeholder-count="10"><option value="{{o}}">{{o}}</option></sc-for>
+</select>
+</label>
+</sc-if>
+<div role="radiogroup" aria-label="Trainers view" style="display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{views}}" as="vw" hint-placeholder-count="2">
+<button type="button" class="seg" role="radio" aria-checked="{{vw.on}}" onClick="{{vw.pick}}" style="min-height: 44px; padding: 0 16px; border: none; border-radius: 8px; background: {{vw.bg}}; color: {{vw.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 23px; cursor: pointer">{{vw.name}}</button>
+</sc-for>
+</div>
+</div>
 <div style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
 <div style="display: grid; grid-template-columns: 300px minmax(0, 1fr) 84px; align-items: stretch; border-bottom: 3px solid #343f58; background: #1b2232">
 <span></span>
+<sc-if value="{{onRecords}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: end">
+<sc-for list="{{recHeads}}" as="rh" hint-placeholder-count="6"><span style="padding: 14px 4px 12px; text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 21px; color: #c3cad8; white-space: nowrap">{{rh}}</span></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{onProgress}}" hint-placeholder-val="{{ true }}">
 <div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); align-items: end">
 <sc-for list="{{cols}}" as="c" hint-placeholder-count="10">
 <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 4px 12px; background: {{c.bg}}">
@@ -94,19 +119,26 @@ Download
 </div>
 </sc-for>
 </div>
+</sc-if>
 <span></span>
 </div>
 
 <sc-for list="{{rows}}" as="p" hint-placeholder-count="3">
 <div style="border-bottom: {{p.divider}}">
-<button type="button" class="trow" aria-expanded="{{p.open}}" onClick="{{p.toggle}}" style="width: 100%; display: grid; grid-template-columns: 300px minmax(0, 1fr) 84px; align-items: center; min-height: 96px; padding: 0; border: none; background: {{p.rowBg}}; color: #eef1f7; font: inherit; text-align: left; cursor: pointer">
-<span style="display: flex; align-items: center; gap: 14px; padding: 0 24px">
+<div class="trow" style="width: 100%; display: grid; grid-template-columns: 300px minmax(0, 1fr) 84px; align-items: center; min-height: 96px; background: {{p.rowBg}}; color: #eef1f7">
+<button type="button" aria-expanded="{{p.open}}" onClick="{{p.toggle}}" style="align-self: stretch; display: flex; align-items: center; gap: 14px; padding: 0 24px; border: none; background: transparent; color: #eef1f7; font: inherit; text-align: left; cursor: pointer">
 <span style="width: 50px; height: 50px; flex: none; box-sizing: border-box; border-radius: 10px; border: 3px solid #10141d; box-shadow: 0 0 0 3px {{p.colour}}; background: {{p.colour}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 30px; color: #10141d">{{p.initial}}</span>
 <span style="display: flex; align-items: center; gap: 8px; min-width: 0">
 <span class="tname" style="font-family: 'Jersey 10', sans-serif; font-size: 30px; line-height: 1.15">{{p.name}}</span>
 <sc-if value="{{p.you}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #10141d; background: #ffd34d; padding: 1px 7px; border-radius: 4px">You</span></sc-if>
 </span>
+</button>
+<sc-if value="{{onRecords}}" hint-placeholder-val="{{ false }}">
+<span style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-self: stretch; align-items: center; font-variant-numeric: tabular-nums">
+<sc-for list="{{p.rec}}" as="rc" hint-placeholder-count="6"><span style="text-align: center; font-weight: 700; font-size: 17px; color: {{rc.ink}}">{{rc.v}}</span></sc-for>
 </span>
+</sc-if>
+<sc-if value="{{onProgress}}" hint-placeholder-val="{{ true }}">
 <span style="position: relative; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); align-self: stretch">
 <span style="position: absolute; left: 5%; right: 5%; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: #10141d"></span>
 <span style="position: absolute; left: 5%; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: {{p.colour}}; width: {{p.fill}}%"></span>
@@ -115,28 +147,36 @@ Download
 <sc-if value="{{n.plain}}" hint-placeholder-val="{{ true }}"><span style="width: 16px; height: 16px; border-radius: 50%; background: {{n.fill}}"></span></sc-if>
 <sc-if value="{{n.round}}" hint-placeholder-val="{{ false }}"><span style="width: 30px; height: 30px; border-radius: 50%; background: {{n.fill}}; border: 4px solid {{n.ring}}; box-shadow: 0 0 0 3px #222a3b; box-sizing: border-box"></span></sc-if>
 <sc-if value="{{n.final}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 50%; background: #2a2416; border: 3px solid #8a7330; display: grid; place-items: center"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v5a5 5 0 0 1-10 0z" fill="#ffd34d"></path><path d="M10 13h4v4h3v4H7v-4h3z" fill="#ffd34d"></path></svg></span></sc-if>
-<sc-if value="{{n.here}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; box-sizing: border-box; border-radius: 10px; background: {{p.colour}}; border: 4px solid #10141d; box-shadow: 0 0 0 3px {{n.hereRing}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 25px; color: #10141d; animation: bob 0.5s steps(2) infinite alternate">{{p.initial}}</span></sc-if>
+<sc-if value="{{n.snap}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; left: 50%; bottom: 10px; width: 8px; height: 8px; margin-left: -4px; background: #5ad1f0"></span></sc-if>
+<sc-if value="{{n.here}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; box-sizing: border-box; border-radius: 10px; background: {{p.colour}}; border: 4px solid #10141d; box-shadow: 0 0 0 3px {{n.hereRing}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 25px; color: #10141d; animation: bob 0.5s steps(2) infinite alternate">{{p.initial}}<sc-if value="{{p.handSet}}" hint-placeholder-val="{{ false }}"><span title="{{p.handNote}}" style="position: absolute; top: -12px; right: -12px; width: 20px; height: 20px; border-radius: 5px; background: #c3cad8; border: 2px solid #10141d; display: grid; place-items: center"><svg width="10" height="10" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v1H7zM6 1h1v1H6zM9 1h1v2H9zM5 2h1v1H5zM8 2h1v1H8zM4 3h1v1H4zM7 3h1v1H7zM3 4h1v1H3zM6 4h1v1H6zM2 5h1v1H2zM5 5h1v1H5zM1 6h1v1H1zM4 6h1v1H4zM0 7h1v3H0zM3 7h1v1H3zM1 9h2v1H1zM2 8h1v1H2z" fill="#10141d"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">{{p.handNote}}</span></span></sc-if></span></sc-if>
+<sc-if value="{{n.snap}}" hint-placeholder-val="{{ false }}"><button type="button" class="node" aria-label="{{n.label}}" aria-pressed="{{n.sel}}" onClick="{{n.pick}}" style="position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; box-sizing: border-box; border-radius: 14px; border: 3px solid {{n.selRing}}; background: transparent; cursor: pointer"></button></sc-if>
 </span>
 </sc-for>
 </span>
+</sc-if>
 <span style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-right: 24px">
-<span class="chev" style="width: 44px; height: 44px; box-sizing: border-box; border-radius: 10px; background: #2c3549; border: 3px solid #44506d; display: grid; place-items: center"><svg width="16" height="12" viewBox="0 0 22 16" aria-hidden="true" style="transform: {{p.chev}}"><path d="M2 3h18l-9 11z" fill="#5ad1f0"></path></svg></span>
+<button type="button" class="chev" aria-label="{{p.chevLabel}}" aria-expanded="{{p.open}}" onClick="{{p.toggle}}" style="width: 44px; height: 44px; box-sizing: border-box; border-radius: 10px; background: #2c3549; border: 3px solid #44506d; display: grid; place-items: center; cursor: pointer"><svg width="16" height="12" viewBox="0 0 22 16" aria-hidden="true" style="transform: {{p.chev}}"><path d="M2 3h18l-9 11z" fill="#5ad1f0"></path></svg></button>
 </span>
-</button>
+</div>
 <sc-if value="{{p.open}}" hint-placeholder-val="{{ false }}">
-<div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 14px; padding: 20px 24px 24px; background: #1b2232; border-top: 3px dashed #343f58">
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 14px; padding: 16px 24px 24px; background: #1b2232; border-top: 3px dashed #343f58">
+<span style="flex: 1 0 100%; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #5ad1f0">At {{p.selName}}</span>
 <a href="Pc.dc.html" class="tile" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; min-width: 130px; color: #eef1f7; text-decoration: none">
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf; display: flex; align-items: center; gap: 8px">PC <svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></span>
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 44px; line-height: 0.9">{{p.alive}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 44px; line-height: 0.9">{{p.selAlive}}</span>
 </a>
 <a href="#" class="tile" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; min-width: 130px; color: #eef1f7; text-decoration: none">
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf; display: flex; align-items: center; gap: 8px">Teams <svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></span>
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 44px; line-height: 0.9">{{p.teams}}</span>
 </a>
-<div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; min-width: 130px">
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Fainted</span>
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 44px; line-height: 0.9">{{p.faintedCount}}</span>
-</div>
+<a href="TrainerJourney.dc.html" class="tile" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; min-width: 130px; color: #eef1f7; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf; display: flex; align-items: center; gap: 8px">Fainted <svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 44px; line-height: 0.9; color: {{p.faintInk}}">{{p.selFainted}}</span>
+</a>
+<a href="TrainerJourney.dc.html" class="tile" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; min-width: 150px; color: #eef1f7; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf; display: flex; align-items: center; gap: 8px">Journey <svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 44px; line-height: 0.9; white-space: nowrap">{{p.selTime}}</span>
+</a>
 <sc-if value="{{hasLives}}" hint-placeholder-val="{{ true }}">
 <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px">
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Lives · {{p.livesLeft}} of {{maxLives}}</span>
@@ -149,8 +189,11 @@ Download
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Snapshots</span>
 <span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 48px">
 <sc-for list="{{p.snaps}}" as="sn" hint-placeholder-count="3">
-<a href="Pc.dc.html" class="snap" style="display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; background: #2c3549; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none">{{sn}}</a>
+<a href="Pc.dc.html" class="snap" style="display: flex; align-items: center; min-height: 40px; padding: 0 12px; box-sizing: border-box; border-radius: 8px; background: #2c3549; border: 3px solid {{sn.line}}; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none">{{sn.name}}</a>
 </sc-for>
+<sc-if value="{{p.canUpload}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" aria-haspopup="dialog" onClick="{{p.upload}}" style="display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h2v1H4zM3 2h4v1H3zM2 3h6v1H2zM4 4h2v4H4zM1 9h8v1H1z" fill="#5ad1f0"></path></svg>Upload</button>
+</sc-if>
 </span>
 <sc-if value="{{p.hasWarning}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 700; font-size: 14px; color: #ffc878">Export missing: {{p.warning}}</span></sc-if>
 </div>
@@ -158,6 +201,10 @@ Download
 </sc-if>
 </div>
 </sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 22px; padding: 0 6px; font-size: 14px; color: #a3acbf">
+<span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 8px; height: 8px; background: #5ad1f0"></span>Snapshot</span>
+<span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 4px; background: #c3cad8; display: grid; place-items: center"><svg width="8" height="8" viewBox="0 0 10 10" shape-rendering="crispEdges"><path d="M7 0h2v1H7zM6 1h1v1H6zM9 1h1v2H9zM5 2h1v1H5zM8 2h1v1H8zM4 3h1v1H4zM7 3h1v1H7zM3 4h1v1H3zM6 4h1v1H6zM2 5h1v1H2zM5 5h1v1H5zM1 6h1v1H1zM4 6h1v1H4zM0 7h1v3H0zM3 7h1v1H3zM1 9h2v1H1zM2 8h1v1H2z" fill="#10141d"></path></svg></span>Set by hand</span>
 </div>
 </main>
 <section aria-labelledby="rules" style="padding: 8px 40px 56px; display: flex; flex-direction: column; gap: 14px">
@@ -182,9 +229,17 @@ Download
 </div>
 </section>
 
+<sc-if value="{{upOpen}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 5; display: flex; justify-content: center; align-items: flex-start; padding-top: 400px; box-sizing: border-box; background: rgba(0,0,0,0.6)">
+<div style="width: 600px">
+<dc-import name="UploadDialog" step="file" who="{{upWho}}" outcome="{{outcome}}" on-close="{{closeUpload}}" on-saved="{{savedUpload}}" hint-size="600px,460px"></dc-import>
+</div>
+</div>
+</sc-if>
+
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2040}}'>
+<script type="text/x-dc" data-dc-script data-props='{"admin":{"editor":"boolean","default":false},"ingestion":{"editor":"enum","options":["manual","automatic"],"default":"manual"},"outcome":{"editor":"enum","options":["works","upload fails","no save in zip"],"default":"works"},"$preview":{"width":1440,"height":2040}}'>
 
 function rng(seed) { let x = seed; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
 function blink(name, rand, lo, hi) { return name + ' ' + (lo + rand() * (hi - lo)).toFixed(2) + 's steps(2) ' + (rand() * 2).toFixed(2) + 's infinite alternate'; }
@@ -233,27 +288,79 @@ class Component extends DCLogic {
     const cols = ms.map((m) => ({name: m.name, round: !!m.round, roundName: m.round ? 'Round ' + m.round : '', final: !!m.final, ink: m.final ? '#ffd34d' : (m.round ? '#ffb0a8' : '#c3cad8'), bg: m.round ? tint : 'transparent'}));
     const maxLives = 5;
     const people = [
-      {name: 'Dloez', initial: 'D', colour: '#ffd34d', at: 6, you: true, alive: 47, fainted: 3, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5', 'Gym 7'], teams: 5},
-      {name: 'Vicky', initial: 'V', colour: '#5ad1f0', at: 7, alive: 52, fainted: 1, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5', 'Gym 7'], teams: 5, warning: 'no IVs, EVs or stats · no moves'},
-      {name: 'Javi', initial: 'J', colour: '#7be08a', at: 5, alive: 38, fainted: 4, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
-      {name: 'Inop', initial: 'I', colour: '#ff8a80', at: 4, alive: 29, fainted: 6, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
-      {name: 'Tole', initial: 'T', colour: '#c39bff', at: 4, alive: 33, fainted: 5, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
-      {name: 'Elfo', initial: 'E', colour: '#ffb347', at: 4, alive: 41, fainted: 2, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4}
+      {name: 'Dloez', initial: 'D', colour: '#ffd34d', you: true, alive: 47, fainted: 3, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5', 'Gym 7'], teams: 5},
+      {name: 'Vicky', initial: 'V', colour: '#5ad1f0', alive: 52, fainted: 1, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5', 'Gym 7'], teams: 5, warning: 'no IVs, EVs or stats · no moves'},
+      {name: 'Javi', initial: 'J', colour: '#7be08a', alive: 38, fainted: 4, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4, hand: {at: 5, by: 'Dloez', when: '23 Oct'}},
+      {name: 'Inop', initial: 'I', colour: '#ff8a80', alive: 29, fainted: 6, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
+      {name: 'Tole', initial: 'T', colour: '#c39bff', alive: 33, fainted: 5, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
+      {name: 'Elfo', initial: 'E', colour: '#ffb347', alive: 41, fainted: 2, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4}
     ];
-    const open = this.state && this.state.open !== undefined ? this.state.open : 0;
-    const rows = people.map((p, ri) => ({
-      ...p, you: !!p.you, rowBg: ri === open ? '#283146' : (p.you ? 'rgba(255,211,77,0.06)' : 'transparent'), fill: p.at * 10,
-      open: ri === open, chev: ri === open ? 'rotate(180deg)' : 'none', toggle: () => this.setState({open: ri === open ? -1 : ri}),
-      faintedCount: p.fainted,
-      livesLeft: p.lives, hearts: Array.from({length: maxLives}, (_, i) => ({c: i < p.lives ? '#ff6a5e' : '#44506d'})),
-      hasWarning: !!p.warning, warning: p.warning || '',
-      divider: ri < people.length - 1 ? '3px solid #343f58' : 'none',
-      nodes: ms.map((m, i) => {
-        const got = i <= p.at;
-        return {here: i === p.at, plain: !m.round && !m.final, round: !!m.round, final: !!m.final, fill: got ? p.colour : '#2c3549', ring: got ? '#ff6a5e' : '#7a3a36', hereRing: m.round ? '#ff6a5e' : p.colour, bg: m.round ? tint : 'transparent'};
-      })
-    }));
-    return {h: 2040, hasLives: false, maxLives, cols, rows, sky: nightScene(360, 65)};
+    const DLOEZ = {
+      'Gym 1': {time: 3.8, badges: 1, owned: 12, won: 28, lost: 0, black: 0, fainted: 0, alive: 14},
+      'Gym 2': {time: 7.35, badges: 2, owned: 21, won: 61, lost: 0, black: 0, fainted: 0, alive: 22},
+      'Gym 3': {time: 11.03, badges: 3, owned: 30, won: 93, lost: 1, black: 1, fainted: 0, alive: 30},
+      'Gym 5': {time: 19.58, badges: 5, owned: 48, won: 148, lost: 1, black: 1, fainted: 2, alive: 38},
+      'Gym 7': {time: 27.23, badges: 7, owned: 66, won: 201, lost: 2, black: 2, fainted: 3, alive: 47}
+    };
+    const st = this.state || {};
+    const open = st.open !== undefined ? st.open : 0;
+    const admin = !!this.props.admin;
+    const auto = this.props.ingestion === 'automatic';
+    const added = st.added || {};
+    const sel = st.sel || {};
+    const upFor = st.upFor !== undefined ? st.upFor : -1;
+    const view = st.view || 'Progress';
+    const names = ms.map((m) => m.name);
+    const recAt = st.recAt || 'Gym 5';
+    const hours = (h) => Math.floor(h) + ' h ' + String(Math.round((h % 1) * 60)).padStart(2, '0');
+    const snapsOf = (p) => names.filter((n) => p.snaps.includes(n) || (added[p.name] || []).includes(n));
+    const recOf = (p, ri, n) => {
+      const list = snapsOf(p);
+      if (!list.includes(n)) return null;
+      if (p.you && DLOEZ[n]) return DLOEZ[n];
+      const i = names.indexOf(n), k = list.indexOf(n), frac = list.length > 1 ? k / (list.length - 1) : 1;
+      return {time: 3.4 * (i + 1) + ri * 0.45, badges: Math.min(8, i + 1), owned: 10 + i * 7 + ri * 2, won: 25 + i * 26 + ri, lost: Math.round(frac * (1 + ri % 3)), black: Math.round(frac * (ri % 3)), fainted: Math.round(frac * p.fainted), alive: Math.round(12 + frac * (p.alive - 12))};
+    };
+    const whoOf = (p, ri) => {
+      const snaps = {};
+      snapsOf(p).forEach((n) => { snaps[n] = recOf(p, ri, n).alive; });
+      return {name: p.name, initial: p.initial, colour: p.colour, you: !!p.you, snaps};
+    };
+    const rows = people.map((p, ri) => {
+      const list = snapsOf(p);
+      const latest = list[list.length - 1];
+      const at = p.hand ? p.hand.at : names.indexOf(latest);
+      const chosen = sel[p.name] && list.includes(sel[p.name]) ? sel[p.name] : latest;
+      const r = recOf(p, ri, chosen);
+      const ra = recOf(p, ri, recAt);
+      const dash = {v: '—', ink: '#6b7489'};
+      return {
+        ...p, canUpload: admin || (!!p.you && !auto), upload: () => this.setState({upFor: ri}), rowBg: ri === open ? '#283146' : (p.you ? 'rgba(255,211,77,0.06)' : 'transparent'), fill: at * 10,
+        open: ri === open, chev: ri === open ? 'rotate(180deg)' : 'none', chevLabel: (ri === open ? 'Close ' : 'Open ') + p.name, toggle: () => this.setState({open: ri === open ? -1 : ri}),
+        snaps: list.map((n) => ({name: n, line: n === chosen ? '#5ad1f0' : 'transparent'})),
+        selName: chosen, selAlive: r.alive, selFainted: r.fainted, faintInk: r.fainted ? '#ff6a5e' : '#eef1f7', selTime: hours(r.time),
+        handSet: !!p.hand, handNote: p.hand ? 'Set by hand · ' + p.hand.by + ', ' + p.hand.when : '',
+        rec: ra ? [{v: hours(ra.time), ink: '#eef1f7'}, {v: ra.badges + ' / 8', ink: '#eef1f7'}, {v: String(ra.owned), ink: '#eef1f7'}, {v: ra.won + ' – ' + ra.lost, ink: '#eef1f7'}, {v: String(ra.black), ink: '#eef1f7'}, {v: String(ra.fainted), ink: ra.fainted ? '#ff6a5e' : '#eef1f7'}] : [dash, dash, dash, dash, dash, dash],
+        livesLeft: p.lives, hearts: Array.from({length: maxLives}, (_, i) => ({c: i < p.lives ? '#ff6a5e' : '#44506d'})),
+        hasWarning: !!p.warning, warning: p.warning || '',
+        divider: ri < people.length - 1 ? '3px solid #343f58' : 'none',
+        nodes: ms.map((m, i) => {
+          const got = i <= at, snap = list.includes(m.name), on = snap && m.name === chosen;
+          return {here: i === at, plain: !m.round && !m.final, round: !!m.round, final: !!m.final, fill: got ? p.colour : '#2c3549', ring: got ? '#ff6a5e' : '#7a3a36', hereRing: m.round ? '#ff6a5e' : p.colour, bg: m.round ? tint : 'transparent',
+            snap, sel: on, selRing: on ? '#5ad1f0' : 'transparent', label: p.name + ' at ' + m.name,
+            pick: () => this.setState({sel: Object.assign({}, sel, {[p.name]: m.name}), open: ri})};
+        })
+      };
+    });
+    const up = upFor >= 0 ? people[upFor] : null;
+    return {h: 2040, hasLives: false, maxLives, cols, rows, sky: nightScene(360, 65),
+      onProgress: view === 'Progress', onRecords: view === 'Records',
+      views: ['Progress', 'Records'].map((v) => ({name: v, on: v === view, bg: v === view ? '#d93a30' : 'transparent', fg: v === view ? '#ffffff' : '#c3cad8', pick: () => this.setState({view: v})})),
+      recAt, recOptions: names, pickRecAt: (e) => this.setState({recAt: e.target.value}),
+      recHeads: ['Play time', 'Badges', 'Pokédex', 'Battles', 'Blackouts', 'Fainted'],
+      upOpen: !!up, upWho: up ? whoOf(up, upFor) : null, outcome: this.props.outcome || 'works',
+      closeUpload: () => this.setState({upFor: -1}),
+      savedUpload: (m) => { if (!up) return; const list = (added[up.name] || []).concat([m]); this.setState({added: Object.assign({}, added, {[up.name]: list})}); }};
   }
 }
 </script>
