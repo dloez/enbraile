@@ -1,14 +1,13 @@
 # Site v2 Tasks
 
-Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
+Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones. The first entry whose screen uses the look's amber adds the `warning` token (`#ffc878` on `#3b3530`) and its row in [Design System](../../pkmn/site/reference/design-system.md) ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), 2026-10-23).
 
-## Design the upload flow, the player pages, the PC, the team list and the team builder
+## Design the PC's links, the team list and builder, and the new pages' phone layouts
 
-The rest of the screens, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the upload flow (where it starts, the slot and milestone pick), the player's profile, the player's series page (Journey and Fallen), the PC page with its snapshot picker ([Pages](discovery.md#pages)), the series page's interactive progress track and its compare switch, the team list, the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and phone layouts of the series list and series page. The PC, bag and team views carry their content over from Open Sheet and Team Analysis.
+The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the PC board's links (a breadcrumb to the player's series page, the header's name to the profile), phone layouts of the player's profile, the player's series page, the series list and the series page, and the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare). The PC, bag and team views carry their content over from Open Sheet and Team Analysis. The upload flow, the series page's revision and the two player pages were signed off on 2026-10-23 and are frozen in `pkmn/site/design/`.
 
 **Do:**
 - [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
-- [ ] Bring the upload boards (on the canvas, liked by the owner, 2026-10-23) in line with the data model ([Model](discovery.md#model), [Snapshots In](discovery.md#snapshots-in)): the milestone preselected from the save, the rolled zip's download on the saved step, no upload for players of an automatic series, the admin overrides on the rows. The owner wants the product designed before more screens, so this comes before the player pages, the PC, the team list and the team builder.
 - [ ] Get the owner's sign-off; copy the signed-off boards into `pkmn/site/design/` and record the sign-off in `docs/pkmn/site/explanation/site.md` → Look and Decisions.
 
 **Acceptance:**
@@ -21,22 +20,39 @@ The rest of the screens, desktop and phone, in the signed-off look ([Pages → D
 **Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** sign-off on these screens.
 
-## The header fits a phone with every tab and sign-out
+## Design the header at phone width
 
-The signed-off header holds Series · PC · Teams (· Admin for admins) and sign-out at the right ([Look](../../pkmn/site/explanation/site.md#look)), but the frozen boards (`pkmn/site/design/series.dc.html`, `series-list.dc.html`) draw it at desktop width only, and the next design entries name phone layouts of their own screens, not of the header. Today's header (`src/components/site-header.tsx`) fits a phone with its two tabs; each tab is a fixed `h-12 px-3` box with a pixel icon and a `text-2xl` label, and the nav does not wrap or scroll, so the Series tab, the Admin tab and sign-out from the entries below push it past a 375px screen. [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules already have tab bars scroll sideways (`overflow-x-auto`).
+A phone board of the header on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas: Series · PC · Teams (· Admin for admins), the player's badge and name opening their profile, and sign-out, on a 360–390px screen. The owner chose a board first over letting the tabs scroll sideways under the design system's phone rule (2026-10-23).
 
 **Do:**
-- [ ] The header at phone width as the answer below says, with the tabs and sign-out the entries below add; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell updated.
+- [ ] Draw the board; get the owner's sign-off; copy it into `pkmn/site/design/` and record the sign-off in `site.md` → Look and Decisions.
+
+**Acceptance:**
+- Claude-run: none (no code).
+- Human-run: the owner opens the board and signs it off, or lists changes.
+- Reuse: the header on the frozen `series.dc.html`.
+- Neighbors: the upload flow's phone board (`upload-phone.dc.html`).
+- Forbidden: dropping a tab or sign-out at phone width; pieces outside the look without naming them as additions.
+
+**Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
+**Needs the author:** sign-off on the board.
+
+## The header fits a phone with every tab and sign-out
+
+The signed-off header holds Series · PC · Teams (· Admin for admins) and, at the right, the player's badge and name and sign-out ([Look](../../pkmn/site/explanation/site.md#look)), but the frozen boards (`pkmn/site/design/series.dc.html`, `series-list.dc.html`) draw it at desktop width only, and the next design entries name phone layouts of their own screens, not of the header. Today's header (`src/components/site-header.tsx`) fits a phone with its two tabs; each tab is a fixed `h-12 px-3` box with a pixel icon and a `text-2xl` label, and the nav does not wrap or scroll, so the Series tab, the Admin tab and sign-out from the entries below push it past a 375px screen. [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules already have tab bars scroll sideways (`overflow-x-auto`).
+
+**Do:**
+- [ ] The header at phone width as its signed-off board draws it, with the tabs, the name and sign-out the entries below add; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell updated.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, `browser_resize` to 390×844 and to 360×800, signed in as an admin with every tab present, screenshot the header and confirm no horizontal page scroll.
 - Human-run: on a phone, open the site signed in as an admin and reach every tab and sign-out.
-- Reuse: `TABS` in `src/components/site-header.tsx`; `PixelIcon`.
+- Reuse: the header's phone board in `pkmn/site/design/`; `TABS` in `src/components/site-header.tsx`; `PixelIcon`.
 - Neighbors: Open Sheet's tab bar (`src/open-sheet/components/tab-bar.tsx`), which scrolls sideways with `overflow-x-auto`.
 - Forbidden: a hamburger menu or any piece outside the look without naming it as an addition; dropping a tab at phone width.
 
 **Touches:** `pkmn/site/src/components/site-header.tsx`, `docs/pkmn/site/reference/design-system.md`
-**Needs the author:** the header's phone layout: the tabs scroll sideways under the design system's existing phone rule, with sign-out staying in view (recommended, nothing new to design), or a phone board of the header on the Site v2 Screens canvas first?
+**After:** Design the header at phone width
 
 ## Players sign in with Discord and admins keep the allowlist
 
@@ -72,7 +88,7 @@ The series form (number, name, game, ingestion mode, players from the allowlist,
 **Acceptance:**
 - Claude-run: `npm run gate`; `npx drizzle-kit check`.
 - Human-run: as admin, make a draft series and see the checklist list what is missing; fill it in item by item until "Start" enables; start it. As an allowed player of it, sign in and land on its page, read its rules, download its game. As an allowed player not in it, see no download. Make a second draft by "copy from series 1" and see the rules copied. Open `/series`: each series on its moving scene, the running one marked playing now; hover a banner and see it lift. On the series page, open a trainer's row and see their PC, Teams and snapshot tiles; turn on reduced motion and see the scenes stand still.
-- Reuse: `pkmn/site/design/series-list.dc.html` and `pkmn/site/design/series.dc.html`; the games from `api/_lib/games.ts` and `shared/games.ts`, and `downloadUrl` in `api/_lib/files.ts` for the players' download; the allowlist from the entry above; `Panel` and `liftCardClass` in `src/components/controls.tsx`, `PlayerBadge`, `PixelIcon`.
+- Reuse: `pkmn/site/design/series-list.dc.html` and `pkmn/site/design/series.dc.html` (its 2026-10-23 revision: the Upload button, the clickable track, the Progress/Records switch and the hand-set mark come with their own entries below); the games from `api/_lib/games.ts` and `shared/games.ts`, and `downloadUrl` in `api/_lib/files.ts` for the players' download; the allowlist from the entry above; `Panel` and `liftCardClass` in `src/components/controls.tsx`, `PlayerBadge`, `PixelIcon`.
 - Neighbors: `src/pages/home.tsx`.
 - Forbidden: rules enforced in team building; raw HTML in rendered rules; the boards' sample data; a series switcher on the series page; a Lives tile (open in [Backlog → where do a trainer's lives come from?](../backlog.md#pkmnsite-where-do-a-trainers-lives-come-from)).
 
@@ -92,12 +108,12 @@ The export ported to TypeScript in the site, run in a Vercel Function on the sav
 **Acceptance:**
 - Claude-run: `npm run gate`; for a save zip the owner provides, the port's output for the fields the Python export writes equals `uv run pkmn/games/anil/export_data.py --save <zip> --moves` except for TM rolls (`diff` after stripping rolled entries); its fainted list, pockets, trainer, party, play time and Pokédex match what `wonder eval` reads from the same save.
 - Human-run: upload your series 1 zip, see "Post-League" suggested, keep it, and see the count and the Fainted tile on your row; upload it again and see one snapshot, replaced; as admin, upload another player's zip for them; upload a zip without a save and read its refusal.
-- Reuse: `pkmn/site/src/open-sheet/schema.ts` (the export's zod schema); the games' multipart upload (`startUpload`, `partUrl`, `completeUpload`, `abortUpload` and `objectSize` in `api/_lib/files.ts`, the `/upload`, `/upload/part` and `/file` routes in `api/_lib/games.ts`, `uploadParts` in `shared/upload.ts`, `putPart` in `src/lib/api.ts`).
+- Reuse: the frozen upload boards (`upload-dialog.dc.html` and the `upload-*.dc.html` states) and the Upload button on `series.dc.html`, in `pkmn/site/design/`; `pkmn/site/src/open-sheet/schema.ts` (the export's zod schema); the games' multipart upload (`startUpload`, `partUrl`, `completeUpload`, `abortUpload` and `objectSize` in `api/_lib/files.ts`, the `/upload`, `/upload/part` and `/file` routes in `api/_lib/games.ts`, `uploadParts` in `shared/upload.ts`, `putPart` in `src/lib/api.ts`).
 - Neighbors: `pkmn/games/anil/export_data.py`.
 - Forbidden: Python in the site's functions; an endpoint for automatic ingestion; a pipeline that assumes the manual upload.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `pkmn/games/anil/generate_export_data.py`, `docs/pkmn/games/anil/`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Admins create and start series; players land on the current one; Design the upload flow, the player pages, the PC, the team list and the team builder
+**After:** Admins create and start series; players land on the current one
 
 ## Keep each save's TM rolls and hand the rolled zip back
 
@@ -167,11 +183,11 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: a second copy of the PC components.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** Players upload their save zip as a snapshot; Design the upload flow, the player pages, the PC, the team list and the team builder
+**After:** Players upload their save zip as a snapshot; Design the PC's links, the team list and builder, and the new pages' phone layouts
 
 ## A player's series page: Journey and the fallen
 
-`/players/<player>/series/<n>` ([A player in a series?](discovery.md#pages)): Journey, the player's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count), each column opening the PC at that snapshot; and Fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)); a small button to the player's PC. The series row's Fainted and Journey tiles open it at `#fallen` and `#journey`.
+`/players/<player>/series/<n>` ([A player in a series?](discovery.md#pages)): Journey, the player's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count), each column opening the PC at that snapshot; and Fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)); a small button to the player's PC naming its target ("Gym 7 · latest"), opening the series' latest snapshot. The series row's Fainted and Journey tiles open it at `#fallen` and `#journey`.
 
 **Do:**
 - [ ] The page's Journey and Fallen sections over the snapshots' records; the fallen matched across consecutive snapshots by personal ID; the tiles' links.
@@ -181,7 +197,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Human-run: open your series 1 page from the series page and read your Post-League records and your fallen.
 - Reuse: the snapshot read route from the entry above; the sprites Open Sheet shows.
 - Neighbors: the series row's tiles.
-- Forbidden: a fallen Pokémon's span guessed without two snapshots (one snapshot gives "by <milestone>"); a PC or party on this page.
+- Forbidden: a fallen Pokémon's span guessed without two snapshots (one snapshot gives "by <milestone>", owner, 2026-10-23); a PC or party on this page.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
 **After:** Browse any player's PC at any snapshot
@@ -218,7 +234,7 @@ Each row's progress track shows the trainer at their latest snapshot, with the r
 - Forbidden: a ranking or ordering by records.
 
 **Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** A player's series page: Journey and the fallen; Design the upload flow, the player pages, the PC, the team list and the team builder
+**After:** A player's series page: Journey and the fallen
 
 ## Build teams locked to a snapshot, stored in the account
 
@@ -237,7 +253,7 @@ Each row's progress track shows the trainer at their latest snapshot, with the r
 - Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Browse any player's PC at any snapshot
+**After:** Browse any player's PC at any snapshot; Design the PC's links, the team list and builder, and the new pages' phone layouts
 
 ## Upload old exports as snapshots, with warnings for what they lack
 
