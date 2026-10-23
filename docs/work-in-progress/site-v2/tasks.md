@@ -171,7 +171,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 
 ## The trainer page's Journey and the fallen
 
-Journey lays out the trainer's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count, the party with its levels), and the trainer page lists the fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)).
+Journey lays out the trainer's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count), and the trainer page lists the fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)).
 
 **Do:**
 - [ ] The Journey tab over the snapshots' trainer records; the fallen list, each matched across consecutive snapshots by personal ID.
