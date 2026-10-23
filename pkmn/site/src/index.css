@@ -39,6 +39,21 @@
     --color-pixel-case: var(--pixel-case);
     --color-pixel-notch: var(--pixel-notch);
     --color-scrim: var(--scrim);
+    --color-faint: var(--faint);
+    --color-row-hi: var(--row-hi);
+    --color-round: var(--round);
+    --color-round-ink: var(--round-ink);
+    --color-round-dim: var(--round-dim);
+    --color-trophy: var(--trophy);
+    --color-trophy-rim: var(--trophy-rim);
+    --color-scene-night-sky-1: var(--scene-night-sky-1);
+    --color-scene-night-sparkle: var(--scene-night-sparkle);
+    --color-scene-night-panel: var(--scene-night-panel);
+    --color-scene-night-panel-edge: var(--scene-night-panel-edge);
+    --color-scene-night-panel-sub: var(--scene-night-panel-sub);
+    --color-scene-route-sky-1: var(--scene-route-sky-1);
+    --color-scene-route-panel: var(--scene-route-panel);
+    --color-scene-route-panel-sub: var(--scene-route-panel-sub);
     --color-box: var(--box);
     --color-cell: var(--cell);
     --color-cell-hi: var(--cell-hi);
@@ -93,6 +108,8 @@
     --cyan: #5ad1f0;
     --yellow: #ffd34d;
     --green: #7be08a;
+    --orange: #ffb347;
+    --coral: #ff8a80;
     --primary: var(--cyan);
     --primary-foreground: var(--ink);
     --secondary: var(--cell);
@@ -123,9 +140,55 @@
     --player-1: var(--yellow);
     --player-2: var(--cyan);
     --player-3: var(--green);
-    --player-4: #ff8a80;
+    --player-4: var(--coral);
     --player-5: #c39bff;
-    --player-6: #ffb347;
+    --player-6: var(--orange);
+    --faint: #6b7489;
+    --row-hi: #283146;
+    --round: #c12d24;
+    --round-ink: #ffb0a8;
+    --round-dim: #7a3a36;
+    --trophy: #2a2416;
+    --trophy-rim: #8a7330;
+    --scene-night-sky-1: #0d1430;
+    --scene-night-sky-2: #111a3b;
+    --scene-night-sky-3: #162147;
+    --scene-night-sky-4: #1c2954;
+    --scene-night-sky-5: #223262;
+    --scene-night-star: var(--white);
+    --scene-night-star-dim: #7f96c8;
+    --scene-night-sparkle: #cfe0ff;
+    --scene-night-moon: #f2ead6;
+    --scene-night-crater: #d8ccb0;
+    --scene-night-far: #16224d;
+    --scene-night-near: #0a1026;
+    --scene-night-window: var(--yellow);
+    --scene-night-lamp: var(--orange);
+    --scene-night-shadow: #0a1a4a;
+    --scene-night-panel: rgba(10, 16, 38, 0.8);
+    --scene-night-panel-edge: #34406a;
+    --scene-night-panel-sub: #b9c8ec;
+    --scene-route-sky-1: #58aee8;
+    --scene-route-sky-2: #6dbbec;
+    --scene-route-sky-3: #85c8f0;
+    --scene-route-sky-4: #a3d7f3;
+    --scene-route-cloud: var(--white);
+    --scene-route-cloud-shade: #d6ecf8;
+    --scene-route-hills: #8db7d6;
+    --scene-route-grass: #6cbf4f;
+    --scene-route-grass-hi: #8ad66a;
+    --scene-route-tree: #2f7d3a;
+    --scene-route-tree-hi: #4fa556;
+    --scene-route-tree-shade: #256a30;
+    --scene-route-trunk: #7a5230;
+    --scene-route-path: #e0c080;
+    --scene-route-path-hi: #f0d8a0;
+    --scene-route-path-edge: #b8945a;
+    --scene-route-flower: var(--white);
+    --scene-route-flower-red: var(--coral);
+    --scene-route-flower-heart: var(--yellow);
+    --scene-route-panel: rgba(255, 255, 255, 0.88);
+    --scene-route-panel-sub: var(--ink);
     --pixel-rim: #4a5470;
     --pixel-red: #e3403a;
     --pixel-case: #3a4150;
@@ -162,5 +225,31 @@
   html {
     @apply font-sans;
     font-synthesis: none;
+  }
+}
+
+@keyframes scene-twinkle {
+  from { opacity: 1; }
+  to { opacity: 0.15; }
+}
+
+@keyframes scene-sparkle {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scene-glow {
+  from { opacity: 1; }
+  to { opacity: 0.25; }
+}
+
+@keyframes scene-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-art * {
+    animation: none !important;
   }
 }

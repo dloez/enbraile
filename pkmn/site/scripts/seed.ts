@@ -1,9 +1,11 @@
+import { readFile } from "node:fs/promises";
 import { crc32 } from "node:zlib";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, pool } from "../api/_lib/db.js";
 import { requireEnv } from "../api/_lib/env.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
-import { game } from "../api/_lib/schema.js";
+import { game, milestone, series, seriesPlayer, user } from "../api/_lib/schema.js";
+import type { MilestoneMark } from "../shared/series.js";
 import { partSizeFor, uploadParts } from "../shared/upload.js";
 import { createAdmin, createTestPlayer, usernameTaken } from "./accounts.js";
 
@@ -14,6 +16,24 @@ const testPlayers = [
   { name: "Leaf", allowed: false },
 ];
 const seedGame = { name: "Pokémon Añil + Randomlocke", fileName: "anil-stand-in.zip" };
+const seedSeries = {
+  number: 1,
+  name: "Series 1",
+  players: ["Red", "Blue"],
+  rules: new URL("../../../docs/pkmn/series/1/reference/rules.md", import.meta.url),
+  milestones: [
+    ["Gym 1", "round"],
+    ["Gym 2", "round"],
+    ["Gym 3", "round"],
+    ["Gym 4", "none"],
+    ["Gym 5", "round"],
+    ["Gym 6", "none"],
+    ["Gym 7", "round"],
+    ["Gym 8", "none"],
+    ["Post-League", "none"],
+    ["Tournament", "tournament"],
+  ] satisfies [string, MilestoneMark][],
+};
 
 function standInZip(): Uint8Array {
   const name = Buffer.from("stand-in.txt");
@@ -81,6 +101,33 @@ async function seedTheGame() {
   });
 }
 
+async function seedTheSeries() {
+  const [existing] = await db.select({ id: series.id }).from(series).where(eq(series.number, seedSeries.number));
+  if (existing) return;
+  const [seeded] = await db.select({ id: game.id }).from(game).where(eq(game.name, seedGame.name));
+  if (!seeded) throw new Error(`The game ${seedGame.name} is missing`);
+  const players = await db.select({ id: user.id }).from(user).where(inArray(user.username, seedSeries.players.map((name) => name.toLowerCase())));
+  const rules = await readFile(seedSeries.rules, "utf8");
+  const id = crypto.randomUUID();
+  await db.transaction(async (tx) => {
+    await tx.insert(series).values({
+      id,
+      number: seedSeries.number,
+      name: seedSeries.name,
+      gameId: seeded.id,
+      scene: "route",
+      ingestion: "manual",
+      rules,
+      state: "running",
+      startedAt: new Date(),
+    });
+    await tx.insert(seriesPlayer).values(players.map((p) => ({ seriesId: id, userId: p.id })));
+    await tx.insert(milestone).values(
+      seedSeries.milestones.map(([name, mark], position) => ({ id: crypto.randomUUID(), seriesId: id, position, name, mark })),
+    );
+  });
+}
+
 async function main() {
   for (const variable of ["DATABASE_URL", "S3_ENDPOINT"]) {
     const host = new URL(requireEnv(variable)).hostname;
@@ -92,8 +139,9 @@ async function main() {
     if (!(await usernameTaken(name.toLowerCase()))) await createTestPlayer(name, allowed);
   }
   await seedTheGame();
+  await seedTheSeries();
   console.log(
-    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")} and the game ${seedGame.name} with a stand-in zip`,
+    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}`,
   );
 }
 

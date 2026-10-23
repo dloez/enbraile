@@ -17,7 +17,7 @@ Check a change to `pkmn/site/` end to end on the local stack: drive the real sit
 ### 1. Sign in
 
 - **As an admin:** open `http://localhost:5173/admin` and sign in as `admin` with the password `admin-password`, typing into the Username and Password boxes and pressing "Sign in"; the page shows "Admin" and "Sign out".
-- **As a test player:** open `http://localhost:5173/api/auth/dev/sign-in?username=<name>` with `red`, `blue` or `leaf`. It starts a session for that player and redirects to `/`. Red and Blue are allowed and land on the home; Leaf is not, and lands on the waiting page until an admin allows them at `/admin/players`. It refuses an admin or an unknown name with 404, and does not exist at all unless `DEV_SIGN_IN` is `1`.
+- **As a test player:** open `http://localhost:5173/api/auth/dev/sign-in?username=<name>` with `red`, `blue` or `leaf`. It starts a session for that player and redirects to `/`. Red and Blue are allowed and land on the seeded Series 1, whose players they are; Leaf is not, and lands on the waiting page until an admin allows them at `/admin/players`. It refuses an admin or an unknown name with 404, and does not exist at all unless `DEV_SIGN_IN` is `1`.
 - **Signed out:** every page but `/admin` shows the sign-in page. Discord sign-in works only with the `DISCORD_*` variables set and `localhost:5173` registered in the Discord application, so locally a player signs in with the test sign-in.
 
 Each sign-in replaces the browser's session cookie, so one browser is one user at a time. The browser's profile lives in memory and starts empty whenever the MCP server restarts.
@@ -63,7 +63,7 @@ This wipes the database and the bucket and brings back the seeded state; `npm ru
 
 - From a reset, after signing in as `admin` and as `blue`, step 3's query lists one session for each, `admin` with `admin` true.
 - `http://localhost:5173/api/auth/dev/sign-in?username=admin` answers 404.
-- Signed in as `leaf`, `/` shows "Waiting for an admin" and `/api/players` answers 403; after the admin presses Allow beside Leaf at `/admin/players`, a reload shows the home.
+- Signed in as `leaf`, `/` shows "Waiting for an admin" and `/api/players` answers 403; after the admin presses Allow beside Leaf at `/admin/players`, a reload shows Series 1 without its Download, since Leaf is not one of its players.
 - With `DEV_SIGN_IN` unset and `npm run dev` restarted, `http://localhost:5173/api/auth/dev/sign-in?username=red` answers 404.
 
 ## Troubleshooting

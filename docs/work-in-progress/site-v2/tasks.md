@@ -37,26 +37,6 @@ Discord sign-in and the allowlist are built and checked on the local stack (2026
 **Touches:** `docs/pkmn/site/`
 **Needs the author:** the owner-run steps above.
 
-## Admins create and start series; players land on the current one
-
-The series form (number, name, game, ingestion mode, players from the allowlist, milestones, Markdown rules with "copy from series"), the start checklist, and the draft → running → finished states ([Accounts and Access](discovery.md#accounts-and-access)). Each series gets a background scene from a fixed set (a night sky and a daytime route so far), each animated. `/series` lists the series on their scenes, and a player lands on the running series' page as signed off ([Pages](discovery.md#pages)): the scene header with the name and the game's box and download, the League placeholder, the Trainers table with its rows opening into PC, Teams and snapshot tiles, and the rules. Series 1 is created through it, its rules pasted from `docs/pkmn/series/1/reference/rules.md`. The home page's tool list gives way to this page for signed-in players.
-
-**Do:**
-- [ ] Series (with its ingestion mode, manual or automatic, [How does a save reach the site?](discovery.md#snapshots-in)), series players and milestones tables and migration; the admin series list, form and checklist; starting and finishing a series.
-- [ ] Extend `npm run seed` with series 1 on the seeded game, its test players in it.
-- [ ] The scene component: the night sky and the daytime route as pixel SVG, their stepped animations, still under `prefers-reduced-motion`; the scene picker in the series form.
-- [ ] `/series` and `/series/<n>` as in the frozen boards, the Series tab, and the landing redirect; the game's download for players of a linked series; the Markdown rules rendered (a pinned Markdown renderer, no raw HTML).
-- [ ] Rewrite `site.md`'s decision "A hub per series, agreed in direction" (2026-10-21: the home page lists the series, Open Sheet and Team Analysis under each hub), which site v2's sections and series pages replace ([Pages](discovery.md#pages)).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `npx drizzle-kit check`.
-- Human-run: as admin, make a draft series and see the checklist list what is missing; fill it in item by item until "Start" enables; start it. As an allowed player of it, sign in and land on its page, read its rules, download its game. As an allowed player not in it, see no download. Make a second draft by "copy from series 1" and see the rules copied. Open `/series`: each series on its moving scene, the running one marked playing now; hover a banner and see it lift. On the series page, open a trainer's row and see their PC, Teams and snapshot tiles; turn on reduced motion and see the scenes stand still.
-- Reuse: `pkmn/site/design/series-list.dc.html` and `pkmn/site/design/series.dc.html` (its 2026-10-23 revision: the Upload button, the clickable track, the Progress/Records switch and the hand-set mark come with their own entries below); the games from `api/_lib/games.ts` and `shared/games.ts`, and `downloadUrl` in `api/_lib/files.ts` for the players' download; the allowlist from the entry above; `Panel` and `liftCardClass` in `src/components/controls.tsx`, `PlayerBadge`, `PixelIcon`.
-- Neighbors: `src/pages/home.tsx`.
-- Forbidden: rules enforced in team building; raw HTML in rendered rules; the boards' sample data; a series switcher on the series page; a Lives tile (open in [Backlog → where do a trainer's lives come from?](../backlog.md#pkmnsite-where-do-a-trainers-lives-come-from)).
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-
 ## Players upload their save zip as a snapshot
 
 The export ported to TypeScript in the site, run in a Vercel Function on the save zip the browser put in B2 ([Snapshots In](discovery.md#snapshots-in), [The export?](discovery.md#data-stack-and-config)), through the one pipeline every ingestion mode shares: raw save stored, exported, snapshot. `generate_export_data.py` writes the export's data as JSON for the site; the port reads the zip, lists its `Partida N.rxdata` slots, and exports with moves always. A snapshot holds everything the save holds at its milestone ([What does a snapshot hold?](discovery.md#model)), not only today's export. The player picks the slot on their row of the series page and the milestone, suggested from the save's badges and Hall of Fame; the row then shows the snapshot with its Pokémon count and its Fainted tile. Uploading again to a milestone replaces it. An admin can upload for any player. In an automatic series the players see no upload. This entry rolls missing TMs in memory as the export does; keeping them is the entry below.
@@ -75,7 +55,6 @@ The export ported to TypeScript in the site, run in a Vercel Function on the sav
 - Forbidden: Python in the site's functions; an endpoint for automatic ingestion; a pipeline that assumes the manual upload.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `pkmn/games/anil/generate_export_data.py`, `docs/pkmn/games/anil/`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Admins create and start series; players land on the current one
 
 ## Keep each save's TM rolls and hand the rolled zip back
 
@@ -294,7 +273,7 @@ Compare puts 2–4 of the player's teams side by side with the scoreboard and da
 
 **Do:**
 - [ ] Compare in the team builder over stored teams.
-- [ ] Delete `src/pages/team-analysis.tsx`, `src/team-analysis/drafts.ts`, the route, `src/tools.ts` and the old `localStorage` drafts on load; rewrite `team-analysis.md` into the team builder's doc and `add-a-page-to-the-site.md` without tools; drop the tools from `pkmn/site/CLAUDE.md`'s Routes rule and `site.md`'s opening and Stack; update `docs/pkmn/index.md`.
+- [ ] Delete `src/pages/team-analysis.tsx`, `src/team-analysis/drafts.ts`, the route and the old `localStorage` drafts on load; rewrite `team-analysis.md` into the team builder's doc; update `docs/pkmn/index.md`. (`src/tools.ts`, the tools in `add-a-page-to-the-site.md`, `pkmn/site/CLAUDE.md`'s Routes rule and `site.md` went with the series page, 2026-10-23.)
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `grep -rn "team-analysis:drafts\|carryTeam\|tools.ts\|/team-analysis" pkmn/site/src docs/pkmn` finds nothing.

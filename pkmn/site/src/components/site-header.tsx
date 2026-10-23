@@ -6,9 +6,10 @@ import { SignOutIcon, useSignOut } from "@/components/sign-out";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-type Tab = { label: string; to: "/open-sheet" | "/team-analysis" | "/admin"; icon: PixelIconName };
+type Tab = { label: string; to: "/series" | "/open-sheet" | "/team-analysis" | "/admin"; icon: PixelIconName };
 
 const TABS: readonly Tab[] = [
+  { label: "Series", to: "/series", icon: "flag" },
   { label: "PC", to: "/open-sheet", icon: "monitor" },
   { label: "Teams", to: "/team-analysis", icon: "people" },
 ];

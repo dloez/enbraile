@@ -1,22 +1,32 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
-import { liftCardClass } from "@/components/controls";
+import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { listPage } from "@/components/page";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { tools } from "@/tools";
+import { seriesBannerList } from "../../shared/series";
 
 export function HomePage() {
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api("/series", seriesBannerList).then(
+      (list) => {
+        const running = list.find((s) => s.state === "running");
+        if (running) void navigate({ to: "/series/$number", params: { number: String(running.number) }, replace: true });
+        else void navigate({ to: "/series", replace: true });
+      },
+      (caught: unknown) => setError(caught instanceof Error ? caught.message : "Something went wrong"),
+    );
+  }, [navigate]);
+
   return (
-    <main className={cn(listPage, "gap-7 py-7 sm:py-9")}>
-      <h1 className="m-0 font-heading text-5xl leading-none sm:text-6xl">Tools</h1>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        {tools.map((tool) => (
-          <Link key={tool.to} to={tool.to} className={cn(liftCardClass, "flex items-center gap-3 px-5 py-4.5")}>
-            <span className="flex-1 font-heading text-4xl">{tool.name}</span>
-            <ArrowRight className="size-6 text-primary" aria-hidden="true" />
-          </Link>
-        ))}
-      </div>
+    <main className={cn(listPage, "py-7 sm:py-9")}>
+      {error && (
+        <p role="alert" className="m-0 text-destructive">
+          {error}
+        </p>
+      )}
     </main>
   );
 }

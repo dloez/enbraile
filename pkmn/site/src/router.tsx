@@ -10,6 +10,18 @@ const homeRoute = createRoute({
   component: HomePage,
 });
 
+const seriesListRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/series",
+  component: lazyRouteComponent(() => import("@/pages/series-list"), "SeriesListPage"),
+});
+
+const seriesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/series/$number",
+  component: lazyRouteComponent(() => import("@/pages/series"), "SeriesPage"),
+});
+
 const openSheetRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/open-sheet",
@@ -40,7 +52,30 @@ const adminPlayersRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/admin-players"), "AdminPlayersPage"),
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, openSheetRoute, teamAnalysisRoute, adminRoute, adminGamesRoute, adminPlayersRoute]);
+const adminSeriesListRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin/series",
+  component: lazyRouteComponent(() => import("@/pages/admin-series-list"), "AdminSeriesListPage"),
+});
+
+const adminSeriesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin/series/$id",
+  component: lazyRouteComponent(() => import("@/pages/admin-series"), "AdminSeriesPage"),
+});
+
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  seriesListRoute,
+  seriesRoute,
+  openSheetRoute,
+  teamAnalysisRoute,
+  adminRoute,
+  adminGamesRoute,
+  adminPlayersRoute,
+  adminSeriesListRoute,
+  adminSeriesRoute,
+]);
 
 export const router = createRouter({ routeTree });
 

@@ -68,7 +68,7 @@ Scales of one hue are built with opacity on the token (`bg-chart-2/10`, `/15`, `
 
 ### Players
 
-`player-1` to `player-6`: yellow (`var(--yellow)`), cyan (`var(--cyan)`), green (`var(--green)`), `#ff8a80`, `#c39bff`, `#ffb347`. Each player draws in one, through `PlayerBadge`.
+`player-1` to `player-6`: yellow (`var(--yellow)`), cyan (`var(--cyan)`), green (`var(--green)`), coral (`var(--coral)`, `#ff8a80`), `#c39bff`, orange (`var(--orange)`, `#ffb347`). `coral` and `orange` are declared on their own because the scenes share them. Each player draws in one, through `PlayerBadge`.
 
 ### Sign-in
 
@@ -78,6 +78,21 @@ Scales of one hue are built with opacity on the token (`bg-chart-2/10`, `/15`, `
 | `discord` | `#5865f2` | Discord's blurple, the Discord button's fill and nowhere else |
 | `discord-edge` | `#8891f7` | The Discord button's border |
 | `discord-hi` | `#6d78f5` | The Discord button's hover and focus fill |
+
+### Series
+
+| Token | Value | Role |
+|-------|-------|------|
+| `faint` | `#6b7489` | A value not there yet ("—"), the barrier's feet |
+| `row-hi` | `#283146` | A trainer row's hover and its open state |
+| `round` | `#c12d24` | A league round: the "Round N" tag, and at `/10` the tint of its column |
+| `round-ink` | `#ffb0a8` | A round milestone's name |
+| `round-dim` | `#7a3a36` | A round's node not reached yet |
+| `trophy`, `trophy-rim` | `#2a2416`, `#8a7330` | The tournament node's disc and rim, around a `yellow` cup |
+
+### Scenes
+
+`scene-night-*` and `scene-route-*`, in `src/index.css`, are the colours of the two series scenes, used by `SceneArt` as `var(--scene-…)` fills and, for the ground, title shadow, chips and game box over a scene, through `SCENE_LOOK` (`bg-scene-night-panel`, `text-scene-night-sparkle`…). Night: five sky bands `sky-1`–`sky-5` (`#0d1430`…`#223262`), `star` (`var(--white)`), `star-dim`, `sparkle`, `moon`, `crater`, the `far` and `near` hills, `window` (`var(--yellow)`) and `lamp` (`var(--orange)`), plus `shadow` (the title's drop), `panel` (`rgba(10,16,38,0.8)`), `panel-edge` and `panel-sub`. Route: four sky bands `sky-1`–`sky-4`, `cloud` (`var(--white)`), `cloud-shade`, `hills`, `grass`, `grass-hi`, `tree`, `tree-hi`, `tree-shade`, `trunk`, `path`, `path-hi`, `path-edge`, the flowers (`flower` white, `flower-red` `var(--coral)`, `flower-heart` `var(--yellow)`), `panel` (`rgba(255,255,255,0.88)`) and `panel-sub` (`var(--ink)`). They are used only over a scene.
 
 ### Pixel art
 
@@ -102,8 +117,8 @@ Sizes are Tailwind's scale only, no pixel sizes:
 
 | Size | Where |
 |------|-------|
-| `text-5xl`–`text-6xl`, pixel | A page's `h1` (home); the archetype's name |
-| `text-4xl`, pixel | Section `h2` (a team's name, "Team", "Members", "Matrices"); home cards |
+| `text-5xl`–`text-6xl`, pixel | A page's `h1` (the series list, the admin pages), a series banner's name; the archetype's name |
+| `text-4xl`, pixel | Section `h2` (a team's name, "Team", "Members", "Matrices"); admin cards (the admin home, the series list) |
 | `text-3xl`, pixel | The summary's name, the drop zone's line; a head-to-head's big percentage (Nunito) |
 | `text-2xl`, pixel | Tabs, buttons, `Panel` titles, dialog titles, member card and graph node names, box titles ("PC 56"), the phone summary's sheet title |
 | `text-xl`, pixel | `Segmented` options, file tabs, small group headings inside a card ("Ability"), the vendored dialog and sheet titles' default |
@@ -137,14 +152,14 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 ## Layout Shell
 
 - **Root** (`SiteShell`, `src/components/site-shell.tsx`, the root route's component in `src/router.tsx`): a `flex min-h-svh flex-col` column holding `SiteHeader` and the route's `<Outlet />`. Outside `/admin`, a signed-out reader gets the sign-in page and a player not yet allowed the waiting page instead, both without the header. Each page renders its own `<main>`.
-- **Header** (`src/components/site-header.tsx`): `bg-ink` with a red `border-b-4`, `h-16 px-8` from `sm`. The pixel Poké Ball (`size-9` in a `size-12` box) links home; then the tabs, `TABS` in the same file, with Admin (the pixel key, opening `/admin`) added for an admin: each `h-12 rounded-t-lg px-5`, a pixel icon and its label in `text-2xl` pixel face, sitting on the red line. The open tab is `bg-red text-white`, joined to the line; the others `text-subtle`, `hover:bg-card hover:text-white`. PC (monitor) opens Open Sheet and Teams (people) opens Team Analysis until the series pages exist. At the right (`ml-auto`), for a signed-in reader: a player's `PlayerBadge` (an admin has none), their name in `text-2xl` pixel face, and sign-out, a `size-11` icon button (`SignOutIcon`), `text-muted-foreground`, `hover:bg-card hover:text-white`. No page title and no other navigation.
-- **Header below `sm`** (after `header-phone.dc.html` and its two open boards): a compact `h-15` bar, `pl-3 pr-2 gap-2`: the Poké Ball (`size-8` in a `size-11` box), the open section's icon (`size-4`, in `red`) and name in `text-[1.625rem]` pixel face filling the middle (empty where no tab is open, as on the home), and a `size-11` menu button, white, with the pixel `menu` icon, `bg-card` and the pixel `cross` while open (`aria-expanded`). The menu is a `nav` under the bar's red line, full width, `bg-ink` with a `border-b-4 border-border`, `px-3 pt-2.5 pb-3.5 gap-1`, over a `bg-scrim` covering the page below the header; it lists the tabs as `min-h-13 rounded-lg px-3.5` rows in `text-[1.75rem]` pixel face with their icons (the open one `bg-red text-white`, the others `text-subtle`, `hover:bg-card hover:text-white`), then, for a signed-in reader, a `h-0.75 bg-cell` divider, the badge (`size="xs"`, a player only) and name in white, and sign-out with `SignOutIcon` in `text-muted-foreground`. Choosing a tab, the scrim, Escape or any route change closes it. The tabs, the account and the menu never show at the other width.
+- **Header** (`src/components/site-header.tsx`): `bg-ink` with a red `border-b-4`, `h-16 px-8` from `sm`. The pixel Poké Ball (`size-9` in a `size-12` box) links home; then the tabs, `TABS` in the same file, with Admin (the pixel key, opening `/admin`) added for an admin: each `h-12 rounded-t-lg px-5`, a pixel icon and its label in `text-2xl` pixel face, sitting on the red line. The open tab is `bg-red text-white`, joined to the line; the others `text-subtle`, `hover:bg-card hover:text-white`. Series (flag) opens `/series` and is open on every series page; PC (monitor) opens Open Sheet and Teams (people) opens Team Analysis until the pages replacing them exist. At the right (`ml-auto`), for a signed-in reader: a player's `PlayerBadge` (an admin has none), their name in `text-2xl` pixel face, and sign-out, a `size-11` icon button (`SignOutIcon`), `text-muted-foreground`, `hover:bg-card hover:text-white`. No page title and no other navigation.
+- **Header below `sm`** (after `header-phone.dc.html` and its two open boards): a compact `h-15` bar, `pl-3 pr-2 gap-2`: the Poké Ball (`size-8` in a `size-11` box), the open section's icon (`size-4`, in `red`) and name in `text-[1.625rem]` pixel face filling the middle (empty where no tab is open), and a `size-11` menu button, white, with the pixel `menu` icon, `bg-card` and the pixel `cross` while open (`aria-expanded`). The menu is a `nav` under the bar's red line, full width, `bg-ink` with a `border-b-4 border-border`, `px-3 pt-2.5 pb-3.5 gap-1`, over a `bg-scrim` covering the page below the header; it lists the tabs as `min-h-13 rounded-lg px-3.5` rows in `text-[1.75rem]` pixel face with their icons (the open one `bg-red text-white`, the others `text-subtle`, `hover:bg-card hover:text-white`), then, for a signed-in reader, a `h-0.75 bg-cell` divider, the badge (`size="xs"`, a player only) and name in white, and sign-out with `SignOutIcon` in `text-muted-foreground`. Choosing a tab, the scrim, Escape or any route change closes it. The tabs, the account and the menu never show at the other width.
 - **Page column** (`src/components/page.ts`): every page is a centred column with the gutter `px-4 sm:px-8` (the header's from `sm`; below it the header's compact bar keeps its own, `pl-3 pr-2`), and one width per page kind:
 
   | Class | Width | Page kind |
   |-------|-------|-----------|
-  | `listPage` | `max-w-240` (60rem) | A page listing links: home |
-  | `toolPage` | `max-w-344` (86rem) | A tool: Open Sheet (its tab bar, PC and team views) and Team Analysis |
+  | `listPage` | `max-w-240` (60rem) | A page listing links or a form: the admin pages |
+  | `toolPage` | `max-w-344` (86rem) | A tool or a series page: Open Sheet (its tab bar, PC and team views), Team Analysis, `/series` and `/series/<n>` (whose scene header runs the full width, its content on this column) |
   | `messageWidth` | `max-w-180` (45rem) | A single message or form inside a page: drop zone, refusal, storage error |
 
   The page's own spacing (`gap-…`, `py-…`) is added with `cn(toolPage, "…")`; nothing inside a page adds a gutter of its own.
@@ -164,7 +179,8 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 | `SiteHeader` | `src/components/site-header.tsx` | The header and its tabs ([Layout Shell](#layout-shell)) |
 | `BallSplit`, `ballTitleClass` | `src/components/ball-split.tsx` | The sign-in and waiting pages' Poké Ball, after their boards: a `bg-red` top `h-[51svh]` (`sm:h-[52svh]`) with the site's name in `text-8xl` (`sm:text-9xl`) pixel face and `.enbraile.vip` in `blush`; an `ink` band (`h-3.5`, `sm:h-4.5`) with a `foreground` ball (`size-20`, `sm:size-30`) on its seam; the dark half holding the page's content |
 | `SignOutIcon` | `src/components/sign-out.tsx` | The boards' sign-out mark, a door with an arrow leaving it, in `currentColor`; `useSignOut` beside it signs out |
-| `PixelIcon` | `src/components/pixel-icon.tsx` | The pixel icons as crisp-edged SVG, `size-4.5` by default: `ball` (the Poké Ball, in its own colours), `flag`, `monitor`, `people`, `key`, `menu`, `cross`, `download` (in `currentColor`) and `cartridge` (in its own colours) |
+| `PixelIcon` | `src/components/pixel-icon.tsx` | The pixel icons as crisp-edged SVG, `size-4.5` by default: `ball` (the Poké Ball, in its own colours), `flag`, `monitor`, `people`, `key`, `menu`, `cross`, `download` (in `currentColor`), `cartridge` (in its own colours) and `barrier` (the League placeholder's striped barrier, 14 units, in `yellow`, `ink`, `muted-foreground` and `faint`) |
+| `SceneArt`, `SCENE_LOOK` | `src/components/scene.tsx` | A series' animated background scene (`night` or `route`) as crisp SVG rectangles, absolute over its box and covering it from the bottom (`xMidYMax slice`); `width` and `height` set its pixel grid (360×65 for a page's header, 338 wide for a banner). Blinking and drifting pixels use the `scene-*` keyframes in `src/index.css`, stopped under `prefers-reduced-motion`. `SCENE_LOOK[scene]` gives the classes for what sits on it: `ground` (the box's background), `title` (the pixel name's shadow), `chip` (the game line on a banner), `panel` and `panelSub` (the game's box on a series page) and `button` (the quiet button's face over a light scene) |
 | `PlayerBadge` | `src/components/player-badge.tsx` | A player, boxed, never round: their initial in the pixel face on their colour, a 3px `ink` border and a ring in their colour; `size="xs"` (`size-8 rounded-[7px] ring-2`, the header's menu), `"sm"` (`size-9 rounded-md ring-2`) or `"lg"` (`size-12.5 rounded-lg ring-3`), after the boards' header and trainer rows; `colour` picks `player-1`…`player-6`; `playerColour(id)` picks one from a player's id. Shown in the header, on the waiting page and on the allowlist |
 | `listPage`, `toolPage`, `messageWidth` | `src/components/page.ts` | The page column classes ([Layout Shell](#layout-shell)) |
 | `TypeDot`, `TypeChip`, `TypeSquare`, `UnknownMark` | `src/components/marks.tsx` | A type as its colour with the white symbol (dot 16px, chip with name, square 24px); `?` in `destructive` for anything Showdown lacks |
@@ -195,6 +211,8 @@ A tool's own components stay in `src/<tool>/components/` (Open Sheet's `MonSprit
 - **Empty slot / empty state:** a dashed outline (`border-2 border-dashed`, `border-cell-hi` inside a box; `border-3` on a card-sized one), muted text if any, `rounded-lg`–`rounded-2xl`; clickable ones open the action that fills them.
 - **Drop zone:** `messageWidth` dashed card, `rounded-2xl border-3`, an icon tile on `bg-box`, a pixel-face line and a quiet file button (`buttonClass` on a `label`); the border turns `primary` while dragging over.
 - **Errors:** an `alert` row, `rounded-xl border border-destructive bg-destructive-soft`, a `CircleAlert` in `destructive`. A whole-page failure is a plain `text-destructive` paragraph.
+- **Tile:** a figure with its label, as on a trainer row (`Tile` in `src/pages/series.tsx`): `rounded-xl border-3 bg-card px-4 py-3`, the label in `text-xl` pixel face `text-muted-foreground`, the value below in `text-5xl` pixel face, `text-faint` while it is "—".
+- **Banner:** a series on its scene as a whole-width link (`src/pages/series-list.tsx`): `liftCardClass` with `h-35 overflow-hidden`, `SceneArt` behind, the name in pixel face with the scene's `title` shadow and the game on the scene's `chip`, the state at the top right on `bg-primary` (playing now) or `bg-ink` (finished) with a 3px `ink` border.
 - **Sticky aside:** on wide screens a detail pane is `sticky top-4 w-100 max-h-[calc(100svh-2rem)] rounded-2xl border-3 bg-card`, its footer action above a top border.
 
 ## Imagery and Icons
@@ -202,6 +220,7 @@ A tool's own components stay in `src/<tool>/components/` (Open Sheet's `MonSprit
 - **Pokémon sprites:** Showdown's Gen 5 sprites through `@pkmn/img`'s `Sprites.getPokemon(name, { gen: "gen5", shiny, gender })`, always `[image-rendering:pixelated]`, `alt=""` when a label already names the Pokémon.
 - **Item icons:** `@pkmn/img`'s `Icons.getItem`, a background position on Showdown's sheet (`ItemIcon`).
 - **Type icons:** duiker101's SVG paths in `src/lib/type-icons.ts`, white on the type's colour.
-- **Pixel icons:** `PixelIcon`, drawn on a 10 or 12 unit grid with `shapeRendering="crispEdges"`: the home mark, the header's tab icons and its menu button. A new pixel icon is added to its `ICONS` table.
+- **Pixel icons:** `PixelIcon`, drawn on a 10, 12 or 14 unit grid with `shapeRendering="crispEdges"`: the home mark, the header's tab icons, its menu button and the League placeholder's barrier. A new pixel icon is added to its `ICONS` table.
+- **Series scenes:** `SceneArt`, pixel art drawn in code, one per series, in the `scene-*` tokens.
 - **UI icons:** `lucide-react`, `aria-hidden` beside a text label or with `aria-label` when alone; sizes `size-3.5`–`size-5.5`. In use: `ArrowRight`, `Upload`, `Plus`, `X`, `Pencil`, `Copy`, `Trash2`, `ClipboardPaste`, `ClipboardCopy`, `ClipboardCheck`, `Check`, `Search`, `ShoppingBag`, `Package`, `CircleAlert`, `TriangleAlert`, `Info`, `ChartNetwork`.
 - **Tab icon:** `public/favicon.svg`, with `favicon-32.png` and `apple-touch-icon.png` rendered from it.

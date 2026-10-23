@@ -1,9 +1,9 @@
 import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
-import * as z from "zod";
 import { newGame, partRequest, uploadAbort, uploadDone, uploadRequest, type Game } from "../../shared/games.js";
 import { partRange, partSizeFor } from "../../shared/upload.js";
 import { requireAdmin } from "./admin.js";
+import { body } from "./body.js";
 import { db } from "./db.js";
 import {
   abortUpload,
@@ -27,11 +27,6 @@ function view(row: GameRow): Game {
     fileSize: row.fileSize,
     uploadedAt: row.uploadedAt?.toISOString() ?? null,
   };
-}
-
-async function body<T extends z.ZodType>(request: Request, schema: T): Promise<z.infer<T> | undefined> {
-  const parsed = schema.safeParse(await request.json().catch(() => undefined));
-  return parsed.success ? parsed.data : undefined;
 }
 
 function gamePrefix(id: string): string {

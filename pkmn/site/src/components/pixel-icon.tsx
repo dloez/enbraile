@@ -18,6 +18,15 @@ const ICONS = {
     size: 10,
     paths: [["fill-current", "M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z"]],
   },
+  barrier: {
+    size: 14,
+    paths: [
+      ["fill-yellow", "M1 3h12v4H1z"],
+      ["fill-ink", "M1 3h2v4H1zM5 3h2v4H5zM9 3h2v4H9z"],
+      ["fill-muted-foreground", "M2 7h2v7H2zM10 7h2v7h-2z"],
+      ["fill-faint", "M1 13h4v1H1zM9 13h4v1H9z"],
+    ],
+  },
   download: { size: 10, paths: [["fill-current", "M4 1h2v4H4zM2 5h6v1H2zM3 6h4v1H3zM4 7h2v1H4zM1 9h8v1H1z"]] },
   cartridge: {
     size: 10,

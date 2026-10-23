@@ -22,6 +22,7 @@ export function AdminPage() {
 }
 
 const ADMIN_PAGES = [
+  { name: "Series", to: "/admin/series" },
   { name: "Players", to: "/admin/players" },
   { name: "Games", to: "/admin/games" },
 ] as const;

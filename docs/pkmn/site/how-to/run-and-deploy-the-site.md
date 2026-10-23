@@ -51,7 +51,7 @@ npm run db:migrate
 npm run seed
 ```
 
-`seed` makes the admin `admin` with the password `admin-password`, the test players Red and Blue, allowed, and Leaf, waiting for an admin, and the game "Pokémon Añil + Randomlocke" with a small stand-in zip put in the bucket, skipping any already there, and refuses a `DATABASE_URL` or `S3_ENDPOINT` whose host is not `localhost` or `127.0.0.1`. To make a real admin instead, `npm run admin:create <name>` asks for the password twice; it refuses a name already taken and a password under 8 characters. Every script reads `.env.local`; a variable already set in the shell wins over it.
+`seed` makes the admin `admin` with the password `admin-password`, the test players Red and Blue, allowed, and Leaf, waiting for an admin, the game "Pokémon Añil + Randomlocke" with a small stand-in zip put in the bucket, and Series 1 running on it, on the daytime route, with Red and Blue as its players, ten milestones and the rules of `docs/pkmn/series/1/reference/rules.md`, skipping any already there, and refuses a `DATABASE_URL` or `S3_ENDPOINT` whose host is not `localhost` or `127.0.0.1`. To make a real admin instead, `npm run admin:create <name>` asks for the password twice; it refuses a name already taken and a password under 8 characters. Every script reads `.env.local`; a variable already set in the shell wins over it.
 
 After changing `api/_lib/schema.ts`, write the next migration with `npm run db:generate`, check the migrations with `npx drizzle-kit check`, and commit the new files in `drizzle/`. A migration only goes forward: to undo a change, generate another.
 
@@ -61,7 +61,7 @@ After changing `api/_lib/schema.ts`, write the next migration with `npm run db:g
 npm run dev
 ```
 
-Vite starts the API itself (`scripts/dev-api.ts` under `tsx watch`, on `API_PORT`, restarting on changes), proxies `/api` to it, prints the local URL, and stops the API when it stops. Every page but `/admin` asks a signed-out reader to sign in, and players sign in locally with the test sign-in ([How to Verify the Site](verify-the-site.md)). Open Sheet is at `/open-sheet`, admins sign in at `/admin`, the allowlist is at `/admin/players` and the games are at `/admin/games`. Imports and teams are stored in that browser's IndexedDB for the dev origin.
+Vite starts the API itself (`scripts/dev-api.ts` under `tsx watch`, on `API_PORT`, restarting on changes), proxies `/api` to it, prints the local URL, and stops the API when it stops. Every page but `/admin` asks a signed-out reader to sign in, and players sign in locally with the test sign-in ([How to Verify the Site](verify-the-site.md)). A signed-in player lands on the running series at `/series/<n>`, every series is at `/series`, Open Sheet is at `/open-sheet`, admins sign in at `/admin`, the allowlist is at `/admin/players`, the games are at `/admin/games` and the series are at `/admin/series`. Imports and teams are stored in that browser's IndexedDB for the dev origin.
 
 ### 5. Run the gate
 
@@ -119,10 +119,11 @@ Use Instant Rollback on the previous production deployment in the Vercel dashboa
 
 ## Verification
 
-- `https://pkmn.enbraile.vip` serves the home page, and `/open-sheet` the tool.
+- Signed in, `https://pkmn.enbraile.vip` sends the reader to the running series' page, or to `/series` while none runs, and `/open-sheet` serves the tool.
+- At `/admin/series`, an admin creates a draft, sees its checklist list what is missing, fills it in until Start enables, and starts it; its players then land on it, read its rules and download its game, and an allowed player outside it sees no Download. `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/admin/series` prints `401`.
 - `/admin` signs an admin in with the password `admin:create` set, refuses a wrong one with "Wrong username or password", and signs out.
 - `curl -s -o /dev/null -w '%{http_code}' 'https://pkmn.enbraile.vip/api/auth/dev/sign-in?username=x'` prints `404`.
 - At `/admin/games`, an admin creates a game, uploads its zip, sees its size and date after a reload, and downloads a file of the same size; `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/games` prints `401`.
-- Signed out, `https://pkmn.enbraile.vip` shows the sign-in page. Signing in with Discord as someone new shows the waiting page; an admin allows them at `/admin/players`, and their reload shows the home; removed, their reload shows the waiting page again. `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/players` prints `401`.
+- Signed out, `https://pkmn.enbraile.vip` shows the sign-in page. Signing in with Discord as someone new shows the waiting page; an admin allows them at `/admin/players`, and their reload shows the series; removed, their reload shows the waiting page again. `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/players` prints `401`.
 - `curl -sI https://pkmn.enbraile.vip` shows `server: Vercel`.
 - After a push, the page loads a new `/assets/index-*.js` bundle carrying the change.

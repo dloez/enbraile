@@ -1,4 +1,6 @@
-import { bigint, boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { bigint, boolean, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { INGESTION_MODES, MILESTONE_MARKS, SCENES, SERIES_STATES } from "../../shared/series.js";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -85,3 +87,56 @@ export const game = pgTable("game", {
   uploadedAt: timestamp("uploaded_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const sceneEnum = pgEnum("scene", SCENES);
+
+export const ingestionEnum = pgEnum("ingestion", INGESTION_MODES);
+
+export const seriesStateEnum = pgEnum("series_state", SERIES_STATES);
+
+export const milestoneMarkEnum = pgEnum("milestone_mark", MILESTONE_MARKS);
+
+export const series = pgTable(
+  "series",
+  {
+    id: text("id").primaryKey(),
+    number: integer("number").notNull().unique(),
+    name: text("name").notNull(),
+    gameId: text("game_id").references(() => game.id, { onDelete: "restrict" }),
+    scene: sceneEnum("scene").notNull().default("night"),
+    ingestion: ingestionEnum("ingestion").notNull().default("manual"),
+    rules: text("rules").notNull().default(""),
+    state: seriesStateEnum("state").notNull().default("draft"),
+    startedAt: timestamp("started_at"),
+    finishedAt: timestamp("finished_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("series_one_running_idx").on(table.state).where(sql`${table.state} = 'running'`)],
+);
+
+export const seriesPlayer = pgTable(
+  "series_player",
+  {
+    seriesId: text("series_id")
+      .notNull()
+      .references(() => series.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.seriesId, table.userId] }), index("series_player_user_id_idx").on(table.userId)],
+);
+
+export const milestone = pgTable(
+  "milestone",
+  {
+    id: text("id").primaryKey(),
+    seriesId: text("series_id")
+      .notNull()
+      .references(() => series.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    name: text("name").notNull(),
+    mark: milestoneMarkEnum("mark").notNull().default("none"),
+  },
+  (table) => [unique("milestone_series_position_unique").on(table.seriesId, table.position), unique("milestone_series_name_unique").on(table.seriesId, table.name)],
+);

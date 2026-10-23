@@ -23,11 +23,7 @@ const myToolRoute = createRoute({
 
 The header's tabs are the site's sections, listed in `TABS` in `src/components/site-header.tsx` with a label, a path and a [pixel icon](../reference/design-system.md#imagery-and-icons); a page joins them only when it is a section of its own.
 
-### 2. List it on the home page
-
-Add `{ name: "My Tool", to: "/my-tool" }` to `src/tools.ts`. The home page renders it as a link card; a page that is not a tool skips this step.
-
-### 3. Write the page
+### 2. Write the page
 
 Put the page component in `src/pages/my-tool.tsx` and the tool's own code in `src/my-tool/` (`components/` for its UI). The page returns its own `<main>`, on the page column for its kind from `src/components/page.ts` ([Layout Shell](../reference/design-system.md#layout-shell)), `toolPage` for a tool:
 
@@ -43,7 +39,7 @@ export function MyToolPage() {
 
 The column carries the width and the gutter; nothing inside the page adds its own. A component another tool also needs goes in `src/components/`, never imported from the other tool's folder.
 
-### 4. Build the UI from what exists
+### 3. Build the UI from what exists
 
 In this order:
 
@@ -54,16 +50,16 @@ In this order:
 
 Colours come from the [tokens](../reference/design-system.md#colour-tokens) only: red for where you are, cyan (`primary`) for what you can act on and for selection, yellow for you and winners, `chart-2` for the good side of a comparison, `destructive` for errors and the bad side. Use the pixel face (`font-heading`) for headings, labels, tabs and buttons and `tabular-nums` for numbers in running text, text sizes and radii from Tailwind's scale only ([Typography](../reference/design-system.md#typography), [Radius, Spacing, Borders, Shadow](../reference/design-system.md#radius-spacing-borders-shadow)). Write no helper text explaining the UI.
 
-### 5. Update the design system in the same change
+### 4. Update the design system in the same change
 
 If the page added or changed a token, a shared component, the shell or a pattern another page could reuse, edit [Site Design System](../reference/design-system.md) in the same commit: the new token's value and role, the component's path and use, the pattern's classes. A new colour goes into `src/index.css`'s `:root` and `@theme inline`, never into a component.
 
-### 6. Update the docs that mention tools
+### 5. Update the docs that list the pages
 
 Add the page to [The pkmn Site](../explanation/site.md)'s opening list and the Site row of the [pkmn index](../../index.md), with its own explanation doc under `docs/pkmn/site/explanation/` if it has design decisions.
 
 ## Verification
 
 1. `npm run gate` passes in `pkmn/site/`.
-2. `npm run dev`: the home page shows the new card, its tab is open in the header if it has one, and the page works at desktop width and at a phone width (about 375px) with no horizontal page scroll.
+2. `npm run dev`: the page opens at its route, its tab is open in the header if it has one, and the page works at desktop width and at a phone width (about 375px) with no horizontal page scroll.
 3. `grep -nE '#[0-9a-fA-F]{3,8}\b|rgba?\(' src/pages/my-tool.tsx src/my-tool -r` finds no raw colours.
