@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dloez's journey on a phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#161b26}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+.ph-menu:hover{background:#222a3b!important;color:#ffffff!important}
+.ph-item:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}
+.col:hover{background:#283146!important}
+.btn:hover{background:rgba(255,255,255,0.18)!important}
+.jscroll{scrollbar-width:thin;scrollbar-color:#44506d transparent}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 1300px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="position: relative; z-index: 2; flex: none; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="MainPhone.dc.html" aria-label="Home" style="flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px">
+<svg width="32" height="32" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<span style="flex: 1"></span>
+<button type="button" class="ph-menu" aria-label="Menu" aria-expanded="{{open}}" aria-controls="ph-panel" onClick="{{toggle}}" style="flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: {{btnBg}}; color: #ffffff; display: grid; place-items: center; cursor: pointer">
+<sc-if value="{{closed}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z" fill="currentColor"></path></svg></sc-if>
+</button>
+</header>
+
+<div style="flex: none; display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 0">
+<nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 10px; font-family: 'Jersey 10', sans-serif; font-size: 22px">
+<a href="ProfilePhone.dc.html" style="display: flex; align-items: center; gap: 8px; min-height: 44px; text-decoration: none"><svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M12 2L2 9l10 7z" fill="currentColor"></path></svg>Dloez</a>
+<span aria-hidden="true" style="color: #6b7489">·</span>
+<a href="MainPhone.dc.html" style="display: flex; align-items: center; min-height: 44px; text-decoration: none">Series 2</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="width: 44px; height: 44px; flex: none; box-sizing: border-box; border-radius: 10px; border: 3px solid #10141d; box-shadow: 0 0 0 3px #ffd34d; background: #ffd34d; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 28px; color: #10141d">D</span>
+<h1 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 44px; line-height: 0.85">Dloez in Series 2</h1>
+<span style="flex: none; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d; background: #ffd34d; padding: 1px 7px; border-radius: 4px">You</span>
+</div>
+<a href="Pc.dc.html" class="btn" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px 4px; box-sizing: border-box; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z" fill="#5ad1f0"></path></svg>Dloez's PC<span style="margin-left: auto; padding: 0 8px; border-radius: 5px; background: #10141d; color: #c3cad8; font-size: 20px; line-height: 26px">Gym 7 · latest</span></a>
+</div>
+
+<main style="flex: 1; display: flex; flex-direction: column; gap: 24px; padding: 20px 16px 36px">
+
+<h2 id="journey" style="margin: 0 0 -12px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 34px">Journey</h2>
+<section aria-labelledby="journey" style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
+<div role="table" aria-label="Records at each milestone" class="jscroll" tabindex="0" style="overflow-x: auto; font-variant-numeric: tabular-nums; outline: none">
+<div role="row" style="display: grid; grid-template-columns: 120px repeat(10, 92px); width: max-content; background: #1b2232; border-bottom: 3px solid #343f58">
+<span role="columnheader" style="position: sticky; left: 0; z-index: 1; background: #1b2232; border-right: 3px solid #343f58"></span>
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="10">
+<span role="columnheader" style="display: flex">
+<sc-if value="{{c.has}}" hint-placeholder-val="{{ true }}"><a href="Pc.dc.html" class="col" aria-label="{{c.title}}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 52px; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 20px; white-space: nowrap; text-decoration: none">{{c.name}}<svg width="7" height="10" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></a></sc-if>
+<sc-if value="{{c.empty}}" hint-placeholder-val="{{ false }}"><span style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 52px; color: #6b7489; font-family: 'Jersey 10', sans-serif; font-size: 20px; white-space: nowrap">{{c.name}}</span></sc-if>
+</span>
+</sc-for>
+</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+<div role="row" style="display: grid; grid-template-columns: 120px repeat(10, 92px); width: max-content; border-bottom: 1px solid #343f58">
+<span role="rowheader" style="position: sticky; left: 0; z-index: 1; display: flex; align-items: center; min-height: 52px; padding: 0 12px; background: #222a3b; border-right: 3px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 20px; line-height: 1; color: #a3acbf">{{r.label}}</span>
+<sc-for list="{{r.cells}}" as="v" hint-placeholder-count="10">
+<span role="cell" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 6px; line-height: 1.15">
+<span style="font-size: 15px; font-weight: 700; color: {{v.ink}}; white-space: nowrap">{{v.main}}</span>
+<sc-if value="{{v.hasSub}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; font-weight: 700; color: {{v.subInk}}; white-space: nowrap">{{v.sub}}</span></sc-if>
+</span>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="fallen" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; gap: 12px">
+<h2 id="fallen" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 34px">Fallen</h2>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; color: #a3acbf">{{fallenCount}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{fallen}}" as="f" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 14px; padding: 10px 14px 10px 10px; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
+<span style="flex: none; width: 64px; height: 64px; border-radius: 12px; background: #1b2232; display: grid; place-items: center; overflow: hidden"><img src="{{f.sprite}}" alt="" width="72" height="72" style="display: block; image-rendering: pixelated; filter: grayscale(1); opacity: 0.6"></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{f.nick}}</span>
+<span style="font-size: 14px; font-weight: 700; color: #a3acbf">{{f.species}} · Lv. {{f.level}}</span>
+<span style="align-self: flex-start; display: flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #4e3742; color: #ff6a5e; font-family: 'Jersey 10', sans-serif; font-size: 20px">{{f.span}}</span>
+</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+</main>
+
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
+<div onClick="{{toggle}}" style="position: absolute; inset: 60px 0 0; z-index: 1; background: rgba(0,0,0,0.6)"></div>
+<nav id="ph-panel" aria-label="Sections" style="position: absolute; left: 0; right: 0; top: 60px; z-index: 2; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 14px; background: #10141d; border-bottom: 4px solid #343f58">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<a href="{{t.href}}" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="{{t.icon}}" fill="currentColor"></path></svg>{{t.name}}</a>
+</sc-for>
+<span aria-hidden="true" style="height: 3px; margin: 6px 2px; background: #2c3549"></span>
+<a href="ProfilePhone.dc.html" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none">
+<span aria-hidden="true" style="width: 32px; height: 32px; margin-left: -7px; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px #ffd34d; background: #ffd34d; box-sizing: border-box; display: grid; place-items: center; font-size: 22px; color: #10141d">D</span>Dloez</a>
+<button type="button" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border: none; border-radius: 10px; background: transparent; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-align: left; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg>Sign out</button>
+</nav>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1300}}'>
+const S = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
+  '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
+const MON = {10: 'Luxio', 17: 'Pelipper', 41: 'Kingdra'};
+const MS = ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 4', 'Gym 5', 'Gym 6', 'Gym 7', 'Gym 8', 'League', 'Tournament'];
+const SNAP = {
+  'Gym 1': {time: '3 h 48', badges: 1, money: 4120, seen: 41, owned: 12, won: 28, lost: 0, black: 0, fainted: 0},
+  'Gym 2': {time: '7 h 21', badges: 2, money: 9860, seen: 86, owned: 21, won: 61, lost: 0, black: 0, fainted: 0},
+  'Gym 3': {time: '11 h 02', badges: 3, money: 17340, seen: 138, owned: 30, won: 93, lost: 1, black: 1, fainted: 0},
+  'Gym 5': {time: '19 h 35', badges: 5, money: 48900, seen: 241, owned: 48, won: 148, lost: 1, black: 1, fainted: 2},
+  'Gym 7': {time: '27 h 14', badges: 7, money: 112450, seen: 352, owned: 66, won: 201, lost: 2, black: 2, fainted: 3}
+};
+const FALLEN = [
+  {key: 10, nick: 'LAURA', level: 29, from: 'Gym 3', to: 'Gym 5'},
+  {key: 17, nick: 'BADYAM', level: 30, from: 'Gym 3', to: 'Gym 5'},
+  {key: 41, nick: 'TRAMPA', level: 41, from: 'Gym 5', to: 'Gym 7'}
+];
+const TAKEN = Object.keys(SNAP);
+const TABS = [
+  {name: 'Series', href: 'SeriesListPhone.dc.html', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
+  {name: 'PC', href: 'Pc.dc.html', icon: 'M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z'},
+  {name: 'Teams', href: 'TeamsList.dc.html', icon: 'M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z'}
+];
+function money(n) { return '₽' + n.toLocaleString('en-US'); }
+class Component extends DCLogic {
+  renderVals() {
+    const open = !!(this.state && this.state.open);
+    const prevOf = (m) => { const i = TAKEN.indexOf(m); return i > 0 ? SNAP[TAKEN[i - 1]] : null; };
+    const cell = (m, f) => {
+      const s = SNAP[m];
+      if (!s) return {main: '—', ink: '#6b7489', hasSub: false, sub: '', subInk: ''};
+      return Object.assign({ink: '#eef1f7', hasSub: false, sub: '', subInk: '#a3acbf'}, f(s, prevOf(m)));
+    };
+    const rows = [
+      {label: 'Play time', f: (s) => ({main: s.time})},
+      {label: 'Badges', f: (s) => ({main: s.badges + ' / 8'})},
+      {label: 'Money', f: (s) => ({main: money(s.money)})},
+      {label: 'Pokédex', f: (s) => ({main: s.owned + ' owned', hasSub: true, sub: s.seen + ' seen'})},
+      {label: 'Trainer battles', f: (s) => ({main: s.won + ' – ' + s.lost, hasSub: true, sub: 'won – lost'})},
+      {label: 'Blackouts', f: (s) => ({main: String(s.black)})},
+      {label: 'Fainted', f: (s, p) => { const d = p ? s.fainted - p.fainted : 0; return {main: String(s.fainted), ink: s.fainted ? '#ff6a5e' : '#eef1f7', hasSub: d > 0, sub: '+' + d, subInk: '#ff6a5e'}; }}
+    ].map((r) => ({label: r.label, cells: MS.map((m) => cell(m, r.f))}));
+    return {
+      open, closed: !open, btnBg: open ? '#222a3b' : 'transparent',
+      toggle: () => this.setState({open: !open}),
+      tabs: TABS,
+      cols: MS.map((m) => ({name: m, has: !!SNAP[m], empty: !SNAP[m], title: "Dloez's PC at " + m})),
+      rows,
+      fallenCount: String(FALLEN.length),
+      fallen: FALLEN.map((f) => ({sprite: S[f.key], nick: f.nick, species: MON[f.key], level: f.level, span: f.from + ' → ' + f.to}))
+    };
+  }
+}
+</script>
+</body>
+</html>

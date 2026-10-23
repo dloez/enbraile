@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Series 2 on a phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#161b26}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+@keyframes bob{0%{transform:translateY(0)}100%{transform:translateY(-4px)}}
+@keyframes twinkle{0%{opacity:1}100%{opacity:0.15}}
+@keyframes sparkle{0%{opacity:0}100%{opacity:1}}
+@keyframes glow{0%{opacity:1}100%{opacity:0.25}}
+.btn:hover{background:rgba(255,255,255,0.18)!important}
+.tile{transition:transform 0.12s steps(2)}
+.tile:hover{border-color:#5ad1f0!important;transform:translateY(-2px)}
+.who:hover{background:#283146!important}
+.who:hover .tname{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
+.snap:hover{background:#5ad1f0!important;color:#10141d!important}
+.who:hover .chev{border-color:#5ad1f0!important}
+.seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
+.ph-menu:hover{background:#222a3b!important;color:#ffffff!important}
+.ph-item:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 1700px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="position: relative; z-index: 3; flex: none; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="MainPhone.dc.html" aria-label="Home" style="flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px">
+<svg width="32" height="32" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<span style="flex: 1; display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #ffffff"><svg width="16" height="16" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z" fill="#d93a30"></path></svg>Series</span>
+<button type="button" class="ph-menu" aria-label="Menu" aria-expanded="{{menu}}" aria-controls="ph-panel" onClick="{{toggleMenu}}" style="flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: {{btnBg}}; color: #ffffff; display: grid; place-items: center; cursor: pointer">
+<sc-if value="{{menuClosed}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{menu}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z" fill="currentColor"></path></svg></sc-if>
+</button>
+</header>
+
+<section aria-labelledby="series-title" style="position: relative; height: 220px; overflow: hidden; background: #0d1430">
+<svg width="392" height="220" viewBox="0 0 98 55" shape-rendering="crispEdges" aria-hidden="true" style="position: absolute; left: 0; top: 0; display: block">
+<sc-for list="{{sky}}" as="r" hint-placeholder-count="120">
+<rect x="{{r.x}}" y="{{r.y}}" width="{{r.w}}" height="{{r.h}}" fill="{{r.c}}" style="animation: {{r.a}}"></rect>
+</sc-for>
+</svg>
+<div style="position: relative; height: 100%; box-sizing: border-box; padding: 28px 16px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 18px">
+<h1 id="series-title" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 76px; line-height: 0.8; color: #ffffff; text-shadow: 0 5px 0 #0a1a4a">Series 2</h1>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 8px 8px 8px 12px; background: rgba(10,16,38,0.8); border: 3px solid #34406a; border-radius: 14px">
+<span style="display: flex; align-items: center; gap: 10px">
+<svg width="34" height="34" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true" style="flex: none"><path d="M1 1h7l1 1v8H1z" fill="#3a4150"></path><path d="M2 3h6v5H2z" fill="#d93a30"></path><path d="M3 4h4v1H3z" fill="#ffffff"></path><path d="M3 6h2v1H3z" fill="#ffd34d"></path><path d="M2 1h1v1H2zM4 1h1v1H4zM6 1h1v1H6z" fill="#2c3240"></path></svg>
+<span style="display: flex; flex-direction: column; line-height: 1.15">
+<span style="font-weight: 800; font-size: 17px; color: #ffffff">Pokémon Añil</span>
+<span style="font-weight: 700; font-size: 14px; color: #b9c8ec">Randomlocke</span>
+</span>
+</span>
+<a href="#" class="btn" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px 4px; box-sizing: border-box; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none">
+<svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h2v4H4zM2 5h6v1H2zM3 6h4v1H3zM4 7h2v1H4zM1 9h8v1H1z" fill="currentColor"></path></svg>
+Download
+</a>
+</div>
+</div>
+</section>
+
+<main style="padding: 20px 16px 24px; display: flex; flex-direction: column; gap: 12px">
+<section aria-labelledby="league-title" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px">
+<h2 id="league-title" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 34px">League</h2>
+<div style="display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 96px; box-sizing: border-box; background: #1b2232; border: 3px dashed #44506d; border-radius: 18px">
+<svg width="40" height="40" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 3h12v4H1z" fill="#ffd34d"></path><path d="M1 3h2v4H1zM5 3h2v4H5zM9 3h2v4H9z" fill="#10141d"></path><path d="M2 7h2v7H2zM10 7h2v7h-2z" fill="#a3acbf"></path><path d="M1 13h4v1H1zM9 13h4v1H9z" fill="#6b7489"></path></svg>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; color: #ffd34d">Work in progress</span>
+</div>
+</section>
+
+<h2 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 34px">Trainers</h2>
+<div style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
+<div aria-hidden="true" style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); padding: 0 12px; background: #1b2232; border-bottom: 3px solid #343f58">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="10">
+<span style="display: grid; place-items: center; min-height: 36px; background: {{c.bg}}; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: {{c.ink}}">
+<sc-if value="{{c.notFinal}}" hint-placeholder-val="{{ true }}">{{c.short}}</sc-if>
+<sc-if value="{{c.final}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M7 3h10v5a5 5 0 0 1-10 0z" fill="#ffd34d"></path><path d="M10 13h4v4h3v4H7v-4h3z" fill="#ffd34d"></path></svg></sc-if>
+</span>
+</sc-for>
+</div>
+<sc-for list="{{rows}}" as="p" hint-placeholder-count="6">
+<div style="border-bottom: {{p.divider}}; background: {{p.rowBg}}">
+<button type="button" class="who" aria-expanded="{{p.open}}" onClick="{{p.toggle}}" style="width: 100%; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 12px 0; box-sizing: border-box; border: none; background: transparent; color: #eef1f7; font: inherit; text-align: left; cursor: pointer">
+<span aria-hidden="true" style="width: 34px; height: 34px; flex: none; box-sizing: border-box; border-radius: 8px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{p.colour}}; background: {{p.colour}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #10141d">{{p.initial}}</span>
+<span class="tname" style="font-family: 'Jersey 10', sans-serif; font-size: 26px; line-height: 1">{{p.name}}</span>
+<sc-if value="{{p.you}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #10141d; background: #ffd34d; padding: 0 6px; border-radius: 4px">You</span></sc-if>
+<span style="flex: 1"></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{p.latest}}</span>
+<span class="chev" aria-hidden="true" style="width: 36px; height: 36px; flex: none; box-sizing: border-box; border-radius: 9px; background: #2c3549; border: 3px solid #44506d; display: grid; place-items: center"><svg width="14" height="10" viewBox="0 0 22 16" style="transform: {{p.chev}}"><path d="M2 3h18l-9 11z" fill="#5ad1f0"></path></svg></span>
+</button>
+<span role="img" aria-label="{{p.trackLabel}}" style="position: relative; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); height: 50px; margin: 0 12px 8px">
+<span style="position: absolute; left: 5%; right: 5%; top: 50%; height: 4px; margin-top: -2px; border-radius: 2px; background: #10141d"></span>
+<span style="position: absolute; left: 5%; top: 50%; height: 4px; margin-top: -2px; border-radius: 2px; background: {{p.colour}}; width: {{p.fill}}%"></span>
+<sc-for list="{{p.nodes}}" as="n" hint-placeholder-count="10">
+<span style="position: relative; display: grid; place-items: center; background: {{n.bg}}">
+<sc-if value="{{n.plain}}" hint-placeholder-val="{{ true }}"><span style="width: 12px; height: 12px; border-radius: 50%; background: {{n.fill}}"></span></sc-if>
+<sc-if value="{{n.round}}" hint-placeholder-val="{{ false }}"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{n.fill}}; border: 3px solid {{n.ring}}; box-shadow: 0 0 0 2px #222a3b; box-sizing: border-box"></span></sc-if>
+<sc-if value="{{n.final}}" hint-placeholder-val="{{ false }}"><span style="width: 30px; height: 30px; border-radius: 50%; background: #2a2416; border: 2px solid #8a7330; box-sizing: border-box; display: grid; place-items: center"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M7 3h10v5a5 5 0 0 1-10 0z" fill="#ffd34d"></path><path d="M10 13h4v4h3v4H7v-4h3z" fill="#ffd34d"></path></svg></span></sc-if>
+<sc-if value="{{n.snap}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 50%; top: 50%; width: {{n.ringSize}}; height: {{n.ringSize}}; margin-left: {{n.ringOff}}; margin-top: {{n.ringOff}}; box-sizing: border-box; border-radius: {{n.ringRadius}}; border: 2px solid {{n.selRing}}"></span></sc-if>
+<sc-if value="{{n.here}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 50%; top: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; box-sizing: border-box; border-radius: 7px; background: {{p.colour}}; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{n.hereRing}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d; animation: bob 0.5s steps(2) infinite alternate">{{p.initial}}</span></sc-if>
+</span>
+</sc-for>
+</span>
+<sc-if value="{{p.open}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 12px 12px 16px; background: #1b2232; border-top: 3px dashed #343f58">
+<div role="radiogroup" aria-label="{{p.pickLabel}}" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{p.snaps}}" as="sn" hint-placeholder-count="5">
+<button type="button" class="seg" role="radio" aria-checked="{{sn.on}}" onClick="{{sn.pick}}" style="flex: 1 0 auto; min-height: 44px; padding: 0 10px; border: none; border-radius: 8px; background: {{sn.bg}}; color: {{sn.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 21px; cursor: pointer">{{sn.name}}</button>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<a href="Pc.dc.html" class="tile" style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; color: #eef1f7; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf; display: flex; align-items: center; gap: 8px">PC <svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 36px; line-height: 0.9">{{p.selAlive}}</span>
+</a>
+<a href="TeamsList.dc.html" class="tile" style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; color: #eef1f7; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf; display: flex; align-items: center; gap: 8px">Teams <svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 36px; line-height: 0.9">{{p.teams}}</span>
+</a>
+<a href="TrainerJourneyPhone.dc.html" class="tile" style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; color: #eef1f7; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf; display: flex; align-items: center; gap: 8px">Fainted <svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 36px; line-height: 0.9; color: {{p.faintInk}}">{{p.selFainted}}</span>
+</a>
+<a href="TrainerJourneyPhone.dc.html" class="tile" style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #222a3b; border: 3px solid #343f58; border-radius: 12px; color: #eef1f7; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf; display: flex; align-items: center; gap: 8px">Journey <svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 36px; line-height: 0.9; white-space: nowrap">{{p.selTime}}</span>
+</a>
+</div>
+<sc-if value="{{p.canUpload}}" hint-placeholder-val="{{ false }}">
+<a href="UploadMobile.dc.html" class="btn" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 14px 4px; box-sizing: border-box; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none"><svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h2v1H4zM3 2h4v1H3zM2 3h6v1H2zM4 4h2v4H4zM1 9h8v1H1z" fill="#5ad1f0"></path></svg>Upload</a>
+</sc-if>
+<sc-if value="{{p.hasWarning}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 700; font-size: 14px; color: #ffc878">Export missing: {{p.warning}}</span></sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</main>
+
+<section aria-labelledby="rules" style="padding: 8px 16px 40px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="rules" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 34px">Rules</h2>
+<div style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; padding: 18px 18px 4px; font-size: 16px; line-height: 1.6">
+<div style="margin-bottom: 16px">
+<h3 style="margin: 0 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 25px; color: #5ad1f0">Encounters</h3>
+<p style="margin: 0; color: #d5dae5">[SERIES 2 RULES, RENDERED FROM THE SERIES' MARKDOWN]</p>
+</div>
+<div style="margin-bottom: 16px">
+<h3 style="margin: 0 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 25px; color: #5ad1f0">Items</h3>
+<p style="margin: 0; color: #d5dae5">[…]</p>
+</div>
+<div style="margin-bottom: 16px">
+<h3 style="margin: 0 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 25px; color: #5ad1f0">League</h3>
+<p style="margin: 0; color: #d5dae5">[…]</p>
+</div>
+<div style="margin-bottom: 16px">
+<h3 style="margin: 0 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 25px; color: #5ad1f0">Tournament</h3>
+<p style="margin: 0; color: #d5dae5">[…]</p>
+</div>
+</div>
+</section>
+
+<sc-if value="{{menu}}" hint-placeholder-val="{{ false }}">
+<div onClick="{{toggleMenu}}" style="position: absolute; inset: 60px 0 0; z-index: 2; background: rgba(0,0,0,0.6)"></div>
+<nav id="ph-panel" aria-label="Sections" style="position: absolute; left: 0; right: 0; top: 60px; z-index: 3; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 14px; background: #10141d; border-bottom: 4px solid #343f58">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<a href="{{t.href}}" class="ph-item" aria-current="{{t.current}}" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; background: {{t.bg}}; color: {{t.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="{{t.icon}}" fill="currentColor"></path></svg>{{t.name}}</a>
+</sc-for>
+<span aria-hidden="true" style="height: 3px; margin: 6px 2px; background: #2c3549"></span>
+<a href="ProfilePhone.dc.html" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none">
+<span aria-hidden="true" style="width: 32px; height: 32px; margin-left: -7px; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px #ffd34d; background: #ffd34d; box-sizing: border-box; display: grid; place-items: center; font-size: 22px; color: #10141d">D</span>Dloez</a>
+<button type="button" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border: none; border-radius: 10px; background: transparent; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-align: left; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg>Sign out</button>
+</nav>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"admin":{"editor":"boolean","default":false},"ingestion":{"editor":"enum","options":["manual","automatic"],"default":"manual"},"$preview":{"width":390,"height":1700}}'>
+const TABS = [
+  {name: 'Series', href: 'SeriesListPhone.dc.html', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
+  {name: 'PC', href: 'Pc.dc.html', icon: 'M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z'},
+  {name: 'Teams', href: 'TeamsList.dc.html', icon: 'M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z'}
+];
+function rng(seed) { let x = seed; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
+function blink(name, rand, lo, hi) { return name + ' ' + (lo + rand() * (hi - lo)).toFixed(2) + 's steps(2) ' + (rand() * 2).toFixed(2) + 's infinite alternate'; }
+function bandsTo(r, W, bands) {
+  bands.forEach(([y, h, c], i) => {
+    r(0, y, W, h, c);
+    if (i > 0) { const prev = bands[i - 1][2]; for (let x = (i % 2); x < W; x += 2) r(x, y, 1, 1, prev); }
+  });
+}
+function nightScene(W, H) {
+  const R = [];
+  const r = (x, y, w, h, c, a) => R.push({x, y, w, h, c, a: a || 'none'});
+  const k = H / 65;
+  bandsTo(r, W, [[0, Math.round(16 * k), '#0d1430'], [Math.round(16 * k), Math.round(13 * k), '#111a3b'], [Math.round(29 * k), Math.round(11 * k), '#162147'], [Math.round(40 * k), Math.round(9 * k), '#1c2954'], [Math.round(49 * k), H - Math.round(49 * k), '#223262']]);
+  const rand = rng(7);
+  const sky = Math.round(44 * k);
+  for (let i = 0; i < W / 3; i++) {
+    const x = Math.floor(rand() * W), y = Math.floor(rand() * sky), lit = rand() < 0.45;
+    r(x, y, 1, 1, lit ? '#ffffff' : '#7f96c8', lit ? blink('twinkle', rand, 0.6, 1.6) : 'none');
+  }
+  for (let i = 0; i < 3; i++) {
+    const x = 50 + Math.floor(rand() * (W - 66)), y = 3 + Math.floor(rand() * (sky - 10)), a = blink('sparkle', rand, 0.9, 1.8);
+    r(x, y - 1, 1, 3, '#cfe0ff', a); r(x - 1, y, 3, 1, '#cfe0ff', a); r(x, y, 1, 1, '#ffffff', a);
+  }
+  const mx = W - 14, my = Math.round(12 * k);
+  for (let dy = -5; dy <= 5; dy++) { const w = Math.round(Math.sqrt(28 - dy * dy)); r(mx - w, my + dy, w * 2 + 1, 1, '#f2ead6'); }
+  r(mx - 3, my - 3, 2, 2, '#d8ccb0'); r(mx + 1, my + 1, 2, 2, '#d8ccb0');
+  const farBase = Math.round(48 * k), nearBase = Math.round(57 * k);
+  for (let x = 0; x < W; x++) { const t = farBase + Math.round(3 * Math.sin(x / 13) + Math.sin(x / 6)); r(x, t, 1, H - t, '#16224d'); }
+  const near = [];
+  for (let x = 0; x < W; x++) { const t = nearBase + Math.round(2 * Math.sin(x / 10 + 2) + Math.sin(x / 4)); near.push(t); r(x, t, 1, H - t, '#0a1026'); }
+  for (let x = 8; x < W - 4; x += 12 + Math.floor(rand() * 10)) {
+    const y = near[x] + 2;
+    if (y < H - 1) { const a = blink('glow', rand, 1.2, 2.6); r(x, y, 1, 1, '#ffd34d', a); if (rand() < 0.5) r(x + 2, y, 1, 1, '#ffb347', a); }
+  }
+  return R;
+}
+class Component extends DCLogic {
+  renderVals() {
+    const ms = [
+      {name: 'Gym 1', round: 1}, {name: 'Gym 2', round: 2}, {name: 'Gym 3', round: 3}, {name: 'Gym 4'},
+      {name: 'Gym 5', round: 4}, {name: 'Gym 6'}, {name: 'Gym 7', round: 5}, {name: 'Gym 8'},
+      {name: 'League'}, {name: 'Tournament', final: true}
+    ];
+    const tint = 'rgba(193,45,36,0.10)';
+    const cols = ms.map((m) => ({name: m.name, short: m.name === 'League' ? 'L' : m.name.replace('Gym ', ''), notFinal: !m.final, round: !!m.round, final: !!m.final, ink: m.final ? '#ffd34d' : (m.round ? '#ffb0a8' : '#c3cad8'), bg: m.round ? tint : 'transparent'}));
+    const people = [
+      {name: 'Dloez', initial: 'D', colour: '#ffd34d', you: true, fainted: 3, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5', 'Gym 7'], teams: 5},
+      {name: 'Vicky', initial: 'V', colour: '#5ad1f0', fainted: 1, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5', 'Gym 7'], teams: 5, warning: 'no IVs, EVs or stats · no moves'},
+      {name: 'Javi', initial: 'J', colour: '#7be08a', fainted: 4, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
+      {name: 'Inop', initial: 'I', colour: '#ff8a80', fainted: 6, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
+      {name: 'Tole', initial: 'T', colour: '#c39bff', fainted: 5, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
+      {name: 'Elfo', initial: 'E', colour: '#ffb347', fainted: 2, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4}
+    ];
+    const DLOEZ = {
+      'Gym 1': {time: 3.8, fainted: 0, alive: 14}, 'Gym 2': {time: 7.35, fainted: 0, alive: 22}, 'Gym 3': {time: 11.03, fainted: 0, alive: 30},
+      'Gym 5': {time: 19.58, fainted: 2, alive: 38}, 'Gym 7': {time: 27.23, fainted: 3, alive: 47}
+    };
+    const st = this.state || {};
+    const open = st.open !== undefined ? st.open : 0;
+    const menu = !!st.menu;
+    const admin = !!this.props.admin;
+    const auto = this.props.ingestion === 'automatic';
+    const sel = st.sel || {};
+    const names = ms.map((m) => m.name);
+    const hours = (h) => Math.floor(h) + ' h ' + String(Math.round((h % 1) * 60)).padStart(2, '0');
+    const recOf = (p, ri, n) => {
+      if (p.you && DLOEZ[n]) return DLOEZ[n];
+      const i = names.indexOf(n), k = p.snaps.indexOf(n), frac = p.snaps.length > 1 ? k / (p.snaps.length - 1) : 1;
+      return {time: 3.4 * (i + 1) + ri * 0.45, fainted: Math.round(frac * p.fainted), alive: Math.round(12 + i * 4.4 + ri)};
+    };
+    const rows = people.map((p, ri) => {
+      const list = p.snaps;
+      const latest = list[list.length - 1];
+      const at = names.indexOf(latest);
+      const chosen = sel[p.name] && list.includes(sel[p.name]) ? sel[p.name] : latest;
+      const r = recOf(p, ri, chosen);
+      const isOpen = ri === open;
+      const bg = isOpen ? '#283146' : (p.you ? 'rgba(255,211,77,0.06)' : 'transparent');
+      return {
+        ...p, canUpload: admin || (!!p.you && !auto), rowBg: bg, fill: at * 10, latest,
+        trackLabel: p.name + ' at ' + latest + ' · snapshots ' + list.join(', '), pickLabel: p.name + "'s snapshot",
+        open: isOpen, chev: isOpen ? 'rotate(180deg)' : 'none', chevLabel: (isOpen ? 'Close ' : 'Open ') + p.name, toggle: () => this.setState({open: isOpen ? -1 : ri}),
+        snaps: list.map((n) => ({name: n, on: n === chosen, bg: n === chosen ? '#d93a30' : 'transparent', fg: n === chosen ? '#ffffff' : '#c3cad8', pick: () => this.setState({sel: Object.assign({}, sel, {[p.name]: n})})})),
+        selName: chosen, selAlive: r.alive, selFainted: r.fainted, faintInk: r.fainted ? '#ff6a5e' : '#eef1f7', selTime: hours(r.time),
+        hasWarning: !!p.warning, warning: p.warning || '',
+        divider: ri < people.length - 1 ? '3px solid #343f58' : 'none',
+        nodes: ms.map((m, i) => {
+          const got = i <= at, snap = list.includes(m.name), on = snap && m.name === chosen, rs = i === at ? 36 : m.final ? 36 : m.round ? 30 : 22;
+          return {here: i === at, plain: !m.round && !m.final, round: !!m.round, final: !!m.final, fill: got ? p.colour : '#2c3549', ring: got ? '#ff6a5e' : '#7a3a36', hereRing: m.round ? '#ff6a5e' : p.colour, bg: m.round ? tint : 'transparent',
+            snap, sel: on, selRing: on ? '#5ad1f0' : 'rgba(90,209,240,0.35)', ringRadius: i === at ? '10px' : '50%', ringSize: rs + 'px', ringOff: (-rs / 2) + 'px'};
+        })
+      };
+    });
+    return {
+      cols, rows, sky: nightScene(98, 55),
+      menu, menuClosed: !menu, btnBg: menu ? '#222a3b' : 'transparent', toggleMenu: () => this.setState({menu: !menu}),
+      tabs: TABS.map((t, i) => ({name: t.name, href: t.href, icon: t.icon, current: i === 0 ? 'page' : null, bg: i === 0 ? '#d93a30' : 'transparent', fg: i === 0 ? '#ffffff' : '#c3cad8'}))
+    };
+  }
+}
+</script>
+</body>
+</html>

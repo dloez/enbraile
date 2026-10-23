@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Series on a phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#161b26}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+@keyframes twinkle{0%{opacity:1}100%{opacity:0.15}}
+@keyframes sparkle{0%{opacity:0}100%{opacity:1}}
+@keyframes glow{0%{opacity:1}100%{opacity:0.25}}
+@keyframes drift{0%{transform:translateX(0)}100%{transform:translateX(6px)}}
+.banner{transition:transform 0.12s steps(2),box-shadow 0.12s steps(2)}
+.banner:hover,.banner:focus-visible{border-color:#5ad1f0!important;transform:translateY(-4px);box-shadow:0 8px 0 0 #0a0d14}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+.ph-menu:hover{background:#222a3b!important;color:#ffffff!important}
+.ph-item:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="position: relative; z-index: 2; flex: none; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="MainPhone.dc.html" aria-label="Home" style="flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px">
+<svg width="32" height="32" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<span style="flex: 1; display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #ffffff"><svg width="16" height="16" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z" fill="#d93a30"></path></svg>Series</span>
+<button type="button" class="ph-menu" aria-label="Menu" aria-expanded="{{open}}" aria-controls="ph-panel" onClick="{{toggle}}" style="flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: {{btnBg}}; color: #ffffff; display: grid; place-items: center; cursor: pointer">
+<sc-if value="{{closed}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z" fill="currentColor"></path></svg></sc-if>
+</button>
+</header>
+
+<main style="padding: 22px 16px 32px; display: flex; flex-direction: column; gap: 18px">
+<h1 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 48px; line-height: 1">Series</h1>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 16px">
+<sc-for list="{{series}}" as="s" hint-placeholder-count="2">
+<li>
+<a href="{{s.href}}" class="banner" style="position: relative; display: block; height: 140px; box-sizing: border-box; border: 4px solid #2c3549; border-radius: 18px; overflow: hidden; text-decoration: none; color: #ffffff">
+<svg width="350" height="132" viewBox="{{s.vb}}" preserveAspectRatio="xMidYMax slice" shape-rendering="crispEdges" aria-hidden="true" style="position: absolute; left: 0; top: 0; display: block">
+<sc-for list="{{s.scene}}" as="r" hint-placeholder-count="120">
+<rect x="{{r.x}}" y="{{r.y}}" width="{{r.w}}" height="{{r.h}}" fill="{{r.c}}" style="animation: {{r.a}}"></rect>
+</sc-for>
+</svg>
+<span style="position: absolute; left: 16px; top: 18px; right: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 52px; line-height: 0.8; color: #ffffff; text-shadow: {{s.shadow}}">{{s.name}}</span>
+<span style="padding: 2px 10px; border-radius: 8px; background: {{s.subBg}}; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; color: {{s.sub}}">Pokémon Añil · Randomlocke</span>
+</span>
+<span style="position: absolute; right: 12px; top: 14px; padding: 1px 10px; border-radius: 8px; border: 3px solid #10141d; background: {{s.chipBg}}; color: {{s.chipInk}}; font-family: 'Jersey 10', sans-serif; font-size: 20px">{{s.status}}</span>
+</a>
+</li>
+</sc-for>
+</ul>
+</main>
+
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
+<div onClick="{{toggle}}" style="position: absolute; inset: 60px 0 0; z-index: 1; background: rgba(0,0,0,0.6)"></div>
+<nav id="ph-panel" aria-label="Sections" style="position: absolute; left: 0; right: 0; top: 60px; z-index: 2; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 14px; background: #10141d; border-bottom: 4px solid #343f58">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<a href="{{t.href}}" class="ph-item" aria-current="{{t.current}}" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; background: {{t.bg}}; color: {{t.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="{{t.icon}}" fill="currentColor"></path></svg>{{t.name}}</a>
+</sc-for>
+<span aria-hidden="true" style="height: 3px; margin: 6px 2px; background: #2c3549"></span>
+<a href="ProfilePhone.dc.html" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none">
+<span aria-hidden="true" style="width: 32px; height: 32px; margin-left: -7px; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px #ffd34d; background: #ffd34d; box-sizing: border-box; display: grid; place-items: center; font-size: 22px; color: #10141d">D</span>Dloez</a>
+<button type="button" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border: none; border-radius: 10px; background: transparent; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-align: left; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg>Sign out</button>
+</nav>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const TABS = [
+  {name: 'Series', href: 'SeriesListPhone.dc.html', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
+  {name: 'PC', href: 'Pc.dc.html', icon: 'M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z'},
+  {name: 'Teams', href: 'TeamsList.dc.html', icon: 'M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z'}
+];
+function rng(seed) { let x = seed; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
+function blink(name, rand, lo, hi) { return name + ' ' + (lo + rand() * (hi - lo)).toFixed(2) + 's steps(2) ' + (rand() * 2).toFixed(2) + 's infinite alternate'; }
+function bandsTo(r, W, bands) {
+  bands.forEach(([y, h, c], i) => {
+    r(0, y, W, h, c);
+    if (i > 0) { const prev = bands[i - 1][2]; for (let x = (i % 2); x < W; x += 2) r(x, y, 1, 1, prev); }
+  });
+}
+function nightScene(W, H) {
+  const R = [];
+  const r = (x, y, w, h, c, a) => R.push({x, y, w, h, c, a: a || 'none'});
+  const k = H / 65;
+  bandsTo(r, W, [[0, Math.round(16 * k), '#0d1430'], [Math.round(16 * k), Math.round(13 * k), '#111a3b'], [Math.round(29 * k), Math.round(11 * k), '#162147'], [Math.round(40 * k), Math.round(9 * k), '#1c2954'], [Math.round(49 * k), H - Math.round(49 * k), '#223262']]);
+  const rand = rng(7);
+  const sky = Math.round(44 * k);
+  for (let i = 0; i < W / 3; i++) {
+    const x = Math.floor(rand() * W), y = Math.floor(rand() * sky), lit = rand() < 0.45;
+    r(x, y, 1, 1, lit ? '#ffffff' : '#7f96c8', lit ? blink('twinkle', rand, 0.6, 1.6) : 'none');
+  }
+  for (let i = 0; i < 3; i++) {
+    const x = 40 + Math.floor(rand() * (W - 60)), y = 3 + Math.floor(rand() * (sky - 8)), a = blink('sparkle', rand, 0.9, 1.8);
+    r(x, y - 1, 1, 3, '#cfe0ff', a); r(x - 1, y, 3, 1, '#cfe0ff', a); r(x, y, 1, 1, '#ffffff', a);
+  }
+  const mx = W - 14, my = Math.round(14 * k);
+  for (let dy = -5; dy <= 5; dy++) { const w = Math.round(Math.sqrt(28 - dy * dy)); r(mx - w, my + dy, w * 2 + 1, 1, '#f2ead6'); }
+  r(mx - 3, my - 3, 2, 2, '#d8ccb0'); r(mx + 1, my + 1, 2, 2, '#d8ccb0');
+  const farBase = Math.round(48 * k), nearBase = Math.round(57 * k);
+  for (let x = 0; x < W; x++) { const t = farBase + Math.round(2 * Math.sin(x / 11) + Math.sin(x / 5)); r(x, t, 1, H - t, '#16224d'); }
+  const near = [];
+  for (let x = 0; x < W; x++) { const t = nearBase + Math.round(2 * Math.sin(x / 9 + 2) + Math.sin(x / 4)); near.push(t); r(x, t, 1, H - t, '#0a1026'); }
+  for (let x = 8; x < W - 4; x += 12 + Math.floor(rand() * 10)) {
+    const y = near[x] + 1;
+    if (y < H) { const a = blink('glow', rand, 1.2, 2.6); r(x, y, 1, 1, '#ffd34d', a); if (rand() < 0.5) r(x + 2, y, 1, 1, '#ffb347', a); }
+  }
+  return R;
+}
+function tree(r, tx, base) {
+  [5, 7, 9, 9, 9, 9, 7, 5].forEach((w, i) => r(tx - Math.floor(w / 2), base - 11 + i, w, 1, '#2f7d3a'));
+  r(tx - 3, base - 10, 3, 1, '#4fa556'); r(tx - 4, base - 9, 3, 2, '#4fa556');
+  r(tx + 2, base - 5, 2, 2, '#256a30'); r(tx - 1, base - 3, 2, 3, '#7a5230');
+}
+function dayScene(W, H) {
+  const R = [];
+  const r = (x, y, w, h, c, a) => R.push({x, y, w, h, c, a: a || 'none'});
+  bandsTo(r, W, [[0, 10, '#58aee8'], [10, 10, '#6dbbec'], [20, 8, '#85c8f0'], [28, 8, '#a3d7f3']]);
+  [[Math.round(W * 0.5), 22, 22, 7], [Math.round(W * 0.78), 26, 16, 9]].forEach(([x, y, w, d], i) => {
+    const a = 'drift ' + d + 's steps(6) ' + (-i * 1.3) + 's infinite alternate';
+    r(x + 4, y, w - 10, 1, '#ffffff', a); r(x + 2, y + 1, w - 4, 2, '#ffffff', a); r(x, y + 3, w, 2, '#ffffff', a); r(x + 1, y + 5, w - 2, 1, '#d6ecf8', a);
+  });
+  for (let x = 0; x < W; x++) { const t = 31 + Math.round(3 * Math.sin(x / 23) + 2 * Math.sin(x / 9 + 1)); r(x, t, 1, 38 - t, '#8db7d6'); }
+  r(0, 38, W, H - 38, '#6cbf4f'); r(0, 38, W, 1, '#8ad66a');
+  const rand = rng(5);
+  for (let x = 4; x < W; x += 10) tree(r, x + Math.floor(rand() * 4), 41);
+  for (let x = 9; x < W; x += 13) tree(r, x + Math.floor(rand() * 4), 46);
+  r(0, 48, W, 5, '#e0c080'); r(0, 48, W, 1, '#f0d8a0'); r(0, 52, W, 1, '#b8945a');
+  for (let x = 7; x < W - 4; x += 15 + Math.floor(rand() * 12)) {
+    const y = 53 + Math.floor(rand() * 2), c = rand() < 0.5 ? '#ffffff' : '#ff8a80';
+    r(x, y, 1, 1, c, blink('glow', rand, 1, 2.4)); r(x + 1, y, 1, 1, '#ffd34d');
+  }
+  return R;
+}
+class Component extends DCLogic {
+  renderVals() {
+    const open = !!(this.state && this.state.open);
+    const series = [
+      {name: 'Series 2', href: 'MainPhone.dc.html', vb: '0 0 88 33', scene: nightScene(88, 33), shadow: '0 4px 0 #0a1a4a', sub: '#cfe0ff', subBg: 'rgba(10,16,38,0.8)', status: 'Playing now', chipBg: '#5ad1f0', chipInk: '#10141d'},
+      {name: 'Series 1', href: '#', vb: '0 0 88 55', scene: dayScene(88, 55), subBg: 'rgba(255,255,255,0.88)', shadow: '0 -3px 0 #10141d, 3px 0 0 #10141d, 0 3px 0 #10141d, -3px 0 0 #10141d, 3px 3px 0 #10141d, -3px -3px 0 #10141d, 3px -3px 0 #10141d, -3px 3px 0 #10141d, 0 6px 0 #10141d', sub: '#10141d', status: 'Finished', chipBg: '#10141d', chipInk: '#eef1f7'}
+    ];
+    return {
+      open, closed: !open, btnBg: open ? '#222a3b' : 'transparent',
+      toggle: () => this.setState({open: !open}),
+      tabs: TABS.map((t, i) => ({name: t.name, href: t.href, icon: t.icon, current: i === 0 ? 'page' : null, bg: i === 0 ? '#d93a30' : 'transparent', fg: i === 0 ? '#ffffff' : '#c3cad8'})),
+      series
+    };
+  }
+}
+</script>
+</body>
+</html>

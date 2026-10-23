@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dloez on a phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#161b26}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+.ph-menu:hover{background:#222a3b!important;color:#ffffff!important}
+.ph-item:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}
+.banner{transition:transform 0.12s steps(2),box-shadow 0.12s steps(2)}
+.banner:hover,.banner:focus-visible{transform:translateY(-4px);border-color:#5ad1f0!important;box-shadow:0 8px 0 0 #0a0d14}
+@media (prefers-reduced-motion: reduce){.banner{transition:none}.banner:hover{transform:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 1240px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="position: relative; z-index: 2; flex: none; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="MainPhone.dc.html" aria-label="Home" style="flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px">
+<svg width="32" height="32" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<span style="flex: 1"></span>
+<button type="button" class="ph-menu" aria-label="Menu" aria-expanded="{{open}}" aria-controls="ph-panel" onClick="{{toggle}}" style="flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: {{btnBg}}; color: #ffffff; display: grid; place-items: center; cursor: pointer">
+<sc-if value="{{closed}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z" fill="currentColor"></path></svg></sc-if>
+</button>
+</header>
+
+<main style="flex: 1; display: flex; flex-direction: column; gap: 28px; padding: 22px 16px 36px">
+
+<div style="display: flex; align-items: center; gap: 16px">
+<span aria-hidden="true" style="width: 64px; height: 64px; flex: none; box-sizing: border-box; border-radius: 12px; border: 4px solid #10141d; box-shadow: 0 0 0 3px #ffd34d; background: #ffd34d; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 44px; color: #10141d">D</span>
+<div style="min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 10px">
+<h1 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 60px; line-height: 0.8">Dloez</h1>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d; background: #ffd34d; padding: 1px 7px; border-radius: 4px">You</span>
+</div>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">Trainer since Series 1</span>
+</div>
+</div>
+
+<section aria-labelledby="totals" style="display: flex; flex-direction: column; gap: 12px">
+<h2 id="totals" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 34px">Career</h2>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{totals}}" as="t" hint-placeholder-count="7">
+<div style="grid-column: {{t.span}}; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #222a3b; border: 3px solid #343f58; border-radius: 14px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #a3acbf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.label}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 32px; line-height: 0.9; color: {{t.ink}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums">{{t.value}}</span>
+<span style="min-height: 18px; font-size: 13px; font-weight: 700; color: #a3acbf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.sub}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 84px; padding: 12px 16px; box-sizing: border-box; background: #1b2232; border: 3px dashed #44506d; border-radius: 18px">
+<svg width="36" height="36" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true" style="flex: none"><path d="M1 3h12v4H1z" fill="#ffd34d"></path><path d="M1 3h2v4H1zM5 3h2v4H5zM9 3h2v4H9z" fill="#10141d"></path><path d="M2 7h2v7H2zM10 7h2v7h-2z" fill="#a3acbf"></path><path d="M1 13h4v1H1zM9 13h4v1H9z" fill="#6b7489"></path></svg>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1.05; color: #ffd34d">League results · Work in progress</span>
+</div>
+</section>
+
+<section aria-labelledby="series" style="display: flex; flex-direction: column; gap: 12px">
+<h2 id="series" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 34px">Series</h2>
+<sc-for list="{{series}}" as="s" hint-placeholder-count="2">
+<a href="TrainerJourneyPhone.dc.html" class="banner" style="position: relative; display: block; overflow: hidden; border-radius: 18px; border: 4px solid #2c3549; color: #ffffff; text-decoration: none">
+<span aria-hidden="true" style="position: absolute; inset: 0; display: flex; flex-direction: column">
+<sc-for list="{{s.bands}}" as="b" hint-placeholder-count="5"><span style="flex: {{b.f}}; background: {{b.c}}"></span></sc-for>
+</span>
+<span style="position: relative; display: flex; flex-direction: column; gap: 14px; padding: 16px 14px 14px">
+<span style="display: flex; align-items: flex-start; gap: 10px">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 52px; line-height: 0.8; text-shadow: 0 4px 0 {{s.shadow}}">{{s.name}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; padding: 1px 8px; border-radius: 5px; background: {{s.stateBg}}; color: {{s.stateInk}}">{{s.state}}</span>
+</span>
+<span style="font-weight: 800; font-size: 15px; color: #ffffff; text-shadow: 0 2px 0 {{s.shadow}}">{{s.game}}</span>
+</span>
+<svg width="12" height="18" viewBox="0 0 14 18" aria-hidden="true" style="flex: none; margin-top: 8px"><path d="M2 2l10 7-10 7z" fill="#5ad1f0"></path></svg>
+</span>
+<span style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{s.stats}}" as="x" hint-placeholder-count="4">
+<span style="min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; box-sizing: border-box; background: rgba(10,16,38,0.82); border: 3px solid #34406a; border-radius: 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #b9c8ec; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{x.label}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 0.95; color: {{x.ink}}; white-space: nowrap">{{x.value}}</span>
+</span>
+</sc-for>
+</span>
+</span>
+</a>
+</sc-for>
+</section>
+
+</main>
+
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
+<div onClick="{{toggle}}" style="position: absolute; inset: 60px 0 0; z-index: 1; background: rgba(0,0,0,0.6)"></div>
+<nav id="ph-panel" aria-label="Sections" style="position: absolute; left: 0; right: 0; top: 60px; z-index: 2; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 14px; background: #10141d; border-bottom: 4px solid #343f58">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<a href="{{t.href}}" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="{{t.icon}}" fill="currentColor"></path></svg>{{t.name}}</a>
+</sc-for>
+<span aria-hidden="true" style="height: 3px; margin: 6px 2px; background: #2c3549"></span>
+<a href="ProfilePhone.dc.html" class="ph-item" aria-current="page" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; background: #222a3b; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none">
+<span aria-hidden="true" style="width: 32px; height: 32px; margin-left: -7px; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px #ffd34d; background: #ffd34d; box-sizing: border-box; display: grid; place-items: center; font-size: 22px; color: #10141d">D</span>Dloez</a>
+<button type="button" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border: none; border-radius: 10px; background: transparent; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-align: left; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg>Sign out</button>
+</nav>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1240}}'>
+const NIGHT = [{f: 3, c: '#0d1430'}, {f: 2, c: '#111a3b'}, {f: 2, c: '#162147'}, {f: 1.4, c: '#1c2954'}, {f: 1.6, c: '#0a1026'}];
+const DAY = [{f: 3, c: '#3d7fd1'}, {f: 2, c: '#5a98e0'}, {f: 1.4, c: '#86b8ee'}, {f: 1.2, c: '#3f8f3a'}, {f: 1.4, c: '#2d6b2b'}];
+const TABS = [
+  {name: 'Series', href: 'SeriesListPhone.dc.html', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
+  {name: 'PC', href: 'Pc.dc.html', icon: 'M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z'},
+  {name: 'Teams', href: 'TeamsList.dc.html', icon: 'M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z'}
+];
+class Component extends DCLogic {
+  renderVals() {
+    const open = !!(this.state && this.state.open);
+    const short = 'span 2', wide = 'span 3';
+    return {
+      open, closed: !open, btnBg: open ? '#222a3b' : 'transparent',
+      toggle: () => this.setState({open: !open}),
+      tabs: TABS,
+      totals: [
+        {label: 'Series', value: '2', sub: '1 finished', ink: '#eef1f7', span: short},
+        {label: 'Badges', value: '15', sub: 'of 16', ink: '#eef1f7', span: short},
+        {label: 'Blackouts', value: '3', sub: '', ink: '#eef1f7', span: short},
+        {label: 'Play time', value: '61 h 40', sub: '', ink: '#eef1f7', span: wide},
+        {label: 'Trainer battles', value: '402 – 3', sub: 'won – lost', ink: '#eef1f7', span: wide},
+        {label: 'Best Pokédex', value: '118', sub: 'owned · Series 1', ink: '#eef1f7', span: wide},
+        {label: 'Fallen', value: '9', sub: '', ink: '#ff6a5e', span: wide}
+      ],
+      series: [
+        {name: 'Series 2', game: 'Pokémon Añil · Randomlocke', state: 'Playing now', stateBg: '#d93a30', stateInk: '#ffffff', shadow: '#0a1a4a', bands: NIGHT,
+          stats: [{label: 'Reached', value: 'Gym 7', ink: '#ffffff'}, {label: 'Play time', value: '27 h 14', ink: '#ffffff'}, {label: 'Fallen', value: '3', ink: '#ff8a80'}, {label: 'Teams', value: '5', ink: '#ffffff'}]},
+        {name: 'Series 1', game: 'Pokémon Añil · Randomlocke', state: 'Finished', stateBg: '#10141d', stateInk: '#c3cad8', shadow: '#1e4f8f', bands: DAY,
+          stats: [{label: 'Reached', value: 'League', ink: '#ffd34d'}, {label: 'Play time', value: '34 h 26', ink: '#ffffff'}, {label: 'Fallen', value: '6', ink: '#ff8a80'}, {label: 'Teams', value: '3', ink: '#ffffff'}]}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
