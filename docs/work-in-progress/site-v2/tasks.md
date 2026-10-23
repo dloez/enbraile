@@ -2,13 +2,13 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Design the upload flow, the PC page, the team list and the team builder
+## Design the upload flow, the trainer page, the team list and the team builder
 
-The rest of the screens, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the upload flow (where it starts, the slot and milestone pick), the PC page with its snapshot picker, the team list, the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and phone layouts of the series list and series page. The PC, bag and team views carry their content over from Open Sheet and Team Analysis.
+The rest of the screens, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the upload flow (where it starts, the slot and milestone pick), the trainer page (Journey · PC · Bag under one snapshot picker, the fallen, [The trainer page?](discovery.md#pages)), the series page's interactive progress track and its compare switch, the team list, the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and phone layouts of the series list and series page. The PC, bag and team views carry their content over from Open Sheet and Team Analysis.
 
 **Do:**
 - [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
-- [ ] Bring the upload boards (on the canvas, liked by the owner, 2026-10-23) in line with the data model ([Model](discovery.md#model), [Snapshots In](discovery.md#snapshots-in)): the milestone preselected from the save, the rolled zip's download on the saved step, no upload for players of an automatic series, the admin overrides on the rows. The owner wants the product designed before more screens, so this comes before the PC page, the team list and the team builder.
+- [ ] Bring the upload boards (on the canvas, liked by the owner, 2026-10-23) in line with the data model ([Model](discovery.md#model), [Snapshots In](discovery.md#snapshots-in)): the milestone preselected from the save, the rolled zip's download on the saved step, no upload for players of an automatic series, the admin overrides on the rows. The owner wants the product designed before more screens, so this comes before the trainer page, the team list and the team builder.
 - [ ] Get the owner's sign-off; copy the signed-off boards into `pkmn/site/design/` and record the sign-off in `docs/pkmn/site/explanation/site.md` → Look and Decisions.
 
 **Acceptance:**
@@ -97,7 +97,7 @@ The export ported to TypeScript in the site, run in a Vercel Function on the sav
 - Forbidden: Python in the site's functions; an endpoint for automatic ingestion; a pipeline that assumes the manual upload.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `pkmn/games/anil/generate_export_data.py`, `docs/pkmn/games/anil/`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Admins create and start series; players land on the current one; Design the upload flow, the PC page, the team list and the team builder
+**After:** Admins create and start series; players land on the current one; Design the upload flow, the trainer page, the team list and the team builder
 
 ## Keep each save's TM rolls and hand the rolled zip back
 
@@ -126,13 +126,14 @@ An admin can set any value derived from a save by hand (progress, the fainted co
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `npx drizzle-kit check`; through `verify-site`, as admin, set a player's fainted count, upload a new save for them and see the set count kept, clear it and see the save's; move a snapshot to another milestone; delete one; as a player, see no override controls and get `403` from the routes.
-- Human-run: as admin on production, correct a snapshot's milestone and see it on the series page.
+- Human-run: as admin on production, correct a snapshot's milestone and see it on the series page; set a player's progress by hand and see their track mark it as set by hand.
 - Reuse: `requireAdmin` in `api/_lib/admin.ts`; the snapshot tables from the save-zip entry.
 - Neighbors: the series page's Trainers table.
 - Forbidden: a value set by hand overwritten by a later save; an override without who set it and when.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** Players upload their save zip as a snapshot
+
 ## Retire export_data.py
 
 Players upload on the site now, so the Python export and its CLI go, `--moves` with them ([The export?](discovery.md#data-stack-and-config)).
@@ -151,22 +152,56 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 **Touches:** `pkmn/games/anil/`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
 **After:** Keep each save's TM rolls and hand the rolled zip back
 
-## Browse any player's PC at any snapshot
+## The trainer page, with its PC and bag at any snapshot
 
-`/series/<n>/players/<player>?snapshot=<milestone>`: Open Sheet's PC, summary and bag over a stored snapshot, with a snapshot picker; every player's row on the series page links to it ([Model](discovery.md#model)). `/open-sheet` keeps working until teams move.
+`/series/<n>/players/<player>?snapshot=<milestone>` is the trainer's page ([The trainer page?](discovery.md#pages)): tabs Journey · PC · Bag under one snapshot picker, PC and Bag being Open Sheet's PC, summary and bag over the stored snapshot. Every player's row on the series page links to it, and the header's PC tab opens the signed-in player's own in the running series. Journey is the entry below. `/open-sheet` keeps working until teams move.
 
 **Do:**
-- [ ] A snapshot read route; the PC page reading it through the export's schema.
+- [ ] A snapshot read route; the trainer page's tabs and picker, its PC and Bag reading the snapshot through the export's schema; the PC tab.
 
 **Acceptance:**
 - Claude-run: `npm run gate`.
-- Human-run: open another player's PC from the series page; search, filter by type, open a summary and the bag; switch snapshot when there are two; on a phone, the same.
-- Reuse: `src/open-sheet/components/pc.tsx`, `summary.tsx`, `bag.tsx`, `src/open-sheet/dex.ts`.
+- Human-run: open another player's trainer page from the series page; search the PC, filter by type, open a summary and the bag; switch snapshot when there are two; open the PC tab and land on your own; on a phone, the same.
+- Reuse: the frozen trainer page boards in `pkmn/site/design/`; `src/open-sheet/components/pc.tsx`, `summary.tsx`, `bag.tsx`, `src/open-sheet/dex.ts`.
 - Neighbors: `src/pages/open-sheet.tsx`.
 - Forbidden: a second copy of the PC components.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** Players upload their save zip as a snapshot
+**After:** Players upload their save zip as a snapshot; Design the upload flow, the trainer page, the team list and the team builder
+
+## The trainer page's Journey and the fallen
+
+Journey lays out the trainer's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count, the party with its levels), and the trainer page lists the fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)).
+
+**Do:**
+- [ ] The Journey tab over the snapshots' trainer records; the fallen list, each matched across consecutive snapshots by personal ID.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, with two seeded snapshots for a test player, one Pokémon alive in the first and permafainted in the second, see Journey's two columns and that Pokémon fallen between their milestones.
+- Human-run: open your series 1 trainer page's Journey and read your Post-League records and your fallen.
+- Reuse: the snapshot read route from the entry above; `PixelIcon` and the sprites Open Sheet shows.
+- Neighbors: the series row's Fainted tile.
+- Forbidden: a fallen Pokémon's span guessed without two snapshots (one snapshot gives "by <milestone>").
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
+**After:** The trainer page, with its PC and bag at any snapshot
+
+## The series page's track reads the snapshots, and trainers compare
+
+Each row's progress track shows the trainer at their latest snapshot, with the row's tiles showing it; clicking another milestone's node shows that snapshot ([The progress track?](discovery.md#pages)). A switch on the Trainers table swaps the tracks for each trainer's records at a chosen milestone: play time, fainted, Pokédex, battles, unranked ([Comparing trainers?](discovery.md#pages)).
+
+**Do:**
+- [ ] The interactive track and the row's tiles per snapshot; the compare switch and its milestone pick.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, with two snapshots for a test player, click the earlier node and see the row's tiles change; flip the switch, pick a milestone, and read each trainer's records; a trainer with no snapshot at it reads as such.
+- Human-run: on production, click through your own track's nodes and compare the trainers at Post-League.
+- Reuse: the series page from "Admins create and start series"; the snapshot read route.
+- Neighbors: `pkmn/site/design/series.dc.html`.
+- Forbidden: a ranking or ordering by records.
+
+**Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
+**After:** The trainer page's Journey and the fallen; Design the upload flow, the trainer page, the team list and the team builder
 
 ## Build teams locked to a snapshot, stored in the account
 
@@ -185,7 +220,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Browse any player's PC at any snapshot
+**After:** The trainer page, with its PC and bag at any snapshot
 
 ## Upload old exports as snapshots, with warnings for what they lack
 
