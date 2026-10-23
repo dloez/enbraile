@@ -2,6 +2,41 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
+## Previews get their own bucket
+
+Previews share the production B2 bucket and key today ([How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6, the `S3_*` rows "the same"), so any branch preview can overwrite or delete the production game files. The owner chose a bucket of their own for previews (2026-10-23).
+
+**Do:**
+- [ ] Owner-run: a second private bucket in the same B2 account, with an application key limited to it (read and write) and a CORS rule allowing only `https://*.vercel.app`; the Preview `S3_BUCKET`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` in Vercel set to it, then a preview redeployed; `https://*.vercel.app` removed from the production bucket's CORS rule.
+- [ ] Step 6 of the run how-to and `site.md` → Hosting and Deploys and Data and Storage name the two buckets; a dated decision in `site.md` replaces the shared bucket.
+
+**Acceptance:**
+- Claude-run: `uvx b2 bucket get <production bucket>` lists only `https://pkmn.enbraile.vip` in its CORS origins; a preflight `OPTIONS` to the preview bucket with `Origin: https://<a preview>.vercel.app` answers `200` with that origin allowed, and one to the production bucket from the same origin does not.
+- Human-run: on a branch preview, sign in at `/admin` against `dev`, upload a small zip to a test game, and see it in the preview bucket and not in the production one.
+- Reuse: the production bucket's setup in the run how-to's step 6.
+- Neighbors: `site.md`'s "Seen working on production on 2026-10-23" note.
+- Forbidden: the production key in the Preview environment; a public bucket.
+
+**Touches:** `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/run-and-deploy-the-site.md`
+
+## Upload game zips in parts
+
+A game's zip, about 600 MB, goes up as one presigned `PUT` ([The pkmn Site → Games](../../pkmn/site/explanation/site.md#games)). One dropped connection loses the whole upload, and B2's refusals reach the page only as "The upload could not reach the file store", since its error answers carry no CORS headers: the first production upload failed that way and worked on a retry (2026-10-23). The owner chose a multipart upload (2026-10-23): the file goes up in parts, a few at a time, each retried on its own.
+
+**Do:**
+- [ ] Routes that start a multipart upload for a game, sign each part's `PUT` for its exact size, complete it from the parts' ETags (exposed by the CORS rule), and abort it; the browser splits the file, uploads parts in parallel with one progress bar, retries a failed part, and aborts on giving up.
+- [ ] `npm run seed` and the local MinIO take the same path; the part size and how many go at once are recorded in `site.md` → Decisions as build choices.
+- [ ] `site.md` → Games describes the new flow.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, upload a 200 MB zip to a test game on the local stack, see one object of the right size in MinIO and no multipart upload left open (`mc ls --incomplete`); kill the network partway through one part (DevTools offline for a few seconds) and see the upload finish.
+- Human-run: upload the Añil package zip on production and download it back at the same size.
+- Reuse: `api/_lib/files.ts`, `api/_lib/games.ts`, `shared/games.ts`, `putFile` in `src/lib/api.ts`.
+- Neighbors: `src/pages/admin-games.tsx`.
+- Forbidden: file bodies through a Vercel Function; a multipart upload left open after a failure the page reported.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`
+
 ## Design the sign-in and waiting pages
 
 The Discord sign-in page and the page a signed-in player not yet allowed sees, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)).
