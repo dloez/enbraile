@@ -25,17 +25,59 @@ The screens still undrawn, desktop and phone, in the signed-off look ([Pages →
 Discord sign-in and the allowlist are built and checked on the local stack (2026-10-23); production needs the owner's half, as [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 describes.
 
 **Do:**
-- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migration `0002_allowlist`) before the push that deploys it.
+- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migrations `0002_allowlist` and `0003_series`, both unpushed on `main` with the code that needs them) before the push that deploys it.
 
 **Acceptance:**
 - Claude-run: none.
-- Human-run: on production, sign in with Discord as a new user and see the waiting page; as an admin in another browser, allow them at `/admin/players`; reload and see the home; remove them and see the waiting page again.
+- Human-run: on production, sign in with Discord as a new user and see the waiting page; as an admin in another browser, allow them at `/admin/players`; reload and land on `/series` (empty until a series runs, then that series' page); remove them and see the waiting page again.
 - Reuse: step 6 of the run how-to.
 - Neighbors: none.
 - Forbidden: the Discord secret anywhere but Vercel and `.env.local`.
 
 **Touches:** `docs/pkmn/site/`
 **Needs the author:** the owner-run steps above.
+
+## Owner-run: start series 1 on production
+
+The series pages, the admin series form and the phone header are built and checked on the local stack (2026-10-23), where the seed makes series 1; on production series 1 is created through the form, its rules pasted from `docs/pkmn/series/1/reference/rules.md`, as the series entry that landed in `f799e09` asked. Its production checks left the queue with it.
+
+**Do:**
+- [ ] Owner-run: as admin at `/admin/series`, make series 1 on the Añil game, the daytime route, manual ingestion, its players from the allowlist, milestones Gym 1 to Gym 8, Post-League and Tournament with rounds as its rules set, and its rules pasted from `docs/pkmn/series/1/reference/rules.md`; start it.
+
+**Acceptance:**
+- Claude-run: none.
+- Human-run: as admin, make the draft and see the checklist list what is missing; fill it in until Start enables; start it. As an allowed player of it, sign in and land on its page, read its rules, download its game; as an allowed player not in it, see no Download. Make a second draft by "Copy from" series 1, see the rules copied, and delete it. Open `/series` and see series 1's banner on its moving scene, marked playing now; turn on reduced motion and see the scenes stand still. On a phone, signed in as an admin and as a player, reach every tab and sign-out from the header's menu.
+- Reuse: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) → Verification.
+- Neighbors: none.
+- Forbidden: series 1 made by `npm run seed` or by SQL on production.
+
+**Touches:** `docs/pkmn/site/`
+**After:** Owner-run: Discord sign-in on production
+**Needs the author:** the owner-run steps above.
+
+## Bring the site docs in line with what the series page and phone header landings changed
+
+The three landings of 2026-10-23 (`23e9fb0`, `a501944`, `f799e09`) each wrote their own docs without the others' diffs, and some sentences one of them wrote are now false or incomplete:
+
+- `docs/pkmn/site/explanation/site.md` → Decisions, the allowlist's build choices: "the home's tool list kept for allowed players until the series page replaces it" (the series build choices delete it) and "the header's name hidden below `sm` … until the header's signed-off phone menu … is built" (it is built: `Account` in `src/components/site-header.tsx` is hidden below `sm` as a whole). Rewrite to what is true now, dated.
+- `site.md` → Accounts: "`npm run seed` … makes the local admin, the test players … and a game with a stand-in zip" leaves out series 1 (`scripts/seed.ts`; the run how-to's step 3 has it).
+- `site.md` → Decisions, "One gutter and one width per page kind": `max-w-240` "for a list page (home)"; the home renders no list, and `listPage` is the admin pages' column ([Design System](../../pkmn/site/reference/design-system.md) → Layout Shell).
+- `site.md` → Decisions, the series build choices list what of the revised `series.dc.html` was left to later entries but not its Fainted and Journey tiles: the built row (`TrainerRow` in `src/pages/series.tsx`) has PC, Teams and Snapshots tiles only.
+- `design-system.md` → Patterns → Card: "(home links, `px-5 py-4.5`)"; the home cards are gone, and the lift cards with the arrow are the admin home's and `/admin/series`'s.
+- `design-system.md` → Components → `PlayerBadge`: "Shown in the header, on the waiting page and on the allowlist"; it is also on the series page's trainer rows and the admin series form's players (`src/pages/series.tsx`, `src/pages/admin-series.tsx`).
+- `docs/work-in-progress/site-v2/discovery.md` → Pages → Design?: "then the PC's links, the header at phone width, the team list and the team builder"; the header at phone width was signed off on 2026-10-23 ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)) and is built.
+
+**Do:**
+- [ ] Fix each sentence above against the code it names.
+
+**Acceptance:**
+- Claude-run: `grep -n "tool list kept\|until the header's signed-off phone menu\|list page (home)\|home links" docs/pkmn/site` finds nothing; every link and anchor in the edited docs resolves.
+- Human-run: none.
+- Reuse: none.
+- Neighbors: none.
+- Forbidden: a decision's date or owner changed; a fact copied into a second doc instead of linked.
+
+**Touches:** `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/reference/design-system.md`, `docs/work-in-progress/site-v2/discovery.md`
 
 ## Players upload their save zip as a snapshot
 
@@ -44,6 +86,7 @@ The export ported to TypeScript in the site, run in a Vercel Function on the sav
 **Do:**
 - [ ] `generate_export_data.py` writes the data JSON into the site; port the Ruby Marshal reader, slot pick, abilities, moves and items, and add what the export leaves out: fainted Pokémon (species, nickname, level), all 8 bag pockets, the trainer (name, ID, money, badges), the party and its levels, play time, the Pokédex, used first-encounter routes, read from the paths in [State → Save Records](../../pkmn/games/anil/reference/state.md#save-records); the League milestone suggested from `$PokemonGlobal@hallOfFame`, never `GameStats@hall_of_fame_entry_count`.
 - [ ] Saves and snapshots tables and migration; the zip kept in B2 under its snapshot; the upload flow with the milestone suggestion; a failed export shows its reason; no upload for players of an automatic series.
+- [ ] The trainer row's tiles from the snapshot: the PC tile's Pokémon count, the Snapshots tile listing it, and the Fainted tile, which `series.dc.html` draws but `TrainerRow` in `src/pages/series.tsx` does not have yet.
 - [ ] Extend `npm run seed` with a snapshot for a test player, uploaded from a save zip in `pkmn/site/saves/` when one is there ([Local data to check with?](discovery.md#observability-and-verification)).
 - [ ] Move [Open Sheet JSON](../../pkmn/games/anil/reference/open-sheet-json.md) to be the snapshot format's reference, widened to the snapshot's contents.
 
@@ -74,23 +117,6 @@ The TMs a save's export rolled are kept, reused when the site exports that same 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`, `docs/pkmn/games/anil/`
 **After:** Players upload their save zip as a snapshot
 
-## Admins set save-derived values by hand and manage any snapshot
-
-An admin can set any value derived from a save by hand (progress, the fainted count, a snapshot's milestone), and upload, replace, delete or move any snapshot for any player ([Admin overrides?](discovery.md#model), [How does a save reach the site?](discovery.md#snapshots-in)). Each value records its source, from the save or set by hand (by whom and when), and a value set by hand wins until an admin clears it.
-
-**Do:**
-- [ ] The source of each derived value in the schema and migration; override, clear, delete and move routes, admin-only; the overrides on the series page's rows.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `npx drizzle-kit check`; through `verify-site`, as admin, set a player's fainted count, upload a new save for them and see the set count kept, clear it and see the save's; move a snapshot to another milestone; delete one; as a player, see no override controls and get `403` from the routes.
-- Human-run: as admin on production, correct a snapshot's milestone and see it on the series page; set a player's progress by hand and see their track mark it as set by hand.
-- Reuse: `requireAdmin` in `api/_lib/admin.ts`; the snapshot tables from the save-zip entry.
-- Neighbors: the series page's Trainers table.
-- Forbidden: a value set by hand overwritten by a later save; an override without who set it and when.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Players upload their save zip as a snapshot
-
 ## Retire export_data.py
 
 Players upload on the site now, so the Python export and its CLI go, `--moves` with them ([The export?](discovery.md#data-stack-and-config)).
@@ -114,7 +140,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 `/players/<player>/series/<n>/pc?snapshot=<milestone>`: Open Sheet's PC, summary and bag over a stored snapshot, with a snapshot picker, the bag opening from its Bag button ([The PC?](discovery.md#pages)). A trainer row's PC tile on the series page opens it, and the header's PC tab opens the signed-in player's own in the running series. `/open-sheet` keeps working until teams move.
 
 **Do:**
-- [ ] A snapshot read route; the PC page reading it through the export's schema; the PC tile and the PC tab.
+- [ ] A snapshot read route; the PC page reading it through the export's schema; the PC tile, each snapshot in the row's Snapshots tile opening the PC at it ([First page after sign-in?](discovery.md#pages)), and the PC tab (`TABS` in `src/components/site-header.tsx`, today `/open-sheet`).
 
 **Acceptance:**
 - Claude-run: `npm run gate`.
@@ -126,12 +152,29 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
 **After:** Players upload their save zip as a snapshot; Design the PC's links, the team list and builder, and the new pages' phone layouts
 
+## The series list and the series page fit a phone
+
+`/series` and `/series/<n>` at phone width, as the design entry's phone boards draw them. Today the Trainers table (`TrainerRow` in `src/pages/series.tsx`, `grid-cols-[300px_minmax(0,1fr)_84px]`) scrolls sideways on a phone, a build choice that holds only "until its phone layout is designed" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the series build choices); no other entry builds these two pages' phone layouts.
+
+**Do:**
+- [ ] Both pages at phone width after their signed-off phone boards; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules updated with what they add; the series build choice's sideways-scrolling table rewritten.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, `browser_resize` to 390×844 and to 360×800, signed in as a player of series 1, open `/series` and `/series/1`, open a trainer's row, and confirm no horizontal page scroll; at desktop width, both pages unchanged.
+- Human-run: on a phone, open the series list and the series page, open your row and read your tiles and the rules.
+- Reuse: the phone boards the design entry freezes in `pkmn/site/design/`; `Tile` and `TrainerRow` in `src/pages/series.tsx`; `SceneArt`.
+- Neighbors: the phone header in `src/components/site-header.tsx`.
+- Forbidden: a second copy of the page for phones; the Trainers table scrolling sideways once the phone board is built.
+
+**Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/src/pages/series-list.tsx`, `docs/pkmn/site/`
+**After:** Design the PC's links, the team list and builder, and the new pages' phone layouts
+
 ## A player's series page: Journey and the fallen
 
 `/players/<player>/series/<n>` ([A player in a series?](discovery.md#pages)): Journey, the player's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count), each column opening the PC at that snapshot; and Fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)); a small button to the player's PC naming its target ("Gym 7 · latest"), opening the series' latest snapshot. The series row's Fainted and Journey tiles open it at `#fallen` and `#journey`.
 
 **Do:**
-- [ ] The page's Journey and Fallen sections over the snapshots' records; the fallen matched across consecutive snapshots by personal ID; the tiles' links.
+- [ ] The page's Journey and Fallen sections over the snapshots' records, at phone width as the design entry's phone board draws it; the fallen matched across consecutive snapshots by personal ID; the row's Journey tile (play time, after `series.dc.html`; `TrainerRow` in `src/pages/series.tsx` has none yet) and the Fainted and Journey tiles' links.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, with two seeded snapshots for a test player, one Pokémon alive in the first and permafainted in the second, see Journey's two columns and that Pokémon fallen between their milestones; click a column and land on the PC at that snapshot; open the row's Fainted tile and land at `#fallen`.
@@ -141,14 +184,14 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: a fallen Pokémon's span guessed without two snapshots (one snapshot gives "by <milestone>", owner, 2026-10-23); a PC or party on this page.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**After:** Browse any player's PC at any snapshot
+**After:** Browse any player's PC at any snapshot; Design the PC's links, the team list and builder, and the new pages' phone layouts
 
 ## A player's profile, across every series
 
 `/players/<player>` ([The player's profile?](discovery.md#pages)): the badge and name; career totals summed from each series' latest snapshot (series played and finished, total play time, badges earned, best Pokédex, trainer battles won and lost, blackouts, total fallen); the league results placeholder; one banner per series played, newest first, on its scene, with how far they got, play time, fallen and team count, linking to their series page. A player's name or badge anywhere, and the signed-in player's name in the header, open it.
 
 **Do:**
-- [ ] A profile read route summing the latest snapshots; the page; the name and badge links across the site.
+- [ ] A profile read route summing the latest snapshots; the page, at phone width as the design entry's phone board draws it; the name and badge links across the site, the header's desktop name and its phone menu's name row included (both plain text until now, [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the phone header's build choices).
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, with a test player in two seeded series, see the totals add up both latest snapshots and both banners, newest first; click a banner and land on that series' page; click a name on the series page and land on the profile.
@@ -158,7 +201,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: totals from any snapshot but each series' latest; league results beyond the placeholder.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**After:** A player's series page: Journey and the fallen
+**After:** A player's series page: Journey and the fallen; Design the PC's links, the team list and builder, and the new pages' phone layouts
 
 ## The series page's track reads the snapshots, and trainers compare
 
@@ -170,19 +213,36 @@ Each row's progress track shows the trainer at their latest snapshot, with the r
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, with two snapshots for a test player, click the earlier node and see the row's tiles change; flip the switch, pick a milestone, and read each trainer's records; a trainer with no snapshot at it reads as such.
 - Human-run: on production, click through your own track's nodes and compare the trainers at Post-League.
-- Reuse: the series page from "Admins create and start series"; the snapshot read route.
+- Reuse: the series page, `src/pages/series.tsx` (`TrainerRow`'s track); the snapshot read route.
 - Neighbors: `pkmn/site/design/series.dc.html`.
 - Forbidden: a ranking or ordering by records.
 
 **Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
 **After:** A player's series page: Journey and the fallen
 
+## Admins set save-derived values by hand and manage any snapshot
+
+An admin can set any value derived from a save by hand (progress, the fainted count, a snapshot's milestone), and upload, replace, delete or move any snapshot for any player ([Admin overrides?](discovery.md#model), [How does a save reach the site?](discovery.md#snapshots-in)). Each value records its source, from the save or set by hand (by whom and when), and a value set by hand wins until an admin clears it.
+
+**Do:**
+- [ ] The source of each derived value in the schema and migration; override, clear, delete and move routes, admin-only; the overrides on the series page's rows, and the track's mark on progress set by hand, as `series.dc.html` draws it.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `npx drizzle-kit check`; through `verify-site`, as admin, set a player's fainted count, upload a new save for them and see the set count kept, clear it and see the save's; move a snapshot to another milestone; delete one; as a player, see no override controls and get `403` from the routes.
+- Human-run: as admin on production, correct a snapshot's milestone and see it on the series page; set a player's progress by hand and see their track mark it as set by hand.
+- Reuse: `requireAdmin` in `api/_lib/admin.ts`; the snapshot tables from the save-zip entry.
+- Neighbors: the series page's Trainers table.
+- Forbidden: a value set by hand overwritten by a later save; an override without who set it and when.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
+**After:** Players upload their save zip as a snapshot; The series page's track reads the snapshots, and trainers compare
+
 ## Build teams locked to a snapshot, stored in the account
 
 `/teams` lists every team, the player's first and others' read-only; `/teams/<id>` builds one from one snapshot as six member cards edited in place, with the snapshot's item and Mini Seta limits, a picker of the snapshot's PC for empty slots, Analysis (Summary, Graph, Archetype, Members, Matrices) beside the cards, giving way to a member's summary when its header row is clicked, Showdown copy and import (unbacked sets left out, as today). The PC page stays read-only; "Add to team" in its summary adds the Pokémon to a team or a new one ([How do the PC and the team pages split?](discovery.md#team-building)). A new team starts on the player's latest snapshot of the running series. `/open-sheet`, the Dexie database and its local data go.
 
 **Do:**
-- [ ] Teams table and migration (owner, sources, slots); team routes, the owner alone writing; `npm run seed` extended with a team on the seeded snapshot.
+- [ ] Teams table and migration (owner, sources, slots); team routes, the owner alone writing; `npm run seed` extended with a team on the seeded snapshot; the header's Teams tab opening `/teams` (`TABS` in `src/components/site-header.tsx`, today `/team-analysis`); the trainer row's Teams tile counting the trainer's teams.
 - [ ] Move Open Sheet's builder under `/teams/<id>` on stored snapshots; delete `/open-sheet`, `src/open-sheet/db.ts`, the import tabs and Dexie, and the browser's old database on first load.
 - [ ] Rewrite `open-sheet.md` as the team builder's doc (rename it) and update `docs/pkmn/index.md`.
 
@@ -195,6 +255,24 @@ Each row's progress track shows the trainer at their latest snapshot, with the r
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
 **After:** Browse any player's PC at any snapshot; Design the PC's links, the team list and builder, and the new pages' phone layouts
+
+## A trainer row's Teams tile opens their teams
+
+The series page's trainer row has a Teams tile, drawn in `series.dc.html` as a link and specified as "their teams (count, opens them)" ([First page after sign-in?](discovery.md#pages)). The count comes with the team builder; where it opens is settled nowhere: `/teams` lists every team with the reader's first, and no route lists one player's teams.
+
+**Do:**
+- [ ] The tile's link to where the author settles.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, with a seeded team for a test player, open their row's Teams tile and land where it is settled.
+- Human-run: open another trainer's Teams tile from the series page and see their teams.
+- Reuse: the team list from the entry above; `Tile` in `src/pages/series.tsx`.
+- Neighbors: the row's PC tile.
+- Forbidden: a route for one player's teams that the author did not settle.
+
+**Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
+**After:** Build teams locked to a snapshot, stored in the account
+**Needs the author:** where does a trainer row's Teams tile open: `/teams` filtered to that trainer, a new `/players/<player>/teams`, or the trainer's teams on their series page?
 
 ## Upload old exports as snapshots, with warnings for what they lack
 
@@ -282,5 +360,5 @@ Compare puts 2–4 of the player's teams side by side with the scoreboard and da
 - Neighbors: the team builder.
 - Forbidden: keeping `/team-analysis` as a redirect.
 
-**Touches:** `pkmn/site/src/`, `pkmn/site/CLAUDE.md`, `docs/pkmn/site/`, `docs/pkmn/index.md`
+**Touches:** `pkmn/site/src/`, `docs/pkmn/site/`, `docs/pkmn/index.md`
 **After:** Give each team its pool, the Pool view, Speed Tiers and Tera
