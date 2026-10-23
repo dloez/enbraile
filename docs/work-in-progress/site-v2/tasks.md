@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Admins sign in and keep games on production
-
-Nothing of the server side has reached `pkmn.enbraile.vip` yet: `main` is six commits ahead of `origin/main` (2026-10-22), and `https://pkmn.enbraile.vip/api/games` answers `200` with the single-page app rather than `401`. The closed entries "Admins sign in at /admin" and "Admins create games and upload their files" left their owner-run steps and production checks undone: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 (Neon branches, the B2 bucket with its CORS rule and key, the Vercel variables, migrating each branch, `admin:create`), then step 7. Every module of the API reads its variables when it loads (`api/_lib/env.ts`, `db.ts`, `files.ts`), so a push before step 6 deploys an API whose every route fails. Several things the docs state about Vercel have only been seen locally: that `vercel.json`'s `/api/(.*)` rewrite reaches the Hono app's `/api` routes, that Vercel's function build compiles `api/index.ts` with the project's TypeScript 7 and its import from `shared/`, that `pg`'s pool holds up against Neon's pooled connection string, that a preview with `BETTER_AUTH_URL` unset signs an admin in ([site.md](../../pkmn/site/explanation/site.md) → Hosting and Deploys), and that B2 takes a browser `PUT` of a ~600 MB zip through the signed `Content-Length` and the CORS rule, from production and from a `*.vercel.app` preview.
-
-**Do:**
-- [ ] Owner-run: step 6 of the run how-to, then push `main`.
-- [ ] Run the how-to's Verification on production and on a branch preview, and record in `site.md` → Decisions what was seen working and when, as its Vercel decision records 2026-10-20. Anything that does not behave as the docs say becomes its own entry, and the docs are corrected to what was seen.
-
-**Acceptance:**
-- Claude-run: `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/games` prints `401`; `curl -s -o /dev/null -w '%{http_code}' 'https://pkmn.enbraile.vip/api/auth/dev/sign-in?username=x'` prints `404`; the same two against the preview's URL.
-- Human-run: on production, sign in at `/admin` with the admin `admin:create` made, see a wrong password refused, sign out; at `/admin/games`, create "Pokémon Añil + Randomlocke", upload the package zip from `pkmn/games/anil/game/archives/`, reload and see its size and date, download it and check the size matches; on a branch preview, sign in at `/admin` and upload a small zip to a test game; in the Vercel dashboard, read the function logs of those requests and see no errors.
-- Reuse: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) steps 6 and 7 and its Verification.
-- Neighbors: `site.md`'s "Seen working on 2026-10-20" note on the Vercel decision.
-- Forbidden: secrets in the repository; `DEV_SIGN_IN` set in any Vercel environment; a code change made to get past a failed check (that is a new entry).
-
-**Touches:** `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/run-and-deploy-the-site.md`
-**Needs the author:** the production setup of the run how-to's step 6 (Neon branches, the B2 bucket, its CORS rule and key, the Vercel variables, both branches migrated, an admin made) is done and `main` is pushed.
-
 ## Design the sign-in and waiting pages
 
 The Discord sign-in page and the page a signed-in player not yet allowed sees, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)).
