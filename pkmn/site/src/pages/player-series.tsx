@@ -69,12 +69,16 @@ function Head({ page }: { page: JourneyPage }) {
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-6">
       <div className="flex min-w-0 flex-col gap-2">
         <nav aria-label="Breadcrumb" className="-my-2.5 flex items-center gap-2.5 font-heading text-[1.375rem] sm:my-0">
-          <span className="flex min-h-11 items-center gap-2 text-primary sm:min-h-0">
+          <Link
+            to="/players/$player"
+            params={{ player: page.player.id }}
+            className="flex min-h-11 items-center gap-2 text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 sm:min-h-0"
+          >
             <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
               <path d="M12 2L2 9l10 7z" />
             </svg>
             {page.player.name}
-          </span>
+          </Link>
           <span aria-hidden="true" className="text-faint">
             ·
           </span>
@@ -87,7 +91,9 @@ function Head({ page }: { page: JourneyPage }) {
           </Link>
         </nav>
         <div className="flex min-w-0 items-center gap-3 sm:gap-3.5">
-          <PlayerBadge name={page.player.name} colour={playerColour(page.player.id)} size="lg" />
+          <Link to="/players/$player" params={{ player: page.player.id }} aria-label={`${page.player.name}'s profile`} className="flex-none rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+            <PlayerBadge name={page.player.name} colour={playerColour(page.player.id)} size="lg" />
+          </Link>
           <h1 className="m-0 min-w-0 font-heading text-[2.75rem] leading-[0.85] font-normal sm:text-6xl">
             {page.player.name} in Series {page.series.number}
           </h1>

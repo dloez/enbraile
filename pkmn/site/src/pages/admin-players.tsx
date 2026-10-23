@@ -101,8 +101,14 @@ function PlayerList({
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {players.map((p) => (
             <li key={p.id} className="flex items-center gap-3 rounded-lg border bg-muted px-3 py-2">
-              <PlayerBadge name={p.name} colour={playerColour(p.id)} />
-              <span className="min-w-0 flex-1 truncate font-heading text-2xl">{p.name}</span>
+              <Link
+                to="/players/$player"
+                params={{ player: p.id }}
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-lg decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <PlayerBadge name={p.name} colour={playerColour(p.id)} />
+                <span className="truncate font-heading text-2xl">{p.name}</span>
+              </Link>
               <span className="hidden text-sm text-muted-foreground tabular-nums sm:inline">{formatDate(p.joinedAt)}</span>
               <button
                 type="button"

@@ -22,6 +22,12 @@ const seriesRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/series"), "SeriesPage"),
 });
 
+const playerProfileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/players/$player",
+  component: lazyRouteComponent(() => import("@/pages/player-profile"), "PlayerProfilePage"),
+});
+
 const playerSeriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/players/$player/series/$number",
@@ -84,6 +90,7 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   seriesListRoute,
   seriesRoute,
+  playerProfileRoute,
   playerSeriesRoute,
   pcRoute,
   openSheetRoute,

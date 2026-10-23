@@ -115,8 +115,19 @@ function Account({ user }: { user: User }) {
   const { signingOut, signOut } = useSignOut();
   return (
     <div className="ml-auto hidden min-w-0 items-center gap-3 sm:flex">
-      {!user.admin && <PlayerBadge name={user.name} colour={playerColour(user.id)} />}
-      <span className="truncate font-heading text-2xl text-white">{user.name}</span>
+      {user.admin ? (
+        <span className="truncate font-heading text-2xl text-white">{user.name}</span>
+      ) : (
+        <Link
+          to="/players/$player"
+          params={{ player: user.id }}
+          activeOptions={{ exact: true }}
+          className={`flex min-h-11 min-w-0 items-center gap-3 rounded-lg px-2 hover:bg-card aria-[current=page]:bg-card ${focus}`}
+        >
+          <PlayerBadge name={user.name} colour={playerColour(user.id)} />
+          <span className="truncate font-heading text-2xl text-white">{user.name}</span>
+        </Link>
+      )}
       <button
         type="button"
         aria-label="Sign out"
@@ -203,14 +214,24 @@ function PhoneMenu({
           {user && (
             <>
               <span aria-hidden="true" className="mx-0.5 my-1.5 h-0.75 bg-cell" />
-              <div className={cn(menuItem, "text-white")}>
-                {!user.admin && (
+              {user.admin ? (
+                <div className={cn(menuItem, "text-white")}>
+                  <span className="truncate">{user.name}</span>
+                </div>
+              ) : (
+                <Link
+                  to="/players/$player"
+                  params={{ player: user.id }}
+                  activeOptions={{ exact: true }}
+                  onClick={() => setOpen(false)}
+                  className={cn(menuItem, "text-white hover:bg-card aria-[current=page]:bg-card")}
+                >
                   <span className="-ml-1.75 flex">
                     <PlayerBadge name={user.name} colour={playerColour(user.id)} size="xs" />
                   </span>
-                )}
-                <span className="truncate">{user.name}</span>
-              </div>
+                  <span className="truncate">{user.name}</span>
+                </Link>
+              )}
               <button
                 type="button"
                 disabled={signingOut}

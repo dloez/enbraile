@@ -73,22 +73,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## A player's profile, across every series
-
-`/players/<player>` ([The player's profile?](discovery.md#pages)): the badge and name; career totals summed from each series' latest snapshot (series played and finished, total play time, badges earned, best Pokédex, trainer battles won and lost, blackouts, total fallen); the league results placeholder; one banner per series played, newest first, on its scene, with how far they got, play time, fallen and team count, linking to their series page. A player's name or badge anywhere, and the signed-in player's name in the header, open it.
-
-**Do:**
-- [ ] A profile read route summing the latest snapshots; the page, after `player-profile.dc.html` and, at phone width, `player-profile-phone.dc.html`; the name and badge links across the site, the player's series page's breadcrumb, the header's desktop name and its phone menu's name row included (both plain text until now, [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the phone header's build choices).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with a test player in two seeded series, see the totals add up both latest snapshots and both banners, newest first; click a banner and land on that series' page; click a name on the series page and land on the profile.
-- Human-run: open your own profile from the header and read your series 1 totals.
-- Reuse: the scene component and `PlayerBadge`; the records from the entry above.
-- Neighbors: `pkmn/site/design/series-list.dc.html`'s banners.
-- Forbidden: totals from any snapshot but each series' latest; league results beyond the placeholder.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-
 ## The series page's track reads the snapshots
 
 Each row's progress track shows the trainer at their latest snapshot, with the row's tiles showing it; each milestone with a snapshot is ringed in faint cyan in its node's shape, and clicking one shows that snapshot ([The progress track?](discovery.md#pages)). The Trainers table has no Records view ([Comparing trainers?](discovery.md#pages)).

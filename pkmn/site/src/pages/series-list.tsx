@@ -8,9 +8,9 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { type Scene, type SeriesBanner, seriesBannerList } from "../../shared/series";
 
-const BANNER_SIZE: Record<Scene, [number, number]> = { night: [338, 33], route: [338, 55] };
+export const BANNER_SIZE: Record<Scene, [number, number]> = { night: [338, 33], route: [338, 55] };
 
-const PHONE_BANNER_SIZE: Record<Scene, [number, number]> = { night: [88, 33], route: [88, 55] };
+export const PHONE_BANNER_SIZE: Record<Scene, [number, number]> = { night: [88, 33], route: [88, 55] };
 
 export function gameLine(game: string): string {
   return game.split(" + ").join(" · ");

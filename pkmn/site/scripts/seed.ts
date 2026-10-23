@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { crc32 } from "node:zlib";
 import { Dex } from "@pkmn/dex";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { db, pool } from "../api/_lib/db.js";
 import { requireEnv } from "../api/_lib/env.js";
 import { saveSlots } from "../api/_lib/export/save-zip.js";
@@ -39,6 +39,8 @@ const seedSeries = {
     ["Tournament", "tournament"],
   ] satisfies [string, MilestoneMark][],
 };
+const finishedSeries = { number: 2, name: "Series 2", players: ["Red", "Blue"], milestone: "Tournament", extraPlayTime: 7200 };
+
 const seedSnapshot = { player: "Red", saves: new URL("../saves/", import.meta.url), fallback: "Post-League" };
 
 function standInZip(): Uint8Array {
@@ -205,6 +207,51 @@ async function seedTheEarlierSnapshot(seriesId: string, userId: string, laterId:
   return member.nickname ?? species.name;
 }
 
+async function seedTheFinishedSeries(): Promise<string | null> {
+  const [existing] = await db.select({ id: series.id }).from(series).where(eq(series.number, finishedSeries.number));
+  if (existing) return null;
+  const [first] = await db.select().from(series).where(eq(series.number, seedSeries.number));
+  const [player] = await db.select({ id: user.id }).from(user).where(eq(user.username, seedSnapshot.player.toLowerCase()));
+  if (!first || !player) throw new Error(`${seedSeries.name} or ${seedSnapshot.player} is missing`);
+  const [latest] = await db
+    .select({ snapshot })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .where(and(eq(save.seriesId, first.id), eq(save.userId, player.id)))
+    .orderBy(desc(milestone.position))
+    .limit(1);
+  const players = await db.select({ id: user.id }).from(user).where(inArray(user.username, finishedSeries.players.map((name) => name.toLowerCase())));
+  const id = crypto.randomUUID();
+  const milestones = seedSeries.milestones.map(([name, mark], position) => ({ id: crypto.randomUUID(), seriesId: id, position, name, mark }));
+  const chosen = milestones.find((m) => m.name === finishedSeries.milestone)!;
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    await tx.insert(series).values({
+      id,
+      number: finishedSeries.number,
+      name: finishedSeries.name,
+      gameId: first.gameId,
+      scene: "night",
+      ingestion: "manual",
+      rules: first.rules,
+      state: "finished",
+      startedAt: now,
+      finishedAt: now,
+    });
+    await tx.insert(seriesPlayer).values(players.map((p) => ({ seriesId: id, userId: p.id })));
+    await tx.insert(milestone).values(milestones);
+    if (!latest) return;
+    const saveId = crypto.randomUUID();
+    await tx.insert(save).values({ id: saveId, seriesId: id, userId: player.id });
+    const data = structuredClone(latest.snapshot.data);
+    data.playTime = data.playTime === null ? null : data.playTime + finishedSeries.extraPlayTime;
+    const { id: _id, saveId: _save, milestoneId: _milestone, takenAt: _takenAt, ...kept } = latest.snapshot;
+    await tx.insert(snapshot).values({ ...kept, id: crypto.randomUUID(), saveId, milestoneId: chosen.id, data: data satisfies Snapshot });
+  });
+  return latest ? `${finishedSeries.name} finished, on the night sky, with ${seedSnapshot.player}'s ${chosen.name} snapshot copied from their latest in ${seedSeries.name}, two hours longer` : `${finishedSeries.name} finished, on the night sky`;
+}
+
 async function main() {
   for (const variable of ["DATABASE_URL", "S3_ENDPOINT"]) {
     const host = new URL(requireEnv(variable)).hostname;
@@ -218,8 +265,9 @@ async function main() {
   await seedTheGame();
   await seedTheSeries();
   const seededSnapshot = await seedTheSnapshot();
+  const seededFinished = await seedTheFinishedSeries();
   console.log(
-    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededSnapshot ? `, with ${seededSnapshot}` : ""}`,
+    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
   );
 }
 

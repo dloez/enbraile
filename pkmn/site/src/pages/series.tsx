@@ -279,31 +279,36 @@ function TrainerRow({
           open ? "bg-row-hi" : you && "bg-yellow/6",
         )}
       >
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={onToggle}
-          className="flex min-h-13 cursor-pointer items-center gap-2.5 self-stretch px-3 pt-2 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:gap-3.5 sm:px-6 sm:pt-0"
-        >
-          <PlayerBadge name={trainer.name} colour={playerColour(trainer.id)} size="row" />
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="truncate font-heading text-[1.625rem] leading-none decoration-3 underline-offset-4 group-hover:underline sm:text-3xl sm:leading-tight">
-              {trainer.name}
-            </span>
-            {you && <span className="rounded-sm bg-yellow px-1.5 font-heading text-base text-ink sm:px-1.75 sm:text-lg">You</span>}
-          </span>
-          <span className="ml-auto flex flex-none items-center gap-2.5 sm:hidden">
-            {latest && <span className="font-heading text-xl text-muted-foreground">{latest.milestone}</span>}
-            <span
-              aria-hidden="true"
-              className="grid size-9 place-items-center rounded-[9px] border-3 border-cell-hi bg-cell group-hover:border-primary"
+        <span className="flex min-h-13 items-center gap-2.5 self-stretch pt-2 pl-3 sm:gap-3.5 sm:px-6 sm:pt-0">
+          <Link
+            to="/players/$player"
+            params={{ player: trainer.id }}
+            className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg decoration-3 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 sm:gap-3.5"
+          >
+            <PlayerBadge name={trainer.name} colour={playerColour(trainer.id)} size="row" />
+            <span className="truncate font-heading text-[1.625rem] leading-none sm:text-3xl sm:leading-tight">{trainer.name}</span>
+          </Link>
+          {you && <span className="flex-none rounded-sm bg-yellow px-1.5 font-heading text-base text-ink sm:px-1.75 sm:text-lg">You</span>}
+          {!desktop && (
+            <button
+              type="button"
+              aria-label={`${open ? "Close" : "Open"} ${trainer.name}`}
+              aria-expanded={open}
+              onClick={onToggle}
+              className="flex min-h-11 flex-1 cursor-pointer items-center justify-end gap-2.5 self-stretch pr-3 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              <svg viewBox="0 0 22 16" className={cn("h-2.5 w-3.5 fill-primary", open && "rotate-180")}>
-                <path d="M2 3h18l-9 11z" />
-              </svg>
-            </span>
-          </span>
-        </button>
+              {latest && <span className="font-heading text-xl text-muted-foreground">{latest.milestone}</span>}
+              <span
+                aria-hidden="true"
+                className="grid size-9 place-items-center rounded-[9px] border-3 border-cell-hi bg-cell group-hover:border-primary"
+              >
+                <svg viewBox="0 0 22 16" className={cn("h-2.5 w-3.5 fill-primary", open && "rotate-180")}>
+                  <path d="M2 3h18l-9 11z" />
+                </svg>
+              </span>
+            </button>
+          )}
+        </span>
         <span
           role={desktop ? undefined : "img"}
           aria-label={desktop ? undefined : latest ? `${trainer.name} at ${latest.milestone}` : `${trainer.name}, no snapshots`}

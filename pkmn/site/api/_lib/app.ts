@@ -4,6 +4,7 @@ import { adminSeries } from "./admin-series.js";
 import { auth } from "./auth.js";
 import { games } from "./games.js";
 import { players } from "./players.js";
+import { profiles } from "./profiles.js";
 import { saveUploads } from "./save-uploads.js";
 import { seriesRoutes } from "./series.js";
 
@@ -15,6 +16,7 @@ app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
 
 app.route("/games", games);
 app.route("/players", players);
+app.route("/profiles", profiles);
 app.route("/series", seriesRoutes);
 app.route("/series", saveUploads);
 app.route("/admin/series", adminSeries);
