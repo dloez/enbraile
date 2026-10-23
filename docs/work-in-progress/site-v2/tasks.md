@@ -73,27 +73,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## Bring the site docs in line with the snapshot and PC landings
-
-The upload (`3b0df37`), TM rolls (`2011e77`) and PC page (`fe84424`) entries each wrote their own build choices without seeing the next one's diff, leaving sentences the later landings made false:
-
-- `docs/pkmn/site/explanation/site.md:91` (the snapshot upload's build choices) says the done step is "without the boards' 'Open PC' button, which comes with the entry building the PC" and that "the PC, Fainted and snapshot chips [are] not yet links"; `upload-dialog.tsx:315` renders "Open PC", the PC tile and every snapshot chip link to the PC (`series.tsx:320`, `:384`), and `site.md:58` and `:70` already say so.
-- `site.md:121` (the series build choices) leaves "the boards' … Progress and Records switch and hand-set mark … to their own entries"; the owner dropped both on 2026-10-23 (`site.md:98`), so no entry builds them.
-- `docs/pkmn/site/reference/design-system.md:166` puts "whose scene header runs the full width" on the PC page, which `fe84424` inserted before the series page's parenthesis; `src/pages/pc.tsx` has no scene header, and the full-width scene header is `/series/<n>`'s (`SeriesHeader`, `series.tsx:79`).
-- `docs/pkmn/site/explanation/open-sheet.md:23` says imports are validated by "the zod schema in `src/open-sheet/schema.ts`, which mirrors the JSON reference"; the schema is `sheetSchema` in `shared/snapshot.ts`, which `src/open-sheet/schema.ts` only re-exports and checks with.
-
-**Do:**
-- [ ] Rewrite each sentence to say what is true now, noting in the build choices which later landing changed it.
-
-**Acceptance:**
-- Claude-run: `grep -n "comes with the entry building the PC\|not yet links" docs/pkmn/site/explanation/site.md` and `grep -n "PC page (whose scene header" docs/pkmn/site/reference/design-system.md` find nothing; `grep -n "shared/snapshot" docs/pkmn/site/explanation/open-sheet.md` finds the schema's line.
-- Human-run: none.
-- Reuse: the code lines named above.
-- Neighbors: `361b142`, the last pass bringing the site docs in line.
-- Forbidden: rewriting a decision's substance or its date; touching code.
-
-**Touches:** `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/reference/design-system.md`, `docs/pkmn/site/explanation/open-sheet.md`
-
 ## The series list and the series page fit a phone
 
 `/series` and `/series/<n>` at phone width, as `series-list-phone.dc.html` and `series-phone.dc.html` draw them ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the phone layouts' sign-off). Today the Trainers table (`TrainerRow` in `src/pages/series.tsx`, `grid-cols-[300px_minmax(0,1fr)_84px]`) scrolls sideways on a phone, a build choice that holds only "until its phone layout is designed" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the series build choices); no other entry builds these two pages' phone layouts. The phone row's snapshot picker comes with the track entry below, its Journey tile with the player's series page and its export warning with old exports; this entry lays out the tiles that exist.
