@@ -1,6 +1,6 @@
 # Snapshot Format
 
-What a snapshot holds: the JSON object the site's export (`pkmn/site/api/_lib/export/`) makes from one `Partida N.rxdata` slot of a save zip, stored as the `snapshot` row's `data` ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and its zod schema, `snapshotSchema` in `pkmn/site/shared/snapshot.ts`. Its first three keys, `pokemon`, `items` and `tms`, are the Open Sheet JSON that `pkmn/games/anil/export_data.py` writes, and the site's port writes them the same way; the rest is what the Python export leaves out. Why each export field is there, and what is left out, is in [Open Sheet Export](../../games/anil/explanation/open-sheet-export.md). Where each value sits in the save is in [State](../../games/anil/reference/state.md). Every ID in `pokemon`, `items` and `tms` is a Showdown ID: the English Showdown name lowercased, with everything but letters and digits removed.
+What a snapshot holds: the JSON object the site's export (`pkmn/site/api/_lib/export/`) makes from one `Partida N.rxdata` slot of a save zip, stored as the `snapshot` row's `data` ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and its zod schema, `snapshotSchema` in `pkmn/site/shared/snapshot.ts`. Its first three keys, `pokemon`, `items` and `tms`, are the Open Sheet JSON the retired Python export wrote, and the site's export writes them the same way; the rest is what the Python export left out. Why each of the three keys' fields is there, and what is left out, is in [Save Export](../explanation/save-export.md). Where each value sits in the save is in [State](../../games/anil/reference/state.md). Every ID in `pokemon`, `items` and `tms` is a Showdown ID: the English Showdown name lowercased, with everything but letters and digits removed.
 
 ```json
 {
@@ -62,9 +62,7 @@ The values above are illustrative; `bag` always holds all eight pockets.
 | `usedEncounters` | array of integers | The map IDs whose first encounter is used (`challenge_encs`), ascending |
 | `saveSlot` | string or null | The Multi Save slot name (`Partida 1`) |
 | `randomlockeVersion` | integer or null | The save's `@randomlocke_version` |
-| `notices` | array of strings | The export's notices ([Open Sheet Export → Notices](../../games/anil/explanation/open-sheet-export.md#notices)), the version notice included |
-
-The Python export writes only `pokemon`, `items` and `tms`, with no header: no trainer, badges, format version or export time.
+| `notices` | array of strings | The export's notices ([Save Export → Notices](../explanation/save-export.md#notices)), the version notice included |
 
 ## `pokemon[]`
 
@@ -82,7 +80,7 @@ The Python export writes only `pokemon`, `items` and `tms`, with no header: no t
 | `ivs` | object or null | Its IVs, 0 to 31, keyed `hp`, `atk`, `def`, `spa`, `spd`, `spe`; a Hyper-Trained stat counts 31; null, with a notice, when the save has not filled them in |
 | `evs` | object or null | Its EVs, keyed the same way; null, with a notice, when the save has not filled them in |
 | `stats` | object or null | Its stats at its own level as the game stores and shows them, keyed the same way; null, with a notice, when the save has not filled them in |
-| `moves` | object | Always in a snapshot; in the Python export only with `--moves`: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks, every one of them rolled by then ([Rolling TMs](../../games/anil/explanation/open-sheet-export.md#rolling-tms)). All three are arrays of move IDs, each move once |
+| `moves` | object | Always in a snapshot; a Python export holds it only when run with its moves option: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks, every one of them rolled by then ([Rolling TMs](../explanation/save-export.md#rolling-tms)). All three are arrays of move IDs, each move once |
 | `personalId` | integer or null | Snapshots only: its `@personalID`, which it keeps for life |
 
 ## `items[]`
@@ -128,16 +126,3 @@ Holds the items of pocket 1 (Objetos) and pocket 5 (Bayas), and the held items t
 | `publicId` | integer or null | The ID shown in game, its low 16 bits |
 | `money` | integer or null | `$player@money` |
 | `badges` | array of booleans | `$player@badges`, one per badge |
-
-## Python Command Line
-
-`export_data.py` writes the first three keys:
-
-| Option | Effect |
-|--------|--------|
-| *(none)* | Finds the `Partida N.rxdata` slots in the Windows save folder; takes the only one, or asks which |
-| `--save PATH` | Reads that save file instead |
-| `--moves` | Adds `moves` to each Pokémon |
-| `--out PATH` | Writes there instead of `<trainer name>-open-sheet.json` in the current folder |
-
-An existing file at the output path is overwritten. Notices and the closing count go to the terminal, never into the JSON; the [explanation](../../games/anil/explanation/open-sheet-export.md#notices) lists them.

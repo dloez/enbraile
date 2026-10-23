@@ -33,7 +33,7 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["export_data.py", "generate_export_data.py"]
+extend-exclude = ["generate_export_data.py"]
 
 [tool.ty.src]
-exclude = ["export_data.py", "generate_export_data.py"]
+exclude = ["generate_export_data.py"]

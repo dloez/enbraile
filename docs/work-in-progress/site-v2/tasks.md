@@ -55,23 +55,6 @@ The series pages, the admin series form and the phone header are built and check
 **After:** Owner-run: Discord sign-in on production
 **Needs the author:** the owner-run steps above.
 
-## Retire export_data.py
-
-Players upload on the site now, so the Python export and its CLI go, `--moves` with them ([The export?](discovery.md#data-stack-and-config)).
-
-**Do:**
-- [ ] Delete `pkmn/games/anil/export_data.py`; drop its excludes from `pyproject.toml` and its line in `pkmn/games/anil/CLAUDE.md`.
-- [ ] Delete `docs/pkmn/games/anil/how-to/run-the-open-sheet-export.md`; fold what still holds of `open-sheet-export.md` into the site's docs or the snapshot reference; update `runtime-design.md`, `docs/pkmn/index.md` and every link (`grep -rn "export_data\|open-sheet-export\|run-the-open-sheet-export" docs pkmn`).
-
-**Acceptance:**
-- Claude-run: from `pkmn/games/anil/`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run ty check`; `grep -rn "export_data.py\|--moves" docs pkmn .claude` finds nothing outside git history.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: none.
-- Forbidden: a stub or redirect left for the old script.
-
-**Touches:** `pkmn/games/anil/`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-
 ## Browse any player's PC at any snapshot
 
 `/players/<player>/series/<n>/pc?snapshot=<milestone>`: Open Sheet's PC, summary and bag over a stored snapshot, with a snapshot picker, the bag opening from its Bag button, and the page's breadcrumb as `pc.dc.html` draws it ([The PC?](discovery.md#pages)). A trainer row's PC tile on the series page opens it, and the header's PC tab opens the signed-in player's own in the running series. `/open-sheet` keeps working until teams move.

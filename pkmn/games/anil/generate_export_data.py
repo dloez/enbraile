@@ -12,7 +12,6 @@ from urllib.request import urlopen
 from rubymarshal.reader import load
 
 ROOT = Path(__file__).parent
-EXPORT = ROOT / "export_data.py"
 SITE_DATA = ROOT.parent.parent / "site" / "api" / "_lib" / "export" / "data.json"
 MOD = ROOT / "src" / "anil" / "mod"
 MOD_DATA = MOD / "data"
@@ -29,7 +28,6 @@ NON_EVOLUTIONS = {"None", "Shedinja"}
 SHOWDOWN_ITEMS = "https://raw.githubusercontent.com/smogon/pokemon-showdown/master/data/items.ts"
 UNMODELED_ITEMS_KEPT = {"TINYMUSHROOM"}
 SHOWDOWN_ITEM_KEY = re.compile(r"^\t([a-z0-9]+): \{$", re.MULTILINE)
-BLOCK = re.compile(r"^DATA = \{\n.*?^\}\n", re.MULTILINE | re.DOTALL)
 
 
 def showdown_id(name: str) -> str:
@@ -158,47 +156,11 @@ def build() -> dict:
     }
 
 
-def literal(value) -> str:
-    if value is None or isinstance(value, bool):
-        return repr(value)
-    if isinstance(value, list):
-        return "[" + ", ".join(literal(item) for item in value) + "]"
-    if isinstance(value, dict):
-        return "{" + ", ".join(f"{literal(k)}: {literal(v)}" for k, v in value.items()) + "}"
-    return json.dumps(value, ensure_ascii=False)
-
-
-def render(data: dict) -> str:
-    lines = ["DATA = {"]
-    for key, value in data.items():
-        if isinstance(value, dict) and value and all(isinstance(inner, dict) for inner in value.values()):
-            lines.append(f"    {literal(key)}: {{")
-            for kind, table in value.items():
-                lines.append(f"        {literal(kind)}: {{")
-                lines.extend(f"            {literal(k)}: {literal(v)}," for k, v in table.items())
-                lines.append("        },")
-            lines.append("    },")
-        elif isinstance(value, dict):
-            lines.append(f"    {literal(key)}: {{")
-            lines.extend(f"        {literal(k)}: {literal(v)}," for k, v in value.items())
-            lines.append("    },")
-        else:
-            lines.append(f"    {literal(key)}: {literal(value)},")
-    lines.append("}")
-    return "\n".join(lines) + "\n"
-
-
 def main() -> None:
     data = build()
-    script = EXPORT.read_text(encoding="utf-8")
-    if not BLOCK.search(script):
-        sys.exit(f"no DATA block in {EXPORT}")
-    updated = BLOCK.sub(lambda _: render(data), script, count=1)
-    if updated != script:
-        EXPORT.write_text(updated, encoding="utf-8")
     site = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
-    site_changed = not SITE_DATA.is_file() or SITE_DATA.read_text(encoding="utf-8") != site
-    if site_changed:
+    changed = not SITE_DATA.is_file() or SITE_DATA.read_text(encoding="utf-8") != site
+    if changed:
         SITE_DATA.parent.mkdir(parents=True, exist_ok=True)
         SITE_DATA.write_text(site, encoding="utf-8")
     counts = ", ".join(f"{len(table)} {kind}" for kind, table in data["showdown"].items())
@@ -206,8 +168,7 @@ def main() -> None:
         f"Randomlocke version {data['randomlocke_version']}; Showdown IDs: {counts}; "
         f"{len(data['types'])} species-form types, {len(data['fixed_abilities'])} with fixed abilities, {len(data['pockets'])} item pockets, "
         f"{len(data['tm_moves'])} TM moves, {len(data['move_types'])} move types, {len(data['evolutions'])} species with "
-        f"evolutions; {'written to' if updated != script else 'unchanged:'} {EXPORT}; "
-        f"{'written to' if site_changed else 'unchanged:'} {SITE_DATA}"
+        f"evolutions; {'written to' if changed else 'unchanged:'} {SITE_DATA}"
     )
 
 

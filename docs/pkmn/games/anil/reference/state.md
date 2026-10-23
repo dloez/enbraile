@@ -79,7 +79,7 @@ At the title screen (session `20261002-024731`, a fresh boot), `wonder state` sh
 
 ## Save Records
 
-What a save holds of a run as a whole, read for the site's snapshots. Verified 2026-10-23 on `es-v4.14`, read-only, with `export_data.py`'s own `MarshalReader` on the one real save at hand, MIRAMEEE's `Partida 1.rxdata` (8 badges, in the Hall of Fame); sources from `game/extracted/es-v4.14/scripts`. The save's top-level hash holds `stats` beside the keys [Open Sheet Export](../explanation/open-sheet-export.md) reads.
+What a save holds of a run as a whole, read for the site's snapshots. Verified 2026-10-23 on `es-v4.14`, read-only, with the Python export's own Marshal reader on the one real save at hand, MIRAMEEE's `Partida 1.rxdata` (8 badges, in the Hall of Fame); sources from `game/extracted/es-v4.14/scripts`. The save's top-level hash holds `stats` beside the keys [Save Export](../../../site/explanation/save-export.md) reads.
 
 | Field | Path | How verified |
 |-------|------|--------------|

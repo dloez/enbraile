@@ -117,6 +117,16 @@ Migrate production first when the change carries a new migration: run `npm run d
 
 Use Instant Rollback on the previous production deployment in the Vercel dashboard, or revert the commit and push, which redeploys. A migration is not rolled back: a schema change is undone by a new forward migration, and lost data comes back through Neon's point-in-time restore.
 
+### Refresh the export's data
+
+Only when the game build, the mod's data (`pkmn/games/anil/src/anil/mod/`) or Showdown's item list changes, the owner regenerates the save export's `api/_lib/export/data.json` ([Save Export → Data Shipped With the Export](../explanation/save-export.md#data-shipped-with-the-export)). It reads the mod and the game files in `pkmn/games/anil/game/`, which [How to Install the Game](../../games/anil/how-to/install-the-game.md) fetches, and downloads Showdown's `data/items.ts`, so it needs a network connection. From the repository root:
+
+```sh
+uv run pkmn/games/anil/generate_export_data.py
+```
+
+It prints its counts and whether it wrote `data.json`, which it rewrites only when it changed. Commit and push it: it reaches the site with the next deploy.
+
 ## Verification
 
 - Signed in, `https://pkmn.enbraile.vip` sends the reader to the running series' page, or to `/series` while none runs, and `/open-sheet` serves the tool.
