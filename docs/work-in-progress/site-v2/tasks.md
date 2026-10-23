@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Upload game zips in parts
-
-A game's zip, about 600 MB, goes up as one presigned `PUT` ([The pkmn Site → Games](../../pkmn/site/explanation/site.md#games)). One dropped connection loses the whole upload, and B2's refusals reach the page only as "The upload could not reach the file store", since its error answers carry no CORS headers: the first production upload failed that way and worked on a retry (2026-10-23). The owner chose a multipart upload (2026-10-23): the file goes up in parts, a few at a time, each retried on its own.
-
-**Do:**
-- [ ] Routes that start a multipart upload for a game, sign each part's `PUT` for its exact size, complete it from the parts' ETags (exposed by the CORS rule), and abort it; the browser splits the file, uploads parts in parallel with one progress bar, retries a failed part, and aborts on giving up.
-- [ ] `npm run seed` and the local MinIO take the same path; the part size and how many go at once are recorded in `site.md` → Decisions as build choices.
-- [ ] `site.md` → Games describes the new flow.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, upload a 200 MB zip to a test game on the local stack, see one object of the right size in MinIO and no multipart upload left open (`mc ls --incomplete`); kill the network partway through one part (DevTools offline for a few seconds) and see the upload finish.
-- Human-run: upload the Añil package zip on production and download it back at the same size.
-- Reuse: `api/_lib/files.ts`, `api/_lib/games.ts`, `shared/games.ts`, `putFile` in `src/lib/api.ts`.
-- Neighbors: `src/pages/admin-games.tsx`.
-- Forbidden: file bodies through a Vercel Function; a multipart upload left open after a failure the page reported.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`
-
 ## Design the upload flow, the PC page, the team list and the team builder
 
 The rest of the screens, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the upload flow (where it starts, the slot and milestone pick), the PC page with its snapshot picker, the team list, the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and phone layouts of the series list and series page. The PC, bag and team views carry their content over from Open Sheet and Team Analysis.
@@ -109,7 +91,7 @@ The export ported to TypeScript in the site, run in a Vercel Function on the sav
 **Acceptance:**
 - Claude-run: `npm run gate`; for a save zip the owner provides, the port's JSON equals `uv run pkmn/games/anil/export_data.py --save <zip> --moves` except for TM rolls (`diff` after stripping rolled entries).
 - Human-run: upload your series 1 zip as "Post-League" and see the count on your row; upload it again and see one snapshot, replaced; as admin, upload another player's zip for them; upload a zip without a save and read its refusal.
-- Reuse: `pkmn/site/src/open-sheet/schema.ts` (the export's zod schema); the games' presigned upload in three steps (`uploadUrl` and `objectSize` in `api/_lib/files.ts`, the `/upload` and `/file` routes in `api/_lib/games.ts`, `putFile` in `src/lib/api.ts`).
+- Reuse: `pkmn/site/src/open-sheet/schema.ts` (the export's zod schema); the games' multipart upload (`startUpload`, `partUrl`, `completeUpload`, `abortUpload` and `objectSize` in `api/_lib/files.ts`, the `/upload`, `/upload/part` and `/file` routes in `api/_lib/games.ts`, `uploadParts` in `shared/upload.ts`, `putPart` in `src/lib/api.ts`).
 - Neighbors: `pkmn/games/anil/export_data.py`.
 - Forbidden: Python in the site's functions; offering the rolled zip back.
 

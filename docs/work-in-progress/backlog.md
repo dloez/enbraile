@@ -12,7 +12,7 @@ The series page's trainer panel wants per-trainer data the site has no source fo
 
 ### pkmn/site: clear files the bucket holds that nothing points to
 
-A game's upload is a presigned `PUT` to B2 followed by `POST /api/games/<id>/file`, which records the key ([The pkmn Site → Games](../pkmn/site/explanation/site.md#games)). When the `PUT` lands and the confirm never runs or fails, the zip stays in the bucket with no row pointing at it, about 600 MB each; none exist yet (2026-10-23). The same will hold for snapshot uploads.
+A game's upload is a multipart upload that `POST /api/games/<id>/file` completes and then records ([The pkmn Site → Games](../pkmn/site/explanation/site.md#games)), and the game's open multipart uploads are aborted when its next upload starts. When the upload completes but recording it fails, or deleting the replaced file fails, the zip stays in the bucket with no row pointing at it, about 600 MB each; none exist yet (2026-10-23). The same will hold for snapshot uploads.
 
 **Do:**
 - [ ] A way to find and delete the bucket's objects no `game` row (and later no snapshot) names.

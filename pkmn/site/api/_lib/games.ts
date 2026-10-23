@@ -1,10 +1,20 @@
 import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as z from "zod";
-import { newGame, uploadDone, uploadRequest, type Game } from "../../shared/games.js";
+import { newGame, partRequest, uploadAbort, uploadDone, uploadRequest, type Game } from "../../shared/games.js";
+import { partRange, partSizeFor } from "../../shared/upload.js";
 import { requireAdmin } from "./admin.js";
 import { db } from "./db.js";
-import { deleteObject, downloadUrl, objectSize, uploadUrl } from "./files.js";
+import {
+  abortUpload,
+  abortUploadsUnder,
+  completeUpload,
+  deleteObject,
+  downloadUrl,
+  objectSize,
+  partUrl,
+  startUpload,
+} from "./files.js";
 import { game } from "./schema.js";
 
 type GameRow = typeof game.$inferSelect;
@@ -22,6 +32,10 @@ function view(row: GameRow): Game {
 async function body<T extends z.ZodType>(request: Request, schema: T): Promise<z.infer<T> | undefined> {
   const parsed = schema.safeParse(await request.json().catch(() => undefined));
   return parsed.success ? parsed.data : undefined;
+}
+
+function gamePrefix(id: string): string {
+  return `games/${id}/`;
 }
 
 async function findGame(id: string): Promise<GameRow | undefined> {
@@ -55,15 +69,43 @@ games.post("/:id/upload", async (c) => {
   if (!row) return c.json({ error: "No such game" }, 404);
   const input = await body(c.req.raw, uploadRequest);
   if (!input) return c.json({ error: "Upload a .zip file" }, 400);
-  const key = `games/${row.id}/${crypto.randomUUID()}.zip`;
-  return c.json({ key, url: await uploadUrl(key, input.size) });
+  const prefix = gamePrefix(row.id);
+  await abortUploadsUnder(prefix).catch(() => undefined);
+  const key = `${prefix}${crypto.randomUUID()}.zip`;
+  return c.json({ key, uploadId: await startUpload(key), partSize: partSizeFor(input.size) });
+});
+
+games.post("/:id/upload/part", async (c) => {
+  const row = await findGame(c.req.param("id"));
+  if (!row) return c.json({ error: "No such game" }, 404);
+  const input = await body(c.req.raw, partRequest);
+  if (!input || !input.key.startsWith(gamePrefix(row.id))) return c.json({ error: "Not this game's upload" }, 400);
+  const range = partRange(input.size, partSizeFor(input.size), input.part);
+  if (!range) return c.json({ error: "No such part" }, 400);
+  return c.json({ url: await partUrl(input.key, input.uploadId, input.part, range.end - range.start) });
+});
+
+games.delete("/:id/upload", async (c) => {
+  const row = await findGame(c.req.param("id"));
+  if (!row) return c.json({ error: "No such game" }, 404);
+  const input = await body(c.req.raw, uploadAbort);
+  if (!input || !input.key.startsWith(gamePrefix(row.id))) return c.json({ error: "Not this game's upload" }, 400);
+  await abortUpload(input.key, input.uploadId);
+  return c.json({});
 });
 
 games.post("/:id/file", async (c) => {
   const row = await findGame(c.req.param("id"));
   if (!row) return c.json({ error: "No such game" }, 404);
   const input = await body(c.req.raw, uploadDone);
-  if (!input || !input.key.startsWith(`games/${row.id}/`)) return c.json({ error: "Not this game's upload" }, 400);
+  if (!input || !input.key.startsWith(gamePrefix(row.id))) return c.json({ error: "Not this game's upload" }, 400);
+  const parts = [...input.parts].sort((a, b) => a.part - b.part);
+  try {
+    await completeUpload(input.key, input.uploadId, parts);
+  } catch {
+    await abortUpload(input.key, input.uploadId).catch(() => undefined);
+    return c.json({ error: "The file store refused the uploaded parts" }, 400);
+  }
   const size = await objectSize(input.key);
   if (size === undefined) return c.json({ error: "The upload did not reach the file store" }, 400);
   const [updated] = await db

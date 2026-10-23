@@ -13,9 +13,22 @@ export const zipName = z
 
 export const uploadRequest = z.object({ fileName: zipName, size: z.number().int().positive() });
 
-export const uploadTicket = z.object({ key: z.string(), url: z.string() });
+export const uploadTicket = z.object({ key: z.string(), uploadId: z.string(), partSize: z.number().int().positive() });
 
-export const uploadDone = z.object({ key: z.string().min(1), fileName: zipName });
+const openUpload = z.object({ key: z.string().min(1), uploadId: z.string().min(1) });
+
+export const partRequest = openUpload.extend({ size: z.number().int().positive(), part: z.number().int().positive() });
+
+export const partTicket = z.object({ url: z.string() });
+
+export const uploadDone = openUpload.extend({
+  fileName: zipName,
+  parts: z.array(z.object({ part: z.number().int().positive(), etag: z.string().min(1) })).min(1),
+});
+
+export const uploadAbort = openUpload;
+
+export const uploadAborted = z.object({});
 
 export const game = z.object({
   id: z.string(),
@@ -30,3 +43,5 @@ export const gameList = z.array(game);
 export const downloadLink = z.object({ url: z.string() });
 
 export type Game = z.infer<typeof game>;
+
+export type UploadTicket = z.infer<typeof uploadTicket>;

@@ -45,7 +45,7 @@ select u.username, u.admin, s.created_at from session s join "user" u on u.id = 
 docker compose exec -T minio sh -c 'mc alias set l http://localhost:9000 minioadmin minioadmin >/dev/null && mc ls --recursive l/pkmn-site'
 ```
 
-`mc stat` and `mc cat` on a `l/pkmn-site/<key>` path show one object. A game's zip is under `games/<game id>/`, and the `game` table's `file_key` names the current one.
+`mc stat` and `mc cat` on a `l/pkmn-site/<key>` path show one object. A game's zip is under `games/<game id>/`, and the `game` table's `file_key` names the current one. `mc ls --incomplete --recursive l/pkmn-site` lists the multipart uploads still open, which a finished or abandoned upload leaves none of. MinIO drops open uploads when its container is killed, so read this before restarting it.
 
 ### 5. Reset
 
@@ -72,4 +72,6 @@ This wipes the database and the bucket and brings back the seeded state; `npm ru
 | Every browser call hangs, screenshots above all | `.mcp.json`'s `WAYLAND_DISPLAY` was dropped; restore it and reconnect with `/mcp`. `wsl --shutdown` from Windows repairs a wedged compositor. |
 | `browser_type` or `browser_click` says the input is invalid | They take the element as `target`, the `ref` from the latest snapshot; refs change whenever the page re-renders. |
 | A snapshot taken right after navigating is empty | The page had not rendered yet; `browser_wait_for` its heading first. |
+| Going offline (Chrome DevTools Protocol's `Network.emulateNetworkConditions`) does not break an upload's part already on its way | Offline only fails requests that start while it lasts. To cut parts mid-way, slow the upload with the same call's `uploadThroughput` and run `docker compose restart -t 0 minio` while it runs; `docker compose stop -t 0 minio` leaves a port that accepts no connection, as a dropped network does. |
+| A `page.route` stub keeps answering after `page.unroute` | `unroute` only removes a route given the same matcher object; `page.unrouteAll()` removes every one. |
 | Port 5432, 9000 or 5173 is taken | Run a second stack as [How to Run and Deploy the Site](run-and-deploy-the-site.md) step 2 says, and start Vite with `npm run dev -- --port <port>`, with `BETTER_AUTH_URL` and the URLs above on that port. |

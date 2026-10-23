@@ -2,8 +2,9 @@ import { crc32 } from "node:zlib";
 import { eq } from "drizzle-orm";
 import { db, pool } from "../api/_lib/db.js";
 import { requireEnv } from "../api/_lib/env.js";
-import { putObject } from "../api/_lib/files.js";
+import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
 import { game } from "../api/_lib/schema.js";
+import { partSizeFor, uploadParts } from "../shared/upload.js";
 import { createAdmin, createTestPlayer, usernameTaken } from "./accounts.js";
 
 const admin = { name: "admin", password: "admin-password" };
@@ -39,13 +40,33 @@ function standInZip(): Uint8Array {
   return Buffer.concat([local, name, data, central, name, end]);
 }
 
+async function uploadZip(key: string, zip: Uint8Array) {
+  const uploadId = await startUpload(key);
+  try {
+    const parts = await uploadParts(zip.length, partSizeFor(zip.length), async (part, start, end, _onProgress, signal) => {
+      const response = await fetch(await partUrl(key, uploadId, part, end - start), {
+        method: "PUT",
+        body: zip.subarray(start, end),
+        signal,
+      });
+      const etag = response.headers.get("etag");
+      if (!response.ok || !etag) throw new Error(`The file store refused part ${part} (${response.status})`);
+      return etag;
+    });
+    await completeUpload(key, uploadId, parts);
+  } catch (error) {
+    await abortUpload(key, uploadId).catch(() => undefined);
+    throw error;
+  }
+}
+
 async function seedTheGame() {
   const [existing] = await db.select({ id: game.id }).from(game).where(eq(game.name, seedGame.name));
   if (existing) return;
   const id = crypto.randomUUID();
   const key = `games/${id}/${crypto.randomUUID()}.zip`;
   const zip = standInZip();
-  await putObject(key, zip);
+  await uploadZip(key, zip);
   await db.insert(game).values({
     id,
     name: seedGame.name,
