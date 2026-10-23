@@ -2,6 +2,28 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET`, `POST`, `PUT` or `DELETE` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
+## Bring the design system in line with the old exports' warnings
+
+The old exports' landing (`e87655d`) drew three amber pieces that [Design System](../../pkmn/site/reference/design-system.md) does not list, and left two of its passages short of what the code does:
+- `design-system.md:63`, the `warning` token: "its border and icon (a snapshot about to be replaced)"; it is now also the text of the series row's and the PC page's "Export missing" line (`text-sm font-bold text-warning`, `src/pages/series.tsx`, `src/pages/pc.tsx`), the done step's "Missing:" chip's border, icon and text, and the file row's `zip` icon for an export (`src/components/upload-dialog.tsx`).
+- `design-system.md:223`, the Warning pattern, names only the boxed row; the line and the done step's chips (`rounded-full border border-warning px-3 py-1 text-sm font-bold text-warning` with a `TriangleAlert`, and the grey `rounded-full bg-cell … text-subtle` skipped chip, `ExportGaps`) are not there.
+- `design-system.md:190`, `UploadDialog`: the file row's `zip` icon is always `primary` and the done step holds no export chips.
+- `design-system.md:173`, the phone's open row: it ends at the Upload button; the "Export missing" line under it (`col-span-2`) is missing.
+
+[The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots) and the old exports' build choices already say what is true.
+
+**Do:**
+- [ ] Rewrite each passage above to say what the code does, keeping each decision's date and adding none.
+
+**Acceptance:**
+- Claude-run: each rewritten passage read against `src/pages/series.tsx`, `src/pages/pc.tsx` and `src/components/upload-dialog.tsx`; `grep -n "Export missing\|ExportGaps" docs/pkmn/site/reference/design-system.md` finds the line and the chips; every link in the touched doc resolves.
+- Human-run: none.
+- Reuse: [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the old exports' build choices, the passages' owner.
+- Neighbors: `7bba9aa`, the last docs sync.
+- Forbidden: code changes; a new decision; rewording a decision the owner dated as theirs.
+
+**Touches:** `docs/pkmn/site/reference/design-system.md`
+
 ## Design the team list, the team builder and the PC's summary
 
 The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare), and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards.
@@ -61,11 +83,13 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 
 **Do:**
 - [ ] Owner-run: once series 1 runs, each player uploads their save zip from their row on `/series/1`.
+- [ ] Owner-run: as admin, upload MIRAMEEE's and Vicky's old exports (`pkmn/site/saves/MIRAMEEE-open-sheet.json`, `Vicky-open-sheet.json`) for them, the production half of the old exports' entry, which landed in `e87655d` with its local checks done and its production check carried here.
 
 **Acceptance:**
 - Claude-run: none.
 - Human-run: as a player of series 1 on production, upload your save zip from your row, see the suggested milestone, save it and read "<milestone> saved" with the Pokémon count and the TM rolls row; download the rolled zip from the done step and from the snapshot chip, and see it named as your zip; click "Open PC" and see your PC at that snapshot, its summary and its bag; as another player, open the first player's row and see their snapshot chips without a download button; as admin, upload for a player and replace their snapshot, and read the amber warning first.
 - Human-run: as admin on production, correct a snapshot's milestone with Move and see it on the series page; set a player's progress by hand and see their track move to it; clear it and see the latest snapshot's milestone again.
+- Human-run: as admin on production, upload Vicky's export for her and read the done step's "Missing: IVs, EVs, stats · moves" chip, with no TM rolls row; upload MIRAMEEE's and read "Missing: IVs, EVs, stats · TM rolls"; on `/series/1` see each row's amber "Export missing" line and no download button on their chips; open each one's PC, read the line above the picker, and open a Pokémon's Stats tab and see "—" for IVs, EVs and stats with the "At Level 50" ranges ([Snapshot Format → Old Exports](../../pkmn/site/reference/snapshot.md#old-exports)).
 - Reuse: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) → Verification.
 - Neighbors: none.
 - Forbidden: snapshots made on production by `npm run seed` or by SQL.
@@ -82,7 +106,7 @@ The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424`
 - [ ] The box after `pc.dc.html` and the summary after the signed-off `Summary` board, in `src/components/pc/`, so the PC page and Open Sheet both take it; new colours as tokens; [Design System](../../pkmn/site/reference/design-system.md) → Box and cells and the PC's components updated; the PC page's build choice rewritten.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, open a seeded snapshot's PC at desktop width and at 390×844, select a Pokémon and read its summary's tabs, open the bag; compare against the boards with `browser_take_screenshot`.
+- Claude-run: `npm run gate`; through `verify-site`, open a seeded snapshot's PC at desktop width and at 390×844, select a Pokémon and read its summary's tabs, open the bag; compare against the boards with `browser_take_screenshot`; upload `saves/Vicky-open-sheet.json` for a test player and open its PC, and read the "Export missing" line above the picker and, in a Pokémon's summary, "—" for IVs, EVs and stats, the "At Level 50" ranges and no Moves tab, as [Snapshot Format → Old Exports](../../pkmn/site/reference/snapshot.md#old-exports) says (added by the gardener pass after `e87655d`, which put the line on the PC page's head).
 - Human-run: open your PC on production and read a Pokémon's summary.
 - Reuse: `SnapshotPc`, `PcBox`, `SummaryAside`, `SummarySheet` in `src/components/pc/pc-box.tsx`; `src/components/pc/summary.tsx`, `bag.tsx`.
 - Neighbors: `pkmn/site/design/pc.dc.html`.
@@ -130,20 +154,23 @@ The series page's trainer row has a Teams tile, drawn in `series.dc.html` as a l
 
 ## Mark an old export's unrolled TM moves unchecked in the team builder
 
-Split out of the old exports' entry above, the one part of it that needs the team builder: an export whose `moves` predate TM rolling has them marked unchecked when they are picked for a team ([Exports from older versions](discovery.md#snapshots-in)), and a team built from each old export shows its Level 50 ranges.
+Split out of the old exports' entry, which landed in `e87655d`, the one part of it that needs the team builder: an export whose `moves` predate TM rolling has them marked unchecked when they are picked for a team ([Exports from older versions](discovery.md#snapshots-in)), and a team built from each old export shows its Level 50 ranges.
+
+What landed does not carry what this needs. The missing-field report (`missing` on the `snapshot` row, `exportReport` in `shared/snapshot.ts`) holds `tmRolls` once for the whole snapshot, set when any Pokémon's `moves` has an `unchecked` key, empty or not (`readExport`); the per-Pokémon `unchecked` lists themselves are dropped from `data`, since `pokemonSchema`'s `moves` keeps only `current`, `relearner` and `tms` (the raw `.json` stays in the bucket at the snapshot's `file_key`). And MIRAMEEE's export, the only old one with `moves`, holds `unchecked: []` on all 48 Pokémon against 101 bag TMs (read 2026-10-23): every bag TM had a game roll for each, so its `tms` are pairs the game kept, not unrolled ones ([Save Export → Rolling TMs](../../pkmn/site/explanation/save-export.md#rolling-tms)), and discovery's "unrolled TM moves" for it does not hold.
 
 **Do:**
-- [ ] `moves` without rolled TMs marked unchecked in the move picker, read from the snapshot's missing-field report.
+- [ ] `moves` without rolled TMs marked unchecked in the move picker, as the author settles below.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, build a team from each of the two old exports uploaded as in the entry above, see Level 50 ranges shown, and see MIRAMEEE's TM moves marked unchecked in the move picker while a save zip's snapshot's are not.
-- Human-run: build a team from MIRAMEEE's export on production and see its TM moves marked unchecked.
-- Reuse: `src/open-sheet/components/move-picker.tsx` as the team builder moved it; the missing-field report from the entry above.
+- Claude-run: `npm run gate`; through `verify-site`, upload `saves/Vicky-open-sheet.json` and `saves/MIRAMEEE-open-sheet.json` for two test players through the series page's upload dialog, build a team from each, see Level 50 ranges shown, and see the TM moves the author's answer marks shown unchecked in the move picker while a save zip's snapshot's are not.
+- Human-run: build a team from MIRAMEEE's export on production and see its TM moves marked as the author settled.
+- Reuse: `src/open-sheet/components/move-picker.tsx` as the team builder moved it; `missing` on the `snapshot` row (`exportReport`, `readExport` in `shared/snapshot.ts`).
 - Neighbors: the team builder's member cards.
 - Forbidden: refusing a move for being unchecked; a second move picker.
 
 **Touches:** `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
 **After:** Build teams locked to a snapshot, stored in the account
+**Needs the author:** what does "marked unchecked" mark? (a) every TM move of a snapshot whose report holds `tmRolls`, which would mark MIRAMEEE's game-kept rolls unchecked; (b) only each Pokémon's `unchecked` TMs, offered in the picker with the mark, which means keeping `unchecked` in the stored snapshot (or re-reading the raw export) and marks nothing for series 1's exports; (c) nothing, the entry dropped, since no export in hand has an unrolled TM, keeping only its Level 50 check for the team builder's own entry. Recommended: (c), or (b) if exports from other series are expected.
 
 ## Build teams from several snapshots, any player's
 
