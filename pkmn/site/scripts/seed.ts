@@ -8,7 +8,11 @@ import { partSizeFor, uploadParts } from "../shared/upload.js";
 import { createAdmin, createTestPlayer, usernameTaken } from "./accounts.js";
 
 const admin = { name: "admin", password: "admin-password" };
-const testPlayers = ["Red", "Blue", "Leaf"];
+const testPlayers = [
+  { name: "Red", allowed: true },
+  { name: "Blue", allowed: true },
+  { name: "Leaf", allowed: false },
+];
 const seedGame = { name: "Pokémon Añil + Randomlocke", fileName: "anil-stand-in.zip" };
 
 function standInZip(): Uint8Array {
@@ -84,12 +88,12 @@ async function main() {
   }
 
   if (!(await usernameTaken(admin.name))) await createAdmin(admin.name, admin.password);
-  for (const name of testPlayers) {
-    if (!(await usernameTaken(name.toLowerCase()))) await createTestPlayer(name);
+  for (const { name, allowed } of testPlayers) {
+    if (!(await usernameTaken(name.toLowerCase()))) await createTestPlayer(name, allowed);
   }
   await seedTheGame();
   console.log(
-    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.join(", ")} and the game ${seedGame.name} with a stand-in zip`,
+    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")} and the game ${seedGame.name} with a stand-in zip`,
   );
 }
 

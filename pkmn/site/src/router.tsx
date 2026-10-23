@@ -1,15 +1,8 @@
-import { createRootRoute, createRoute, createRouter, lazyRouteComponent, Outlet } from "@tanstack/react-router";
-import { SiteHeader } from "@/components/site-header";
+import { createRootRoute, createRoute, createRouter, lazyRouteComponent } from "@tanstack/react-router";
+import { SiteShell } from "@/components/site-shell";
 import { HomePage } from "@/pages/home";
 
-const rootRoute = createRootRoute({
-  component: () => (
-    <div className="flex min-h-svh flex-col">
-      <SiteHeader />
-      <Outlet />
-    </div>
-  ),
-});
+const rootRoute = createRootRoute({ component: SiteShell });
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -41,7 +34,13 @@ const adminGamesRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/admin-games"), "AdminGamesPage"),
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, openSheetRoute, teamAnalysisRoute, adminRoute, adminGamesRoute]);
+const adminPlayersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin/players",
+  component: lazyRouteComponent(() => import("@/pages/admin-players"), "AdminPlayersPage"),
+});
+
+const routeTree = rootRoute.addChildren([homeRoute, openSheetRoute, teamAnalysisRoute, adminRoute, adminGamesRoute, adminPlayersRoute]);
 
 export const router = createRouter({ routeTree });
 

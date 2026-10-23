@@ -1,6 +1,6 @@
 # Site Design System
 
-The visual system of `pkmn/site/`: its tokens, type, layout shell, components and recurring patterns. The code is the source of truth: the tokens in `src/index.css`, the shell in `src/router.tsx` and `src/components/site-header.tsx`, and the components named below. The values come from the frozen boards in `pkmn/site/design/`. This doc describes them and changes in the same commit as they do (`pkmn/site/CLAUDE.md`). Why the site looks this way is in [The pkmn Site → Look](../explanation/site.md#look). Adding a page is in [How to Add a Page to the Site](../how-to/add-a-page-to-the-site.md).
+The visual system of `pkmn/site/`: its tokens, type, layout shell, components and recurring patterns. The code is the source of truth: the tokens in `src/index.css`, the shell in `src/router.tsx`, `src/components/site-shell.tsx` and `src/components/site-header.tsx`, and the components named below. The values come from the frozen boards in `pkmn/site/design/`. This doc describes them and changes in the same commit as they do (`pkmn/site/CLAUDE.md`). Why the site looks this way is in [The pkmn Site → Look](../explanation/site.md#look). Adding a page is in [How to Add a Page to the Site](../how-to/add-a-page-to-the-site.md).
 
 ## Rules
 
@@ -70,6 +70,15 @@ Scales of one hue are built with opacity on the token (`bg-chart-2/10`, `/15`, `
 
 `player-1` to `player-6`: yellow (`var(--yellow)`), cyan (`var(--cyan)`), green (`var(--green)`), `#ff8a80`, `#c39bff`, `#ffb347`. Each player draws in one, through `PlayerBadge`.
 
+### Sign-in
+
+| Token | Value | Role |
+|-------|-------|------|
+| `blush` | `#ffd6d2` | `.enbraile.vip` on the sign-in and waiting pages' red half |
+| `discord` | `#5865f2` | Discord's blurple, the Discord button's fill and nowhere else |
+| `discord-edge` | `#8891f7` | The Discord button's border |
+| `discord-hi` | `#6d78f5` | The Discord button's hover and focus fill |
+
 ### Pixel art
 
 `pixel-rim` `#4a5470` and `pixel-red` `#e3403a` (the Poké Ball's outline and top), `pixel-case` `#3a4150` and `pixel-notch` `#2c3240` (the cartridge), used only by `PixelIcon`, beside `white`, `red` and `yellow`.
@@ -127,8 +136,8 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 
 ## Layout Shell
 
-- **Root** (`src/router.tsx`): a `flex min-h-svh flex-col` column holding `SiteHeader` and the route's `<Outlet />`. Each page renders its own `<main>`.
-- **Header** (`src/components/site-header.tsx`): `h-16`, `bg-ink`, a red `border-b-4`, `px-4 sm:px-8`. The pixel Poké Ball (`size-9` in a `size-12` box) links home; then the tabs, `TABS` in the same file: each `h-12 rounded-t-lg px-3 sm:px-5`, a pixel icon and its label in `text-2xl` pixel face, sitting on the red line. The open tab is `bg-red text-white`, joined to the line; the others `text-subtle`, `hover:bg-card hover:text-white`. PC (monitor) opens Open Sheet and Teams (people) opens Team Analysis until the series pages exist. No page title and no other navigation.
+- **Root** (`SiteShell`, `src/components/site-shell.tsx`, the root route's component in `src/router.tsx`): a `flex min-h-svh flex-col` column holding `SiteHeader` and the route's `<Outlet />`. Outside `/admin`, a signed-out reader gets the sign-in page and a player not yet allowed the waiting page instead, both without the header. Each page renders its own `<main>`.
+- **Header** (`src/components/site-header.tsx`): `h-16`, `bg-ink`, a red `border-b-4`, `px-4 sm:px-8`. The pixel Poké Ball (`size-9` in a `size-12` box) links home; then the tabs, `TABS` in the same file: each `h-12 rounded-t-lg px-3 sm:px-5`, a pixel icon and its label in `text-2xl` pixel face, sitting on the red line. The open tab is `bg-red text-white`, joined to the line; the others `text-subtle`, `hover:bg-card hover:text-white`. PC (monitor) opens Open Sheet and Teams (people) opens Team Analysis until the series pages exist. At the right (`ml-auto`), for a signed-in reader: a player's `PlayerBadge` (an admin has none), their name in `text-2xl` pixel face (hidden below `sm`), and sign-out, a `size-11` icon button (`SignOutIcon`), `text-muted-foreground`, `hover:bg-card hover:text-white`. Below `sm` the header's gap is `gap-2` and the account's `gap-1`, so both tabs, the badge and sign-out fit 360px. No page title and no other navigation.
 - **Page column** (`src/components/page.ts`): every page is a centred column with the header's gutter, `px-4 sm:px-8`, and one width per page kind:
 
   | Class | Width | Page kind |
@@ -152,8 +161,10 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 | `Dialog` | `src/components/ui/dialog.tsx` | Modal on `bg-scrim`; pass `className="bg-card"`; title in `font-heading text-2xl`; `aria-describedby={undefined}` when there is no description |
 | `Sheet` | `src/components/ui/sheet.tsx` | Bottom sheet for a phone's detail pane (imported as `BottomSheet` in the PC) |
 | `SiteHeader` | `src/components/site-header.tsx` | The header and its tabs ([Layout Shell](#layout-shell)) |
+| `BallSplit`, `ballTitleClass` | `src/components/ball-split.tsx` | The sign-in and waiting pages' Poké Ball, after their boards: a `bg-red` top `h-[51svh]` (`sm:h-[52svh]`) with the site's name in `text-8xl` (`sm:text-9xl`) pixel face and `.enbraile.vip` in `blush`; an `ink` band (`h-3.5`, `sm:h-4.5`) with a `foreground` ball (`size-20`, `sm:size-30`) on its seam; the dark half holding the page's content |
+| `SignOutIcon` | `src/components/sign-out.tsx` | The boards' sign-out mark, a door with an arrow leaving it, in `currentColor`; `useSignOut` beside it signs out |
 | `PixelIcon` | `src/components/pixel-icon.tsx` | The pixel icons as crisp-edged SVG, `size-4.5` by default: `ball` (the Poké Ball, in its own colours), `flag`, `monitor`, `people`, `download` (in `currentColor`) and `cartridge` (in its own colours) |
-| `PlayerBadge` | `src/components/player-badge.tsx` | A player, boxed, never round: their initial in the pixel face on their colour, a 3px `ink` border and a ring in their colour; `size="sm"` (`size-9 rounded-md ring-2`) or `"lg"` (`size-12.5 rounded-lg ring-3`), after the boards' header and trainer rows; `colour` picks `player-1`…`player-6`. No page shows a player yet |
+| `PlayerBadge` | `src/components/player-badge.tsx` | A player, boxed, never round: their initial in the pixel face on their colour, a 3px `ink` border and a ring in their colour; `size="sm"` (`size-9 rounded-md ring-2`) or `"lg"` (`size-12.5 rounded-lg ring-3`), after the boards' header and trainer rows; `colour` picks `player-1`…`player-6`; `playerColour(id)` picks one from a player's id. Shown in the header, on the waiting page and on the allowlist |
 | `listPage`, `toolPage`, `messageWidth` | `src/components/page.ts` | The page column classes ([Layout Shell](#layout-shell)) |
 | `TypeDot`, `TypeChip`, `TypeSquare`, `UnknownMark` | `src/components/marks.tsx` | A type as its colour with the white symbol (dot 16px, chip with name, square 24px); `?` in `destructive` for anything Showdown lacks |
 | `Panel` | `src/components/controls.tsx` | A titled panel: `rounded-2xl border-3 bg-card p-4`, `h3` in `text-2xl` pixel face, optional `aside` |

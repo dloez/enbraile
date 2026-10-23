@@ -14,6 +14,12 @@ const SIZES = {
   lg: "size-12.5 rounded-lg ring-3 text-3xl",
 } as const;
 
+export function playerColour(id: string): number {
+  let hash = 0;
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return hash % COLOURS.length;
+}
+
 export function PlayerBadge({ name, colour, size = "sm" }: { name: string; colour: number; size?: keyof typeof SIZES }) {
   return (
     <span

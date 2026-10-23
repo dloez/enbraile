@@ -15,6 +15,13 @@
       "when": 1792704891253,
       "tag": "0001_games",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792764117397,
+      "tag": "0002_allowlist",
+      "breakpoints": true
     }
   ]
 }

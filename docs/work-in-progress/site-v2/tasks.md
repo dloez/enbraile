@@ -36,25 +36,22 @@ The signed-off header holds Series · PC · Teams (· Admin for admins) and, at 
 
 **Touches:** `pkmn/site/src/components/site-header.tsx`, `pkmn/site/src/components/pixel-icon.tsx`, `docs/pkmn/site/reference/design-system.md`
 
-## Players sign in with Discord and admins keep the allowlist
+## Owner-run: Discord sign-in on production
 
-Discord sign-in through Better Auth, on the sign-in page; a signed-in player who is not allowed sees the waiting page, an allowed one an empty home. Both pages are drawn in the frozen boards `pkmn/site/design/sign-in.dc.html`, `sign-in-phone.dc.html`, `waiting.dc.html` and `waiting-phone.dc.html` ([The pkmn Site → Look](../../pkmn/site/explanation/site.md#look)): no site header on either, the waiting page's own sign-out below its message. The admin's allowlist page lists everyone who has signed in and allows or removes them.
+Discord sign-in and the allowlist are built and checked on the local stack (2026-10-23); production needs the owner's half, as [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 describes.
 
 **Do:**
-- [ ] The Discord provider (owner-run: the Discord application, its redirect URIs for production and localhost, its secrets in Vercel).
-- [ ] An `allowed` flag on players, the admin allowlist page, the waiting page, the site header's sign-out.
-- [ ] Every API route but sign-in refuses players not allowed.
-- [ ] Extend `npm run seed` so the test players are allowed but one, who waits; the Discord variables named in `.env.example`; [How to Verify the Site](../../pkmn/site/how-to/verify-the-site.md)'s sign-ins say which test player waits.
+- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migration `0002_allowlist`) before the push that deploys it.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; `npx drizzle-kit check`.
-- Claude-run: through Playwright MCP, a test player not allowed sees the waiting page, and after the admin allows them, the home.
-- Human-run: on production, sign in with Discord as a new user and see the waiting page; as an admin in another browser, allow them; reload and see the home; remove them and see the waiting page again.
-- Reuse: the four sign-in and waiting boards in `pkmn/site/design/`; `api/_lib/auth.ts`, `api/_lib/admin.ts` (`requireAdmin`), `scripts/accounts.ts`, `src/lib/auth-client.ts`, `src/lib/api.ts` with a zod schema in `shared/`.
-- Neighbors: the `/admin` pages (`src/pages/admin.tsx`, `src/pages/admin-games.tsx`).
-- Forbidden: an admin account linked to Discord; admin powers on a Discord session; Discord's blurple anywhere but the Discord button.
+- Claude-run: none.
+- Human-run: on production, sign in with Discord as a new user and see the waiting page; as an admin in another browser, allow them at `/admin/players`; reload and see the home; remove them and see the waiting page again.
+- Reuse: step 6 of the run how-to.
+- Neighbors: none.
+- Forbidden: the Discord secret anywhere but Vercel and `.env.local`.
 
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/.env.example`, `docs/pkmn/site/`, `docs/pkmn/index.md`
+**Touches:** `docs/pkmn/site/`
+**Needs the author:** the owner-run steps above.
 
 ## Admins create and start series; players land on the current one
 
@@ -75,7 +72,6 @@ The series form (number, name, game, ingestion mode, players from the allowlist,
 - Forbidden: rules enforced in team building; raw HTML in rendered rules; the boards' sample data; a series switcher on the series page; a Lives tile (open in [Backlog → where do a trainer's lives come from?](../backlog.md#pkmnsite-where-do-a-trainers-lives-come-from)).
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Players sign in with Discord and admins keep the allowlist
 
 ## Players upload their save zip as a snapshot
 

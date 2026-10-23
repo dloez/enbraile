@@ -32,7 +32,7 @@ export async function createAdmin(name: string, password: string): Promise<void>
   });
 }
 
-export async function createTestPlayer(name: string): Promise<void> {
+export async function createTestPlayer(name: string, allowed: boolean): Promise<void> {
   const username = name.toLowerCase();
   const context = await auth.$context;
   await db.insert(user).values({
@@ -41,5 +41,6 @@ export async function createTestPlayer(name: string): Promise<void> {
     email: `${username}@test.invalid`,
     username,
     displayUsername: name,
+    allowed,
   });
 }

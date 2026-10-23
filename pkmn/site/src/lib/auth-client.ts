@@ -3,5 +3,5 @@ import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
   basePath: "/api/auth",
-  plugins: [usernameClient(), inferAdditionalFields({ user: { admin: { type: "boolean", required: false } } })],
+  plugins: [usernameClient(), inferAdditionalFields({ user: { admin: { type: "boolean", required: false }, allowed: { type: "boolean", required: false } } })],
 });

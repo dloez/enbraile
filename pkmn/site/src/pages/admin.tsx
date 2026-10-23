@@ -21,30 +21,22 @@ export function AdminPage() {
   );
 }
 
+const ADMIN_PAGES = [
+  { name: "Players", to: "/admin/players" },
+  { name: "Games", to: "/admin/games" },
+] as const;
+
 function AdminHome() {
-  const [signingOut, setSigningOut] = useState(false);
   return (
     <main className={cn(listPage, "gap-7 py-7 sm:py-9")}>
-      <div className="flex flex-wrap items-center gap-4">
-        <h1 className="m-0 flex-1 font-heading text-5xl leading-none sm:text-6xl">Admin</h1>
-        <button
-          type="button"
-          disabled={signingOut}
-          onClick={async () => {
-            setSigningOut(true);
-            await authClient.signOut();
-            setSigningOut(false);
-          }}
-          className={buttonClass}
-        >
-          Sign out
-        </button>
-      </div>
+      <h1 className="m-0 font-heading text-5xl leading-none sm:text-6xl">Admin</h1>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Link to="/admin/games" className={cn(liftCardClass, "flex items-center gap-3 px-5 py-4.5")}>
-          <span className="flex-1 font-heading text-4xl">Games</span>
-          <ArrowRight className="size-6 text-primary" aria-hidden="true" />
-        </Link>
+        {ADMIN_PAGES.map((page) => (
+          <Link key={page.to} to={page.to} className={cn(liftCardClass, "flex items-center gap-3 px-5 py-4.5")}>
+            <span className="flex-1 font-heading text-4xl">{page.name}</span>
+            <ArrowRight className="size-6 text-primary" aria-hidden="true" />
+          </Link>
+        ))}
       </div>
     </main>
   );

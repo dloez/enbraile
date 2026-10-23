@@ -41,6 +41,7 @@ Copy `.env.example` to `.env.local` (untracked). Its values fit the local stack;
 - `BETTER_AUTH_URL`: `http://localhost:5173`, the Vite dev URL.
 - `API_PORT`: the port the API listens on behind Vite, 8787.
 - `DEV_SIGN_IN`: `1` turns on the dev-only test sign-in ([How to Verify the Site](verify-the-site.md)). Never set it anywhere but a local `.env.local`.
+- `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`: the Discord application's OAuth2 client (step 6). Left empty, Discord sign-in is not registered and its button answers "Sign-in failed"; the local stack signs players in with the test sign-in instead.
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`: the file store; the example's point at the local MinIO and its `pkmn-site` bucket. With a second stack's `MINIO_PORT`, match the port in `S3_ENDPOINT`.
 
 Then apply the migrations and seed the known state:
@@ -50,7 +51,7 @@ npm run db:migrate
 npm run seed
 ```
 
-`seed` makes the admin `admin` with the password `admin-password`, the test players Red, Blue and Leaf, and the game "Pokémon Añil + Randomlocke" with a small stand-in zip put in the bucket, skipping any already there, and refuses a `DATABASE_URL` or `S3_ENDPOINT` whose host is not `localhost` or `127.0.0.1`. To make a real admin instead, `npm run admin:create <name>` asks for the password twice; it refuses a name already taken and a password under 8 characters. Every script reads `.env.local`; a variable already set in the shell wins over it.
+`seed` makes the admin `admin` with the password `admin-password`, the test players Red and Blue, allowed, and Leaf, waiting for an admin, and the game "Pokémon Añil + Randomlocke" with a small stand-in zip put in the bucket, skipping any already there, and refuses a `DATABASE_URL` or `S3_ENDPOINT` whose host is not `localhost` or `127.0.0.1`. To make a real admin instead, `npm run admin:create <name>` asks for the password twice; it refuses a name already taken and a password under 8 characters. Every script reads `.env.local`; a variable already set in the shell wins over it.
 
 After changing `api/_lib/schema.ts`, write the next migration with `npm run db:generate`, check the migrations with `npx drizzle-kit check`, and commit the new files in `drizzle/`. A migration only goes forward: to undo a change, generate another.
 
@@ -60,7 +61,7 @@ After changing `api/_lib/schema.ts`, write the next migration with `npm run db:g
 npm run dev
 ```
 
-Vite starts the API itself (`scripts/dev-api.ts` under `tsx watch`, on `API_PORT`, restarting on changes), proxies `/api` to it, prints the local URL, and stops the API when it stops. Open Sheet is at `/open-sheet`, admins sign in at `/admin`, and the games are at `/admin/games`. Imports and teams are stored in that browser's IndexedDB for the dev origin.
+Vite starts the API itself (`scripts/dev-api.ts` under `tsx watch`, on `API_PORT`, restarting on changes), proxies `/api` to it, prints the local URL, and stops the API when it stops. Every page but `/admin` asks a signed-out reader to sign in, and players sign in locally with the test sign-in ([How to Verify the Site](verify-the-site.md)). Open Sheet is at `/open-sheet`, admins sign in at `/admin`, the allowlist is at `/admin/players` and the games are at `/admin/games`. Imports and teams are stored in that browser's IndexedDB for the dev origin.
 
 ### 5. Run the gate
 
@@ -82,6 +83,8 @@ uvx b2 bucket update --cors-rules '[{"corsRuleName":"pkmn-site","allowedOrigins"
 
 and the same with `https://*.vercel.app` for `pkmn-site-preview-enbraile`; `uvx b2 account clear` afterwards. A preflight `OPTIONS` to `https://s3.<region>.backblazeb2.com/<bucket>/x` with an `Origin` and `Access-Control-Request-Method: PUT` answers `200` for the allowed origin and `403` for any other. The buckets' S3 endpoint is shown on their page (`https://s3.<region>.backblazeb2.com`), and the region is the part after `s3.`.
 
+In the [Discord Developer Portal](https://discord.com/developers/applications), make an application for the site. Under OAuth2, add the redirects `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`, and copy its client ID and client secret. Previews get no Discord sign-in: their URLs change with every branch, so they sign in as an admin or not at all.
+
 Set the project's environment variables:
 
 | Variable | Production | Preview |
@@ -92,6 +95,7 @@ Set the project's environment variables:
 | `S3_ENDPOINT`, `S3_REGION` | the buckets' endpoint and region | the same |
 | `S3_BUCKET` | `pkmn-site-enbraile` | `pkmn-site-preview-enbraile` |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | the production bucket's key ID and key | the preview bucket's |
+| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` | the Discord application's client ID and secret | unset |
 
 Neon's connection strings carry `sslmode=require`, which `pg` already treats as `verify-full` and warns about on every connection; write `sslmode=verify-full` in every Neon string, in Vercel and in the shell, which keeps the same certificate checks and silences the warning.
 
@@ -119,5 +123,6 @@ Use Instant Rollback on the previous production deployment in the Vercel dashboa
 - `/admin` signs an admin in with the password `admin:create` set, refuses a wrong one with "Wrong username or password", and signs out.
 - `curl -s -o /dev/null -w '%{http_code}' 'https://pkmn.enbraile.vip/api/auth/dev/sign-in?username=x'` prints `404`.
 - At `/admin/games`, an admin creates a game, uploads its zip, sees its size and date after a reload, and downloads a file of the same size; `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/games` prints `401`.
+- Signed out, `https://pkmn.enbraile.vip` shows the sign-in page. Signing in with Discord as someone new shows the waiting page; an admin allows them at `/admin/players`, and their reload shows the home; removed, their reload shows the waiting page again. `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/players` prints `401`.
 - `curl -sI https://pkmn.enbraile.vip` shows `server: Vercel`.
 - After a push, the page loads a new `/assets/index-*.js` bundle carrying the change.
