@@ -4,6 +4,14 @@ Laid out as the `/scope` skill's work-in-progress layout says. An entry's headin
 
 ## Questions
 
+### pkmn/site: how is a team locked?
+
+[Site v2 → Team Building](site-v2/discovery.md#team-building) says only that a tournament creates teams whose sources it locks. Open: who locks a team and when (a match, an admin, the player submitting it); what locking freezes, the sources only or the whole build (members, items, abilities, moves); whether it can be unlocked, and by whom; how a locked team shows on the team page and the team list. Higher priority than the question below, which depends on it. _(owner, 2026-10-23)_
+
+### pkmn/site: in a manual series, what happens to the items a locked team uses?
+
+A locked team's build spends items (Mini Setas on abilities, held items), and the player has to spend them in the real game too; the site only learns what the save holds at the next upload. Open: whether the site deducts them from the snapshot's bag for the player's other teams once a team is locked; whether it expects the next snapshot to show them spent; what happens when it does not, keeping to the trust stance of manual series, with no blocking validation ([Site v2 → Snapshots In](site-v2/discovery.md#snapshots-in)). Depends on [how is a team locked?](#pkmnsite-how-is-a-team-locked). _(owner, 2026-10-23)_
+
 ### pkmn/site: where do a trainer's lives come from?
 
 The series page's trainer panel wants a trainer's lives, for a series that plays with a lives clause (series 1 plays without one), and nothing gives them yet. The rest of what the panel wants now comes from the snapshot, fainted Pokémon included, through a per-series ingestion mode ([Site v2 → Model](site-v2/discovery.md#model), [Snapshots In](site-v2/discovery.md#snapshots-in), 2026-10-23). Raised in the site v2 design pass. _(owner, 2026-10-22)_
