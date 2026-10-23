@@ -28,6 +28,7 @@ At the title screen (session `20261002-024731`, a fresh boot), `wonder state` sh
 | Nickname | method `name`: the nickname, or the species name when there is none | `Chispa`, typed at the game's nickname entry; an eval-made Eevee reads `Eevee` |
 | Form | method `form` | 0 for both; forms not otherwise checked |
 | Level | method `level` (from `@exp`) | Nv. 5 |
+| Permafainted | `@perma_faint`, true for a Pokémon the challenge's permafaint rule took | 12 of the 91 hatched Pokémon in the party and boxes of MIRAMEEE's `Partida 1.rxdata` ([Save Records](#save-records)) |
 | Experience | `@exp` | 135, then 153 after a won wild battle |
 | Gender | method `gender`: 0 male, 1 female, 2 genderless | The Charmander reads 1, and `female?` answers true |
 | Types | method `types`, a list of type Symbols, one entry for a single type | `[:FIRE]`; Pidgey's battler `NORMAL`, `FLYING` |
@@ -75,6 +76,21 @@ At the title screen (session `20261002-024731`, a fresh boot), `wonder state` sh
 | First encounters used | `$PokemonGlobal.challenge_encs`: a hash from map ID (Integer) to `true`, read as no map marked when it is nil ([Nuzlocke](nuzlocke.md) for when a map is marked); kept as the set of map IDs marked `true` | Session `20261004-152242` (booted into `doubles-pre` as the save `memory-verify-3`): read empty, then map 29 after a Master Ball catch in an eval-started wild battle on it, as `wonder know state` printed |
 | Challenge queued | `$PokemonGlobal.challenge_qued`: true from the new game until the first Poké Ball starts the challenge, then false ([Nuzlocke](nuzlocke.md)); kept as true only when it reads `true`. Read with the state since 2026-10-06 for the rules engine's healing guard ([Rules Engine Design → Field Actions](../explanation/rules-engine-design.md#field-actions)) | Session `20261006-233700` (booted into `marked-azul` as the save `heal-guard-1`): read true at Ciudad Verde's buy list (map 31 event 8) before any Poké Ball, then false once 10 Poké Balls were bought |
 | Visited maps | `$PokemonGlobal.visitedMaps` at depth 1, as the [Live World](#live-world) read takes it | Session `20261004-151909` (booted into `doubles-pre`): read maps 1, 28, 29, 104 and 217 through `wonder state` |
+
+## Save Records
+
+What a save holds of a run as a whole, read for the site's snapshots. Verified 2026-10-23 on `es-v4.14`, read-only, with `export_data.py`'s own `MarshalReader` on the one real save at hand, MIRAMEEE's `Partida 1.rxdata` (8 badges, in the Hall of Fame); sources from `game/extracted/es-v4.14/scripts`. The save's top-level hash holds `stats` beside the keys [Open Sheet Export](../explanation/open-sheet-export.md) reads.
+
+| Field | Path | How verified |
+|-------|------|--------------|
+| Play time | `save["stats"]` is a `GameStats` (`032_Game_SaveValues.rb:120`, `055_Game_Stats.rb`); `@play_time` in seconds, with `@play_sessions` and `@time_last_saved` | 134379.17 s (37 h 19 min), 67 sessions |
+| Pokédex | `$player@pokedex`, a `Player::Pokedex` (`294_Player_Pokedex.rb`); `@seen` and `@owned` are hashes of species → true, counted as the game's `seen_count` and `owned_count` count them | 463 seen, 132 owned |
+| Hall of Fame | `$PokemonGlobal@hallOfFame`, a list of the 6-member teams entered, with `@hallOfFameLastNumber`; `$player@halloffame` is set too. `GameStats@hall_of_fame_entry_count` is not: it read 0 on a save in the Hall of Fame | 1 team, `@hallOfFameLastNumber` 1 |
+| Battle counts | `GameStats`: `@trainer_battles_won`, `@trainer_battles_lost`, `@wild_battles_won`, `@wild_battles_lost` (fleeing included), `@blacked_out_count`, `@evolution_count`, `@failed_poke_ball_count` | 229, 2, 122, 287, 1, 47, 98 |
+| Not kept by Añil | `GameStats@times_to_get_badges` stays `[]` and `@gym_leader_attempts` all 0: a save holds no time per badge or count of gym attempts | As read |
+| Challenge | `$PokemonGlobal@challenge_rules`, the challenge rules on (`PERMAFAINT`, `ONE_CAPTURE`, …); `@challenge_state`, by challenge, its outcome and rules (`{1 => ['VICTORY', rules]}` for a challenge won) | As read |
+
+Money, badges and the save slot are in [Trainer](#trainer), the Pokévial's charges in [Pokévial](#pokévial) (5 of 5 in this save), and the first encounters used in [Run Progress](#run-progress).
 
 ## Live World
 

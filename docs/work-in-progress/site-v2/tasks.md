@@ -84,8 +84,7 @@ The series form (number, name, game, ingestion mode, players from the allowlist,
 The export ported to TypeScript in the site, run in a Vercel Function on the save zip the browser put in B2 ([Snapshots In](discovery.md#snapshots-in), [The export?](discovery.md#data-stack-and-config)), through the one pipeline every ingestion mode shares: raw save stored, exported, snapshot. `generate_export_data.py` writes the export's data as JSON for the site; the port reads the zip, lists its `Partida N.rxdata` slots, and exports with moves always. A snapshot holds everything the save holds at its milestone ([What does a snapshot hold?](discovery.md#model)), not only today's export. The player picks the slot on their row of the series page and the milestone, suggested from the save's badges and Hall of Fame; the row then shows the snapshot with its Pokémon count and its Fainted tile. Uploading again to a milestone replaces it. An admin can upload for any player. In an automatic series the players see no upload. This entry rolls missing TMs in memory as the export does; keeping them is the entry below.
 
 **Do:**
-- [ ] Locate play time and the Pokédex's seen and owned in a real save, and record them in [State](../../pkmn/games/anil/reference/state.md).
-- [ ] `generate_export_data.py` writes the data JSON into the site; port the Ruby Marshal reader, slot pick, abilities, moves and items, and add what the export leaves out: fainted Pokémon (species, nickname, level), all 8 bag pockets, the trainer (name, ID, money, badges), the party and its levels, play time, the Pokédex, used first-encounter routes.
+- [ ] `generate_export_data.py` writes the data JSON into the site; port the Ruby Marshal reader, slot pick, abilities, moves and items, and add what the export leaves out: fainted Pokémon (species, nickname, level), all 8 bag pockets, the trainer (name, ID, money, badges), the party and its levels, play time, the Pokédex, used first-encounter routes, read from the paths in [State → Save Records](../../pkmn/games/anil/reference/state.md#save-records); the League milestone suggested from `$PokemonGlobal@hallOfFame`, never `GameStats@hall_of_fame_entry_count`.
 - [ ] Saves and snapshots tables and migration; the zip kept in B2 under its snapshot; the upload flow with the milestone suggestion; a failed export shows its reason; no upload for players of an automatic series.
 - [ ] Extend `npm run seed` with a snapshot for a test player, uploaded from a save zip in `pkmn/site/saves/` when one is there ([Local data to check with?](discovery.md#observability-and-verification)).
 - [ ] Move [Open Sheet JSON](../../pkmn/games/anil/reference/open-sheet-json.md) to be the snapshot format's reference, widened to the snapshot's contents.
@@ -102,18 +101,18 @@ The export ported to TypeScript in the site, run in a Vercel Function on the sav
 
 ## Keep each save's TM rolls and hand the rolled zip back
 
-The TMs a snapshot rolled are kept and reused on every later export of that save, and the player can download their zip back with the slot's `tm_compatibility_<slot>.dat` holding them ([TM rolls the export makes?](discovery.md#snapshots-in)). A later upload whose save lacks rolls the site made was never put back: its snapshot says so and offers the download again.
+The TMs a save's export rolled are kept, reused when the site exports that same zip again, and replaced by the next zip's own rolls when the player uploads again; the player can download their zip back with the slot's `tm_compatibility_<slot>.dat` holding them ([TM rolls the export makes?](discovery.md#snapshots-in)).
 
 **Do:**
-- [ ] The save's rolls stored with it; the port seeded with them before rolling what is still missing.
-- [ ] The rolled zip built as `export_data.py --save` builds it (the player's zip entry for entry, the side file replaced or added) and offered on the saved step and the snapshot; the "not put back" note.
+- [ ] The save's rolls stored with it; a re-export of the same zip seeded with them before rolling what is still missing; a new upload's export reading its own side file or save first.
+- [ ] The rolled zip built as `export_data.py --save` builds it (the player's zip entry for entry, the side file replaced or added) and offered on the saved step and the snapshot.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, upload a save zip twice and see the second snapshot's TM moves equal the first's; download the rolled zip, and read its side file back with the port's Marshal reader holding the snapshot's rolls.
-- Human-run: download your rolled zip, extract it with the game closed, load and save in game, upload again, and see no "not put back" note.
+- Claude-run: `npm run gate`; through `verify-site`, re-export a stored save and see its TM moves unchanged; download the rolled zip, and read its side file back with the port's Marshal reader holding the snapshot's rolls.
+- Human-run: download your rolled zip, extract it with the game closed, load and save in game, upload again, and see the same TM moves.
 - Reuse: the port's Marshal reader and writer; `downloadUrl` in `api/_lib/files.ts`.
 - Neighbors: [Open Sheet Export → Rolling TMs](../../pkmn/games/anil/explanation/open-sheet-export.md#rolling-tms).
-- Forbidden: rolling a pair again that the site already rolled for the save; writing the save itself.
+- Forbidden: rolling again a pair the site already rolled for the stored zip; comparing one snapshot's TMs with another's; writing the save itself.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`, `docs/pkmn/games/anil/`
 **After:** Players upload their save zip as a snapshot
