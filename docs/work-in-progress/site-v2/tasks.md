@@ -2,9 +2,9 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones. The first entry whose screen uses the look's amber adds the `warning` token (`#ffc878` on `#3b3530`) and its row in [Design System](../../pkmn/site/reference/design-system.md) ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), 2026-10-23).
 
-## Design the PC's links, the team list and builder, and the new pages' phone layouts
+## Design the new pages' phone layouts, the team list and builder
 
-The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the PC board's links (a breadcrumb to the player's series page, the header's name to the profile), phone layouts of the player's profile, the player's series page, the series list and the series page, and the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare). The PC, bag and team views carry their content over from Open Sheet and Team Analysis. The upload flow, the series page's revision and the two player pages were signed off on 2026-10-23 and are frozen in `pkmn/site/design/`.
+The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): phone layouts of the player's profile, the player's series page, the series list and the series page, and the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare). The team views carry their content over from Open Sheet and Team Analysis. The PC page and the series page's second revision were signed off on 2026-10-23 and are frozen in `pkmn/site/design/` with the earlier boards.
 
 **Do:**
 - [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
@@ -74,7 +74,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 
 ## Browse any player's PC at any snapshot
 
-`/players/<player>/series/<n>/pc?snapshot=<milestone>`: Open Sheet's PC, summary and bag over a stored snapshot, with a snapshot picker, the bag opening from its Bag button ([The PC?](discovery.md#pages)). A trainer row's PC tile on the series page opens it, and the header's PC tab opens the signed-in player's own in the running series. `/open-sheet` keeps working until teams move.
+`/players/<player>/series/<n>/pc?snapshot=<milestone>`: Open Sheet's PC, summary and bag over a stored snapshot, with a snapshot picker, the bag opening from its Bag button, and the page's breadcrumb as `pc.dc.html` draws it ([The PC?](discovery.md#pages)). A trainer row's PC tile on the series page opens it, and the header's PC tab opens the signed-in player's own in the running series. `/open-sheet` keeps working until teams move.
 
 **Do:**
 - [ ] A snapshot read route; the PC page reading it through the export's schema; the PC tile, each snapshot in the row's Snapshots tile opening the PC at it ([First page after sign-in?](discovery.md#pages)), and the PC tab (`TABS` in `src/components/site-header.tsx`, today `/open-sheet`).
@@ -82,12 +82,11 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 **Acceptance:**
 - Claude-run: `npm run gate`.
 - Human-run: open another player's PC from the series page; search, filter by type, open a summary and the bag; switch snapshot when there are two; open the PC tab and land on your own; on a phone, the same.
-- Reuse: the frozen PC boards in `pkmn/site/design/`; `src/open-sheet/components/pc.tsx`, `summary.tsx`, `bag.tsx`, `src/open-sheet/dex.ts`.
+- Reuse: `pkmn/site/design/pc.dc.html`; `src/open-sheet/components/pc.tsx`, `summary.tsx`, `bag.tsx`, `src/open-sheet/dex.ts`.
 - Neighbors: `src/pages/open-sheet.tsx`.
 - Forbidden: a second copy of the PC components.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** Design the PC's links, the team list and builder, and the new pages' phone layouts
 
 ## The series list and the series page fit a phone
 
@@ -104,24 +103,24 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: a second copy of the page for phones; the Trainers table scrolling sideways once the phone board is built.
 
 **Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/src/pages/series-list.tsx`, `docs/pkmn/site/`
-**After:** Design the PC's links, the team list and builder, and the new pages' phone layouts
+**After:** Design the new pages' phone layouts, the team list and builder
 
 ## A player's series page: Journey and the fallen
 
 `/players/<player>/series/<n>` ([A player in a series?](discovery.md#pages)): Journey, the player's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count), each column opening the PC at that snapshot; and Fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)); a small button to the player's PC naming its target ("Gym 7 · latest"), opening the series' latest snapshot. The series row's Fainted and Journey tiles open it at `#fallen` and `#journey`.
 
 **Do:**
-- [ ] The page's Journey and Fallen sections over the snapshots' records, at phone width as the design entry's phone board draws it; the fallen matched across consecutive snapshots by personal ID; the row's Journey tile (play time, after `series.dc.html`; `TrainerRow` in `src/pages/series.tsx` has none yet) and the Fainted and Journey tiles' links.
+- [ ] The page's Journey and Fallen sections over the snapshots' records, at phone width as the design entry's phone board draws it; the fallen matched across consecutive snapshots by personal ID; the row's Journey tile (play time, after `series.dc.html`; `TrainerRow` in `src/pages/series.tsx` has none yet) and the Fainted and Journey tiles' links.; the PC page's breadcrumb, "◀ <player> · Series <n>", linking here
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with two seeded snapshots for a test player, one Pokémon alive in the first and permafainted in the second, see Journey's two columns and that Pokémon fallen between their milestones; click a column and land on the PC at that snapshot; open the row's Fainted tile and land at `#fallen`.
+- Claude-run: `npm run gate`; through `verify-site`, with two seeded snapshots for a test player, one Pokémon alive in the first and permafainted in the second, see Journey's two columns and that Pokémon fallen between their milestones; click a column and land on the PC at that snapshot; open the row's Fainted tile and land at `#fallen`; from the PC, click the breadcrumb and land on this page.
 - Human-run: open your series 1 page from the series page and read your Post-League records and your fallen.
 - Reuse: the snapshot read route from the entry above; the sprites Open Sheet shows.
 - Neighbors: the series row's tiles.
 - Forbidden: a fallen Pokémon's span guessed without two snapshots (one snapshot gives "by <milestone>", owner, 2026-10-23); a PC or party on this page.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**After:** Browse any player's PC at any snapshot; Design the PC's links, the team list and builder, and the new pages' phone layouts
+**After:** Browse any player's PC at any snapshot; Design the new pages' phone layouts, the team list and builder
 
 ## A player's profile, across every series
 
@@ -138,21 +137,21 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: totals from any snapshot but each series' latest; league results beyond the placeholder.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**After:** A player's series page: Journey and the fallen; Design the PC's links, the team list and builder, and the new pages' phone layouts
+**After:** A player's series page: Journey and the fallen; Design the new pages' phone layouts, the team list and builder
 
-## The series page's track reads the snapshots, and trainers compare
+## The series page's track reads the snapshots
 
-Each row's progress track shows the trainer at their latest snapshot, with the row's tiles showing it; clicking another milestone's node shows that snapshot ([The progress track?](discovery.md#pages)). A switch on the Trainers table swaps the tracks for each trainer's records at a chosen milestone: play time, fainted, Pokédex, battles, unranked ([Comparing trainers?](discovery.md#pages)).
+Each row's progress track shows the trainer at their latest snapshot, with the row's tiles showing it; each milestone with a snapshot is ringed in faint cyan in its node's shape, and clicking one shows that snapshot ([The progress track?](discovery.md#pages)). The Trainers table has no Records view ([Comparing trainers?](discovery.md#pages)).
 
 **Do:**
-- [ ] The interactive track and the row's tiles per snapshot; the compare switch and its milestone pick.
+- [ ] The interactive track, its rings, and the row's tiles per snapshot.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with two snapshots for a test player, click the earlier node and see the row's tiles change; flip the switch, pick a milestone, and read each trainer's records; a trainer with no snapshot at it reads as such.
-- Human-run: on production, click through your own track's nodes and compare the trainers at Post-League.
+- Claude-run: `npm run gate`; through `verify-site`, with two snapshots for a test player, see both nodes ringed, click the earlier one and see the row's tiles change.
+- Human-run: on production, click through your own track's nodes.
 - Reuse: the series page, `src/pages/series.tsx` (`TrainerRow`'s track); the snapshot read route.
 - Neighbors: `pkmn/site/design/series.dc.html`.
-- Forbidden: a ranking or ordering by records.
+- Forbidden: a Records view or switch on the series page; a ranking or ordering by records.
 
 **Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
 **After:** A player's series page: Journey and the fallen
@@ -162,17 +161,17 @@ Each row's progress track shows the trainer at their latest snapshot, with the r
 An admin can set any value derived from a save by hand (progress, the fainted count, a snapshot's milestone), and upload, replace, delete or move any snapshot for any player ([Admin overrides?](discovery.md#model), [How does a save reach the site?](discovery.md#snapshots-in)). Each value records its source, from the save or set by hand (by whom and when), and a value set by hand wins until an admin clears it.
 
 **Do:**
-- [ ] The source of each derived value in the schema and migration; override, clear, delete and move routes, admin-only; the overrides on the series page's rows, and the track's mark on progress set by hand, as `series.dc.html` draws it.
+- [ ] The source of each derived value in the schema and migration; override, clear, delete and move routes, admin-only; the overrides on the series page's rows; the track shows no mark on progress set by hand (`series.dc.html`).
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `npx drizzle-kit check`; through `verify-site`, as admin, set a player's fainted count, upload a new save for them and see the set count kept, clear it and see the save's; move a snapshot to another milestone; delete one; as a player, see no override controls and get `403` from the routes.
-- Human-run: as admin on production, correct a snapshot's milestone and see it on the series page; set a player's progress by hand and see their track mark it as set by hand.
+- Human-run: as admin on production, correct a snapshot's milestone and see it on the series page; set a player's progress by hand and see their track move to it.
 - Reuse: `requireAdmin` in `api/_lib/admin.ts`; the snapshot tables from the save-zip entry.
 - Neighbors: the series page's Trainers table.
 - Forbidden: a value set by hand overwritten by a later save; an override without who set it and when.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** The series page's track reads the snapshots, and trainers compare
+**After:** The series page's track reads the snapshots
 
 ## Build teams locked to a snapshot, stored in the account
 
@@ -191,7 +190,7 @@ An admin can set any value derived from a save by hand (progress, the fainted co
 - Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Browse any player's PC at any snapshot; Design the PC's links, the team list and builder, and the new pages' phone layouts
+**After:** Browse any player's PC at any snapshot; Design the new pages' phone layouts, the team list and builder
 
 ## A trainer row's Teams tile opens their teams
 
