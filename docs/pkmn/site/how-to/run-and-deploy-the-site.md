@@ -80,17 +80,27 @@ Set the project's environment variables:
 
 | Variable | Production | Preview |
 |----------|------------|---------|
-| `DATABASE_URL` | the production branch's pooled connection string | the `dev` branch's |
+| `DATABASE_URL` | the production branch's pooled connection string, with `sslmode=verify-full` | the `dev` branch's, the same way |
 | `BETTER_AUTH_SECRET` | a random secret | another random secret |
 | `BETTER_AUTH_URL` | `https://pkmn.enbraile.vip` | unset |
 | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET` | the B2 bucket's endpoint, region and name | the same |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | the application key's ID and key | the same |
 
-`API_PORT` and `DEV_SIGN_IN` stay unset in Vercel: without `DEV_SIGN_IN` the test sign-in does not exist. Then migrate each branch and make the admins, running step 3's `db:migrate` and `admin:create` with that branch's `DATABASE_URL` set in the shell.
+Neon's connection strings carry `sslmode=require`, which `pg` already treats as `verify-full` and warns about on every connection; write `sslmode=verify-full` in every Neon string, in Vercel and in the shell, which keeps the same certificate checks and silences the warning.
+
+`API_PORT` and `DEV_SIGN_IN` stay unset in Vercel: without `DEV_SIGN_IN` the test sign-in does not exist. Then migrate each branch and make the admins with that branch's direct connection string (the one without `-pooler`) and its environment's `BETTER_AUTH_SECRET` set in the shell, since `admin:create` loads the site's auth setup, which refuses to start without one:
+
+```sh
+export DATABASE_URL='<the branch's direct connection string>'
+export BETTER_AUTH_SECRET='<that environment's secret>'
+npm run db:migrate
+npm run admin:create <name>
+unset DATABASE_URL BETTER_AUTH_SECRET
+```
 
 ### 7. Deploy
 
-Migrate production first when the change carries a new migration: run `npm run db:migrate` with the production branch's `DATABASE_URL` set in the shell. Then push to `main`. Vercel builds and deploys every push that touches `pkmn/site/` to production, and a branch push gets a public preview URL, shown on the commit's GitHub status and in the Vercel dashboard. There is no manual deploy command.
+Migrate production first when the change carries a new migration: run `npm run db:migrate` with the production branch's direct connection string as `DATABASE_URL` in the shell. Then push to `main`. Vercel builds and deploys every push that touches `pkmn/site/` to production, and a branch push gets a public preview URL, shown on the commit's GitHub status and in the Vercel dashboard. There is no manual deploy command.
 
 ### 8. Roll back
 
