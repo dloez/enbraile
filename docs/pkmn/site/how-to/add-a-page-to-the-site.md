@@ -21,7 +21,7 @@ const myToolRoute = createRoute({
 });
 ```
 
-The header's tabs are the site's sections, listed in `TABS` in `src/components/site-header.tsx` with a label, a path and a [pixel icon](../reference/design-system.md#imagery-and-icons); a page joins them only when it is a section of its own.
+The header's tabs are the site's sections, each a `Tab` in `src/components/site-header.tsx` with a label, a [pixel icon](../reference/design-system.md#imagery-and-icons), the route it opens and the paths it is open on, put in the reader's tabs in `SiteHeader`; a page joins them only when it is a section of its own.
 
 ### 2. Write the page
 

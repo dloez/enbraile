@@ -4,7 +4,7 @@ import { displayName, type Mon } from "@/open-sheet/dex";
 import type { Slots } from "@/open-sheet/team";
 import { analysed, defensiveChart, offensiveCoverage, speedOrder } from "@/open-sheet/analysis";
 import { TypeDot } from "@/components/marks";
-import { MonSprite } from "@/open-sheet/components/summary";
+import { MonSprite } from "@/components/pc/summary";
 
 function Count({ value, className }: { value: number; className: string }) {
   return <span className={cn("tabular-nums text-xs", value === 0 ? "text-muted-foreground/40" : className)}>{value}</span>;

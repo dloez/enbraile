@@ -1,9 +1,10 @@
+import { Link } from "@tanstack/react-router";
 import { CircleAlert, TriangleAlert, X } from "lucide-react";
 import { type DragEvent, type ReactNode, useState } from "react";
 import { buttonClass } from "@/components/controls";
 import { PixelIcon } from "@/components/pixel-icon";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { downloadSnapshotZip } from "@/lib/snapshot-zip";
@@ -301,9 +302,22 @@ export function UploadDialog({
             </FileButton>
           )}
           {step.name === "done" && (
-            <Button className={goClass} onClick={() => close(false)}>
-              Close
-            </Button>
+            <>
+              <Button className={goClass} onClick={() => close(false)}>
+                Close
+              </Button>
+              <Link
+                to="/players/$player/series/$number/pc"
+                params={{ player: trainer.id, number: String(seriesNumber) }}
+                search={{ snapshot: step.saved.milestone }}
+                className={cn(buttonVariants({ variant: "go" }), goClass)}
+              >
+                Open PC
+                <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
+                  <path d="M2 2l10 7-10 7z" />
+                </svg>
+              </Link>
+            </>
           )}
         </div>
       </DialogContent>

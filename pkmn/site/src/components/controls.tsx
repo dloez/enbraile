@@ -26,29 +26,50 @@ export function Panel({
 
 export function Segmented<T extends string | number>({
   label,
+  labelledBy,
   options,
   value,
   onChange,
+  size = "md",
   className,
 }: {
-  label: string;
-  options: readonly { value: T; label: ReactNode }[];
+  label?: string;
+  labelledBy?: string;
+  options: readonly { value: T; label: ReactNode; disabled?: boolean }[];
   value: T;
   onChange: (value: T) => void;
+  size?: "md" | "lg";
   className?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn("inline-flex gap-0.5 rounded-lg border bg-muted p-0.75", className)}>
+    <div
+      role="radiogroup"
+      aria-label={label}
+      aria-labelledby={labelledBy}
+      className={cn(
+        "inline-flex bg-muted",
+        size === "lg" ? "gap-1 rounded-xl border-3 p-1" : "gap-0.5 rounded-lg border p-0.75",
+        className,
+      )}
+    >
       {options.map((o) => (
         <button
           key={String(o.value)}
           type="button"
           role="radio"
           aria-checked={o.value === value}
+          disabled={o.disabled}
           onClick={() => onChange(o.value)}
           className={cn(
-            "min-h-9 flex-1 cursor-pointer rounded-md px-3.5 font-heading text-xl whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-            o.value === value ? "bg-red text-white" : "text-subtle hover:bg-face hover:text-white",
+            "flex-1 cursor-pointer px-3.5 font-heading whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default",
+            size === "lg" ? "min-h-11 rounded-lg text-[1.4375rem]" : "min-h-9 rounded-md text-xl",
+            o.value === value
+              ? "bg-red text-white"
+              : o.disabled
+                ? "text-faint"
+                : size === "lg"
+                  ? "text-foreground hover:bg-cell hover:text-white"
+                  : "text-subtle hover:bg-face hover:text-white",
           )}
         >
           {o.label}

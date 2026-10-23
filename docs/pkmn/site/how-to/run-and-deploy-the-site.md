@@ -61,7 +61,7 @@ After changing `api/_lib/schema.ts`, write the next migration with `npm run db:g
 npm run dev
 ```
 
-Vite starts the API itself (`scripts/dev-api.ts` under `tsx watch`, on `API_PORT`, restarting on changes), proxies `/api` to it, prints the local URL, and stops the API when it stops. Every page but `/admin` asks a signed-out reader to sign in, and players sign in locally with the test sign-in ([How to Verify the Site](verify-the-site.md)). A signed-in player lands on the running series at `/series/<n>`, every series is at `/series`, Open Sheet is at `/open-sheet`, admins sign in at `/admin`, the allowlist is at `/admin/players`, the games are at `/admin/games` and the series are at `/admin/series`. A series page's Upload button takes a save zip as a snapshot. Imports and teams are stored in that browser's IndexedDB for the dev origin.
+Vite starts the API itself (`scripts/dev-api.ts` under `tsx watch`, on `API_PORT`, restarting on changes), proxies `/api` to it, prints the local URL, and stops the API when it stops. Every page but `/admin` asks a signed-out reader to sign in, and players sign in locally with the test sign-in ([How to Verify the Site](verify-the-site.md)). A signed-in player lands on the running series at `/series/<n>`, every series is at `/series`, a player's PC at `/players/<player id>/series/<n>/pc` (the header's PC tab opens one's own), Open Sheet is at `/open-sheet`, admins sign in at `/admin`, the allowlist is at `/admin/players`, the games are at `/admin/games` and the series are at `/admin/series`. A series page's Upload button takes a save zip as a snapshot. Imports and teams are stored in that browser's IndexedDB for the dev origin.
 
 ### 5. Run the gate
 

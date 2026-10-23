@@ -1,4 +1,4 @@
-import { useParams } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -298,7 +298,11 @@ function TrainerRow({
       {open && (
         <div className="flex flex-wrap items-stretch gap-3.5 border-t-3 border-dashed bg-box px-6 pt-4 pb-6">
           {latest && <span className="flex-[1_0_100%] font-heading text-2xl text-primary">At {latest.milestone}</span>}
-          <Tile label="PC" value={latest?.pokemon} />
+          <Tile
+            label="PC"
+            value={latest?.pokemon}
+            link={latest && { player: trainer.id, number: String(seriesNumber), label: `Open ${trainer.name}'s PC` }}
+          />
           <Tile label="Teams" />
           <Tile label="Fainted" value={latest?.fainted} alarm />
           <div className="flex min-w-65 flex-1 flex-col gap-1.5 rounded-xl border-3 bg-card px-4 py-3">
@@ -308,12 +312,23 @@ function TrainerRow({
                 <span
                   key={s.milestone}
                   className={cn(
-                    "flex min-h-10 items-center gap-1 rounded-md border-3 bg-cell pl-3 font-heading text-2xl",
-                    s.zip ? "pr-0.5" : "pr-3",
+                    "flex min-h-10 items-center gap-1 overflow-hidden rounded-md border-3 bg-cell font-heading text-2xl",
+                    s.zip && "pr-0.5",
                     s === latest ? "border-primary" : "border-transparent",
                   )}
                 >
-                  {s.milestone}
+                  <Link
+                    to="/players/$player/series/$number/pc"
+                    params={{ player: trainer.id, number: String(seriesNumber) }}
+                    search={{ snapshot: s.milestone }}
+                    aria-label={`Open ${trainer.name}'s PC at ${s.milestone}`}
+                    className={cn(
+                      "flex items-center self-stretch pl-3 text-foreground outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
+                      s.zip ? "pr-1.5" : "pr-3",
+                    )}
+                  >
+                    {s.milestone}
+                  </Link>
                   {s.zip && (
                     <button
                       type="button"
@@ -347,9 +362,11 @@ function TrainerRow({
   );
 }
 
-function Tile({ label, value, alarm }: { label: string; value?: number; alarm?: boolean }) {
-  return (
-    <div className="flex min-w-32.5 flex-col gap-1.5 rounded-xl border-3 bg-card px-4 py-3">
+type TileLink = { player: string; number: string; label: string };
+
+function Tile({ label, value, alarm, link }: { label: string; value?: number; alarm?: boolean; link?: TileLink }) {
+  const body = (
+    <>
       <span className="font-heading text-xl text-muted-foreground">{label}</span>
       <span
         className={cn(
@@ -359,7 +376,23 @@ function Tile({ label, value, alarm }: { label: string; value?: number; alarm?: 
       >
         {value ?? "—"}
       </span>
-    </div>
+    </>
+  );
+  const tile = "flex min-w-32.5 flex-col gap-1.5 rounded-xl border-3 bg-card px-4 py-3";
+  if (!link) return <div className={tile}>{body}</div>;
+  return (
+    <Link
+      to="/players/$player/series/$number/pc"
+      params={{ player: link.player, number: link.number }}
+      search={{}}
+      aria-label={link.label}
+      className={cn(
+        tile,
+        "outline-none transition-[translate,border-color] duration-120 ease-[steps(2)] hover:-translate-y-0.5 hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+      )}
+    >
+      {body}
+    </Link>
   );
 }
 

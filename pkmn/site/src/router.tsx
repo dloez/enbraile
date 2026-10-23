@@ -22,6 +22,16 @@ const seriesRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/series"), "SeriesPage"),
 });
 
+export type PcSearch = { snapshot?: string };
+
+const pcRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/players/$player/series/$number/pc",
+  validateSearch: (search: Record<string, unknown>): PcSearch =>
+    typeof search.snapshot === "string" && search.snapshot !== "" ? { snapshot: search.snapshot } : {},
+  component: lazyRouteComponent(() => import("@/pages/pc"), "PcPage"),
+});
+
 const openSheetRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/open-sheet",
@@ -68,6 +78,7 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   seriesListRoute,
   seriesRoute,
+  pcRoute,
   openSheetRoute,
   teamAnalysisRoute,
   adminRoute,

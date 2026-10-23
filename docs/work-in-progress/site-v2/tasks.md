@@ -55,22 +55,6 @@ The series pages, the admin series form and the phone header are built and check
 **After:** Owner-run: Discord sign-in on production
 **Needs the author:** the owner-run steps above.
 
-## Browse any player's PC at any snapshot
-
-`/players/<player>/series/<n>/pc?snapshot=<milestone>`: Open Sheet's PC, summary and bag over a stored snapshot, with a snapshot picker, the bag opening from its Bag button, and the page's breadcrumb as `pc.dc.html` draws it ([The PC?](discovery.md#pages)). A trainer row's PC tile on the series page opens it, and the header's PC tab opens the signed-in player's own in the running series. `/open-sheet` keeps working until teams move.
-
-**Do:**
-- [ ] A snapshot read route; the PC page reading it through the export's schema; the PC tile, each snapshot in the row's Snapshots tile opening the PC at it ([First page after sign-in?](discovery.md#pages)), and the PC tab (`TABS` in `src/components/site-header.tsx`, today `/open-sheet`).
-
-**Acceptance:**
-- Claude-run: `npm run gate`.
-- Human-run: open another player's PC from the series page; search, filter by type, open a summary and the bag; switch snapshot when there are two; open the PC tab and land on your own; on a phone, the same.
-- Reuse: `pkmn/site/design/pc.dc.html`; `src/open-sheet/components/pc.tsx`, `summary.tsx`, `bag.tsx`, `src/open-sheet/dex.ts`.
-- Neighbors: `src/pages/open-sheet.tsx`.
-- Forbidden: a second copy of the PC components.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-
 ## The series list and the series page fit a phone
 
 `/series` and `/series/<n>` at phone width, as the design entry's phone boards draw them. Today the Trainers table (`TrainerRow` in `src/pages/series.tsx`, `grid-cols-[300px_minmax(0,1fr)_84px]`) scrolls sideways on a phone, a build choice that holds only "until its phone layout is designed" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the series build choices); no other entry builds these two pages' phone layouts.
@@ -103,7 +87,7 @@ The series pages, the admin series form and the phone header are built and check
 - Forbidden: a fallen Pokémon's span guessed without two snapshots (one snapshot gives "by <milestone>", owner, 2026-10-23); a PC or party on this page.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**After:** Browse any player's PC at any snapshot; Design the new pages' phone layouts, the team list and builder
+**After:** Design the new pages' phone layouts, the team list and builder
 
 ## A player's profile, across every series
 
@@ -173,7 +157,7 @@ An admin can set any value derived from a save by hand (progress, the fainted co
 - Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Browse any player's PC at any snapshot; Design the new pages' phone layouts, the team list and builder
+**After:** Design the new pages' phone layouts, the team list and builder
 
 ## A trainer row's Teams tile opens their teams
 

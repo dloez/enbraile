@@ -1,0 +1,111 @@
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Segmented } from "@/components/controls";
+import { toolPage } from "@/components/page";
+import { PlayerBadge, playerColour } from "@/components/player-badge";
+import { api } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
+import { SnapshotPc } from "@/components/pc/pc-box";
+import { type PcPage as Pc, pcPage } from "../../shared/pc";
+
+const FROM = "/players/$player/series/$number/pc";
+
+function message(error: unknown): string {
+  return error instanceof Error ? error.message : "Something went wrong";
+}
+
+export function PcPage() {
+  const { player, number } = useParams({ from: FROM });
+  const { snapshot } = useSearch({ from: FROM });
+  const navigate = useNavigate();
+  const [page, setPage] = useState<Pc | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    setError(null);
+    const query = snapshot === undefined ? "" : `?snapshot=${encodeURIComponent(snapshot)}`;
+    api(`/series/${encodeURIComponent(number)}/trainers/${encodeURIComponent(player)}/pc${query}`, pcPage).then(
+      (next) => live && setPage(next),
+      (caught: unknown) => {
+        if (!live) return;
+        setPage(null);
+        setError(message(caught));
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [player, number, snapshot]);
+
+  if (error) {
+    return (
+      <main className={cn(toolPage, "py-7 sm:py-9")}>
+        <p role="alert" className="m-0 text-destructive">
+          {error}
+        </p>
+      </main>
+    );
+  }
+  if (!page) return <main className={toolPage} />;
+
+  function pick(milestone: string) {
+    void navigate({ to: FROM, params: { player, number }, search: { snapshot: milestone } });
+  }
+
+  return (
+    <main className={cn(toolPage, "pt-5")}>
+      <PcHead page={page} onPick={pick} />
+      {page.snapshot ? (
+        <SnapshotPc key={page.milestone} sheet={page.snapshot} />
+      ) : (
+        <p className="my-6 rounded-2xl border-3 border-dashed border-cell-hi bg-box px-5 py-10 text-center font-heading text-3xl text-subtle">
+          No snapshot yet
+        </p>
+      )}
+    </main>
+  );
+}
+
+function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => void }) {
+  const { data } = authClient.useSession();
+  const you = data?.user.id === page.player.id;
+  return (
+    <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+      <div className="flex min-w-0 flex-col gap-2">
+        <nav aria-label="Breadcrumb" className="flex font-heading text-[1.375rem]">
+          <span className="flex min-h-11 items-center gap-2 text-primary -my-2.5">
+            <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
+              <path d="M12 2L2 9l10 7z" />
+            </svg>
+            {page.player.name}
+            <span aria-hidden="true" className="text-faint">
+              ·
+            </span>
+            Series {page.series.number}
+          </span>
+        </nav>
+        <div className="flex min-w-0 items-center gap-3.5">
+          <PlayerBadge name={page.player.name} colour={playerColour(page.player.id)} size="lg" />
+          <h1 className="m-0 truncate font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">{page.player.name}'s PC</h1>
+          {you && <span className="rounded-sm bg-yellow px-2 font-heading text-lg text-ink">You</span>}
+        </div>
+      </div>
+      <div className="flex-1" />
+      <div className="flex max-w-full flex-wrap items-center gap-3">
+        <span id="snapshot-label" className="font-heading text-[1.375rem] text-muted-foreground">
+          Snapshot
+        </span>
+        <Segmented
+          labelledBy="snapshot-label"
+          size="lg"
+          className="max-w-full flex-wrap"
+          options={page.milestones.map((m) => ({ value: m.name, label: m.name, disabled: !m.taken }))}
+          value={page.milestone ?? ""}
+          onChange={onPick}
+        />
+      </div>
+    </div>
+  );
+}

@@ -1,20 +1,72 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PixelIcon, type PixelIconName } from "@/components/pixel-icon";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { SignOutIcon, useSignOut } from "@/components/sign-out";
+import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { seriesBannerList } from "../../shared/series";
 
-type Tab = { label: string; to: "/series" | "/open-sheet" | "/team-analysis" | "/admin"; icon: PixelIconName };
+type Target = { to: "/series" | "/team-analysis" | "/admin" } | { to: "/players/$player/series/$number/pc"; player: string; number: string };
 
-const TABS: readonly Tab[] = [
-  { label: "Series", to: "/series", icon: "flag" },
-  { label: "PC", to: "/open-sheet", icon: "monitor" },
-  { label: "Teams", to: "/team-analysis", icon: "people" },
-];
+type Tab = { label: string; icon: PixelIconName; target: Target; open: (pathname: string) => boolean };
 
-const ADMIN_TAB: Tab = { label: "Admin", to: "/admin", icon: "key" };
+const under = (path: string) => (pathname: string) => pathname === path || pathname.startsWith(`${path}/`);
+
+const onPc = (pathname: string) => /^\/players\/[^/]+\/series\/[^/]+\/pc\/?$/.test(pathname);
+
+const SERIES_TAB: Tab = { label: "Series", icon: "flag", target: { to: "/series" }, open: under("/series") };
+
+const TEAMS_TAB: Tab = { label: "Teams", icon: "people", target: { to: "/team-analysis" }, open: under("/team-analysis") };
+
+const ADMIN_TAB: Tab = { label: "Admin", icon: "key", target: { to: "/admin" }, open: under("/admin") };
+
+function pcTab(user: User, running: number | null): Tab {
+  const target: Target =
+    running === null ? { to: "/series" } : { to: "/players/$player/series/$number/pc", player: user.id, number: String(running) };
+  return { label: "PC", icon: "monitor", target, open: onPc };
+}
+
+function TabLink({ tab, className, onClick, children }: { tab: Tab; className: string; onClick?: () => void; children: ReactNode }) {
+  const target = tab.target;
+  if (target.to === "/players/$player/series/$number/pc") {
+    return (
+      <Link
+        to={target.to}
+        params={{ player: target.player, number: target.number }}
+        search={{}}
+        onClick={onClick}
+        className={className}
+        activeOptions={{ includeSearch: false }}
+      >
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <Link to={target.to} onClick={onClick} className={className}>
+      {children}
+    </Link>
+  );
+}
+
+function useRunningSeries(player: User | undefined): number | null {
+  const [running, setRunning] = useState<number | null>(null);
+  const id = player && !player.admin ? player.id : null;
+  useEffect(() => {
+    if (id === null) return;
+    let live = true;
+    api("/series", seriesBannerList).then(
+      (list) => live && setRunning(list.find((s) => s.state === "running")?.number ?? null),
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [id]);
+  return running;
+}
 
 type User = { id: string; name: string; admin?: boolean | null };
 
@@ -23,7 +75,10 @@ const focus = "outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 export function SiteHeader() {
   const { data } = authClient.useSession();
   const user = data?.user;
-  const tabs = user?.admin ? [...TABS, ADMIN_TAB] : TABS;
+  const running = useRunningSeries(user);
+  const tabs = !user ? [SERIES_TAB, TEAMS_TAB] : user.admin ? [SERIES_TAB, TEAMS_TAB, ADMIN_TAB] : [SERIES_TAB, pcTab(user, running), TEAMS_TAB];
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const current = tabs.find((tab) => tab.open(pathname));
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -33,20 +88,21 @@ export function SiteHeader() {
         </Link>
         <nav aria-label="Sections" className="hidden items-end gap-1 self-stretch sm:flex">
           {tabs.map((tab) => (
-            <Link
-              key={tab.to}
-              to={tab.to}
-              className={`flex h-12 items-center gap-2.5 rounded-t-lg px-5 font-heading text-2xl ${focus}`}
-              activeProps={{ className: "bg-red text-white" }}
-              inactiveProps={{ className: "text-subtle hover:bg-card hover:text-white" }}
+            <TabLink
+              key={tab.label}
+              tab={tab}
+              className={cn(
+                `flex h-12 items-center gap-2.5 rounded-t-lg px-5 font-heading text-2xl ${focus}`,
+                tab === current ? "bg-red text-white" : "text-subtle hover:bg-card hover:text-white",
+              )}
             >
               <PixelIcon name={tab.icon} />
               {tab.label}
-            </Link>
+            </TabLink>
           ))}
         </nav>
         {user && <Account user={user} />}
-        <PhoneMenu tabs={tabs} user={user} open={open} setOpen={setOpen} />
+        <PhoneMenu tabs={tabs} current={current} pathname={pathname} user={user} open={open} setOpen={setOpen} />
       </header>
       {open && (
         <div aria-hidden="true" onClick={() => setOpen(false)} className="fixed inset-0 z-10 bg-scrim sm:hidden" />
@@ -79,18 +135,20 @@ const menuItem = `flex min-h-13 items-center gap-3.5 rounded-lg px-3.5 font-head
 
 function PhoneMenu({
   tabs,
+  current,
+  pathname,
   user,
   open,
   setOpen,
 }: {
   tabs: readonly Tab[];
+  current: Tab | undefined;
+  pathname: string;
   user: User | undefined;
   open: boolean;
   setOpen: (open: boolean) => void;
 }) {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { signingOut, signOut } = useSignOut();
-  const current = tabs.find((tab) => pathname === tab.to || pathname.startsWith(`${tab.to}/`));
 
   useEffect(() => setOpen(false), [pathname, setOpen]);
 
@@ -132,17 +190,15 @@ function PhoneMenu({
           className="absolute inset-x-0 top-full mt-1 flex flex-col gap-1 border-b-4 border-border bg-ink px-3 pt-2.5 pb-3.5 sm:hidden"
         >
           {tabs.map((tab) => (
-            <Link
-              key={tab.to}
-              to={tab.to}
+            <TabLink
+              key={tab.label}
+              tab={tab}
               onClick={() => setOpen(false)}
-              className={menuItem}
-              activeProps={{ className: "bg-red text-white" }}
-              inactiveProps={{ className: "text-subtle hover:bg-card hover:text-white" }}
+              className={cn(menuItem, tab === current ? "bg-red text-white" : "text-subtle hover:bg-card hover:text-white")}
             >
               <PixelIcon name={tab.icon} />
               {tab.label}
-            </Link>
+            </TabLink>
           ))}
           {user && (
             <>

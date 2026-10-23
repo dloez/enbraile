@@ -6,7 +6,7 @@ import { canLearn, describeItem, describeTm, displayName, type BagItem, type Bag
 import type { Sheet } from "@/open-sheet/schema";
 import { heldCount, memberMon, type Slots } from "@/open-sheet/team";
 import { TypeSquare, UnknownMark } from "@/components/marks";
-import { MonSprite } from "@/open-sheet/components/summary";
+import { MonSprite } from "@/components/pc/summary";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 type PocketId = "items" | "berries" | "tms";
@@ -58,7 +58,7 @@ function TargetButton({ target, move, onGive }: { target: Target; move?: string;
   );
 }
 
-function Row({ icon, name, marked, sub, desc, qty, spent, usable, open, targets, onClick, onGive }: {
+function Row({ icon, name, marked, sub, desc, qty, spent, usable, readOnly, open, targets, onClick, onGive }: {
   icon: ReactNode;
   name: string;
   marked: boolean;
@@ -67,6 +67,7 @@ function Row({ icon, name, marked, sub, desc, qty, spent, usable, open, targets,
   qty?: string;
   spent?: boolean;
   usable: boolean;
+  readOnly: boolean;
   open: boolean;
   targets: Target[];
   onClick: () => void;
@@ -79,7 +80,10 @@ function Row({ icon, name, marked, sub, desc, qty, spent, usable, open, targets,
         disabled={!usable}
         aria-expanded={open}
         onClick={onClick}
-        className="grid w-full cursor-pointer grid-cols-[28px_1fr_auto] items-center gap-x-3 gap-y-1 px-2 py-2.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50"
+        className={cn(
+          "grid w-full cursor-pointer grid-cols-[28px_1fr_auto] items-center gap-x-3 gap-y-1 px-2 py-2.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default",
+          !readOnly && "disabled:opacity-50",
+        )}
       >
         {icon}
         <span className="flex min-w-0 flex-col gap-0.5">
@@ -116,10 +120,7 @@ function tmSub(tm: BagTm): string {
     .join(" · ");
 }
 
-interface BagProps {
-  sheet: Sheet;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface BagTeam {
   slots: Slots;
   mons: readonly Mon[];
   giveTo: number | null;
@@ -127,7 +128,24 @@ interface BagProps {
   onTeach: (slot: number, move: string) => void;
 }
 
-export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, onTeach }: BagProps) {
+interface BagProps {
+  sheet: Sheet;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  team?: BagTeam;
+}
+
+const NO_SLOTS: Slots = [];
+
+const nothing = () => undefined;
+
+export function Bag({ sheet, open, onOpenChange, team }: BagProps) {
+  const readOnly = team === undefined;
+  const slots = team?.slots ?? NO_SLOTS;
+  const mons = team?.mons ?? [];
+  const giveTo = team?.giveTo ?? null;
+  const onGive = team?.onGive ?? nothing;
+  const onTeach = team?.onTeach ?? nothing;
   const [pocket, setPocket] = useState<PocketId>("items");
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
@@ -227,6 +245,7 @@ export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, on
                       sub={tmSub(tm)}
                       desc={tm.desc}
                       usable={usable}
+                      readOnly={readOnly}
                       open={!giveMon && picked === key}
                       targets={tmTargets}
                       onClick={() => choose(key, (slot) => onTeach(slot, tm.move.id))}
@@ -252,6 +271,7 @@ export function Bag({ sheet, open, onOpenChange, slots, mons, giveTo, onGive, on
                       qty={held > 0 ? `${left}/${item.quantity}` : `×${item.quantity}`}
                       spent={left <= 0}
                       usable={usable}
+                      readOnly={readOnly}
                       open={usable && !giveMon && picked === key}
                       targets={targets}
                       onClick={() => choose(key, (slot) => onGive(slot, item.id))}

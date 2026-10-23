@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { describeItem, displayName, type Mon } from "@/open-sheet/dex";
 import { memberMon, type Slots } from "@/open-sheet/team";
-import { ItemIcon } from "@/open-sheet/components/bag";
-import { MonSprite } from "@/open-sheet/components/summary";
+import { ItemIcon } from "@/components/pc/bag";
+import { MonSprite } from "@/components/pc/summary";
 
 interface TeamStripProps {
   slots: Slots;

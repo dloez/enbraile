@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 import { canLearn, currentAbility, describeItem, describeMove, displayName, STAT_LABELS, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { MINI_SETA, memberMon, quantityOf, setasNeeded, type Member, type Slots } from "@/open-sheet/team";
-import { ItemIcon } from "@/open-sheet/components/bag";
+import { ItemIcon } from "@/components/pc/bag";
 import { buttonClass } from "@/components/controls";
 import { TypeDot, UnknownMark } from "@/components/marks";
 import { SheetAnalysis } from "@/open-sheet/components/sheet-analysis";
 import { MovePicker } from "@/open-sheet/components/move-picker";
-import { MonSprite } from "@/open-sheet/components/summary";
+import { MonSprite } from "@/components/pc/summary";
 import { showdownTeam } from "@/open-sheet/showdown";
 import { carryTeam } from "@/team-analysis/drafts";
 
