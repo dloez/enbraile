@@ -20,39 +20,21 @@ The screens still undrawn, desktop and phone, in the signed-off look ([Pages →
 **Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** sign-off on these screens.
 
-## Design the header at phone width
-
-A phone board of the header on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas: Series · PC · Teams (· Admin for admins), the player's badge and name opening their profile, and sign-out, on a 360–390px screen. The owner chose a board first over letting the tabs scroll sideways under the design system's phone rule (2026-10-23).
-
-**Do:**
-- [ ] Draw the board; get the owner's sign-off; copy it into `pkmn/site/design/` and record the sign-off in `site.md` → Look and Decisions.
-
-**Acceptance:**
-- Claude-run: none (no code).
-- Human-run: the owner opens the board and signs it off, or lists changes.
-- Reuse: the header on the frozen `series.dc.html`.
-- Neighbors: the upload flow's phone board (`upload-phone.dc.html`).
-- Forbidden: dropping a tab or sign-out at phone width; pieces outside the look without naming them as additions.
-
-**Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
-**Needs the author:** sign-off on the board.
-
 ## The header fits a phone with every tab and sign-out
 
-The signed-off header holds Series · PC · Teams (· Admin for admins) and, at the right, the player's badge and name and sign-out ([Look](../../pkmn/site/explanation/site.md#look)), but the frozen boards (`pkmn/site/design/series.dc.html`, `series-list.dc.html`) draw it at desktop width only, and the next design entries name phone layouts of their own screens, not of the header. Today's header (`src/components/site-header.tsx`) fits a phone with its two tabs; each tab is a fixed `h-12 px-3` box with a pixel icon and a `text-2xl` label, and the nav does not wrap or scroll, so the Series tab, the Admin tab and sign-out from the entries below push it past a 375px screen. [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules already have tab bars scroll sideways (`overflow-x-auto`).
+The signed-off header holds Series · PC · Teams (· Admin for admins) and, at the right, the player's badge and name and sign-out ([Look](../../pkmn/site/explanation/site.md#look)). On a phone it is a compact bar, as the owner signed off on 2026-10-23 (`pkmn/site/design/header-phone.dc.html`, `header-phone-open.dc.html`, `header-phone-open-player.dc.html`): the Poké Ball, the open section's name with its icon, and a pixel three-line menu button opening a dropdown under the bar over a scrim (the tabs with the open one red, a divider, the badge and name opening the profile, sign-out), the button turning into a cross while open; the Admin entry gets a pixel key icon. Today's header (`src/components/site-header.tsx`) has fixed `h-12 px-3` tabs that neither wrap nor scroll.
 
 **Do:**
-- [ ] The header at phone width as its signed-off board draws it, with the tabs, the name and sign-out the entries below add; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell updated.
+- [ ] The header at phone width as its three boards draw it, with the tabs, the name and sign-out the entries below add; the key in `PixelIcon`'s `ICONS`; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules updated with the menu.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, `browser_resize` to 390×844 and to 360×800, signed in as an admin with every tab present, screenshot the header and confirm no horizontal page scroll.
+- Claude-run: `npm run gate`; through `verify-site`, `browser_resize` to 390×844 and to 360×800, signed in as an admin and as a player, screenshot the header closed and open, reach every tab and sign-out from the menu, and confirm no horizontal page scroll; at desktop width, the header unchanged.
 - Human-run: on a phone, open the site signed in as an admin and reach every tab and sign-out.
-- Reuse: the header's phone board in `pkmn/site/design/`; `TABS` in `src/components/site-header.tsx`; `PixelIcon`.
-- Neighbors: Open Sheet's tab bar (`src/open-sheet/components/tab-bar.tsx`), which scrolls sideways with `overflow-x-auto`.
-- Forbidden: a hamburger menu or any piece outside the look without naming it as an addition; dropping a tab at phone width.
+- Reuse: the three header phone boards in `pkmn/site/design/`; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell; `TABS` in `src/components/site-header.tsx`; `PixelIcon`.
+- Neighbors: Open Sheet's tab bar (`src/open-sheet/components/tab-bar.tsx`).
+- Forbidden: dropping a tab or sign-out at phone width; the phone menu at desktop width; pieces outside the look beyond the menu and the key.
 
-**Touches:** `pkmn/site/src/components/site-header.tsx`, `docs/pkmn/site/reference/design-system.md`
-**After:** Design the header at phone width
+**Touches:** `pkmn/site/src/components/site-header.tsx`, `pkmn/site/src/components/pixel-icon.tsx`, `docs/pkmn/site/reference/design-system.md`
 
 ## Players sign in with Discord and admins keep the allowlist
 
