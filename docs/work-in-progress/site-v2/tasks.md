@@ -55,30 +55,6 @@ The series pages, the admin series form and the phone header are built and check
 **After:** Owner-run: Discord sign-in on production
 **Needs the author:** the owner-run steps above.
 
-## Bring the site docs in line with what the series page and phone header landings changed
-
-The three landings of 2026-10-23 (`23e9fb0`, `a501944`, `f799e09`) each wrote their own docs without the others' diffs, and some sentences one of them wrote are now false or incomplete:
-
-- `docs/pkmn/site/explanation/site.md` → Decisions, the allowlist's build choices: "the home's tool list kept for allowed players until the series page replaces it" (the series build choices delete it) and "the header's name hidden below `sm` … until the header's signed-off phone menu … is built" (it is built: `Account` in `src/components/site-header.tsx` is hidden below `sm` as a whole). Rewrite to what is true now, dated.
-- `site.md` → Accounts: "`npm run seed` … makes the local admin, the test players … and a game with a stand-in zip" leaves out series 1 (`scripts/seed.ts`; the run how-to's step 3 has it).
-- `site.md` → Decisions, "One gutter and one width per page kind": `max-w-240` "for a list page (home)"; the home renders no list, and `listPage` is the admin pages' column ([Design System](../../pkmn/site/reference/design-system.md) → Layout Shell).
-- `site.md` → Decisions, the series build choices list what of the revised `series.dc.html` was left to later entries but not its Fainted and Journey tiles: the built row (`TrainerRow` in `src/pages/series.tsx`) has PC, Teams and Snapshots tiles only.
-- `design-system.md` → Patterns → Card: "(home links, `px-5 py-4.5`)"; the home cards are gone, and the lift cards with the arrow are the admin home's and `/admin/series`'s.
-- `design-system.md` → Components → `PlayerBadge`: "Shown in the header, on the waiting page and on the allowlist"; it is also on the series page's trainer rows and the admin series form's players (`src/pages/series.tsx`, `src/pages/admin-series.tsx`).
-- `docs/work-in-progress/site-v2/discovery.md` → Pages → Design?: "then the PC's links, the header at phone width, the team list and the team builder"; the header at phone width was signed off on 2026-10-23 ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)) and is built.
-
-**Do:**
-- [ ] Fix each sentence above against the code it names.
-
-**Acceptance:**
-- Claude-run: `grep -n "tool list kept\|until the header's signed-off phone menu\|list page (home)\|home links" docs/pkmn/site` finds nothing; every link and anchor in the edited docs resolves.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: none.
-- Forbidden: a decision's date or owner changed; a fact copied into a second doc instead of linked.
-
-**Touches:** `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/reference/design-system.md`, `docs/work-in-progress/site-v2/discovery.md`
-
 ## Players upload their save zip as a snapshot
 
 The export ported to TypeScript in the site, run in a Vercel Function on the save zip the browser put in B2 ([Snapshots In](discovery.md#snapshots-in), [The export?](discovery.md#data-stack-and-config)), through the one pipeline every ingestion mode shares: raw save stored, exported, snapshot. `generate_export_data.py` writes the export's data as JSON for the site; the port reads the zip, lists its `Partida N.rxdata` slots, and exports with moves always. A snapshot holds everything the save holds at its milestone ([What does a snapshot hold?](discovery.md#model)), not only today's export. The player picks the slot on their row of the series page and the milestone, suggested from the save's badges and Hall of Fame; the row then shows the snapshot with its Pokémon count and its Fainted tile. Uploading again to a milestone replaces it. An admin can upload for any player. In an automatic series the players see no upload. This entry rolls missing TMs in memory as the export does; keeping them is the entry below.
