@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { buttonClass } from "@/components/controls";
@@ -7,11 +7,12 @@ import { toolPage } from "@/components/page";
 import { PixelIcon } from "@/components/pixel-icon";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
+import { UploadDialog } from "@/components/upload-dialog";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { downloadLink } from "../../shared/games";
-import { type SeriesPage as Series, seriesPage } from "../../shared/series";
+import { type SeriesPage as Series, seriesPage, type Trainer } from "../../shared/series";
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
@@ -27,6 +28,10 @@ export function SeriesPage() {
     setError(null);
     api(`/series/${encodeURIComponent(number)}`, seriesPage).then(setSeries, (caught: unknown) => setError(message(caught)));
   }, [number]);
+
+  function reload() {
+    api(`/series/${encodeURIComponent(number)}`, seriesPage).then(setSeries, () => undefined);
+  }
 
   if (error) {
     return (
@@ -44,7 +49,7 @@ export function SeriesPage() {
       <SeriesHeader series={series} />
       <main className={cn(toolPage, "gap-3.5 pt-6 pb-8")}>
         <League />
-        <Trainers series={series} />
+        <Trainers series={series} onChanged={reload} />
       </main>
       <Rules rules={series.rules} />
     </>
@@ -117,9 +122,11 @@ function League() {
   );
 }
 
-function Trainers({ series }: { series: Series }) {
+function Trainers({ series, onChanged }: { series: Series; onChanged: () => void }) {
   const { data } = authClient.useSession();
   const [open, setOpen] = useState<string | null>(null);
+  const [uploadFor, setUploadFor] = useState<string | null>(null);
+  const uploading = series.trainers.find((t) => t.id === uploadFor);
   const columns = `repeat(${Math.max(series.milestones.length, 1)}, minmax(0, 1fr))`;
   let round = 0;
   const heads = series.milestones.map((m) => ({ ...m, round: m.mark === "round" ? ++round : 0 }));
@@ -168,11 +175,23 @@ function Trainers({ series }: { series: Series }) {
                 onToggle={() => setOpen(open === trainer.id ? null : trainer.id)}
                 milestones={heads}
                 columns={columns}
+                onUpload={() => setUploadFor(trainer.id)}
               />
             ))}
           </div>
         </div>
       </div>
+      {uploading && (
+        <UploadDialog
+          open
+          onOpenChange={(next) => !next && setUploadFor(null)}
+          seriesNumber={series.number}
+          trainer={uploading}
+          forOther={uploading.id !== data?.user.id}
+          milestones={series.milestones.map((m) => m.name)}
+          onSaved={onChanged}
+        />
+      )}
     </section>
   );
 }
@@ -194,15 +213,18 @@ function TrainerRow({
   onToggle,
   milestones,
   columns,
+  onUpload,
 }: {
-  trainer: { id: string; name: string };
+  trainer: Trainer;
   you: boolean;
   open: boolean;
   last: boolean;
   onToggle: () => void;
   milestones: { name: string; mark: string; round: number }[];
   columns: string;
+  onUpload: () => void;
 }) {
+  const latest = trainer.snapshots.at(-1);
   return (
     <div className={cn(!last && "border-b-3")}>
       <div
@@ -260,11 +282,32 @@ function TrainerRow({
       </div>
       {open && (
         <div className="flex flex-wrap items-stretch gap-3.5 border-t-3 border-dashed bg-box px-6 pt-4 pb-6">
-          <Tile label="PC">—</Tile>
-          <Tile label="Teams">—</Tile>
+          {latest && <span className="flex-[1_0_100%] font-heading text-2xl text-primary">At {latest.milestone}</span>}
+          <Tile label="PC" value={latest?.pokemon} />
+          <Tile label="Teams" />
+          <Tile label="Fainted" value={latest?.fainted} alarm />
           <div className="flex min-w-65 flex-1 flex-col gap-1.5 rounded-xl border-3 bg-card px-4 py-3">
             <span className="font-heading text-xl text-muted-foreground">Snapshots</span>
-            <span className="flex min-h-12 items-center font-heading text-2xl text-faint">—</span>
+            <span className="flex min-h-12 flex-wrap items-center gap-2">
+              {trainer.snapshots.map((s) => (
+                <span
+                  key={s.milestone}
+                  className={cn(
+                    "flex min-h-10 items-center rounded-md border-3 bg-cell px-3 font-heading text-2xl",
+                    s === latest ? "border-primary" : "border-transparent",
+                  )}
+                >
+                  {s.milestone}
+                </span>
+              ))}
+              {trainer.snapshots.length === 0 && !trainer.canUpload && <span className="font-heading text-2xl text-faint">—</span>}
+              {trainer.canUpload && (
+                <button type="button" aria-haspopup="dialog" onClick={onUpload} className={cn(buttonClass, "min-h-10 px-3.5 text-2xl")}>
+                  <PixelIcon name="upload" className="size-3.5 text-primary" />
+                  Upload
+                </button>
+              )}
+            </span>
           </div>
         </div>
       )}
@@ -272,11 +315,18 @@ function TrainerRow({
   );
 }
 
-function Tile({ label, children }: { label: string; children: ReactNode }) {
+function Tile({ label, value, alarm }: { label: string; value?: number; alarm?: boolean }) {
   return (
     <div className="flex min-w-32.5 flex-col gap-1.5 rounded-xl border-3 bg-card px-4 py-3">
       <span className="font-heading text-xl text-muted-foreground">{label}</span>
-      <span className="font-heading text-5xl leading-[0.9] text-faint">{children}</span>
+      <span
+        className={cn(
+          "font-heading text-5xl leading-[0.9] tabular-nums",
+          value === undefined ? "text-faint" : alarm && value > 0 ? "text-destructive" : "text-foreground",
+        )}
+      >
+        {value ?? "—"}
+      </span>
     </div>
   );
 }

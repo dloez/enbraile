@@ -10,7 +10,7 @@ It is done when, deployed at `pkmn.enbraile.vip`, a reader drops in two exports,
 
 ## What It Reads
 
-The JSON that `pkmn/games/anil/export_data.py` writes, exactly as [Open Sheet JSON](../../games/anil/reference/open-sheet-json.md) defines it. Which items go out is decided in [Open Sheet Export](../../games/anil/explanation/open-sheet-export.md#decisions). Moves and learnsets are not in the default export, but the views and the stored model leave room for them: a member already has four move slots, and the learnable moves `--moves` adds narrow the move picker instead of reshaping the builder.
+The JSON that `pkmn/games/anil/export_data.py` writes, exactly as the first three keys of the [Snapshot Format](../reference/snapshot.md) define it. Which items go out is decided in [Open Sheet Export](../../games/anil/explanation/open-sheet-export.md#decisions). Moves and learnsets are not in the default export, but the views and the stored model leave room for them: a member already has four move slots, and the learnable moves `--moves` adds narrow the move picker instead of reshaping the builder.
 
 Names, descriptions, base stats and the type chart come from `@pkmn/dex`, Showdown's data, Gen 9. Fights are Showdown "[Gen 9] Custom Game" ([Series 1 Rules → The League](../../series/1/reference/rules.md#the-league)), and several Gen 1–5 Pokémon gained base stats in Gen 6+, so Showdown's Gen 9 data is what the fight runs; PokéAPI's cartridge data is not, and the export's IDs already follow Showdown.
 

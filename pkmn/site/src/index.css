@@ -15,6 +15,10 @@
     --font-sans: 'Nunito', system-ui, sans-serif;
     --color-ink: var(--ink);
     --color-red: var(--red);
+    --color-red-hi: var(--red-hi);
+    --color-warning: var(--warning);
+    --color-warning-soft: var(--warning-soft);
+    --color-warning-ink: var(--warning-ink);
     --color-blush: var(--blush);
     --color-discord: var(--discord);
     --color-discord-edge: var(--discord-edge);
@@ -101,6 +105,10 @@
     --popover: var(--card);
     --popover-foreground: var(--foreground);
     --red: #d93a30;
+    --red-hi: #ef5148;
+    --warning: #ffc878;
+    --warning-soft: #3b3530;
+    --warning-ink: #ffe2b8;
     --blush: #ffd6d2;
     --discord: #5865f2;
     --discord-edge: #8891f7;

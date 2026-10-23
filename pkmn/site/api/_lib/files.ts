@@ -6,6 +6,7 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   ListMultipartUploadsCommand,
+  ListObjectsV2Command,
   S3Client,
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
@@ -99,4 +100,21 @@ export async function objectSize(key: string): Promise<number | undefined> {
 
 export async function deleteObject(key: string): Promise<void> {
   await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+}
+
+export async function readObject(key: string): Promise<Uint8Array> {
+  const { Body } = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  if (!Body) throw new Error("The file store sent nothing back");
+  return Body.transformToByteArray();
+}
+
+export async function objectsUnder(prefix: string): Promise<{ key: string; modified: Date | undefined }[]> {
+  const found: { key: string; modified: Date | undefined }[] = [];
+  let token: string | undefined;
+  do {
+    const page = await s3.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token }));
+    for (const object of page.Contents ?? []) if (object.Key) found.push({ key: object.Key, modified: object.LastModified });
+    token = page.IsTruncated ? page.NextContinuationToken : undefined;
+  } while (token);
+  return found;
 }

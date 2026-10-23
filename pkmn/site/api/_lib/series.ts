@@ -1,24 +1,10 @@
 import { desc, eq, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import type { SeriesBanner, SeriesPage } from "../../shared/series.js";
-import { auth } from "./auth.js";
 import { db } from "./db.js";
 import { downloadUrl } from "./files.js";
 import { game, series } from "./schema.js";
-import { gameOf, milestonesOf, plays, type SeriesRow, trainersOf } from "./series-data.js";
-
-async function viewer(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  return session?.user;
-}
-
-async function findShown(param: string, admin: boolean): Promise<SeriesRow | undefined> {
-  const number = Number(param);
-  if (!Number.isInteger(number)) return undefined;
-  const [row] = await db.select().from(series).where(eq(series.number, number));
-  if (!row || (row.state === "draft" && !admin)) return undefined;
-  return row;
-}
+import { findShown, gameOf, mayUpload, milestonesOf, plays, trainersOf, viewer } from "./series-data.js";
 
 export const seriesRoutes = new Hono();
 
@@ -47,7 +33,7 @@ seriesRoutes.get("/:number", async (c) => {
     ingestion: row.ingestion,
     rules: row.rules,
     milestones: await milestonesOf(row.id),
-    trainers: await trainersOf(row.id),
+    trainers: (await trainersOf(row.id)).map((trainer) => ({ ...trainer, canUpload: mayUpload(user, row, trainer.id) })),
     canDownload: chosen?.fileKey != null && (!!user.admin || (await plays(row.id, user.id))),
   };
   return c.json(page);

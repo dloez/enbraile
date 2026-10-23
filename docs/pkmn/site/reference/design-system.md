@@ -10,7 +10,7 @@ The visual system of `pkmn/site/`: its tokens, type, layout shell, components an
 - **English UI**, with Showdown's names.
 - **Desktop-first, every view usable on a phone.**
 - **No outside runtime calls** beyond Showdown's sprites (the site's own `/api` aside): fonts are bundled from Fontsource, type icons from `src/lib/type-icons.ts`, pixel art drawn in code.
-- **Red marks where you are, cyan what you can act on, yellow you and winners.**
+- **Red marks where you are, cyan what you can act on, yellow you and winners, amber a warning that never blocks.**
 
 ## Colour Tokens
 
@@ -51,7 +51,8 @@ All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through
 
 | Token | Value | Role |
 |-------|-------|------|
-| `red` | `#d93a30` | Where you are: the header's bottom line, the open tab, the chosen `Segmented` option |
+| `red` | `#d93a30` | Where you are: the header's bottom line, the open tab, the chosen `Segmented` option; the go button's face |
+| `red-hi` | `#ef5148` | The go button's hover |
 | `cyan` | `#5ad1f0` | What you can act on |
 | `primary` | `var(--cyan)` | Selection borders, a lift card's hover border, a pressed `Toggle`'s fill, links' arrows, a nature's raised stat, the top value of a bar |
 | `primary-foreground` | `var(--ink)` | Text on `primary` |
@@ -59,6 +60,9 @@ All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through
 | `green` | `#7be08a` | The good side, through `chart-2` |
 | `destructive` | `#ff6a5e` | Errors, refusals, unknown marks (`?`), weaknesses, delete actions |
 | `destructive-soft` | `color-mix(in srgb, var(--destructive) 20%, var(--card))` | Fill behind an error or a weakness cell |
+| `warning` | `#ffc878` | Amber, a soft warning that never blocks: its border and icon (a snapshot about to be replaced) |
+| `warning-soft` | `#3b3530` | Fill behind a warning |
+| `warning-ink` | `#ffe2b8` | A warning's text |
 | `chart-1` | `var(--cyan)` | Series 1 |
 | `chart-2` | `var(--green)` | The "good for us" side: resistances, super-effective coverage, a nature's lowered stat, speed bars, series 2 |
 | `chart-3` | `var(--subtle)` | Neutral: ordinary bars, coverage lines, tag text, series 3 |
@@ -173,15 +177,16 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 
 | Component | Path | Use |
 |-----------|------|-----|
-| `Button`, `buttonVariants` | `src/components/ui/button.tsx` | The quiet pixel-face button, vendored from shadcn: `min-h-11 rounded-md px-4 pb-1`, `bg-face` with `hover:bg-face-hi`, the dark bottom edge, white `text-2xl` pixel face (`size="default"`); `size-11` (`"icon"`) or `size-7` (`"icon-sm"`). Variants: `default`, `destructive` (the same face, `text-destructive`), `ghost` (no face, muted text, `hover:bg-face`). Every button is one of these; in dialogs, the confirm is `destructive` when it deletes |
+| `Button`, `buttonVariants` | `src/components/ui/button.tsx` | The quiet pixel-face button, vendored from shadcn: `min-h-11 rounded-md px-4 pb-1`, `bg-face` with `hover:bg-face-hi`, the dark bottom edge, white `text-2xl` pixel face (`size="default"`); `size-11` (`"icon"`) or `size-7` (`"icon-sm"`). Variants: `default`, `destructive` (the same face, `text-destructive`), `ghost` (no face, muted text, `hover:bg-face`), `go` (the upload boards' red action: `bg-red` with `hover:bg-red-hi`, falling back to the quiet face with `text-faint` while disabled). Every button is one of these; in dialogs, the confirm is `destructive` when it deletes |
 | `Dialog` | `src/components/ui/dialog.tsx` | Modal on `bg-scrim`; pass `className="bg-card"`; title in `font-heading text-2xl`; `aria-describedby={undefined}` when there is no description |
 | `Sheet` | `src/components/ui/sheet.tsx` | Bottom sheet for a phone's detail pane (imported as `BottomSheet` in the PC) |
 | `SiteHeader` | `src/components/site-header.tsx` | The header and its tabs ([Layout Shell](#layout-shell)) |
 | `BallSplit`, `ballTitleClass` | `src/components/ball-split.tsx` | The sign-in and waiting pages' Poké Ball, after their boards: a `bg-red` top `h-[51svh]` (`sm:h-[52svh]`) with the site's name in `text-8xl` (`sm:text-9xl`) pixel face and `.enbraile.vip` in `blush`; an `ink` band (`h-3.5`, `sm:h-4.5`) with a `foreground` ball (`size-20`, `sm:size-30`) on its seam; the dark half holding the page's content |
 | `SignOutIcon` | `src/components/sign-out.tsx` | The boards' sign-out mark, a door with an arrow leaving it, in `currentColor`; `useSignOut` beside it signs out |
-| `PixelIcon` | `src/components/pixel-icon.tsx` | The pixel icons as crisp-edged SVG, `size-4.5` by default: `ball` (the Poké Ball, in its own colours), `flag`, `monitor`, `people`, `key`, `menu`, `cross`, `download` (in `currentColor`), `cartridge` (in its own colours) and `barrier` (the League placeholder's striped barrier, 14 units, in `yellow`, `ink`, `muted-foreground` and `faint`) |
+| `PixelIcon` | `src/components/pixel-icon.tsx` | The pixel icons as crisp-edged SVG, `size-4.5` by default: `ball` (the Poké Ball, in its own colours), `flag`, `monitor`, `people`, `key`, `menu`, `cross`, `download`, `upload`, `check` (in `currentColor`), `zip` (a file in `muted-foreground` with its zipper in `currentColor`), `cartridge` (in its own colours) and `barrier` (the League placeholder's striped barrier, 14 units, in `yellow`, `ink`, `muted-foreground` and `faint`) |
 | `SceneArt`, `SCENE_LOOK` | `src/components/scene.tsx` | A series' animated background scene (`night` or `route`) as crisp SVG rectangles, absolute over its box and covering it from the bottom (`xMidYMax slice`); `width` and `height` set its pixel grid (360×65 for a page's header, 338 wide for a banner). Blinking and drifting pixels use the `scene-*` keyframes in `src/index.css`, stopped under `prefers-reduced-motion`. `SCENE_LOOK[scene]` gives the classes for what sits on it: `ground` (the box's background), `title` (the pixel name's shadow), `chip` (the game line on a banner), `panel` and `panelSub` (the game's box on a series page) and `button` (the quiet button's face over a light scene) |
 | `PlayerBadge` | `src/components/player-badge.tsx` | A player, boxed, never round: their initial in the pixel face on their colour, a 3px `ink` border and a ring in their colour; `size="xs"` (`size-8 rounded-[7px] ring-2`, the header's menu), `"sm"` (`size-9 rounded-md ring-2`) or `"lg"` (`size-12.5 rounded-lg ring-3`), after the boards' header and trainer rows; `colour` picks `player-1`…`player-6`; `playerColour(id)` picks one from a player's id. Shown in the header, on the waiting page, on the allowlist, on the series page's trainer rows and on the admin series form's players |
+| `UploadDialog` | `src/components/upload-dialog.tsx` | The snapshot upload, after the `upload-*.dc.html` boards: a `Dialog` (`sm:max-w-150`, `border-3`, `px-6 pt-5.5 pb-6`, a bottom sheet below `sm`) titled in `text-4xl` pixel face, with the drop zone, the file row (a `zip` icon on `bg-ink`, name, size, the percentage or "Uploaded" in `chart-2`, and a segmented `h-4` bar in `primary`, `destructive` when it failed), the error alert, the slot radios (`min-h-15 rounded-xl border-3`, chosen `border-primary bg-primary/12`), the milestone grid (`bg-ink` well of `bg-cell` cells, the chosen one `bg-red`, a 7px square on one that has a snapshot), the amber replace warning and the done step; actions `min-h-13`, the go button `go` ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)) |
 | `listPage`, `toolPage`, `messageWidth` | `src/components/page.ts` | The page column classes ([Layout Shell](#layout-shell)) |
 | `TypeDot`, `TypeChip`, `TypeSquare`, `UnknownMark` | `src/components/marks.tsx` | A type as its colour with the white symbol (dot 16px, chip with name, square 24px); `?` in `destructive` for anything Showdown lacks |
 | `Panel` | `src/components/controls.tsx` | A titled panel: `rounded-2xl border-3 bg-card p-4`, `h3` in `text-2xl` pixel face, optional `aside` |
@@ -210,8 +215,9 @@ A tool's own components stay in `src/<tool>/components/` (Open Sheet's `MonSprit
 - **Pills and chips:** `rounded-full bg-secondary px-2.5 py-1 text-xs text-chart-3` for tags; `TypeChip` for types.
 - **Empty slot / empty state:** a dashed outline (`border-2 border-dashed`, `border-cell-hi` inside a box; `border-3` on a card-sized one), muted text if any, `rounded-lg`–`rounded-2xl`; clickable ones open the action that fills them.
 - **Drop zone:** `messageWidth` dashed card, `rounded-2xl border-3`, an icon tile on `bg-box`, a pixel-face line and a quiet file button (`buttonClass` on a `label`); the border turns `primary` while dragging over.
+- **Warning:** a row `rounded-xl border border-warning bg-warning-soft px-4 py-3`, a `TriangleAlert` in `warning`, bold text in `warning-ink`; it informs and never blocks.
 - **Errors:** an `alert` row, `rounded-xl border border-destructive bg-destructive-soft`, a `CircleAlert` in `destructive`. A whole-page failure is a plain `text-destructive` paragraph.
-- **Tile:** a figure with its label, as on a trainer row (`Tile` in `src/pages/series.tsx`): `rounded-xl border-3 bg-card px-4 py-3`, the label in `text-xl` pixel face `text-muted-foreground`, the value below in `text-5xl` pixel face, `text-faint` while it is "—".
+- **Tile:** a figure with its label, as on a trainer row (`Tile` in `src/pages/series.tsx`): `rounded-xl border-3 bg-card px-4 py-3`, the label in `text-xl` pixel face `text-muted-foreground`, the value below in `text-5xl` pixel face, `text-faint` while it is "—", `text-destructive` for a fainted count above 0.
 - **Banner:** a series on its scene as a whole-width link (`src/pages/series-list.tsx`): `liftCardClass` with `h-35 overflow-hidden`, `SceneArt` behind, the name in pixel face with the scene's `title` shadow and the game on the scene's `chip`, the state at the top right on `bg-primary` (playing now) or `bg-ink` (finished) with a 3px `ink` border.
 - **Sticky aside:** on wide screens a detail pane is `sticky top-4 w-100 max-h-[calc(100svh-2rem)] rounded-2xl border-3 bg-card`, its footer action above a top border.
 

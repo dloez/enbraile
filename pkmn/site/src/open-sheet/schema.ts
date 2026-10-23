@@ -1,58 +1,8 @@
-import { z } from "zod";
+import type { z } from "zod";
+import { sheetSchema, type Sheet } from "../../shared/snapshot";
 
-const id = z.string().min(1);
-
-const spread = z
-  .object({ hp: z.int(), atk: z.int(), def: z.int(), spa: z.int(), spd: z.int(), spe: z.int() })
-  .nullable();
-
-export const pokemonSchema = z.object({
-  species: id,
-  nickname: z.string().nullable(),
-  gender: z.enum(["M", "F", "N"]).nullable(),
-  shiny: z.boolean(),
-  level: z.int().nullable(),
-  nature: id.nullable(),
-  ability: id.nullable(),
-  abilities: z
-    .object({
-      base: z.array(id),
-      hidden: z.array(id),
-    })
-    .nullable(),
-  types: z.array(id).min(1).max(2),
-  ivs: spread,
-  evs: spread,
-  stats: spread,
-  moves: z
-    .object({
-      current: z.array(id).max(4),
-      relearner: z.array(id),
-      tms: z.array(id),
-    })
-    .optional(),
-});
-
-export const itemSchema = z.object({
-  item: id,
-  quantity: z.int().positive(),
-});
-
-export const tmSchema = z.object({
-  item: id,
-  move: id,
-});
-
-export const sheetSchema = z.object({
-  pokemon: z.array(pokemonSchema),
-  items: z.array(itemSchema),
-  tms: z.array(tmSchema),
-});
-
-export type Sheet = z.infer<typeof sheetSchema>;
-export type SheetPokemon = z.infer<typeof pokemonSchema>;
-export type SheetItem = z.infer<typeof itemSchema>;
-export type SheetTm = z.infer<typeof tmSchema>;
+export { itemSchema, pokemonSchema, sheetSchema, tmSchema } from "../../shared/snapshot";
+export type { Sheet, SheetItem, SheetPokemon, SheetTm } from "../../shared/snapshot";
 
 export type Checked = { ok: true; sheet: Sheet } | { ok: false; reason: string };
 

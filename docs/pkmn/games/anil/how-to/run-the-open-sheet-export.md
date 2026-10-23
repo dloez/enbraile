@@ -1,6 +1,6 @@
 # How to Run and Share the Open Sheet Export
 
-Write a player's [Open Sheet JSON](../reference/open-sheet-json.md) with `pkmn/games/anil/export_data.py` from the save folder they zip and send you, and hand the zip back with its TM rolls; or run it on your own save. Why it works this way is in [Open Sheet Export](../explanation/open-sheet-export.md).
+Write a player's Open Sheet JSON ([Snapshot Format](../../../site/reference/snapshot.md), its first three keys) with `pkmn/games/anil/export_data.py` from the save folder they zip and send you, and hand the zip back with its TM rolls; or run it on your own save. Why it works this way is in [Open Sheet Export](../explanation/open-sheet-export.md).
 
 ## Prerequisites
 
@@ -65,7 +65,7 @@ Only when the game build, the mod's data (`pkmn/games/anil/src/anil/mod/`) or Sh
 uv run pkmn/games/anil/generate_export_data.py
 ```
 
-It rewrites the `DATA` dict in `export_data.py`, and nothing when the data is unchanged. Commit and push it to reach the raw URL.
+It rewrites the `DATA` dict in `export_data.py` and the site's copy of the same data, `pkmn/site/api/_lib/export/data.json`, each only when it changed. Commit and push both: the script reaches players through the raw URL, the JSON through the site's next deploy.
 
 ## Verification
 

@@ -1,9 +1,31 @@
 import { and, asc, eq, ne } from "drizzle-orm";
 import { type AdminSeries, startChecklist } from "../../shared/series.js";
+import { auth } from "./auth.js";
 import { db } from "./db.js";
-import { game, milestone, series, seriesPlayer, user } from "./schema.js";
+import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
 
 export type SeriesRow = typeof series.$inferSelect;
+
+export type Viewer = { id: string; admin?: boolean | null };
+
+export async function viewer(request: Request) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  return session?.user;
+}
+
+export async function findShown(param: string, admin: boolean): Promise<SeriesRow | undefined> {
+  const number = Number(param);
+  if (!Number.isInteger(number)) return undefined;
+  const [row] = await db.select().from(series).where(eq(series.number, number));
+  if (!row || (row.state === "draft" && !admin)) return undefined;
+  return row;
+}
+
+export function mayUpload(reader: Viewer, row: SeriesRow, playerId: string): boolean {
+  if (row.state === "draft") return false;
+  if (reader.admin) return true;
+  return reader.id === playerId && row.ingestion === "manual" && row.state === "running";
+}
 
 export async function milestonesOf(seriesId: string) {
   return db
@@ -14,12 +36,23 @@ export async function milestonesOf(seriesId: string) {
 }
 
 export async function trainersOf(seriesId: string) {
-  return db
+  const players = await db
     .select({ id: user.id, name: user.name })
     .from(seriesPlayer)
     .innerJoin(user, eq(user.id, seriesPlayer.userId))
     .where(eq(seriesPlayer.seriesId, seriesId))
     .orderBy(asc(user.name));
+  const taken = await db
+    .select({ userId: save.userId, milestone: milestone.name, pokemon: snapshot.pokemon, fainted: snapshot.fainted })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .where(eq(save.seriesId, seriesId))
+    .orderBy(asc(milestone.position));
+  return players.map((player) => ({
+    ...player,
+    snapshots: taken.filter((row) => row.userId === player.id).map(({ milestone, pokemon, fainted }) => ({ milestone, pokemon, fainted })),
+  }));
 }
 
 export async function plays(seriesId: string, userId: string): Promise<boolean> {

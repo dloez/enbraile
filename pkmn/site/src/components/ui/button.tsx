@@ -11,6 +11,7 @@ const buttonVariants = cva(
         default: "bg-face text-white shadow-[inset_0_-4px_0_0_var(--edge)] hover:bg-face-hi",
         destructive: "bg-face text-destructive shadow-[inset_0_-4px_0_0_var(--edge)] hover:bg-face-hi",
         ghost: "text-muted-foreground hover:bg-face hover:text-foreground",
+        go: "bg-red text-white shadow-[inset_0_-4px_0_0_var(--edge)] hover:bg-red-hi disabled:bg-face disabled:text-faint disabled:opacity-100",
       },
       size: {
         default: "min-h-11 px-4 pb-1",

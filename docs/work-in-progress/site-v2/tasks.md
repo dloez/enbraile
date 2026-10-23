@@ -55,26 +55,6 @@ The series pages, the admin series form and the phone header are built and check
 **After:** Owner-run: Discord sign-in on production
 **Needs the author:** the owner-run steps above.
 
-## Players upload their save zip as a snapshot
-
-The export ported to TypeScript in the site, run in a Vercel Function on the save zip the browser put in B2 ([Snapshots In](discovery.md#snapshots-in), [The export?](discovery.md#data-stack-and-config)), through the one pipeline every ingestion mode shares: raw save stored, exported, snapshot. `generate_export_data.py` writes the export's data as JSON for the site; the port reads the zip, lists its `Partida N.rxdata` slots, and exports with moves always. A snapshot holds everything the save holds at its milestone ([What does a snapshot hold?](discovery.md#model)), not only today's export. The player picks the slot on their row of the series page and the milestone, suggested from the save's badges and Hall of Fame; the row then shows the snapshot with its Pokémon count and its Fainted tile. Uploading again to a milestone replaces it. An admin can upload for any player. In an automatic series the players see no upload. This entry rolls missing TMs in memory as the export does; keeping them is the entry below.
-
-**Do:**
-- [ ] `generate_export_data.py` writes the data JSON into the site; port the Ruby Marshal reader, slot pick, abilities, moves and items, and add what the export leaves out: fainted Pokémon (species, nickname, level), all 8 bag pockets, the trainer (name, ID, money, badges), the party and its levels, play time, the Pokédex, used first-encounter routes, read from the paths in [State → Save Records](../../pkmn/games/anil/reference/state.md#save-records); the League milestone suggested from `$PokemonGlobal@hallOfFame`, never `GameStats@hall_of_fame_entry_count`.
-- [ ] Saves and snapshots tables and migration; the zip kept in B2 under its snapshot; the upload flow with the milestone suggestion; a failed export shows its reason; no upload for players of an automatic series.
-- [ ] The trainer row's tiles from the snapshot: the PC tile's Pokémon count, the Snapshots tile listing it, and the Fainted tile, which `series.dc.html` draws but `TrainerRow` in `src/pages/series.tsx` does not have yet.
-- [ ] Extend `npm run seed` with a snapshot for a test player, uploaded from a save zip in `pkmn/site/saves/` when one is there ([Local data to check with?](discovery.md#observability-and-verification)).
-- [ ] Move [Open Sheet JSON](../../pkmn/games/anil/reference/open-sheet-json.md) to be the snapshot format's reference, widened to the snapshot's contents.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; for a save zip the owner provides, the port's output for the fields the Python export writes equals `uv run pkmn/games/anil/export_data.py --save <zip> --moves` except for TM rolls (`diff` after stripping rolled entries); its fainted list, pockets, trainer, party, play time and Pokédex match what `wonder eval` reads from the same save.
-- Human-run: upload your series 1 zip, see "Post-League" suggested, keep it, and see the count and the Fainted tile on your row; upload it again and see one snapshot, replaced; as admin, upload another player's zip for them; upload a zip without a save and read its refusal.
-- Reuse: the frozen upload boards (`upload-dialog.dc.html` and the `upload-*.dc.html` states) and the Upload button on `series.dc.html`, in `pkmn/site/design/`; `pkmn/site/src/open-sheet/schema.ts` (the export's zod schema); the games' multipart upload (`startUpload`, `partUrl`, `completeUpload`, `abortUpload` and `objectSize` in `api/_lib/files.ts`, the `/upload`, `/upload/part` and `/file` routes in `api/_lib/games.ts`, `uploadParts` in `shared/upload.ts`, `putPart` in `src/lib/api.ts`).
-- Neighbors: `pkmn/games/anil/export_data.py`.
-- Forbidden: Python in the site's functions; an endpoint for automatic ingestion; a pipeline that assumes the manual upload.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `pkmn/games/anil/generate_export_data.py`, `docs/pkmn/games/anil/`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-
 ## Keep each save's TM rolls and hand the rolled zip back
 
 The TMs a save's export rolled are kept, reused when the site exports that same zip again, and replaced by the next zip's own rolls when the player uploads again; the player can download their zip back with the slot's `tm_compatibility_<slot>.dat` holding them ([TM rolls the export makes?](discovery.md#snapshots-in)).
@@ -91,7 +71,6 @@ The TMs a save's export rolled are kept, reused when the site exports that same 
 - Forbidden: rolling again a pair the site already rolled for the stored zip; comparing one snapshot's TMs with another's; writing the save itself.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`, `docs/pkmn/games/anil/`
-**After:** Players upload their save zip as a snapshot
 
 ## Retire export_data.py
 
@@ -126,7 +105,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: a second copy of the PC components.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** Players upload their save zip as a snapshot; Design the PC's links, the team list and builder, and the new pages' phone layouts
+**After:** Design the PC's links, the team list and builder, and the new pages' phone layouts
 
 ## The series list and the series page fit a phone
 
@@ -211,7 +190,7 @@ An admin can set any value derived from a save by hand (progress, the fainted co
 - Forbidden: a value set by hand overwritten by a later save; an override without who set it and when.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Players upload their save zip as a snapshot; The series page's track reads the snapshots, and trainers compare
+**After:** The series page's track reads the snapshots, and trainers compare
 
 ## Build teams locked to a snapshot, stored in the account
 
@@ -266,7 +245,7 @@ The upload also takes an export `.json`, and every export is read as far as it g
 - Neighbors: the save zip upload.
 - Forbidden: refusing an export for a missing field; a second schema for old exports.
 
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`, `docs/pkmn/games/anil/reference/open-sheet-json.md`
+**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`, `docs/pkmn/site/reference/snapshot.md`
 **After:** Build teams locked to a snapshot, stored in the account
 
 ## Build teams from several snapshots, any player's

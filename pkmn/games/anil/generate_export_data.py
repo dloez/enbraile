@@ -13,6 +13,7 @@ from rubymarshal.reader import load
 
 ROOT = Path(__file__).parent
 EXPORT = ROOT / "export_data.py"
+SITE_DATA = ROOT.parent.parent / "site" / "api" / "_lib" / "export" / "data.json"
 MOD = ROOT / "src" / "anil" / "mod"
 MOD_DATA = MOD / "data"
 GAME_DATA = ROOT / "game" / "base" / "es-v4.14" / "Data"
@@ -195,12 +196,18 @@ def main() -> None:
     updated = BLOCK.sub(lambda _: render(data), script, count=1)
     if updated != script:
         EXPORT.write_text(updated, encoding="utf-8")
+    site = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
+    site_changed = not SITE_DATA.is_file() or SITE_DATA.read_text(encoding="utf-8") != site
+    if site_changed:
+        SITE_DATA.parent.mkdir(parents=True, exist_ok=True)
+        SITE_DATA.write_text(site, encoding="utf-8")
     counts = ", ".join(f"{len(table)} {kind}" for kind, table in data["showdown"].items())
     print(
         f"Randomlocke version {data['randomlocke_version']}; Showdown IDs: {counts}; "
         f"{len(data['types'])} species-form types, {len(data['fixed_abilities'])} with fixed abilities, {len(data['pockets'])} item pockets, "
         f"{len(data['tm_moves'])} TM moves, {len(data['move_types'])} move types, {len(data['evolutions'])} species with "
-        f"evolutions; {'written to' if updated != script else 'unchanged:'} {EXPORT}"
+        f"evolutions; {'written to' if updated != script else 'unchanged:'} {EXPORT}; "
+        f"{'written to' if site_changed else 'unchanged:'} {SITE_DATA}"
     )
 
 

@@ -1,10 +1,13 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { crc32 } from "node:zlib";
-import { eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db, pool } from "../api/_lib/db.js";
 import { requireEnv } from "../api/_lib/env.js";
+import { saveSlots } from "../api/_lib/export/save-zip.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
-import { game, milestone, series, seriesPlayer, user } from "../api/_lib/schema.js";
+import { ingest, savePrefix } from "../api/_lib/ingest.js";
+import { game, milestone, save, series, seriesPlayer, snapshot, user } from "../api/_lib/schema.js";
+import { suggestMilestone } from "../shared/save-upload.js";
 import type { MilestoneMark } from "../shared/series.js";
 import { partSizeFor, uploadParts } from "../shared/upload.js";
 import { createAdmin, createTestPlayer, usernameTaken } from "./accounts.js";
@@ -34,6 +37,7 @@ const seedSeries = {
     ["Tournament", "tournament"],
   ] satisfies [string, MilestoneMark][],
 };
+const seedSnapshot = { player: "Red", saves: new URL("../saves/", import.meta.url), fallback: "Post-League" };
 
 function standInZip(): Uint8Array {
   const name = Buffer.from("stand-in.txt");
@@ -128,6 +132,31 @@ async function seedTheSeries() {
   });
 }
 
+async function seedTheSnapshot(): Promise<string | null> {
+  const zips = (await readdir(seedSnapshot.saves).catch(() => [])).filter((name) => name.toLowerCase().endsWith(".zip")).sort();
+  if (zips.length === 0) return null;
+  const [row] = await db.select({ id: series.id }).from(series).where(eq(series.number, seedSeries.number));
+  const [player] = await db.select({ id: user.id }).from(user).where(eq(user.username, seedSnapshot.player.toLowerCase()));
+  if (!row || !player) throw new Error(`${seedSeries.name} or ${seedSnapshot.player} is missing`);
+  const [taken] = await db
+    .select({ id: snapshot.id })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .where(and(eq(save.seriesId, row.id), eq(save.userId, player.id)));
+  if (taken) return null;
+  const fileName = zips[0];
+  const zip = await readFile(new URL(encodeURIComponent(fileName), seedSnapshot.saves));
+  const [slot] = saveSlots(zip);
+  const milestones = await db.select({ id: milestone.id, name: milestone.name }).from(milestone).where(eq(milestone.seriesId, row.id)).orderBy(asc(milestone.position));
+  const name = suggestMilestone(milestones.map((m) => m.name), slot) ?? seedSnapshot.fallback;
+  const chosen = milestones.find((m) => m.name === name);
+  if (!chosen) throw new Error(`${seedSeries.name} has no milestone ${name}`);
+  const key = `${savePrefix(row.id, player.id)}${crypto.randomUUID()}.zip`;
+  await uploadZip(key, zip);
+  const done = await ingest({ seriesId: row.id, userId: player.id, milestoneId: chosen.id, fileKey: key, fileName, slot: slot.entry, uploadedBy: null });
+  return `${seedSnapshot.player}'s ${chosen.name} snapshot from ${fileName} (${done.pokemon} Pokémon, ${done.fainted} fainted)`;
+}
+
 async function main() {
   for (const variable of ["DATABASE_URL", "S3_ENDPOINT"]) {
     const host = new URL(requireEnv(variable)).hostname;
@@ -140,8 +169,9 @@ async function main() {
   }
   await seedTheGame();
   await seedTheSeries();
+  const seededSnapshot = await seedTheSnapshot();
   console.log(
-    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}`,
+    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededSnapshot ? `, with ${seededSnapshot}` : ""}`,
   );
 }
 

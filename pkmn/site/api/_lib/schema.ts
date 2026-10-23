@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
-import { bigint, boolean, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import type { Snapshot } from "../../shared/snapshot.js";
 import { INGESTION_MODES, MILESTONE_MARKS, SCENES, SERIES_STATES } from "../../shared/series.js";
 
 export const user = pgTable("user", {
@@ -139,4 +140,42 @@ export const milestone = pgTable(
     mark: milestoneMarkEnum("mark").notNull().default("none"),
   },
   (table) => [unique("milestone_series_position_unique").on(table.seriesId, table.position), unique("milestone_series_name_unique").on(table.seriesId, table.name)],
+);
+
+export const save = pgTable(
+  "save",
+  {
+    id: text("id").primaryKey(),
+    seriesId: text("series_id")
+      .notNull()
+      .references(() => series.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [unique("save_series_user_unique").on(table.seriesId, table.userId), index("save_user_id_idx").on(table.userId)],
+);
+
+export const snapshot = pgTable(
+  "snapshot",
+  {
+    id: text("id").primaryKey(),
+    saveId: text("save_id")
+      .notNull()
+      .references(() => save.id, { onDelete: "cascade" }),
+    milestoneId: text("milestone_id")
+      .notNull()
+      .references(() => milestone.id, { onDelete: "cascade" }),
+    fileKey: text("file_key").notNull(),
+    fileName: text("file_name").notNull(),
+    fileSize: bigint("file_size", { mode: "number" }).notNull(),
+    slot: text("slot").notNull(),
+    data: jsonb("data").$type<Snapshot>().notNull(),
+    pokemon: integer("pokemon").notNull(),
+    fainted: integer("fainted").notNull(),
+    uploadedBy: text("uploaded_by").references(() => user.id, { onDelete: "set null" }),
+    takenAt: timestamp("taken_at").notNull().defaultNow(),
+  },
+  (table) => [unique("snapshot_save_milestone_unique").on(table.saveId, table.milestoneId), index("snapshot_milestone_id_idx").on(table.milestoneId)],
 );

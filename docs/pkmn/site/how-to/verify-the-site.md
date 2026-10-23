@@ -46,7 +46,11 @@ select u.username, u.admin, s.created_at from session s join "user" u on u.id = 
 docker compose exec -T minio sh -c 'mc alias set l http://localhost:9000 minioadmin minioadmin >/dev/null && mc ls --recursive l/pkmn-site'
 ```
 
-`mc stat` and `mc cat` on a `l/pkmn-site/<key>` path show one object. A game's zip is under `games/<game id>/`, and the `game` table's `file_key` names the current one. `mc ls --incomplete --recursive l/pkmn-site` lists the multipart uploads still open, which a finished or abandoned upload leaves none of. MinIO drops open uploads when its container is killed, so read this before restarting it.
+`mc stat` and `mc cat` on a `l/pkmn-site/<key>` path show one object. A game's zip is under `games/<game id>/`, and the `game` table's `file_key` names the current one. A save zip is under `saves/<series id>/<player id>/`, and each `snapshot` row's `file_key` names the one it holds; the snapshots and whose they are:
+
+```sh
+docker compose exec -T postgres psql -U postgres -d pkmn -c 'select u.username, m.name, s.pokemon, s.fainted, s.file_key from snapshot s join save v on v.id = s.save_id join "user" u on u.id = v.user_id join milestone m on m.id = s.milestone_id'
+``` `mc ls --incomplete --recursive l/pkmn-site` lists the multipart uploads still open, which a finished or abandoned upload leaves none of. MinIO drops open uploads when its container is killed, so read this before restarting it.
 
 ### 5. Reset
 
@@ -64,6 +68,7 @@ This wipes the database and the bucket and brings back the seeded state; `npm ru
 - From a reset, after signing in as `admin` and as `blue`, step 3's query lists one session for each, `admin` with `admin` true.
 - `http://localhost:5173/api/auth/dev/sign-in?username=admin` answers 404.
 - Signed in as `leaf`, `/` shows "Waiting for an admin" and `/api/players` answers 403; after the admin presses Allow beside Leaf at `/admin/players`, a reload shows Series 1 without its Download, since Leaf is not one of its players.
+- From a reset with a save zip in `pkmn/site/saves/`, Red's row on Series 1 opens on "At <milestone>" with the PC and Fainted tiles filled; signed in as `blue`, Upload on Blue's row takes the same zip as a snapshot, and the query in step 4 lists one row for each.
 - With `DEV_SIGN_IN` unset and `npm run dev` restarted, `http://localhost:5173/api/auth/dev/sign-in?username=red` answers 404.
 
 ## Troubleshooting
@@ -75,5 +80,6 @@ This wipes the database and the bucket and brings back the seeded state; `npm ru
 | `browser_type` or `browser_click` says the input is invalid | They take the element as `target`, the `ref` from the latest snapshot; refs change whenever the page re-renders. |
 | A snapshot taken right after navigating is empty | The page had not rendered yet; `browser_wait_for` its heading first. |
 | Going offline (Chrome DevTools Protocol's `Network.emulateNetworkConditions`) does not break an upload's part already on its way | Offline only fails requests that start while it lasts. To cut parts mid-way, slow the upload with the same call's `uploadThroughput` and run `docker compose restart -t 0 minio` while it runs; `docker compose stop -t 0 minio` leaves a port that accepts no connection, as a dropped network does. |
+| `browser_file_upload` refuses a file "outside allowed roots" (a save zip in another checkout's `pkmn/site/saves/`) | Serve the folder over HTTP (`python3 -m http.server <port> --bind 127.0.0.1` in it), then in `browser_run_code_unsafe` fetch the file and pass it to `setInputFiles` as `{ name, mimeType, buffer }` on the dialog's `input[aria-label="Save zip"]`; the code runs in Playwright's process, which has `fetch` but no `import`. |
 | A `page.route` stub keeps answering after `page.unroute` | `unroute` only removes a route given the same matcher object; `page.unrouteAll()` removes every one. |
 | Port 5432, 9000 or 5173 is taken | Run a second stack as [How to Run and Deploy the Site](run-and-deploy-the-site.md) step 2 says, and start Vite with `npm run dev -- --port <port>`, with `BETTER_AUTH_URL` and the URLs above on that port. |

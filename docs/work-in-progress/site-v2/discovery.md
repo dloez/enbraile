@@ -96,6 +96,6 @@ Done when, on `pkmn.enbraile.vip`: a player the admin has allowed signs in with 
 ## References
 
 - [The pkmn Site](../../pkmn/site/explanation/site.md), [Open Sheet](../../pkmn/site/explanation/open-sheet.md), [Team Analysis](../../pkmn/site/explanation/team-analysis.md), [Site Design System](../../pkmn/site/reference/design-system.md), [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md)
-- [Open Sheet Export](../../pkmn/games/anil/explanation/open-sheet-export.md), [Open Sheet JSON](../../pkmn/games/anil/reference/open-sheet-json.md), [How to Run the Open Sheet Export](../../pkmn/games/anil/how-to/run-the-open-sheet-export.md)
+- [Open Sheet Export](../../pkmn/games/anil/explanation/open-sheet-export.md), [Snapshot Format](../../pkmn/site/reference/snapshot.md), [How to Run the Open Sheet Export](../../pkmn/games/anil/how-to/run-the-open-sheet-export.md)
 - [Series 1 Rules](../../pkmn/series/1/reference/rules.md)
 - Code: `pkmn/site/src/router.tsx`, `src/tools.ts`, `src/open-sheet/`, `src/team-analysis/`, `src/pages/team-analysis.tsx`, `src/analysis/`, `src/components/analysis/`; `pkmn/games/anil/export_data.py`, `generate_export_data.py`

@@ -2,11 +2,11 @@ import { Link } from "@tanstack/react-router";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { buttonClass, fieldClass, Panel } from "@/components/controls";
 import { listPage } from "@/components/page";
-import { api, putPart } from "@/lib/api";
+import { api } from "@/lib/api";
+import { sendFile } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import { AdminGate } from "@/pages/admin";
-import { downloadLink, game, gameList, type Game, partTicket, uploadAborted, type UploadTicket, uploadTicket } from "../../shared/games";
-import { uploadParts } from "../../shared/upload";
+import { downloadLink, game, gameList, type Game } from "../../shared/games";
 
 const sizeUnits = ["B", "KB", "MB", "GB"];
 
@@ -26,20 +26,6 @@ function formatDate(iso: string): string {
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
-}
-
-const abortAttempts = 3;
-
-async function abortUpload(gameId: string, { key, uploadId }: UploadTicket): Promise<boolean> {
-  for (let attempt = 1; attempt <= abortAttempts; attempt += 1) {
-    try {
-      await api(`/games/${gameId}/upload`, uploadAborted, { method: "DELETE", body: { key, uploadId } });
-      return true;
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-    }
-  }
-  return false;
 }
 
 export function AdminGamesPage() {
@@ -141,27 +127,10 @@ function GameRow({ game: current, onChange }: { game: Game; onChange: (updated: 
   async function upload(file: File) {
     setError(null);
     setProgress(0);
-    let ticket: UploadTicket | undefined;
     try {
-      ticket = await api(`/games/${current.id}/upload`, uploadTicket, {
-        body: { fileName: file.name, size: file.size },
-      });
-      const { key, uploadId, partSize } = ticket;
-      const parts = await uploadParts(
-        file.size,
-        partSize,
-        async (part, start, end, onPartProgress, signal) => {
-          const { url } = await api(`/games/${current.id}/upload/part`, partTicket, {
-            body: { key, uploadId, size: file.size, part },
-          });
-          return putPart(url, file.slice(start, end), onPartProgress, signal);
-        },
-        setProgress,
-      );
-      onChange(await api(`/games/${current.id}/file`, game, { body: { key, uploadId, fileName: file.name, parts } }));
+      onChange(await sendFile(`/games/${current.id}`, file, game, setProgress));
     } catch (caught) {
-      const cleared = ticket ? await abortUpload(current.id, ticket) : true;
-      setError(cleared ? message(caught) : `${message(caught)}; its parts stay in the file store until the next upload`);
+      setError(message(caught));
     }
     setProgress(null);
   }

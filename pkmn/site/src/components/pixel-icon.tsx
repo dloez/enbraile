@@ -27,6 +27,15 @@ const ICONS = {
       ["fill-faint", "M1 13h4v1H1zM9 13h4v1H9z"],
     ],
   },
+  upload: { size: 10, paths: [["fill-current", "M4 1h2v1H4zM3 2h4v1H3zM2 3h6v1H2zM4 4h2v4H4zM1 9h8v1H1z"]] },
+  check: { size: 10, paths: [["fill-current", "M8 1h2v2H8zM7 3h2v2H7zM6 5h2v2H6zM4 7h3v2H4zM2 5h2v2H2zM0 3h2v2H0z"]] },
+  zip: {
+    size: 10,
+    paths: [
+      ["fill-muted-foreground", "M1 0h6v1H1zM7 1h1v1H7zM8 2h1v8H8zM1 9h7v1H1zM1 1h1v8H1z"],
+      ["fill-current", "M4 1h1v1H4zM5 2h1v1H5zM4 3h1v1H4zM5 4h1v1H5zM4 5h2v2H4z"],
+    ],
+  },
   download: { size: 10, paths: [["fill-current", "M4 1h2v4H4zM2 5h6v1H2zM3 6h4v1H3zM4 7h2v1H4zM1 9h8v1H1z"]] },
   cartridge: {
     size: 10,

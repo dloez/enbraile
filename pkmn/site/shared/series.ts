@@ -70,7 +70,9 @@ export const seriesBanner = z.object({
 
 export const seriesBannerList = z.array(seriesBanner);
 
-export const trainer = z.object({ id: z.string(), name: z.string() });
+export const trainerSnapshot = z.object({ milestone: z.string(), pokemon: z.number().int(), fainted: z.number().int() });
+
+export const trainer = z.object({ id: z.string(), name: z.string(), canUpload: z.boolean(), snapshots: z.array(trainerSnapshot) });
 
 export const seriesPage = seriesBanner.extend({
   ingestion,
@@ -110,3 +112,5 @@ export type AdminSeries = z.infer<typeof adminSeries>;
 export type SeriesBanner = z.infer<typeof seriesBanner>;
 
 export type SeriesPage = z.infer<typeof seriesPage>;
+
+export type Trainer = z.infer<typeof trainer>;
