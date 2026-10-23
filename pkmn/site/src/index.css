@@ -13,6 +13,7 @@
 @theme inline {
     --font-heading: 'Jersey 10', sans-serif;
     --font-sans: 'Nunito', system-ui, sans-serif;
+    --animate-track-bob: track-bob 0.5s steps(2) infinite alternate;
     --color-ink: var(--ink);
     --color-red: var(--red);
     --color-red-hi: var(--red-hi);
@@ -250,6 +251,11 @@
 @keyframes scene-glow {
   from { opacity: 1; }
   to { opacity: 0.25; }
+}
+
+@keyframes track-bob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
 }
 
 @keyframes scene-drift {

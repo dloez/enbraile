@@ -1,13 +1,8 @@
 import { cn } from "@/lib/utils";
 
-const COLOURS = [
-  "bg-player-1 ring-player-1",
-  "bg-player-2 ring-player-2",
-  "bg-player-3 ring-player-3",
-  "bg-player-4 ring-player-4",
-  "bg-player-5 ring-player-5",
-  "bg-player-6 ring-player-6",
-] as const;
+export const PLAYER_FILL = ["bg-player-1", "bg-player-2", "bg-player-3", "bg-player-4", "bg-player-5", "bg-player-6"] as const;
+
+export const PLAYER_RING = ["ring-player-1", "ring-player-2", "ring-player-3", "ring-player-4", "ring-player-5", "ring-player-6"] as const;
 
 const SIZES = {
   xs: "size-8 rounded-[7px] ring-2 text-[1.375rem]",
@@ -20,7 +15,7 @@ const SIZES = {
 export function playerColour(id: string): number {
   let hash = 0;
   for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return hash % COLOURS.length;
+  return hash % PLAYER_FILL.length;
 }
 
 export function PlayerBadge({ name, colour, size = "sm" }: { name: string; colour: number; size?: keyof typeof SIZES }) {
@@ -30,7 +25,8 @@ export function PlayerBadge({ name, colour, size = "sm" }: { name: string; colou
       className={cn(
         "grid flex-none place-items-center border-3 border-ink font-heading leading-none text-ink",
         SIZES[size],
-        COLOURS[colour % COLOURS.length],
+        PLAYER_FILL[colour % PLAYER_FILL.length],
+        PLAYER_RING[colour % PLAYER_RING.length],
       )}
     >
       {name.charAt(0).toUpperCase()}

@@ -73,22 +73,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## The series page's track reads the snapshots
-
-Each row's progress track shows the trainer at their latest snapshot, with the row's tiles showing it; each milestone with a snapshot is ringed in faint cyan in its node's shape, and clicking one shows that snapshot ([The progress track?](discovery.md#pages)). The Trainers table has no Records view ([Comparing trainers?](discovery.md#pages)).
-
-**Do:**
-- [ ] The interactive track, its rings, and the row's tiles per snapshot; on a phone, where the track only shows, the open row's segmented control of the trainer's milestones picking the snapshot instead (`series-phone.dc.html`, [The progress track?](discovery.md#pages)).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with two snapshots for a test player, see both nodes ringed, click the earlier one and see the row's tiles change; at 390×844, pick the earlier milestone in the open row's control and see the tiles change.
-- Human-run: on production, click through your own track's nodes.
-- Reuse: the series page, `src/pages/series.tsx` (`TrainerRow`'s track); `trainersOf` in `api/_lib/series-data.ts`, which already answers each snapshot's milestone and counts; `Segmented` in `src/components/controls.tsx`.
-- Neighbors: `pkmn/site/design/series.dc.html`.
-- Forbidden: a Records view or switch on the series page; a ranking or ordering by records.
-
-**Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-
 ## Admins set save-derived values by hand and manage any snapshot
 
 An admin can set any value derived from a save by hand (progress, the fainted count, a snapshot's milestone), and upload, replace, delete or move any snapshot for any player ([Admin overrides?](discovery.md#model), [How does a save reach the site?](discovery.md#snapshots-in)). Each value records its source, from the save or set by hand (by whom and when), and a value set by hand wins until an admin clears it.
@@ -104,7 +88,6 @@ An admin can set any value derived from a save by hand (progress, the fainted co
 - Forbidden: a value set by hand overwritten by a later save; an override without who set it and when.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** The series page's track reads the snapshots
 
 ## The PC box and summary take the signed-off look
 

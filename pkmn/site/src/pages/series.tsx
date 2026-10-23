@@ -2,10 +2,10 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { buttonClass } from "@/components/controls";
+import { buttonClass, Segmented } from "@/components/controls";
 import { toolPage } from "@/components/page";
 import { PixelIcon } from "@/components/pixel-icon";
-import { PlayerBadge, playerColour } from "@/components/player-badge";
+import { PLAYER_FILL, PLAYER_RING, PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
 import { UploadDialog } from "@/components/upload-dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -199,6 +199,7 @@ function Trainers({ series, onChanged }: { series: Series; onChanged: () => void
                 open={open === trainer.id}
                 last={index === series.trainers.length - 1}
                 onToggle={() => setOpen(open === trainer.id ? null : trainer.id)}
+                onOpen={() => setOpen(trainer.id)}
                 milestones={heads}
                 columns={columns}
                 onUpload={() => setUploadFor(trainer.id)}
@@ -244,6 +245,7 @@ function TrainerRow({
   open,
   last,
   onToggle,
+  onOpen,
   milestones,
   columns,
   onUpload,
@@ -254,12 +256,15 @@ function TrainerRow({
   open: boolean;
   last: boolean;
   onToggle: () => void;
-  milestones: { name: string; mark: string; round: number }[];
+  onOpen: () => void;
+  milestones: Milestone[];
   columns: string;
   onUpload: () => void;
 }) {
   const latest = trainer.snapshots.at(-1);
   const desktop = useMediaQuery("(min-width: 40rem)");
+  const [picked, setPicked] = useState<string | null>(null);
+  const shown = trainer.snapshots.find((s) => s.milestone === picked) ?? latest;
   const [zipError, setZipError] = useState<string | null>(null);
 
   async function fetchZip(milestone: string) {
@@ -309,30 +314,17 @@ function TrainerRow({
             </button>
           )}
         </span>
-        <span
-          role={desktop ? undefined : "img"}
-          aria-label={desktop ? undefined : latest ? `${trainer.name} at ${latest.milestone}` : `${trainer.name}, no snapshots`}
-          className="relative mx-3 mb-2 grid h-12.5 sm:mx-0 sm:mb-0 sm:h-auto sm:self-stretch"
-          style={{ gridTemplateColumns: columns }}
-        >
-          <span
-            className="absolute top-1/2 -mt-0.5 h-1 rounded-sm bg-ink sm:-mt-0.75 sm:h-1.5"
-            style={{ left: `${50 / Math.max(milestones.length, 1)}%`, right: `${50 / Math.max(milestones.length, 1)}%` }}
-          />
-          {milestones.map((m) => (
-            <span key={m.name} className={cn("relative grid place-items-center", m.round > 0 && "bg-round/10")}>
-              {m.mark === "tournament" ? (
-                <span className="grid size-7.5 place-items-center rounded-full border-2 border-trophy-rim bg-trophy sm:size-13 sm:border-3">
-                  <Trophy className="size-4 sm:size-7" />
-                </span>
-              ) : m.round > 0 ? (
-                <span className="size-5.5 rounded-full border-3 border-round-dim bg-cell shadow-[0_0_0_2px_var(--card)] sm:size-7.5 sm:border-4 sm:shadow-[0_0_0_3px_var(--card)]" />
-              ) : (
-                <span className="size-3 rounded-full bg-cell sm:size-4" />
-              )}
-            </span>
-          ))}
-        </span>
+        <Track
+          trainer={trainer}
+          milestones={milestones}
+          columns={columns}
+          shown={shown?.milestone}
+          interactive={desktop}
+          onPick={(milestone) => {
+            setPicked(milestone);
+            onOpen();
+          }}
+        />
         <span className="hidden items-center justify-end pr-6 sm:flex">
           <button
             type="button"
@@ -349,89 +341,94 @@ function TrainerRow({
       </div>
       {open && (
         <div className="grid grid-cols-2 gap-2 border-t-3 border-dashed bg-box px-3 pt-3 pb-4 sm:flex sm:flex-wrap sm:items-stretch sm:gap-3.5 sm:px-6 sm:pt-4 sm:pb-6">
-          {latest && <span className="hidden flex-[1_0_100%] font-heading text-2xl text-primary sm:block">At {latest.milestone}</span>}
+          {shown && desktop && <span className="flex-[1_0_100%] font-heading text-2xl text-primary">At {shown.milestone}</span>}
+          {shown && !desktop && (
+            <Segmented
+              label={`${trainer.name}'s snapshot`}
+              size="lg"
+              options={trainer.snapshots.map((s) => ({ value: s.milestone, label: s.milestone }))}
+              value={shown.milestone}
+              onChange={setPicked}
+              className="col-span-2 flex flex-wrap"
+            />
+          )}
           <Tile
             label="PC"
-            value={latest?.pokemon}
-            link={latest && { player: trainer.id, number: String(seriesNumber), label: `Open ${trainer.name}'s PC` }}
+            value={shown?.pokemon}
+            link={shown && { player: trainer.id, number: String(seriesNumber), label: `Open ${trainer.name}'s PC at ${shown.milestone}`, snapshot: shown.milestone }}
           />
           <Tile label="Teams" />
           <Tile
             label="Fainted"
-            value={latest?.fainted}
+            value={shown?.fainted}
             alarm
             link={{ player: trainer.id, number: String(seriesNumber), label: `${trainer.name}'s fallen`, hash: "fallen" }}
           />
           <Tile
             label="Journey"
-            value={latest && playTime(latest.playTime)}
+            value={shown && playTime(shown.playTime)}
             wide
             link={{ player: trainer.id, number: String(seriesNumber), label: `${trainer.name}'s journey`, hash: "journey" }}
           />
-          <div className="col-span-2 flex flex-col gap-1 rounded-xl border-3 bg-card px-3 py-2.5 sm:min-w-65 sm:flex-1 sm:gap-1.5 sm:px-4 sm:py-3">
-            <span className="font-heading text-[1.1875rem] text-muted-foreground sm:text-xl">Snapshots</span>
-            <span className="flex min-h-12 flex-wrap items-center gap-2">
-              {trainer.snapshots.map((s) => (
-                <span
-                  key={s.milestone}
-                  className={cn(
-                    "flex min-h-10 items-center gap-1 overflow-hidden rounded-md border-3 bg-cell font-heading text-2xl",
-                    s.zip && "pr-0.5",
-                    s === latest ? "border-primary" : "border-transparent",
-                  )}
-                >
-                  <Link
-                    to="/players/$player/series/$number/pc"
-                    params={{ player: trainer.id, number: String(seriesNumber) }}
-                    search={{ snapshot: s.milestone }}
-                    aria-label={`Open ${trainer.name}'s PC at ${s.milestone}`}
+          {desktop && (
+            <div className="flex min-w-65 flex-1 flex-col gap-1.5 rounded-xl border-3 bg-card px-4 py-3">
+              <span className="font-heading text-xl text-muted-foreground">Snapshots</span>
+              <span className="flex min-h-12 flex-wrap items-center gap-2">
+                {trainer.snapshots.map((s) => (
+                  <span
+                    key={s.milestone}
                     className={cn(
-                      "flex items-center self-stretch pl-3 text-foreground outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
-                      s.zip ? "pr-1.5" : "pr-3",
+                      "flex min-h-10 items-center gap-1 overflow-hidden rounded-md border-3 bg-cell font-heading text-2xl",
+                      s.zip && "pr-0.5",
+                      s === shown ? "border-primary" : "border-transparent",
                     )}
                   >
-                    {s.milestone}
-                  </Link>
-                  {s.zip && (
-                    <button
-                      type="button"
-                      aria-label={`Download the ${s.milestone} zip`}
-                      title="Download zip"
-                      onClick={() => void fetchZip(s.milestone)}
-                      className="grid size-8.5 cursor-pointer place-items-center rounded-sm outline-none hover:bg-border focus-visible:ring-3 focus-visible:ring-ring/50"
+                    <Link
+                      to="/players/$player/series/$number/pc"
+                      params={{ player: trainer.id, number: String(seriesNumber) }}
+                      search={{ snapshot: s.milestone }}
+                      aria-label={`Open ${trainer.name}'s PC at ${s.milestone}`}
+                      className={cn(
+                        "flex items-center self-stretch pl-3 text-foreground outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
+                        s.zip ? "pr-1.5" : "pr-3",
+                      )}
                     >
-                      <PixelIcon name="download" className="size-3.5 text-primary" />
-                    </button>
-                  )}
-                </span>
-              ))}
-              {trainer.snapshots.length === 0 && (
-                <span className={cn("font-heading text-2xl text-faint", trainer.canUpload && "sm:hidden")}>—</span>
+                      {s.milestone}
+                    </Link>
+                    {s.zip && (
+                      <button
+                        type="button"
+                        aria-label={`Download the ${s.milestone} zip`}
+                        title="Download zip"
+                        onClick={() => void fetchZip(s.milestone)}
+                        className="grid size-8.5 cursor-pointer place-items-center rounded-sm outline-none hover:bg-border focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        <PixelIcon name="download" className="size-3.5 text-primary" />
+                      </button>
+                    )}
+                  </span>
+                ))}
+                {trainer.snapshots.length === 0 && !trainer.canUpload && <span className="font-heading text-2xl text-faint">—</span>}
+                {trainer.canUpload && (
+                  <button type="button" aria-haspopup="dialog" onClick={onUpload} className={cn(buttonClass, "min-h-10 px-3.5 text-2xl")}>
+                    <PixelIcon name="upload" className="size-3.5 text-primary" />
+                    Upload
+                  </button>
+                )}
+              </span>
+              {zipError && (
+                <p role="alert" className="m-0 text-sm text-destructive">
+                  {zipError}
+                </p>
               )}
-              {trainer.canUpload && (
-                <button
-                  type="button"
-                  aria-haspopup="dialog"
-                  onClick={onUpload}
-                  className={cn(buttonClass, "hidden min-h-10 px-3.5 text-2xl sm:inline-flex")}
-                >
-                  <PixelIcon name="upload" className="size-3.5 text-primary" />
-                  Upload
-                </button>
-              )}
-            </span>
-            {zipError && (
-              <p role="alert" className="m-0 text-sm text-destructive">
-                {zipError}
-              </p>
-            )}
-          </div>
-          {trainer.canUpload && (
+            </div>
+          )}
+          {trainer.canUpload && !desktop && (
             <button
               type="button"
               aria-haspopup="dialog"
               onClick={onUpload}
-              className={cn(buttonClass, "col-span-2 mt-0.5 min-h-12 px-3.5 text-[1.375rem] sm:hidden")}
+              className={cn(buttonClass, "col-span-2 mt-0.5 min-h-12 px-3.5 text-[1.375rem]")}
             >
               <PixelIcon name="upload" className="size-3.5 text-primary" />
               Upload
@@ -443,7 +440,110 @@ function TrainerRow({
   );
 }
 
-type TileLink = { player: string; number: string; label: string; hash?: "fallen" | "journey" };
+type Milestone = { name: string; mark: string; round: number };
+
+const RING_SIZE = {
+  here: "size-9 rounded-[10px] sm:size-14 sm:rounded-[14px]",
+  tournament: "size-9 rounded-full sm:size-16",
+  round: "size-7.5 rounded-full sm:size-11",
+  plain: "size-5.5 rounded-full sm:size-8",
+} as const;
+
+function Track({
+  trainer,
+  milestones,
+  columns,
+  shown,
+  interactive,
+  onPick,
+}: {
+  trainer: Trainer;
+  milestones: Milestone[];
+  columns: string;
+  shown: string | undefined;
+  interactive: boolean;
+  onPick: (milestone: string) => void;
+}) {
+  const colour = playerColour(trainer.id);
+  const taken = new Set(trainer.snapshots.map((s) => s.milestone));
+  const latest = trainer.snapshots.at(-1);
+  const at = latest ? milestones.findIndex((m) => m.name === latest.milestone) : -1;
+  const count = Math.max(milestones.length, 1);
+  const label = latest
+    ? `${trainer.name} at ${latest.milestone} · snapshots ${trainer.snapshots.map((s) => s.milestone).join(", ")}`
+    : `${trainer.name}, no snapshots`;
+
+  return (
+    <span
+      role={interactive ? undefined : "img"}
+      aria-label={interactive ? undefined : label}
+      className="relative mx-3 mb-2 grid h-12.5 sm:mx-0 sm:mb-0 sm:h-auto sm:self-stretch"
+      style={{ gridTemplateColumns: columns }}
+    >
+      <span className="absolute top-1/2 -mt-0.5 h-1 rounded-sm bg-ink sm:-mt-0.75 sm:h-1.5" style={{ left: `${50 / count}%`, right: `${50 / count}%` }} />
+      {at > 0 && (
+        <span
+          className={cn("absolute top-1/2 -mt-0.5 h-1 rounded-sm sm:-mt-0.75 sm:h-1.5", PLAYER_FILL[colour])}
+          style={{ left: `${50 / count}%`, width: `${(at * 100) / count}%` }}
+        />
+      )}
+      {milestones.map((m, i) => {
+        const got = i <= at;
+        const here = i === at;
+        const snap = taken.has(m.name);
+        const ring = cn(
+          "box-border border-2 sm:border-3",
+          RING_SIZE[here ? "here" : m.mark === "tournament" ? "tournament" : m.round > 0 ? "round" : "plain"],
+          m.name === shown ? "border-primary" : "border-primary/35 sm:border-primary/30",
+        );
+        return (
+          <span key={m.name} className={cn("relative grid place-items-center", m.round > 0 && "bg-round/10")}>
+            {m.mark === "tournament" ? (
+              <span className="grid size-7.5 place-items-center rounded-full border-2 border-trophy-rim bg-trophy sm:size-13 sm:border-3">
+                <Trophy className="size-4 sm:size-7" />
+              </span>
+            ) : m.round > 0 ? (
+              <span
+                className={cn(
+                  "size-5.5 rounded-full border-3 shadow-[0_0_0_2px_var(--card)] sm:size-7.5 sm:border-4 sm:shadow-[0_0_0_3px_var(--card)]",
+                  got ? cn("border-destructive", PLAYER_FILL[colour]) : "border-round-dim bg-cell",
+                )}
+              />
+            ) : (
+              <span className={cn("size-3 rounded-full sm:size-4", got ? PLAYER_FILL[colour] : "bg-cell")} />
+            )}
+            {snap && !interactive && <span aria-hidden="true" className={cn("absolute top-1/2 left-1/2 -translate-1/2", ring)} />}
+            {here && (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute top-1/2 left-1/2 -mt-3.5 -ml-3.5 grid size-7 place-items-center rounded-[7px] border-3 border-ink font-heading text-lg leading-none text-ink ring-2 animate-track-bob motion-reduce:animate-none sm:-mt-5.5 sm:-ml-5.5 sm:size-11 sm:rounded-[10px] sm:border-4 sm:text-[1.5625rem] sm:ring-3",
+                  PLAYER_FILL[colour],
+                  m.round > 0 ? "ring-destructive" : PLAYER_RING[colour],
+                )}
+              >
+                {trainer.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+            {snap && interactive && (
+              <button
+                type="button"
+                aria-label={`${trainer.name} at ${m.name}`}
+                aria-pressed={m.name === shown}
+                onClick={() => onPick(m.name)}
+                className="group/ring absolute top-1/2 left-1/2 -mt-7 -ml-7 grid size-14 cursor-pointer place-items-center rounded-[14px] outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <span aria-hidden="true" className={cn(ring, m.name !== shown && "group-hover/ring:border-primary/70")} />
+              </button>
+            )}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+type TileLink = { player: string; number: string; label: string; hash?: "fallen" | "journey"; snapshot?: string };
 
 function Tile({ label, value, alarm, wide, link }: { label: string; value?: number | string; alarm?: boolean; wide?: boolean; link?: TileLink }) {
   const body = (
@@ -490,7 +590,7 @@ function Tile({ label, value, alarm, wide, link }: { label: string; value?: numb
     <Link
       to="/players/$player/series/$number/pc"
       params={{ player: link.player, number: link.number }}
-      search={{}}
+      search={link.snapshot ? { snapshot: link.snapshot } : {}}
       aria-label={link.label}
       className={cn(tile, lift)}
     >
