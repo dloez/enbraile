@@ -10,6 +10,7 @@ import { SCENE_LOOK, SceneArt } from "@/components/scene";
 import { UploadDialog } from "@/components/upload-dialog";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { cn } from "@/lib/utils";
 import { downloadLink } from "../../shared/games";
 import { type SeriesPage as Series, seriesPage, type Trainer } from "../../shared/series";
@@ -168,6 +169,7 @@ function Trainers({ series, onChanged }: { series: Series; onChanged: () => void
             {series.trainers.map((trainer, index) => (
               <TrainerRow
                 key={trainer.id}
+                seriesNumber={series.number}
                 trainer={trainer}
                 you={trainer.id === data?.user.id}
                 open={open === trainer.id}
@@ -206,6 +208,7 @@ function Trophy({ className }: { className?: string }) {
 }
 
 function TrainerRow({
+  seriesNumber,
   trainer,
   you,
   open,
@@ -215,6 +218,7 @@ function TrainerRow({
   columns,
   onUpload,
 }: {
+  seriesNumber: number;
   trainer: Trainer;
   you: boolean;
   open: boolean;
@@ -225,6 +229,17 @@ function TrainerRow({
   onUpload: () => void;
 }) {
   const latest = trainer.snapshots.at(-1);
+  const [zipError, setZipError] = useState<string | null>(null);
+
+  async function fetchZip(milestone: string) {
+    setZipError(null);
+    try {
+      await downloadSnapshotZip(seriesNumber, trainer.id, milestone);
+    } catch (caught) {
+      setZipError(message(caught));
+    }
+  }
+
   return (
     <div className={cn(!last && "border-b-3")}>
       <div
@@ -293,11 +308,23 @@ function TrainerRow({
                 <span
                   key={s.milestone}
                   className={cn(
-                    "flex min-h-10 items-center rounded-md border-3 bg-cell px-3 font-heading text-2xl",
+                    "flex min-h-10 items-center gap-1 rounded-md border-3 bg-cell pl-3 font-heading text-2xl",
+                    s.zip ? "pr-0.5" : "pr-3",
                     s === latest ? "border-primary" : "border-transparent",
                   )}
                 >
                   {s.milestone}
+                  {s.zip && (
+                    <button
+                      type="button"
+                      aria-label={`Download the ${s.milestone} zip`}
+                      title="Download zip"
+                      onClick={() => void fetchZip(s.milestone)}
+                      className="grid size-8.5 cursor-pointer place-items-center rounded-sm outline-none hover:bg-border focus-visible:ring-3 focus-visible:ring-ring/50"
+                    >
+                      <PixelIcon name="download" className="size-3.5 text-primary" />
+                    </button>
+                  )}
                 </span>
               ))}
               {trainer.snapshots.length === 0 && !trainer.canUpload && <span className="font-heading text-2xl text-faint">—</span>}
@@ -308,6 +335,11 @@ function TrainerRow({
                 </button>
               )}
             </span>
+            {zipError && (
+              <p role="alert" className="m-0 text-sm text-destructive">
+                {zipError}
+              </p>
+            )}
           </div>
         </div>
       )}

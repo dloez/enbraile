@@ -25,7 +25,7 @@ The screens still undrawn, desktop and phone, in the signed-off look ([Pages →
 Discord sign-in and the allowlist are built and checked on the local stack (2026-10-23); production needs the owner's half, as [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 describes.
 
 **Do:**
-- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migrations `0002_allowlist`, `0003_series` and `0004_saves`, all unpushed on `main` with the code that needs them) before the push that deploys it.
+- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migrations `0002_allowlist`, `0003_series`, `0004_saves` and `0005_tm_rolls`, all unpushed on `main` with the code that needs them) before the push that deploys it.
 
 **Acceptance:**
 - Claude-run: none.
@@ -55,23 +55,6 @@ The series pages, the admin series form and the phone header are built and check
 **After:** Owner-run: Discord sign-in on production
 **Needs the author:** the owner-run steps above.
 
-## Keep each save's TM rolls and hand the rolled zip back
-
-The TMs a save's export rolled are kept, reused when the site exports that same zip again, and replaced by the next zip's own rolls when the player uploads again; the player can download their zip back with the slot's `tm_compatibility_<slot>.dat` holding them ([TM rolls the export makes?](discovery.md#snapshots-in)).
-
-**Do:**
-- [ ] The save's rolls stored with it; a re-export of the same zip seeded with them before rolling what is still missing; a new upload's export reading its own side file or save first.
-- [ ] The rolled zip built as `export_data.py --save` builds it (the player's zip entry for entry, the side file replaced or added) and offered on the saved step and the snapshot.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, re-export a stored save and see its TM moves unchanged; download the rolled zip, and read its side file back with the port's Marshal reader holding the snapshot's rolls.
-- Human-run: download your rolled zip, extract it with the game closed, load and save in game, upload again, and see the same TM moves.
-- Reuse: the port's Marshal reader and writer; `downloadUrl` in `api/_lib/files.ts`.
-- Neighbors: [Open Sheet Export → Rolling TMs](../../pkmn/games/anil/explanation/open-sheet-export.md#rolling-tms).
-- Forbidden: rolling again a pair the site already rolled for the stored zip; comparing one snapshot's TMs with another's; writing the save itself.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`, `docs/pkmn/games/anil/`
-
 ## Retire export_data.py
 
 Players upload on the site now, so the Python export and its CLI go, `--moves` with them ([The export?](discovery.md#data-stack-and-config)).
@@ -88,7 +71,6 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 - Forbidden: a stub or redirect left for the old script.
 
 **Touches:** `pkmn/games/anil/`, `docs/pkmn/games/anil/`, `docs/pkmn/index.md`
-**After:** Keep each save's TM rolls and hand the rolled zip back
 
 ## Browse any player's PC at any snapshot
 

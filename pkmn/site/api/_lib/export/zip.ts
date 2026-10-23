@@ -1,4 +1,4 @@
-import { inflateRawSync } from "node:zlib";
+import { crc32, deflateRawSync, inflateRawSync } from "node:zlib";
 
 export class ZipError extends Error {}
 
@@ -9,7 +9,16 @@ export type ZipEntry = {
   size: number;
   offset: number;
   modified: string;
+  nameBytes: Uint8Array;
+  flags: number;
+  crc: number;
+  time: number;
+  date: number;
+  madeBy: number;
+  external: number;
 };
+
+export type NewEntry = { nameBytes: Uint8Array; utf8: boolean; data: Uint8Array };
 
 const largestEntry = 256 * 1024 * 1024;
 
@@ -81,6 +90,13 @@ export function zipEntries(data: Uint8Array): ZipEntry[] {
       size: view.getUint32(at + 24, true),
       offset: view.getUint32(at + 42, true),
       modified: dosTime(view.getUint16(at + 14, true), view.getUint16(at + 12, true)),
+      nameBytes,
+      flags,
+      crc: view.getUint32(at + 16, true),
+      time: view.getUint16(at + 12, true),
+      date: view.getUint16(at + 14, true),
+      madeBy: view.getUint16(at + 4, true),
+      external: view.getUint32(at + 38, true),
     };
     zip64(view, at + 46 + nameLength, at + 46 + nameLength + extraLength, entry, {
       size: entry.size === 0xffffffff,
@@ -93,12 +109,17 @@ export function zipEntries(data: Uint8Array): ZipEntry[] {
   return entries;
 }
 
-export function readEntry(data: Uint8Array, entry: ZipEntry): Uint8Array {
+function storedBytes(data: Uint8Array, entry: ZipEntry): Uint8Array {
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   if (entry.offset + 30 > data.byteLength || view.getUint32(entry.offset, true) !== 0x04034b50) throw new ZipError(`a broken entry ${entry.name}`);
   const begin = entry.offset + 30 + view.getUint16(entry.offset + 26, true) + view.getUint16(entry.offset + 28, true);
   const stored = data.subarray(begin, begin + entry.compressedSize);
   if (stored.length !== entry.compressedSize) throw new ZipError(`a broken entry ${entry.name}`);
+  return stored;
+}
+
+export function readEntry(data: Uint8Array, entry: ZipEntry): Uint8Array {
+  const stored = storedBytes(data, entry);
   if (entry.method === 0) return stored;
   if (entry.method !== 8) throw new ZipError(`${entry.name} is compressed in a way the site cannot read`);
   try {
@@ -106,4 +127,110 @@ export function readEntry(data: Uint8Array, entry: ZipEntry): Uint8Array {
   } catch {
     throw new ZipError(`a broken entry ${entry.name}`);
   }
+}
+
+type Written = {
+  nameBytes: Uint8Array;
+  flags: number;
+  method: number;
+  time: number;
+  date: number;
+  crc: number;
+  compressedSize: number;
+  size: number;
+  madeBy: number;
+  external: number;
+  stored: Uint8Array;
+};
+
+function dosNow(): { time: number; date: number } {
+  const now = new Date();
+  return {
+    time: (now.getUTCHours() << 11) | (now.getUTCMinutes() << 5) | Math.floor(now.getUTCSeconds() / 2),
+    date: ((now.getUTCFullYear() - 1980) << 9) | ((now.getUTCMonth() + 1) << 5) | now.getUTCDate(),
+  };
+}
+
+function written(entry: NewEntry, like: ZipEntry | undefined): Written {
+  const stored = deflateRawSync(entry.data);
+  const { time, date } = dosNow();
+  return {
+    nameBytes: entry.nameBytes,
+    flags: entry.utf8 ? 0x800 : 0,
+    method: 8,
+    time,
+    date,
+    crc: crc32(entry.data),
+    compressedSize: stored.length,
+    size: entry.data.length,
+    madeBy: like?.madeBy ?? 20,
+    external: like?.external ?? 0,
+    stored,
+  };
+}
+
+function sameName(a: Uint8Array, b: Uint8Array): boolean {
+  return a.length === b.length && a.every((byte, i) => byte === b[i]);
+}
+
+export function replaceEntry(data: Uint8Array, entries: ZipEntry[], replacement: NewEntry): Uint8Array {
+  const kept: Written[] = [];
+  let replaced = false;
+  for (const entry of entries) {
+    if (sameName(entry.nameBytes, replacement.nameBytes)) {
+      kept.push(written(replacement, entry));
+      replaced = true;
+      continue;
+    }
+    kept.push({ ...entry, flags: entry.flags & 0x806, stored: storedBytes(data, entry) });
+  }
+  if (!replaced) kept.push(written(replacement, undefined));
+  if (kept.length > 0xffff) throw new ZipError("too many files to write back");
+  const total = kept.reduce((sum, entry) => sum + 76 + 2 * entry.nameBytes.length + entry.stored.length, 22);
+  if (total > 0xffffffff) throw new ZipError("too large to write back");
+  const out = new Uint8Array(total);
+  const view = new DataView(out.buffer);
+  let at = 0;
+  const offsets: number[] = [];
+  for (const entry of kept) {
+    offsets.push(at);
+    view.setUint32(at, 0x04034b50, true);
+    view.setUint16(at + 4, 20, true);
+    view.setUint16(at + 6, entry.flags, true);
+    view.setUint16(at + 8, entry.method, true);
+    view.setUint16(at + 10, entry.time, true);
+    view.setUint16(at + 12, entry.date, true);
+    view.setUint32(at + 14, entry.crc, true);
+    view.setUint32(at + 18, entry.compressedSize, true);
+    view.setUint32(at + 22, entry.size, true);
+    view.setUint16(at + 26, entry.nameBytes.length, true);
+    view.setUint16(at + 28, 0, true);
+    out.set(entry.nameBytes, at + 30);
+    out.set(entry.stored, at + 30 + entry.nameBytes.length);
+    at += 30 + entry.nameBytes.length + entry.stored.length;
+  }
+  const directory = at;
+  kept.forEach((entry, i) => {
+    view.setUint32(at, 0x02014b50, true);
+    view.setUint16(at + 4, entry.madeBy, true);
+    view.setUint16(at + 6, 20, true);
+    view.setUint16(at + 8, entry.flags, true);
+    view.setUint16(at + 10, entry.method, true);
+    view.setUint16(at + 12, entry.time, true);
+    view.setUint16(at + 14, entry.date, true);
+    view.setUint32(at + 16, entry.crc, true);
+    view.setUint32(at + 20, entry.compressedSize, true);
+    view.setUint32(at + 24, entry.size, true);
+    view.setUint16(at + 28, entry.nameBytes.length, true);
+    view.setUint32(at + 38, entry.external, true);
+    view.setUint32(at + 42, offsets[i], true);
+    out.set(entry.nameBytes, at + 46);
+    at += 46 + entry.nameBytes.length;
+  });
+  view.setUint32(at, 0x06054b50, true);
+  view.setUint16(at + 8, kept.length, true);
+  view.setUint16(at + 10, kept.length, true);
+  view.setUint32(at + 12, at - directory, true);
+  view.setUint32(at + 16, directory, true);
+  return out;
 }

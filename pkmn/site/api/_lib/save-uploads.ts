@@ -7,9 +7,9 @@ import { body } from "./body.js";
 import { db } from "./db.js";
 import { ExportError } from "./export/export.js";
 import { saveSlots } from "./export/save-zip.js";
-import { abortUpload, abortUploadsUnder, completeUpload, deleteObject, objectSize, objectsUnder, partUrl, readObject, startUpload } from "./files.js";
-import { ingest, savePrefix } from "./ingest.js";
-import { milestone, snapshot } from "./schema.js";
+import { abortUpload, abortUploadsUnder, completeUpload, deleteObject, downloadUrl, objectSize, objectsUnder, partUrl, readObject, startUpload } from "./files.js";
+import { ingest, savePrefix, stillUsed } from "./ingest.js";
+import { milestone, save, snapshot } from "./schema.js";
 import { findShown, mayUpload, plays, type SeriesRow, viewer } from "./series-data.js";
 
 const staleMs = 60 * 60 * 1000;
@@ -32,8 +32,7 @@ async function clearStale(prefix: string) {
   const now = Date.now();
   for (const object of objects) {
     if (!object.modified || now - object.modified.getTime() < staleMs) continue;
-    const [kept] = await db.select({ id: snapshot.id }).from(snapshot).where(eq(snapshot.fileKey, object.key));
-    if (!kept) await deleteObject(object.key).catch(() => undefined);
+    if (!(await stillUsed(object.key))) await deleteObject(object.key).catch(() => undefined);
   }
 }
 
@@ -133,4 +132,21 @@ saveUploads.post("/:number/trainers/:player/snapshots", async (c) => {
     if (why) return c.json({ error: why }, 400);
     throw error;
   }
+});
+
+saveUploads.get("/:number/trainers/:player/snapshots/:milestone/zip", async (c) => {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  const row = await findShown(c.req.param("number"), !!reader.admin);
+  if (!row) return c.json({ error: "No such series" }, 404);
+  const playerId = c.req.param("player");
+  if (!reader.admin && reader.id !== playerId) return c.json({ error: "Only the player and admins download a player's zip" }, 403);
+  const [found] = await db
+    .select({ rolledKey: snapshot.rolledKey, fileName: snapshot.fileName })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .where(and(eq(save.seriesId, row.id), eq(save.userId, playerId), eq(milestone.name, c.req.param("milestone"))));
+  if (!found?.rolledKey) return c.json({ error: "No zip for this snapshot" }, 404);
+  return c.json({ url: await downloadUrl(found.rolledKey, found.fileName) });
 });

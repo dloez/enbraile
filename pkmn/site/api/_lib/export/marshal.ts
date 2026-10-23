@@ -220,3 +220,59 @@ export class MarshalReader {
     }
   }
 }
+
+const encoder = new TextEncoder();
+
+export class MarshalWriter {
+  private readonly out: number[] = [4, 8];
+  private readonly symbols = new Map<string, number>();
+
+  dump(value: unknown): Uint8Array {
+    this.write(value);
+    return Uint8Array.from(this.out);
+  }
+
+  private integer(value: number) {
+    if (!Number.isInteger(value) || value < 0) throw new MarshalError(`cannot write the length ${value}`);
+    if (value === 0) {
+      this.out.push(0);
+      return;
+    }
+    if (value < 123) {
+      this.out.push(value + 5);
+      return;
+    }
+    const bytes: number[] = [];
+    for (let rest = value; rest > 0; rest = Math.floor(rest / 256)) bytes.push(rest % 256);
+    this.out.push(bytes.length, ...bytes);
+  }
+
+  private write(value: unknown) {
+    if (value === true) this.out.push(0x54);
+    else if (value === false) this.out.push(0x46);
+    else if (value instanceof RubySymbol) {
+      const known = this.symbols.get(value.name);
+      if (known !== undefined) {
+        this.out.push(0x3b);
+        this.integer(known);
+        return;
+      }
+      this.symbols.set(value.name, this.symbols.size);
+      const encoded = encoder.encode(value.name);
+      this.out.push(0x3a);
+      this.integer(encoded.length);
+      for (const byte of encoded) this.out.push(byte);
+    } else if (Array.isArray(value)) {
+      this.out.push(0x5b);
+      this.integer(value.length);
+      for (const item of value) this.write(item);
+    } else if (value instanceof Map) {
+      this.out.push(0x7b);
+      this.integer(value.size);
+      for (const [key, item] of value) {
+        this.write(key);
+        this.write(item);
+      }
+    } else throw new MarshalError(`cannot write ${typeof value}`);
+  }
+}

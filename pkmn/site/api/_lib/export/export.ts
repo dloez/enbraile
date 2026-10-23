@@ -1,6 +1,6 @@
 import type { SheetItem, SheetPokemon, SheetTm, Snapshot, SnapshotMember } from "../../../shared/snapshot.js";
 import DATA from "./data.json" with { type: "json" };
-import { hashGet, isHash, isInt, MarshalError, MarshalReader, type RubyHash, RubyObject, text, truthy } from "./marshal.js";
+import { hashGet, isHash, isInt, MarshalError, MarshalReader, MarshalWriter, type RubyHash, RubyObject, RubySymbol, text, truthy } from "./marshal.js";
 
 type ExportData = {
   randomlocke_version: number;
@@ -34,7 +34,9 @@ type Spread = { hp: number; atk: number; def: number; spa: number; spd: number; 
 
 type Save = Map<unknown, unknown>;
 
-type Compatibility = Map<string, [string, boolean][]>;
+export type Compatibility = Map<string, [string, boolean][]>;
+
+export type TmRolls = [string, [string, boolean][]][];
 
 type MovesContext = {
   learnsets: unknown;
@@ -326,6 +328,20 @@ function tmCompatibility(side: Uint8Array | null, label: string, metadata: RubyO
   return compatibility;
 }
 
+export function storedRolls(compatibility: Compatibility): TmRolls {
+  return [...compatibility].map(([species, pairs]) => [species, pairs.map(([move, compatible]) => [move, compatible] as [string, boolean])]);
+}
+
+function seeded(rolls: TmRolls): Compatibility {
+  return new Map(rolls.map(([species, pairs]) => [species, pairs.map(([move, compatible]) => [move, compatible] as [string, boolean])]));
+}
+
+export function sideFile(compatibility: Compatibility): Uint8Array {
+  return new MarshalWriter().dump(
+    new Map([...compatibility].map(([species, pairs]) => [new RubySymbol(species), pairs.map(([move, compatible]) => [new RubySymbol(move), compatible])])),
+  );
+}
+
 function rollTms(compatibility: Compatibility, pokemon: RubyObject[], save: Save, tmMap: unknown): number {
   let rolled = 0;
   const tms = bagTms(save);
@@ -482,7 +498,7 @@ function stat(stats: RubyObject | undefined, name: string): number | null {
 
 export type Exported = { snapshot: Snapshot; rolled: number; compatibility: Compatibility };
 
-export function exportSave(save: Save, side: Uint8Array | null, sideLabel: string): Exported {
+export function exportSave(save: Save, side: Uint8Array | null, sideLabel: string, kept: TmRolls | null): Exported {
   const metadata = metadataOf(save);
   const randomized = save.get("randomized_data");
   const abilityTable = isHash(randomized) ? randomized.get("abilities") : undefined;
@@ -490,7 +506,7 @@ export function exportSave(save: Save, side: Uint8Array | null, sideLabel: strin
   const capsules = metadata.get("random_abs_pokes");
   const notices: string[] = [];
   const tmMap = metadata.get("tm_move_map");
-  const compatibility = tmCompatibility(side, sideLabel, metadata, notices);
+  const compatibility = kept ? seeded(kept) : tmCompatibility(side, sideLabel, metadata, notices);
   const seen = fieldablePokemon(save).filter((pokemon) => own(showdown.species, speciesForm(pokemon)) !== undefined);
   const rolled = rollTms(compatibility, seen, save, tmMap);
   const moves: MovesContext = {

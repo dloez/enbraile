@@ -1,5 +1,5 @@
-import { ExportError, type Exported, exportSave, progressOf, readSave, sideFileName } from "./export.js";
-import { readEntry, ZipError, type ZipEntry, zipEntries } from "./zip.js";
+import { ExportError, type Exported, exportSave, progressOf, readSave, sideFile, sideFileName, storedRolls, type TmRolls } from "./export.js";
+import { readEntry, replaceEntry, ZipError, type ZipEntry, zipEntries } from "./zip.js";
 
 const SLOT = /^Partida (\d+)\.rxdata$/;
 
@@ -60,12 +60,26 @@ export function saveSlots(zip: Uint8Array): SaveSlot[] {
   });
 }
 
-export function exportZipSlot(zip: Uint8Array, slot: string): Exported {
+export type ZipExport = Exported & { tmRolls: TmRolls; sideFile: string; rolledZip: Uint8Array };
+
+const encoder = new TextEncoder();
+
+export function exportZipSlot(zip: Uint8Array, slot: string, kept: TmRolls | null): ZipExport {
   const entries = entriesOf(zip);
   const entry = slotEntries(entries).find((candidate) => candidate.name === slot);
   if (!entry) throw new ExportError(`${slot} is not a Partida save in this zip.`);
   const save = readSave(read(zip, entry), entry.name);
-  const sideName = folderOf(entry.name) + sideFileName(save);
+  const sideFileOf = sideFileName(save);
+  const sideName = folderOf(entry.name) + sideFileOf;
   const side = entries.find((candidate) => candidate.name === sideName);
-  return exportSave(save, side ? read(zip, side) : null, sideName);
+  const exported = exportSave(save, side ? read(zip, side) : null, sideName, kept);
+  const folder = entry.nameBytes.subarray(0, entry.nameBytes.length - baseName(entry.name).length);
+  const nameBytes = new Uint8Array([...folder, ...encoder.encode(sideFileOf)]);
+  let rolledZip: Uint8Array;
+  try {
+    rolledZip = replaceEntry(zip, entries, { nameBytes, utf8: (entry.flags & 0x800) !== 0, data: sideFile(exported.compatibility) });
+  } catch (error) {
+    throw new ExportError(error instanceof ZipError ? `The zip is ${error.message}.` : "The zip could not be written back.");
+  }
+  return { ...exported, tmRolls: storedRolls(exported.compatibility), sideFile: sideFileOf, rolledZip };
 }

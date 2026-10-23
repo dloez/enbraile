@@ -70,7 +70,7 @@ export const seriesBanner = z.object({
 
 export const seriesBannerList = z.array(seriesBanner);
 
-export const trainerSnapshot = z.object({ milestone: z.string(), pokemon: z.number().int(), fainted: z.number().int() });
+export const trainerSnapshot = z.object({ milestone: z.string(), pokemon: z.number().int(), fainted: z.number().int(), zip: z.boolean() });
 
 export const trainer = z.object({ id: z.string(), name: z.string(), canUpload: z.boolean(), snapshots: z.array(trainerSnapshot) });
 

@@ -6,6 +6,7 @@ import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
+import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { sendFile, UploadError } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import { type SavedSnapshot, savedSnapshot, type UploadedSave, uploadedSave } from "../../shared/save-upload";
@@ -261,6 +262,10 @@ export function UploadDialog({
               {step.saved.milestone} {step.saved.replaced ? "replaced" : "saved"}
             </span>
             <span className="font-heading text-3xl leading-none text-subtle tabular-nums">{step.saved.pokemon} Pokémon</span>
+            <RolledZip
+              saved={step.saved}
+              onDownload={() => downloadSnapshotZip(seriesNumber, trainer.id, step.saved.milestone)}
+            />
           </div>
         )}
 
@@ -415,6 +420,40 @@ function FileRow({ file, step }: { file: File; step: Step }) {
           <span aria-hidden="true" className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent_0_14px,var(--ink)_14px_17px)]" />
         </span>
       )}
+    </div>
+  );
+}
+
+function RolledZip({ saved, onDownload }: { saved: SavedSnapshot; onDownload: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function download() {
+    setBusy(true);
+    setError(null);
+    try {
+      await onDownload();
+    } catch (caught) {
+      setError(message(caught));
+    }
+    setBusy(false);
+  }
+
+  return (
+    <div className="mt-2 flex flex-col gap-2 self-stretch">
+      <div className="flex items-center gap-3.5 rounded-2xl bg-box py-3 pr-3 pl-4">
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="font-heading text-2xl leading-none tabular-nums">
+            {saved.rolled} TM {saved.rolled === 1 ? "roll" : "rolls"}
+          </span>
+          <span className="truncate text-sm text-muted-foreground">{saved.sideFile}</span>
+        </span>
+        <button type="button" disabled={busy} onClick={() => void download()} className={cn(buttonClass, "min-h-12 px-4 text-2xl")}>
+          <PixelIcon name="download" className="size-4 text-primary" />
+          Download zip
+        </button>
+      </div>
+      {error && <Alert>{error}</Alert>}
     </div>
   );
 }

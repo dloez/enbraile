@@ -35,7 +35,7 @@ export async function milestonesOf(seriesId: string) {
     .orderBy(asc(milestone.position));
 }
 
-export async function trainersOf(seriesId: string) {
+export async function trainersOf(seriesId: string, reader: Viewer) {
   const players = await db
     .select({ id: user.id, name: user.name })
     .from(seriesPlayer)
@@ -43,7 +43,7 @@ export async function trainersOf(seriesId: string) {
     .where(eq(seriesPlayer.seriesId, seriesId))
     .orderBy(asc(user.name));
   const taken = await db
-    .select({ userId: save.userId, milestone: milestone.name, pokemon: snapshot.pokemon, fainted: snapshot.fainted })
+    .select({ userId: save.userId, milestone: milestone.name, pokemon: snapshot.pokemon, fainted: snapshot.fainted, rolledKey: snapshot.rolledKey })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
@@ -51,7 +51,9 @@ export async function trainersOf(seriesId: string) {
     .orderBy(asc(milestone.position));
   return players.map((player) => ({
     ...player,
-    snapshots: taken.filter((row) => row.userId === player.id).map(({ milestone, pokemon, fainted }) => ({ milestone, pokemon, fainted })),
+    snapshots: taken
+      .filter((row) => row.userId === player.id)
+      .map(({ milestone, pokemon, fainted, rolledKey }) => ({ milestone, pokemon, fainted, zip: rolledKey !== null && (!!reader.admin || reader.id === player.id) })),
   }));
 }
 

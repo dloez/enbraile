@@ -7,6 +7,7 @@ import {
   HeadObjectCommand,
   ListMultipartUploadsCommand,
   ListObjectsV2Command,
+  PutObjectCommand,
   S3Client,
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
@@ -96,6 +97,10 @@ export async function objectSize(key: string): Promise<number | undefined> {
   } catch {
     return undefined;
   }
+}
+
+export async function putObject(key: string, body: Uint8Array): Promise<void> {
+  await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: "application/zip" }));
 }
 
 export async function deleteObject(key: string): Promise<void> {

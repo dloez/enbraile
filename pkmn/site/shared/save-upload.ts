@@ -31,6 +31,8 @@ export const savedSnapshot = z.object({
   pokemon: z.number().int(),
   fainted: z.number().int(),
   replaced: z.boolean(),
+  rolled: z.number().int(),
+  sideFile: z.string(),
 });
 
 export function suggestMilestone(milestones: readonly string[], progress: { badges: number | null; hallOfFame: number | null }): string | null {

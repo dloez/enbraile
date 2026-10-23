@@ -33,7 +33,7 @@ seriesRoutes.get("/:number", async (c) => {
     ingestion: row.ingestion,
     rules: row.rules,
     milestones: await milestonesOf(row.id),
-    trainers: (await trainersOf(row.id)).map((trainer) => ({ ...trainer, canUpload: mayUpload(user, row, trainer.id) })),
+    trainers: (await trainersOf(row.id, user)).map((trainer) => ({ ...trainer, canUpload: mayUpload(user, row, trainer.id) })),
     canDownload: chosen?.fileKey != null && (!!user.admin || (await plays(row.id, user.id))),
   };
   return c.json(page);

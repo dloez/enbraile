@@ -46,10 +46,10 @@ select u.username, u.admin, s.created_at from session s join "user" u on u.id = 
 docker compose exec -T minio sh -c 'mc alias set l http://localhost:9000 minioadmin minioadmin >/dev/null && mc ls --recursive l/pkmn-site'
 ```
 
-`mc stat` and `mc cat` on a `l/pkmn-site/<key>` path show one object. A game's zip is under `games/<game id>/`, and the `game` table's `file_key` names the current one. A save zip is under `saves/<series id>/<player id>/`, and each `snapshot` row's `file_key` names the one it holds; the snapshots and whose they are:
+`mc stat` and `mc cat` on a `l/pkmn-site/<key>` path show one object. A game's zip is under `games/<game id>/`, and the `game` table's `file_key` names the current one. A save zip is under `saves/<series id>/<player id>/`, and each `snapshot` row's `file_key` names the one it holds and its `rolled_key` the rolled zip it hands back, beside it as `<uuid>-rolled.zip`; the snapshots and whose they are:
 
 ```sh
-docker compose exec -T postgres psql -U postgres -d pkmn -c 'select u.username, m.name, s.pokemon, s.fainted, s.file_key from snapshot s join save v on v.id = s.save_id join "user" u on u.id = v.user_id join milestone m on m.id = s.milestone_id'
+docker compose exec -T postgres psql -U postgres -d pkmn -c 'select u.username, m.name, s.pokemon, s.fainted, s.file_key, s.rolled_key from snapshot s join save v on v.id = s.save_id join "user" u on u.id = v.user_id join milestone m on m.id = s.milestone_id'
 ``` `mc ls --incomplete --recursive l/pkmn-site` lists the multipart uploads still open, which a finished or abandoned upload leaves none of. MinIO drops open uploads when its container is killed, so read this before restarting it.
 
 ### 5. Reset
