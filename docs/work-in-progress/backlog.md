@@ -27,6 +27,12 @@ A game's upload is a multipart upload that `POST /api/games/<id>/file` completes
 **Touches:** `pkmn/site/api/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
 **Needs the author:** how it runs: a script the owner runs by hand, or something scheduled?
 
+### pkmn/site: Team Analysis's view switch scrolls a 360px phone sideways
+
+At 360×800, `/team-analysis` is 379px wide: its `Segmented` view switch (`inline-flex gap-0.5 rounded-lg border bg-muted p-0.75`, `src/components/controls.tsx`) overflows the page column by 19px, so the page scrolls sideways (seen through `verify-site` on 2026-10-23 while checking the phone header, whose own width measured 360px). Make the switch fit or wrap at 360px, or confirm that the team pages replacing `/team-analysis` ([Site v2 → Compare teams](site-v2/tasks.md)) drop it.
+
+**Touches:** `pkmn/site/src/components/controls.tsx`, `pkmn/site/src/pages/`
+
 ## Ideas
 
 ### pkmn/site: enforce a series' rules in team building

@@ -12,6 +12,12 @@ const ICONS = {
   flag: { size: 10, paths: [["fill-current", "M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z"]] },
   monitor: { size: 10, paths: [["fill-current", "M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z"]] },
   people: { size: 10, paths: [["fill-current", "M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z"]] },
+  key: { size: 10, paths: [["fill-current", "M1 2h3v1H1zM0 3h1v3H0zM4 3h1v3H4zM1 6h3v1H1zM5 4h5v1H5zM7 5h1v2H7zM9 5h1v2H9z"]] },
+  menu: { size: 10, paths: [["fill-current", "M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z"]] },
+  cross: {
+    size: 10,
+    paths: [["fill-current", "M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z"]],
+  },
   download: { size: 10, paths: [["fill-current", "M4 1h2v4H4zM2 5h6v1H2zM3 6h4v1H3zM4 7h2v1H4zM1 9h8v1H1z"]] },
   cartridge: {
     size: 10,

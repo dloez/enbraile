@@ -10,6 +10,7 @@ const COLOURS = [
 ] as const;
 
 const SIZES = {
+  xs: "size-8 rounded-[7px] ring-2 text-[1.375rem]",
   sm: "size-9 rounded-md ring-2 text-2xl",
   lg: "size-12.5 rounded-lg ring-3 text-3xl",
 } as const;

@@ -20,22 +20,6 @@ The screens still undrawn, desktop and phone, in the signed-off look ([Pages →
 **Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** sign-off on these screens.
 
-## The header fits a phone with every tab and sign-out
-
-The signed-off header holds Series · PC · Teams (· Admin for admins) and, at the right, the player's badge and name and sign-out ([Look](../../pkmn/site/explanation/site.md#look)). On a phone it is a compact bar, as the owner signed off on 2026-10-23 (`pkmn/site/design/header-phone.dc.html`, `header-phone-open.dc.html`, `header-phone-open-player.dc.html`): the Poké Ball, the open section's name with its icon, and a pixel three-line menu button opening a dropdown under the bar over a scrim (the tabs with the open one red, a divider, the badge and name opening the profile, sign-out), the button turning into a cross while open; the Admin entry gets a pixel key icon. Today's header (`src/components/site-header.tsx`) has fixed `h-12 px-3` tabs that neither wrap nor scroll.
-
-**Do:**
-- [ ] The header at phone width as its three boards draw it, with the tabs, the name and sign-out the entries below add; the key in `PixelIcon`'s `ICONS`; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules updated with the menu.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, `browser_resize` to 390×844 and to 360×800, signed in as an admin and as a player, screenshot the header closed and open, reach every tab and sign-out from the menu, and confirm no horizontal page scroll; at desktop width, the header unchanged.
-- Human-run: on a phone, open the site signed in as an admin and reach every tab and sign-out.
-- Reuse: the three header phone boards in `pkmn/site/design/`; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell; `TABS` in `src/components/site-header.tsx`; `PixelIcon`.
-- Neighbors: Open Sheet's tab bar (`src/open-sheet/components/tab-bar.tsx`).
-- Forbidden: dropping a tab or sign-out at phone width; the phone menu at desktop width; pieces outside the look beyond the menu and the key.
-
-**Touches:** `pkmn/site/src/components/site-header.tsx`, `pkmn/site/src/components/pixel-icon.tsx`, `docs/pkmn/site/reference/design-system.md`
-
 ## Owner-run: Discord sign-in on production
 
 Discord sign-in and the allowlist are built and checked on the local stack (2026-10-23); production needs the owner's half, as [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 describes.
