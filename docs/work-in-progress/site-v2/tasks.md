@@ -37,24 +37,6 @@ A game's zip, about 600 MB, goes up as one presigned `PUT` ([The pkmn Site → G
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`
 
-## Design the sign-in and waiting pages
-
-The Discord sign-in page and the page a signed-in player not yet allowed sees, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)).
-
-**Do:**
-- [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
-- [ ] Get the owner's sign-off; copy the signed-off boards into `pkmn/site/design/` and record the sign-off in `docs/pkmn/site/explanation/site.md` → Look and Decisions.
-
-**Acceptance:**
-- Claude-run: none (no code).
-- Human-run: the owner opens the boards and signs them off, or lists changes.
-- Reuse: the frozen boards in `pkmn/site/design/`.
-- Neighbors: the canvas's earlier phone sign-in board.
-- Forbidden: colours or pieces outside the look without naming them as additions; helper text.
-
-**Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
-**Needs the author:** sign-off on the sign-in and waiting pages.
-
 ## Design the upload flow, the PC page, the team list and the team builder
 
 The rest of the screens, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the upload flow (where it starts, the slot and milestone pick), the PC page with its snapshot picker, the team list, the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and phone layouts of the series list and series page. The PC, bag and team views carry their content over from Open Sheet and Team Analysis.
@@ -92,7 +74,7 @@ The signed-off header holds Series · PC · Teams (· Admin for admins) and sign
 
 ## Players sign in with Discord and admins keep the allowlist
 
-Discord sign-in through Better Auth; a signed-in player who is not allowed sees the waiting page, an allowed one an empty home. The admin's allowlist page lists everyone who has signed in and allows or removes them.
+Discord sign-in through Better Auth, on the sign-in page; a signed-in player who is not allowed sees the waiting page, an allowed one an empty home. Both pages are drawn in the frozen boards `pkmn/site/design/sign-in.dc.html`, `sign-in-phone.dc.html`, `waiting.dc.html` and `waiting-phone.dc.html` ([The pkmn Site → Look](../../pkmn/site/explanation/site.md#look)): no site header on either, the waiting page's own sign-out below its message. The admin's allowlist page lists everyone who has signed in and allows or removes them.
 
 **Do:**
 - [ ] The Discord provider (owner-run: the Discord application, its redirect URIs for production and localhost, its secrets in Vercel).
@@ -104,12 +86,11 @@ Discord sign-in through Better Auth; a signed-in player who is not allowed sees 
 - Claude-run: `npm run gate`; `npx drizzle-kit check`.
 - Claude-run: through Playwright MCP, a test player not allowed sees the waiting page, and after the admin allows them, the home.
 - Human-run: on production, sign in with Discord as a new user and see the waiting page; as an admin in another browser, allow them; reload and see the home; remove them and see the waiting page again.
-- Reuse: `api/_lib/auth.ts`, `api/_lib/admin.ts` (`requireAdmin`), `scripts/accounts.ts`, `src/lib/auth-client.ts`, `src/lib/api.ts` with a zod schema in `shared/`.
+- Reuse: the four sign-in and waiting boards in `pkmn/site/design/`; `api/_lib/auth.ts`, `api/_lib/admin.ts` (`requireAdmin`), `scripts/accounts.ts`, `src/lib/auth-client.ts`, `src/lib/api.ts` with a zod schema in `shared/`.
 - Neighbors: the `/admin` pages (`src/pages/admin.tsx`, `src/pages/admin-games.tsx`).
-- Forbidden: an admin account linked to Discord; admin powers on a Discord session.
+- Forbidden: an admin account linked to Discord; admin powers on a Discord session; Discord's blurple anywhere but the Discord button.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/.env.example`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Design the sign-in and waiting pages
 
 ## Admins create and start series; players land on the current one
 
@@ -189,7 +170,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 
 ## Build teams locked to a snapshot, stored in the account
 
-`/teams` lists the player's teams; `/teams/<id>` builds one from one snapshot with Open Sheet's PC, strip, bag, item and Mini Seta limits, Team view and Analysis (Summary, Graph, Archetype, Members, Matrices), Showdown copy and import (unbacked sets left out, as today). A new team starts on the player's latest snapshot of the running series. Others' teams are readable, not editable, from their PC page ([Team Building](discovery.md#team-building)). `/open-sheet`, the Dexie database and its local data go.
+`/teams` lists every team, the player's first and others' read-only; `/teams/<id>` builds one from one snapshot as six member cards edited in place, with the snapshot's item and Mini Seta limits, a picker of the snapshot's PC for empty slots, Analysis (Summary, Graph, Archetype, Members, Matrices) beside the cards, giving way to a member's summary when its header row is clicked, Showdown copy and import (unbacked sets left out, as today). The PC page stays read-only; "Add to team" in its summary adds the Pokémon to a team or a new one ([How do the PC and the team pages split?](discovery.md#team-building)). A new team starts on the player's latest snapshot of the running series. `/open-sheet`, the Dexie database and its local data go.
 
 **Do:**
 - [ ] Teams table and migration (owner, sources, slots); team routes, the owner alone writing; `npm run seed` extended with a team on the seeded snapshot.
@@ -199,7 +180,7 @@ Players upload on the site now, so the Python export and its CLI go, `--moves` w
 **Acceptance:**
 - Claude-run: `npm run gate`; `grep -rn "dexie\|open-sheet:tab" pkmn/site/src pkmn/site/package.json` finds nothing.
 - Human-run: make a team on your series 1 snapshot, give items until one runs out, switch an ability and see the Mini Seta count, copy it for Showdown and paste it back as a new team; reload on another device and see the teams; open another player's team read-only.
-- Reuse: `src/open-sheet/team.ts`, `showdown.ts`, `components/team-view.tsx`, `sheet-analysis.tsx`, `src/analysis/`.
+- Reuse: `src/open-sheet/team.ts`, `showdown.ts`, `components/team-view.tsx`, `sheet-analysis.tsx`, `summary.tsx` (the PC's, not a copy), `src/analysis/`.
 - Neighbors: `src/open-sheet/components/team-bar.tsx`.
 - Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
 
@@ -244,15 +225,15 @@ A team's sources picker takes any number of snapshots, any player's; the PC show
 
 ## Add free members, and import unbacked sets as free members
 
-A free member is a full Showdown set (any species in the team's pool, item, ability, nature, EVs, IVs, level, four moves), marked as free and counted against no bag. A pasted team's sets the sources cannot back come in as free members, listed in the dialog ([Team Building](discovery.md#team-building)).
+A free member is a full Showdown set (any species in the team's pool, item, ability, nature, EVs, IVs, level, four moves), marked as free and counted against no bag. With "Any Pokémon" among a team's sources, the pasted sets the other sources cannot back come in as free members, listed in the dialog ([Team Building](discovery.md#team-building)).
 
 **Do:**
 - [ ] The free member editor; free members in the stored slots, the copy and the analysis.
-- [ ] The import keeps backed matching and makes free members of the rest.
+- [ ] "Any Pokémon" as a source, added and removed like a snapshot; the import keeps backed matching and makes free members of the rest when it is a source.
 
 **Acceptance:**
 - Claude-run: `npm run gate`.
-- Human-run: make a team with no sources and six free members, copy it to Showdown and check it imports there; paste a team mixing your Pokémon and others and see the free ones marked and listed.
+- Human-run: make a team whose only source is "Any Pokémon" with six free members, copy it to Showdown and check it imports there; paste a team mixing your Pokémon and others and see the free ones marked and listed.
 - Reuse: `src/analysis/paste.ts`, `src/open-sheet/components/move-picker.tsx`.
 - Neighbors: `src/open-sheet/showdown.ts`.
 - Forbidden: free members counted against a bag.

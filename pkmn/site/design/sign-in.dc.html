@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+.discord:hover,.discord:focus-visible{background:#6d78f5!important}
+.btn:hover,.btn:focus-visible{background:rgba(255,255,255,0.18)!important}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; position: relative; overflow: hidden; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<div style="flex: none; height: 470px; background: #d93a30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 24px 60px; box-sizing: border-box">
+<h1 style="margin: 0; font-weight: 400; font-family: 'Jersey 10', sans-serif; font-size: 150px; line-height: 0.8; color: #ffffff">pkmn</h1>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 30px; color: #ffd6d2">.enbraile.vip</span>
+</div>
+
+<div style="flex: none; height: 18px; background: #10141d"></div>
+
+<div aria-hidden="true" style="position: absolute; left: 660px; top: 419px; width: 120px; height: 120px; border-radius: 50%; background: #eef1f7; border: 14px solid #10141d; box-sizing: border-box; display: grid; place-items: center">
+<span style="width: 42px; height: 42px; border-radius: 50%; border: 6px solid #10141d; box-sizing: border-box"></span>
+</div>
+
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 72px 40px 56px">
+<a href="Waiting.dc.html" class="discord" style="display: flex; align-items: center; justify-content: center; gap: 14px; width: 440px; min-height: 64px; border-radius: 12px; background: #5865f2; color: #ffffff; border: 3px solid #8891f7; font-family: 'Jersey 10', sans-serif; font-size: 30px; text-decoration: none; box-sizing: border-box">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4c-2 .4-3.5 1-5 2-1.5 3-2 6-2 9.5C2.5 17 4.5 18 7 18.6l1.2-2"></path><path d="M16 4c2 .4 3.5 1 5 2 1.5 3 2 6 2 9.5-1.5 1.5-3.5 2.5-6 3.1l-1.2-2"></path><path d="M6.5 16c3.5 1.6 7.5 1.6 11 0"></path><circle cx="9" cy="11.5" r="1.4"></circle><circle cx="15" cy="11.5" r="1.4"></circle></svg>
+Sign in with Discord
+</a>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
