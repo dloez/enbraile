@@ -8,6 +8,25 @@ Laid out as the `/scope` skill's work-in-progress layout says. An entry's headin
 
 The series page's trainer panel wants per-trainer data the site has no source for yet: Pokémon fainted (the save export leaves permafainted Pokémon out), lives (series 1 plays without them, a later series may not), alongside what snapshots already give (the PC, the bag, TMs). Today one series reads Añil saves through one export; a later series may run on another game, another mod or another way of reporting. How the site takes in trainer data has to allow several ingestion paths, one per series or game, rather than assume today's export. Raised in the site v2 design pass ([Site v2 → Snapshots In](site-v2/discovery.md#snapshots-in)). _(owner, 2026-10-22)_
 
+## Tasks
+
+### pkmn/site: clear files the bucket holds that nothing points to
+
+A game's upload is a presigned `PUT` to B2 followed by `POST /api/games/<id>/file`, which records the key ([The pkmn Site → Games](../pkmn/site/explanation/site.md#games)). When the `PUT` lands and the confirm never runs or fails, the zip stays in the bucket with no row pointing at it, about 600 MB each; none exist yet (2026-10-23). The same will hold for snapshot uploads.
+
+**Do:**
+- [ ] A way to find and delete the bucket's objects no `game` row (and later no snapshot) names.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; on the local stack, put an object under `games/<id>/` with no row, run it, and see it gone while a recorded file stays.
+- Human-run: none.
+- Reuse: `api/_lib/files.ts`.
+- Neighbors: `api/_lib/games.ts`.
+- Forbidden: deleting an object a row names.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
+**Needs the author:** how it runs: a script the owner runs by hand, or something scheduled?
+
 ## Ideas
 
 ### pkmn/site: the league
