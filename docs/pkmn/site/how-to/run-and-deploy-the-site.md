@@ -74,7 +74,13 @@ It runs `tsc -b`, and must pass before a change is done; the site has no tests, 
 
 In the Vercel dashboard, add Neon from the Vercel Marketplace (free tier) to the project, named `pkmn-site`, in the region `aws-eu-central-1` (Frankfurt), where `vercel.json` runs the function (`fra1`); in Neon keep a production branch and a `dev` branch. The integration may add its own `DATABASE_URL` and branch per preview: keep the variables as in the table below.
 
-In Backblaze B2, make a private bucket and an application key limited to it, with read and write access. Give the bucket a CORS rule so browsers can upload to it and download from it straight: allowed origins `https://pkmn.enbraile.vip` and `https://*.vercel.app` for previews, operations `s3_put`, `s3_get` and `s3_head`, headers `*`, exposed header `ETag`. The bucket's S3 endpoint is shown on its page (`https://s3.<region>.backblazeb2.com`), and the region is the part after `s3.`.
+In Backblaze B2, make two private buckets in the same account, `pkmn-site-enbraile` for production and `pkmn-site-preview-enbraile` for previews, and for each an application key limited to that bucket, with read and write access. Give each bucket a CORS rule so browsers can upload to it and download from it straight: operations `s3_put`, `s3_get` and `s3_head`, headers `*`, exposed header `ETag`, max age 3600, allowed origin `https://pkmn.enbraile.vip` on the production bucket and `https://*.vercel.app` on the preview one, and nothing else. B2's web UI cannot save a custom origin, so set the rule with the CLI, signed in (`uvx b2 account authorize`) with that bucket's key:
+
+```sh
+uvx b2 bucket update --cors-rules '[{"corsRuleName":"pkmn-site","allowedOrigins":["https://pkmn.enbraile.vip"],"allowedOperations":["s3_head","s3_put","s3_get"],"allowedHeaders":["*"],"exposeHeaders":["ETag"],"maxAgeSeconds":3600}]' pkmn-site-enbraile
+```
+
+and the same with `https://*.vercel.app` for `pkmn-site-preview-enbraile`; `uvx b2 account clear` afterwards. A preflight `OPTIONS` to `https://s3.<region>.backblazeb2.com/<bucket>/x` with an `Origin` and `Access-Control-Request-Method: PUT` answers `200` for the allowed origin and `403` for any other. The buckets' S3 endpoint is shown on their page (`https://s3.<region>.backblazeb2.com`), and the region is the part after `s3.`.
 
 Set the project's environment variables:
 
@@ -83,8 +89,9 @@ Set the project's environment variables:
 | `DATABASE_URL` | the production branch's pooled connection string, with `sslmode=verify-full` | the `dev` branch's, the same way |
 | `BETTER_AUTH_SECRET` | a random secret | another random secret |
 | `BETTER_AUTH_URL` | `https://pkmn.enbraile.vip` | unset |
-| `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET` | the B2 bucket's endpoint, region and name | the same |
-| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | the application key's ID and key | the same |
+| `S3_ENDPOINT`, `S3_REGION` | the buckets' endpoint and region | the same |
+| `S3_BUCKET` | `pkmn-site-enbraile` | `pkmn-site-preview-enbraile` |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | the production bucket's key ID and key | the preview bucket's |
 
 Neon's connection strings carry `sslmode=require`, which `pg` already treats as `verify-full` and warns about on every connection; write `sslmode=verify-full` in every Neon string, in Vercel and in the shell, which keeps the same certificate checks and silences the warning.
 

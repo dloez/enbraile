@@ -2,23 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Previews get their own bucket
-
-Previews share the production B2 bucket and key today ([How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6, the `S3_*` rows "the same"), so any branch preview can overwrite or delete the production game files. The owner chose a bucket of their own for previews (2026-10-23).
-
-**Do:**
-- [ ] Owner-run: a second private bucket in the same B2 account, with an application key limited to it (read and write) and a CORS rule allowing only `https://*.vercel.app`; the Preview `S3_BUCKET`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` in Vercel set to it, then a preview redeployed; `https://*.vercel.app` removed from the production bucket's CORS rule.
-- [ ] Step 6 of the run how-to and `site.md` → Hosting and Deploys and Data and Storage name the two buckets; a dated decision in `site.md` replaces the shared bucket.
-
-**Acceptance:**
-- Claude-run: `uvx b2 bucket get <production bucket>` lists only `https://pkmn.enbraile.vip` in its CORS origins; a preflight `OPTIONS` to the preview bucket with `Origin: https://<a preview>.vercel.app` answers `200` with that origin allowed, and one to the production bucket from the same origin does not.
-- Human-run: on a branch preview, sign in at `/admin` against `dev`, upload a small zip to a test game, and see it in the preview bucket and not in the production one.
-- Reuse: the production bucket's setup in the run how-to's step 6.
-- Neighbors: `site.md`'s "Seen working on production on 2026-10-23" note.
-- Forbidden: the production key in the Preview environment; a public bucket.
-
-**Touches:** `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/run-and-deploy-the-site.md`
-
 ## Upload game zips in parts
 
 A game's zip, about 600 MB, goes up as one presigned `PUT` ([The pkmn Site → Games](../../pkmn/site/explanation/site.md#games)). One dropped connection loses the whole upload, and B2's refusals reach the page only as "The upload could not reach the file store", since its error answers carry no CORS headers: the first production upload failed that way and worked on a retry (2026-10-23). The owner chose a multipart upload (2026-10-23): the file goes up in parts, a few at a time, each retried on its own.
