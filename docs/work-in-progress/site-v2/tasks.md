@@ -25,7 +25,7 @@ The screens still undrawn, desktop and phone, in the signed-off look ([Pages →
 Discord sign-in and the allowlist are built and checked on the local stack (2026-10-23); production needs the owner's half, as [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 describes.
 
 **Do:**
-- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migrations `0002_allowlist`, `0003_series`, `0004_saves` and `0005_tm_rolls`, all unpushed on `main` with the code that needs them) before the push that deploys it.
+- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migrations `0002_allowlist`, `0003_series`, `0004_saves`, `0005_tm_rolls` and `0006_overrides`, all unpushed on `main` with the code that needs them) before the push that deploys it.
 
 **Acceptance:**
 - Claude-run: none.
@@ -65,6 +65,7 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **Acceptance:**
 - Claude-run: none.
 - Human-run: as a player of series 1 on production, upload your save zip from your row, see the suggested milestone, save it and read "<milestone> saved" with the Pokémon count and the TM rolls row; download the rolled zip from the done step and from the snapshot chip, and see it named as your zip; click "Open PC" and see your PC at that snapshot, its summary and its bag; as another player, open the first player's row and see their snapshot chips without a download button; as admin, upload for a player and replace their snapshot, and read the amber warning first.
+- Human-run: as admin on production, correct a snapshot's milestone with Move and see it on the series page; set a player's progress by hand and see their track move to it; clear it and see the latest snapshot's milestone again.
 - Reuse: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) → Verification.
 - Neighbors: none.
 - Forbidden: snapshots made on production by `npm run seed` or by SQL.
@@ -72,22 +73,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **Touches:** `docs/pkmn/site/`
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
-
-## Admins set save-derived values by hand and manage any snapshot
-
-An admin can set any value derived from a save by hand (progress, the fainted count, a snapshot's milestone), and upload, replace, delete or move any snapshot for any player ([Admin overrides?](discovery.md#model), [How does a save reach the site?](discovery.md#snapshots-in)). Each value records its source, from the save or set by hand (by whom and when), and a value set by hand wins until an admin clears it.
-
-**Do:**
-- [ ] The source of each derived value in the schema and migration; override, clear, delete and move routes, admin-only; the overrides on the series page's rows; the track shows no mark on progress set by hand (`series.dc.html`).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `npx drizzle-kit check`; through `verify-site`, as admin, set a player's fainted count, upload a new save for them and see the set count kept, clear it and see the save's; move a snapshot to another milestone; delete one; as a player, see no override controls and get `403` from the routes.
-- Human-run: as admin on production, correct a snapshot's milestone and see it on the series page; set a player's progress by hand and see their track move to it.
-- Reuse: `requireAdmin` in `api/_lib/admin.ts`; the snapshot tables from the save-zip entry.
-- Neighbors: the series page's Trainers table.
-- Forbidden: a value set by hand overwritten by a later save; an override without who set it and when.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 
 ## The PC box and summary take the signed-off look
 

@@ -103,6 +103,7 @@ seriesRoutes.get("/:number/trainers/:player/journey", async (c) => {
       pokedex: sql<Snapshot["pokedex"]>`${snapshot.data}->'pokedex'`,
       records: sql<Snapshot["records"]>`${snapshot.data}->'records'`,
       fainted: sql<Snapshot["fainted"]>`${snapshot.data}->'fainted'`,
+      faintedSet: snapshot.faintedSet,
     })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
@@ -127,7 +128,7 @@ seriesRoutes.get("/:number/trainers/:player/journey", async (c) => {
               trainerBattlesWon: s.records.trainerBattlesWon,
               trainerBattlesLost: s.records.trainerBattlesLost,
               blackouts: s.records.blackouts,
-              fainted: s.fainted.length,
+              fainted: s.faintedSet ?? s.fainted.length,
             }
           : null,
       };

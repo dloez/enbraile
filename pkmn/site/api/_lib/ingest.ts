@@ -20,7 +20,7 @@ export function savePrefix(seriesId: string, userId: string): string {
   return `saves/${seriesId}/${userId}/`;
 }
 
-async function saveFor(seriesId: string, userId: string): Promise<string> {
+export async function saveFor(seriesId: string, userId: string): Promise<string> {
   await db.insert(save).values({ id: crypto.randomUUID(), seriesId, userId }).onConflictDoNothing({ target: [save.seriesId, save.userId] });
   const [row] = await db
     .select({ id: save.id })
@@ -48,7 +48,7 @@ export async function stillUsed(key: string): Promise<boolean> {
   return row !== undefined;
 }
 
-async function dropIfUnused(key: string | null | undefined) {
+export async function dropIfUnused(key: string | null | undefined) {
   if (key && !(await stillUsed(key))) await deleteObject(key).catch(() => undefined);
 }
 
@@ -70,6 +70,8 @@ export async function ingest(raw: RawSave): Promise<Ingested> {
     pokemon: data.pokemon.length,
     fainted: data.fainted.length,
     uploadedBy: raw.uploadedBy,
+    movedBy: null,
+    movedAt: null,
     takenAt: new Date(),
   };
   let previous: { fileKey: string; rolledKey: string | null } | undefined;

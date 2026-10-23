@@ -37,7 +37,7 @@ profiles.get("/:player", async (c) => {
           trainer: sql<Snapshot["trainer"]>`${snapshot.data}->'trainer'`,
           pokedex: sql<Snapshot["pokedex"]>`${snapshot.data}->'pokedex'`,
           records: sql<Snapshot["records"]>`${snapshot.data}->'records'`,
-          fainted: snapshot.fainted,
+          fainted: sql<number>`coalesce(${snapshot.faintedSet}, ${snapshot.fainted})`,
         })
         .from(snapshot)
         .innerJoin(save, eq(save.id, snapshot.saveId))
@@ -45,8 +45,16 @@ profiles.get("/:player", async (c) => {
         .where(and(eq(save.userId, player.id), inArray(save.seriesId, ids)))
         .orderBy(asc(milestone.position))
     : [];
+  const progress = ids.length
+    ? await db
+        .select({ seriesId: save.seriesId, milestone: milestone.name })
+        .from(save)
+        .innerJoin(milestone, eq(milestone.id, save.progressId))
+        .where(and(eq(save.userId, player.id), inArray(save.seriesId, ids)))
+    : [];
   const rows = played.map((s) => {
     const last = taken.findLast((t) => t.seriesId === s.id);
+    const reached = progress.find((p) => p.seriesId === s.id)?.milestone ?? last?.milestone ?? null;
     const latest: LatestRecord | null = last
       ? {
           series: s.name,
@@ -60,20 +68,20 @@ profiles.get("/:player", async (c) => {
           fallen: last.fainted,
         }
       : null;
-    return { s, last, latest, end: milestones.findLast((m) => m.seriesId === s.id)?.name ?? null };
+    return { s, reached, latest, end: milestones.findLast((m) => m.seriesId === s.id)?.name ?? null };
   });
   const page: ProfilePage = {
     player,
     since: played.at(-1)?.name ?? null,
     career: careerOf(rows.map(({ s, latest }) => ({ finished: s.state === "finished", latest }))),
-    series: rows.map(({ s, last, latest, end }) => ({
+    series: rows.map(({ s, reached, latest, end }) => ({
       number: s.number,
       name: s.name,
       scene: s.scene,
       state: s.state,
       game: s.game,
-      reached: last?.milestone ?? null,
-      reachedEnd: last !== undefined && last.milestone === end,
+      reached,
+      reachedEnd: reached !== null && reached === end,
       playTime: latest?.playTime ?? null,
       fallen: latest?.fallen ?? null,
     })),

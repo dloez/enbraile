@@ -7,6 +7,7 @@ import { toolPage } from "@/components/page";
 import { PixelIcon } from "@/components/pixel-icon";
 import { PLAYER_FILL, PLAYER_RING, PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
+import { TrainerAdmin } from "@/components/trainer-admin";
 import { UploadDialog } from "@/components/upload-dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
@@ -203,6 +204,7 @@ function Trainers({ series, onChanged }: { series: Series; onChanged: () => void
                 milestones={heads}
                 columns={columns}
                 onUpload={() => setUploadFor(trainer.id)}
+                onChanged={onChanged}
               />
             ))}
           </div>
@@ -249,6 +251,7 @@ function TrainerRow({
   milestones,
   columns,
   onUpload,
+  onChanged,
 }: {
   seriesNumber: number;
   trainer: Trainer;
@@ -260,6 +263,7 @@ function TrainerRow({
   milestones: Milestone[];
   columns: string;
   onUpload: () => void;
+  onChanged: () => void;
 }) {
   const latest = trainer.snapshots.at(-1);
   const desktop = useMediaQuery("(min-width: 40rem)");
@@ -302,7 +306,7 @@ function TrainerRow({
               onClick={onToggle}
               className="flex min-h-11 flex-1 cursor-pointer items-center justify-end gap-2.5 self-stretch pr-3 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              {latest && <span className="font-heading text-xl text-muted-foreground">{latest.milestone}</span>}
+              {trainer.progress && <span className="font-heading text-xl text-muted-foreground">{trainer.progress}</span>}
               <span
                 aria-hidden="true"
                 className="grid size-9 place-items-center rounded-[9px] border-3 border-cell-hi bg-cell group-hover:border-primary"
@@ -434,6 +438,16 @@ function TrainerRow({
               Upload
             </button>
           )}
+          {trainer.sources && (
+            <TrainerAdmin
+              seriesNumber={seriesNumber}
+              trainer={trainer}
+              shown={shown}
+              milestones={milestones.map((m) => m.name)}
+              onChanged={onChanged}
+              onMoved={setPicked}
+            />
+          )}
         </div>
       )}
     </div>
@@ -466,11 +480,10 @@ function Track({
 }) {
   const colour = playerColour(trainer.id);
   const taken = new Set(trainer.snapshots.map((s) => s.milestone));
-  const latest = trainer.snapshots.at(-1);
-  const at = latest ? milestones.findIndex((m) => m.name === latest.milestone) : -1;
+  const at = trainer.progress ? milestones.findIndex((m) => m.name === trainer.progress) : -1;
   const count = Math.max(milestones.length, 1);
-  const label = latest
-    ? `${trainer.name} at ${latest.milestone} · snapshots ${trainer.snapshots.map((s) => s.milestone).join(", ")}`
+  const label = trainer.progress
+    ? `${trainer.name} at ${trainer.progress} · ${trainer.snapshots.length > 0 ? `snapshots ${trainer.snapshots.map((s) => s.milestone).join(", ")}` : "no snapshots"}`
     : `${trainer.name}, no snapshots`;
 
   return (

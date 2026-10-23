@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { bigint, boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { Snapshot } from "../../shared/snapshot.js";
 import type { TmRolls } from "./export/export.js";
 import { INGESTION_MODES, MILESTONE_MARKS, SCENES, SERIES_STATES } from "../../shared/series.js";
@@ -153,9 +153,16 @@ export const save = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    progressId: text("progress_id").references(() => milestone.id, { onDelete: "set null" }),
+    progressSetBy: text("progress_set_by").references(() => user.id, { onDelete: "restrict" }),
+    progressSetAt: timestamp("progress_set_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (table) => [unique("save_series_user_unique").on(table.seriesId, table.userId), index("save_user_id_idx").on(table.userId)],
+  (table) => [
+    unique("save_series_user_unique").on(table.seriesId, table.userId),
+    index("save_user_id_idx").on(table.userId),
+    check("save_progress_source", sql`${table.progressId} IS NULL OR (${table.progressSetBy} IS NOT NULL AND ${table.progressSetAt} IS NOT NULL)`),
+  ],
 );
 
 export const snapshot = pgTable(
@@ -177,8 +184,18 @@ export const snapshot = pgTable(
     rolledKey: text("rolled_key"),
     pokemon: integer("pokemon").notNull(),
     fainted: integer("fainted").notNull(),
+    faintedSet: integer("fainted_set"),
+    faintedSetBy: text("fainted_set_by").references(() => user.id, { onDelete: "restrict" }),
+    faintedSetAt: timestamp("fainted_set_at"),
+    movedBy: text("moved_by").references(() => user.id, { onDelete: "restrict" }),
+    movedAt: timestamp("moved_at"),
     uploadedBy: text("uploaded_by").references(() => user.id, { onDelete: "set null" }),
     takenAt: timestamp("taken_at").notNull().defaultNow(),
   },
-  (table) => [unique("snapshot_save_milestone_unique").on(table.saveId, table.milestoneId), index("snapshot_milestone_id_idx").on(table.milestoneId)],
+  (table) => [
+    unique("snapshot_save_milestone_unique").on(table.saveId, table.milestoneId),
+    index("snapshot_milestone_id_idx").on(table.milestoneId),
+    check("snapshot_fainted_source", sql`${table.faintedSet} IS NULL OR (${table.faintedSetBy} IS NOT NULL AND ${table.faintedSetAt} IS NOT NULL)`),
+    check("snapshot_moved_source", sql`(${table.movedBy} IS NULL) = (${table.movedAt} IS NULL)`),
+  ],
 );

@@ -1,4 +1,4 @@
-import { and, asc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import { type AdminSeries, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
@@ -42,19 +42,63 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
     .innerJoin(user, eq(user.id, seriesPlayer.userId))
     .where(eq(seriesPlayer.seriesId, seriesId))
     .orderBy(asc(user.name));
+  const saves = await db
+    .select({ userId: save.userId, progress: milestone.name, progressSetBy: save.progressSetBy, progressSetAt: save.progressSetAt })
+    .from(save)
+    .leftJoin(milestone, eq(milestone.id, save.progressId))
+    .where(eq(save.seriesId, seriesId));
   const taken = await db
-    .select({ userId: save.userId, milestone: milestone.name, pokemon: snapshot.pokemon, fainted: snapshot.fainted, playTime: sql<number | null>`(${snapshot.data}->>'playTime')::float8`, rolledKey: snapshot.rolledKey })
+    .select({
+      userId: save.userId,
+      milestone: milestone.name,
+      pokemon: snapshot.pokemon,
+      fainted: snapshot.fainted,
+      faintedSet: snapshot.faintedSet,
+      faintedSetBy: snapshot.faintedSetBy,
+      faintedSetAt: snapshot.faintedSetAt,
+      movedBy: snapshot.movedBy,
+      movedAt: snapshot.movedAt,
+      playTime: sql<number | null>`(${snapshot.data}->>'playTime')::float8`,
+      rolledKey: snapshot.rolledKey,
+    })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
     .where(eq(save.seriesId, seriesId))
     .orderBy(asc(milestone.position));
-  return players.map((player) => ({
-    ...player,
-    snapshots: taken
+  const names = reader.admin
+    ? await namesOf([...saves.map((s) => s.progressSetBy), ...taken.flatMap((t) => [t.faintedSetBy, t.movedBy])])
+    : new Map<string, string>();
+  const byHand = (by: string | null, at: Date | null) => (by && at ? { by: names.get(by) ?? by, at: at.toISOString() } : null);
+  return players.map((player) => {
+    const own = saves.find((s) => s.userId === player.id);
+    const snapshots = taken
       .filter((row) => row.userId === player.id)
-      .map(({ milestone, pokemon, fainted, playTime, rolledKey }) => ({ milestone, pokemon, fainted, playTime, zip: rolledKey !== null && (!!reader.admin || reader.id === player.id) })),
-  }));
+      .map((row) => ({
+        milestone: row.milestone,
+        pokemon: row.pokemon,
+        fainted: row.faintedSet ?? row.fainted,
+        playTime: row.playTime,
+        zip: row.rolledKey !== null && (!!reader.admin || reader.id === player.id),
+        ...(reader.admin
+          ? { sources: { savedFainted: row.fainted, fainted: row.faintedSet === null ? null : byHand(row.faintedSetBy, row.faintedSetAt), moved: byHand(row.movedBy, row.movedAt) } }
+          : {}),
+      }));
+    const handProgress = own?.progress ?? null;
+    return {
+      ...player,
+      progress: handProgress ?? snapshots.at(-1)?.milestone ?? null,
+      snapshots,
+      ...(reader.admin ? { sources: { progress: handProgress === null ? null : byHand(own?.progressSetBy ?? null, own?.progressSetAt ?? null) } } : {}),
+    };
+  });
+}
+
+async function namesOf(ids: (string | null)[]): Promise<Map<string, string>> {
+  const wanted = [...new Set(ids.filter((id): id is string => id !== null))];
+  if (wanted.length === 0) return new Map();
+  const rows = await db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.id, wanted));
+  return new Map(rows.map((row) => [row.id, row.name]));
 }
 
 export async function plays(seriesId: string, userId: string): Promise<boolean> {

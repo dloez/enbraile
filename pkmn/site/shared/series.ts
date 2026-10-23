@@ -70,9 +70,37 @@ export const seriesBanner = z.object({
 
 export const seriesBannerList = z.array(seriesBanner);
 
-export const trainerSnapshot = z.object({ milestone: z.string(), pokemon: z.number().int(), fainted: z.number().int(), playTime: z.number().nullable(), zip: z.boolean() });
+export const setByHand = z.object({ by: z.string(), at: z.string() });
 
-export const trainer = z.object({ id: z.string(), name: z.string(), canUpload: z.boolean(), snapshots: z.array(trainerSnapshot) });
+export const snapshotSources = z.object({ savedFainted: z.number().int(), fainted: setByHand.nullable(), moved: setByHand.nullable() });
+
+export const trainerSnapshot = z.object({
+  milestone: z.string(),
+  pokemon: z.number().int(),
+  fainted: z.number().int(),
+  playTime: z.number().nullable(),
+  zip: z.boolean(),
+  sources: snapshotSources.optional(),
+});
+
+export const trainerSources = z.object({ progress: setByHand.nullable() });
+
+export const trainer = z.object({
+  id: z.string(),
+  name: z.string(),
+  canUpload: z.boolean(),
+  progress: z.string().nullable(),
+  snapshots: z.array(trainerSnapshot),
+  sources: trainerSources.optional(),
+});
+
+export const progressInput = z.object({ milestone: z.string().min(1) });
+
+export const faintedInput = z.object({ count: z.number().int().min(0).max(999) });
+
+export const moveInput = z.object({ milestone: z.string().min(1) });
+
+export const overrideDone = z.object({});
 
 export const seriesPage = seriesBanner.extend({
   ingestion,
@@ -114,3 +142,7 @@ export type SeriesBanner = z.infer<typeof seriesBanner>;
 export type SeriesPage = z.infer<typeof seriesPage>;
 
 export type Trainer = z.infer<typeof trainer>;
+
+export type TrainerSnapshot = z.infer<typeof trainerSnapshot>;
+
+export type SetByHand = z.infer<typeof setByHand>;
