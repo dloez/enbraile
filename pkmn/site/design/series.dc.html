@@ -24,7 +24,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 .trow:hover .chev{border-color:#5ad1f0!important}
 .snap:hover{background:#5ad1f0!important;color:#10141d!important}
 .trow:hover .tname{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:3px}
-.node:not([aria-pressed="true"]):hover{border-color:rgba(90,209,240,0.6)!important}
+.node:not([aria-pressed="true"]):hover>span{border-color:rgba(90,209,240,0.7)!important}
 .seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
 .field:focus-within{border-color:#5ad1f0!important}
 select option{background:#10141d;color:#eef1f7}
@@ -83,31 +83,10 @@ Download
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 36px; color: #ffd34d">Work in progress</span>
 </div>
 </section>
-<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
-<h2 style="flex: 1; margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 38px">Trainers</h2>
-<sc-if value="{{onRecords}}" hint-placeholder-val="{{ false }}">
-<label class="field" style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 14px; box-sizing: border-box; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">At</span>
-<select value="{{recAt}}" onChange="{{pickRecAt}}" style="border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 23px; outline: none; cursor: pointer">
-<sc-for list="{{recOptions}}" as="o" hint-placeholder-count="10"><option value="{{o}}">{{o}}</option></sc-for>
-</select>
-</label>
-</sc-if>
-<div role="radiogroup" aria-label="Trainers view" style="display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
-<sc-for list="{{views}}" as="vw" hint-placeholder-count="2">
-<button type="button" class="seg" role="radio" aria-checked="{{vw.on}}" onClick="{{vw.pick}}" style="min-height: 44px; padding: 0 16px; border: none; border-radius: 8px; background: {{vw.bg}}; color: {{vw.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 23px; cursor: pointer">{{vw.name}}</button>
-</sc-for>
-</div>
-</div>
+<h2 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 38px">Trainers</h2>
 <div style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
 <div style="display: grid; grid-template-columns: 300px minmax(0, 1fr) 84px; align-items: stretch; border-bottom: 3px solid #343f58; background: #1b2232">
 <span></span>
-<sc-if value="{{onRecords}}" hint-placeholder-val="{{ false }}">
-<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: end">
-<sc-for list="{{recHeads}}" as="rh" hint-placeholder-count="6"><span style="padding: 14px 4px 12px; text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 21px; color: #c3cad8; white-space: nowrap">{{rh}}</span></sc-for>
-</div>
-</sc-if>
-<sc-if value="{{onProgress}}" hint-placeholder-val="{{ true }}">
 <div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); align-items: end">
 <sc-for list="{{cols}}" as="c" hint-placeholder-count="10">
 <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 4px 12px; background: {{c.bg}}">
@@ -119,7 +98,7 @@ Download
 </div>
 </sc-for>
 </div>
-</sc-if>
+
 <span></span>
 </div>
 
@@ -133,12 +112,6 @@ Download
 <sc-if value="{{p.you}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #10141d; background: #ffd34d; padding: 1px 7px; border-radius: 4px">You</span></sc-if>
 </span>
 </button>
-<sc-if value="{{onRecords}}" hint-placeholder-val="{{ false }}">
-<span style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-self: stretch; align-items: center; font-variant-numeric: tabular-nums">
-<sc-for list="{{p.rec}}" as="rc" hint-placeholder-count="6"><span style="text-align: center; font-weight: 700; font-size: 17px; color: {{rc.ink}}">{{rc.v}}</span></sc-for>
-</span>
-</sc-if>
-<sc-if value="{{onProgress}}" hint-placeholder-val="{{ true }}">
 <span style="position: relative; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); align-self: stretch">
 <span style="position: absolute; left: 5%; right: 5%; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: #10141d"></span>
 <span style="position: absolute; left: 5%; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: {{p.colour}}; width: {{p.fill}}%"></span>
@@ -147,13 +120,12 @@ Download
 <sc-if value="{{n.plain}}" hint-placeholder-val="{{ true }}"><span style="width: 16px; height: 16px; border-radius: 50%; background: {{n.fill}}"></span></sc-if>
 <sc-if value="{{n.round}}" hint-placeholder-val="{{ false }}"><span style="width: 30px; height: 30px; border-radius: 50%; background: {{n.fill}}; border: 4px solid {{n.ring}}; box-shadow: 0 0 0 3px #222a3b; box-sizing: border-box"></span></sc-if>
 <sc-if value="{{n.final}}" hint-placeholder-val="{{ false }}"><span style="width: 52px; height: 52px; border-radius: 50%; background: #2a2416; border: 3px solid #8a7330; display: grid; place-items: center"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v5a5 5 0 0 1-10 0z" fill="#ffd34d"></path><path d="M10 13h4v4h3v4H7v-4h3z" fill="#ffd34d"></path></svg></span></sc-if>
-<sc-if value="{{n.snap}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; left: 50%; bottom: 10px; width: 8px; height: 8px; margin-left: -4px; background: #5ad1f0"></span></sc-if>
-<sc-if value="{{n.here}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; box-sizing: border-box; border-radius: 10px; background: {{p.colour}}; border: 4px solid #10141d; box-shadow: 0 0 0 3px {{n.hereRing}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 25px; color: #10141d; animation: bob 0.5s steps(2) infinite alternate">{{p.initial}}<sc-if value="{{p.handSet}}" hint-placeholder-val="{{ false }}"><span title="{{p.handNote}}" style="position: absolute; top: -12px; right: -12px; width: 20px; height: 20px; border-radius: 5px; background: #c3cad8; border: 2px solid #10141d; display: grid; place-items: center"><svg width="10" height="10" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v1H7zM6 1h1v1H6zM9 1h1v2H9zM5 2h1v1H5zM8 2h1v1H8zM4 3h1v1H4zM7 3h1v1H7zM3 4h1v1H3zM6 4h1v1H6zM2 5h1v1H2zM5 5h1v1H5zM1 6h1v1H1zM4 6h1v1H4zM0 7h1v3H0zM3 7h1v1H3zM1 9h2v1H1zM2 8h1v1H2z" fill="#10141d"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">{{p.handNote}}</span></span></sc-if></span></sc-if>
-<sc-if value="{{n.snap}}" hint-placeholder-val="{{ false }}"><button type="button" class="node" aria-label="{{n.label}}" aria-pressed="{{n.sel}}" onClick="{{n.pick}}" style="position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; box-sizing: border-box; border-radius: 14px; border: 3px solid {{n.selRing}}; background: transparent; cursor: pointer"></button></sc-if>
+<sc-if value="{{n.here}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; box-sizing: border-box; border-radius: 10px; background: {{p.colour}}; border: 4px solid #10141d; box-shadow: 0 0 0 3px {{n.hereRing}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 25px; color: #10141d; animation: bob 0.5s steps(2) infinite alternate">{{p.initial}}</span></sc-if>
+<sc-if value="{{n.snap}}" hint-placeholder-val="{{ false }}"><button type="button" class="node" aria-label="{{n.label}}" aria-pressed="{{n.sel}}" onClick="{{n.pick}}" style="position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; box-sizing: border-box; border: none; border-radius: 14px; background: transparent; cursor: pointer; display: grid; place-items: center; padding: 0"><span aria-hidden="true" style="width: {{n.ringSize}}; height: {{n.ringSize}}; box-sizing: border-box; border-radius: {{n.ringRadius}}; border: 3px solid {{n.selRing}}"></span></button></sc-if>
 </span>
 </sc-for>
 </span>
-</sc-if>
+
 <span style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-right: 24px">
 <button type="button" class="chev" aria-label="{{p.chevLabel}}" aria-expanded="{{p.open}}" onClick="{{p.toggle}}" style="width: 44px; height: 44px; box-sizing: border-box; border-radius: 10px; background: #2c3549; border: 3px solid #44506d; display: grid; place-items: center; cursor: pointer"><svg width="16" height="12" viewBox="0 0 22 16" aria-hidden="true" style="transform: {{p.chev}}"><path d="M2 3h18l-9 11z" fill="#5ad1f0"></path></svg></button>
 </span>
@@ -201,10 +173,6 @@ Download
 </sc-if>
 </div>
 </sc-for>
-</div>
-<div style="display: flex; flex-wrap: wrap; gap: 22px; padding: 0 6px; font-size: 14px; color: #a3acbf">
-<span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 8px; height: 8px; background: #5ad1f0"></span>Snapshot</span>
-<span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 4px; background: #c3cad8; display: grid; place-items: center"><svg width="8" height="8" viewBox="0 0 10 10" shape-rendering="crispEdges"><path d="M7 0h2v1H7zM6 1h1v1H6zM9 1h1v2H9zM5 2h1v1H5zM8 2h1v1H8zM4 3h1v1H4zM7 3h1v1H7zM3 4h1v1H3zM6 4h1v1H6zM2 5h1v1H2zM5 5h1v1H5zM1 6h1v1H1zM4 6h1v1H4zM0 7h1v3H0zM3 7h1v1H3zM1 9h2v1H1zM2 8h1v1H2z" fill="#10141d"></path></svg></span>Set by hand</span>
 </div>
 </main>
 <section aria-labelledby="rules" style="padding: 8px 40px 56px; display: flex; flex-direction: column; gap: 14px">
@@ -290,7 +258,7 @@ class Component extends DCLogic {
     const people = [
       {name: 'Dloez', initial: 'D', colour: '#ffd34d', you: true, alive: 47, fainted: 3, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5', 'Gym 7'], teams: 5},
       {name: 'Vicky', initial: 'V', colour: '#5ad1f0', alive: 52, fainted: 1, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5', 'Gym 7'], teams: 5, warning: 'no IVs, EVs or stats · no moves'},
-      {name: 'Javi', initial: 'J', colour: '#7be08a', alive: 38, fainted: 4, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4, hand: {at: 5, by: 'Dloez', when: '23 Oct'}},
+      {name: 'Javi', initial: 'J', colour: '#7be08a', alive: 38, fainted: 4, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
       {name: 'Inop', initial: 'I', colour: '#ff8a80', alive: 29, fainted: 6, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
       {name: 'Tole', initial: 'T', colour: '#c39bff', alive: 33, fainted: 5, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4},
       {name: 'Elfo', initial: 'E', colour: '#ffb347', alive: 41, fainted: 2, lives: 0, snaps: ['Gym 1', 'Gym 2', 'Gym 3', 'Gym 5'], teams: 4}
@@ -309,9 +277,7 @@ class Component extends DCLogic {
     const added = st.added || {};
     const sel = st.sel || {};
     const upFor = st.upFor !== undefined ? st.upFor : -1;
-    const view = st.view || 'Progress';
     const names = ms.map((m) => m.name);
-    const recAt = st.recAt || 'Gym 5';
     const hours = (h) => Math.floor(h) + ' h ' + String(Math.round((h % 1) * 60)).padStart(2, '0');
     const snapsOf = (p) => names.filter((n) => p.snaps.includes(n) || (added[p.name] || []).includes(n));
     const recOf = (p, ri, n) => {
@@ -329,35 +295,27 @@ class Component extends DCLogic {
     const rows = people.map((p, ri) => {
       const list = snapsOf(p);
       const latest = list[list.length - 1];
-      const at = p.hand ? p.hand.at : names.indexOf(latest);
+      const at = names.indexOf(latest);
       const chosen = sel[p.name] && list.includes(sel[p.name]) ? sel[p.name] : latest;
       const r = recOf(p, ri, chosen);
-      const ra = recOf(p, ri, recAt);
-      const dash = {v: '—', ink: '#6b7489'};
       return {
         ...p, canUpload: admin || (!!p.you && !auto), upload: () => this.setState({upFor: ri}), rowBg: ri === open ? '#283146' : (p.you ? 'rgba(255,211,77,0.06)' : 'transparent'), fill: at * 10,
         open: ri === open, chev: ri === open ? 'rotate(180deg)' : 'none', chevLabel: (ri === open ? 'Close ' : 'Open ') + p.name, toggle: () => this.setState({open: ri === open ? -1 : ri}),
         snaps: list.map((n) => ({name: n, line: n === chosen ? '#5ad1f0' : 'transparent'})),
         selName: chosen, selAlive: r.alive, selFainted: r.fainted, faintInk: r.fainted ? '#ff6a5e' : '#eef1f7', selTime: hours(r.time),
-        handSet: !!p.hand, handNote: p.hand ? 'Set by hand · ' + p.hand.by + ', ' + p.hand.when : '',
-        rec: ra ? [{v: hours(ra.time), ink: '#eef1f7'}, {v: ra.badges + ' / 8', ink: '#eef1f7'}, {v: String(ra.owned), ink: '#eef1f7'}, {v: ra.won + ' – ' + ra.lost, ink: '#eef1f7'}, {v: String(ra.black), ink: '#eef1f7'}, {v: String(ra.fainted), ink: ra.fainted ? '#ff6a5e' : '#eef1f7'}] : [dash, dash, dash, dash, dash, dash],
         livesLeft: p.lives, hearts: Array.from({length: maxLives}, (_, i) => ({c: i < p.lives ? '#ff6a5e' : '#44506d'})),
         hasWarning: !!p.warning, warning: p.warning || '',
         divider: ri < people.length - 1 ? '3px solid #343f58' : 'none',
         nodes: ms.map((m, i) => {
           const got = i <= at, snap = list.includes(m.name), on = snap && m.name === chosen;
           return {here: i === at, plain: !m.round && !m.final, round: !!m.round, final: !!m.final, fill: got ? p.colour : '#2c3549', ring: got ? '#ff6a5e' : '#7a3a36', hereRing: m.round ? '#ff6a5e' : p.colour, bg: m.round ? tint : 'transparent',
-            snap, sel: on, selRing: on ? '#5ad1f0' : 'transparent', label: p.name + ' at ' + m.name,
+            snap, sel: on, selRing: on ? '#5ad1f0' : 'rgba(90,209,240,0.3)', ringRadius: i === at ? '14px' : '50%', ringSize: i === at ? '56px' : m.final ? '64px' : m.round ? '44px' : '32px', label: p.name + ' at ' + m.name,
             pick: () => this.setState({sel: Object.assign({}, sel, {[p.name]: m.name}), open: ri})};
         })
       };
     });
     const up = upFor >= 0 ? people[upFor] : null;
     return {h: 2040, hasLives: false, maxLives, cols, rows, sky: nightScene(360, 65),
-      onProgress: view === 'Progress', onRecords: view === 'Records',
-      views: ['Progress', 'Records'].map((v) => ({name: v, on: v === view, bg: v === view ? '#d93a30' : 'transparent', fg: v === view ? '#ffffff' : '#c3cad8', pick: () => this.setState({view: v})})),
-      recAt, recOptions: names, pickRecAt: (e) => this.setState({recAt: e.target.value}),
-      recHeads: ['Play time', 'Badges', 'Pokédex', 'Battles', 'Blackouts', 'Fainted'],
       upOpen: !!up, upWho: up ? whoOf(up, upFor) : null, outcome: this.props.outcome || 'works',
       closeUpload: () => this.setState({upFor: -1}),
       savedUpload: (m) => { if (!up) return; const list = (added[up.name] || []).concat([m]); this.setState({added: Object.assign({}, added, {[up.name]: list})}); }};
