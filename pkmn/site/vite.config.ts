@@ -32,6 +32,9 @@ function devApi(): Plugin {
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), devApi()],
+  build: {
+    chunkSizeWarningLimit: 3300,
+  },
   server: {
     proxy: {
       "/api": `http://localhost:${apiPort}`,

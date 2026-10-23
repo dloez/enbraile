@@ -18,7 +18,7 @@ From `pkmn/site/`:
 npm install
 ```
 
-npm runs only the install scripts listed under `allowScripts` in `package.json`.
+`allowScripts` in `package.json` records which dependencies' install scripts are reviewed (esbuild's, approved per version); npm warns about any other until it is approved with `npm approve-scripts <pkg>` or denied with `npm deny-scripts <pkg>`.
 
 ### 2. Start the local stack
 
