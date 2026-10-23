@@ -60,6 +60,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
       movedAt: snapshot.movedAt,
       playTime: sql<number | null>`(${snapshot.data}->>'playTime')::float8`,
       rolledKey: snapshot.rolledKey,
+      missing: snapshot.missing,
     })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
@@ -80,6 +81,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
         fainted: row.faintedSet ?? row.fainted,
         playTime: row.playTime,
         zip: row.rolledKey !== null && (!!reader.admin || reader.id === player.id),
+        missing: row.missing,
         ...(reader.admin
           ? { sources: { savedFainted: row.fainted, fainted: row.faintedSet === null ? null : byHand(row.faintedSetBy, row.faintedSetAt), moved: byHand(row.movedBy, row.movedAt) } }
           : {}),

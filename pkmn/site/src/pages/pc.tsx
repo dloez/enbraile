@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { SnapshotPc } from "@/components/pc/pc-box";
 import { type PcPage as Pc, pcPage } from "../../shared/pc";
+import { missingLine } from "../../shared/snapshot";
 
 const FROM = "/players/$player/series/$number/pc";
 
@@ -99,18 +100,23 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
         </div>
       </div>
       <div className="flex-1" />
-      <div className="flex max-w-full flex-wrap items-center gap-3">
-        <span id="snapshot-label" className="font-heading text-[1.375rem] text-muted-foreground">
-          Snapshot
-        </span>
-        <Segmented
-          labelledBy="snapshot-label"
-          size="lg"
-          className="max-w-full flex-wrap"
-          options={page.milestones.map((m) => ({ value: m.name, label: m.name, disabled: !m.taken }))}
-          value={page.milestone ?? ""}
-          onChange={onPick}
-        />
+      <div className="flex max-w-full flex-col items-end gap-2 max-sm:items-start">
+        {page.missing && missingLine(page.missing) && (
+          <span className="text-sm font-bold text-warning">Export missing: {missingLine(page.missing)}</span>
+        )}
+        <div className="flex max-w-full flex-wrap items-center gap-3">
+          <span id="snapshot-label" className="font-heading text-[1.375rem] text-muted-foreground">
+            Snapshot
+          </span>
+          <Segmented
+            labelledBy="snapshot-label"
+            size="lg"
+            className="max-w-full flex-wrap"
+            options={page.milestones.map((m) => ({ value: m.name, label: m.name, disabled: !m.taken }))}
+            value={page.milestone ?? ""}
+            onChange={onPick}
+          />
+        </div>
       </div>
     </div>
   );

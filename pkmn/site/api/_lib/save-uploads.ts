@@ -1,14 +1,24 @@
 import { and, asc, eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
-import { partRequest, uploadAbort, uploadDone, uploadRequest } from "../../shared/games.js";
-import { largestSaveZip, snapshotRequest, suggestMilestone, type SavedSnapshot, type UploadedSave } from "../../shared/save-upload.js";
+import { partRequest, uploadAbort } from "../../shared/games.js";
+import {
+  isExportName,
+  largestExport,
+  largestSaveZip,
+  saveUploadDone,
+  saveUploadRequest,
+  snapshotRequest,
+  suggestMilestone,
+  type SavedSnapshot,
+  type UploadedSave,
+} from "../../shared/save-upload.js";
 import { partRange, partSizeFor } from "../../shared/upload.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
 import { ExportError } from "./export/export.js";
 import { saveSlots } from "./export/save-zip.js";
 import { abortUpload, abortUploadsUnder, completeUpload, deleteObject, downloadUrl, objectSize, objectsUnder, partUrl, readObject, startUpload } from "./files.js";
-import { ingest, savePrefix, stillUsed } from "./ingest.js";
+import { ingest, isExportKey, parseExport, savePrefix, stillUsed } from "./ingest.js";
 import { milestone, save, snapshot } from "./schema.js";
 import { findShown, mayUpload, plays, type SeriesRow, viewer } from "./series-data.js";
 
@@ -49,12 +59,14 @@ export const saveUploads = new Hono();
 saveUploads.post("/:number/trainers/:player/upload", async (c) => {
   const found = await target(c);
   if (found instanceof Response) return found;
-  const input = await body(c.req.raw, uploadRequest);
-  if (!input) return c.json({ error: "Upload a .zip file" }, 400);
-  if (input.size > largestSaveZip) return c.json({ error: "A save zip is at most 100 MB" }, 400);
+  const input = await body(c.req.raw, saveUploadRequest);
+  if (!input) return c.json({ error: "Upload a .zip save or a .json export" }, 400);
+  const json = isExportName(input.fileName);
+  if (json && input.size > largestExport) return c.json({ error: "An export is at most 10 MB" }, 400);
+  if (!json && input.size > largestSaveZip) return c.json({ error: "A save zip is at most 100 MB" }, 400);
   await abortUploadsUnder(found.prefix).catch(() => undefined);
   await clearStale(found.prefix).catch(() => undefined);
-  const key = `${found.prefix}${crypto.randomUUID()}.zip`;
+  const key = `${found.prefix}${crypto.randomUUID()}.${json ? "json" : "zip"}`;
   return c.json({ key, uploadId: await startUpload(key), partSize: partSizeFor(input.size) });
 });
 
@@ -80,7 +92,7 @@ saveUploads.delete("/:number/trainers/:player/upload", async (c) => {
 saveUploads.post("/:number/trainers/:player/file", async (c) => {
   const found = await target(c);
   if (found instanceof Response) return found;
-  const input = await body(c.req.raw, uploadDone);
+  const input = await body(c.req.raw, saveUploadDone);
   if (!input || !input.key.startsWith(found.prefix)) return c.json({ error: "Not this player's upload" }, 400);
   const parts = [...input.parts].sort((a, b) => a.part - b.part);
   try {
@@ -93,8 +105,14 @@ saveUploads.post("/:number/trainers/:player/file", async (c) => {
   if (size === undefined) return c.json({ error: "The upload did not reach the file store" }, 400);
   const names = (await milestoneNames(found.row.id)).map((m) => m.name);
   try {
-    const slots = saveSlots(await readObject(input.key)).map((slot) => ({ ...slot, suggested: suggestMilestone(names, slot) }));
-    const answer: UploadedSave = { key: input.key, fileName: input.fileName, size, slots };
+    const file = await readObject(input.key);
+    if (isExportKey(input.key)) {
+      const { sheet, report } = parseExport(file);
+      const answer: UploadedSave = { key: input.key, fileName: input.fileName, size, slots: [], export: { pokemon: sheet.pokemon.length, report } };
+      return c.json(answer);
+    }
+    const slots = saveSlots(file).map((slot) => ({ ...slot, suggested: suggestMilestone(names, slot) }));
+    const answer: UploadedSave = { key: input.key, fileName: input.fileName, size, slots, export: null };
     return c.json(answer);
   } catch (error) {
     await deleteObject(input.key).catch(() => undefined);
@@ -114,7 +132,8 @@ saveUploads.post("/:number/trainers/:player/snapshots", async (c) => {
     .from(milestone)
     .where(and(eq(milestone.seriesId, found.row.id), eq(milestone.name, input.milestone)));
   if (!chosen) return c.json({ error: "No such milestone" }, 400);
-  if ((await objectSize(input.key)) === undefined) return c.json({ error: "The upload is gone; upload the zip again" }, 400);
+  if (isExportKey(input.key) !== (input.slot === null)) return c.json({ error: isExportKey(input.key) ? "An export has no slot" : "Pick a slot of the zip" }, 400);
+  if ((await objectSize(input.key)) === undefined) return c.json({ error: "The upload is gone; upload the file again" }, 400);
   try {
     const done = await ingest({
       seriesId: found.row.id,

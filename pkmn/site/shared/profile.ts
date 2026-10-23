@@ -44,7 +44,7 @@ export type LatestRecord = {
   playTime: number | null;
   badges: number;
   badgeSlots: number;
-  owned: number;
+  owned: number | null;
   trainerBattlesWon: number | null;
   trainerBattlesLost: number | null;
   blackouts: number | null;
@@ -58,7 +58,10 @@ function sum(values: (number | null)[]): number | null {
 
 export function careerOf(played: { finished: boolean; latest: LatestRecord | null }[]): CareerTotals {
   const latest = played.flatMap((p) => (p.latest ? [p.latest] : []));
-  const best = latest.reduce<LatestRecord | null>((top, r) => (top === null || r.owned > top.owned ? r : top), null);
+  const best = latest.reduce<(LatestRecord & { owned: number }) | null>(
+    (top, r) => (r.owned !== null && (top === null || r.owned > top.owned) ? { ...r, owned: r.owned } : top),
+    null,
+  );
   return {
     series: played.length,
     finished: played.filter((p) => p.finished).length,

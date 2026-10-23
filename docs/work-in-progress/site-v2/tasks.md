@@ -25,7 +25,7 @@ The screens still undrawn, desktop and phone, in the signed-off look ([Pages →
 Discord sign-in and the allowlist are built and checked on the local stack (2026-10-23); production needs the owner's half, as [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 describes.
 
 **Do:**
-- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migrations `0002_allowlist`, `0003_series`, `0004_saves`, `0005_tm_rolls` and `0006_overrides`, all unpushed on `main` with the code that needs them) before the push that deploys it.
+- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; `npm run db:migrate` against the production branch (migrations `0002_allowlist`, `0003_series`, `0004_saves`, `0005_tm_rolls`, `0006_overrides` and `0007_exports`, all unpushed on `main` with the code that needs them) before the push that deploys it.
 
 **Acceptance:**
 - Claude-run: none.
@@ -128,24 +128,6 @@ The series page's trainer row has a Teams tile, drawn in `series.dc.html` as a l
 **After:** Build teams locked to a snapshot, stored in the account
 **Needs the author:** where does a trainer row's Teams tile open: `/teams` filtered to that trainer, a new `/players/<player>/teams`, or the trainer's teams on their series page?
 
-## Upload old exports as snapshots, with warnings for what they lack
-
-The upload also takes an export `.json`, and every export is read as far as it goes ([Exports from older versions](discovery.md#snapshots-in)): the export schema treats every field but the species as optional, a snapshot stores what was missing, and its series page row and PC page show the warning. Series 1's MIRAMEEE and Vicky exports, in `pkmn/site/saves/`, go in through it.
-
-**Do:**
-- [ ] A lenient export schema with the missing-field report; entries without a usable species skipped and counted; refuse only non-JSON or nothing usable.
-- [ ] JSON in the upload flow (player and admin), the drop zone reading "or an export" and the done step after `upload-done-json.dc.html`; the warning chip on the row and the PC page's "Export missing" line (left out until now, [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's and the upload's build choices); the missing-field report saying when an export's `moves` predate TM rolling, for the team builder's entry below.
-- [ ] Record in the snapshot format's reference which fields old exports lack and how the site reads them.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, upload `saves/Vicky-open-sheet.json` and `saves/MIRAMEEE-open-sheet.json` for two test players, see each warning on the series page and the PC page, open a Pokémon's summary in each with its Stats tab's "At Level 50" ranges shown, and open the bag; upload a JSON with one entry missing its species and read "1 skipped"; upload a file that is not JSON and read its refusal.
-- Human-run: upload the two exports for MIRAMEEE and Vicky on production and open their PCs.
-- Reuse: `sheetSchema` and `snapshotSchema` in `shared/snapshot.ts` (which `src/open-sheet/schema.ts` re-exports), made lenient rather than copied; `ingest` in `api/_lib/ingest.ts`.
-- Neighbors: the save zip upload.
-- Forbidden: refusing an export for a missing field; a second schema for old exports.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`, `docs/pkmn/site/reference/snapshot.md`
-
 ## Mark an old export's unrolled TM moves unchecked in the team builder
 
 Split out of the old exports' entry above, the one part of it that needs the team builder: an export whose `moves` predate TM rolling has them marked unchecked when they are picked for a team ([Exports from older versions](discovery.md#snapshots-in)), and a team built from each old export shows its Level 50 ranges.
@@ -161,7 +143,7 @@ Split out of the old exports' entry above, the one part of it that needs the tea
 - Forbidden: refusing a move for being unchecked; a second move picker.
 
 **Touches:** `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** Build teams locked to a snapshot, stored in the account; Upload old exports as snapshots, with warnings for what they lack
+**After:** Build teams locked to a snapshot, stored in the account
 
 ## Build teams from several snapshots, any player's
 

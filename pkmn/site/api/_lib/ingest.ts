@@ -1,5 +1,7 @@
 import { and, eq, isNotNull, or } from "drizzle-orm";
+import { type ExportReport, readExport, type Sheet, type Snapshot } from "../../shared/snapshot.js";
 import { db } from "./db.js";
+import { ExportError, type TmRolls } from "./export/export.js";
 import { exportZipSlot } from "./export/save-zip.js";
 import { deleteObject, putObject, readObject } from "./files.js";
 import { save, snapshot } from "./schema.js";
@@ -10,11 +12,66 @@ export type RawSave = {
   milestoneId: string;
   fileKey: string;
   fileName: string;
-  slot: string;
+  slot: string | null;
   uploadedBy: string | null;
 };
 
-export type Ingested = { pokemon: number; fainted: number; replaced: boolean; rolled: number; sideFile: string };
+export type Ingested = {
+  pokemon: number;
+  fainted: number;
+  replaced: boolean;
+  rolled: number | null;
+  sideFile: string | null;
+  missing: ExportReport | null;
+};
+
+export function isExportKey(key: string): boolean {
+  return key.endsWith(".json");
+}
+
+export function parseExport(file: Uint8Array): { sheet: Sheet; report: ExportReport } {
+  let data: unknown;
+  try {
+    data = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(file));
+  } catch {
+    throw new ExportError("This file is not JSON");
+  }
+  const read = readExport(data);
+  if ("refused" in read) throw new ExportError(read.refused);
+  return read;
+}
+
+function fromExport(sheet: Sheet): Snapshot {
+  return {
+    ...sheet,
+    fainted: [],
+    party: [],
+    bag: [],
+    trainer: { name: null, id: null, publicId: null, money: null, badges: [] },
+    playTime: null,
+    pokedex: { seen: null, owned: null },
+    records: { trainerBattlesWon: null, trainerBattlesLost: null, wildBattlesWon: null, wildBattlesLost: null, blackouts: null },
+    hallOfFame: null,
+    usedEncounters: [],
+    saveSlot: null,
+    randomlockeVersion: null,
+    notices: [],
+  };
+}
+
+type Read = { data: Snapshot; tmRolls: TmRolls | null; rolledKey: string | null; rolled: number | null; sideFile: string | null; missing: ExportReport | null };
+
+async function read(raw: RawSave, file: Uint8Array): Promise<Read> {
+  if (isExportKey(raw.fileKey)) {
+    const { sheet, report } = parseExport(file);
+    return { data: fromExport(sheet), tmRolls: null, rolledKey: null, rolled: null, sideFile: null, missing: report };
+  }
+  if (!raw.slot) throw new ExportError("Pick a slot of the zip");
+  const exported = exportZipSlot(file, raw.slot, await keptRolls(raw.fileKey, raw.slot));
+  const rolledKey = `${savePrefix(raw.seriesId, raw.userId)}${crypto.randomUUID()}-rolled.zip`;
+  await putObject(rolledKey, exported.rolledZip);
+  return { data: exported.snapshot, tmRolls: exported.tmRolls, rolledKey, rolled: exported.rolled, sideFile: exported.sideFile, missing: null };
+}
 
 export function savePrefix(seriesId: string, userId: string): string {
   return `saves/${seriesId}/${userId}/`;
@@ -53,20 +110,18 @@ export async function dropIfUnused(key: string | null | undefined) {
 }
 
 export async function ingest(raw: RawSave): Promise<Ingested> {
-  const zip = await readObject(raw.fileKey);
-  const exported = exportZipSlot(zip, raw.slot, await keptRolls(raw.fileKey, raw.slot));
-  const data = exported.snapshot;
+  const file = await readObject(raw.fileKey);
+  const { data, tmRolls, rolledKey, rolled, sideFile, missing } = await read(raw, file);
   const saveId = await saveFor(raw.seriesId, raw.userId);
-  const rolledKey = `${savePrefix(raw.seriesId, raw.userId)}${crypto.randomUUID()}-rolled.zip`;
-  await putObject(rolledKey, exported.rolledZip);
   const values = {
     fileKey: raw.fileKey,
     fileName: raw.fileName,
-    fileSize: zip.length,
-    slot: raw.slot,
+    fileSize: file.length,
+    slot: isExportKey(raw.fileKey) ? null : raw.slot,
     data,
-    tmRolls: exported.tmRolls,
+    tmRolls,
     rolledKey,
+    missing,
     pokemon: data.pokemon.length,
     fainted: data.fainted.length,
     uploadedBy: raw.uploadedBy,
@@ -89,7 +144,7 @@ export async function ingest(raw: RawSave): Promise<Ingested> {
       return existing;
     });
   } catch (error) {
-    await deleteObject(rolledKey).catch(() => undefined);
+    if (rolledKey) await deleteObject(rolledKey).catch(() => undefined);
     throw error;
   }
   if (previous && previous.fileKey !== raw.fileKey) await dropIfUnused(previous.fileKey);
@@ -98,7 +153,8 @@ export async function ingest(raw: RawSave): Promise<Ingested> {
     pokemon: values.pokemon,
     fainted: values.fainted,
     replaced: previous !== undefined,
-    rolled: exported.rolled,
-    sideFile: exported.sideFile,
+    rolled,
+    sideFile,
+    missing,
   };
 }

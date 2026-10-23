@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
-import type { Snapshot } from "../../shared/snapshot.js";
+import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import type { TmRolls } from "./export/export.js";
 import { INGESTION_MODES, MILESTONE_MARKS, SCENES, SERIES_STATES } from "../../shared/series.js";
 
@@ -178,8 +178,9 @@ export const snapshot = pgTable(
     fileKey: text("file_key").notNull(),
     fileName: text("file_name").notNull(),
     fileSize: bigint("file_size", { mode: "number" }).notNull(),
-    slot: text("slot").notNull(),
+    slot: text("slot"),
     data: jsonb("data").$type<Snapshot>().notNull(),
+    missing: jsonb("missing").$type<ExportReport>(),
     tmRolls: jsonb("tm_rolls").$type<TmRolls>(),
     rolledKey: text("rolled_key"),
     pokemon: integer("pokemon").notNull(),

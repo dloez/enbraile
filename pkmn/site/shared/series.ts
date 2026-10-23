@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { exportReport } from "./snapshot.js";
 
 export const SCENES = ["night", "route"] as const;
 
@@ -80,6 +81,7 @@ export const trainerSnapshot = z.object({
   fainted: z.number().int(),
   playTime: z.number().nullable(),
   zip: z.boolean(),
+  missing: exportReport.nullable(),
   sources: snapshotSources.optional(),
 });
 

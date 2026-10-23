@@ -130,9 +130,9 @@ function Journey({ page }: { page: JourneyPage }) {
   const previous = (index: number) => page.columns.slice(0, index).findLast((c) => c.record !== null)?.record ?? null;
   const rows: Row[] = [
     { label: "Play time", cell: (r) => ({ main: playTime(r.playTime) }) },
-    { label: "Badges", cell: (r) => ({ main: `${r.badges} / ${r.badgeSlots}` }) },
+    { label: "Badges", cell: (r) => ({ main: r.badgeSlots === 0 ? "—" : `${r.badges} / ${r.badgeSlots}` }) },
     { label: "Money", cell: (r) => ({ main: money(r.money) }) },
-    { label: "Pokédex", cell: (r) => ({ main: `${r.owned} owned`, sub: `${r.seen} seen` }) },
+    { label: "Pokédex", cell: (r) => (r.owned === null ? { main: "—" } : { main: `${r.owned} owned`, sub: `${count(r.seen)} seen` }) },
     { label: "Trainer battles", cell: (r) => ({ main: `${count(r.trainerBattlesWon)} – ${count(r.trainerBattlesLost)}`, sub: "won – lost" }) },
     { label: "Blackouts", cell: (r) => ({ main: count(r.blackouts) }) },
   ];

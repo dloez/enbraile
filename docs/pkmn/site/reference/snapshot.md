@@ -1,6 +1,6 @@
 # Snapshot Format
 
-What a snapshot holds: the JSON object the site's export (`pkmn/site/api/_lib/export/`) makes from one `Partida N.rxdata` slot of a save zip, stored as the `snapshot` row's `data` ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and its zod schema, `snapshotSchema` in `pkmn/site/shared/snapshot.ts`. Its first three keys, `pokemon`, `items` and `tms`, are the Open Sheet JSON the retired Python export wrote, and the site's export writes them the same way; the rest is what the Python export left out. Why each of the three keys' fields is there, and what is left out, is in [Save Export](../explanation/save-export.md). Where each value sits in the save is in [State](../../games/anil/reference/state.md). Every ID in `pokemon`, `items` and `tms` is a Showdown ID: the English Showdown name lowercased, with everything but letters and digits removed.
+What a snapshot holds: the JSON object the site's export (`pkmn/site/api/_lib/export/`) makes from one `Partida N.rxdata` slot of a save zip, or that the site reads from an old export's JSON ([Old Exports](#old-exports)), stored as the `snapshot` row's `data` ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and its zod schema, `snapshotSchema` in `pkmn/site/shared/snapshot.ts`. Its first three keys, `pokemon`, `items` and `tms`, are the Open Sheet JSON the retired Python export wrote, and the site's export writes them the same way; the rest is what the Python export left out. Why each of the three keys' fields is there, and what is left out, is in [Save Export](../explanation/save-export.md). Where each value sits in the save is in [State](../../games/anil/reference/state.md). Every ID in `pokemon`, `items` and `tms` is a Showdown ID: the English Showdown name lowercased, with everything but letters and digits removed.
 
 ```json
 {
@@ -56,9 +56,9 @@ The values above are illustrative; `bag` always holds all eight pockets.
 | `bag` | array of objects | The bag's eight pockets in order, every item in each |
 | `trainer` | object | The trainer's name, ID, money and badges |
 | `playTime` | number or null | `GameStats@play_time`, in seconds; null when the save has none |
-| `pokedex` | object | `seen` and `owned`: how many species the Pokédex marks as seen and as owned, counted as the game counts them |
+| `pokedex` | object | `seen` and `owned`: how many species the Pokédex marks as seen and as owned, counted as the game counts them; each null in an old export's snapshot |
 | `records` | object | `GameStats`' battle counts: `trainerBattlesWon`, `trainerBattlesLost`, `wildBattlesWon`, `wildBattlesLost` (fleeing included) and `blackouts` (`@blacked_out_count`), each an integer or null |
-| `hallOfFame` | integer | How many teams `$PokemonGlobal@hallOfFame` holds; 0 before the League is won |
+| `hallOfFame` | integer or null | How many teams `$PokemonGlobal@hallOfFame` holds; 0 before the League is won; null in an old export's snapshot |
 | `usedEncounters` | array of integers | The map IDs whose first encounter is used (`challenge_encs`), ascending |
 | `saveSlot` | string or null | The Multi Save slot name (`Partida 1`) |
 | `randomlockeVersion` | integer or null | The save's `@randomlocke_version` |
@@ -80,7 +80,7 @@ The values above are illustrative; `bag` always holds all eight pockets.
 | `ivs` | object or null | Its IVs, 0 to 31, keyed `hp`, `atk`, `def`, `spa`, `spd`, `spe`; a Hyper-Trained stat counts 31; null, with a notice, when the save has not filled them in |
 | `evs` | object or null | Its EVs, keyed the same way; null, with a notice, when the save has not filled them in |
 | `stats` | object or null | Its stats at its own level as the game stores and shows them, keyed the same way; null, with a notice, when the save has not filled them in |
-| `moves` | object | Always in a snapshot; a Python export holds it only when run with its moves option: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks, every one of them rolled by then ([Rolling TMs](../explanation/save-export.md#rolling-tms)). All three are arrays of move IDs, each move once |
+| `moves` | object | Always in a save zip's snapshot; a Python export holds it only when run with its moves option: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks, every one of them rolled by then ([Rolling TMs](../explanation/save-export.md#rolling-tms)). All three are arrays of move IDs, each move once |
 | `personalId` | integer or null | Snapshots only: its `@personalID`, which it keeps for life |
 
 ## `items[]`
@@ -126,3 +126,28 @@ Holds the items of pocket 1 (Objetos) and pocket 5 (Bayas), and the held items t
 | `publicId` | integer or null | The ID shown in game, its low 16 bits |
 | `money` | integer or null | `$player@money` |
 | `badges` | array of booleans | `$player@badges`, one per badge |
+
+## Old Exports
+
+The upload also takes the `.json` a Python export wrote ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and reads it as far as it goes rather than refusing it for a gap (`readExport` in `pkmn/site/shared/snapshot.ts`). Its `pokemon`, `items` and `tms` are read with the same `pokemonSchema`, `itemSchema` and `tmSchema` as a save zip's snapshot: in `pokemon[]` every key but `species` reads as absent when it is missing or not of its type (null, `shiny` false, `types` empty, `moves` left out), and an entry of any of the three lists that still fails, a Pokémon without a non-empty `species` among them, is skipped and counted. A list that is missing reads as empty. Only a file that is not JSON ("This file is not JSON"), not an object ("This file is not an export"), or with no entry read in any of the three lists ("Nothing in this export can be read") is refused.
+
+The rest of the snapshot, which no export ever held, reads as absent: `fainted`, `party`, `bag`, `usedEncounters` and `notices` empty, `trainer`'s values null and its `badges` empty, `playTime`, `pokedex`'s counts, every `records` count, `hallOfFame`, `saveSlot` and `randomlockeVersion` null. Its fainted count is 0 until an admin sets it by hand.
+
+Beside `data`, the snapshot row keeps the export's missing-field report (`missing`, `exportReport` in `shared/snapshot.ts`; null for a save zip's snapshot): `missing`, the gaps found in the order below, and `skipped`, how many entries were skipped.
+
+| Gap | Found when |
+|-----|------------|
+| `ivs`, `evs`, `stats` | A Pokémon lacks that key or holds a value not of its type; Python exports wrote them from 2026-10-21 |
+| `moves` | A Pokémon lacks `moves`; a Python export wrote them only under its moves option |
+| `tmRolls` | A Pokémon's `moves` carries `unchecked`, the list of bag TMs its species had no roll for, which every Python export with moves wrote until TM rolling replaced it on 2026-10-21: its `tms` hold only the pairs the game had rolled, and the site keeps no rolls for it |
+| `level`, `nature`, `ability`, `abilities`, `types`, `gender`, `nickname`, `shiny` | A Pokémon lacks that key or holds a value not of its type |
+| `items`, `tms` | The export has no such list |
+
+The series page's row and the PC page read the report as "Export missing: no IVs, EVs or stats · no moves · 1 skipped" (`missingLine`), and the upload's done step as a "Missing: IVs, EVs, stats · moves" chip beside a "1 skipped" one (`missingList`). Series 1's two old exports read as:
+
+| Export | Pokémon | Gaps |
+|--------|---------|------|
+| Vicky's, 2026-10-16 | 55 | `ivs`, `evs`, `stats`, `moves` |
+| MIRAMEEE's, 2026-10-17 | 48 | `ivs`, `evs`, `stats`, `tmRolls` |
+
+The PC shows what an old export lacks the way it shows any absent value: "—" for IVs, EVs and stats, the Stats tab's "At Level 50" ranges over IVs 0 to 31, no Moves tab without `moves`.

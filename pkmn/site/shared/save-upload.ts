@@ -1,7 +1,25 @@
 import * as z from "zod";
-import { zipName } from "./games.js";
+import { uploadDone } from "./games.js";
+import { exportReport } from "./snapshot.js";
 
 export const largestSaveZip = 100 * 1024 * 1024;
+
+export const largestExport = 10 * 1024 * 1024;
+
+export function isExportName(name: string): boolean {
+  return name.toLowerCase().endsWith(".json");
+}
+
+export const saveFileName = z
+  .string()
+  .trim()
+  .min(1)
+  .max(255)
+  .refine((name) => name.toLowerCase().endsWith(".zip") || isExportName(name), "Not a zip or an export");
+
+export const saveUploadRequest = z.object({ fileName: saveFileName, size: z.number().int().positive() });
+
+export const saveUploadDone = uploadDone.extend({ fileName: saveFileName });
 
 export const saveSlot = z.object({
   entry: z.string(),
@@ -16,13 +34,14 @@ export const uploadedSave = z.object({
   key: z.string(),
   fileName: z.string(),
   size: z.number().int(),
-  slots: z.array(saveSlot).min(1),
+  slots: z.array(saveSlot),
+  export: z.object({ pokemon: z.number().int(), report: exportReport }).nullable(),
 });
 
 export const snapshotRequest = z.object({
   key: z.string().min(1),
-  fileName: zipName,
-  slot: z.string().min(1),
+  fileName: saveFileName,
+  slot: z.string().min(1).nullable(),
   milestone: z.string().min(1),
 });
 
@@ -31,8 +50,9 @@ export const savedSnapshot = z.object({
   pokemon: z.number().int(),
   fainted: z.number().int(),
   replaced: z.boolean(),
-  rolled: z.number().int(),
-  sideFile: z.string(),
+  rolled: z.number().int().nullable(),
+  sideFile: z.string().nullable(),
+  missing: exportReport.nullable(),
 });
 
 export function suggestMilestone(milestones: readonly string[], progress: { badges: number | null; hallOfFame: number | null }): string | null {

@@ -10,7 +10,8 @@ import { api } from "@/lib/api";
 import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { sendFile, UploadError } from "@/lib/upload";
 import { cn } from "@/lib/utils";
-import { type SavedSnapshot, savedSnapshot, type UploadedSave, uploadedSave } from "../../shared/save-upload";
+import { isExportName, type SavedSnapshot, savedSnapshot, type UploadedSave, uploadedSave } from "../../shared/save-upload";
+import { missingList } from "../../shared/snapshot";
 import type { Trainer } from "../../shared/series";
 
 type Step =
@@ -45,6 +46,8 @@ function message(error: unknown): string {
 }
 
 const goClass = "min-h-13 px-5.5";
+
+const ACCEPT = ".zip,.json,application/zip,application/json";
 
 export function UploadDialog({
   open,
@@ -96,8 +99,8 @@ export function UploadDialog({
         setStep({ name: "uploading", progress: fraction });
       });
       const first = done.slots[0];
-      setSlot(first.entry);
-      setMilestone((current) => (picked && current ? current : (first.suggested ?? current)));
+      setSlot(first?.entry ?? null);
+      setMilestone((current) => (picked && current ? current : (first?.suggested ?? current)));
       setStep({ name: "pick", upload: done, error: null });
     } catch (caught) {
       if (caught instanceof UploadError && caught.sent) setStep({ name: "refused", error: message(caught) });
@@ -111,11 +114,11 @@ export function UploadDialog({
   }
 
   async function save(upload: UploadedSave) {
-    if (!slot || !milestone || !file) return;
+    if ((!slot && !upload.export) || !milestone || !file) return;
     setStep({ name: "exporting", upload });
     try {
       const saved = await api(`${base}/snapshots`, savedSnapshot, {
-        body: { key: upload.key, fileName: upload.fileName, slot, milestone },
+        body: { key: upload.key, fileName: upload.fileName, slot: upload.export ? null : slot, milestone },
       });
       setStep({ name: "done", saved });
       onSaved();
@@ -127,7 +130,7 @@ export function UploadDialog({
   const current = step.name === "pick" || step.name === "exporting" ? step.upload : null;
   const locked = step.name === "exporting";
   const showMilestones = step.name === "uploading" || step.name === "pick" || step.name === "exporting";
-  const ready = step.name === "pick" && !!milestone && !!slot;
+  const ready = step.name === "pick" && !!milestone && (!!slot || !!step.upload.export);
   const chosenSlot = current?.slots.find((s) => s.entry === slot);
 
   return (
@@ -263,10 +266,14 @@ export function UploadDialog({
               {step.saved.milestone} {step.saved.replaced ? "replaced" : "saved"}
             </span>
             <span className="font-heading text-3xl leading-none text-subtle tabular-nums">{step.saved.pokemon} Pokémon</span>
-            <RolledZip
-              saved={step.saved}
-              onDownload={() => downloadSnapshotZip(seriesNumber, trainer.id, step.saved.milestone)}
-            />
+            {step.saved.sideFile !== null && (
+              <RolledZip
+                rolled={step.saved.rolled ?? 0}
+                sideFile={step.saved.sideFile}
+                onDownload={() => downloadSnapshotZip(seriesNumber, trainer.id, step.saved.milestone)}
+              />
+            )}
+            {step.saved.missing && <ExportGaps report={step.saved.missing} />}
           </div>
         )}
 
@@ -338,7 +345,7 @@ function FileButton({ children, className, go, onFile }: { children: ReactNode; 
       {children}
       <input
         type="file"
-        accept=".zip,application/zip"
+        accept={ACCEPT}
         className="absolute size-px opacity-0"
         onChange={(event) => {
           const chosen = event.target.files?.[0];
@@ -376,12 +383,12 @@ function DropZone({ onFile }: { onFile: (file: File) => void }) {
       <span aria-hidden="true" className="grid size-18 place-items-center rounded-xl bg-ink">
         <PixelIcon name="upload" className="size-10 text-primary" />
       </span>
-      <span className="text-center font-heading text-3xl leading-none">Drop a save zip</span>
+      <span className="text-center font-heading text-3xl leading-none">Drop a save zip or an export</span>
       <span className={cn(buttonClass, "pointer-events-none")}>Choose file</span>
       <input
         type="file"
-        accept=".zip,application/zip"
-        aria-label="Save zip"
+        accept={ACCEPT}
+        aria-label="Save zip or export"
         className="absolute size-px opacity-0"
         onChange={(event) => {
           const chosen = event.target.files?.[0];
@@ -402,7 +409,7 @@ function FileRow({ file, step }: { file: File; step: Step }) {
     <div className="flex flex-col gap-3 rounded-xl bg-box px-4 py-3.5">
       <div className="flex items-center gap-3.5">
         <span aria-hidden="true" className="grid size-11 flex-none place-items-center rounded-lg bg-ink">
-          <PixelIcon name="zip" className="size-6 text-primary" />
+          <PixelIcon name="zip" className={cn("size-6", isExportName(file.name) ? "text-warning" : "text-primary")} />
         </span>
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate font-bold">{file.name}</span>
@@ -438,7 +445,22 @@ function FileRow({ file, step }: { file: File; step: Step }) {
   );
 }
 
-function RolledZip({ saved, onDownload }: { saved: SavedSnapshot; onDownload: () => Promise<void> }) {
+function ExportGaps({ report }: { report: NonNullable<SavedSnapshot["missing"]> }) {
+  if (report.missing.length === 0 && report.skipped === 0) return null;
+  return (
+    <span className="flex flex-wrap justify-center gap-2">
+      {report.missing.length > 0 && (
+        <span className="flex items-center gap-1.5 rounded-full border border-warning px-3 py-1 text-sm font-bold text-warning">
+          <TriangleAlert aria-hidden="true" className="size-3.5" />
+          Missing: {missingList(report)}
+        </span>
+      )}
+      {report.skipped > 0 && <span className="rounded-full bg-cell px-3 py-1 text-sm font-bold text-subtle">{report.skipped} skipped</span>}
+    </span>
+  );
+}
+
+function RolledZip({ rolled, sideFile, onDownload }: { rolled: number; sideFile: string; onDownload: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -458,9 +480,9 @@ function RolledZip({ saved, onDownload }: { saved: SavedSnapshot; onDownload: ()
       <div className="flex items-center gap-3.5 rounded-2xl bg-box py-3 pr-3 pl-4">
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="font-heading text-2xl leading-none tabular-nums">
-            {saved.rolled} TM {saved.rolled === 1 ? "roll" : "rolls"}
+            {rolled} TM {rolled === 1 ? "roll" : "rolls"}
           </span>
-          <span className="truncate text-sm text-muted-foreground">{saved.sideFile}</span>
+          <span className="truncate text-sm text-muted-foreground">{sideFile}</span>
         </span>
         <button type="button" disabled={busy} onClick={() => void download()} className={cn(buttonClass, "min-h-12 px-4 text-2xl")}>
           <PixelIcon name="download" className="size-4 text-primary" />

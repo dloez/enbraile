@@ -71,13 +71,14 @@ seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
   const asked = c.req.query("snapshot");
   const chosen = asked === undefined ? taken.findLast((m) => m.snapshotId !== null) : taken.find((m) => m.milestone === asked);
   if (asked !== undefined && !chosen?.snapshotId) return c.json({ error: `No snapshot at ${asked}` }, 404);
-  const [held] = chosen?.snapshotId ? await db.select({ data: snapshot.data }).from(snapshot).where(eq(snapshot.id, chosen.snapshotId)) : [];
+  const [held] = chosen?.snapshotId ? await db.select({ data: snapshot.data, missing: snapshot.missing }).from(snapshot).where(eq(snapshot.id, chosen.snapshotId)) : [];
   const page: PcPage = {
     player,
     series: { number: row.number, name: row.name },
     milestones: taken.map((m) => ({ name: m.milestone, taken: m.snapshotId !== null })),
     milestone: held ? (chosen?.milestone ?? null) : null,
     snapshot: held?.data ?? null,
+    missing: held?.missing ?? null,
   };
   return c.json(page);
 });

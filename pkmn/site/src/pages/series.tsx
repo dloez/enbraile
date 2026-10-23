@@ -17,6 +17,7 @@ import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { cn } from "@/lib/utils";
 import { downloadLink } from "../../shared/games";
 import { type SeriesPage as Series, seriesPage, type Trainer } from "../../shared/series";
+import { missingLine } from "../../shared/snapshot";
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
@@ -269,6 +270,7 @@ function TrainerRow({
   const desktop = useMediaQuery("(min-width: 40rem)");
   const [picked, setPicked] = useState<string | null>(null);
   const shown = trainer.snapshots.find((s) => s.milestone === picked) ?? latest;
+  const warning = shown?.missing ? missingLine(shown.missing) : "";
   const [zipError, setZipError] = useState<string | null>(null);
 
   async function fetchZip(milestone: string) {
@@ -420,6 +422,7 @@ function TrainerRow({
                   </button>
                 )}
               </span>
+              {warning && <span className="text-sm font-bold text-warning">Export missing: {warning}</span>}
               {zipError && (
                 <p role="alert" className="m-0 text-sm text-destructive">
                   {zipError}
@@ -438,6 +441,7 @@ function TrainerRow({
               Upload
             </button>
           )}
+          {warning && !desktop && <span className="col-span-2 text-sm font-bold text-warning">Export missing: {warning}</span>}
           {trainer.sources && (
             <TrainerAdmin
               seriesNumber={seriesNumber}
