@@ -11,6 +11,7 @@ import { UploadDialog } from "@/components/upload-dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { playTime } from "@/lib/records";
 import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { cn } from "@/lib/utils";
 import { downloadLink } from "../../shared/games";
@@ -350,7 +351,18 @@ function TrainerRow({
             link={latest && { player: trainer.id, number: String(seriesNumber), label: `Open ${trainer.name}'s PC` }}
           />
           <Tile label="Teams" />
-          <Tile label="Fainted" value={latest?.fainted} alarm />
+          <Tile
+            label="Fainted"
+            value={latest?.fainted}
+            alarm
+            link={{ player: trainer.id, number: String(seriesNumber), label: `${trainer.name}'s fallen`, hash: "fallen" }}
+          />
+          <Tile
+            label="Journey"
+            value={latest && playTime(latest.playTime)}
+            wide
+            link={{ player: trainer.id, number: String(seriesNumber), label: `${trainer.name}'s journey`, hash: "journey" }}
+          />
           <div className="col-span-2 flex flex-col gap-1 rounded-xl border-3 bg-card px-3 py-2.5 sm:min-w-65 sm:flex-1 sm:gap-1.5 sm:px-4 sm:py-3">
             <span className="font-heading text-[1.1875rem] text-muted-foreground sm:text-xl">Snapshots</span>
             <span className="flex min-h-12 flex-wrap items-center gap-2">
@@ -426,9 +438,9 @@ function TrainerRow({
   );
 }
 
-type TileLink = { player: string; number: string; label: string };
+type TileLink = { player: string; number: string; label: string; hash?: "fallen" | "journey" };
 
-function Tile({ label, value, alarm, link }: { label: string; value?: number; alarm?: boolean; link?: TileLink }) {
+function Tile({ label, value, alarm, wide, link }: { label: string; value?: number | string; alarm?: boolean; wide?: boolean; link?: TileLink }) {
   const body = (
     <>
       <span className="flex items-center gap-2 font-heading text-[1.1875rem] text-muted-foreground sm:text-xl">
@@ -441,26 +453,41 @@ function Tile({ label, value, alarm, link }: { label: string; value?: number; al
       </span>
       <span
         className={cn(
-          "font-heading text-4xl leading-[0.9] tabular-nums sm:text-5xl",
-          value === undefined ? "text-faint" : alarm && value > 0 ? "text-destructive" : "text-foreground",
+          "font-heading text-4xl leading-[0.9] whitespace-nowrap tabular-nums sm:text-5xl",
+          value === undefined ? "text-faint" : alarm && typeof value === "number" && value > 0 ? "text-destructive" : "text-foreground",
         )}
       >
         {value ?? "—"}
       </span>
     </>
   );
-  const tile = "flex flex-col gap-1 rounded-xl border-3 bg-card px-3 py-2.5 sm:min-w-32.5 sm:gap-1.5 sm:px-4 sm:py-3";
+  const tile = cn(
+    "flex flex-col gap-1 rounded-xl border-3 bg-card px-3 py-2.5 sm:gap-1.5 sm:px-4 sm:py-3",
+    wide ? "sm:min-w-37.5" : "sm:min-w-32.5",
+  );
   if (!link) return <div className={tile}>{body}</div>;
+  const lift =
+    "outline-none transition-[translate,border-color] duration-120 ease-[steps(2)] hover:-translate-y-0.5 hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  if (link.hash) {
+    return (
+      <Link
+        to="/players/$player/series/$number"
+        params={{ player: link.player, number: link.number }}
+        hash={link.hash}
+        aria-label={link.label}
+        className={cn(tile, lift)}
+      >
+        {body}
+      </Link>
+    );
+  }
   return (
     <Link
       to="/players/$player/series/$number/pc"
       params={{ player: link.player, number: link.number }}
       search={{}}
       aria-label={link.label}
-      className={cn(
-        tile,
-        "outline-none transition-[translate,border-color] duration-120 ease-[steps(2)] hover:-translate-y-0.5 hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
-      )}
+      className={cn(tile, lift)}
     >
       {body}
     </Link>

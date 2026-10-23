@@ -68,7 +68,7 @@ This wipes the database and the bucket and brings back the seeded state; `npm ru
 - From a reset, after signing in as `admin` and as `blue`, step 3's query lists one session for each, `admin` with `admin` true.
 - `http://localhost:5173/api/auth/dev/sign-in?username=admin` answers 404.
 - Signed in as `leaf`, `/` shows "Waiting for an admin" and `/api/players` answers 403; after the admin presses Allow beside Leaf at `/admin/players`, a reload shows Series 1 without its Download, since Leaf is not one of its players.
-- From a reset with a save zip in `pkmn/site/saves/`, Red's row on Series 1 opens on "At <milestone>" with the PC and Fainted tiles filled; signed in as `blue`, Upload on Blue's row takes the same zip as a snapshot, and the query in step 4 lists one row for each.
+- From a reset with a save zip in `pkmn/site/saves/`, Red's row on Series 1 opens on "At <milestone>" with the PC, Fainted and Journey tiles filled, two snapshot chips, and its Fainted tile opens Red's series page at Fallen, where one Pokémon reads "<milestone before> → <milestone>"; signed in as `blue`, Upload on Blue's row takes the same zip as a snapshot, and the query in step 4 lists one row for each.
 - With `DEV_SIGN_IN` unset and `npm run dev` restarted, `http://localhost:5173/api/auth/dev/sign-in?username=red` answers 404.
 
 ## Troubleshooting

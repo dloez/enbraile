@@ -73,22 +73,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## A player's series page: Journey and the fallen
-
-`/players/<player>/series/<n>` ([A player in a series?](discovery.md#pages)): Journey, the player's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count), each column opening the PC at that snapshot; and Fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)); a small button to the player's PC naming its target ("Gym 7 · latest"), opening the series' latest snapshot. The series row's Fainted and Journey tiles open it at `#fallen` and `#journey`.
-
-**Do:**
-- [ ] The page's Journey and Fallen sections over the snapshots' records, after `player-series.dc.html` and, at phone width, `player-series-phone.dc.html` (Journey scrolling sideways with its label column stuck left, the fallen one per row); the fallen matched across consecutive snapshots by personal ID; the row's Journey tile (play time, after `series.dc.html` and `series-phone.dc.html`; `TrainerRow` in `src/pages/series.tsx` has none yet) and the Fainted and Journey tiles' links; the PC page's breadcrumb, "◀ <player> · Series <n>", linking here, and this page's own breadcrumb's series link (its player link comes with the profile).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with two seeded snapshots for a test player, one Pokémon alive in the first and permafainted in the second, see Journey's two columns and that Pokémon fallen between their milestones; click a column and land on the PC at that snapshot; open the row's Fainted tile and land at `#fallen`; from the PC, click the breadcrumb and land on this page.
-- Human-run: open your series 1 page from the series page and read your Post-League records and your fallen.
-- Reuse: the PC page's read route, `GET /api/series/<n>/trainers/<player>/pc` in `api/_lib/series.ts` with `pcPage` in `shared/pc.ts`, as the shape to follow; `snapshotSchema` in `shared/snapshot.ts` (`records`, `playTime`, `pokedex`, `trainer`, `fainted` and `party` with `personalId`); `MonSprite` in `src/components/pc/summary.tsx`.
-- Neighbors: the series row's tiles; `src/pages/pc.tsx`'s `PcHead`.
-- Forbidden: a fallen Pokémon's span guessed without two snapshots (one snapshot gives "by <milestone>", owner, 2026-10-23); a PC or party on this page.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-
 ## A player's profile, across every series
 
 `/players/<player>` ([The player's profile?](discovery.md#pages)): the badge and name; career totals summed from each series' latest snapshot (series played and finished, total play time, badges earned, best Pokédex, trainer battles won and lost, blackouts, total fallen); the league results placeholder; one banner per series played, newest first, on its scene, with how far they got, play time, fallen and team count, linking to their series page. A player's name or badge anywhere, and the signed-in player's name in the header, open it.
@@ -104,7 +88,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 - Forbidden: totals from any snapshot but each series' latest; league results beyond the placeholder.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**After:** A player's series page: Journey and the fallen
 
 ## The series page's track reads the snapshots
 
@@ -121,7 +104,6 @@ Each row's progress track shows the trainer at their latest snapshot, with the r
 - Forbidden: a Records view or switch on the series page; a ranking or ordering by records.
 
 **Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** A player's series page: Journey and the fallen
 
 ## Admins set save-derived values by hand and manage any snapshot
 

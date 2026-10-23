@@ -1,4 +1,4 @@
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { type AdminSeries, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
@@ -43,7 +43,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
     .where(eq(seriesPlayer.seriesId, seriesId))
     .orderBy(asc(user.name));
   const taken = await db
-    .select({ userId: save.userId, milestone: milestone.name, pokemon: snapshot.pokemon, fainted: snapshot.fainted, rolledKey: snapshot.rolledKey })
+    .select({ userId: save.userId, milestone: milestone.name, pokemon: snapshot.pokemon, fainted: snapshot.fainted, playTime: sql<number | null>`(${snapshot.data}->>'playTime')::float8`, rolledKey: snapshot.rolledKey })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
@@ -53,7 +53,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
     ...player,
     snapshots: taken
       .filter((row) => row.userId === player.id)
-      .map(({ milestone, pokemon, fainted, rolledKey }) => ({ milestone, pokemon, fainted, zip: rolledKey !== null && (!!reader.admin || reader.id === player.id) })),
+      .map(({ milestone, pokemon, fainted, playTime, rolledKey }) => ({ milestone, pokemon, fainted, playTime, zip: rolledKey !== null && (!!reader.admin || reader.id === player.id) })),
   }));
 }
 

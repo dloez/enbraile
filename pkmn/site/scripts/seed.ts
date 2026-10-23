@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { crc32 } from "node:zlib";
+import { Dex } from "@pkmn/dex";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db, pool } from "../api/_lib/db.js";
 import { requireEnv } from "../api/_lib/env.js";
@@ -9,6 +10,7 @@ import { ingest, savePrefix } from "../api/_lib/ingest.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, user } from "../api/_lib/schema.js";
 import { suggestMilestone } from "../shared/save-upload.js";
 import type { MilestoneMark } from "../shared/series.js";
+import type { Snapshot } from "../shared/snapshot.js";
 import { partSizeFor, uploadParts } from "../shared/upload.js";
 import { createAdmin, createTestPlayer, usernameTaken } from "./accounts.js";
 
@@ -154,7 +156,53 @@ async function seedTheSnapshot(): Promise<string | null> {
   const key = `${savePrefix(row.id, player.id)}${crypto.randomUUID()}.zip`;
   await uploadZip(key, zip);
   const done = await ingest({ seriesId: row.id, userId: player.id, milestoneId: chosen.id, fileKey: key, fileName, slot: slot.entry, uploadedBy: null });
-  return `${seedSnapshot.player}'s ${chosen.name} snapshot from ${fileName} (${done.pokemon} Pokémon, ${done.fainted} fainted)`;
+  const seeded = `${seedSnapshot.player}'s ${chosen.name} snapshot from ${fileName} (${done.pokemon} Pokémon, ${done.fainted} fainted)`;
+  const earlier = milestones[milestones.indexOf(chosen) - 1];
+  const before = earlier ? await seedTheEarlierSnapshot(row.id, player.id, chosen.id, earlier.id) : null;
+  return before ? `${seeded}, and a ${earlier!.name} one before it with ${before} still alive` : seeded;
+}
+
+async function seedTheEarlierSnapshot(seriesId: string, userId: string, laterId: string, milestoneId: string): Promise<string | null> {
+  const [later] = await db
+    .select()
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .where(and(eq(save.seriesId, seriesId), eq(save.userId, userId), eq(snapshot.milestoneId, laterId)));
+  if (!later) return null;
+  const data = structuredClone(later.snapshot.data);
+  const index = data.fainted.findLastIndex((m) => m.personalId !== null && m.species !== null && Dex.species.get(m.species).exists);
+  if (index < 0) return null;
+  const [member] = data.fainted.splice(index, 1);
+  if (!member?.species) return null;
+  const species = Dex.species.get(member.species);
+  data.pokemon.push({
+    species: member.species,
+    nickname: member.nickname,
+    gender: null,
+    shiny: false,
+    level: member.level,
+    nature: null,
+    ability: null,
+    abilities: null,
+    types: species.types.map((type) => type.toLowerCase()),
+    ivs: null,
+    evs: null,
+    stats: null,
+    moves: { current: [], relearner: [], tms: [] },
+    personalId: member.personalId,
+  });
+  data.party = data.party.map((m) => (m.personalId === member.personalId ? { ...m, fainted: false } : m));
+  data.playTime = data.playTime === null ? null : Math.max(0, data.playTime - 3600);
+  const { id: _id, milestoneId: _later, takenAt: _takenAt, ...kept } = later.snapshot;
+  await db.insert(snapshot).values({
+    ...kept,
+    id: crypto.randomUUID(),
+    milestoneId,
+    data: data satisfies Snapshot,
+    pokemon: data.pokemon.length,
+    fainted: data.fainted.length,
+  });
+  return member.nickname ?? species.name;
 }
 
 async function main() {

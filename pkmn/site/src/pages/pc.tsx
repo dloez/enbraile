@@ -1,4 +1,4 @@
-import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Segmented } from "@/components/controls";
 import { toolPage } from "@/components/page";
@@ -75,7 +75,11 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
     <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
       <div className="flex min-w-0 flex-col gap-2">
         <nav aria-label="Breadcrumb" className="flex font-heading text-[1.375rem]">
-          <span className="flex min-h-11 items-center gap-2 text-primary -my-2.5">
+          <Link
+            to="/players/$player/series/$number"
+            params={{ player: page.player.id, number: String(page.series.number) }}
+            className="-my-2.5 flex min-h-11 items-center gap-2 text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
             <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
               <path d="M12 2L2 9l10 7z" />
             </svg>
@@ -84,7 +88,7 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
               ·
             </span>
             Series {page.series.number}
-          </span>
+          </Link>
         </nav>
         <div className="flex min-w-0 items-center gap-3.5">
           <PlayerBadge name={page.player.name} colour={playerColour(page.player.id)} size="lg" />

@@ -14,7 +14,7 @@ const PAGES: [Page, string][] = [
 
 const GENDERS = { M: "Male", F: "Female", N: "Genderless" } as const;
 
-export function MonSprite({ mon, className }: { mon: Mon; className?: string }) {
+export function MonSprite({ mon, className }: { mon: Pick<Mon, "sprite">; className?: string }) {
   if (!mon.sprite) {
     return (
       <span aria-hidden="true" className={cn("grid place-items-center font-heading text-3xl text-muted-foreground", className)}>
