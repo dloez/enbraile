@@ -1,10 +1,10 @@
 # Site v2 Tasks
 
-Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET` or `POST` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones. The first entry whose screen uses the look's amber adds the `warning` token (`#ffc878` on `#3b3530`) and its row in [Design System](../../pkmn/site/reference/design-system.md) ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), 2026-10-23).
+Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET`, `POST`, `PUT` or `DELETE` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Design the new pages' phone layouts, the team list and builder
+## Design the team list, the team builder and the PC's summary
 
-The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): phone layouts of the player's profile, the player's series page, the series list and the series page, and the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare). The team views carry their content over from Open Sheet and Team Analysis. The PC page and the series page's second revision were signed off on 2026-10-23 and are frozen in `pkmn/site/design/` with the earlier boards.
+The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare), and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards.
 
 **Do:**
 - [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
@@ -14,7 +14,7 @@ The screens still undrawn, desktop and phone, in the signed-off look ([Pages →
 - Claude-run: none (no code).
 - Human-run: the owner opens the boards and signs them off, or lists changes.
 - Reuse: the frozen boards in `pkmn/site/design/`; [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) and [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABaszfH) for what each view holds.
-- Neighbors: the canvas's PC board.
+- Neighbors: `pkmn/site/design/pc.dc.html`.
 - Forbidden: colours or pieces outside the look without naming them as additions; helper text.
 
 **Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
@@ -55,46 +55,83 @@ The series pages, the admin series form and the phone header are built and check
 **After:** Owner-run: Discord sign-in on production
 **Needs the author:** the owner-run steps above.
 
-## The series list and the series page fit a phone
+## Owner-run: upload series 1's saves on production
 
-`/series` and `/series/<n>` at phone width, as the design entry's phone boards draw them. Today the Trainers table (`TrainerRow` in `src/pages/series.tsx`, `grid-cols-[300px_minmax(0,1fr)_84px]`) scrolls sideways on a phone, a build choice that holds only "until its phone layout is designed" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the series build choices); no other entry builds these two pages' phone layouts.
+The snapshot upload, the rolled zip and the PC page are built and checked on the local stack (2026-10-23, `3b0df37`, `2011e77`, `fe84424`) against MinIO; on production a save zip goes up to B2 under `saves/` and is read back, exported and rolled inside the Vercel Function, which the local stack does not exercise ([The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots)). No other entry checks it there.
 
 **Do:**
-- [ ] Both pages at phone width after their signed-off phone boards; [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules updated with what they add; the series build choice's sideways-scrolling table rewritten.
+- [ ] Owner-run: once series 1 runs, each player uploads their save zip from their row on `/series/1`.
+
+**Acceptance:**
+- Claude-run: none.
+- Human-run: as a player of series 1 on production, upload your save zip from your row, see the suggested milestone, save it and read "<milestone> saved" with the Pokémon count and the TM rolls row; download the rolled zip from the done step and from the snapshot chip, and see it named as your zip; click "Open PC" and see your PC at that snapshot, its summary and its bag; as another player, open the first player's row and see their snapshot chips without a download button; as admin, upload for a player and replace their snapshot, and read the amber warning first.
+- Reuse: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) → Verification.
+- Neighbors: none.
+- Forbidden: snapshots made on production by `npm run seed` or by SQL.
+
+**Touches:** `docs/pkmn/site/`
+**After:** Owner-run: start series 1 on production
+**Needs the author:** the owner-run steps above.
+
+## Bring the site docs in line with the snapshot and PC landings
+
+The upload (`3b0df37`), TM rolls (`2011e77`) and PC page (`fe84424`) entries each wrote their own build choices without seeing the next one's diff, leaving sentences the later landings made false:
+
+- `docs/pkmn/site/explanation/site.md:91` (the snapshot upload's build choices) says the done step is "without the boards' 'Open PC' button, which comes with the entry building the PC" and that "the PC, Fainted and snapshot chips [are] not yet links"; `upload-dialog.tsx:315` renders "Open PC", the PC tile and every snapshot chip link to the PC (`series.tsx:320`, `:384`), and `site.md:58` and `:70` already say so.
+- `site.md:121` (the series build choices) leaves "the boards' … Progress and Records switch and hand-set mark … to their own entries"; the owner dropped both on 2026-10-23 (`site.md:98`), so no entry builds them.
+- `docs/pkmn/site/reference/design-system.md:166` puts "whose scene header runs the full width" on the PC page, which `fe84424` inserted before the series page's parenthesis; `src/pages/pc.tsx` has no scene header, and the full-width scene header is `/series/<n>`'s (`SeriesHeader`, `series.tsx:79`).
+- `docs/pkmn/site/explanation/open-sheet.md:23` says imports are validated by "the zod schema in `src/open-sheet/schema.ts`, which mirrors the JSON reference"; the schema is `sheetSchema` in `shared/snapshot.ts`, which `src/open-sheet/schema.ts` only re-exports and checks with.
+
+**Do:**
+- [ ] Rewrite each sentence to say what is true now, noting in the build choices which later landing changed it.
+
+**Acceptance:**
+- Claude-run: `grep -n "comes with the entry building the PC\|not yet links" docs/pkmn/site/explanation/site.md` and `grep -n "PC page (whose scene header" docs/pkmn/site/reference/design-system.md` find nothing; `grep -n "shared/snapshot" docs/pkmn/site/explanation/open-sheet.md` finds the schema's line.
+- Human-run: none.
+- Reuse: the code lines named above.
+- Neighbors: `361b142`, the last pass bringing the site docs in line.
+- Forbidden: rewriting a decision's substance or its date; touching code.
+
+**Touches:** `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/reference/design-system.md`, `docs/pkmn/site/explanation/open-sheet.md`
+
+## The series list and the series page fit a phone
+
+`/series` and `/series/<n>` at phone width, as `series-list-phone.dc.html` and `series-phone.dc.html` draw them ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the phone layouts' sign-off). Today the Trainers table (`TrainerRow` in `src/pages/series.tsx`, `grid-cols-[300px_minmax(0,1fr)_84px]`) scrolls sideways on a phone, a build choice that holds only "until its phone layout is designed" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the series build choices); no other entry builds these two pages' phone layouts. The phone row's snapshot picker comes with the track entry below, its Journey tile with the player's series page and its export warning with old exports; this entry lays out the tiles that exist.
+
+**Do:**
+- [ ] Both pages at phone width after their signed-off phone boards: the banners on a smaller crop of their scene; one row per trainer, its badge, name, latest milestone and chevron one button, the track across the full width under it, display-only, keyed above the table; the open row's tiles two by two, then Upload opening the bottom sheet; the rules in one column. [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules updated with what they add; the series build choice's sideways-scrolling table rewritten.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, `browser_resize` to 390×844 and to 360×800, signed in as a player of series 1, open `/series` and `/series/1`, open a trainer's row, and confirm no horizontal page scroll; at desktop width, both pages unchanged.
 - Human-run: on a phone, open the series list and the series page, open your row and read your tiles and the rules.
-- Reuse: the phone boards the design entry freezes in `pkmn/site/design/`; `Tile` and `TrainerRow` in `src/pages/series.tsx`; `SceneArt`.
+- Reuse: `pkmn/site/design/series-list-phone.dc.html`, `series-phone.dc.html` and `upload-phone.dc.html`; `Tile` and `TrainerRow` in `src/pages/series.tsx`; `SceneArt`.
 - Neighbors: the phone header in `src/components/site-header.tsx`.
 - Forbidden: a second copy of the page for phones; the Trainers table scrolling sideways once the phone board is built.
 
 **Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/src/pages/series-list.tsx`, `docs/pkmn/site/`
-**After:** Design the new pages' phone layouts, the team list and builder
 
 ## A player's series page: Journey and the fallen
 
 `/players/<player>/series/<n>` ([A player in a series?](discovery.md#pages)): Journey, the player's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count), each column opening the PC at that snapshot; and Fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)); a small button to the player's PC naming its target ("Gym 7 · latest"), opening the series' latest snapshot. The series row's Fainted and Journey tiles open it at `#fallen` and `#journey`.
 
 **Do:**
-- [ ] The page's Journey and Fallen sections over the snapshots' records, at phone width as the design entry's phone board draws it; the fallen matched across consecutive snapshots by personal ID; the row's Journey tile (play time, after `series.dc.html`; `TrainerRow` in `src/pages/series.tsx` has none yet) and the Fainted and Journey tiles' links.; the PC page's breadcrumb, "◀ <player> · Series <n>", linking here
+- [ ] The page's Journey and Fallen sections over the snapshots' records, after `player-series.dc.html` and, at phone width, `player-series-phone.dc.html` (Journey scrolling sideways with its label column stuck left, the fallen one per row); the fallen matched across consecutive snapshots by personal ID; the row's Journey tile (play time, after `series.dc.html` and `series-phone.dc.html`; `TrainerRow` in `src/pages/series.tsx` has none yet) and the Fainted and Journey tiles' links; the PC page's breadcrumb, "◀ <player> · Series <n>", linking here, and this page's own breadcrumb's series link (its player link comes with the profile).
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, with two seeded snapshots for a test player, one Pokémon alive in the first and permafainted in the second, see Journey's two columns and that Pokémon fallen between their milestones; click a column and land on the PC at that snapshot; open the row's Fainted tile and land at `#fallen`; from the PC, click the breadcrumb and land on this page.
 - Human-run: open your series 1 page from the series page and read your Post-League records and your fallen.
-- Reuse: the snapshot read route from the entry above; the sprites Open Sheet shows.
-- Neighbors: the series row's tiles.
+- Reuse: the PC page's read route, `GET /api/series/<n>/trainers/<player>/pc` in `api/_lib/series.ts` with `pcPage` in `shared/pc.ts`, as the shape to follow; `snapshotSchema` in `shared/snapshot.ts` (`records`, `playTime`, `pokedex`, `trainer`, `fainted` and `party` with `personalId`); `MonSprite` in `src/components/pc/summary.tsx`.
+- Neighbors: the series row's tiles; `src/pages/pc.tsx`'s `PcHead`.
 - Forbidden: a fallen Pokémon's span guessed without two snapshots (one snapshot gives "by <milestone>", owner, 2026-10-23); a PC or party on this page.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**After:** Design the new pages' phone layouts, the team list and builder
 
 ## A player's profile, across every series
 
 `/players/<player>` ([The player's profile?](discovery.md#pages)): the badge and name; career totals summed from each series' latest snapshot (series played and finished, total play time, badges earned, best Pokédex, trainer battles won and lost, blackouts, total fallen); the league results placeholder; one banner per series played, newest first, on its scene, with how far they got, play time, fallen and team count, linking to their series page. A player's name or badge anywhere, and the signed-in player's name in the header, open it.
 
 **Do:**
-- [ ] A profile read route summing the latest snapshots; the page, at phone width as the design entry's phone board draws it; the name and badge links across the site, the header's desktop name and its phone menu's name row included (both plain text until now, [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the phone header's build choices).
+- [ ] A profile read route summing the latest snapshots; the page, after `player-profile.dc.html` and, at phone width, `player-profile-phone.dc.html`; the name and badge links across the site, the player's series page's breadcrumb, the header's desktop name and its phone menu's name row included (both plain text until now, [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the phone header's build choices).
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, with a test player in two seeded series, see the totals add up both latest snapshots and both banners, newest first; click a banner and land on that series' page; click a name on the series page and land on the profile.
@@ -104,19 +141,19 @@ The series pages, the admin series form and the phone header are built and check
 - Forbidden: totals from any snapshot but each series' latest; league results beyond the placeholder.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**After:** A player's series page: Journey and the fallen; Design the new pages' phone layouts, the team list and builder
+**After:** A player's series page: Journey and the fallen
 
 ## The series page's track reads the snapshots
 
 Each row's progress track shows the trainer at their latest snapshot, with the row's tiles showing it; each milestone with a snapshot is ringed in faint cyan in its node's shape, and clicking one shows that snapshot ([The progress track?](discovery.md#pages)). The Trainers table has no Records view ([Comparing trainers?](discovery.md#pages)).
 
 **Do:**
-- [ ] The interactive track, its rings, and the row's tiles per snapshot.
+- [ ] The interactive track, its rings, and the row's tiles per snapshot; on a phone, where the track only shows, the open row's segmented control of the trainer's milestones picking the snapshot instead (`series-phone.dc.html`, [The progress track?](discovery.md#pages)).
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with two snapshots for a test player, see both nodes ringed, click the earlier one and see the row's tiles change.
+- Claude-run: `npm run gate`; through `verify-site`, with two snapshots for a test player, see both nodes ringed, click the earlier one and see the row's tiles change; at 390×844, pick the earlier milestone in the open row's control and see the tiles change.
 - Human-run: on production, click through your own track's nodes.
-- Reuse: the series page, `src/pages/series.tsx` (`TrainerRow`'s track); the snapshot read route.
+- Reuse: the series page, `src/pages/series.tsx` (`TrainerRow`'s track); `trainersOf` in `api/_lib/series-data.ts`, which already answers each snapshot's milestone and counts; `Segmented` in `src/components/controls.tsx`.
 - Neighbors: `pkmn/site/design/series.dc.html`.
 - Forbidden: a Records view or switch on the series page; a ranking or ordering by records.
 
@@ -140,24 +177,41 @@ An admin can set any value derived from a save by hand (progress, the fainted co
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** The series page's track reads the snapshots
 
+## The PC box and summary take the signed-off look
+
+The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424` kept them so and left `pc.dc.html`'s teal box "for when its `Summary` board is signed off" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's build choices). No other entry restyles them, and the team builder reuses all three.
+
+**Do:**
+- [ ] The box after `pc.dc.html` and the summary after the signed-off `Summary` board, in `src/components/pc/`, so the PC page and Open Sheet both take it; new colours as tokens; [Design System](../../pkmn/site/reference/design-system.md) → Box and cells and the PC's components updated; the PC page's build choice rewritten.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, open a seeded snapshot's PC at desktop width and at 390×844, select a Pokémon and read its summary's tabs, open the bag; compare against the boards with `browser_take_screenshot`.
+- Human-run: open your PC on production and read a Pokémon's summary.
+- Reuse: `SnapshotPc`, `PcBox`, `SummaryAside`, `SummarySheet` in `src/components/pc/pc-box.tsx`; `src/components/pc/summary.tsx`, `bag.tsx`.
+- Neighbors: `pkmn/site/design/pc.dc.html`.
+- Forbidden: a second box or summary for the PC page; raw colours in components.
+
+**Touches:** `pkmn/site/src/components/pc/`, `pkmn/site/src/index.css`, `docs/pkmn/site/`
+**After:** Design the team list, the team builder and the PC's summary
+
 ## Build teams locked to a snapshot, stored in the account
 
 `/teams` lists every team, the player's first and others' read-only; `/teams/<id>` builds one from one snapshot as six member cards edited in place, with the snapshot's item and Mini Seta limits, a picker of the snapshot's PC for empty slots, Analysis (Summary, Graph, Archetype, Members, Matrices) beside the cards, giving way to a member's summary when its header row is clicked, Showdown copy and import (unbacked sets left out, as today). The PC page stays read-only; "Add to team" in its summary adds the Pokémon to a team or a new one ([How do the PC and the team pages split?](discovery.md#team-building)). A new team starts on the player's latest snapshot of the running series. `/open-sheet`, the Dexie database and its local data go.
 
 **Do:**
-- [ ] Teams table and migration (owner, sources, slots); team routes, the owner alone writing; `npm run seed` extended with a team on the seeded snapshot; the header's Teams tab opening `/teams` (`TABS` in `src/components/site-header.tsx`, today `/team-analysis`); the trainer row's Teams tile counting the trainer's teams.
+- [ ] Teams table and migration (owner, sources, slots); team routes, the owner alone writing; `npm run seed` extended with a team on the seeded snapshot; the header's Teams tab opening `/teams` (`TEAMS_TAB` in `src/components/site-header.tsx`, today `/team-analysis`); the trainer row's Teams tile counting the trainer's teams.
 - [ ] Move Open Sheet's builder under `/teams/<id>` on stored snapshots; delete `/open-sheet`, `src/open-sheet/db.ts`, the import tabs and Dexie, and the browser's old database on first load.
 - [ ] Rewrite `open-sheet.md` as the team builder's doc (rename it) and update `docs/pkmn/index.md`.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `grep -rn "dexie\|open-sheet:tab" pkmn/site/src pkmn/site/package.json` finds nothing.
 - Human-run: make a team on your series 1 snapshot, give items until one runs out, switch an ability and see the Mini Seta count, copy it for Showdown and paste it back as a new team; reload on another device and see the teams; open another player's team read-only.
-- Reuse: `src/open-sheet/team.ts`, `showdown.ts`, `components/team-view.tsx`, `sheet-analysis.tsx`, `summary.tsx` (the PC's, not a copy), `src/analysis/`.
+- Reuse: `src/open-sheet/team.ts`, `showdown.ts`, `components/team-view.tsx`, `sheet-analysis.tsx`; the PC's pieces in `src/components/pc/` (`pc-box.tsx`, `summary.tsx`, `bag.tsx`), not copies; `snapshotSchema` in `shared/snapshot.ts` for the stored snapshot; `src/analysis/`.
 - Neighbors: `src/open-sheet/components/team-bar.tsx`.
 - Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Design the new pages' phone layouts, the team list and builder
+**After:** Design the team list, the team builder and the PC's summary
 
 ## A trainer row's Teams tile opens their teams
 
@@ -183,13 +237,13 @@ The upload also takes an export `.json`, and every export is read as far as it g
 
 **Do:**
 - [ ] A lenient export schema with the missing-field report; entries without a usable species skipped and counted; refuse only non-JSON or nothing usable.
-- [ ] JSON in the upload flow (player and admin); the warning chip; `moves` without rolled TMs marked unchecked in the move picker.
+- [ ] JSON in the upload flow (player and admin), the drop zone reading "or an export" and the done step after `upload-done-json.dc.html`; the warning chip on the row and the PC page's "Export missing" line (left out until now, [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's and the upload's build choices); `moves` without rolled TMs marked unchecked in the move picker.
 - [ ] Record in the snapshot format's reference which fields old exports lack and how the site reads them.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, upload `saves/Vicky-open-sheet.json` and `saves/MIRAMEEE-open-sheet.json` for two test players, see each warning on the series page and the PC page, open a Pokémon's summary and the bag in each, and build a team from each with Level 50 ranges shown; upload a JSON with one entry missing its species and read "1 skipped"; upload a file that is not JSON and read its refusal.
 - Human-run: upload the two exports for MIRAMEEE and Vicky on production and open their PCs.
-- Reuse: `src/open-sheet/schema.ts`'s zod schema, made lenient rather than copied.
+- Reuse: `sheetSchema` and `snapshotSchema` in `shared/snapshot.ts` (which `src/open-sheet/schema.ts` re-exports), made lenient rather than copied; `ingest` in `api/_lib/ingest.ts`.
 - Neighbors: the save zip upload.
 - Forbidden: refusing an export for a missing field; a second schema for old exports.
 
@@ -207,7 +261,7 @@ A team's sources picker takes any number of snapshots, any player's; the PC show
 - Claude-run: `npm run gate`.
 - Human-run: add another player's snapshot to a team, put one of their Pokémon in it, and see its item limited by their bag, not yours; remove that source and see the member flagged.
 - Reuse: the team builder from the entry above.
-- Neighbors: `src/open-sheet/components/pc.tsx`.
+- Neighbors: `src/components/pc/pc-box.tsx`, `src/open-sheet/components/pc.tsx`.
 - Forbidden: one pooled bag across sources.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
@@ -254,7 +308,7 @@ Compare puts 2–4 of the player's teams side by side with the scoreboard and da
 
 **Do:**
 - [ ] Compare in the team builder over stored teams.
-- [ ] Delete `src/pages/team-analysis.tsx`, `src/team-analysis/drafts.ts`, the route and the old `localStorage` drafts on load; rewrite `team-analysis.md` into the team builder's doc; update `docs/pkmn/index.md`. (`src/tools.ts`, the tools in `add-a-page-to-the-site.md`, `pkmn/site/CLAUDE.md`'s Routes rule and `site.md` went with the series page, 2026-10-23.)
+- [ ] Delete `src/pages/team-analysis.tsx`, `src/team-analysis/drafts.ts`, the route and the old `localStorage` drafts on load; rewrite `team-analysis.md` into the team builder's doc; update `docs/pkmn/index.md`. (`src/tools.ts`, the tools in `add-a-page-to-the-site.md`, `pkmn/site/CLAUDE.md`'s Routes rule and `site.md` went with the series page, 2026-10-23.) Rewrite the decisions in `site.md` that name `carryTeam` or `/team-analysis` to say what is true now, so the grep below holds.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `grep -rn "team-analysis:drafts\|carryTeam\|tools.ts\|/team-analysis" pkmn/site/src docs/pkmn` finds nothing.
