@@ -73,22 +73,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## The series list and the series page fit a phone
-
-`/series` and `/series/<n>` at phone width, as `series-list-phone.dc.html` and `series-phone.dc.html` draw them ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the phone layouts' sign-off). Today the Trainers table (`TrainerRow` in `src/pages/series.tsx`, `grid-cols-[300px_minmax(0,1fr)_84px]`) scrolls sideways on a phone, a build choice that holds only "until its phone layout is designed" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the series build choices); no other entry builds these two pages' phone layouts. The phone row's snapshot picker comes with the track entry below, its Journey tile with the player's series page and its export warning with old exports; this entry lays out the tiles that exist.
-
-**Do:**
-- [ ] Both pages at phone width after their signed-off phone boards: the banners on a smaller crop of their scene; one row per trainer, its badge, name, latest milestone and chevron one button, the track across the full width under it, display-only, keyed above the table; the open row's tiles two by two, then Upload opening the bottom sheet; the rules in one column. [Design System](../../pkmn/site/reference/design-system.md) → Layout Shell's phone rules updated with what they add; the series build choice's sideways-scrolling table rewritten.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, `browser_resize` to 390×844 and to 360×800, signed in as a player of series 1, open `/series` and `/series/1`, open a trainer's row, and confirm no horizontal page scroll; at desktop width, both pages unchanged.
-- Human-run: on a phone, open the series list and the series page, open your row and read your tiles and the rules.
-- Reuse: `pkmn/site/design/series-list-phone.dc.html`, `series-phone.dc.html` and `upload-phone.dc.html`; `Tile` and `TrainerRow` in `src/pages/series.tsx`; `SceneArt`.
-- Neighbors: the phone header in `src/components/site-header.tsx`.
-- Forbidden: a second copy of the page for phones; the Trainers table scrolling sideways once the phone board is built.
-
-**Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/src/pages/series-list.tsx`, `docs/pkmn/site/`
-
 ## A player's series page: Journey and the fallen
 
 `/players/<player>/series/<n>` ([A player in a series?](discovery.md#pages)): Journey, the player's records across their snapshots, one column per milestone (play time, badges, money, Pokédex seen and owned, trainer battles won and lost, blackouts, the fainted count), each column opening the PC at that snapshot; and Fallen: sprite, nickname, species, level, and the span of milestones in which each fell, from consecutive snapshots ([The fallen?](discovery.md#pages)); a small button to the player's PC naming its target ("Gym 7 · latest"), opening the series' latest snapshot. The series row's Fainted and Journey tiles open it at `#fallen` and `#journey`.
