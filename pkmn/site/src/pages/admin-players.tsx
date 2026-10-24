@@ -164,6 +164,7 @@ function PlayerList({
   onAct: (target: Player) => void;
   onDelete: (target: Player) => void;
 }) {
+  const [confirming, setConfirming] = useState<string | null>(null);
   return (
     <Panel title={title} aside={<span className="text-sm text-muted-foreground tabular-nums">{players.length}</span>}>
       {players.length === 0 ? (
@@ -185,8 +186,25 @@ function PlayerList({
               ) : (
                 <span className="hidden text-sm text-muted-foreground tabular-nums sm:inline">{formatDate(p.joinedAt)}</span>
               )}
-              {p.invited && (
-                <button type="button" disabled={busy !== null} onClick={() => onDelete(p)} className={buttonVariants({ variant: "destructive" })}>
+              {confirming === p.id ? (
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => {
+                    setConfirming(null);
+                    onDelete(p);
+                  }}
+                  className={buttonVariants({ variant: "destructive" })}
+                >
+                  Confirm delete
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => (p.invited ? onDelete(p) : setConfirming(p.id))}
+                  className={buttonVariants({ variant: "destructive" })}
+                >
                   Delete
                 </button>
               )}

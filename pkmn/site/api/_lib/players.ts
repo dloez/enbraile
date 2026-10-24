@@ -3,7 +3,9 @@ import { Hono } from "hono";
 import { allowedChange, invite, type Player } from "../../shared/players.js";
 import { requireAdmin } from "./admin.js";
 import { db } from "./db.js";
-import { account, seriesPlayer, user } from "./schema.js";
+import { abortUploadsUnder, deleteObject, objectsUnder } from "./files.js";
+import { savePrefix } from "./ingest.js";
+import { account, save, seriesPlayer, user } from "./schema.js";
 
 const columns = { id: user.id, name: user.name, allowed: user.allowed, createdAt: user.createdAt, accessToken: account.accessToken, accountId: account.id };
 
@@ -67,9 +69,21 @@ players.post("/:id/allowed", async (c) => {
 players.delete("/:id", async (c) => {
   const row = await one(c.req.param("id"));
   if (!row) return c.json({ error: "No such player" }, 404);
-  if (!view(row).invited) return c.json({ error: "Only an invite nobody has used can be deleted" }, 409);
-  const [inSeries] = await db.select({ id: seriesPlayer.seriesId }).from(seriesPlayer).where(eq(seriesPlayer.userId, row.id)).limit(1);
-  if (inSeries) return c.json({ error: "Take them out of their series first" }, 409);
-  await db.delete(user).where(and(eq(user.id, row.id), eq(user.admin, false)));
+  const played = await db.selectDistinct({ seriesId: save.seriesId }).from(save).where(eq(save.userId, row.id));
+  const placed = await db.select({ seriesId: seriesPlayer.seriesId }).from(seriesPlayer).where(eq(seriesPlayer.userId, row.id));
+  const prefixes = [...new Set([...played, ...placed].map((p) => savePrefix(p.seriesId, row.id)))];
+  try {
+    await db.delete(user).where(and(eq(user.id, row.id), eq(user.admin, false)));
+  } catch (error) {
+    const cause = error instanceof Error && "cause" in error ? error.cause : error;
+    if (typeof cause === "object" && cause !== null && "code" in cause && cause.code === "23503") {
+      return c.json({ error: "They changed other players' snapshots by hand; those changes name them" }, 409);
+    }
+    throw error;
+  }
+  for (const prefix of prefixes) {
+    await abortUploadsUnder(prefix).catch(() => undefined);
+    for (const object of await objectsUnder(prefix).catch(() => [])) await deleteObject(object.key).catch(() => undefined);
+  }
   return c.json({ id: row.id });
 });
