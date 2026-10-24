@@ -1,10 +1,10 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
-import { newSeries, playersInput, rulesInput, seriesInput } from "../../shared/series.js";
+import { milestonesInput, newSeries, playersInput, rulesInput, seriesInput } from "../../shared/series.js";
 import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
-import { game, milestone, save, series, seriesPlayer, user } from "./schema.js";
+import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
 import { adminView, type SeriesRow } from "./series-data.js";
 
 async function findSeries(id: string): Promise<SeriesRow | undefined> {
@@ -129,6 +129,41 @@ adminSeries.put("/:id/players", async (c) => {
     await db.delete(seriesPlayer).where(and(eq(seriesPlayer.seriesId, row.id), inArray(seriesPlayer.userId, dropped)));
   }
   if (added.length > 0) await db.insert(seriesPlayer).values(added.map((userId) => ({ seriesId: row.id, userId }))).onConflictDoNothing();
+  return c.json(await adminView(row));
+});
+
+adminSeries.put("/:id/milestones", async (c) => {
+  const row = await findSeries(c.req.param("id"));
+  if (!row) return c.json({ error: "No such series" }, 404);
+  if (row.state !== "running") return c.json({ error: "Only a running series changes its milestones here" }, 409);
+  const input = await body(c.req.raw, milestonesInput);
+  if (!input) return c.json({ error: "A series keeps at least one named milestone" }, 400);
+  const names = input.milestones.map((m) => m.name.toLowerCase());
+  if (new Set(names).size !== names.length) return c.json({ error: "Two milestones share a name" }, 400);
+  const current = await db.select({ id: milestone.id, name: milestone.name }).from(milestone).where(eq(milestone.seriesId, row.id));
+  const kept = input.milestones.flatMap((m) => (m.id ? [m.id] : []));
+  if (new Set(kept).size !== kept.length || kept.some((id) => !current.some((m) => m.id === id))) {
+    return c.json({ error: "A milestone is not this series'" }, 400);
+  }
+  const dropped = current.filter((m) => !kept.includes(m.id));
+  if (dropped.length > 0) {
+    const held = await db
+      .selectDistinct({ milestoneId: snapshot.milestoneId })
+      .from(snapshot)
+      .where(inArray(snapshot.milestoneId, dropped.map((m) => m.id)));
+    const blocked = dropped.filter((m) => held.some((h) => h.milestoneId === m.id)).map((m) => m.name);
+    if (blocked.length > 0) return c.json({ error: `Move or delete the snapshots at ${blocked.join(", ")} first` }, 409);
+  }
+  await db.transaction(async (tx) => {
+    if (dropped.length > 0) await tx.delete(milestone).where(inArray(milestone.id, dropped.map((m) => m.id)));
+    for (const [index, id] of kept.entries()) {
+      await tx.update(milestone).set({ position: -1 - index, name: id }).where(eq(milestone.id, id));
+    }
+    for (const [position, m] of input.milestones.entries()) {
+      if (m.id) await tx.update(milestone).set({ position, name: m.name, mark: m.mark }).where(eq(milestone.id, m.id));
+      else await tx.insert(milestone).values({ id: crypto.randomUUID(), seriesId: row.id, position, name: m.name, mark: m.mark });
+    }
+  });
   return c.json(await adminView(row));
 });
 

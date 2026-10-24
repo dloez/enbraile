@@ -104,6 +104,7 @@ function AdminSeriesForm() {
 
   const editable = series.state === "draft";
   const playersEditable = series.state !== "finished";
+  const milestonesEditable = series.state !== "finished";
   const change = (patch: Partial<Draft>) => {
     setSaved(false);
     setDraft({ ...draft, ...patch });
@@ -143,6 +144,8 @@ function AdminSeriesForm() {
       : series.state === "running"
         ? api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules } }).then(() =>
             api(`/admin/series/${series.id}/players`, adminSeries, { method: "PUT", body: { playerIds: draft.playerIds } }),
+          ).then(() =>
+            api(`/admin/series/${series.id}/milestones`, adminSeries, { method: "PUT", body: { milestones: draft.milestones } }),
           )
         : api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules } });
 
@@ -291,20 +294,20 @@ function AdminSeriesForm() {
               change({ milestones: list });
             };
             return (
-              <li key={index} className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted px-2.5 py-2">
+              <li key={m.id ?? `new-${index}`} className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted px-2.5 py-2">
                 <span className="w-6 text-center text-sm text-muted-foreground tabular-nums">{index + 1}</span>
                 <input
                   aria-label={`Milestone ${index + 1}`}
                   required
                   maxLength={40}
-                  disabled={!editable}
+                  disabled={!milestonesEditable}
                   value={m.name}
                   onChange={(event) => set({ name: event.target.value })}
                   className={cn(fieldClass, focus, "min-w-32 flex-1 bg-card disabled:opacity-60")}
                 />
                 <select
                   aria-label={`Milestone ${index + 1} kind`}
-                  disabled={!editable}
+                  disabled={!milestonesEditable}
                   value={m.mark}
                   onChange={(event) => set({ mark: event.target.value as MilestoneMark })}
                   className={cn(fieldClass, focus, "cursor-pointer bg-card disabled:opacity-60")}
@@ -315,7 +318,7 @@ function AdminSeriesForm() {
                     </option>
                   ))}
                 </select>
-                {editable && (
+                {milestonesEditable && (
                   <span className="flex">
                     <button type="button" aria-label="Move up" title="Move up" disabled={index === 0} onClick={() => move(-1)} className={quietIconClass}>
                       <ArrowUp className="size-4" />
@@ -345,7 +348,7 @@ function AdminSeriesForm() {
             );
           })}
         </ol>
-        {editable && (
+        {milestonesEditable && (
           <button
             type="button"
             onClick={() => change({ milestones: [...draft.milestones, { name: "", mark: "none" }] })}

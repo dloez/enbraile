@@ -29,7 +29,7 @@ export function mayUpload(reader: Viewer, row: SeriesRow, playerId: string): boo
 
 export async function milestonesOf(seriesId: string) {
   return db
-    .select({ name: milestone.name, mark: milestone.mark })
+    .select({ id: milestone.id, name: milestone.name, mark: milestone.mark })
     .from(milestone)
     .where(eq(milestone.seriesId, seriesId))
     .orderBy(asc(milestone.position));

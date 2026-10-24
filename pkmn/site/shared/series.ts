@@ -19,7 +19,7 @@ export const seriesState = z.enum(SERIES_STATES);
 
 export const milestoneMark = z.enum(MILESTONE_MARKS);
 
-export const milestoneInput = z.object({ name: z.string().trim().min(1).max(40), mark: milestoneMark });
+export const milestoneInput = z.object({ id: z.string().min(1).optional(), name: z.string().trim().min(1).max(40), mark: milestoneMark });
 
 export const seriesNumber = z.number().int().min(1).max(999);
 
@@ -38,9 +38,11 @@ export const rulesInput = z.object({ rules: z.string().max(100_000) });
 
 export const playersInput = z.object({ playerIds: z.array(z.string().min(1)).max(100) });
 
+export const milestonesInput = z.object({ milestones: z.array(milestoneInput).min(1).max(30) });
+
 export const newSeries = z.object({ number: seriesNumber, name: z.string().trim().min(1).max(100) });
 
-export const milestone = z.object({ name: z.string(), mark: milestoneMark });
+export const milestone = z.object({ id: z.string(), name: z.string(), mark: milestoneMark });
 
 export const checklistItem = z.object({ label: z.string(), done: z.boolean() });
 
