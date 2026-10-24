@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { buttonClass, fieldClass, Panel } from "@/components/controls";
 import { listPage } from "@/components/page";
@@ -56,12 +55,7 @@ function AdminGames() {
 
   return (
     <main className={cn(listPage, "gap-7 py-7 sm:py-9")}>
-      <div className="flex flex-wrap items-center gap-4">
-        <h1 className="m-0 flex-1 font-heading text-5xl leading-none sm:text-6xl">Games</h1>
-        <Link to="/admin" className={buttonClass}>
-          Admin
-        </Link>
-      </div>
+      <h1 className="m-0 font-heading text-5xl leading-none sm:text-6xl">Games</h1>
       <NewGame onCreated={(created) => setGames((current) => [...(current ?? []), created])} />
       {error && (
         <p role="alert" className="m-0 text-sm text-destructive">

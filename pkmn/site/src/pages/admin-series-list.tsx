@@ -34,12 +34,7 @@ function AdminSeriesList() {
 
   return (
     <main className={cn(listPage, "gap-7 py-7 sm:py-9")}>
-      <div className="flex flex-wrap items-center gap-4">
-        <h1 className="m-0 flex-1 font-heading text-5xl leading-none sm:text-6xl">Series</h1>
-        <Link to="/admin" className={buttonClass}>
-          Admin
-        </Link>
-      </div>
+      <h1 className="m-0 font-heading text-5xl leading-none sm:text-6xl">Series</h1>
       {list && <NewSeries key={next} next={next} />}
       {error && (
         <p role="alert" className="m-0 text-sm text-destructive">

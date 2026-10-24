@@ -93,6 +93,7 @@ The site writes no logs of its own: Vercel's build and deployment logs cover the
 
 ## Decisions
 
+- **The admin pages have no Admin button beside their title;** the header's Admin tab leads back to the admin home. _(owner, 2026-10-24)_
 - **Deleting a player deletes everything they have,** their snapshots in every series and their save zips in the bucket included, after a second press; Remove only takes them off the allowlist. **Why:** the owner chose it over refusing to delete a player who has played, accepting that finished series lose that player's history. _(owner, 2026-10-24)_
 - **The waiting page says only "Waiting for an admin",** without the line under it that `waiting.dc.html` and `waiting-phone.dc.html` draw ("An admin has to let you in before you can see the series."); the frozen boards keep it. _(owner, 2026-10-24)_
 - **An admin invites a player by their Discord user ID, and a series starts with any number of players, taking more while it runs.** An invite is a real player, allowed, with their Discord account made ahead of their first sign-in; a running series' players change, but one with a snapshot in it stays. **Why:** the owner wants everything ready for a player before they sign in, and to start a series before every player has joined. The invite owning the Discord account, rather than a list of pending IDs read at sign-in, lets an invited player be put in a series before they sign in, and needs no migration. _(owner, 2026-10-24; replaces "at least two players" on the start checklist and a running series changing only its rules)_
