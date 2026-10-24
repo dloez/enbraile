@@ -42,11 +42,11 @@ Discord sign-in and the allowlist are built and checked on the local stack (2026
 The series pages, the admin series form and the phone header are built and checked on the local stack (2026-10-23), where the seed makes series 1; on production series 1 is created through the form, its rules pasted from `docs/pkmn/series/1/reference/rules.md`, as the series entry that landed in `f799e09` asked. Its production checks left the queue with it.
 
 **Do:**
-- [ ] Owner-run: as admin at `/admin/series`, make series 1 on the Añil game, the daytime route, manual ingestion, its players from the allowlist, milestones Gym 1 to Gym 8, Post-League and Tournament with rounds as its rules set, and its rules pasted from `docs/pkmn/series/1/reference/rules.md`; start it.
+- [ ] Owner-run: as admin at `/admin/series`, make series 1 on the Añil game, the daytime route, manual ingestion, its players from the allowlist (invite them by Discord user ID at `/admin/players` first, or add them once it runs), milestones Gym 1 to Gym 8, Post-League and Tournament with rounds as its rules set, and its rules pasted from `docs/pkmn/series/1/reference/rules.md`; start it.
 
 **Acceptance:**
 - Claude-run: none.
-- Human-run: as admin, make the draft and see the checklist list what is missing; fill it in until Start enables; start it. As an allowed player of it, sign in and land on its page, read its rules, download its game; as an allowed player not in it, see no Download. Make a second draft by "Copy from" series 1, see the rules copied, and delete it. Open `/series` and see series 1's banner on its moving scene, marked playing now; turn on reduced motion and see the scenes stand still. On a phone, signed in as an admin and as a player, reach every tab and sign-out from the header's menu.
+- Human-run: as admin, invite a player by Discord user ID and see them under Allowed, marked Invited; make the draft and see the checklist list what is missing; fill it in until Start enables; start it. As an allowed player of it, sign in and land on its page, read its rules, download its game; as an allowed player not in it, see no Download. Make a second draft by "Copy from" series 1, see the rules copied, and delete it. Open `/series` and see series 1's banner on its moving scene, marked playing now; turn on reduced motion and see the scenes stand still. On a phone, signed in as an admin and as a player, reach every tab and sign-out from the header's menu.
 - Reuse: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) → Verification.
 - Neighbors: none.
 - Forbidden: series 1 made by `npm run seed` or by SQL on production.

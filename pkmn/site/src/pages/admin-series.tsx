@@ -103,6 +103,7 @@ function AdminSeriesForm() {
   }
 
   const editable = series.state === "draft";
+  const playersEditable = series.state !== "finished";
   const change = (patch: Partial<Draft>) => {
     setSaved(false);
     setDraft({ ...draft, ...patch });
@@ -111,7 +112,6 @@ function AdminSeriesForm() {
   const checklist = startChecklist({
     rules: draft.rules,
     gameHasFile: !!chosen?.fileName,
-    players: draft.playerIds.length,
     milestones: draft.milestones.length,
     otherRunning: series.otherRunning,
   });
@@ -140,7 +140,11 @@ function AdminSeriesForm() {
           method: "PUT",
           body: { ...draft, number: Number(draft.number) } satisfies SeriesInput,
         })
-      : api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules } });
+      : series.state === "running"
+        ? api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules } }).then(() =>
+            api(`/admin/series/${series.id}/players`, adminSeries, { method: "PUT", body: { playerIds: draft.playerIds } }),
+          )
+        : api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules } });
 
   const start = async () => {
     await save();
@@ -253,12 +257,12 @@ function AdminSeriesForm() {
                     className={cn(
                       "flex cursor-pointer items-center gap-3 rounded-lg border bg-muted px-3 py-2 focus-within:ring-3 focus-within:ring-ring/50",
                       picked && "border-primary",
-                      !editable && "cursor-default opacity-60",
+                      !playersEditable && "cursor-default opacity-60",
                     )}
                   >
                     <input
                       type="checkbox"
-                      disabled={!editable}
+                      disabled={!playersEditable}
                       checked={picked}
                       onChange={() =>
                         change({ playerIds: picked ? draft.playerIds.filter((pid) => pid !== p.id) : [...draft.playerIds, p.id] })
@@ -376,7 +380,7 @@ function AdminSeriesForm() {
         )}
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" disabled={busy} onClick={() => void run(save)} className={buttonClass}>
-            {editable ? "Save" : "Save rules"}
+            {series.state === "finished" ? "Save rules" : "Save"}
           </button>
           {editable && (
             <button type="button" disabled={busy || !ready} onClick={() => void run(start)} className={buttonClass}>

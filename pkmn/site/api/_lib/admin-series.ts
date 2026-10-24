@@ -1,10 +1,10 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
-import { newSeries, rulesInput, seriesInput } from "../../shared/series.js";
+import { newSeries, playersInput, rulesInput, seriesInput } from "../../shared/series.js";
 import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
-import { game, milestone, series, seriesPlayer, user } from "./schema.js";
+import { game, milestone, save, series, seriesPlayer, user } from "./schema.js";
 import { adminView, type SeriesRow } from "./series-data.js";
 
 async function findSeries(id: string): Promise<SeriesRow | undefined> {
@@ -15,6 +15,15 @@ async function findSeries(id: string): Promise<SeriesRow | undefined> {
 function uniqueViolation(error: unknown, constraint: string): boolean {
   const cause = error instanceof Error && "cause" in error ? error.cause : error;
   return typeof cause === "object" && cause !== null && "code" in cause && cause.code === "23505" && "constraint" in cause && cause.constraint === constraint;
+}
+
+async function allAllowed(playerIds: string[]): Promise<boolean> {
+  if (playerIds.length === 0) return true;
+  const found = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(and(inArray(user.id, playerIds), eq(user.admin, false), eq(user.allowed, true)));
+  return found.length === playerIds.length;
 }
 
 export const adminSeries = new Hono();
@@ -57,13 +66,7 @@ adminSeries.put("/:id", async (c) => {
     if (!found) return c.json({ error: "No such game" }, 400);
   }
   const playerIds = [...new Set(input.playerIds)];
-  if (playerIds.length > 0) {
-    const found = await db
-      .select({ id: user.id })
-      .from(user)
-      .where(and(inArray(user.id, playerIds), eq(user.admin, false), eq(user.allowed, true)));
-    if (found.length !== playerIds.length) return c.json({ error: "Every player must be on the allowlist" }, 400);
-  }
+  if (!(await allAllowed(playerIds))) return c.json({ error: "Every player must be on the allowlist" }, 400);
   try {
     const updated = await db.transaction(async (tx) => {
       const [saved] = await tx
@@ -103,6 +106,30 @@ adminSeries.put("/:id/rules", async (c) => {
   const [updated] = await db.update(series).set({ rules: input.rules }).where(eq(series.id, c.req.param("id"))).returning();
   if (!updated) return c.json({ error: "No such series" }, 404);
   return c.json(await adminView(updated));
+});
+
+adminSeries.put("/:id/players", async (c) => {
+  const row = await findSeries(c.req.param("id"));
+  if (!row) return c.json({ error: "No such series" }, 404);
+  if (row.state !== "running") return c.json({ error: "Only a running series changes its players here" }, 409);
+  const input = await body(c.req.raw, playersInput);
+  if (!input) return c.json({ error: "Players are a list of ids" }, 400);
+  const playerIds = [...new Set(input.playerIds)];
+  const current = await db.select({ userId: seriesPlayer.userId }).from(seriesPlayer).where(eq(seriesPlayer.seriesId, row.id));
+  const dropped = current.map((p) => p.userId).filter((userId) => !playerIds.includes(userId));
+  const added = playerIds.filter((userId) => !current.some((p) => p.userId === userId));
+  if (!(await allAllowed(added))) return c.json({ error: "Every player must be on the allowlist" }, 400);
+  if (dropped.length > 0) {
+    const [played] = await db
+      .select({ userId: save.userId })
+      .from(save)
+      .where(and(eq(save.seriesId, row.id), inArray(save.userId, dropped)))
+      .limit(1);
+    if (played) return c.json({ error: "A player with a snapshot in this series stays in it" }, 409);
+    await db.delete(seriesPlayer).where(and(eq(seriesPlayer.seriesId, row.id), inArray(seriesPlayer.userId, dropped)));
+  }
+  if (added.length > 0) await db.insert(seriesPlayer).values(added.map((userId) => ({ seriesId: row.id, userId }))).onConflictDoNothing();
+  return c.json(await adminView(row));
 });
 
 adminSeries.post("/:id/start", async (c) => {

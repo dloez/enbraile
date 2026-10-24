@@ -143,7 +143,7 @@ export async function adminView(row: SeriesRow): Promise<AdminSeries> {
     milestones,
     checklist:
       row.state === "draft"
-        ? startChecklist({ rules: row.rules, gameHasFile: chosen?.fileKey != null, players: players.length, milestones: milestones.length, otherRunning: running })
+        ? startChecklist({ rules: row.rules, gameHasFile: chosen?.fileKey != null, milestones: milestones.length, otherRunning: running })
         : [],
     otherRunning: running,
     startedAt: row.startedAt?.toISOString() ?? null,

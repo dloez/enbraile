@@ -17,7 +17,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   database: drizzleAdapter(db, { provider: "pg", schema }),
   emailAndPassword: { enabled: true, disableSignUp: true },
-  socialProviders: discordId && discordSecret ? { discord: { clientId: discordId, clientSecret: discordSecret } } : {},
+  socialProviders: discordId && discordSecret ? { discord: { clientId: discordId, clientSecret: discordSecret, overrideUserInfoOnSignIn: true } } : {},
   account: { accountLinking: { enabled: false } },
   user: {
     additionalFields: {

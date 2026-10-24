@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
-import { buttonClass, Panel } from "@/components/controls";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { buttonClass, fieldClass, Panel } from "@/components/controls";
 import { listPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AdminGate } from "@/pages/admin";
-import { player, playerList, type Player } from "../../shared/players";
+import { player, playerList, removed, type Player } from "../../shared/players";
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
@@ -54,6 +54,18 @@ function AdminPlayers() {
     setBusy(null);
   }
 
+  async function remove(target: Player) {
+    setBusy(target.id);
+    setError(null);
+    try {
+      const gone = await api(`/players/${target.id}`, removed, { method: "DELETE" });
+      setPlayers((current) => current?.filter((p) => p.id !== gone.id) ?? null);
+    } catch (caught) {
+      setError(message(caught));
+    }
+    setBusy(null);
+  }
+
   const waiting = players?.filter((p) => !p.allowed) ?? [];
   const allowed = players?.filter((p) => p.allowed) ?? [];
 
@@ -72,11 +84,68 @@ function AdminPlayers() {
       )}
       {players && (
         <>
-          <PlayerList title="Waiting" players={waiting} action="Allow" busy={busy} onAct={(p) => setAllowed(p, true)} />
-          <PlayerList title="Allowed" players={allowed} action="Remove" busy={busy} onAct={(p) => setAllowed(p, false)} />
+          <InviteForm onInvited={(invited) => setPlayers((current) => [...(current ?? []), invited])} />
+          <PlayerList title="Waiting" players={waiting} action="Allow" busy={busy} onAct={(p) => setAllowed(p, true)} onDelete={remove} />
+          <PlayerList title="Allowed" players={allowed} action="Remove" busy={busy} onAct={(p) => setAllowed(p, false)} onDelete={remove} />
         </>
       )}
     </main>
+  );
+}
+
+function InviteForm({ onInvited }: { onInvited: (invited: Player) => void }) {
+  const [discordId, setDiscordId] = useState("");
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      onInvited(await api("/players", player, { body: { discordId, name } }));
+      setDiscordId("");
+      setName("");
+    } catch (caught) {
+      setError(message(caught));
+    }
+    setBusy(false);
+  }
+
+  const field = cn(fieldClass, "outline-none focus-visible:ring-3 focus-visible:ring-ring/50");
+
+  return (
+    <Panel title="Invite">
+      <form onSubmit={submit} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <label className="flex flex-1 flex-col gap-1.5 text-sm text-muted-foreground">
+            Discord user ID
+            <input
+              name="discordId"
+              required
+              inputMode="numeric"
+              pattern="\d{17,20}"
+              value={discordId}
+              onChange={(event) => setDiscordId(event.target.value)}
+              className={cn(field, "tabular-nums")}
+            />
+          </label>
+          <label className="flex flex-1 flex-col gap-1.5 text-sm text-muted-foreground">
+            Name
+            <input name="name" required maxLength={32} value={name} onChange={(event) => setName(event.target.value)} className={field} />
+          </label>
+        </div>
+        {error && (
+          <p role="alert" className="m-0 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        <button type="submit" disabled={busy} className={cn(buttonClass, "self-start")}>
+          Invite
+        </button>
+      </form>
+    </Panel>
   );
 }
 
@@ -86,12 +155,14 @@ function PlayerList({
   action,
   busy,
   onAct,
+  onDelete,
 }: {
   title: string;
   players: Player[];
   action: "Allow" | "Remove";
   busy: string | null;
   onAct: (target: Player) => void;
+  onDelete: (target: Player) => void;
 }) {
   return (
     <Panel title={title} aside={<span className="text-sm text-muted-foreground tabular-nums">{players.length}</span>}>
@@ -109,7 +180,16 @@ function PlayerList({
                 <PlayerBadge name={p.name} colour={playerColour(p.id)} />
                 <span className="truncate font-heading text-2xl">{p.name}</span>
               </Link>
-              <span className="hidden text-sm text-muted-foreground tabular-nums sm:inline">{formatDate(p.joinedAt)}</span>
+              {p.invited ? (
+                <span className="text-sm text-muted-foreground">Invited</span>
+              ) : (
+                <span className="hidden text-sm text-muted-foreground tabular-nums sm:inline">{formatDate(p.joinedAt)}</span>
+              )}
+              {p.invited && (
+                <button type="button" disabled={busy !== null} onClick={() => onDelete(p)} className={buttonVariants({ variant: "destructive" })}>
+                  Delete
+                </button>
+              )}
               <button
                 type="button"
                 disabled={busy !== null}

@@ -36,6 +36,8 @@ export const seriesInput = z.object({
 
 export const rulesInput = z.object({ rules: z.string().max(100_000) });
 
+export const playersInput = z.object({ playerIds: z.array(z.string().min(1)).max(100) });
+
 export const newSeries = z.object({ number: seriesNumber, name: z.string().trim().min(1).max(100) });
 
 export const milestone = z.object({ name: z.string(), mark: milestoneMark });
@@ -117,14 +119,12 @@ export const seriesDeleted = z.object({});
 export function startChecklist(draft: {
   rules: string;
   gameHasFile: boolean;
-  players: number;
   milestones: number;
   otherRunning: string | null;
 }): z.infer<typeof checklistItem>[] {
   const items = [
     { label: "Rules written", done: draft.rules.trim() !== "" },
     { label: "A game with its file", done: draft.gameHasFile },
-    { label: "At least two players", done: draft.players >= 2 },
     { label: "At least one milestone", done: draft.milestones >= 1 },
   ];
   if (draft.otherRunning) items.push({ label: `${draft.otherRunning} finished`, done: false });
