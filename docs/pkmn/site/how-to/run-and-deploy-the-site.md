@@ -99,19 +99,18 @@ Set the project's environment variables:
 
 Neon's connection strings carry `sslmode=require`, which `pg` already treats as `verify-full` and warns about on every connection; write `sslmode=verify-full` in every Neon string, in Vercel and in the shell, which keeps the same certificate checks and silences the warning.
 
-`API_PORT` and `DEV_SIGN_IN` stay unset in Vercel: without `DEV_SIGN_IN` the test sign-in does not exist. Then migrate each branch and make the admins with that branch's direct connection string (the one without `-pooler`) and its environment's `BETTER_AUTH_SECRET` set in the shell, since `admin:create` loads the site's auth setup, which refuses to start without one:
+`API_PORT` and `DEV_SIGN_IN` stay unset in Vercel: without `DEV_SIGN_IN` the test sign-in does not exist. Each branch is migrated by its environment's next deploy (step 7). Then make the admins with that branch's direct connection string (the one without `-pooler`) and its environment's `BETTER_AUTH_SECRET` set in the shell, since `admin:create` loads the site's auth setup, which refuses to start without one:
 
 ```sh
 export DATABASE_URL='<the branch's direct connection string>'
 export BETTER_AUTH_SECRET='<that environment's secret>'
-npm run db:migrate
 npm run admin:create <name>
 unset DATABASE_URL BETTER_AUTH_SECRET
 ```
 
 ### 7. Deploy
 
-Migrate production first when the change carries a new migration: run `npm run db:migrate` with the production branch's direct connection string as `DATABASE_URL` in the shell. Then push to `main`. Vercel builds and deploys every push that touches `pkmn/site/` to production, and a branch push gets a public preview URL, shown on the commit's GitHub status and in the Vercel dashboard. There is no manual deploy command.
+Push to `main`. Vercel's build runs `npm run build` and then `npm run db:migrate` (`buildCommand` in `vercel.json`) against that environment's `DATABASE_URL`, so a deploy migrates its own branch, production or `dev`, before it goes live, and a build that fails migrates nothing. A migration that drops or renames something the live code still reads goes out in two deploys: first the code that no longer reads it, then the migration. Vercel builds and deploys every push that touches `pkmn/site/` to production, and a branch push gets a public preview URL, shown on the commit's GitHub status and in the Vercel dashboard. There is no manual deploy command.
 
 ### 8. Roll back
 
