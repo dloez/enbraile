@@ -114,6 +114,7 @@ const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fa
 const TEAMS = [
   {preset: 'elesa', mine: true, name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], keys: [0, 5, 11, 17], when: 'Changed today'},
   {preset: 'rain', mine: true, name: 'Rain test', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], any: true, keys: [2, 8, 14, 20, 26, 32], when: 'Changed 3 days ago'},
+  {preset: 'ban', mine: true, name: 'Ban round', owner: 'Dloez', c: '#ffd34d', series: 2, size: 8, from: [['Dloez', 'Gym 5']], any: true, keys: [1, 7, 13, 19, 25, 31, 37], when: 'Changed 2 days ago'},
   {preset: 'vicky', mine: true, name: 'Scouting Vicky', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30], when: 'Changed 4 days ago'},
   {preset: 'elesa', mine: true, name: 'Final', owner: 'Dloez', c: '#ffd34d', series: 1, from: [['Dloez', 'Tournament']], keys: [1, 7, 13, 19, 25, 31], when: 'Changed in August'},
   {preset: 'mira', mine: false, name: 'League run', owner: 'MIRAMEEE', c: '#ff9ec4', series: 2, from: [['MIRAMEEE', 'Post-League']], keys: [3, 9, 21, 27, 33, 40], when: 'Changed yesterday'},
@@ -133,13 +134,14 @@ class Component extends DCLogic {
     const full = picked.length >= 4;
     const row = (t) => {
       const on = picked.includes(t.name);
-      const slots = Array.from({length: 6}, (_, i) => {
+      const size = t.size || 6;
+      const slots = Array.from({length: size}, (_, i) => {
         const k = t.keys[i];
         return k === undefined ? {filled: false, bg: 'transparent', line: 'dashed', sprite: '', name: ''} : {filled: true, bg: '#1b2232', line: 'solid', sprite: SPRITES[k], name: ''};
       });
       const off = selecting && full && !on;
       return {name: t.name, c: t.c, i: t.owner[0], meta: (t.mine ? '' : t.owner + ' · ') + sourceLine(t), slots, when: t.when,
-        state: t.keys.length + '/6', stateInk: t.keys.length === 6 ? '#7be08a' : '#ffc878',
+        state: t.keys.length + '/' + size, stateInk: t.keys.length === size ? '#7be08a' : '#ffc878',
         selecting, picked: on, pressed: selecting ? (on ? 'true' : 'false') : null, off, dim: off ? 0.45 : 1, cursor: off ? 'default' : 'pointer',
         line: on ? '#5ad1f0' : '#343f58', bg: on ? '#1d3242' : '#222a3b', boxLine: on ? '#5ad1f0' : '#4a5470', boxBg: on ? '#5ad1f0' : '#10141d',
         click: selecting ? () => this.setState({picked: on ? picked.filter((x) => x !== t.name) : picked.concat([t.name])}) : () => this.setState({open: t.preset})};

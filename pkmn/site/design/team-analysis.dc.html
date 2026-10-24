@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Team analysis</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+.seg:not([aria-checked="true"]):not([aria-selected="true"]):not(:disabled):hover{background:#2c3549!important;color:#ffffff!important}
+.btn:not(:disabled):hover{background:rgba(255,255,255,0.18)!important}
+.x:hover{border-color:#5ad1f0!important;color:#ffffff!important}
+.node:hover{box-shadow:0 0 0 3px #5ad1f0!important}
+.ascroll{scrollbar-width:thin;scrollbar-color:#44506d transparent}
+select option{background:#10141d;color:#eef1f7}
+</style>
+</helmet>
+<div style="flex: 1; width: {{rootW}}; height: {{rootH}}; box-sizing: border-box; display: flex; flex-direction: column; gap: {{rootGap}}; min-height: 0; overflow: hidden; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: {{rootBg}}; background-image: {{rootDots}}; background-size: 20px 20px">
+<sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><p style="margin: auto; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #a3acbf">Loading…</p></sc-if>
+
+<sc-if value="{{panel}}" hint-placeholder-val="{{ true }}">
+<div style="flex: none; display: flex; align-items: center; gap: 10px">
+<h2 style="flex: 1; margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 32px; line-height: 1">Analysis</h2>
+<button type="button" class="btn" onClick="{{openFull}}" style="display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px 3px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -3px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 21px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h4v2H2v2H0zM6 0h4v4H8V2H6zM0 6h2v2h2v2H0zM8 6h2v4H6V8h2z" fill="#5ad1f0"></path></svg>Full analysis</button>
+</div>
+<div role="tablist" aria-label="Analysis view" style="flex: none; display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{pTabs}}" as="tb" hint-placeholder-count="4">
+<button type="button" class="seg" role="tab" aria-selected="{{tb.on}}" onClick="{{tb.pick}}" style="flex: 1; min-height: 34px; border: none; border-radius: 8px; background: {{tb.bg}}; color: {{tb.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 20px; cursor: pointer">{{tb.name}}</button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{full}}" hint-placeholder-val="{{ false }}">
+<div style="flex: none; height: 76px; box-sizing: border-box; display: flex; align-items: center; gap: 16px; padding: 0 32px 0 40px; background: #10141d; border-bottom: 4px solid #d93a30">
+<h2 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 38px; line-height: 1; white-space: nowrap"><span style="color: #a3acbf">{{teamName}} ·</span> Analysis</h2>
+<div role="tablist" aria-label="Analysis view" style="display: flex; gap: 4px; padding: 4px; background: #161b26; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{fTabs}}" as="tb" hint-placeholder-count="6">
+<button type="button" class="seg" role="tab" aria-selected="{{tb.on}}" onClick="{{tb.pick}}" style="min-height: 38px; padding: 0 14px; border: none; border-radius: 8px; background: {{tb.bg}}; color: {{tb.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">{{tb.name}}</button>
+</sc-for>
+</div>
+<div style="flex: 1"></div>
+<sc-if value="{{teraOk}}" hint-placeholder-val="{{ true }}">
+<label style="display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #c3cad8; cursor: pointer"><input type="checkbox" checked="{{tera}}" onChange="{{toggleTera}}" style="width: 18px; height: 18px; accent-color: #5ad1f0">Tera</label>
+</sc-if>
+<span title="The team's pool" style="padding: 4px 12px; border-radius: 999px; border: 2px solid #343f58; font-size: 13px; font-weight: 700; color: #8fc8ff">{{poolLabel}}</span>
+<button type="button" class="x" aria-label="Close the analysis" onClick="{{close}}" style="width: 48px; height: 48px; flex: none; border-radius: 10px; border: 3px solid #44506d; background: #2c3549; color: #c3cad8; display: grid; place-items: center; cursor: pointer"><svg width="16" height="16" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h2v1h1v1h2V1h1V0h2v2H7v1H6v2h1v1h1v2H6V7H5V6H3v1H2v1H0V6h1V5h1V3H1V2H0z" fill="currentColor"></path></svg></button>
+</div>
+</sc-if>
+
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: {{bodyPad}}">
+
+<sc-if value="{{vSummary}}" hint-placeholder-val="{{ true }}">
+<div class="ascroll" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px">
+<section aria-label="Archetype" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: #1b2232; border: 3px solid #2c3549; border-radius: 12px">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #a3acbf">Plays like</span>
+<span style="flex: 1; font-family: 'Jersey 10', sans-serif; font-size: 32px; line-height: 1">{{arch.top}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #5ad1f0">{{arch.topPct}}</span>
+</div>
+<sc-for list="{{arch.rank}}" as="ar" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 40px; align-items: center; column-gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #c3cad8">
+<span>{{ar.name}}</span>
+<span style="height: 10px; border-radius: 4px; background: #10141d; overflow: hidden; display: block"><span style="display: block; height: 100%; width: {{ar.w}}%; background: {{ar.c}}"></span></span>
+<span style="text-align: right">{{ar.pct}}</span>
+</div>
+</sc-for>
+<p style="margin: 2px 0 0; font-size: 14px; line-height: 1.4; color: #d5dae5">{{arch.blurb}}</p>
+</section>
+<section aria-labelledby="ck-h" style="display: flex; flex-direction: column; gap: 6px">
+<h3 id="ck-h" style="margin: 0; padding: 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 22px; color: #a3acbf">Checklist</h3>
+<sc-for list="{{checks}}" as="ck" hint-placeholder-count="7">
+<div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; background: #1b2232; border-radius: 10px; border-left: 0">
+<span aria-hidden="true" style="flex: none; width: 22px; height: 22px; border-radius: 6px; background: {{ck.c}}; color: #10141d; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px">{{ck.mark}}</span>
+<span style="font-size: 14px; line-height: 1.4; color: #e3e7ef"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">{{ck.level}}: </span>{{ck.text}}</span>
+</div>
+</sc-for>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{vChart}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{showMatMode}}" hint-placeholder-val="{{ false }}">
+<div style="flex: none; display: flex; align-items: center; gap: 12px">
+<div role="radiogroup" aria-label="Matrix" style="display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{matSides}}" as="ms" hint-placeholder-count="2">
+<button type="button" class="seg" role="radio" aria-checked="{{ms.on}}" onClick="{{ms.pick}}" style="min-height: 36px; padding: 0 14px; border: none; border-radius: 8px; background: {{ms.bg}}; color: {{ms.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 21px; cursor: pointer">{{ms.name}}</button>
+</sc-for>
+</div>
+<div role="radiogroup" aria-label="Values" style="display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{matModes}}" as="mm" hint-placeholder-count="2">
+<button type="button" class="seg" role="radio" aria-checked="{{mm.on}}" onClick="{{mm.pick}}" style="min-height: 36px; padding: 0 14px; border: none; border-radius: 8px; background: {{mm.bg}}; color: {{mm.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 21px; cursor: pointer">{{mm.name}}</button>
+</sc-for>
+</div>
+<span style="font-size: 14px; color: #c3cad8">{{matNote}}</span>
+</div>
+</sc-if>
+<div style="flex: 1; min-height: 0; overflow: auto; border-radius: 12px; background: #1b2232; padding: 6px 8px; box-sizing: border-box">
+<div role="table" aria-label="{{anaCorner}} by type" style="display: flex; flex-direction: column; gap: 4px; min-height: 100%; font-family: 'Jersey 10', sans-serif">
+<div role="row" style="display: grid; grid-template-columns: {{anaGrid}}; column-gap: 3px; align-items: end">
+<span role="columnheader" style="font-size: 18px; color: #a3acbf">{{anaCorner}}</span>
+<sc-for list="{{anaHead}}" as="hd" hint-placeholder-count="6">
+<span role="columnheader" title="{{hd.name}}" style="height: 44px; overflow: hidden; display: flex; align-items: center; justify-content: center"><img src="{{hd.sprite}}" alt="{{hd.name}}" width="56" height="56" style="flex: none; display: block; margin: -8px 0 -4px; image-rendering: pixelated"></span>
+</sc-for>
+<span role="columnheader" style="text-align: center; font-size: 17px; color: #a3acbf">{{anaColA}}</span>
+<span role="columnheader" style="text-align: center; font-size: 17px; color: #a3acbf">{{anaColB}}</span>
+</div>
+<sc-for list="{{anaRows}}" as="r" hint-placeholder-count="18">
+<div role="row" style="flex: 1; display: grid; grid-template-columns: {{anaGrid}}; column-gap: 3px">
+<span role="rowheader" style="display: grid; place-items: center; min-height: 23px; font-size: 18px; color: #ffffff; background: {{r.c}}; border-radius: 5px; text-shadow: 0 1px 0 rgba(0,0,0,0.5)">{{r.type}}</span>
+<sc-for list="{{r.cells}}" as="c" hint-placeholder-count="6">
+<span role="cell" title="{{c.title}}" style="display: grid; place-items: center; font-size: 21px; line-height: 23px; border-radius: 5px; background: {{c.bg}}; color: {{c.ink}}">{{c.txt}}</span>
+</sc-for>
+<span role="cell" style="display: grid; place-items: center; font-size: 21px; line-height: 23px; border-radius: 5px; background: {{r.aBg}}; color: {{r.aInk}}">{{r.a}}</span>
+<span role="cell" style="display: grid; place-items: center; font-size: 21px; line-height: 23px; border-radius: 5px; background: {{r.bBg}}; color: {{r.bInk}}">{{r.b}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{vSpeed}}" hint-placeholder-val="{{ false }}">
+<div class="ascroll" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 3px">
+<sc-for list="{{speedRows}}" as="sr" hint-placeholder-count="14">
+<div style="display: grid; grid-template-columns: 44px 40px minmax(0, 1fr) {{speedBarCol}}; align-items: center; column-gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 9px; background: {{sr.bg}}; border: 2px solid {{sr.border}}">
+<span style="text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: {{sr.ink}}">{{sr.spe}}</span>
+<span style="width: 40px; height: 34px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{sr.sprite}}" alt="" width="48" height="48" style="flex: none; display: block; margin: -8px -4px -6px; image-rendering: pixelated; opacity: {{sr.fade}}"></span>
+<span style="min-width: 0; font-weight: {{sr.weight}}; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: {{sr.ink}}">{{sr.name}}</span>
+<span style="height: 8px; border-radius: 4px; background: #10141d; overflow: hidden; display: block"><span style="display: block; height: 100%; width: {{sr.w}}%; background: {{sr.bar}}"></span></span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{vGraph}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; display: flex; gap: 20px">
+<div style="flex: 1; min-width: 0; position: relative; border-radius: 18px; background: #1b2232; border: 3px solid #343f58; overflow: hidden">
+<svg width="100%" height="100%" viewBox="0 0 900 760" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="position: absolute; inset: 0">
+<sc-for list="{{edges}}" as="e" hint-placeholder-count="8"><line x1="{{e.x1}}" y1="{{e.y1}}" x2="{{e.x2}}" y2="{{e.y2}}" stroke="{{e.c}}" stroke-width="{{e.w}}" stroke-dasharray="{{e.dash}}" stroke-linecap="round" opacity="{{e.o}}"></line></sc-for>
+</svg>
+<sc-for list="{{nodes}}" as="n" hint-placeholder-count="6">
+<button type="button" class="node" aria-pressed="{{n.on}}" aria-label="{{n.name}}" onClick="{{n.pick}}" style="position: absolute; left: {{n.left}}; top: {{n.top}}; width: 120px; height: 120px; margin: -60px 0 0 -60px; padding: 0; border-radius: 50%; border: 5px solid {{n.ring}}; background: #222a3b; box-shadow: {{n.glow}}; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer">
+<img src="{{n.sprite}}" alt="" width="96" height="96" style="flex: none; display: block; image-rendering: pixelated">
+</button>
+</sc-for>
+<div style="position: absolute; left: 16px; bottom: 12px; display: flex; gap: 18px; font-size: 13px; font-weight: 700; color: #c3cad8">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 26px; height: 4px; background: #7be08a; border-radius: 2px"></span>Covers a weakness</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 26px; height: 0; border-top: 4px dashed #ff8a80"></span>Shared weakness</span>
+</div>
+</div>
+<aside aria-label="Selected member" style="flex: none; width: 380px; display: flex; flex-direction: column; gap: 12px; padding: 16px; box-sizing: border-box; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 72px; height: 64px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{gs.sprite}}" alt="" width="84" height="84" style="flex: none; display: block; margin: -10px -6px -10px; image-rendering: pixelated"></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Jersey 10', sans-serif; font-size: 32px; line-height: 0.9">{{gs.name}}</span><span style="display: flex; gap: 5px"><sc-for list="{{gs.types}}" as="t" hint-placeholder-count="2"><span style="font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 21px; color: #ffffff; background: {{t.c}}; border-radius: 5px; padding: 0 8px">{{t.name}}</span></sc-for></span></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Weak to</span><span style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{gs.weak}}" as="t" hint-placeholder-count="3"><span style="font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 21px; color: #ffffff; background: {{t.c}}; border-radius: 5px; padding: 0 8px">{{t.name}} {{t.m}}</span></sc-for></span></div>
+<div class="ascroll" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{gs.links}}" as="lk" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #1b2232; border-left: 4px solid {{lk.c}}">
+<span style="width: 40px; height: 36px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{lk.sprite}}" alt="" width="48" height="48" style="flex: none; display: block; margin: -8px -4px -4px; image-rendering: pixelated"></span>
+<span style="flex: 1; min-width: 0; font-size: 14px; line-height: 1.35; color: #e3e7ef">{{lk.text}}</span>
+</div>
+</sc-for>
+</div>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{vArch}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; display: flex; gap: 20px">
+<section aria-label="Archetype" style="flex: none; width: 520px; display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; box-sizing: border-box; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="flex: 1; font-family: 'Jersey 10', sans-serif; font-size: 40px; line-height: 1">{{arch.top}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 30px; color: #5ad1f0">{{arch.topPct}}</span></div>
+<sc-for list="{{arch.rank}}" as="ar" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 120px minmax(0, 1fr) 44px; align-items: center; column-gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #c3cad8"><span>{{ar.name}}</span><span style="height: 10px; border-radius: 4px; background: #10141d; overflow: hidden; display: block"><span style="display: block; height: 100%; width: {{ar.w}}%; background: {{ar.c}}"></span></span><span style="text-align: right">{{ar.pct}}</span></div>
+</sc-for>
+<svg width="100%" viewBox="0 0 360 300" role="img" aria-label="Fingerprint: the team against {{arch.top}}" style="flex: 1; min-height: 0">
+<sc-for list="{{radar.rings}}" as="rg" hint-placeholder-count="4"><polygon points="{{rg.pts}}" fill="none" stroke="#343f58" stroke-width="1.5"></polygon></sc-for>
+<sc-for list="{{radar.axes}}" as="ax" hint-placeholder-count="8"><line x1="180" y1="150" x2="{{ax.x}}" y2="{{ax.y}}" stroke="#343f58" stroke-width="1.5"></line><text x="{{ax.lx}}" y="{{ax.ly}}" text-anchor="{{ax.anchor}}" dominant-baseline="middle" fill="#c3cad8" font-family="Nunito, sans-serif" font-weight="700" font-size="12">{{ax.label}}</text></sc-for>
+<polygon points="{{radar.proto}}" fill="rgba(255,200,120,0.14)" stroke="#ffc878" stroke-width="2" stroke-dasharray="5 4"></polygon>
+<polygon points="{{radar.team}}" fill="rgba(90,209,240,0.22)" stroke="#5ad1f0" stroke-width="2.5"></polygon>
+</svg>
+<div style="display: flex; gap: 16px; font-size: 13px; font-weight: 700; color: #c3cad8"><span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 4px; background: #5ad1f0"></span>This team</span><span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 0; border-top: 3px dashed #ffc878"></span>{{arch.top}}</span></div>
+<p style="margin: 0; font-size: 14px; line-height: 1.45; color: #d5dae5">{{arch.blurb}}</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{arch.wants}}" as="w" hint-placeholder-count="4"><span style="padding: 2px 10px; border-radius: 999px; background: #1b2232; border: 2px solid #343f58; font-size: 13px; font-weight: 700; color: #c3cad8">{{w}}</span></sc-for></div>
+</section>
+<section aria-label="Bulk and offense map" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; box-sizing: border-box; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
+<h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px">Bulk × offense, against the pool</h3>
+<svg width="100%" viewBox="0 0 700 560" role="img" aria-label="Each member's bulk and offense percentile in the pool" style="flex: 1; min-height: 0">
+<rect x="60" y="20" width="620" height="480" fill="#1b2232" rx="10"></rect>
+<line x1="370" y1="20" x2="370" y2="500" stroke="#343f58" stroke-width="2" stroke-dasharray="6 6"></line>
+<line x1="60" y1="260" x2="680" y2="260" stroke="#343f58" stroke-width="2" stroke-dasharray="6 6"></line>
+<text x="80" y="44" fill="#6b7489" font-family="Jersey 10, sans-serif" font-size="20">Walls</text>
+<text x="660" y="44" text-anchor="end" fill="#6b7489" font-family="Jersey 10, sans-serif" font-size="20">Bulky attackers</text>
+<text x="80" y="486" fill="#6b7489" font-family="Jersey 10, sans-serif" font-size="20">Support</text>
+<text x="660" y="486" text-anchor="end" fill="#6b7489" font-family="Jersey 10, sans-serif" font-size="20">Glass cannons</text>
+<sc-for list="{{mapPool}}" as="pd" hint-placeholder-count="40"><circle cx="{{pd.x}}" cy="{{pd.y}}" r="5" fill="#44506d"></circle></sc-for>
+<sc-for list="{{mapTeam}}" as="mt" hint-placeholder-count="6"><circle cx="{{mt.x}}" cy="{{mt.y}}" r="30" fill="rgba(90,209,240,0.16)" stroke="#5ad1f0" stroke-width="2"></circle><image href="{{mt.sprite}}" x="{{mt.ix}}" y="{{mt.iy}}" width="64" height="64" style="image-rendering: pixelated"></image></sc-for>
+<text x="370" y="540" text-anchor="middle" fill="#c3cad8" font-family="Jersey 10, sans-serif" font-size="22">Offense percentile →</text>
+<text x="24" y="260" text-anchor="middle" fill="#c3cad8" font-family="Jersey 10, sans-serif" font-size="22" transform="rotate(-90 24 260)">Bulk percentile →</text>
+</svg>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{vMembers}}" hint-placeholder-val="{{ false }}">
+<div class="ascroll" style="flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 14px">
+<sc-for list="{{cards}}" as="mc" hint-placeholder-count="6">
+<article aria-label="{{mc.name}}" style="display: flex; flex-direction: column; gap: 8px; padding: 10px 14px 14px; background: #222a3b; border: 3px solid #343f58; border-radius: 16px; min-height: 0">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="width: 64px; height: 56px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{mc.sprite}}" alt="" width="76" height="76" style="flex: none; display: block; margin: -10px -6px -8px; image-rendering: pixelated"></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{mc.name}}</span><span style="display: flex; gap: 5px"><sc-for list="{{mc.types}}" as="t" hint-placeholder-count="2"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 20px; color: #ffffff; background: {{t.c}}; border-radius: 5px; padding: 0 7px">{{t.name}}</span></sc-for></span></span>
+<sc-if value="{{tera}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; align-items: center; gap: 4px; padding: 0 6px; height: 32px; border-radius: 8px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #a3acbf">Tera<select value="{{mc.tera}}" onChange="{{mc.onTera}}" style="border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 18px; outline: none"><sc-for list="{{typeNames}}" as="tn" hint-placeholder-count="18"><option value="{{tn}}">{{tn}}</option></sc-for></select></label>
+</sc-if>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{mc.roles}}" as="rl" hint-placeholder-count="2"><span style="padding: 1px 9px; border-radius: 999px; background: rgba(90,209,240,0.14); font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #9be4f7">{{rl}}</span></sc-for></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px"><sc-for list="{{mc.ix}}" as="ix" hint-placeholder-count="3"><span style="display: flex; flex-direction: column; align-items: center; padding: 4px 0; border-radius: 8px; background: #1b2232"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #a3acbf">{{ix.name}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1; color: {{ix.c}}">{{ix.v}}</span></span></sc-for></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><sc-for list="{{mc.stats}}" as="st" hint-placeholder-count="6"><span style="display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; column-gap: 8px; height: 18px; font-family: 'Jersey 10', sans-serif; font-size: 17px"><span style="color: {{st.ink}}">{{st.name}}</span><span style="height: 8px; border-radius: 3px; background: #10141d; overflow: hidden; display: block"><span style="display: block; height: 100%; width: {{st.w}}%; background: {{st.bar}}"></span></span><span style="text-align: right">{{st.v}}</span></span></sc-for></div>
+<div style="font-size: 13px; line-height: 1.35; color: #c3cad8">{{mc.line}}</div>
+</article>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{vPool}}" hint-placeholder-val="{{ false }}">
+<div style="flex: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; background: #222a3b; border: 3px solid #343f58; border-radius: 14px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">Pool</span>
+<label style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Data<select value="{{pool.gen}}" onChange="{{pool.onGen}}" style="border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 20px; outline: none"><sc-for list="{{pool.gens}}" as="g" hint-placeholder-count="9"><option value="{{g.v}}">{{g.label}}</option></sc-for></select></label>
+<label style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Species up to<select value="{{pool.sg}}" onChange="{{pool.onSg}}" style="border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 20px; outline: none"><sc-for list="{{pool.gens}}" as="g" hint-placeholder-count="9"><option value="{{g.v}}">{{g.label}}</option></sc-for></select></label>
+<sc-for list="{{pool.flags}}" as="fl" hint-placeholder-count="3">
+<label style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #c3cad8; cursor: pointer"><input type="checkbox" checked="{{fl.on}}" onChange="{{fl.flip}}" style="width: 16px; height: 16px; accent-color: #5ad1f0">{{fl.label}}</label>
+</sc-for>
+<div style="flex: 1"></div>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px">{{pool.size}} <span style="color: #a3acbf">species</span></span>
+</div>
+<div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 14px">
+<section aria-label="Types in the pool" style="grid-row: 1 / 3; display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 16px; min-height: 0">
+<h3 style="margin: 0 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 24px">Types in the pool</h3>
+<sc-for list="{{pool.types}}" as="pt" hint-placeholder-count="18">
+<div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 84px minmax(0, 1fr) 46px; align-items: center; column-gap: 10px"><span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 21px; color: #ffffff; background: {{pt.c}}; border-radius: 5px">{{pt.name}}</span><span style="height: 12px; border-radius: 4px; background: #10141d; overflow: hidden; display: block"><span style="display: block; height: 100%; width: {{pt.w}}%; background: {{pt.c}}"></span></span><span style="text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #c3cad8">{{pt.pct}}</span></div>
+</sc-for>
+</section>
+<sc-for list="{{pool.hists}}" as="hg" hint-placeholder-count="2">
+<section aria-label="{{hg.title}}" style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 16px; min-height: 0">
+<h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 24px">{{hg.title}} <span style="font-size: 18px; color: #a3acbf">{{hg.note}}</span></h3>
+<div style="flex: 1; min-height: 0; display: flex; align-items: flex-end; gap: 4px">
+<sc-for list="{{hg.bins}}" as="bn" hint-placeholder-count="12"><span title="{{bn.title}}" style="flex: 1; height: {{bn.h}}%; min-height: 2px; border-radius: 4px 4px 0 0; background: {{bn.c}}"></span></sc-for>
+</div>
+<div style="display: flex; justify-content: space-between; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #a3acbf"><span>{{hg.lo}}</span><span>{{hg.hi}}</span></div>
+</section>
+</sc-for>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["full","panel"],"default":"full"},"members":{"editor":null},"teamName":{"editor":"text","default":"For Elesa"},"onClose":{"editor":null},"onFull":{"editor":null},"$preview":{"width":1440,"height":1000}}'>
+const SHEET = '/_blob/df227043f0b439b7c33cd72640e52ca1';
+const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
+  '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
+const TYPE = {Normal:'#7d7f7d',Fire:'#d62223',Water:'#2575dc',Grass:'#358a22',Electric:'#b98c00',Ice:'#1f95b3',Fighting:'#d46a00',Poison:'#8139b8',Ground:'#915121',Flying:'#4f88c2',Psychic:'#d93a6c',Bug:'#76840f',Rock:'#857f57',Ghost:'#704170',Dragon:'#4a58d0',Dark:'#624d4e',Steel:'#4a8499',Fairy:'#c44fc4'};
+const ORDER = ['Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'];
+const MULT = {0: 1, 1: 2, 2: 0.5, 3: 0};
+const CELL = {4: ['×4', '#b0302a', '#ffffff'], 2: ['×2', '#c8642f', '#ffffff'], 1: ['', '#222a3b', '#ffffff'], 0.5: ['½', '#3d8550', '#ffffff'], 0.25: ['¼', '#2a6338', '#ffffff'], 0: ['0', '#0b0e15', '#eef1f7']};
+const HIT = {2: ['×2', '#3d8550', '#ffffff'], 1: ['', '#222a3b', '#ffffff'], 0.5: ['½', '#c8642f', '#ffffff'], 0: ['0', '#b0302a', '#ffffff'], '-': ['—', '#222a3b', '#6b7489']};
+const NAT = {Lonely:['atk','def'],Brave:['atk','spe'],Adamant:['atk','spa'],Naughty:['atk','spd'],Bold:['def','atk'],Relaxed:['def','spe'],Impish:['def','spa'],Lax:['def','spd'],Timid:['spe','atk'],Hasty:['spe','def'],Jolly:['spe','spa'],Naive:['spe','spd'],Modest:['spa','atk'],Mild:['spa','def'],Quiet:['spa','spe'],Rash:['spa','spd'],Calm:['spd','atk'],Gentle:['spd','def'],Sassy:['spd','spe'],Careful:['spd','spa']};
+const STATS = [['hp', 'HP'], ['atk', 'Atk'], ['def', 'Def'], ['spa', 'SpA'], ['spd', 'SpD'], ['spe', 'Spe']];
+const ABIL = {levitate: {Ground: 0}, flashfire: {Fire: 0}, waterabsorb: {Water: 0}, stormdrain: {Water: 0}, dryskin: {Water: 0, Fire: 1.25}, voltabsorb: {Electric: 0}, lightningrod: {Electric: 0}, motordrive: {Electric: 0}, sapsipper: {Grass: 0}, thickfat: {Fire: 0.5, Ice: 0.5}, heatproof: {Fire: 0.5}, waterbubble: {Fire: 0.5}, fluffy: {Fire: 2}};
+const TAGS = {
+  hazard: ['stealthrock', 'spikes', 'toxicspikes', 'stickyweb'], removal: ['rapidspin', 'defog', 'courtchange', 'mortalspin', 'tidyup'],
+  pivot: ['uturn', 'voltswitch', 'flipturn', 'partingshot', 'teleport', 'batonpass'], screens: ['reflect', 'lightscreen', 'auroraveil'],
+  cleric: ['healbell', 'aromatherapy', 'wish'], phaze: ['roar', 'whirlwind', 'dragontail', 'circlethrow', 'haze'],
+  recovery: ['recover', 'roost', 'softboiled', 'slackoff', 'moonlight', 'morningsun', 'synthesis', 'wish', 'rest', 'shoreup', 'milkdrink', 'strengthsap', 'painsplit', 'leechseed', 'drainpunch', 'gigadrain', 'hornleech'],
+  setup: ['swordsdance', 'nastyplot', 'dragondance', 'calmmind', 'bulkup', 'quiverdance', 'shellsmash', 'agility', 'irondefense', 'coil', 'workup', 'growth', 'curse', 'shiftgear', 'rockpolish', 'tailglow', 'bellydrum', 'cosmicpower', 'amnesia', 'acidarmor', 'barrier', 'honeclaws', 'howl', 'meditate', 'sharpen'],
+  speedctl: ['thunderwave', 'tailwind', 'trickroom', 'stickyweb', 'icywind', 'electroweb', 'glare', 'stunspore', 'bulldoze', 'rocktomb'],
+  priority: ['quickattack', 'extremespeed', 'aquajet', 'machpunch', 'bulletpunch', 'iceshard', 'shadowsneak', 'suckerpunch', 'vacuumwave', 'fakeout', 'accelerock', 'firstimpression', 'jetpunch', 'grassyglide']
+};
+const OFF_ITEMS = ['choiceband', 'choicespecs', 'lifeorb', 'expertbelt', 'blackbelt', 'miracleseed', 'twistedspoon', 'charcoal', 'mysticwater', 'magnet', 'nevermeltice', 'sharpbeak', 'poisonbarb', 'softsand', 'hardstone', 'silverpowder', 'spelltag', 'dragonfang', 'blackglasses', 'metalcoat', 'silkscarf', 'lightball', 'seaincense', 'waveincense', 'roseincense', 'oddincense', 'rockincense', 'powerband', 'machobrace', 'adamantcrystal'];
+const ARCH = {
+  'Hyper Offense': {proto: {speed: 0.8, offense: 0.85, bulk: 0.15, recovery: 0.05, status: 0.12, setup: 0.45, pivot: 0.1, offItems: 0.8}, c: '#ff8a80', blurb: 'Overwhelm the opponent before they can set up a defensive game. Typically a hazard or screens lead, two setup sweepers, two wallbreakers and a fast cleaner. Very weak to priority, status and losing tempo.', wants: ['Suicide lead / hazards or screens', 'Multiple setup sweepers', 'Wallbreakers', 'Speed control (Scarf / priority)']},
+  'Bulky Offense': {proto: {speed: 0.55, offense: 0.72, bulk: 0.4, recovery: 0.2, status: 0.15, setup: 0.3, pivot: 0.35, offItems: 0.45}, c: '#ffc878', blurb: 'Strong attackers that can still switch in on hits. Chips the opponent with pivoting so that late-game threats can clean. Wants hazards, removal and a bit of recovery.', wants: ['Pivots for momentum', 'Hazard setter + removal', 'Bulky attackers / Assault Vest', 'A late-game cleaner']},
+  Balance: {proto: {speed: 0.45, offense: 0.55, bulk: 0.55, recovery: 0.45, status: 0.3, setup: 0.2, pivot: 0.3, offItems: 0.25}, c: '#7be08a', blurb: 'Defensive cores supporting a few strong threats. Adaptable, but every member has to pull weight: usually a wall, a stallbreaker and a sweeper.', wants: ['A defensive core with mutual coverage', 'Reliable recovery on walls', 'Hazards + removal', '1–2 win conditions']},
+  Stall: {proto: {speed: 0.15, offense: 0.15, bulk: 0.88, recovery: 0.9, status: 0.55, setup: 0.1, pivot: 0.15, offItems: 0}, c: '#8fc8ff', blurb: 'The bulkiest mons with reliable recovery, winning through hazards, status and passive damage. Struggles against strong wallbreakers and setup it cannot phaze.', wants: ['Recovery on (almost) every member', 'Status spreaders (Toxic / Will-O-Wisp)', 'Hazards + removal', 'Phazing / Haze vs setup']}
+};
+const FEATS = [['speed', 'Speed', 1], ['offense', 'Offense', 1.2], ['bulk', 'Bulk', 1.2], ['recovery', 'Recovery', 1.2], ['status', 'Status', 1], ['setup', 'Setup', 0.8], ['pivot', 'Pivoting', 0.6], ['offItems', 'Off. items', 0.8]];
+const DEMO = [{key: 0, item: 'icyrock'}, {key: 5, item: 'lightclay'}, {key: 11, item: ''}, {key: 17, item: 'machobrace'}];
+function rng(seed) { let x = (seed * 7919 + 13) % 2147483648; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
+function demoMoves(p, tms) {
+  const r = rng(p.key + 1);
+  STATS.forEach(() => { r(); r(); });
+  const pick = (n) => { const out = [], seen = {}; while (out.length < n) { const t = tms[Math.floor(r() * tms.length)]; if (!seen[t.id]) { seen[t.id] = 1; out.push(t); } } return out; };
+  pick(9).forEach((_, i) => { if (i >= 2) r(); });
+  pick(9);
+  return pick(4).map((t) => t.id);
+}
+function seg(on) { return {on, bg: on ? '#343f58' : 'transparent', fg: on ? '#ffffff' : '#a3acbf'}; }
+function tint(r) { return r < 1 / 3 ? '#ff8a80' : r < 0.5 ? '#ffd34d' : r < 2 / 3 ? '#7be08a' : '#5ad1f0'; }
+function stat(b, iv, ev, lv, key, nat) {
+  const core = Math.floor((2 * b + iv + Math.floor(ev / 4)) * lv / 100);
+  if (key === 'hp') return core + lv + 10;
+  const m = nat && nat[0] === key ? 1.1 : nat && nat[1] === key ? 0.9 : 1;
+  return Math.floor((core + 5) * m);
+}
+function pct(v, arr) { return arr.length ? arr.filter((x) => x < v).length / arr.length : 0; }
+function poly(vals, cx, cy, r) { return vals.map((v, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / vals.length; return (cx + Math.cos(a) * r * v).toFixed(1) + ',' + (cy + Math.sin(a) * r * v).toFixed(1); }).join(' '); }
+class Component extends DCLogic {
+  componentDidMount() {
+    fetch(SHEET).then((r) => r.json()).then((d) => this.setState({d})).catch(() => this.setState({fail: true}));
+  }
+  st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
+  renderVals() {
+    const full = (this.props.mode ?? 'full') === 'full';
+    const tera = this.st('tera', false);
+    const base = {panel: !full, full, loading: true, rootW: full ? '1440px' : '100%', rootH: full ? '1000px' : '100%', rootGap: full ? '0' : '10px', rootBg: full ? '#161b26' : 'transparent', rootDots: full ? 'radial-gradient(#232b3c 1.5px, transparent 1.5px)' : 'none', bodyPad: full ? '20px 40px 32px' : '0',
+      teamName: this.props.teamName ?? 'For Elesa', poolLabel: 'Gen 9 · species ≤ Gen 5 · fully evolved', teraOk: true, tera, toggleTera: () => this.setState({tera: !tera}),
+      close: () => { if (this.props.onClose) this.props.onClose(); }, openFull: () => { if (this.props.onFull) this.props.onFull(); },
+      pTabs: [], fTabs: [], vSummary: false, vChart: false, vSpeed: false, vGraph: false, vArch: false, vMembers: false, vPool: false,
+      arch: {rank: [], wants: []}, checks: [], anaHead: [], anaGrid: '76px 52px 52px', anaRows: [], anaCorner: '', anaColA: '', anaColB: '', showMatMode: false, matSides: [], matModes: [], matNote: '', speedRows: [], speedBarCol: '1fr',
+      edges: [], nodes: [], gs: {types: [], weak: [], links: []}, radar: {rings: [], axes: [], proto: '', team: ''}, mapPool: [], mapTeam: [], cards: [], typeNames: ORDER, pool: {gens: [], flags: [], types: [], hists: []}};
+    const d = this.state && this.state.d;
+    if (!d) return base;
+    const byKey = (k) => d.pokemon.find((p) => p.key === k);
+    const raw = this.props.members || DEMO.map((s) => ({...s, ab: byKey(s.key).ability.id, moves: demoMoves(byKey(s.key), d.tms)}));
+    const teras = this.st('teras', {});
+    const mv = (id) => d.tms.find((t) => t.id === id);
+    const statsOf = (p, m) => {
+      const lv = m.free ? (m.lv || 50) : 50, nat = NAT[m.free ? m.nat : p.nature];
+      const o = {};
+      STATS.forEach(([k]) => { o[k] = stat(p.base[k], m.ivs ? m.ivs[k] : 31, m.evs ? m.evs[k] : 1, lv, k, nat); });
+      return o;
+    };
+    const poolMons = d.pokemon;
+    const spePool = poolMons.map((p) => p.base.spe), offPool = poolMons.map((p) => Math.max(p.base.atk, p.base.spa)), bulkPool = poolMons.map((p) => p.base.hp * (p.base.def + p.base.spd) / 2);
+    const members = raw.map((m) => {
+      const p = byKey(m.key);
+      const moves = m.moves.map(mv).filter(Boolean);
+      const has = (tag) => moves.some((x) => TAGS[tag].includes(x.id));
+      const types = tera && teras[m.key] ? [teras[m.key]] : (p.sdTypes || p.types);
+      const abil = ABIL[m.ab] || {};
+      const def = {};
+      ORDER.forEach((t) => { def[t] = types.reduce((x, dt) => x * (d.chart[dt] ? MULT[d.chart[dt][t] || 0] : 1), 1) * (abil[t] ?? 1); });
+      const ix = {speed: pct(p.base.spe, spePool), offense: pct(Math.max(p.base.atk, p.base.spa), offPool), bulk: pct(p.base.hp * (p.base.def + p.base.spd) / 2, bulkPool)};
+      return {m, p, moves, has, types, def, ix, st: statsOf(p, m), name: p.nickname || p.name, sprite: SPRITES[p.key]};
+    });
+    const n = members.length || 1;
+    const feat = {
+      speed: members.reduce((s, a) => s + a.ix.speed, 0) / n, offense: members.reduce((s, a) => s + a.ix.offense, 0) / n, bulk: members.reduce((s, a) => s + a.ix.bulk, 0) / n,
+      recovery: members.reduce((s, a) => s + (a.has('recovery') ? 1 : a.m.item === 'leftovers' ? 0.35 : 0), 0) / n,
+      status: members.reduce((s, a) => s + a.moves.filter((x) => x.cat === 'Status').length, 0) / (members.reduce((s, a) => s + a.moves.length, 0) || 1),
+      setup: members.reduce((s, a) => s + (a.has('setup') ? 1 : 0), 0) / n, pivot: members.reduce((s, a) => s + (a.has('pivot') ? 1 : 0), 0) / n,
+      offItems: members.reduce((s, a) => s + (OFF_ITEMS.includes(a.m.item) || /plate$|gem$/.test(a.m.item || '') ? 1 : 0), 0) / n
+    };
+    const dists = Object.keys(ARCH).map((name) => ({name, d2: FEATS.reduce((s, [k, , w]) => s + w * (feat[k] - ARCH[name].proto[k]) ** 2, 0)}));
+    const ws = dists.map((x) => Math.exp(-x.d2 / 0.12)), wt = ws.reduce((a, b) => a + b, 0);
+    const rank = dists.map((x, i) => ({name: x.name, p: ws[i] / wt})).sort((a, b) => b.p - a.p);
+    const top = rank[0].name;
+    const arch = {top, topPct: Math.round(rank[0].p * 100) + '%', blurb: ARCH[top].blurb, wants: ARCH[top].wants, rank: rank.map((r) => ({name: r.name, pct: Math.round(r.p * 100) + '%', w: Math.round(r.p * 100), c: ARCH[r.name].c}))};
+
+    const offOf = (a, t) => {
+      const hits = a.moves.filter((x) => x.cat !== 'Status').map((x) => d.chart[t] ? MULT[d.chart[t][x.type] || 0] : 1);
+      return hits.length ? Math.max(...hits) : '-';
+    };
+    const names = (arr) => arr.map((a) => a.name).join(', ');
+    const checks = [];
+    const push = (level, text) => checks.push({level, text, c: {good: '#7be08a', info: '#8fc8ff', warn: '#ffd34d', bad: '#ff8a80'}[level], mark: {good: '✓', info: 'i', warn: '!', bad: '✕'}[level]});
+    const haz = members.filter((a) => a.has('hazard'));
+    haz.length ? push('good', 'Hazards: ' + names(haz)) : push('warn', 'No entry hazard setter.');
+    const rem = members.filter((a) => a.has('removal')), srWeak = members.filter((a) => a.def.Rock > 1 && a.m.item !== 'heavydutyboots');
+    rem.length ? push('good', 'Hazard removal: ' + names(rem)) : push(srWeak.length >= 2 ? 'bad' : 'warn', 'No hazard removal' + (srWeak.length ? ' while ' + srWeak.length + ' take ×2 or more from Stealth Rock: ' + names(srWeak) : '') + '.');
+    const sc = members.filter((a) => a.has('priority') || a.has('speedctl') || a.m.item === 'choicescarf');
+    sc.length ? push('good', 'Speed control / priority: ' + names(sc)) : push(top === 'Stall' ? 'info' : 'warn', 'No Choice Scarf, priority or speed control.');
+    const shared = ORDER.filter((t) => members.filter((a) => a.def[t] > 1).length >= 3);
+    shared.length ? push('bad', 'Three or more members are weak to ' + shared.join(', ') + '.') : push('good', 'No type hits three or more members super-effectively.');
+    const holes = ORDER.filter((t) => members.every((a) => { const o = offOf(a, t); return o === '-' || o < 1; }));
+    holes.length ? push('warn', 'Nothing hits ' + holes.join(', ') + ' even neutrally.') : push('good', 'Every type is hit at least neutrally.');
+    const rec = members.filter((a) => a.has('recovery'));
+    push(rec.length >= 2 ? 'good' : top === 'Stall' || top === 'Balance' ? 'bad' : 'info', rec.length ? 'Recovery on ' + names(rec) + '.' : 'No reliable recovery.');
+    const setup = members.filter((a) => a.has('setup'));
+    setup.length ? push('good', 'Win condition with setup: ' + names(setup) + '.') : push('info', 'No setup move: the team wins through raw damage.');
+    const piv = members.filter((a) => a.has('pivot'));
+    if (piv.length) push('good', 'Pivoting: ' + names(piv) + '.');
+
+    const fullTab = this.st('ftab', 'graph'), pTab = this.st('ptab', 'summary');
+    const view = full ? fullTab : pTab;
+    const matSide = full ? this.st('mside', 'def') : (pTab === 'cov' ? 'cov' : 'def');
+    const matMode = full ? this.st('mmode', 'mult') : 'mult';
+    const typeShare = {};
+    ORDER.forEach((t) => { typeShare[t] = poolMons.filter((p) => (p.sdTypes || p.types).includes(t)).length / poolMons.length; });
+    const weighted = matMode === 'pool';
+    const anaRows = ORDER.map((t) => {
+      if (matSide === 'def') {
+        const ms = members.map((a) => a.def[t]);
+        const weak = ms.filter((x) => x > 1).length, res = ms.filter((x) => x < 1).length;
+        return {type: t, c: TYPE[t], cells: ms.map((x, i) => {
+          if (weighted) { const v = x * typeShare[t]; return {txt: x === 1 ? '' : Math.round(v * 100) + '%', bg: x > 1 ? 'rgba(200,100,47,' + Math.min(1, 0.25 + v * 3) + ')' : x < 1 ? 'rgba(61,133,80,' + Math.min(1, 0.25 + typeShare[t] * 3) + ')' : '#222a3b', ink: '#ffffff', title: members[i].name + ' takes ×' + x + ' from ' + t + ', ' + Math.round(typeShare[t] * 100) + '% of the pool is ' + t}; }
+          const k = CELL[x] || ['×' + x, '#c8642f', '#ffffff']; return {txt: k[0], bg: k[1], ink: k[2], title: members[i].name + ' takes ×' + x + ' from ' + t};
+        }), a: String(weak), aBg: weak >= 3 ? '#b0302a' : '#222a3b', aInk: weak ? '#ffffff' : '#6b7489', b: String(res), bBg: res >= 2 ? '#3d8550' : '#222a3b', bInk: res ? '#ffffff' : '#6b7489'};
+      }
+      const ms = members.map((a) => offOf(a, t));
+      const se = ms.filter((x) => x === 2).length, walled = ms.every((x) => x === '-' || x < 1);
+      return {type: t, c: TYPE[t], cells: ms.map((x, i) => {
+        if (weighted && x !== '-') return {txt: x > 1 ? Math.round(typeShare[t] * 100) + '%' : x < 1 ? '½' : '', bg: x > 1 ? 'rgba(61,133,80,' + Math.min(1, 0.25 + typeShare[t] * 3) + ')' : x < 1 ? '#c8642f' : '#222a3b', ink: '#ffffff', title: Math.round(typeShare[t] * 100) + '% of the pool is ' + t};
+        const k = HIT[x]; return {txt: k[0], bg: k[1], ink: k[2], title: members[i].name + ' hits ' + t + ' ×' + x};
+      }), a: String(se), aBg: se ? '#3d8550' : '#b0302a', aInk: '#ffffff', b: walled ? '!' : '', bBg: walled ? '#b0302a' : '#222a3b', bInk: '#ffffff'};
+    });
+
+    const benchmarks = poolMons.filter((p) => !raw.some((m) => m.key === p.key)).map((p) => ({p, spe: stat(p.base.spe, 31, 1, 50, 'spe', null)})).sort((a, b) => b.spe - a.spe);
+    const pickB = benchmarks.filter((_, i) => i % Math.max(1, Math.floor(benchmarks.length / (full ? 16 : 9))) === 0);
+    const maxSpe = Math.max(...members.map((a) => a.st.spe), ...pickB.map((b) => b.spe), 1);
+    const speedRows = members.map((a) => ({spe: a.st.spe, name: a.name + ' · ' + Math.round(pct(a.st.spe, benchmarks.map((b) => b.spe)) * 100) + '% of the pool is slower', sprite: a.sprite, team: true}))
+      .concat(pickB.map((b) => ({spe: b.spe, name: b.p.name, sprite: SPRITES[b.p.key], team: false})))
+      .sort((x, y) => y.spe - x.spe)
+      .map((r) => ({...r, spe: String(r.spe), w: Math.round(Number(r.spe) / maxSpe * 100), bar: r.team ? '#5ad1f0' : '#44506d', bg: r.team ? 'rgba(90,209,240,0.12)' : 'transparent', border: r.team ? '#5ad1f0' : 'transparent', ink: r.team ? '#ffffff' : '#a3acbf', weight: r.team ? '800' : '600', fade: r.team ? '1' : '0.7'}));
+
+    const out = {...base, loading: false, arch, checks, anaRows, anaHead: members.map((a) => ({sprite: a.sprite, name: a.name})), anaGrid: '76px repeat(' + members.length + ', minmax(0, 1fr)) 52px 52px',
+      anaCorner: matSide === 'def' ? 'Attack' : 'Target', anaColA: matSide === 'def' ? 'Weak' : '×2', anaColB: matSide === 'def' ? 'Resist' : 'Wall', speedRows, speedBarCol: full ? 'minmax(0, 2fr)' : '90px',
+      pTabs: [['summary', 'Summary'], ['def', 'Defense'], ['cov', 'Coverage'], ['speed', 'Speed']].map(([id, name]) => ({name, ...seg(pTab === id), pick: () => this.setState({ptab: id})})),
+      fTabs: [['graph', 'Graph'], ['arch', 'Archetype'], ['members', 'Members'], ['mat', 'Matrices'], ['speed', 'Speed tiers'], ['pool', 'Pool']].map(([id, name]) => ({name, ...seg(fullTab === id), pick: () => this.setState({ftab: id})})),
+      vSummary: view === 'summary', vChart: view === 'def' || view === 'cov' || view === 'mat', vSpeed: view === 'speed', vGraph: view === 'graph', vArch: view === 'arch', vMembers: view === 'members', vPool: view === 'pool',
+      showMatMode: view === 'mat', matSides: [['def', 'Defensive'], ['cov', 'Offensive']].map(([id, name]) => ({name, ...seg(matSide === id), pick: () => this.setState({mside: id})})),
+      matModes: [['mult', 'Multipliers'], ['pool', 'Weighted by the pool']].map(([id, name]) => ({name, ...seg(matMode === id), pick: () => this.setState({mmode: id})})),
+      matNote: weighted ? 'shaded: share of the pool' : ''};
+
+    if (view === 'graph') {
+      const cx = 450, cy = 380, R = 270;
+      const pos = members.map((_, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return {x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R}; });
+      const edges = [];
+      members.forEach((a, i) => members.forEach((b, j) => {
+        if (j <= i) return;
+        const cover = ORDER.filter((t) => (a.def[t] > 1 && b.def[t] < 1) || (b.def[t] > 1 && a.def[t] < 1)).length;
+        const both = ORDER.filter((t) => a.def[t] > 1 && b.def[t] > 1).length;
+        if (cover) edges.push({x1: pos[i].x, y1: pos[i].y, x2: pos[j].x, y2: pos[j].y, c: '#7be08a', w: 2 + cover * 2, dash: 'none', o: 0.85});
+        if (both) edges.push({x1: pos[i].x + 10, y1: pos[i].y + 10, x2: pos[j].x + 10, y2: pos[j].y + 10, c: '#ff8a80', w: 2 + both * 1.5, dash: '10 8', o: 0.85});
+      }));
+      const gsel = Math.min(this.st('gsel', 0), n - 1);
+      const nodes = members.map((a, i) => ({name: a.name, sprite: a.sprite, on: i === gsel, left: (pos[i].x / 900 * 100) + '%', top: (pos[i].y / 760 * 100) + '%', ring: TYPE[a.types[0]], glow: i === gsel ? '0 0 0 5px #5ad1f0' : 'none', pick: () => this.setState({gsel: i})}));
+      const s = members[gsel];
+      const links = [];
+      members.forEach((b, j) => {
+        if (j === gsel) return;
+        const covers = ORDER.filter((t) => s.def[t] > 1 && b.def[t] < 1), coveredBy = ORDER.filter((t) => b.def[t] > 1 && s.def[t] < 1), both = ORDER.filter((t) => s.def[t] > 1 && b.def[t] > 1);
+        if (covers.length) links.push({sprite: b.sprite, c: '#7be08a', text: b.name + ' takes the ' + covers.join(', ') + ' hits ' + s.name + ' fears.'});
+        if (coveredBy.length) links.push({sprite: b.sprite, c: '#7be08a', text: s.name + ' takes the ' + coveredBy.join(', ') + ' hits ' + b.name + ' fears.'});
+        if (both.length) links.push({sprite: b.sprite, c: '#ff8a80', text: 'Both weak to ' + both.join(', ') + '.'});
+      });
+      Object.assign(out, {edges, nodes, gs: {sprite: s.sprite, name: s.name, types: s.types.map((t) => ({name: t, c: TYPE[t]})), weak: ORDER.filter((t) => s.def[t] > 1).map((t) => ({name: t, c: TYPE[t], m: '×' + s.def[t]})), links}});
+    }
+    if (view === 'arch') {
+      const vals = FEATS.map(([k]) => feat[k]), proto = FEATS.map(([k]) => ARCH[top].proto[k]);
+      const axes = FEATS.map(([, label], i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / FEATS.length; const cs = Math.cos(a); return {label, x: (180 + cs * 115).toFixed(1), y: (150 + Math.sin(a) * 115).toFixed(1), lx: (180 + cs * 138).toFixed(1), ly: (150 + Math.sin(a) * 132).toFixed(1), anchor: cs > 0.3 ? 'start' : cs < -0.3 ? 'end' : 'middle'}; });
+      const rings = [0.25, 0.5, 0.75, 1].map((r) => ({pts: poly(FEATS.map(() => r), 180, 150, 115)}));
+      const mx = (o) => 60 + o * 620, my = (b) => 500 - b * 480;
+      Object.assign(out, {radar: {rings, axes, proto: poly(proto, 180, 150, 115), team: poly(vals, 180, 150, 115)},
+        mapPool: poolMons.map((p) => ({x: mx(pct(Math.max(p.base.atk, p.base.spa), offPool)).toFixed(1), y: my(pct(p.base.hp * (p.base.def + p.base.spd) / 2, bulkPool)).toFixed(1)})),
+        mapTeam: members.map((a) => ({sprite: a.sprite, x: mx(a.ix.offense).toFixed(1), y: my(a.ix.bulk).toFixed(1), ix: (mx(a.ix.offense) - 32).toFixed(1), iy: (my(a.ix.bulk) - 36).toFixed(1)}))});
+    }
+    if (view === 'members') {
+      out.cards = members.map((a) => {
+        const r = [], atk = a.moves.filter((x) => x.cat !== 'Status');
+        if (a.has('hazard')) r.push('Hazard setter');
+        if (a.has('removal')) r.push('Hazard removal');
+        if (a.has('pivot')) r.push('Pivot');
+        if (a.has('screens')) r.push('Screens');
+        if (a.ix.bulk > 0.6 && a.has('recovery') && a.ix.offense < 0.6) r.push('Wall');
+        if (a.has('setup') && atk.length >= 2) r.push('Setup sweeper');
+        if (a.has('priority')) r.push('Priority');
+        else if (a.ix.speed >= 0.8 && a.ix.offense >= 0.7) r.push('Fast attacker');
+        if (!r.length) r.push(atk.length >= 3 ? 'Attacker' : 'Support');
+        const nat = NAT[a.m.free ? a.m.nat : a.p.nature];
+        const top = Math.max(...STATS.map(([k]) => a.st[k]));
+        const it = d.items.find((x) => x.id === a.m.item);
+        return {name: a.name, sprite: a.sprite, types: a.types.map((t) => ({name: t, c: TYPE[t]})), roles: r, tera: teras[a.m.key] || (a.p.sdTypes || a.p.types)[0],
+          onTera: (e) => this.setState({teras: {...teras, [a.m.key]: e.target.value}}),
+          ix: [['Speed', a.ix.speed], ['Offense', a.ix.offense], ['Bulk', a.ix.bulk]].map(([name, v]) => ({name, v: Math.round(v * 100) + '%', c: tint(v)})),
+          stats: STATS.map(([k, name]) => ({name, v: a.st[k], w: Math.round(a.st[k] / Math.max(top, 1) * 100), bar: tint(a.p.base[k] / 180), ink: nat && nat[0] === k ? '#ff9d94' : nat && nat[1] === k ? '#8fc8ff' : '#a3acbf'})),
+          line: (it ? it.name : 'No item') + ' · ' + a.moves.map((x) => x.name).join(' · ')};
+      });
+    }
+    if (view === 'pool') {
+      const poolF = this.st('poolF', {gen: '9', sg: '5', fe: true, nl: false, nm: false});
+      const setF = (patch) => this.setState({poolF: {...poolF, ...patch}});
+      const gens = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((g) => ({v: g, label: 'Gen ' + g}));
+      const types = ORDER.map((t) => ({name: t, c: TYPE[t], pct: Math.round(typeShare[t] * 100) + '%', w: Math.round(typeShare[t] / Math.max(...ORDER.map((x) => typeShare[x])) * 100)})).sort((a, b) => b.w - a.w);
+      const hist = (vals, lo, hi, nb, mark) => {
+        const step = (hi - lo) / nb, counts = Array.from({length: nb}, () => 0);
+        vals.forEach((v) => { counts[Math.min(nb - 1, Math.max(0, Math.floor((v - lo) / step)))]++; });
+        const mx = Math.max(...counts, 1);
+        return counts.map((c, i) => ({h: Math.round(c / mx * 100), c: mark.some((v) => v >= lo + i * step && v < lo + (i + 1) * step) ? '#5ad1f0' : '#44506d', title: Math.round(lo + i * step) + '–' + Math.round(lo + (i + 1) * step) + ': ' + c}));
+      };
+      const bst = (p) => STATS.reduce((s, [k]) => s + p.base[k], 0);
+      out.pool = {gen: poolF.gen, sg: poolF.sg, gens, onGen: (e) => setF({gen: e.target.value}), onSg: (e) => setF({sg: e.target.value}),
+        flags: [['fe', 'Fully evolved'], ['nl', 'No legendaries'], ['nm', 'No mythicals']].map(([k, label]) => ({label, on: poolF[k], flip: () => setF({[k]: !poolF[k]})})),
+        size: String(poolMons.length), types,
+        hists: [{title: 'Base stat total', note: 'team in blue', lo: '250', hi: '700', bins: hist(poolMons.map(bst), 250, 700, 15, members.map((a) => bst(a.p)))},
+          {title: 'Base Speed', note: 'team in blue', lo: '0', hi: '160', bins: hist(poolMons.map((p) => p.base.spe), 0, 160, 16, members.map((a) => a.p.base.spe))}]};
+      out.poolLabel = 'Gen ' + poolF.gen + ' · species ≤ Gen ' + poolF.sg + (poolF.fe ? ' · fully evolved' : '');
+      out.teraOk = poolF.gen === '9';
+    }
+    return out;
+  }
+}
+</script>
+</body>
+</html>
