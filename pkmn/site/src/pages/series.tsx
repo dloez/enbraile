@@ -52,7 +52,7 @@ export function SeriesPage() {
   return (
     <>
       <SeriesHeader series={series} />
-      <main className={cn(toolPage, "gap-3 pt-5 pb-6 sm:gap-3.5 sm:pt-6 sm:pb-8")}>
+      <main className={cn(toolPage, "flex-none gap-3 pt-5 pb-6 sm:gap-3.5 sm:pt-6 sm:pb-8")}>
         <League />
         <Trainers series={series} onChanged={reload} />
       </main>
