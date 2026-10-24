@@ -2,9 +2,9 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET`, `POST`, `PUT` or `DELETE` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Design the team list, the team builder and the PC's summary
+## Design the team builder and the PC's summary
 
-The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team list and team builder (sources picker, free member editor, the analysis views including Pool and Compare), and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards.
+The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards. The team list was signed off on 2026-10-25 and is frozen as `teams-list.dc.html` and `teams-list-phone.dc.html`.
 
 **Do:**
 - [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
@@ -91,7 +91,7 @@ The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424`
 - Forbidden: a second box or summary for the PC page; raw colours in components.
 
 **Touches:** `pkmn/site/src/components/pc/`, `pkmn/site/src/index.css`, `docs/pkmn/site/`
-**After:** Design the team list, the team builder and the PC's summary
+**After:** Design the team builder and the PC's summary
 
 ## Build teams locked to a snapshot, stored in the account
 
@@ -110,7 +110,7 @@ The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424`
 - Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Design the team list, the team builder and the PC's summary
+**After:** Design the team builder and the PC's summary
 
 ## A trainer row's Teams tile opens their teams
 
@@ -204,7 +204,7 @@ Team Analysis's pool bar per team, defaulted from the series, the Pool view, Spe
 
 ## Compare teams; /team-analysis and the tools list go
 
-Compare puts 2–4 of the player's teams side by side with the scoreboard and damage calc. With it, `/team-analysis`, its page, drafts and `carryTeam`, `src/tools.ts` and the tools home are deleted ([Team Building](discovery.md#team-building), [Pages](discovery.md#pages)).
+Compare puts 2–4 teams side by side, the player's or other trainers', picked on the team list after its Compare button, with the scoreboard and damage calc. With it, `/team-analysis`, its page, drafts and `carryTeam`, `src/tools.ts` and the tools home are deleted ([Team Building](discovery.md#team-building), [Pages](discovery.md#pages)).
 
 **Do:**
 - [ ] Compare in the team builder over stored teams.
@@ -212,7 +212,7 @@ Compare puts 2–4 of the player's teams side by side with the scoreboard and da
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `grep -rn "team-analysis:drafts\|carryTeam\|tools.ts\|/team-analysis" pkmn/site/src docs/pkmn` finds nothing.
-- Human-run: compare three of your teams and read the scoreboard and a damage calc; open `/team-analysis` and see the not-found page.
+- Human-run: compare two of your teams and another trainer's and read the scoreboard and a damage calc; open `/team-analysis` and see the not-found page.
 - Reuse: `src/team-analysis/components/compare-view.tsx`, `src/analysis/compare.ts`.
 - Neighbors: the team builder.
 - Forbidden: keeping `/team-analysis` as a redirect.
