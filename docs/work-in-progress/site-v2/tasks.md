@@ -4,7 +4,7 @@ Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` f
 
 ## Design the team builder and the PC's summary
 
-The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team builder (sources picker, free member editor, the analysis views including Pool and Compare), and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards. The team list was signed off on 2026-10-25 and is frozen as `teams-list.dc.html` and `teams-list-phone.dc.html`.
+The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team builder (sources picker, the team's size up to eight and the analysis over a pick of six ([How many members does a team hold?](discovery.md#team-building)), free member editor, the analysis views including Pool and Compare), the team list's rows at sizes above six, and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards. The team list was signed off on 2026-10-25 and is frozen as `teams-list.dc.html` and `teams-list-phone.dc.html`.
 
 **Do:**
 - [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
@@ -111,6 +111,23 @@ The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424`
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
 **After:** Design the team builder and the PC's summary
+
+## Teams of up to eight, analysed whole or as a pick of six
+
+A team holds six members by default and up to eight; its size is set like its sources, free for the owner or fixed by a tournament, and the analysis reads every member or a pick of six ([How many members does a team hold?](discovery.md#team-building), 2026-10-25).
+
+**Do:**
+- [ ] The size in the stored team (6 to 8, default 6) and its migration; the builder's size control and its cards for slots 7 and 8; the team list's rows at sizes above six; the analysis' switch between every member and a pick of six; Showdown copy and paste of more than six.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, raise a team to eight, fill it, pick six for the analysis and see it change, reload and see the size and the pick kept.
+- Human-run: build an eight-member team, copy it for Showdown and paste it back as a new team.
+- Reuse: the team builder from the entry above; `src/analysis/`.
+- Neighbors: the team list.
+- Forbidden: a size above eight.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
+**After:** Build teams locked to a snapshot, stored in the account
 
 ## A trainer row's Teams tile opens their teams
 
