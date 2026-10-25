@@ -1,9 +1,8 @@
 import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import Markdown, { type Components } from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { buttonClass, Segmented } from "@/components/controls";
 import { toolPage } from "@/components/page";
+import { Rules } from "@/components/rules";
 import { PixelIcon } from "@/components/pixel-icon";
 import { PLAYER_FILL, PLAYER_RING, PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
@@ -612,45 +611,3 @@ function Tile({ label, value, alarm, wide, link }: { label: string; value?: numb
   );
 }
 
-const RULES: Components = {
-  h1: ({ children }) => <h3 className="m-0 mb-3 font-heading text-4xl font-normal text-white">{children}</h3>,
-  h2: ({ children }) => <h4 className="m-0 mt-5 mb-1 font-heading text-[1.5625rem] font-normal break-after-avoid text-primary first:mt-0 sm:text-3xl">{children}</h4>,
-  h3: ({ children }) => <h5 className="m-0 mt-4 mb-1 font-heading text-2xl font-normal break-after-avoid text-primary">{children}</h5>,
-  h4: ({ children }) => <h6 className="m-0 mt-3 mb-1 font-heading text-xl font-normal break-after-avoid text-subtle">{children}</h6>,
-  p: ({ children }) => <p className="m-0 mb-3">{children}</p>,
-  ul: ({ children }) => <ul className="m-0 mb-3 list-disc pl-5">{children}</ul>,
-  ol: ({ children }) => <ol className="m-0 mb-3 list-decimal pl-5">{children}</ol>,
-  li: ({ children }) => <li className="mb-1.5">{children}</li>,
-  a: ({ children, href }) => (
-    <a href={href} className="text-primary underline underline-offset-2">
-      {children}
-    </a>
-  ),
-  strong: ({ children }) => <strong className="font-extrabold text-white">{children}</strong>,
-  code: ({ children }) => <code className="rounded-sm bg-muted px-1 text-base">{children}</code>,
-  blockquote: ({ children }) => <blockquote className="m-0 mb-3 border-l-3 border-cell-hi pl-3.5 text-subtle">{children}</blockquote>,
-  table: ({ children }) => (
-    <div className="mb-3 overflow-x-auto break-inside-avoid">
-      <table className="w-full border-collapse text-base">{children}</table>
-    </div>
-  ),
-  th: ({ children }) => <th className="border-b-3 px-2 py-1 text-left font-bold">{children}</th>,
-  td: ({ children }) => <td className="border-b px-2 py-1 align-top">{children}</td>,
-  hr: () => <hr className="my-4 border-t-3 border-cell" />,
-};
-
-function Rules({ rules }: { rules: string }) {
-  if (rules.trim() === "") return null;
-  return (
-    <section aria-labelledby="rules-title" className={cn(toolPage, "flex-none gap-3 pt-2 pb-10 sm:gap-3.5 sm:pb-14")}>
-      <h2 id="rules-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
-        Rules
-      </h2>
-      <div className="rounded-2xl border-3 bg-card px-4.5 pt-4.5 pb-1 text-base leading-relaxed sm:px-8 sm:text-lg sm:py-6.5 lg:columns-2 lg:gap-14 lg:[column-rule:3px_solid_var(--cell)]">
-        <Markdown remarkPlugins={[remarkGfm]} skipHtml components={RULES}>
-          {rules}
-        </Markdown>
-      </div>
-    </section>
-  );
-}
