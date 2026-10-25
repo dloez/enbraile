@@ -80,23 +80,6 @@ The PC's one link to teams is "Add to team" in its summary, a menu of the reader
 - Does another player's PC summary show "Add to team" at all? Recommended: yes, since it is the PC's one link to teams and discovery names scouting an opponent as a reason for any player's snapshot; the alternative keeps it on the reader's own PC and adds others' snapshots only from the team page's **+ Source**.
 - If it shows, does its menu list every team of the reader's, picking one adding this snapshot to that team's sources when it is not one already, and "New team" making a team on this snapshot? Recommended: yes; the alternative lists only the reader's teams that already have this snapshot as a source. The reader's own PC lists only those today, so the answer sets its menu too.
 
-## Bring the pkmn index and the design system up to the landed team builder
-
-Two docs the landed entries did not reach still describe the site before them. `docs/pkmn/index.md`'s Team Builder and Site rows say teams are built "from one of their snapshots" with "the snapshot's item and Mini Seta limits", and name no free members, which `cb840cb` (several snapshots, any player's) and `5c42c8c` ("Any Pokémon") changed ([Team Builder](../../pkmn/site/explanation/team-builder.md), first paragraph). [Site Design System → Patterns](../../pkmn/site/reference/design-system.md#patterns) still has the search and filter pattern take "a native `select` styled the same", while every select on the site is `SelectField` and `src/` holds no `<select` since `2e49ee9` took Team Analysis's last ones ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), "Dropdowns are the site's own"); and its "Tabs (file tabs)" pattern and the quiet icon button's "tab rename/close" describe Open Sheet's import tabs, which went on 2026-10-25, with no `rounded-t-lg border border-b-0` tab left in `src/`.
-
-**Do:**
-- [ ] `docs/pkmn/index.md`'s Team Builder and Site rows say what Team Builder's first paragraph says: any number of snapshots, any player's, and "Any Pokémon" for free members, each member limited by its own snapshot's items and Mini Setas.
-- [ ] The design system's search and filter pattern names `SelectField` in place of the native `select`; the file-tabs pattern, and "tab rename/close" in the quiet icon button's uses, go if nothing in `src/` draws them, checked against the code first.
-
-**Acceptance:**
-- Claude-run: `grep -rn "one of their snapshots" docs/pkmn/index.md` finds nothing; `grep -rn "native \`select\`" docs/pkmn/site/` finds nothing; every pattern left in the design system's Patterns names something `grep` finds in `pkmn/site/src/`.
-- Human-run: none.
-- Reuse: [Team Builder](../../pkmn/site/explanation/team-builder.md)'s first paragraph; `SelectField`'s row in the design system's Shared table.
-- Neighbors: `docs/index.md`'s pkmn row.
-- Forbidden: code changes; restating Team Builder's facts in the index beyond a row's summary.
-
-**Touches:** `docs/pkmn/index.md`, `docs/pkmn/site/reference/design-system.md`
-
 ## Keep Radix Select out of the entry script
 
 Pass four found the entry script carrying Radix's Select and Floating UI on every page: `SiteShell` (`src/components/site-shell.tsx`) imports `WaitingPage` statically, `src/pages/waiting.tsx` imports `buttonClass` from `src/components/controls.tsx`, and that file also holds `SelectField`, over `src/components/ui/select.tsx`. Split off in a trial build they made a 31 kB compressed chunk ([The pkmn Site → Performance](../../pkmn/site/explanation/site.md#performance), pass four, and its "What stays"). Confirmed 2026-10-25 by a build of `1e2fd84`: the entry chunk (`assets/index-*.js`, 121 kB gzipped) holds `radix-select-viewport` and `SelectViewport`. The owner's four passes are done; this is the cost pass four named and left, inside the chunk-per-route decision ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), "Each page is its own chunk").
