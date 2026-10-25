@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 import { TYPES } from "@/analysis/dex";
-import { buttonClass } from "@/components/controls";
+import { buttonClass, SelectField } from "@/components/controls";
 import { Bag } from "@/components/pc/bag";
 import { MonSprite, SummaryBody, SummaryHead } from "@/components/pc/summary";
 import { Sheet as BottomSheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -140,21 +140,7 @@ export function PcBox({ mons, selected, onPick, actions }: {
             className="min-w-0 flex-1 bg-transparent outline-none"
           />
         </label>
-        <label className="flex h-12 items-center rounded-[10px] border-3 bg-ink pr-2 pl-3 focus-within:border-primary">
-          <span className="sr-only">Type</span>
-          <select
-            value={type}
-            onChange={(event) => setType(event.target.value)}
-            className="cursor-pointer bg-transparent pr-1 font-heading text-[1.375rem] text-foreground outline-none"
-          >
-            <option value="">All types</option>
-            {TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField label="Type" value={type} onChange={setType} all="All types" options={TYPES.map((t) => ({ value: t, label: t }))} />
         {actions}
       </div>
       <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-xl bg-pc" style={CHECKER}>

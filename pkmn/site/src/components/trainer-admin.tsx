@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { buttonClass, fieldClass } from "@/components/controls";
+import { buttonClass, fieldClass, SelectField } from "@/components/controls";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -88,24 +88,17 @@ export function TrainerAdmin({
     <div className="col-span-2 flex flex-[1_0_100%] flex-col gap-3 rounded-xl border-3 border-dashed border-warning/60 bg-card px-4 py-3">
       <span className="font-heading text-xl text-warning">Admin</span>
       <Row label="Progress" source={<Source hand={handProgress} save={fromSave} />}>
-        <select
-          aria-label={`${trainer.name}'s progress`}
+        <SelectField
+          label={`${trainer.name}'s progress`}
+          size="sm"
           disabled={busy}
           value={handProgress ? (trainer.progress ?? "") : ""}
-          onChange={(event) =>
-            void (event.target.value
-              ? run(`${base}/progress`, "PUT", { milestone: event.target.value })
-              : run(`${base}/progress`, "DELETE"))
+          onChange={(value) =>
+            void (value ? run(`${base}/progress`, "PUT", { milestone: value }) : run(`${base}/progress`, "DELETE"))
           }
-          className={cn(fieldClass, focus, "cursor-pointer text-base")}
-        >
-          <option value="">From the save ({fromSave})</option>
-          {milestones.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
+          all={`From the save (${fromSave})`}
+          options={milestones.map((m) => ({ value: m, label: m }))}
+        />
       </Row>
       {shown && at && shown.sources && (
         <>
@@ -143,19 +136,14 @@ export function TrainerAdmin({
               )
             }
           >
-            <select
-              aria-label={`Move ${trainer.name}'s ${shown.milestone} snapshot to`}
+            <SelectField
+              label={`Move ${trainer.name}'s ${shown.milestone} snapshot to`}
+              size="sm"
               disabled={busy || free.length === 0}
               value={target}
-              onChange={(event) => setTarget(event.target.value)}
-              className={cn(fieldClass, focus, "cursor-pointer text-base")}
-            >
-              {free.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
+              onChange={setTarget}
+              options={free.map((m) => ({ value: m, label: m }))}
+            />
             <button
               type="button"
               disabled={busy || !target}

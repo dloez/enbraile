@@ -78,15 +78,18 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
           <Link
             to="/players/$player/series/$number"
             params={{ player: page.player.id, number: String(page.series.number) }}
+            aria-label={`${page.player.name} in Series ${page.series.number}`}
             className="-my-2.5 flex min-h-11 items-center gap-2 text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
               <path d="M12 2L2 9l10 7z" />
             </svg>
             {page.player.name}
-            <span aria-hidden="true" className="text-faint">
-              ·
-            </span>
+          </Link>
+          <span aria-hidden="true" className="mx-2 self-center text-faint">
+            ·
+          </span>
+          <Link to="/series/$number" params={{ number: String(page.series.number) }} className="-my-2.5 flex min-h-11 items-center gap-2 text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50">
             Series {page.series.number}
           </Link>
         </nav>

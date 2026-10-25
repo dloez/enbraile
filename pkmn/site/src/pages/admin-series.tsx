@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { buttonClass, fieldClass, Panel, quietIconClass, Segmented } from "@/components/controls";
+import { buttonClass, fieldClass, Panel, quietIconClass, Segmented, SelectField } from "@/components/controls";
 import { listPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
@@ -205,19 +205,16 @@ function AdminSeriesForm() {
         </div>
         <label className="flex flex-col gap-1.5 text-sm text-muted-foreground">
           Game
-          <select
+          <SelectField
+            label="Game"
+            size="sm"
             disabled={!editable}
             value={draft.gameId ?? ""}
-            onChange={(event) => change({ gameId: event.target.value || null })}
-            className={cn(fieldClass, focus, "cursor-pointer disabled:opacity-60")}
-          >
-            <option value="">No game</option>
-            {games.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.fileName ? g.name : `${g.name} (no file)`}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => change({ gameId: value || null })}
+            all="No game"
+            options={games.map((g) => ({ value: g.id, label: g.fileName ? g.name : `${g.name} (no file)` }))}
+            className="w-full justify-between"
+          />
         </label>
         <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
           Ingestion
@@ -305,19 +302,14 @@ function AdminSeriesForm() {
                   onChange={(event) => set({ name: event.target.value })}
                   className={cn(fieldClass, focus, "min-w-32 flex-1 bg-card disabled:opacity-60")}
                 />
-                <select
-                  aria-label={`Milestone ${index + 1} kind`}
+                <SelectField
+                  label={`Milestone ${index + 1} kind`}
+                  size="sm"
                   disabled={!milestonesEditable}
                   value={m.mark}
-                  onChange={(event) => set({ mark: event.target.value as MilestoneMark })}
-                  className={cn(fieldClass, focus, "cursor-pointer bg-card disabled:opacity-60")}
-                >
-                  {MILESTONE_MARKS.map((mark) => (
-                    <option key={mark} value={mark}>
-                      {MARK_NAMES[mark]}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(value) => set({ mark: value as MilestoneMark })}
+                  options={MILESTONE_MARKS.map((mark) => ({ value: mark, label: MARK_NAMES[mark] }))}
+                />
                 {milestonesEditable && (
                   <span className="flex">
                     <button type="button" aria-label="Move up" title="Move up" disabled={index === 0} onClick={() => move(-1)} className={quietIconClass}>
@@ -430,18 +422,13 @@ function RulesEditor({ rules, others, onChange }: { rules: string; others: Admin
     <Panel title="Rules">
       {sources.length > 0 && (
         <div className="flex flex-wrap items-center gap-3">
-          <select
-            aria-label="Copy rules from"
+          <SelectField
+            label="Copy rules from"
+            size="sm"
             value={picked?.id ?? ""}
-            onChange={(event) => setSource(event.target.value)}
-            className={cn(fieldClass, focus, "cursor-pointer")}
-          >
-            {sources.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            onChange={setSource}
+            options={sources.map((s) => ({ value: s.id, label: s.name }))}
+          />
           <button type="button" disabled={!picked} onClick={() => picked && onChange(picked.rules)} className={buttonClass}>
             Copy from {picked?.name}
           </button>
