@@ -469,9 +469,11 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
                 {m.mark === "tournament" ? <Trophy className="size-4" /> : shortName(m.name)}
               </span>
               <span className="relative grid h-6.5 w-full place-items-center max-sm:hidden">
-                <span className="absolute inset-x-0 top-2.75 h-1 bg-cell-hi" />
+                <span className={cn("absolute inset-x-0 top-2.75 h-1 bg-cell-hi", index === 0 && "left-1/2", index === heads.length - 1 && "right-1/2")} />
                 {m.mark === "tournament" ? (
-                  <Trophy className="relative size-6" />
+                  <span className="relative grid size-6.5 place-items-center rounded-full border-2 border-trophy-rim bg-trophy">
+                    <Trophy className="size-3.5" />
+                  </span>
                 ) : (
                   <span className={cn("relative rounded-full bg-cell", m.round > 0 ? "size-4.5 ring-3 ring-round" : "size-3 ring-3 ring-cell-hi")} />
                 )}
