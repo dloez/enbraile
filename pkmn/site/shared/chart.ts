@@ -1,4 +1,5 @@
-import { available, dexFor, effectiveness, type Gen, type TypeName } from "@/analysis/dex";
+import { available, dexFor, effectiveness, type Gen } from "./dex.js";
+import type { TypeName } from "./mon.js";
 
 type Modifier = Partial<Record<TypeName, number>>;
 

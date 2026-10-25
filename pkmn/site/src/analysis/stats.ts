@@ -1,4 +1,4 @@
-import { typesIn } from "@/analysis/dex";
+import { typesIn } from "../../shared/dex";
 import type { Metric, Pool } from "@/analysis/pool";
 
 export interface Description {

@@ -5,7 +5,8 @@ import { TypeTag } from "@/components/pc/summary";
 import { UnknownMark } from "@/components/marks";
 import { PLAYER_FILL } from "@/components/player-badge";
 import { cn } from "@/lib/utils";
-import { canLearn, currentAbility, describeItem, describeMove, displayName, type Mon } from "@/teams/dex";
+import { canLearn, currentAbility, displayName, type Mon } from "../../../shared/mon";
+import { describeItem, describeMove } from "../../../shared/describe";
 import type { Member } from "@/teams/team";
 
 export type Focus = "look" | "item" | "ability" | "set" | { move: number } | null;

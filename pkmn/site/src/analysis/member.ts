@@ -1,6 +1,6 @@
 import { toID, type StatID, type StatsTable } from "@pkmn/dex";
-import { ATE_ABILITIES, abilityIn } from "@/analysis/chart";
-import { dexFor, type Gen } from "@/analysis/dex";
+import { ATE_ABILITIES, abilityIn } from "../../shared/chart";
+import { dexFor, type Gen } from "../../shared/dex";
 import type { PokemonSet } from "@/analysis/paste";
 
 export const STATS: readonly StatID[] = ["hp", "atk", "def", "spa", "spd", "spe"];

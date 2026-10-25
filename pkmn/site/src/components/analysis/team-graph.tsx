@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import cytoscape, { type Core, type ElementDefinition, type LayoutOptions, type StylesheetJson } from "cytoscape";
-import { typesIn } from "@/analysis/dex";
+import { typesIn } from "../../../shared/dex";
 import type { Member } from "@/analysis/member";
 import type { Analysis, SynergyEdge } from "@/analysis/team";
 import { typeIconSvg } from "@/lib/type-icons";

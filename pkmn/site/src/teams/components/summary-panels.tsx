@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Panel } from "@/components/controls";
-import { displayName } from "@/teams/dex";
+import { displayName } from "../../../shared/mon";
 import type { Slots, Stocks } from "@/teams/team";
 import { analysed, defensiveChart, offensiveCoverage, speedOrder } from "@/teams/analysis";
 import { TypeDot } from "@/components/marks";

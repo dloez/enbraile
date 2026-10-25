@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
-import { describeItem, describeTm, type BagItem } from "@/teams/dex";
-import type { Sheet } from "@/teams/schema";
+import type { BagItem, BagTm } from "../../../shared/mon";
 import { GapWarning } from "@/components/pc/summary";
 import type { ExportGap } from "../../../shared/snapshot";
 import { UnknownMark } from "@/components/marks";
@@ -58,13 +57,14 @@ function TmDisc({ type, className }: { type: string | null; className?: string }
 }
 
 interface BagProps {
-  sheet: Sheet;
+  items: readonly BagItem[];
+  tms: readonly BagTm[];
   gaps?: readonly ExportGap[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function Bag({ sheet, gaps = [], open, onOpenChange }: BagProps) {
+export function Bag({ items, tms, gaps = [], open, onOpenChange }: BagProps) {
   const [pocket, setPocket] = useState<PocketId>("items");
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
@@ -72,8 +72,6 @@ export function Bag({ sheet, gaps = [], open, onOpenChange }: BagProps) {
   useEffect(() => {
     if (open) setPicked(null);
   }, [open]);
-  const items = useMemo(() => sheet.items.map(describeItem), [sheet]);
-  const tms = useMemo(() => sheet.tms.map(describeTm), [sheet]);
   const q = query.trim().toLowerCase();
 
   const pockets: [PocketId, string, number][] = [

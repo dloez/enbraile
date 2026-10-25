@@ -1,22 +1,10 @@
 import { toID } from "@pkmn/dex";
 import { parsePaste, type PokemonSet } from "@/analysis/paste";
-import { currentAbility, describeItem, describeMove, displayName, NATURES, speciesAbilities, STAT_LABELS, STATS, type Mon } from "@/teams/dex";
+import { currentAbility, displayName, type Mon, STAT_LABELS, STATS } from "../../shared/mon";
+import { describeItem, describeMove } from "../../shared/describe";
+import { memberMon, NATURES, speciesAbilities } from "@/teams/dex";
+import { emptySlots, freeSet, isFree, itemsLeft, MAX_TEAM_SIZE, TEAM_SIZE, MOVE_SLOTS, type FreeMember, type Member, type OwnMember, type Slots, type Stocks } from "@/teams/team";
 import { describeMember } from "../../shared/species";
-import {
-  emptySlots,
-  freeSet,
-  isFree,
-  itemsLeft,
-  MAX_TEAM_SIZE,
-  TEAM_SIZE,
-  memberMon,
-  MOVE_SLOTS,
-  type FreeMember,
-  type Member,
-  type OwnMember,
-  type Slots,
-  type Stocks,
-} from "@/teams/team";
 import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL } from "../../shared/team";
 import type { StatsTable } from "@pkmn/dex";
 

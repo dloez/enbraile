@@ -19,36 +19,12 @@ import { MoveEditor } from "@/teams/components/move-picker";
 import { PasteDialog } from "@/teams/components/paste-dialog";
 import { AnyMark, SnapshotMenu, sourceLabel } from "@/teams/components/snapshot-menu";
 import { SheetAnalysis } from "@/teams/components/sheet-analysis";
-import { currentAbility, describeMove, describePokemon, type Mon } from "@/teams/dex";
+import { currentAbility, type Mon } from "../../shared/mon";
+import { defensesOf, describeMove, describePokemon, describeTm } from "../../shared/describe";
+import { liveSlots, memberMon } from "@/teams/dex";
+import { EMPTY_SHEET, freeCount, giveItem, isFree, lastFilled, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
 import { showdownTeam } from "@/teams/showdown";
-import {
-  EMPTY_SHEET,
-  freeCount,
-  giveItem,
-  isFree,
-  lastFilled,
-  liveSlots,
-  memberMon,
-  ownOf,
-  putFree,
-  putMember,
-  removeMember,
-  resized,
-  setAbility,
-  setasLeft,
-  setFree,
-  setMove,
-  takeItem,
-  usedBy,
-  PICK_SIZE,
-  TEAM_SIZE,
-  TEAM_SIZES,
-  type Member,
-  type Slots,
-  type Stock,
-  type Stocks,
-} from "@/teams/team";
 import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
 import type { TeamPool } from "../../shared/pool";
 
@@ -124,9 +100,11 @@ function BackLink() {
 
 function asSet(mon: Mon, member: Member): Mon {
   const ability = member.ability ?? currentAbility(mon);
+  const abilities = mon.abilities.map((a) => ({ ...a, current: a.id === ability }));
   return {
     ...mon,
-    abilities: mon.abilities.map((a) => ({ ...a, current: a.id === ability })),
+    abilities,
+    defenses: defensesOf(mon.types, abilities),
     learnable: mon.learnable && { ...mon.learnable, current: member.moves.flatMap((m) => (m ? [describeMove(m)] : [])) },
   };
 }
@@ -146,6 +124,7 @@ function holding(sources: readonly TeamSource[]): Held[] {
     colour: playerColour(source.player.id),
     sheet: source.snapshot,
     mons: source.snapshot.pokemon.map(describePokemon),
+    tms: source.snapshot.tms.map(describeTm),
     gaps: source.missing?.missing ?? [],
   }));
 }
@@ -330,7 +309,7 @@ function Builder({ page }: { page: TeamPage }) {
             </button>
           </div>
           <SummaryHead mon={shown} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
-          <SummaryBody key={`${panel.slot}:${ownOf(member)?.source ?? "free"}:${mon.index}`} mon={shown} sheet={sheet} gaps={own?.gaps ?? []} />
+          <SummaryBody key={`${panel.slot}:${ownOf(member)?.source ?? "free"}:${mon.index}`} mon={shown} tms={own?.tms ?? []} gaps={own?.gaps ?? []} />
         </>
       );
     }

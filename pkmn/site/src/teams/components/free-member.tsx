@@ -6,11 +6,11 @@ import { MonSprite } from "@/components/pc/mon-sprite";
 import { SummaryHead, tint } from "@/components/pc/summary";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet as BottomSheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { TYPES } from "@/analysis/dex";
 import { buildPool, type PoolFilters } from "@/analysis/pool";
 import { cn } from "@/lib/utils";
 import { EditorHead, editorScroll } from "@/teams/components/editors";
-import { displayName, freeMon, NATURES, speciesAbilities, STAT_LABELS, STATS, type Mon } from "@/teams/dex";
+import { displayName, type Mon, STAT_LABELS, STATS, TYPES } from "../../../shared/mon";
+import { freeMon, NATURES, speciesAbilities } from "@/teams/dex";
 import { freeSet, newFreeMember, type FreeMember, type FreeSet } from "@/teams/team";
 import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL } from "../../../shared/team";
 

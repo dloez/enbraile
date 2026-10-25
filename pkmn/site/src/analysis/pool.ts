@@ -1,5 +1,5 @@
 import type { Species, StatsTable } from "@pkmn/dex";
-import { available, dexFor, typesIn, type Gen } from "@/analysis/dex";
+import { available, dexFor, typesIn, type Gen } from "../../shared/dex";
 import { STATS, type Member } from "@/analysis/member";
 import type { TeamPool } from "../../shared/pool";
 

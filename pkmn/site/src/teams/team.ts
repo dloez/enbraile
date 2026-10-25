@@ -1,4 +1,4 @@
-import { freeMon, type Mon } from "@/teams/dex";
+import type { Mon } from "../../shared/mon";
 import type { Sheet } from "@/teams/schema";
 import { isFree, MAX_IV, MOVE_SLOTS, type FreeMember, type OwnMember, type TeamMember, type TeamSlots } from "../../shared/team";
 
@@ -21,18 +21,9 @@ export type Stocks = ReadonlyMap<string, Stock>;
 
 export const EMPTY_SHEET: Sheet = { pokemon: [], items: [], tms: [] };
 
-export function memberMon(member: Member | null, stocks: Stocks): Mon | undefined {
-  if (!member) return undefined;
-  if (isFree(member)) {
-    const mon = freeMon(member);
-    return mon.species.known ? mon : undefined;
-  }
+export function ownMon(member: OwnMember, stocks: Stocks): Mon | undefined {
   const mon = stocks.get(member.source)?.mons[member.index];
   return mon && mon.species.id === member.species ? mon : undefined;
-}
-
-export function liveSlots(slots: Slots, stocks: Stocks): Slots {
-  return slots.map((member) => (memberMon(member, stocks) ? member : null));
 }
 
 export function ownOf(member: Member | null): OwnMember | null {
@@ -149,7 +140,10 @@ export function setAbility(slots: Slots, slot: number, ability: string | null, c
 }
 
 export function setasNeeded(slots: Slots, stocks: Stocks, source: string): number {
-  return slots.filter((member) => ownOf(member)?.source === source && member?.ability !== null && memberMon(member, stocks)).length;
+  return slots.filter((member) => {
+    const own = ownOf(member);
+    return own?.source === source && own.ability !== null && ownMon(own, stocks);
+  }).length;
 }
 
 export function setasLeft(slots: Slots, stocks: Stocks, source: string): number {

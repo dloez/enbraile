@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
-import { TYPES } from "@/analysis/dex";
 import { buttonClass, SelectField } from "@/components/controls";
 import { Bag } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
@@ -8,8 +7,7 @@ import { SummaryBody, SummaryHead } from "@/components/pc/summary";
 import { Sheet as BottomSheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
-import { describePokemon, displayName, type Mon } from "@/teams/dex";
-import type { Sheet } from "@/teams/schema";
+import { displayName, TYPES, type BagItem, type BagTm, type Mon } from "../../../shared/mon";
 import type { ExportGap } from "../../../shared/snapshot";
 
 function matches(mon: Mon, query: string, type: string): boolean {
@@ -166,22 +164,22 @@ export function PcBox({ mons, selected, onPick, actions, taken }: {
   );
 }
 
-export function SummaryAside({ mon, sheet, footer, gaps }: { mon: Mon; sheet: Sheet; footer?: ReactNode; gaps?: readonly ExportGap[] }) {
+export function SummaryAside({ mon, tms, footer, gaps }: { mon: Mon; tms: readonly BagTm[]; footer?: ReactNode; gaps?: readonly ExportGap[] }) {
   return (
     <aside
       aria-label="Summary"
       className="sticky top-4 flex max-h-[calc(100svh-2rem)] w-95 flex-none flex-col self-start overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0 lg:self-stretch"
     >
       <SummaryHead mon={mon} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
-      <SummaryBody key={mon.index} mon={mon} sheet={sheet} gaps={gaps} />
+      <SummaryBody key={mon.index} mon={mon} tms={tms} gaps={gaps} />
       {footer}
     </aside>
   );
 }
 
-export function SummarySheet({ mon, sheet, open, onClose, footer, gaps }: {
+export function SummarySheet({ mon, tms, open, onClose, footer, gaps }: {
   mon: Mon | undefined;
-  sheet: Sheet;
+  tms: readonly BagTm[];
   gaps?: readonly ExportGap[];
   open: boolean;
   onClose: () => void;
@@ -197,7 +195,7 @@ export function SummarySheet({ mon, sheet, open, onClose, footer, gaps }: {
               closeRoom
               title={(text) => <SheetTitle className="truncate font-heading text-[2.25rem] leading-[0.85] font-normal">{text}</SheetTitle>}
             />
-            <SummaryBody key={mon.index} mon={mon} sheet={sheet} gaps={gaps} />
+            <SummaryBody key={mon.index} mon={mon} tms={tms} gaps={gaps} />
             {footer}
           </>
         )}
@@ -206,9 +204,14 @@ export function SummarySheet({ mon, sheet, open, onClose, footer, gaps }: {
   );
 }
 
-export function SnapshotPc({ sheet, gaps = [], footer }: { sheet: Sheet; gaps?: readonly ExportGap[]; footer?: (mon: Mon, done: () => void) => ReactNode }) {
+export function SnapshotPc({ mons, items, tms, gaps = [], footer }: {
+  mons: readonly Mon[];
+  items: readonly BagItem[];
+  tms: readonly BagTm[];
+  gaps?: readonly ExportGap[];
+  footer?: (mon: Mon, done: () => void) => ReactNode;
+}) {
   const wide = useMediaQuery("(min-width: 64rem)");
-  const mons = useMemo(() => sheet.pokemon.map(describePokemon), [sheet]);
   const [picked, setPicked] = useState<number | null>(null);
   const [bagOpen, setBagOpen] = useState(false);
   const selected = picked ?? (wide ? 0 : null);
@@ -218,19 +221,19 @@ export function SnapshotPc({ sheet, gaps = [], footer }: { sheet: Sheet; gaps?: 
     <>
       <div className="flex flex-1 gap-6 pt-3.5 pb-3 sm:pb-6 lg:min-h-0">
         <PcBox mons={mons} selected={selected} onPick={setPicked} actions={<BagButton onClick={() => setBagOpen(true)} />} />
-        {wide && selectedMon && <SummaryAside mon={selectedMon} sheet={sheet} gaps={gaps} footer={footer?.(selectedMon, () => undefined)} />}
+        {wide && selectedMon && <SummaryAside mon={selectedMon} tms={tms} gaps={gaps} footer={footer?.(selectedMon, () => undefined)} />}
       </div>
       {!wide && (
         <SummarySheet
           mon={selectedMon}
-          sheet={sheet}
+          tms={tms}
           gaps={gaps}
           open={selectedMon !== undefined}
           onClose={() => setPicked(null)}
           footer={selectedMon && footer?.(selectedMon, () => setPicked(null))}
         />
       )}
-      <Bag sheet={sheet} gaps={gaps} open={bagOpen} onOpenChange={setBagOpen} />
+      <Bag items={items} tms={tms} gaps={gaps} open={bagOpen} onOpenChange={setBagOpen} />
     </>
   );
 }

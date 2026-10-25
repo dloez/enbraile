@@ -3,7 +3,9 @@ import { Search } from "lucide-react";
 import { CategoryTag, TypeTag } from "@/components/pc/summary";
 import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
-import { describeMove, describeTm, displayName, MOVES, tmLabels, type Mon, type MoveInfo } from "@/teams/dex";
+import { describeMove, describeTm } from "../../../shared/describe";
+import { displayName, tmLabels, type Mon, type MoveInfo } from "../../../shared/mon";
+import { MOVES } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
 import { EditorHead, editorScroll } from "@/teams/components/editors";
 

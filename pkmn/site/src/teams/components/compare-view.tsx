@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { attacks, calcHit, koLine, memberName, scoreboard, type ScoreRow } from "@/analysis/compare";
-import type { Gen } from "@/analysis/dex";
+import type { Gen } from "../../../shared/dex";
 import { buildTeam, type Member } from "@/analysis/member";
 import { parsePaste } from "@/analysis/paste";
 import { buildPool } from "@/analysis/pool";
@@ -15,9 +15,10 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { PoolChip } from "@/teams/components/sheet-analysis";
-import { describePokemon } from "@/teams/dex";
+import { describePokemon } from "../../../shared/describe";
+import { liveSlots } from "@/teams/dex";
+import { MAX_TEAM_SIZE, type Stocks } from "@/teams/team";
 import { showdownTeam } from "@/teams/showdown";
-import { liveSlots, MAX_TEAM_SIZE, type Stocks } from "@/teams/team";
 import { MIN_COMPARED, teamPage, type TeamPage } from "../../../shared/team";
 
 interface Compared {

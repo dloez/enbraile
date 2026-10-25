@@ -5,9 +5,11 @@ import { ItemIcon } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
-import { ANY_ITEMS, currentAbility, describeItem, displayName, type Mon } from "@/teams/dex";
+import { currentAbility, displayName, type Mon } from "../../../shared/mon";
+import { describeItem } from "../../../shared/describe";
+import { ANY_ITEMS, memberMon } from "@/teams/dex";
+import { heldCount, isFree, MINI_SETA, ownOf, type Member, type Slots, type Stocks } from "@/teams/team";
 import type { Sheet } from "@/teams/schema";
-import { heldCount, isFree, MINI_SETA, memberMon, ownOf, type Member, type Slots, type Stocks } from "@/teams/team";
 
 export const editorScroll = "-mr-2.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]";
 

@@ -1,31 +1,9 @@
 import { Dex, type ModdedDex } from "@pkmn/dex";
+import { TYPES, type TypeName } from "./mon.js";
 
 export type Gen = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export const GENS: readonly Gen[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-export const TYPES = [
-  "Normal",
-  "Fire",
-  "Water",
-  "Grass",
-  "Electric",
-  "Ice",
-  "Fighting",
-  "Poison",
-  "Ground",
-  "Flying",
-  "Psychic",
-  "Bug",
-  "Rock",
-  "Ghost",
-  "Dragon",
-  "Dark",
-  "Steel",
-  "Fairy",
-] as const;
-
-export type TypeName = (typeof TYPES)[number];
 
 export function dexFor(gen: Gen): ModdedDex {
   return Dex.forGen(gen);

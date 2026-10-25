@@ -1,5 +1,6 @@
 import * as z from "zod";
-import { exportReport, snapshotSchema } from "./snapshot.js";
+import { pcView } from "./mon.js";
+import { exportReport } from "./snapshot.js";
 
 export const pcMilestone = z.object({ name: z.string(), taken: z.boolean() });
 
@@ -9,7 +10,7 @@ export const pcPage = z.object({
   milestones: z.array(pcMilestone),
   milestone: z.string().nullable(),
   snapshotId: z.string().nullable(),
-  snapshot: snapshotSchema.nullable(),
+  pc: pcView.nullable(),
   missing: exportReport.nullable(),
 });
 

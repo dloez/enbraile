@@ -1,5 +1,5 @@
-import { damageTaken, moveVsType } from "@/analysis/chart";
-import { typesIn, type Gen } from "@/analysis/dex";
+import { damageTaken, moveVsType } from "../../shared/chart";
+import { typesIn, type Gen } from "../../shared/dex";
 import { hasTag, STATS, type Member, type MoveData } from "@/analysis/member";
 import type { Metric, Pool } from "@/analysis/pool";
 

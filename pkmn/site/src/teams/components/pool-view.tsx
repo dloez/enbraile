@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { typesIn } from "@/analysis/dex";
+import { typesIn } from "../../../shared/dex";
 import type { Member } from "@/analysis/member";
 import type { Metric, Pool, PoolMember } from "@/analysis/pool";
 import { BASE_STATS, correlations, describe, histogram, typeBreakdown } from "@/analysis/stats";

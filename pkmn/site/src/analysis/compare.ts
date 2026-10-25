@@ -1,5 +1,5 @@
-import { moveVsMon } from "@/analysis/chart";
-import { typesIn, type Gen } from "@/analysis/dex";
+import { moveVsMon } from "../../shared/chart";
+import { typesIn, type Gen } from "../../shared/dex";
 import { hasTag, type Member, type MoveData } from "@/analysis/member";
 import type { Analysis } from "@/analysis/team";
 

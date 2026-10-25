@@ -79,25 +79,6 @@ The PC's one link to teams is "Add to team" in its summary, a menu of the reader
 - Does another player's PC summary show "Add to team" at all? Recommended: yes, since it is the PC's one link to teams and discovery names scouting an opponent as a reason for any player's snapshot; the alternative keeps it on the reader's own PC and adds others' snapshots only from the team page's **+ Source**.
 - If it shows, does its menu list every team of the reader's, picking one adding this snapshot to that team's sources when it is not one already, and "New team" making a team on this snapshot? Recommended: yes; the alternative lists only the reader's teams that already have this snapshot as a source.
 
-## Make the site crisp and fast, pass two
-
-The owner wants the site to feel crisp and fast, and to hold up under load: one of four identical passes, each taking the biggest measured cost it finds (owner, 2026-10-25). Nothing measures the site's speed today; the one standing performance decision is a chunk per route ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
-
-**Do:**
-- [ ] Measure the site on the local stack with `npm run build` and the `web-perf` skill: load and interaction on the series page, the player's series page, the PC and its summary, the team pages that exist by then, at desktop and phone widths; and the API's slowest routes and their queries under repeated requests. Earlier passes' figures are in `site.md`.
-- [ ] Fix the largest cost found that changes nothing a reader sees or can do (bundle weight, waterfalls, re-renders, image and sprite loading, query count and shape, missing indexes, response size, caching headers), then measure again.
-- [ ] Record what was measured before and after, and why that cost was the biggest, under a Performance section of `site.md`, with each fix as a dated decision.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; the before and after figures, from the same measurement, in `site.md`; through `verify-site`, the pages the fix touched still work.
-- Human-run: on production after a push, open the pages the fix touched and feel the difference.
-- Reuse: `web-perf`; the route chunks in `src/router.tsx`; the queries in `api/_lib/`.
-- Neighbors: `vite.config.ts`.
-- Forbidden: removing or hiding anything a page shows to make it faster; a new outside service, host or runtime dependency without the owner's call (queue it as a question instead); a figure in a doc that the pass did not measure.
-
-**Touches:** `pkmn/site/`, `docs/pkmn/site/`
-**After:** Make the site crisp and fast, pass one
-
 ## Make the site crisp and fast, pass three
 
 The owner wants the site to feel crisp and fast, and to hold up under load: one of four identical passes, each taking the biggest measured cost it finds (owner, 2026-10-25). Nothing measures the site's speed today; the one standing performance decision is a chunk per route ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).

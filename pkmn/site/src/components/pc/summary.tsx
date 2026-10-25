@@ -1,10 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { TriangleAlert } from "lucide-react";
-import type { StatID } from "@pkmn/dex";
-import { damageTaken } from "@/analysis/chart";
 import { cn } from "@/lib/utils";
-import { displayName, fightStat, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/teams/dex";
-import type { Sheet } from "@/teams/schema";
+import { displayName, fightStat, learnCount, STAT_LABELS, type BagTm, type Mon, type MoveInfo, type StatID } from "../../../shared/mon";
 import { UnknownMark } from "@/components/marks";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import type { ExportGap } from "../../../shared/snapshot";
@@ -84,7 +81,7 @@ function Info({ mon }: { mon: Mon }) {
   const [picked, setPicked] = useState(current?.id ?? null);
   const shown = mon.abilities.find((a) => a.id === picked) ?? current;
   const defenses = DEFENSE_ORDER.map((attack) => {
-    const m = damageTaken(9, attack, mon.types, current?.id ?? null);
+    const m = mon.defenses[attack];
     const [label, cls] = MULTIPLIERS[m] ?? [`×${m}`, "bg-box"];
     return { attack, m, label, cls };
   });
@@ -312,8 +309,8 @@ interface MoveRow {
   label: string;
 }
 
-function Moves({ mon, sheet, gaps }: { mon: Mon; sheet: Sheet; gaps: readonly ExportGap[] }) {
-  const labels = useMemo(() => tmLabels(sheet.tms), [sheet]);
+function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: readonly ExportGap[] }) {
+  const labels = useMemo(() => new Map(tms.map((t) => [t.move.id, t.label])), [tms]);
   const learn = mon.learnable;
   const rows = useMemo<MoveRow[]>(() => {
     if (!learn) return [];
@@ -457,7 +454,7 @@ export function SummaryHead({ mon, title, closeRoom = false }: { mon: Mon; title
   );
 }
 
-export function SummaryBody({ mon, sheet, gaps = [] }: { mon: Mon; sheet: Sheet; gaps?: readonly ExportGap[] }) {
+export function SummaryBody({ mon, tms, gaps = [] }: { mon: Mon; tms: readonly BagTm[]; gaps?: readonly ExportGap[] }) {
   const [page, setPage] = useState<Page>("info");
   const pages: [Page, string][] = [
     ["info", "Info"],
@@ -479,7 +476,7 @@ export function SummaryBody({ mon, sheet, gaps = [] }: { mon: Mon; sheet: Sheet;
           page === "moves" ? "overflow-hidden" : "overflow-y-auto",
         )}
       >
-        {page === "info" ? <Info mon={mon} /> : page === "stats" ? <Stats mon={mon} /> : <Moves mon={mon} sheet={sheet} gaps={gaps} />}
+        {page === "info" ? <Info mon={mon} /> : page === "stats" ? <Stats mon={mon} /> : <Moves mon={mon} tms={tms} gaps={gaps} />}
       </div>
     </>
   );

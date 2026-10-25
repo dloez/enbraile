@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils";
 import { segButton, segTrack } from "@/teams/components/editors";
 import type { PoolFilters } from "@/analysis/pool";
 import { FreePicker } from "@/teams/components/free-member";
-import { displayName, type Mon } from "@/teams/dex";
+import { displayName, type BagTm, type Mon } from "../../../shared/mon";
+import { memberMon } from "@/teams/dex";
+import { ownOf, type FreeMember, type Slots, type Stocks } from "@/teams/team";
 import type { Sheet } from "@/teams/schema";
-import { memberMon, ownOf, type FreeMember, type Slots, type Stocks } from "@/teams/team";
 import type { ExportGap } from "../../../shared/snapshot";
 
 export interface AddSource {
@@ -20,6 +21,7 @@ export interface AddSource {
   label: string;
   sheet: Sheet;
   mons: readonly Mon[];
+  tms: readonly BagTm[];
   gaps: readonly ExportGap[];
 }
 
@@ -140,11 +142,11 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
           ) : (
             <>
               <PcBox key={source?.id} mons={mons} selected={selected} onPick={setPicked} taken={taken} />
-              {wide && mon && sheet && <SummaryAside mon={mon} sheet={sheet} gaps={gaps} footer={put(mon)} />}
+              {wide && mon && sheet && <SummaryAside mon={mon} tms={source.tms} gaps={gaps} footer={put(mon)} />}
             </>
           )}
         </div>
-        {!wide && !free && sheet && <SummarySheet mon={mon} sheet={sheet} gaps={gaps} open={open && mon !== undefined} onClose={() => setPicked(null)} footer={mon && put(mon)} />}
+        {!wide && !free && sheet && <SummarySheet mon={mon} tms={source.tms} gaps={gaps} open={open && mon !== undefined} onClose={() => setPicked(null)} footer={mon && put(mon)} />}
       </DialogContent>
     </Dialog>
   );

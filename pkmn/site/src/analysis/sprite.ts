@@ -8,3 +8,8 @@ export function spriteOf(member: Member): string {
 export function spriteOfName(name: string): string {
   return Sprites.getPokemon(name, { gen: "gen5" }).url;
 }
+
+export function knownSpriteOfName(name: string): string | null {
+  const url = spriteOfName(name);
+  return url.endsWith("/gen5/0.png") ? null : url;
+}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { dexFor, typesIn } from "@/analysis/dex";
+import { dexFor, typesIn } from "../../../shared/dex";
 import { MOVE_TAGS, STATS, type Member, type MoveTag } from "@/analysis/member";
 import type { Pool } from "@/analysis/pool";
 import { defValue, offValue, type Analysis } from "@/analysis/team";

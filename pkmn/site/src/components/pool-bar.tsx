@@ -1,4 +1,4 @@
-import { GENS, type Gen } from "@/analysis/dex";
+import { GENS, type Gen } from "../../shared/dex";
 import type { Pool, PoolFilters } from "@/analysis/pool";
 import { fieldClass, Segmented, Toggle } from "@/components/controls";
 import { MAX_BST, MIN_BST } from "../../shared/pool";

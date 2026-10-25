@@ -2,9 +2,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { knownSpriteOfName } from "@/analysis/sprite";
 import { cn } from "@/lib/utils";
-import { displayName, type Mon } from "@/teams/dex";
-import { describeMember } from "../../../shared/species";
+import { displayName, type Mon } from "../../../shared/mon";
 import { addMember, isFree, newMember } from "@/teams/team";
 import { emptySlots, teamDone, teamList, teamMade, teamPage, type TeamRow } from "../../../shared/team";
 
@@ -85,7 +85,7 @@ export function AddToTeam({ mon, snapshot, teams, className }: { mon: Mon; snaps
                 >
                   <span className="flex h-6 w-19 flex-none overflow-hidden">
                     {team.members.flatMap((species, at) => {
-                      const sprite = species ? describeMember(species, species).sprite : null;
+                      const sprite = species ? knownSpriteOfName(species) : null;
                       return sprite ? [<img key={at} src={sprite} alt="" className="-mt-1 mr-[-9px] size-8 flex-none [image-rendering:pixelated]" />] : [];
                     })}
                   </span>

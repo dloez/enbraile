@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Segmented } from "@/components/controls";
 import { toolPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { SnapshotPc } from "@/components/pc/pc-box";
 import { AddToTeam, useOwnTeams } from "@/teams/components/add-to-team";
+import { unpackPc } from "../../shared/mon";
 import { type PcPage as Pc, pcPage } from "../../shared/pc";
 
 const FROM = "/players/$player/series/$number/pc";
@@ -25,6 +26,7 @@ export function PcPage() {
   const [error, setError] = useState<string | null>(null);
   const mine = data?.user && !data.user.admin && data.user.id === player ? player : null;
   const teams = useOwnTeams(mine, page?.snapshotId ?? null);
+  const mons = useMemo(() => (page?.pc ? unpackPc(page.pc) : null), [page]);
 
   useEffect(() => {
     let live = true;
@@ -62,10 +64,12 @@ export function PcPage() {
   return (
     <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
       <PcHead page={page} onPick={pick} />
-      {page.snapshot ? (
+      {page.pc && mons ? (
         <SnapshotPc
           key={page.milestone}
-          sheet={page.snapshot}
+          mons={mons}
+          items={page.pc.items}
+          tms={page.pc.tms}
           gaps={page.missing?.missing ?? []}
           footer={builds ? (mon) => <AddToTeam mon={mon} snapshot={builds} teams={teams} className="px-4.5 py-3.5" /> : undefined}
         />
