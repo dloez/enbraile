@@ -169,10 +169,10 @@
     --pc-cell: rgba(16, 20, 29, 0.35);
     --pc-cell-on: rgba(90, 209, 240, 0.22);
     --pc-fade: rgba(14, 34, 40, 0.95);
-    --mult-4: #b0302a;
-    --mult-2: #c8642f;
-    --mult-half: #3d8550;
-    --mult-quarter: #2a6338;
+    --mult-4: #2a6338;
+    --mult-2: #3d8550;
+    --mult-half: #c8642f;
+    --mult-quarter: #b0302a;
     --mult-0: #0b0e15;
     --stat-up: #ff9d94;
     --stat-down: #8fc8ff;

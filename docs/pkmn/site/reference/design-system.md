@@ -65,7 +65,7 @@ All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through
 | `cat-physical` | `#ff9d70` | A physical move's tag (a status move's is `subtle`) |
 | `female` | `#ff9ec4` | ♀ |
 | `prose` | `#d5dae5` | A selected move's description |
-| `mult-4`, `mult-2`, `mult-half`, `mult-quarter`, `mult-0` | `#b0302a`, `#c8642f`, `#3d8550`, `#2a6338`, `#0b0e15` | A type defense cell's damage taken: ×4, ×2, ½, ¼ and immune |
+| `mult-4`, `mult-2`, `mult-half`, `mult-quarter`, `mult-0` | `#2a6338`, `#3d8550`, `#c8642f`, `#b0302a`, `#0b0e15` | A type defense cell's damage taken: ×4, ×2, ½, ¼ and immune; ×4 and ×2 green, ½ and ¼ red, as Pokémon Database does |
 | `destructive` | `#ff6a5e` | Errors, refusals, unknown marks (`?`), weaknesses, delete actions |
 | `destructive-soft` | `color-mix(in srgb, var(--destructive) 20%, var(--card))` | Fill behind an error or a weakness cell |
 | `warning` | `#ffc878` | Amber, a soft warning that never blocks: its border and icon (a snapshot about to be replaced, a gap in an old export), the done step's "Missing:" chip (border, icon and text) and the file row's `zip` icon for an export |
