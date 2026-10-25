@@ -360,9 +360,3 @@ export const MOVES: readonly MoveInfo[] = [
 export function currentAbility(mon: Mon): string | null {
   return mon.abilities.find((a) => a.current)?.id ?? null;
 }
-
-export function describeMember(species: string | null, gameSpecies: string): { name: string; sprite: string | null } {
-  const entry = species === null ? null : gen.species.get(species);
-  if (!entry?.exists) return { name: gameSpecies, sprite: null };
-  return { name: entry.name, sprite: Sprites.getPokemon(entry.name, { gen: "gen5" }).url };
-}

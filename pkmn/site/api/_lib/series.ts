@@ -136,7 +136,7 @@ seriesRoutes.get("/:number/trainers/:player/journey", async (c) => {
       };
     }),
     latest: taken.at(-1)?.milestone ?? null,
-    fallen: fallenAcross(taken),
+    fallen: fallenAcross(taken, (await import("../../shared/species.js")).describeMember),
   };
   return c.json(page);
 });

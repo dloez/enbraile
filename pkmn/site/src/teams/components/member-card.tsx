@@ -1,6 +1,7 @@
 import { ChevronRight, Plus, X } from "lucide-react";
 import { ItemIcon, MiniSeta } from "@/components/pc/bag";
-import { MonSprite, TypeTag } from "@/components/pc/summary";
+import { MonSprite } from "@/components/pc/mon-sprite";
+import { TypeTag } from "@/components/pc/summary";
 import { UnknownMark } from "@/components/marks";
 import { PLAYER_FILL } from "@/components/player-badge";
 import { cn } from "@/lib/utils";

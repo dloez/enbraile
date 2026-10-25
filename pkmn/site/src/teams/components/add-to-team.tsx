@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { describeMember, displayName, type Mon } from "@/teams/dex";
+import { displayName, type Mon } from "@/teams/dex";
+import { describeMember } from "../../../shared/species";
 import { addMember, isFree, newMember } from "@/teams/team";
 import { emptySlots, teamDone, teamList, teamMade, teamPage, type TeamRow } from "../../../shared/team";
 

@@ -1,18 +1,18 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { Check, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { toolPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { api, ApiError } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { describeMember } from "@/teams/dex";
-import { CompareDialog } from "@/teams/components/compare-view";
+import { spriteOfName } from "@/analysis/sprite";
 import { SnapshotMenu } from "@/teams/components/snapshot-menu";
-import { MAX_COMPARED, MIN_COMPARED } from "@/teams/team";
 import { profilePage } from "../../shared/profile";
-import { teamList, teamMade, type TeamRow } from "../../shared/team";
+import { MAX_COMPARED, MIN_COMPARED, teamList, teamMade, type TeamRow } from "../../shared/team";
+
+const CompareDialog = lazy(() => import("@/teams/components/compare-view").then((m) => ({ default: m.CompareDialog })));
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
@@ -50,6 +50,7 @@ export function TeamsPage() {
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
   const [comparing, setComparing] = useState<string[] | null>(null);
+  const [compareOpened, setCompareOpened] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -128,6 +129,7 @@ export function TeamsPage() {
             onClick={() => {
               setPicked([]);
               setPicking(true);
+              setCompareOpened(true);
             }}
             className={buttonVariants({ className: "min-h-12 px-4.5 text-2xl max-sm:order-last max-sm:w-full sm:min-h-13" })}
           >
@@ -165,13 +167,17 @@ export function TeamsPage() {
           {(!filter || filter !== player?.id) && <Group id="teams-others" title={player ? "Other trainers" : "Every team"} rows={others} pick={pick} showOwner />}
         </div>
       )}
-      <CompareDialog
-        ids={comparing}
-        onClose={() => {
-          setComparing(null);
-          stopPicking();
-        }}
-      />
+      {compareOpened && (
+        <Suspense fallback={null}>
+          <CompareDialog
+            ids={comparing}
+            onClose={() => {
+              setComparing(null);
+              stopPicking();
+            }}
+          />
+        </Suspense>
+      )}
     </main>
   );
 }
@@ -274,7 +280,7 @@ function RowBody({ team, showOwner, filled }: { team: TeamRow; showOwner: boolea
       </span>
       <span className="flex w-full min-w-0 gap-1 sm:w-auto sm:flex-1">
         {team.members.map((species, at) => {
-          const sprite = species ? describeMember(species, species).sprite : null;
+          const sprite = species ? spriteOfName(species) : null;
           return (
             <span
               key={at}

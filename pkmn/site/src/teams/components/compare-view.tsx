@@ -17,8 +17,8 @@ import { cn } from "@/lib/utils";
 import { PoolChip } from "@/teams/components/sheet-analysis";
 import { describePokemon } from "@/teams/dex";
 import { showdownTeam } from "@/teams/showdown";
-import { liveSlots, MAX_TEAM_SIZE, MIN_COMPARED, type Stocks } from "@/teams/team";
-import { teamPage, type TeamPage } from "../../../shared/team";
+import { liveSlots, MAX_TEAM_SIZE, type Stocks } from "@/teams/team";
+import { MIN_COMPARED, teamPage, type TeamPage } from "../../../shared/team";
 
 interface Compared {
   id: string;

@@ -4,7 +4,7 @@ import { displayName } from "@/teams/dex";
 import type { Slots, Stocks } from "@/teams/team";
 import { analysed, defensiveChart, offensiveCoverage, speedOrder } from "@/teams/analysis";
 import { TypeDot } from "@/components/marks";
-import { MonSprite } from "@/components/pc/summary";
+import { MonSprite } from "@/components/pc/mon-sprite";
 
 function Count({ value, className }: { value: number; className: string }) {
   return <span className={cn("tabular-nums text-xs", value === 0 ? "text-muted-foreground/40" : className)}>{value}</span>;

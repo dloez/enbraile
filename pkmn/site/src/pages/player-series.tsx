@@ -2,7 +2,7 @@ import { Link, useLocation, useParams } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import { buttonClass } from "@/components/controls";
 import { toolPage } from "@/components/page";
-import { MonSprite } from "@/components/pc/summary";
+import { MonSprite } from "@/components/pc/mon-sprite";
 import { PixelIcon } from "@/components/pixel-icon";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -10,7 +10,6 @@ import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { money, playTime } from "@/lib/records";
 import { cn } from "@/lib/utils";
-import { describeMember } from "@/teams/dex";
 import { type FallenMon, type JourneyPage, type JourneyRecord, journeyPage } from "../../shared/journey";
 
 const FROM = "/players/$player/series/$number";
@@ -260,16 +259,15 @@ function Fallen({ fallen }: { fallen: FallenMon[] }) {
 }
 
 function FallenCard({ mon }: { mon: FallenMon }) {
-  const look = describeMember(mon.species, mon.gameSpecies);
   return (
     <div className="flex items-center gap-3.5 rounded-[18px] border-3 bg-card py-2.5 pr-3.5 pl-2.5 sm:gap-4 sm:py-3 sm:pr-4.5 sm:pl-3">
       <span className="grid size-16 flex-none place-items-center overflow-hidden rounded-xl bg-box sm:size-18">
-        <MonSprite mon={look} className="size-18 opacity-60 grayscale sm:size-20" />
+        <MonSprite mon={mon} className="size-18 opacity-60 grayscale sm:size-20" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate font-heading text-[1.75rem] leading-[0.9] sm:text-3xl">{mon.nickname ?? look.name}</span>
+        <span className="truncate font-heading text-[1.75rem] leading-[0.9] sm:text-3xl">{mon.nickname ?? mon.name}</span>
         <span className="text-sm font-bold text-muted-foreground">
-          {look.name} · Lv. {mon.level ?? "?"}
+          {mon.name} · Lv. {mon.level ?? "?"}
         </span>
         <span className="flex items-center self-start rounded-full bg-destructive-soft px-2.5 py-0.5 font-heading text-xl leading-none text-destructive">
           {mon.from ? `${mon.from} → ${mon.to}` : `by ${mon.to}`}

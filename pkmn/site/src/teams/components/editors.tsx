@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ChevronLeft, Search } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { ItemIcon } from "@/components/pc/bag";
-import { MonSprite } from "@/components/pc/summary";
+import { MonSprite } from "@/components/pc/mon-sprite";
 import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
 import { ANY_ITEMS, currentAbility, describeItem, displayName, type Mon } from "@/teams/dex";

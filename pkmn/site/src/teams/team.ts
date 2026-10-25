@@ -8,10 +8,6 @@ export type { FreeMember, OwnMember } from "../../shared/team";
 
 export const MINI_SETA = "tinymushroom";
 
-export const MIN_COMPARED = 2;
-
-export const MAX_COMPARED = 4;
-
 export type Member = TeamMember;
 
 export type Slots = TeamSlots;

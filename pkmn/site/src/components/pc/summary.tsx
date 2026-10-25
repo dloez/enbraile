@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { displayName, fightStat, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
 import { UnknownMark } from "@/components/marks";
+import { MonSprite } from "@/components/pc/mon-sprite";
 import type { ExportGap } from "../../../shared/snapshot";
 
 type Page = "info" | "stats" | "moves";
@@ -62,17 +63,6 @@ export function CategoryTag({ category, className }: { category: string | null; 
       {category}
     </span>
   );
-}
-
-export function MonSprite({ mon, className }: { mon: Pick<Mon, "sprite">; className?: string }) {
-  if (!mon.sprite) {
-    return (
-      <span aria-hidden="true" className={cn("grid place-items-center font-heading text-3xl text-muted-foreground", className)}>
-        ?
-      </span>
-    );
-  }
-  return <img src={mon.sprite} alt="" className={cn("[image-rendering:pixelated]", className)} />;
 }
 
 export function GapWarning({ children }: { children: ReactNode }) {

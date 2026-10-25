@@ -10,6 +10,10 @@ export const TEAM_SIZES = [6, 7, 8] as const;
 
 export const PICK_SIZE = 6;
 
+export const MIN_COMPARED = 2;
+
+export const MAX_COMPARED = 4;
+
 export const MOVE_SLOTS = 4;
 
 const id = z.string().min(1);

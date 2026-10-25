@@ -1,6 +1,7 @@
 import { toID } from "@pkmn/dex";
 import { parsePaste, type PokemonSet } from "@/analysis/paste";
-import { currentAbility, describeItem, describeMember, describeMove, displayName, NATURES, speciesAbilities, STAT_LABELS, STATS, type Mon } from "@/teams/dex";
+import { currentAbility, describeItem, describeMove, displayName, NATURES, speciesAbilities, STAT_LABELS, STATS, type Mon } from "@/teams/dex";
+import { describeMember } from "../../shared/species";
 import {
   emptySlots,
   freeSet,

@@ -1,4 +1,5 @@
 import * as z from "zod";
+import type { SpeciesLook } from "./species.js";
 
 const count = z.int().nullable();
 
@@ -18,8 +19,8 @@ export const journeyRecord = z.object({
 export const journeyColumn = z.object({ milestone: z.string(), record: journeyRecord.nullable() });
 
 export const fallenMon = z.object({
-  species: z.string().nullable(),
-  gameSpecies: z.string(),
+  name: z.string(),
+  sprite: z.string().nullable(),
   nickname: z.string().nullable(),
   level: z.int().nullable(),
   from: z.string().nullable(),
@@ -40,7 +41,7 @@ export type JourneyPage = z.infer<typeof journeyPage>;
 
 type Member = { species: string | null; gameSpecies: string; nickname: string | null; level: number | null; personalId: number | null };
 
-export function fallenAcross(snapshots: { milestone: string; fainted: Member[] }[]): FallenMon[] {
+export function fallenAcross(snapshots: { milestone: string; fainted: Member[] }[], look: (species: string | null, gameSpecies: string) => SpeciesLook): FallenMon[] {
   const fallen: FallenMon[] = [];
   const seen = new Set<number>();
   snapshots.forEach((snapshot, index) => {
@@ -48,17 +49,17 @@ export function fallenAcross(snapshots: { milestone: string; fainted: Member[] }
     const last = index === snapshots.length - 1;
     for (const member of snapshot.fainted) {
       if (member.personalId === null) {
-        if (last) fallen.push(fall(member, null, snapshot.milestone));
+        if (last) fallen.push(fall(member, look, null, snapshot.milestone));
         continue;
       }
       if (seen.has(member.personalId)) continue;
       seen.add(member.personalId);
-      fallen.push(fall(member, before, snapshot.milestone));
+      fallen.push(fall(member, look, before, snapshot.milestone));
     }
   });
   return fallen;
 }
 
-function fall(member: Member, from: string | null, to: string): FallenMon {
-  return { species: member.species, gameSpecies: member.gameSpecies, nickname: member.nickname, level: member.level, from, to };
+function fall(member: Member, look: (species: string | null, gameSpecies: string) => SpeciesLook, from: string | null, to: string): FallenMon {
+  return { ...look(member.species, member.gameSpecies), nickname: member.nickname, level: member.level, from, to };
 }

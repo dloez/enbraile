@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { MonSprite } from "@/components/pc/summary";
+import { MonSprite } from "@/components/pc/mon-sprite";
 import { PcBox, SummaryAside, SummarySheet } from "@/components/pc/pc-box";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
