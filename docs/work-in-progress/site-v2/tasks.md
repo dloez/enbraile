@@ -195,3 +195,79 @@ Compare puts 2–4 teams side by side, the player's or other trainers', picked o
 
 **Touches:** `pkmn/site/src/`, `docs/pkmn/site/`, `docs/pkmn/index.md`
 **After:** Give each team its pool, the Pool view, Speed Tiers and Tera
+
+## Make the site crisp and fast, pass one
+
+The owner wants the site to feel crisp and fast, and to hold up under load: one of four identical passes, each taking the biggest measured cost it finds (owner, 2026-10-25). Nothing measures the site's speed today; the one standing performance decision is a chunk per route ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
+
+**Do:**
+- [ ] Measure the site on the local stack with `npm run build` and the `web-perf` skill: load and interaction on the series page, the player's series page, the PC and its summary, the team pages that exist by then, at desktop and phone widths; and the API's slowest routes and their queries under repeated requests. Earlier passes' figures are in `site.md`.
+- [ ] Fix the largest cost found that changes nothing a reader sees or can do (bundle weight, waterfalls, re-renders, image and sprite loading, query count and shape, missing indexes, response size, caching headers), then measure again.
+- [ ] Record what was measured before and after, and why that cost was the biggest, under a Performance section of `site.md`, with each fix as a dated decision.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; the before and after figures, from the same measurement, in `site.md`; through `verify-site`, the pages the fix touched still work.
+- Human-run: on production after a push, open the pages the fix touched and feel the difference.
+- Reuse: `web-perf`; the route chunks in `src/router.tsx`; the queries in `api/_lib/`.
+- Neighbors: `vite.config.ts`.
+- Forbidden: removing or hiding anything a page shows to make it faster; a new outside service, host or runtime dependency without the owner's call (queue it as a question instead); a figure in a doc that the pass did not measure.
+
+**Touches:** `pkmn/site/`, `docs/pkmn/site/`
+**After:** Compare teams; /team-analysis and the tools list go
+
+## Make the site crisp and fast, pass two
+
+The owner wants the site to feel crisp and fast, and to hold up under load: one of four identical passes, each taking the biggest measured cost it finds (owner, 2026-10-25). Nothing measures the site's speed today; the one standing performance decision is a chunk per route ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
+
+**Do:**
+- [ ] Measure the site on the local stack with `npm run build` and the `web-perf` skill: load and interaction on the series page, the player's series page, the PC and its summary, the team pages that exist by then, at desktop and phone widths; and the API's slowest routes and their queries under repeated requests. Earlier passes' figures are in `site.md`.
+- [ ] Fix the largest cost found that changes nothing a reader sees or can do (bundle weight, waterfalls, re-renders, image and sprite loading, query count and shape, missing indexes, response size, caching headers), then measure again.
+- [ ] Record what was measured before and after, and why that cost was the biggest, under a Performance section of `site.md`, with each fix as a dated decision.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; the before and after figures, from the same measurement, in `site.md`; through `verify-site`, the pages the fix touched still work.
+- Human-run: on production after a push, open the pages the fix touched and feel the difference.
+- Reuse: `web-perf`; the route chunks in `src/router.tsx`; the queries in `api/_lib/`.
+- Neighbors: `vite.config.ts`.
+- Forbidden: removing or hiding anything a page shows to make it faster; a new outside service, host or runtime dependency without the owner's call (queue it as a question instead); a figure in a doc that the pass did not measure.
+
+**Touches:** `pkmn/site/`, `docs/pkmn/site/`
+**After:** Make the site crisp and fast, pass one
+
+## Make the site crisp and fast, pass three
+
+The owner wants the site to feel crisp and fast, and to hold up under load: one of four identical passes, each taking the biggest measured cost it finds (owner, 2026-10-25). Nothing measures the site's speed today; the one standing performance decision is a chunk per route ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
+
+**Do:**
+- [ ] Measure the site on the local stack with `npm run build` and the `web-perf` skill: load and interaction on the series page, the player's series page, the PC and its summary, the team pages that exist by then, at desktop and phone widths; and the API's slowest routes and their queries under repeated requests. Earlier passes' figures are in `site.md`.
+- [ ] Fix the largest cost found that changes nothing a reader sees or can do (bundle weight, waterfalls, re-renders, image and sprite loading, query count and shape, missing indexes, response size, caching headers), then measure again.
+- [ ] Record what was measured before and after, and why that cost was the biggest, under a Performance section of `site.md`, with each fix as a dated decision.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; the before and after figures, from the same measurement, in `site.md`; through `verify-site`, the pages the fix touched still work.
+- Human-run: on production after a push, open the pages the fix touched and feel the difference.
+- Reuse: `web-perf`; the route chunks in `src/router.tsx`; the queries in `api/_lib/`.
+- Neighbors: `vite.config.ts`.
+- Forbidden: removing or hiding anything a page shows to make it faster; a new outside service, host or runtime dependency without the owner's call (queue it as a question instead); a figure in a doc that the pass did not measure.
+
+**Touches:** `pkmn/site/`, `docs/pkmn/site/`
+**After:** Make the site crisp and fast, pass two
+
+## Make the site crisp and fast, pass four
+
+The owner wants the site to feel crisp and fast, and to hold up under load: one of four identical passes, each taking the biggest measured cost it finds (owner, 2026-10-25). Nothing measures the site's speed today; the one standing performance decision is a chunk per route ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
+
+**Do:**
+- [ ] Measure the site on the local stack with `npm run build` and the `web-perf` skill: load and interaction on the series page, the player's series page, the PC and its summary, the team pages that exist by then, at desktop and phone widths; and the API's slowest routes and their queries under repeated requests. Earlier passes' figures are in `site.md`.
+- [ ] Fix the largest cost found that changes nothing a reader sees or can do (bundle weight, waterfalls, re-renders, image and sprite loading, query count and shape, missing indexes, response size, caching headers), then measure again.
+- [ ] Record what was measured before and after, and why that cost was the biggest, under a Performance section of `site.md`, with each fix as a dated decision.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; the before and after figures, from the same measurement, in `site.md`; through `verify-site`, the pages the fix touched still work.
+- Human-run: on production after a push, open the pages the fix touched and feel the difference.
+- Reuse: `web-perf`; the route chunks in `src/router.tsx`; the queries in `api/_lib/`.
+- Neighbors: `vite.config.ts`.
+- Forbidden: removing or hiding anything a page shows to make it faster; a new outside service, host or runtime dependency without the owner's call (queue it as a question instead); a figure in a doc that the pass did not measure.
+
+**Touches:** `pkmn/site/`, `docs/pkmn/site/`
+**After:** Make the site crisp and fast, pass three
