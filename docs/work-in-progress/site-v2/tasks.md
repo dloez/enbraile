@@ -58,23 +58,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## Teams of up to eight, analysed whole or as a pick of six
-
-A team holds six members by default and up to eight; its size is set like its sources, free for the owner or fixed by a tournament, and the analysis reads every member or a pick of six ([How many members does a team hold?](discovery.md#team-building), 2026-10-25).
-
-**Do:**
-- [ ] The size in the stored team (6 to 8, default 6) and its migration; the builder's size control and its cards for slots 7 and 8; the team list's rows at sizes above six; the analysis' switch between every member and a pick of six; Showdown copy and paste of more than six.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, raise a team to eight, fill it, pick six for the analysis and see it change, reload and see the size and the pick kept.
-- Human-run: build an eight-member team, copy it for Showdown and paste it back as a new team.
-- Reuse: the team builder from the entry above; `src/analysis/`.
-- Neighbors: the team list.
-- Forbidden: a size above eight.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Build teams locked to a snapshot, stored in the account
-
 ## A trainer row's Teams tile opens their teams
 
 The series page's trainer row has a Teams tile, drawn in `series.dc.html` as a link and specified as "their teams (count, opens them)" ([First page after sign-in?](discovery.md#pages)). It opens the team list filtered to that trainer, `/teams?player=<id>`, with a chip naming the trainer that clears the filter ([Where does a trainer row's Teams tile open?](discovery.md#team-building), 2026-10-25).

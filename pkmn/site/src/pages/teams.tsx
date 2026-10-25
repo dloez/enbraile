@@ -145,11 +145,12 @@ function TeamLink({ team, showOwner }: { team: TeamRow; showOwner: boolean }) {
             <span
               key={at}
               className={cn(
-                "flex h-12 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[10px] border-2 sm:h-18 sm:w-20 sm:flex-none",
+                "flex min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[10px] border-2 sm:h-18 sm:max-w-20 sm:basis-20",
+                size > 6 ? "h-10" : "h-12",
                 species ? "border-solid bg-box" : "border-dashed",
               )}
             >
-              {sprite && <img src={sprite} alt="" className="-mt-1.5 -mb-0.5 size-14 flex-none [image-rendering:pixelated] sm:size-20" />}
+              {sprite && <img src={sprite} alt="" className={cn("-mt-1.5 -mb-0.5 flex-none [image-rendering:pixelated] sm:size-20", size > 6 ? "size-12" : "size-14")} />}
             </span>
           );
         })}

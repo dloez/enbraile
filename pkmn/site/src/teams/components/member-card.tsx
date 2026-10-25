@@ -15,7 +15,13 @@ const field = (on: boolean) =>
     on ? "border-primary bg-cell" : "border-cell bg-box",
   );
 
-export function MemberCard({ member, mon, from, colour, focus, glow, editable, onLook, onItem, onAbility, onMove, onRemove }: {
+export interface PickToggle {
+  in: boolean;
+  off: boolean;
+  onToggle: () => void;
+}
+
+export function MemberCard({ member, mon, from, colour, focus, glow, editable, pick, onLook, onItem, onAbility, onMove, onRemove }: {
   member: Member;
   mon: Mon;
   from: string;
@@ -23,6 +29,7 @@ export function MemberCard({ member, mon, from, colour, focus, glow, editable, o
   focus: Focus;
   glow: boolean;
   editable: boolean;
+  pick?: PickToggle;
   onLook: () => void;
   onItem: () => void;
   onAbility: () => void;
@@ -43,6 +50,7 @@ export function MemberCard({ member, mon, from, colour, focus, glow, editable, o
       className={cn(
         "flex min-w-0 flex-1 flex-col justify-between gap-1.5 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5",
         glow ? "border-yellow shadow-[0_0_0_3px_color-mix(in_srgb,var(--yellow)_35%,transparent)]" : lit ? "border-primary" : "border-border",
+        pick && !pick.in && "opacity-55",
       )}
     >
       <div className="flex min-h-15 items-center gap-2">
@@ -73,6 +81,21 @@ export function MemberCard({ member, mon, from, colour, focus, glow, editable, o
           <span className={cn("flex-none rounded-sm px-1.75 font-heading text-[1.0625rem] text-ink", PLAYER_FILL[colour % PLAYER_FILL.length])}>{from}'s PC</span>
           <ChevronRight className={cn("size-5 flex-none", looking ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
         </button>
+        {pick && (
+          <button
+            type="button"
+            aria-pressed={pick.in}
+            disabled={pick.off}
+            onClick={pick.onToggle}
+            title={pick.in ? "Leave out of the six" : "Put in the six"}
+            className={cn(
+              "h-8.5 flex-none rounded-lg border-3 px-2.25 font-heading text-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50 enabled:cursor-pointer disabled:cursor-default",
+              pick.in ? "border-primary bg-primary text-ink" : "border-cell-hi bg-cell text-subtle enabled:hover:border-primary",
+            )}
+          >
+            {pick.in ? "In" : "Out"}
+          </button>
+        )}
         {editable && (
           <button
             type="button"

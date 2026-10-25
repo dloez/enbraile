@@ -152,7 +152,7 @@ teams.post("/", async (c) => {
   const names = await db.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
   const id = crypto.randomUUID();
   await db.transaction(async (tx) => {
-    await tx.insert(team).values({ id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name)), slots });
+    await tx.insert(team).values({ id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name)), size: slots.length, slots });
     await tx.insert(teamSource).values({ teamId: id, snapshotId: source, position: 0 });
   });
   return c.json({ id });
@@ -168,7 +168,7 @@ teams.put("/:id", async (c) => {
   if (input.slots && !backed(input.slots, await sourceIds(id))) return c.json({ error: "A member comes from outside the team's snapshot" }, 400);
   await db
     .update(team)
-    .set({ ...(input.name ? { name: input.name } : {}), ...(input.slots ? { slots: input.slots } : {}), updatedAt: new Date() })
+    .set({ ...(input.name ? { name: input.name } : {}), ...(input.slots ? { size: input.slots.length, slots: input.slots } : {}), updatedAt: new Date() })
     .where(eq(team.id, id));
   return c.json({});
 });

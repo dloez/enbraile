@@ -47,7 +47,7 @@ function header(line: string): Pick<PokemonSet, "species" | "nickname" | "gender
     : { species: name, nickname: "", gender, item };
 }
 
-export function parsePaste(text: string): PokemonSet[] {
+export function parsePaste(text: string, max = 6): PokemonSet[] {
   const blocks = text
     .replace(/\r/g, "")
     .split(/\n\s*\n/)
@@ -84,5 +84,5 @@ export function parsePaste(text: string): PokemonSet[] {
     }
     if (set.species) team.push(set);
   }
-  return team.slice(0, 6);
+  return team.slice(0, max);
 }

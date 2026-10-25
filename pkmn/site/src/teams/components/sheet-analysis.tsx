@@ -7,7 +7,7 @@ import { buildPool, legality, type PoolFilters } from "@/analysis/pool";
 import { analyze } from "@/analysis/team";
 import type { Mon } from "@/teams/dex";
 import { showdownTeam } from "@/teams/showdown";
-import type { Slots } from "@/teams/team";
+import { MAX_TEAM_SIZE, type Slots } from "@/teams/team";
 import { TeamAnalysis } from "@/teams/components/team-analysis";
 import { ArchetypeCard, Checklist } from "@/components/analysis/archetype";
 import { ArchetypeMap } from "@/components/analysis/charts";
@@ -50,7 +50,7 @@ function Tabs({ view, onView, className }: { view: View; onView: (view: View) =>
 function useAnalysis(slots: Slots, mons: readonly Mon[]) {
   const pool = buildPool(SHEET_POOL);
   const text = showdownTeam(slots, mons);
-  const team = useMemo(() => buildTeam(SHEET_POOL.gen, parsePaste(text)).team, [text]);
+  const team = useMemo(() => buildTeam(SHEET_POOL.gen, parsePaste(text, MAX_TEAM_SIZE)).team, [text]);
   const analysis = useMemo(() => (team.length ? analyze(team, pool) : null), [team, pool]);
   return { pool, team, analysis };
 }

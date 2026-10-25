@@ -210,6 +210,7 @@ export const team = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    size: integer("size").notNull().default(6),
     slots: jsonb("slots").$type<TeamSlots>().notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
@@ -217,7 +218,11 @@ export const team = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index("team_owner_id_idx").on(table.ownerId)],
+  (table) => [
+    index("team_owner_id_idx").on(table.ownerId),
+    check("team_size", sql`${table.size} BETWEEN 6 AND 8`),
+    check("team_slots_size", sql`jsonb_array_length(${table.slots}) = ${table.size}`),
+  ],
 );
 
 export const teamSource = pgTable(

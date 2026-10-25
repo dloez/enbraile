@@ -18,19 +18,25 @@ import { MoveEditor } from "@/teams/components/move-picker";
 import { PasteDialog } from "@/teams/components/paste-dialog";
 import { SheetAnalysis } from "@/teams/components/sheet-analysis";
 import { currentAbility, describeMove, describePokemon, type Mon } from "@/teams/dex";
+import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
 import { showdownTeam } from "@/teams/showdown";
 import {
   giveItem,
+  lastFilled,
   liveSlots,
   memberMon,
   MINI_SETA,
   putMember,
   quantityOf,
   removeMember,
+  resized,
   setAbility,
   setasNeeded,
   setMove,
   takeItem,
+  PICK_SIZE,
+  TEAM_SIZE,
+  TEAM_SIZES,
   type Member,
   type Slots,
 } from "@/teams/team";
@@ -130,11 +136,21 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
   const [tab, setTab] = useState<"members" | "analysis">("members");
   const [pasting, setPasting] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
+  const [pick, setPick] = useState<Pick>(() => loadPick(page.id));
   const writes = useRef<Promise<unknown>>(Promise.resolve());
   const editable = page.canEdit;
   const from = source.player.name;
   const colour = playerColour(source.player.id);
   const setasLeft = quantityOf(sheet, MINI_SETA) - setasNeeded(slots, mons);
+  const size = slots.length;
+  const pickMode = size > TEAM_SIZE && pick.scope === "six";
+  const picked = pickedOf(slots, pick);
+  const analysed = pickMode ? analysedSlots(slots, picked) : slots;
+
+  function choosePick(next: Pick) {
+    setPick(next);
+    savePick(page.id, next);
+  }
 
   function write(body: { slots?: Slots; name?: string }) {
     writes.current = writes.current
@@ -187,12 +203,25 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
                 focus={focusOf(slot)}
                 glow={glow === slot}
                 editable={editable}
+                pick={
+                  pickMode
+                    ? {
+                        in: picked.includes(slot),
+                        off: !picked.includes(slot) && picked.length >= PICK_SIZE,
+                        onToggle: () => {
+                          const next = togglePicked(picked, slot);
+                          if (next) choosePick({ ...pick, slots: next });
+                        },
+                      }
+                    : undefined
+                }
                 onLook={() => show(panel.t === "sum" && panel.slot === slot ? { t: "ana" } : { t: "sum", slot })}
                 onItem={() => show({ t: "item", slot, back: backOf(slot) })}
                 onAbility={() => show({ t: "ability", slot, back: backOf(slot) })}
                 onMove={(at) => show({ t: "move", slot, at, back: backOf(slot) })}
                 onRemove={() => {
                   show({ t: "ana" });
+                  if (pick.slots?.includes(slot)) choosePick({ ...pick, slots: pick.slots.filter((at) => at !== slot) });
                   save(removeMember(slots, slot));
                 }}
               />
@@ -206,7 +235,12 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
   );
 
   const editor = panelBody();
-  const analysis = <SheetAnalysis slots={slots} mons={mons} name={name} />;
+  const analysis = (
+    <>
+      {size > TEAM_SIZE && <ScopeSwitch scope={pickMode ? "six" : "all"} filled={filledAt(slots).length} picked={picked.length} onScope={(scope) => choosePick({ ...pick, scope })} />}
+      <SheetAnalysis slots={analysed} mons={mons} name={name} />
+    </>
+  );
 
   function panelBody() {
     if (panel.t === "ana") return null;
@@ -319,6 +353,7 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
         </div>
         <div className="flex-1" />
         <div className="flex flex-wrap items-center gap-3">
+          {editable && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
           {editable && (
             <button type="button" onClick={() => setPasting(true)} className={buttonVariants({ className: "min-h-12" })}>
               Paste
@@ -407,6 +442,73 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
       )}
       {editable && <PasteDialog sheet={sheet} source={source.id} mons={mons} open={pasting} onOpenChange={setPasting} onImport={pasted} />}
     </main>
+  );
+}
+
+function SizeSwitch({ size, least, onSize }: { size: number; least: number; onSize: (size: number) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Members" className="flex items-center gap-1 rounded-xl border-3 bg-ink p-1">
+      <span aria-hidden="true" className="pr-1.5 pl-2 font-heading text-xl text-muted-foreground">
+        Members
+      </span>
+      {TEAM_SIZES.map((n) => {
+        const off = n !== size && n < least;
+        return (
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={n === size}
+            aria-label={`${n} members`}
+            disabled={off}
+            onClick={() => n !== size && onSize(n)}
+            className={cn(
+              "min-h-9 min-w-10 rounded-lg border-none px-3 font-heading text-[1.375rem] outline-none focus-visible:ring-3 focus-visible:ring-ring/50 enabled:cursor-pointer disabled:opacity-45",
+              n === size ? "bg-border text-white" : "bg-transparent text-muted-foreground enabled:hover:bg-cell enabled:hover:text-white",
+            )}
+          >
+            {n}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ScopeSwitch({ scope, filled, picked, onScope }: { scope: Scope; filled: number; picked: number; onScope: (scope: Scope) => void }) {
+  return (
+    <div className="flex flex-none flex-wrap items-center gap-2.5">
+      <span id="scope-label" className="pl-1 font-heading text-xl text-muted-foreground">
+        Analyse
+      </span>
+      <div role="radiogroup" aria-labelledby="scope-label" className="flex gap-1 rounded-xl border-3 bg-ink p-1">
+        {(
+          [
+            ["all", `All ${filled}`],
+            ["six", `Pick ${PICK_SIZE}`],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={scope === value}
+            onClick={() => onScope(value)}
+            className={cn(
+              "min-h-9 cursor-pointer rounded-lg border-none px-3 font-heading text-[1.375rem] outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              scope === value ? "bg-border text-white" : "bg-transparent text-muted-foreground hover:bg-cell hover:text-white",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {scope === "six" && (
+        <span role="status" className={cn("font-heading text-xl", picked < PICK_SIZE ? "text-warning" : "text-muted-foreground")}>
+          {picked} of {PICK_SIZE} in
+        </span>
+      )}
+    </div>
   );
 }
 

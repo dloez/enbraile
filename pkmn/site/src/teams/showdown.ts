@@ -5,6 +5,8 @@ import type { Sheet } from "@/teams/schema";
 import {
   emptySlots,
   itemsLeft,
+  MAX_TEAM_SIZE,
+  TEAM_SIZE,
   memberMon,
   MOVE_SLOTS,
   type Member,
@@ -68,8 +70,8 @@ export interface ReadTeam {
 }
 
 export function readShowdownTeam(text: string, sheet: Sheet, mons: readonly Mon[], source: string): ReadTeam {
-  const sets = parsePaste(text);
-  const slots = emptySlots();
+  const sets = parsePaste(text, MAX_TEAM_SIZE);
+  const slots = emptySlots(MAX_TEAM_SIZE);
   const left: string[] = [];
   const used = new Set<number>();
   let added = 0;
@@ -121,5 +123,5 @@ export function readShowdownTeam(text: string, sheet: Sheet, mons: readonly Mon[
     added += 1;
   }
 
-  return { slots, added, left };
+  return { slots: slots.slice(0, Math.max(TEAM_SIZE, added)), added, left };
 }

@@ -2,7 +2,7 @@ import type { Mon } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
 import { MOVE_SLOTS, type TeamMember, type TeamSlots } from "../../shared/team";
 
-export { emptySlots, MOVE_SLOTS, nextTeamName, TEAM_SIZE } from "../../shared/team";
+export { emptySlots, lastFilled, MAX_TEAM_SIZE, MOVE_SLOTS, nextTeamName, PICK_SIZE, resized, TEAM_SIZE, TEAM_SIZES } from "../../shared/team";
 
 export const MINI_SETA = "tinymushroom";
 
