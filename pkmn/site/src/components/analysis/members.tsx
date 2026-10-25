@@ -5,7 +5,8 @@ import { MOVE_TAGS, STATS, type Member, type MoveTag } from "@/analysis/member";
 import type { Pool } from "@/analysis/pool";
 import { defValue, offValue, type Analysis } from "@/analysis/team";
 import { TypeDot } from "@/components/marks";
-import { Panel, Segmented, SelectField } from "@/components/controls";
+import { Panel, Segmented } from "@/components/controls";
+import { SelectField } from "@/components/select-field";
 import { spriteOf } from "@/analysis/sprite";
 
 const STAT_LABEL = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as const;

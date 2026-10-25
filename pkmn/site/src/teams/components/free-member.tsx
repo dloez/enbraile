@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 import type { StatID } from "@pkmn/dex";
-import { SelectField } from "@/components/controls";
+import { SelectField } from "@/components/select-field";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import { SummaryHead, tint } from "@/components/pc/summary";
 import { buttonVariants } from "@/components/ui/button";

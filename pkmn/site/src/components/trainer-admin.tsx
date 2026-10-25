@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { buttonClass, fieldClass, SelectField } from "@/components/controls";
+import { buttonClass, fieldClass } from "@/components/controls";
+import { SelectField } from "@/components/select-field";
 import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";

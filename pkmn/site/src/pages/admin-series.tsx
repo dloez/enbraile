@@ -1,7 +1,8 @@
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { buttonClass, fieldClass, Panel, quietIconClass, Segmented, SelectField } from "@/components/controls";
+import { buttonClass, fieldClass, Panel, quietIconClass, Segmented } from "@/components/controls";
+import { SelectField } from "@/components/select-field";
 import { listPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";

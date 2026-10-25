@@ -5,7 +5,8 @@ import type { Member } from "@/analysis/member";
 import type { Analysis, SynergyEdge } from "@/analysis/team";
 import { typeIconSvg } from "@/lib/type-icons";
 import { TypeDot } from "@/components/marks";
-import { buttonClass, SelectField, Toggle } from "@/components/controls";
+import { buttonClass, Toggle } from "@/components/controls";
+import { SelectField } from "@/components/select-field";
 import { spriteOf } from "@/analysis/sprite";
 
 export type Layer = "synergy" | "weak" | "resist" | "offense";

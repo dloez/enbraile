@@ -5,7 +5,8 @@ import type { Member } from "@/analysis/member";
 import type { Metric, Pool, PoolMember } from "@/analysis/pool";
 import { BASE_STATS, correlations, describe, histogram, typeBreakdown } from "@/analysis/stats";
 import { TypeDot } from "@/components/marks";
-import { fieldClass, Panel, Segmented, SelectField, Toggle } from "@/components/controls";
+import { fieldClass, Panel, Segmented, Toggle } from "@/components/controls";
+import { SelectField } from "@/components/select-field";
 import { spriteOf, spriteOfName } from "@/analysis/sprite";
 
 const LABEL: Record<string, string> = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe", bst: "BST", phys: "Phys bulk", spec: "Spec bulk" };
