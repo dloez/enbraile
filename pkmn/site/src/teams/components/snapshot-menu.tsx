@@ -82,7 +82,7 @@ export function SnapshotMenu({ label, taken = [], note, className, onClose, onPi
                   }}
                   className="flex min-h-11 flex-none cursor-pointer items-center gap-2.5 rounded-lg border-none bg-transparent px-2.5 text-left font-heading text-[1.3125rem] text-foreground outline-none hover:bg-cell focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
-                  <span aria-hidden="true" className={cn("grid size-5 flex-none place-items-center rounded-[5px] text-[0.9375rem] text-ink", PLAYER_FILL[playerColour(row.player.id) % PLAYER_FILL.length])}>
+                  <span aria-hidden="true" className={cn("grid size-5 flex-none place-items-center rounded-[5px] text-[0.9375rem] leading-none text-ink [text-box:trim-both_cap_alphabetic]", PLAYER_FILL[playerColour(row.player.id) % PLAYER_FILL.length])}>
                     {row.player.name.charAt(0).toUpperCase()}
                   </span>
                   {sourceLabel(row)}

@@ -23,10 +23,11 @@ export function PlayerBadge({ name, colour, size = "sm" }: { name: string; colou
     <span
       aria-hidden="true"
       className={cn(
-        "grid flex-none place-items-center border-3 border-ink font-heading leading-none text-ink",
+        "grid flex-none place-items-center border-3 border-ink font-heading text-ink",
         SIZES[size],
         PLAYER_FILL[colour % PLAYER_FILL.length],
         PLAYER_RING[colour % PLAYER_RING.length],
+        "leading-none [text-box:trim-both_cap_alphabetic]",
       )}
     >
       {name.charAt(0).toUpperCase()}

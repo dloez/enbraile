@@ -516,7 +516,7 @@ function Track({
               <span
                 aria-hidden="true"
                 className={cn(
-                  "absolute top-1/2 left-1/2 -mt-3.5 -ml-3.5 grid size-7 place-items-center rounded-[7px] border-3 border-ink font-heading text-lg leading-none text-ink ring-2 animate-track-bob motion-reduce:animate-none sm:-mt-5.5 sm:-ml-5.5 sm:size-11 sm:rounded-[10px] sm:border-4 sm:text-[1.5625rem] sm:ring-3",
+                  "absolute top-1/2 left-1/2 -mt-3.5 -ml-3.5 grid size-7 place-items-center rounded-[7px] border-3 border-ink font-heading text-lg leading-none text-ink ring-2 [text-box:trim-both_cap_alphabetic] animate-track-bob motion-reduce:animate-none sm:-mt-5.5 sm:-ml-5.5 sm:size-11 sm:rounded-[10px] sm:border-4 sm:text-[1.5625rem] sm:ring-3",
                   PLAYER_FILL[colour],
                   m.round > 0 ? "ring-destructive" : PLAYER_RING[colour],
                 )}

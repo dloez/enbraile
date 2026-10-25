@@ -136,10 +136,10 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 <div aria-hidden="true" style="display: grid; grid-template-columns: {{msCols}}; border-radius: 12px; background: #1b2232; overflow: hidden">
 <sc-for list="{{track}}" as="t" hint-placeholder-count="10">
 <span style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0 12px; background: {{t.tint}}">
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; line-height: 1; color: {{t.ink}}; white-space: nowrap">{{t.short}}</span>
+<span style="display: flex; align-items: center; height: 19px; font-family: 'Jersey 10', sans-serif; font-size: 19px; line-height: 1; color: {{t.ink}}; white-space: nowrap">{{t.short}}<sc-if value="{{t.cup}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill: #ffd34d"><path d="M7 3h10v5a5 5 0 0 1-10 0z"></path><path d="M10 13h4v4h3v4H7v-4h3z"></path></svg></sc-if></span>
 <span style="position: relative; width: 100%; height: 26px; display: grid; place-items: center">
-<span style="position: absolute; left: 0; right: 0; top: 11px; height: 4px; background: #44506d"></span>
-<sc-if value="{{t.cup}}" hint-placeholder-val="{{ false }}"><svg width="24" height="24" viewBox="0 0 24 24" style="position: relative; fill: #ffd34d"><path d="M7 3h10v5a5 5 0 0 1-10 0z"></path><path d="M4 4h3v3a3 3 0 0 1-3-3zM17 4h3a3 3 0 0 1-3 3z"></path><path d="M10 13h4v4h3v4H7v-4h3z"></path></svg></sc-if>
+<span style="position: absolute; left: {{t.lineL}}; right: {{t.lineR}}; top: 11px; height: 4px; background: #44506d"></span>
+<sc-if value="{{t.cup}}" hint-placeholder-val="{{ false }}"><span style="position: relative; width: 26px; height: 26px; box-sizing: border-box; border-radius: 50%; border: 2px solid #8a7330; background: #2a2416; display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="fill: #ffd34d"><path d="M7 3h10v5a5 5 0 0 1-10 0z"></path><path d="M10 13h4v4h3v4H7v-4h3z"></path></svg></span></sc-if>
 <sc-if value="{{t.node}}" hint-placeholder-val="{{ true }}"><span style="position: relative; width: {{t.size}}px; height: {{t.size}}px; border-radius: 50%; background: #2c3549; box-shadow: 0 0 0 3px {{t.ring}}"></span></sc-if>
 </span>
 </span>
@@ -331,9 +331,9 @@ class Component extends DCLogic {
     const set = (patch) => this.setState(Object.assign({saved: false}, patch));
     const night = scene === 'night';
     let round = 0;
-    const track = ms.map(([n, mark]) => {
+    const track = ms.map(([n, mark], i) => {
       const r = mark === 'round' ? ++round : 0;
-      return {short: mark === 'tournament' ? '' : short(n), cup: mark === 'tournament', node: mark !== 'tournament', size: r ? 18 : 12, ring: r ? '#c12d24' : '#44506d', tint: r ? 'rgba(193,45,36,0.12)' : 'transparent', ink: r ? '#ff9d94' : '#a3acbf'};
+      return {short: mark === 'tournament' ? '' : short(n), cup: mark === 'tournament', node: mark !== 'tournament', lineL: i === 0 ? '50%' : '0', lineR: i === ms.length - 1 ? '50%' : '0', size: r ? 18 : 12, ring: r ? '#c12d24' : '#44506d', tint: r ? 'rgba(193,45,36,0.12)' : 'transparent', ink: r ? '#ff9d94' : '#a3acbf'};
     });
     const move = (i, by) => { const l = ms.slice(); const [t] = l.splice(i, 1); l.splice(i + by, 0, t); set({ms: l}); };
     const milestones = ms.map(([n, mark], i) => ({
