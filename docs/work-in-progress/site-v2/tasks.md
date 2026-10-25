@@ -76,6 +76,22 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
 
+## Colour type defenses as Pokémon Database does
+
+The summary's type defenses colour damage taken the other way round from Pokémon Database: ×4 and ×2 red and orange, ½ and ¼ green (`--mult-*` in `src/index.css`, read only by `MULT` in `src/components/pc/summary.tsx`). The owner wants Pokémon Database's reading: ½ and ¼ red, ×2 and ×4 green, immune staying black (owner, 2026-10-25). `design/summary.dc.html` is frozen with the old colours, so the change is a decision recorded in [The pkmn Site](../../pkmn/site/explanation/site.md) rather than an edit to the board.
+
+**Do:**
+- [ ] Swap the values: `--mult-4` takes `#2a6338`, `--mult-2` `#3d8550`, `--mult-half` `#c8642f`, `--mult-quarter` `#b0302a`; `--mult-0` keeps `#0b0e15`. Update the tokens' row in the design system and record the decision, with the board it departs from, in `site.md`.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, open a PC summary's Info and see a ×2 type green and a ½ type red, an immunity black.
+- Human-run: compare one Pokémon's type defenses with its Pokémon Database page and see the same colours.
+- Reuse: the `--mult-*` tokens.
+- Neighbors: none.
+- Forbidden: raw colours in `summary.tsx`; editing `design/summary.dc.html`.
+
+**Touches:** `pkmn/site/src/index.css`, `docs/pkmn/site/reference/design-system.md`, `docs/pkmn/site/explanation/site.md`
+
 ## Teams of up to eight, analysed whole or as a pick of six
 
 A team holds six members by default and up to eight; its size is set like its sources, free for the owner or fixed by a tournament, and the analysis reads every member or a pick of six ([How many members does a team hold?](discovery.md#team-building), 2026-10-25).
