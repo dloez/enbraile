@@ -253,7 +253,7 @@ export function Matrices({ team, analysis, pool }: { team: readonly Member[]; an
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="m-0 font-heading text-4xl">Matrices</h2>
+        <h2 className="m-0 font-heading text-4xl">Type matchups</h2>
         <div className="flex-1" />
         <Segmented
           label="Matrix values"

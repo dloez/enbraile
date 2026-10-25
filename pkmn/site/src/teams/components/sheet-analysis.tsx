@@ -41,15 +41,15 @@ function TeamGraph(props: ComponentProps<GraphModule["TeamGraph"]>) {
 type View = "summary" | "graph" | "archetype" | "members" | "matrices" | "speed" | "pool";
 
 const VIEWS: readonly { value: View; label: string }[] = [
-  { value: "summary", label: "Summary" },
-  { value: "graph", label: "Graph" },
-  { value: "archetype", label: "Archetype" },
-  { value: "members", label: "Members" },
-  { value: "matrices", label: "Matrices" },
-  { value: "speed", label: "Speed tiers" },
+  { value: "summary", label: "Overview" },
+  { value: "graph", label: "Teamwork" },
+  { value: "archetype", label: "Playstyle" },
+  { value: "members", label: "Roles" },
+  { value: "matrices", label: "Type matchups" },
+  { value: "speed", label: "Speed" },
 ];
 
-const FULL_VIEWS: readonly { value: View; label: string }[] = [...VIEWS, { value: "pool", label: "Pool" }];
+const FULL_VIEWS: readonly { value: View; label: string }[] = [...VIEWS, { value: "pool", label: "Opponents" }];
 
 const tabClass = (on: boolean) =>
   cn(
@@ -115,9 +115,9 @@ function Views({ view, slots, stocks, filters, useTera, teras, onTera, onPool, n
           <TeamAnalysis slots={slots} stocks={stocks} stacked={narrow} />
         </>
       )}
-      {view === "graph" && <TeamGraph team={team} analysis={analysis} height={narrow ? 420 : 520} />}
+      {view === "graph" && <TeamGraph team={team} analysis={analysis} height={narrow ? 420 : 520} fill />}
       {view === "archetype" && (
-        <div className={pair}>
+        <div className={cn(pair, "flex-1 *:last:flex-1")}>
           <ArchetypeCard analysis={analysis} />
           <ArchetypeMap team={team} analysis={analysis} pool={pool} />
         </div>
@@ -128,11 +128,15 @@ function Views({ view, slots, stocks, filters, useTera, teras, onTera, onPool, n
         </div>
       )}
       {view === "matrices" && (
-        <div className="min-w-0 overflow-x-auto">
+        <div className="flex min-w-0 flex-1 flex-col overflow-x-auto *:flex-1 *:*:last:flex-1">
           <Matrices team={team} analysis={analysis} pool={pool} />
         </div>
       )}
-      {view === "speed" && <SpeedTiers team={team} pool={pool} />}
+      {view === "speed" && (
+        <div className="flex flex-1 flex-col *:flex-1">
+          <SpeedTiers team={team} pool={pool} />
+        </div>
+      )}
     </>
   );
 }

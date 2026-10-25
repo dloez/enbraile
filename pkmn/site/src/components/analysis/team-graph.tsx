@@ -8,6 +8,7 @@ import { TypeDot } from "@/components/marks";
 import { buttonClass, Toggle } from "@/components/controls";
 import { SelectField } from "@/components/select-field";
 import { spriteOf } from "@/analysis/sprite";
+import { cn } from "@/lib/utils";
 
 export type Layer = "synergy" | "weak" | "resist" | "offense";
 
@@ -370,7 +371,7 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
   );
 }
 
-export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Member[]; analysis: Analysis; height?: number }) {
+export function TeamGraph({ team, analysis, height = 600, fill = false }: { team: readonly Member[]; analysis: Analysis; height?: number; fill?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const positions = useRef<{ key: string; at: Map<string, { x: number; y: number }> } | null>(null);
@@ -468,9 +469,9 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
   };
 
   return (
-    <section aria-label="Graph" className="flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card">
+    <section aria-label="Teamwork" className={cn("flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card", fill && "flex-1")}>
       <div className="flex flex-wrap items-center gap-2.5 border-b px-3.5 py-3">
-        <h3 className="m-0 mr-1.5 font-heading text-2xl">Graph</h3>
+        <h3 className="m-0 mr-1.5 font-heading text-2xl">Teamwork</h3>
         {LAYERS.map((l) => (
           <Toggle key={l.key} pressed={layers[l.key]} onChange={(on) => setLayers({ ...layers, [l.key]: on })}>
             <span className={l.swatch} aria-hidden="true" />
@@ -516,8 +517,8 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
           PNG
         </button>
       </div>
-      <div className="flex flex-wrap">
-        <div className="relative min-w-0 flex-[999_1_560px] bg-muted" style={{ height }}>
+      <div className={cn("flex flex-wrap", fill && "flex-1")}>
+        <div className="relative min-w-0 flex-[999_1_560px] bg-muted" style={fill ? { minHeight: height } : { height }}>
           <div ref={container} className="h-full w-full" aria-label="Team graph" role="img" />
           <div className="pointer-events-none absolute bottom-3 left-3.5 flex flex-wrap gap-3.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">

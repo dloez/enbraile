@@ -77,7 +77,7 @@ export function SpeedTiers({ team, pool }: { team: readonly Member[]; pool: Pool
   ];
   const top = Math.max(...order.map((o) => o.m.stats.spe), benchmarks[2].v, 1);
   return (
-    <Panel title="Speed tiers" aside={<span className="text-xs text-muted-foreground">final Speed</span>}>
+    <Panel title="Speed" aside={<span className="text-xs text-muted-foreground">final Speed</span>}>
       <ol className="m-0 flex list-none flex-col gap-2 p-0">
         {order.map(({ m, i }) => (
           <li key={i} className="grid grid-cols-[40px_minmax(0,104px)_minmax(0,1fr)_44px] items-center gap-2 text-sm">

@@ -50,7 +50,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, onL
     <article
       aria-label={name}
       className={cn(
-        "flex min-w-0 flex-1 flex-col justify-between gap-1.5 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5",
+        "flex min-w-0 flex-1 flex-col gap-2 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5",
         glow ? "border-yellow shadow-[0_0_0_3px_color-mix(in_srgb,var(--yellow)_35%,transparent)]" : lit ? "border-primary" : "border-border",
         pick && !pick.in && "opacity-55",
       )}
@@ -66,8 +66,8 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, onL
             looking ? "border-primary bg-cell" : "border-cell bg-box",
           )}
         >
-          <span className="flex h-15 w-18 flex-none items-center justify-center overflow-hidden">
-            <MonSprite mon={mon} className="-mx-1.5 -mt-3.5 -mb-2.5 size-21 flex-none" />
+          <span className="flex h-21 w-18 flex-none items-center justify-center overflow-hidden">
+            <MonSprite mon={mon} className="-mx-1.5 size-21 flex-none" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.75">
             <span className="min-w-0 truncate font-heading text-[1.75rem] leading-[0.9]">{name}</span>

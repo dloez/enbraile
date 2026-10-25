@@ -130,7 +130,7 @@ Sizes are Tailwind's scale only, no pixel sizes:
 | Size | Where |
 |------|-------|
 | `text-5xl`–`text-6xl`, pixel | A page's `h1` (the series list, the admin pages), a series banner's name; the archetype's name |
-| `text-4xl`, pixel | Section `h2` (a team's name, "Team", "Members", "Matrices"); admin cards (the admin home, the series list); Compare's Head to head percentage on a phone (`text-[2.5rem]` from `lg`) |
+| `text-4xl`, pixel | Section `h2` (a team's name, "Team", "Members", "Type matchups"); admin cards (the admin home, the series list); Compare's Head to head percentage on a phone (`text-[2.5rem]` from `lg`) |
 | `text-3xl`, pixel | The summary's name, the drop zone's line |
 | `text-2xl`, pixel | Tabs, buttons, `Panel` titles, dialog titles, member card and graph node names, box titles ("PC 56"), the phone summary's sheet title |
 | `text-xl`, pixel | `Segmented` options, small group headings inside a card ("Ability"), the vendored dialog and sheet titles' default |

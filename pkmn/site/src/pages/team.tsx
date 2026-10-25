@@ -235,7 +235,7 @@ function Builder({ page }: { page: TeamPage }) {
   const sourceCount = held.length + (anyPokemon ? 1 : 0);
 
   const cards = (
-    <ol aria-label="Members" className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:auto-rows-[minmax(206px,1fr)] lg:overflow-y-auto">
+    <ol aria-label="Members" className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:content-start lg:auto-rows-[minmax(206px,auto)] lg:overflow-y-auto">
       {slots.map((member, slot) => {
         const mon = memberMon(member, stocks);
         const own = stocks.get(ownOf(member)?.source ?? "");

@@ -118,7 +118,31 @@ The preview deploys share the Neon `dev` branch and the `pkmn-site-preview-enbra
 
 The seed refuses any database or store off the local stack unless `SEED_TARGET` is `preview` and `S3_BUCKET` is the preview bucket, so the Production variables are never seeded, and off the local stack it takes the admin's password from `SEED_ADMIN_PASSWORD`, set for Preview in Vercel (the owner reads or changes it there).
 
-Push a branch for a preview URL (step 7), open it signed in to Vercel, and sign in as a test player at `/api/auth/dev/sign-in?username=red`, or as the admin at `/admin`. An agent's browser passes the protection with the project's Protection Bypass for Automation secret, read from `npx vercel api /v9/projects/enbraile-pkmn` (`protectionBypass`) once the CLI is signed in (`npx vercel login`, once per machine), by opening a preview URL once with `?x-vercel-protection-bypass=<secret>&x-vercel-set-bypass-cookie=true`.
+Push a branch for a preview URL (step 7) and open it in a browser signed in to Vercel, which Vercel Authentication asks for first. Then sign in on the preview:
+
+- As a test player: open `/api/auth/dev/sign-in?username=red` (or `blue`, or `leaf`, who is still waiting for an admin), which signs in and lands on the site.
+- As the admin: at `/admin`, the username `admin` and the password in `SEED_ADMIN_PASSWORD`, read in the Vercel dashboard under the project's Environment Variables, Preview; the CLI shows it only as `Hidden`.
+
+Discord sign-in does not work on a preview, whose URL is not among the Discord application's redirects. An agent's browser passes the protection with the project's Protection Bypass for Automation secret, read from `npx vercel api /v9/projects/enbraile-pkmn` (`protectionBypass`), by opening a preview URL once with `?x-vercel-protection-bypass=<secret>&x-vercel-set-bypass-cookie=true`.
+
+### Inspect deployments and the database from the shell
+
+Neither CLI is installed: run both through `npx` from `pkmn/site/`, where `.vercel/` links the Vercel CLI to the project `dloez/enbraile-pkmn`. Each signs in once per machine, `npx vercel login` and `npx neonctl auth`; `npx vercel whoami` and `npx neonctl me` show the account. The Neon project is `pkmn-site` (ID `wandering-pine-85287086`, in the Vercel organization `org-bitter-block-45974978`), with the branches `main` (production) and `dev` (previews).
+
+| To | Run |
+|----|-----|
+| List the deployments, newest first, with their environment and state | `npx vercel ls` |
+| See which commit and when a deployment was built | `npx vercel inspect <deployment URL>` |
+| Read a deployment's build log | `npx vercel inspect <deployment URL> --logs` |
+| Read the function's runtime logs | `npx vercel logs --deployment <deployment URL>` |
+| List a Vercel environment's variables | `npx vercel env ls --environment preview` (or `production`) |
+| Read the project's settings, such as `protectionBypass` | `npx vercel api /v9/projects/enbraile-pkmn` |
+| List the Neon projects | `npx neonctl projects list --org-id org-bitter-block-45974978` |
+| List the Neon branches | `npx neonctl branches list --project-id wandering-pine-85287086` |
+| Print a branch's connection string | `npx neonctl connection-string dev --project-id wandering-pine-85287086 --pooled` (drop `--pooled` for the direct one) |
+| Run SQL on a branch | `npx neonctl connection-string dev --project-id wandering-pine-85287086 --psql -- -c "<sql>"` |
+
+`vercel env ls` names the variables and never shows their values, since they are sensitive. A branch's connection string carries its password: keep it out of commits and logs. The number of rows in `drizzle.__drizzle_migrations` is how many migrations a branch has applied, so `select count(*) from drizzle.__drizzle_migrations` on `dev` and on `main` shows how far each one has been migrated. Without `psql` on the `PATH`, `neonctl` runs its own.
 
 ### 8. Roll back
 
