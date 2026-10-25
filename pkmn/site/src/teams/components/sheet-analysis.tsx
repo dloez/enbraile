@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { Maximize2, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { buildTeam } from "@/analysis/member";
@@ -14,10 +14,29 @@ import { ArchetypeCard, Checklist } from "@/components/analysis/archetype";
 import { ArchetypeMap, SpeedTiers } from "@/components/analysis/charts";
 import { buttonClass } from "@/components/controls";
 import { Matrices, MemberCards } from "@/components/analysis/members";
-import { TeamGraph } from "@/components/analysis/team-graph";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { poolLabel } from "../../../shared/pool";
+
+type GraphModule = typeof import("@/components/analysis/team-graph");
+
+let graphModule: GraphModule | null = null;
+
+function loadGraph(): Promise<GraphModule> {
+  return import("@/components/analysis/team-graph").then((m) => (graphModule = m));
+}
+
+export function preloadGraph() {
+  void loadGraph();
+}
+
+function TeamGraph(props: ComponentProps<GraphModule["TeamGraph"]>) {
+  const [loaded, setLoaded] = useState(graphModule);
+  useEffect(() => {
+    if (!loaded) void loadGraph().then(setLoaded);
+  }, [loaded]);
+  return loaded ? <loaded.TeamGraph {...props} /> : null;
+}
 
 type View = "summary" | "graph" | "archetype" | "members" | "matrices" | "speed" | "pool";
 

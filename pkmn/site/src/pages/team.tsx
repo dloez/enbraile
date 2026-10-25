@@ -18,7 +18,7 @@ import { EmptyCard, MemberCard, type Focus } from "@/teams/components/member-car
 import { MoveEditor } from "@/teams/components/move-picker";
 import { PasteDialog } from "@/teams/components/paste-dialog";
 import { AnyMark, SnapshotMenu, sourceLabel } from "@/teams/components/snapshot-menu";
-import { SheetAnalysis } from "@/teams/components/sheet-analysis";
+import { preloadGraph, SheetAnalysis } from "@/teams/components/sheet-analysis";
 import { currentAbility, type Mon } from "../../shared/mon";
 import { defensesOf, describeMove, describePokemon, describeTm } from "../../shared/describe";
 import { liveSlots, memberMon } from "@/teams/dex";
@@ -154,6 +154,8 @@ function Builder({ page }: { page: TeamPage }) {
   const pickMode = size > TEAM_SIZE && pick.scope === "six";
   const picked = pickedOf(slots, pick);
   const analysed = pickMode ? analysedSlots(slots, picked) : slots;
+
+  useEffect(preloadGraph, []);
 
   function choosePick(next: Pick) {
     setPick(next);
