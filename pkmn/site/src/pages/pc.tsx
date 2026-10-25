@@ -8,7 +8,6 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { SnapshotPc } from "@/components/pc/pc-box";
 import { type PcPage as Pc, pcPage } from "../../shared/pc";
-import { missingLine } from "../../shared/snapshot";
 
 const FROM = "/players/$player/series/$number/pc";
 
@@ -59,7 +58,7 @@ export function PcPage() {
     <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-176")}>
       <PcHead page={page} onPick={pick} />
       {page.snapshot ? (
-        <SnapshotPc key={page.milestone} sheet={page.snapshot} />
+        <SnapshotPc key={page.milestone} sheet={page.snapshot} gaps={page.missing?.missing ?? []} />
       ) : (
         <p className="my-6 rounded-2xl border-3 border-dashed border-cell-hi bg-box px-5 py-10 text-center font-heading text-3xl text-subtle">
           No snapshot yet
@@ -101,9 +100,6 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
       </div>
       <div className="flex-1" />
       <div className="flex max-w-full flex-col items-end gap-2 max-sm:items-start">
-        {page.missing && missingLine(page.missing) && (
-          <span className="text-sm font-bold text-warning">Export missing: {missingLine(page.missing)}</span>
-        )}
         <Segmented
           label="Snapshot"
           size="lg"

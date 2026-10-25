@@ -143,11 +143,11 @@ Beside `data`, the snapshot row keeps the export's missing-field report (`missin
 | `level`, `nature`, `ability`, `abilities`, `types`, `gender`, `nickname`, `shiny` | A Pokémon lacks that key or holds a value not of its type |
 | `items`, `tms` | The export has no such list |
 
-The series page's row and the PC page read the report as "Export missing: no IVs, EVs or stats · no moves · 1 skipped" (`missingLine`), and the upload's done step as a "Missing: IVs, EVs, stats · moves" chip beside a "1 skipped" one (`missingList`). Series 1's two old exports read as:
+The PC reads the report where each gap shows (below), and the upload's done step as a "Missing: IVs, EVs, stats · moves" chip beside a "1 skipped" one (`missingList`). Series 1's two old exports read as:
 
 | Export | Pokémon | Gaps |
 |--------|---------|------|
 | Vicky's, 2026-10-16 | 55 | `ivs`, `evs`, `stats`, `moves` |
 | MIRAMEEE's, 2026-10-17 | 48 | `ivs`, `evs`, `stats`, `tmRolls` |
 
-The PC shows what an old export lacks the way it shows any absent value: "—" for IVs, EVs and stats, the Stats tab opening on its Lv 50 view with ranges over IVs 0 to 31, and "No moves in this export" on the Moves tab without `moves`.
+The PC shows what an old export lacks the way it shows any absent value, "—" for IVs, EVs and stats, and warns where the gap shows rather than over the page: the Stats tab names the IVs, EVs or stats it lacks and opens on its Lv 50 view with ranges over IVs 0 to 31; the Moves tab reads "No moves in this export" without `moves`, and over "Can learn" names the missing TM rolls; the bag names a missing `items` or `tms` list in that pocket (`GapWarning` in `src/components/pc/summary.tsx`).

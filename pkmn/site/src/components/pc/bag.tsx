@@ -4,6 +4,8 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { canLearn, describeItem, describeTm, displayName, type BagItem, type BagTm, type Learn, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
+import { GapWarning } from "@/components/pc/summary";
+import type { ExportGap } from "../../../shared/snapshot";
 import { heldCount, memberMon, type Slots } from "@/open-sheet/team";
 import { TypeSquare, UnknownMark } from "@/components/marks";
 import { MonSprite } from "@/components/pc/summary";
@@ -130,6 +132,7 @@ interface BagTeam {
 
 interface BagProps {
   sheet: Sheet;
+  gaps?: readonly ExportGap[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   team?: BagTeam;
@@ -139,7 +142,7 @@ const NO_SLOTS: Slots = [];
 
 const nothing = () => undefined;
 
-export function Bag({ sheet, open, onOpenChange, team }: BagProps) {
+export function Bag({ sheet, gaps = [], open, onOpenChange, team }: BagProps) {
   const readOnly = team === undefined;
   const slots = team?.slots ?? NO_SLOTS;
   const mons = team?.mons ?? [];
@@ -228,6 +231,11 @@ export function Bag({ sheet, open, onOpenChange, team }: BagProps) {
             />
           </label>
         </div>
+        {(pocket === "tms" ? gaps.includes("tms") : gaps.includes("items")) && (
+          <div className="px-4 pt-2">
+            <GapWarning>No {pocket === "tms" ? "TMs" : "items"} in this export</GapWarning>
+          </div>
+        )}
         <ul className="m-0 min-h-0 flex-1 list-none overflow-auto px-2.5 py-1.5">
           {pocket === "tms" && giveTo === null
             ? tms

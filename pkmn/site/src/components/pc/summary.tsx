@@ -1,10 +1,12 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { TriangleAlert } from "lucide-react";
 import type { StatID } from "@pkmn/dex";
 import { damageTaken } from "@/analysis/chart";
 import { cn } from "@/lib/utils";
 import { displayName, fightStat, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { UnknownMark } from "@/components/marks";
+import type { ExportGap } from "../../../shared/snapshot";
 
 type Page = "info" | "stats" | "moves";
 
@@ -71,6 +73,15 @@ export function MonSprite({ mon, className }: { mon: Pick<Mon, "sprite">; classN
     );
   }
   return <img src={mon.sprite} alt="" className={cn("[image-rendering:pixelated]", className)} />;
+}
+
+export function GapWarning({ children }: { children: ReactNode }) {
+  return (
+    <p className="m-0 flex flex-none items-center gap-2.5 rounded-xl border border-warning bg-warning-soft px-3.5 py-2.5">
+      <TriangleAlert aria-hidden="true" className="size-4.5 flex-none text-warning" />
+      <span className="text-sm font-bold text-warning-ink">{children}</span>
+    </p>
+  );
 }
 
 function tint(ratio: number): string {
@@ -225,8 +236,18 @@ function Stats({ mon }: { mon: Mon }) {
           ? String(stats.reduce((t, s) => t + (s.fight ?? 0), 0))
           : "—";
   const grid = mode === "base" ? "grid-cols-[46px_minmax(0,1fr)_54px]" : "grid-cols-[46px_minmax(0,1fr)_30px_36px_64px]";
+  const lacks = [
+    stats.some((s) => s.iv === null) && "IVs",
+    stats.some((s) => s.ev === null) && "EVs",
+    !known && "stats",
+  ].filter((x): x is string => typeof x === "string");
   return (
     <>
+      {lacks.length > 0 && (
+        <GapWarning>
+          No {lacks.join(", ").replace(/, ([^,]*)$/, " or $1")} in this export{mode === "fifty" && stats.some((s) => s.iv === null) ? ": Lv 50 shows the range over IVs 0–31" : ""}
+        </GapWarning>
+      )}
       <div role="radiogroup" aria-label="Stats shown" className={trackClass}>
         {modes.map(([id, name]) => (
           <button key={id} type="button" role="radio" aria-checked={mode === id} onClick={() => setMode(id)} className={segClass(mode === id)}>
@@ -299,7 +320,7 @@ interface MoveRow {
   label: string;
 }
 
-function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
+function Moves({ mon, sheet, gaps }: { mon: Mon; sheet: Sheet; gaps: readonly ExportGap[] }) {
   const labels = useMemo(() => tmLabels(sheet.tms), [sheet]);
   const learn = mon.learnable;
   const rows = useMemo<MoveRow[]>(() => {
@@ -311,7 +332,7 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
     ];
   }, [learn, labels]);
   const [picked, setPicked] = useState<string | null>(null);
-  if (!learn) return <p className="m-0 font-heading text-[1.375rem] text-warning">No moves in this export</p>;
+  if (!learn) return <GapWarning>No moves in this export</GapWarning>;
   const selected = rows.find((r) => r.key === picked) ?? rows[0];
   const row = (r: MoveRow, withLabel: boolean) => {
     const on = r.key === selected?.key;
@@ -361,6 +382,11 @@ function Moves({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
               </h3>
               <span className="text-right">Pow</span>
             </div>
+            {gaps.includes("tmRolls") && (
+              <div className="mb-1">
+                <GapWarning>No TM rolls in this export: TMs the game has not rolled for it yet are missing</GapWarning>
+              </div>
+            )}
             {learnRows.map((r) => row(r, true))}
           </section>
         )}
@@ -434,7 +460,7 @@ export function SummaryHead({ mon, title, closeRoom = false }: { mon: Mon; title
   );
 }
 
-export function SummaryBody({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
+export function SummaryBody({ mon, sheet, gaps = [] }: { mon: Mon; sheet: Sheet; gaps?: readonly ExportGap[] }) {
   const [page, setPage] = useState<Page>("info");
   const pages: [Page, string][] = [
     ["info", "Info"],
@@ -456,7 +482,7 @@ export function SummaryBody({ mon, sheet }: { mon: Mon; sheet: Sheet }) {
           page === "moves" ? "overflow-hidden" : "overflow-y-auto",
         )}
       >
-        {page === "info" ? <Info mon={mon} /> : page === "stats" ? <Stats mon={mon} /> : <Moves mon={mon} sheet={sheet} />}
+        {page === "info" ? <Info mon={mon} /> : page === "stats" ? <Stats mon={mon} /> : <Moves mon={mon} sheet={sheet} gaps={gaps} />}
       </div>
     </>
   );

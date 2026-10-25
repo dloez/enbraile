@@ -9,6 +9,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { describePokemon, displayName, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
+import type { ExportGap } from "../../../shared/snapshot";
 
 function matches(mon: Mon, query: string, type: string): boolean {
   const q = query.trim().toLowerCase();
@@ -176,22 +177,23 @@ export function PcBox({ mons, selected, onPick, actions }: {
   );
 }
 
-export function SummaryAside({ mon, sheet, footer }: { mon: Mon; sheet: Sheet; footer?: ReactNode }) {
+export function SummaryAside({ mon, sheet, footer, gaps }: { mon: Mon; sheet: Sheet; footer?: ReactNode; gaps?: readonly ExportGap[] }) {
   return (
     <aside
       aria-label="Summary"
       className="sticky top-4 flex max-h-[calc(100svh-2rem)] w-95 flex-none flex-col self-start overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0 lg:self-stretch"
     >
       <SummaryHead mon={mon} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
-      <SummaryBody key={mon.index} mon={mon} sheet={sheet} />
+      <SummaryBody key={mon.index} mon={mon} sheet={sheet} gaps={gaps} />
       {footer}
     </aside>
   );
 }
 
-export function SummarySheet({ mon, sheet, open, onClose, footer }: {
+export function SummarySheet({ mon, sheet, open, onClose, footer, gaps }: {
   mon: Mon | undefined;
   sheet: Sheet;
+  gaps?: readonly ExportGap[];
   open: boolean;
   onClose: () => void;
   footer?: ReactNode;
@@ -206,7 +208,7 @@ export function SummarySheet({ mon, sheet, open, onClose, footer }: {
               closeRoom
               title={(text) => <SheetTitle className="truncate font-heading text-[2.25rem] leading-[0.85] font-normal">{text}</SheetTitle>}
             />
-            <SummaryBody key={mon.index} mon={mon} sheet={sheet} />
+            <SummaryBody key={mon.index} mon={mon} sheet={sheet} gaps={gaps} />
             {footer}
           </>
         )}
@@ -215,7 +217,7 @@ export function SummarySheet({ mon, sheet, open, onClose, footer }: {
   );
 }
 
-export function SnapshotPc({ sheet }: { sheet: Sheet }) {
+export function SnapshotPc({ sheet, gaps = [] }: { sheet: Sheet; gaps?: readonly ExportGap[] }) {
   const wide = useMediaQuery("(min-width: 64rem)");
   const mons = useMemo(() => sheet.pokemon.map(describePokemon), [sheet]);
   const [picked, setPicked] = useState<number | null>(null);
@@ -227,10 +229,10 @@ export function SnapshotPc({ sheet }: { sheet: Sheet }) {
     <>
       <div className="flex flex-1 gap-6 pt-3.5 pb-3 sm:pb-6 lg:min-h-0">
         <PcBox mons={mons} selected={selected} onPick={setPicked} actions={<BagButton onClick={() => setBagOpen(true)} />} />
-        {wide && selectedMon && <SummaryAside mon={selectedMon} sheet={sheet} />}
+        {wide && selectedMon && <SummaryAside mon={selectedMon} sheet={sheet} gaps={gaps} />}
       </div>
-      {!wide && <SummarySheet mon={selectedMon} sheet={sheet} open={selectedMon !== undefined} onClose={() => setPicked(null)} />}
-      <Bag sheet={sheet} open={bagOpen} onOpenChange={setBagOpen} />
+      {!wide && <SummarySheet mon={selectedMon} sheet={sheet} gaps={gaps} open={selectedMon !== undefined} onClose={() => setPicked(null)} />}
+      <Bag sheet={sheet} gaps={gaps} open={bagOpen} onOpenChange={setBagOpen} />
     </>
   );
 }

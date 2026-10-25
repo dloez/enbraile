@@ -194,20 +194,10 @@ function gapGroups(report: ExportReport): string[][] {
   return [spread, ...rest.map((gap) => [gap])].filter((group) => group.length > 0).map((group) => group.map((gap) => GAP_LABEL[gap as ExportGap]));
 }
 
-function either(labels: string[]): string {
-  return labels.length < 2 ? (labels[0] ?? "") : `${labels.slice(0, -1).join(", ")} or ${labels.at(-1)}`;
-}
-
 export function missingList(report: ExportReport): string {
   return gapGroups(report)
     .map((labels) => labels.join(", "))
     .join(" · ");
-}
-
-export function missingLine(report: ExportReport): string {
-  const parts = gapGroups(report).map((labels) => `no ${either(labels)}`);
-  if (report.skipped > 0) parts.push(`${report.skipped} skipped`);
-  return parts.join(" · ");
 }
 
 export type Sheet = z.infer<typeof sheetSchema>;
