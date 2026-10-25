@@ -13,13 +13,20 @@ const earlyMs = 10_000;
 
 const early = new Map<string, { at: number; response: Promise<Response> }>();
 
-export function prefetch(path: string) {
+export function prefetch(path: string): Promise<void> {
   const url = `/api${path}`;
   const held = early.get(url);
-  if (held && Date.now() - held.at < earlyMs) return;
+  if (held && Date.now() - held.at < earlyMs) return settled(held.response);
   const response = fetch(url);
-  response.catch(() => undefined);
   early.set(url, { at: Date.now(), response });
+  return settled(response);
+}
+
+function settled(response: Promise<Response>): Promise<void> {
+  return response.then(
+    () => undefined,
+    () => undefined,
+  );
 }
 
 export function forgetEarly() {

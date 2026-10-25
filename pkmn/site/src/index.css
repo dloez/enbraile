@@ -16,6 +16,7 @@
     --animate-track-bob: track-bob 0.5s steps(2) infinite alternate;
     --animate-pc-nudge-up: pc-nudge-up 0.5s steps(2) infinite alternate;
     --animate-pc-nudge-down: pc-nudge-down 0.5s steps(2) infinite alternate;
+    --animate-nav-sweep: nav-sweep 0.9s linear infinite;
     --color-ink: var(--ink);
     --color-red: var(--red);
     --color-red-hi: var(--red-hi);
@@ -311,6 +312,11 @@
 @keyframes pc-nudge-down {
   from { transform: translateY(0); }
   to { transform: translateY(4px); }
+}
+
+@keyframes nav-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -103,11 +103,22 @@ export function SiteHeader() {
         </nav>
         {user && <Account user={user} />}
         <PhoneMenu tabs={tabs} current={current} pathname={pathname} user={user} open={open} setOpen={setOpen} />
+        <NavProgress />
       </header>
       {open && (
         <div aria-hidden="true" onClick={() => setOpen(false)} className="fixed inset-0 z-10 bg-scrim sm:hidden" />
       )}
     </>
+  );
+}
+
+function NavProgress() {
+  const loading = useRouterState({ select: (state) => state.status === "pending" || state.isLoading });
+  if (!loading) return null;
+  return (
+    <span role="progressbar" aria-label="Loading the page" className="pointer-events-none absolute inset-x-0 -bottom-1 h-1 overflow-hidden">
+      <span className="block h-full w-2/5 animate-nav-sweep bg-primary motion-reduce:w-full motion-reduce:animate-none" />
+    </span>
   );
 }
 
