@@ -6,22 +6,21 @@ import { MonSprite, SummaryHead, tint } from "@/components/pc/summary";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet as BottomSheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { TYPES } from "@/analysis/dex";
-import { buildPool } from "@/analysis/pool";
+import { buildPool, type PoolFilters } from "@/analysis/pool";
 import { cn } from "@/lib/utils";
 import { EditorHead, editorScroll } from "@/teams/components/editors";
-import { SHEET_POOL } from "@/teams/components/sheet-analysis";
 import { displayName, freeMon, NATURES, speciesAbilities, STAT_LABELS, STATS, type Mon } from "@/teams/dex";
 import { freeSet, newFreeMember, type FreeMember, type FreeSet } from "@/teams/team";
 import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL } from "../../../shared/team";
 
-export function poolSpecies(): { id: string; name: string; types: string[] }[] {
-  return buildPool(SHEET_POOL)
+export function poolSpecies(filters: PoolFilters): { id: string; name: string; types: string[] }[] {
+  return buildPool(filters)
     .members.map((m) => ({ id: m.id, name: m.name, types: m.types }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function poolIds(): Set<string> {
-  return new Set(poolSpecies().map((s) => s.id));
+export function poolIds(filters: PoolFilters): Set<string> {
+  return new Set(poolSpecies(filters).map((s) => s.id));
 }
 
 const SIGNS = (mon: Mon, stat: StatID) => {
@@ -148,8 +147,8 @@ function Aside({ member, onChange, footer }: { member: FreeMember; onChange: (se
   );
 }
 
-export function FreePicker({ slot, wide, onPut }: { slot: number; wide: boolean; onPut: (member: FreeMember) => void }) {
-  const species = useMemo(poolSpecies, []);
+export function FreePicker({ slot, wide, pool, onPut }: { slot: number; wide: boolean; pool: PoolFilters; onPut: (member: FreeMember) => void }) {
+  const species = useMemo(() => poolSpecies(pool), [pool]);
   const [query, setQuery] = useState("");
   const [type, setType] = useState("");
   const [picked, setPicked] = useState<string | null>(null);

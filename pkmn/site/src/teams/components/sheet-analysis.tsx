@@ -4,21 +4,22 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { buildTeam } from "@/analysis/member";
 import { parsePaste } from "@/analysis/paste";
 import { buildPool, legality, type PoolFilters } from "@/analysis/pool";
+import { PoolBar } from "@/team-analysis/components/pool-bar";
+import { PoolView } from "@/team-analysis/components/pool-view";
 import { analyze } from "@/analysis/team";
 import { showdownTeam } from "@/teams/showdown";
 import { MAX_TEAM_SIZE, type Slots, type Stocks } from "@/teams/team";
 import { TeamAnalysis } from "@/teams/components/team-analysis";
 import { ArchetypeCard, Checklist } from "@/components/analysis/archetype";
-import { ArchetypeMap } from "@/components/analysis/charts";
+import { ArchetypeMap, SpeedTiers } from "@/components/analysis/charts";
 import { buttonClass } from "@/components/controls";
 import { Matrices, MemberCards } from "@/components/analysis/members";
 import { TeamGraph } from "@/components/analysis/team-graph";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { poolLabel } from "../../../shared/pool";
 
-export const SHEET_POOL: PoolFilters = { gen: 9, speciesGen: 5, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: 800 };
-
-type View = "summary" | "graph" | "archetype" | "members" | "matrices";
+type View = "summary" | "graph" | "archetype" | "members" | "matrices" | "speed" | "pool";
 
 const VIEWS: readonly { value: View; label: string }[] = [
   { value: "summary", label: "Summary" },
@@ -26,7 +27,10 @@ const VIEWS: readonly { value: View; label: string }[] = [
   { value: "archetype", label: "Archetype" },
   { value: "members", label: "Members" },
   { value: "matrices", label: "Matrices" },
+  { value: "speed", label: "Speed tiers" },
 ];
+
+const FULL_VIEWS: readonly { value: View; label: string }[] = [...VIEWS, { value: "pool", label: "Pool" }];
 
 const tabClass = (on: boolean) =>
   cn(
@@ -34,10 +38,10 @@ const tabClass = (on: boolean) =>
     on ? "bg-border text-white" : "bg-transparent text-muted-foreground hover:bg-cell hover:text-white",
   );
 
-function Tabs({ view, onView, className }: { view: View; onView: (view: View) => void; className?: string }) {
+function Tabs({ views, view, onView, className }: { views: readonly { value: View; label: string }[]; view: View; onView: (view: View) => void; className?: string }) {
   return (
     <div role="tablist" aria-label="Analysis view" className={cn("flex flex-none gap-1 overflow-x-auto rounded-xl border-3 bg-ink p-1", className)}>
-      {VIEWS.map((v) => (
+      {views.map((v) => (
         <button key={v.value} type="button" role="tab" aria-selected={view === v.value} onClick={() => onView(v.value)} className={cn(tabClass(view === v.value), "flex-1")}>
           {v.label}
         </button>
@@ -46,16 +50,39 @@ function Tabs({ view, onView, className }: { view: View; onView: (view: View) =>
   );
 }
 
-function useAnalysis(slots: Slots, stocks: Stocks) {
-  const pool = buildPool(SHEET_POOL);
+type Teras = Readonly<Record<string, string>>;
+
+function useAnalysis(slots: Slots, stocks: Stocks, filters: PoolFilters, useTera: boolean, teras: Teras) {
+  const pool = buildPool(filters);
   const text = showdownTeam(slots, stocks);
-  const team = useMemo(() => buildTeam(SHEET_POOL.gen, parsePaste(text, MAX_TEAM_SIZE)).team, [text]);
-  const analysis = useMemo(() => (team.length ? analyze(team, pool) : null), [team, pool]);
+  const built = useMemo(() => buildTeam(filters.gen, parsePaste(text, MAX_TEAM_SIZE)).team, [filters.gen, text]);
+  const team = useMemo(() => (useTera ? built.map((m) => ({ ...m, teraType: teras[m.id] ?? m.types[0] ?? "" })) : built), [built, useTera, teras]);
+  const analysis = useMemo(() => (team.length ? analyze(team, pool, { useTera }) : null), [team, pool, useTera]);
   return { pool, team, analysis };
 }
 
-function Views({ view, slots, stocks, narrow }: { view: View; slots: Slots; stocks: Stocks; narrow: boolean }) {
-  const { pool, team, analysis } = useAnalysis(slots, stocks);
+interface ViewsProps {
+  view: View;
+  slots: Slots;
+  stocks: Stocks;
+  filters: PoolFilters;
+  useTera: boolean;
+  teras: Teras;
+  onTera: (species: string, type: string) => void;
+  onPool?: (filters: PoolFilters) => void;
+  narrow: boolean;
+}
+
+function Views({ view, slots, stocks, filters, useTera, teras, onTera, onPool, narrow }: ViewsProps) {
+  const { pool, team, analysis } = useAnalysis(slots, stocks, filters, useTera, teras);
+  if (view === "pool") {
+    return (
+      <>
+        <PoolBar filters={filters} pool={pool} onChange={onPool} />
+        <PoolView pool={pool} team={team} />
+      </>
+    );
+  }
   if (!analysis) return <p className="m-auto font-heading text-2xl text-muted-foreground">Add a Pokémon to analyse the team</p>;
   const pair = narrow ? "flex flex-col gap-3.5" : "grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]";
   return (
@@ -78,7 +105,7 @@ function Views({ view, slots, stocks, narrow }: { view: View; slots: Slots; stoc
       )}
       {view === "members" && (
         <div className={cn(narrow && "[&>div]:grid-cols-1!")}>
-          <MemberCards team={team} analysis={analysis} legality={(m) => legality(m, SHEET_POOL)} />
+          <MemberCards team={team} analysis={analysis} legality={(m) => legality(m, filters)} tera={useTera ? { of: (m) => m.teraType, onChange: (m, type) => onTera(m.id, type) } : undefined} />
         </div>
       )}
       {view === "matrices" && (
@@ -86,25 +113,38 @@ function Views({ view, slots, stocks, narrow }: { view: View; slots: Slots; stoc
           <Matrices team={team} analysis={analysis} pool={pool} />
         </div>
       )}
+      {view === "speed" && <SpeedTiers team={team} pool={pool} />}
     </>
   );
 }
 
-function PoolChip({ className }: { className?: string }) {
-  const pool = buildPool(SHEET_POOL);
+function PoolChip({ filters, className }: { filters: PoolFilters; className?: string }) {
+  const pool = buildPool(filters);
   return (
-    <span
-      title="Showdown's Gen 9 data, species up to Gen 5, fully evolved"
-      className={cn("rounded-full border-2 px-3 py-1 text-[0.8125rem] font-bold whitespace-nowrap text-stat-down", className)}
-    >
-      Pool · Gen 1–5 species · fully evolved · <span className="tabular-nums">{pool.size}</span>
+    <span title="The team's pool" className={cn("rounded-full border-2 px-3 py-1 text-[0.8125rem] font-bold whitespace-nowrap text-stat-down", className)}>
+      {poolLabel(filters)} · <span className="tabular-nums">{pool.size}</span>
     </span>
   );
 }
 
-export function SheetAnalysis({ slots, stocks, name }: { slots: Slots; stocks: Stocks; name: string }) {
+function TeraToggle({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 font-heading text-[1.375rem] text-subtle">
+      <input type="checkbox" checked={on} onChange={(event) => onChange(event.target.checked)} className="size-4.5 accent-primary" />
+      Tera
+    </label>
+  );
+}
+
+export function SheetAnalysis({ slots, stocks, name, pool: filters, onPool }: { slots: Slots; stocks: Stocks; name: string; pool: PoolFilters; onPool?: (filters: PoolFilters) => void }) {
   const [view, setView] = useState<View>("summary");
   const [full, setFull] = useState(false);
+  const [tera, setTera] = useState(false);
+  const [teras, setTeras] = useState<Teras>({});
+  const teraAllowed = filters.gen >= 9;
+  const useTera = tera && teraAllowed;
+  const panelView = VIEWS.some((v) => v.value === view) ? view : "summary";
+  const shared = { slots, stocks, filters, useTera, teras, onPool, onTera: (species: string, type: string) => setTeras((now) => ({ ...now, [species]: type })) };
   return (
     <>
       <div className="flex flex-none items-center gap-2.5">
@@ -114,9 +154,9 @@ export function SheetAnalysis({ slots, stocks, name }: { slots: Slots; stocks: S
           Full analysis
         </button>
       </div>
-      <Tabs view={view} onView={setView} />
+      <Tabs views={VIEWS} view={panelView} onView={setView} />
       <div className="-mr-2 flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto pr-2 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]">
-        <Views view={view} slots={slots} stocks={stocks} narrow />
+        <Views view={panelView} {...shared} narrow />
       </div>
       <Dialog open={full} onOpenChange={setFull}>
         <DialogContent
@@ -128,9 +168,10 @@ export function SheetAnalysis({ slots, stocks, name }: { slots: Slots; stocks: S
             <DialogTitle className="m-0 truncate font-heading text-[2.375rem] leading-none font-normal">
               <span className="text-muted-foreground">{name} ·</span> Analysis
             </DialogTitle>
-            <Tabs view={view} onView={setView} className="max-w-full bg-background" />
+            <Tabs views={FULL_VIEWS} view={view} onView={setView} className="max-w-full bg-background" />
             <div className="flex-1" />
-            <PoolChip className="max-sm:hidden" />
+            {teraAllowed && <TeraToggle on={tera} onChange={setTera} />}
+            <PoolChip filters={filters} className="max-sm:hidden" />
             <DialogPrimitive.Close
               aria-label="Close the analysis"
               className="grid size-12 flex-none cursor-pointer place-items-center rounded-[10px] border-3 border-cell-hi bg-cell text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -139,7 +180,7 @@ export function SheetAnalysis({ slots, stocks, name }: { slots: Slots; stocks: S
             </DialogPrimitive.Close>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5 sm:px-10">
-            <Views view={view} slots={slots} stocks={stocks} narrow={false} />
+            <Views view={view} {...shared} narrow={false} />
           </div>
         </DialogContent>
       </Dialog>

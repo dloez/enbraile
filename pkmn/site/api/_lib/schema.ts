@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
+import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
 import type { TmRolls } from "./export/export.js";
 import { INGESTION_MODES, MILESTONE_MARKS, SCENES, SERIES_STATES } from "../../shared/series.js";
@@ -109,6 +110,7 @@ export const series = pgTable(
     scene: sceneEnum("scene").notNull().default("night"),
     ingestion: ingestionEnum("ingestion").notNull().default("manual"),
     rules: text("rules").notNull().default(""),
+    pool: jsonb("pool").$type<TeamPool>().notNull().default(DEFAULT_POOL),
     state: seriesStateEnum("state").notNull().default("draft"),
     startedAt: timestamp("started_at"),
     finishedAt: timestamp("finished_at"),
@@ -213,6 +215,7 @@ export const team = pgTable(
     size: integer("size").notNull().default(6),
     anyPokemon: boolean("any_pokemon").notNull().default(false),
     slots: jsonb("slots").$type<TeamSlots>().notNull(),
+    pool: jsonb("pool").$type<TeamPool>().notNull().default(DEFAULT_POOL),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
       .notNull()

@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { teamPool } from "./pool.js";
 import { exportReport } from "./snapshot.js";
 
 export const SCENES = ["night", "route"] as const;
@@ -30,6 +31,7 @@ export const seriesInput = z.object({
   scene,
   ingestion,
   rules: z.string().max(100_000),
+  pool: teamPool,
   playerIds: z.array(z.string().min(1)).max(100),
   milestones: z.array(milestoneInput).max(30),
 });
@@ -54,6 +56,7 @@ export const adminSeries = z.object({
   scene,
   ingestion,
   rules: z.string(),
+  pool: teamPool,
   state: seriesState,
   playerIds: z.array(z.string()),
   milestones: z.array(milestone),

@@ -146,6 +146,7 @@ export async function adminView(row: SeriesRow): Promise<AdminSeries> {
     scene: row.scene,
     ingestion: row.ingestion,
     rules: row.rules,
+    pool: row.pool,
     state: row.state,
     playerIds: players.map((p) => p.id),
     milestones,

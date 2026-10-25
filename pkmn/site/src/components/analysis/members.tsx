@@ -5,7 +5,7 @@ import { MOVE_TAGS, STATS, type Member, type MoveTag } from "@/analysis/member";
 import type { Pool } from "@/analysis/pool";
 import { defValue, offValue, type Analysis } from "@/analysis/team";
 import { TypeDot } from "@/components/marks";
-import { Panel, Segmented } from "@/components/controls";
+import { Panel, Segmented, SelectField } from "@/components/controls";
 import { spriteOf } from "@/analysis/sprite";
 
 const STAT_LABEL = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as const;
@@ -30,7 +30,12 @@ function tagOf(id: string): string | null {
 
 const CATEGORY = { Physical: "P", Special: "S", Status: "—" } as const;
 
-function MemberCard({ member, analysis, index, illegal }: { member: Member; analysis: Analysis; index: number; illegal: string | null }) {
+export interface TeraPicks {
+  of: (member: Member) => string;
+  onChange: (member: Member, type: string) => void;
+}
+
+function MemberCard({ member, analysis, index, illegal, tera }: { member: Member; analysis: Analysis; index: number; illegal: string | null; tera?: TeraPicks }) {
   const a = analysis.members[index];
   const nature = dexFor(analysis.gen).natures.get(member.set.nature);
   return (
@@ -53,6 +58,15 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
             {[member.set.ability, member.set.item, `${member.set.nature} · Lv ${member.set.level}`].filter(Boolean).join(" · ")}
           </span>
         </div>
+        {tera && (
+          <SelectField
+            label={`${member.display}'s Tera type`}
+            size="sm"
+            value={tera.of(member)}
+            onChange={(type) => tera.onChange(member, type)}
+            options={typesIn(analysis.gen).map((t) => ({ value: t, label: t }))}
+          />
+        )}
         <span className="flex flex-col items-end gap-0.5">
           <span className="tabular-nums text-base">{member.bst}</span>
           <span className="text-xs text-muted-foreground">BST · P{Math.round(a.pct.bst * 100)}</span>
@@ -118,11 +132,11 @@ function MemberCard({ member, analysis, index, illegal }: { member: Member; anal
   );
 }
 
-export function MemberCards({ team, analysis, legality }: { team: readonly Member[]; analysis: Analysis; legality: (m: Member) => string | null }) {
+export function MemberCards({ team, analysis, legality, tera }: { team: readonly Member[]; analysis: Analysis; legality: (m: Member) => string | null; tera?: TeraPicks }) {
   return (
     <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3">
       {team.map((m, i) => (
-        <MemberCard key={i} member={m} analysis={analysis} index={i} illegal={legality(m)} />
+        <MemberCard key={i} member={m} analysis={analysis} index={i} illegal={legality(m)} tera={tera} />
       ))}
     </div>
   );

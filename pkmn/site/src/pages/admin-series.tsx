@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AdminGate } from "@/pages/admin";
 import { STATE_NAMES } from "@/pages/admin-series-list";
+import { PoolBar } from "@/team-analysis/components/pool-bar";
 import { type Game, gameList } from "../../shared/games";
 import { type Player, playerList } from "../../shared/players";
 import {
@@ -46,6 +47,7 @@ function draftOf(series: AdminSeries): Draft {
     scene: series.scene,
     ingestion: series.ingestion,
     rules: series.rules,
+    pool: series.pool,
     playerIds: series.playerIds,
     milestones: series.milestones,
   };
@@ -242,6 +244,11 @@ function AdminSeriesForm() {
             </span>
           </div>
         </div>
+      </Panel>
+
+      <Panel title="Default pool">
+        <p className="m-0 text-sm text-muted-foreground">A new team built from this series' snapshots starts with this pool; its owner can change it.</p>
+        <PoolBar filters={draft.pool} onChange={editable ? (pool) => change({ pool }) : undefined} />
       </Panel>
 
       <Panel title="Players" aside={<span className="text-sm text-muted-foreground tabular-nums">{draft.playerIds.length}</span>}>

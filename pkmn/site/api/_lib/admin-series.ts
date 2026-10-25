@@ -78,6 +78,7 @@ adminSeries.put("/:id", async (c) => {
           scene: input.scene,
           ingestion: input.ingestion,
           rules: input.rules,
+          pool: input.pool,
         })
         .where(and(eq(series.id, row.id), eq(series.state, "draft")))
         .returning();

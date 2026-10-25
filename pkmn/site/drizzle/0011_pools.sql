@@ -1,0 +1,2 @@
+ALTER TABLE "series" ADD COLUMN "pool" jsonb DEFAULT '{"gen":9,"speciesGen":5,"noLegendary":false,"noMythical":false,"fullyEvolved":true,"maxBst":800}'::jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "team" ADD COLUMN "pool" jsonb DEFAULT '{"gen":9,"speciesGen":5,"noLegendary":false,"noMythical":false,"fullyEvolved":true,"maxBst":800}'::jsonb NOT NULL;

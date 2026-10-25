@@ -8,6 +8,7 @@ import { PcBox, SummaryAside, SummarySheet } from "@/components/pc/pc-box";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { segButton, segTrack } from "@/teams/components/editors";
+import type { PoolFilters } from "@/analysis/pool";
 import { FreePicker } from "@/teams/components/free-member";
 import { displayName, type Mon } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
@@ -24,12 +25,13 @@ export interface AddSource {
 
 export const ANY = "any";
 
-export function AddDialog({ slot, slots, stocks, sources, anyPokemon, onClose, onPut, onPutFree }: {
+export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onClose, onPut, onPutFree }: {
   slot: number | null;
   slots: Slots;
   stocks: Stocks;
   sources: readonly AddSource[];
   anyPokemon: boolean;
+  pool: PoolFilters;
   onClose: () => void;
   onPut: (slot: number, mon: Mon, source: string) => void;
   onPutFree: (slot: number, member: FreeMember) => void;
@@ -134,7 +136,7 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, onClose, o
         </div>
         <div className="flex min-h-0 flex-1 gap-6 px-4 pt-5 pb-4 sm:px-10 sm:pb-8">
           {free && slot !== null ? (
-            <FreePicker slot={slot} wide={wide} onPut={(member) => onPutFree(slot, member)} />
+            <FreePicker slot={slot} wide={wide} pool={pool} onPut={(member) => onPutFree(slot, member)} />
           ) : (
             <>
               <PcBox key={source?.id} mons={mons} selected={selected} onPick={setPicked} taken={taken} />

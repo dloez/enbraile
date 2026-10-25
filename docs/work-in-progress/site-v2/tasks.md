@@ -79,22 +79,6 @@ The PC's one link to teams is "Add to team" in its summary, a menu of the reader
 - Does another player's PC summary show "Add to team" at all? Recommended: yes, since it is the PC's one link to teams and discovery names scouting an opponent as a reason for any player's snapshot; the alternative keeps it on the reader's own PC and adds others' snapshots only from the team page's **+ Source**.
 - If it shows, does its menu list every team of the reader's, picking one adding this snapshot to that team's sources when it is not one already, and "New team" making a team on this snapshot? Recommended: yes; the alternative lists only the reader's teams that already have this snapshot as a source.
 
-## Give each team its pool, the Pool view, Speed Tiers and Tera
-
-Team Analysis's pool bar per team, defaulted from the series, the Pool view, Speed Tiers and the Tera toggle (gen 9 pools) join the team's Analysis ([The pool?](discovery.md#team-building)).
-
-**Do:**
-- [ ] The pool in the stored team; the pool bar, Pool view, Speed Tiers and Tera in the builder; the series' default pool in the series form.
-
-**Acceptance:**
-- Claude-run: `npm run gate`.
-- Human-run: change a team's pool to Gen 5 and see the Tera toggle go and the percentiles change; reload and see the pool kept; open the Pool view.
-- Reuse: `src/team-analysis/components/pool-bar.tsx`, `pool-view.tsx`, `src/analysis/pool.ts`; `SHEET_POOL` in `src/teams/components/sheet-analysis.tsx`, the fixed pool every team reads today and the series 1 default.
-- Neighbors: `src/pages/team-analysis.tsx`.
-- Forbidden: a second pool implementation.
-
-**Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
-
 ## Compare teams, and /team-analysis and the tools list go
 
 Compare puts 2–4 teams side by side, the player's or other trainers', picked on the team list after its Compare button, with the scoreboard and damage calc. With it, `/team-analysis`, its page, drafts and `carryTeam`, `src/tools.ts` and the tools home are deleted ([Team Building](discovery.md#team-building), [Pages](discovery.md#pages)).

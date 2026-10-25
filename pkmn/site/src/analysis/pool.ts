@@ -1,15 +1,9 @@
 import type { Species, StatsTable } from "@pkmn/dex";
 import { available, dexFor, typesIn, type Gen } from "@/analysis/dex";
 import { STATS, type Member } from "@/analysis/member";
+import type { TeamPool } from "../../shared/pool";
 
-export interface PoolFilters {
-  gen: Gen;
-  speciesGen: Gen;
-  noLegendary: boolean;
-  noMythical: boolean;
-  fullyEvolved: boolean;
-  maxBst: number;
-}
+export type PoolFilters = TeamPool;
 
 export const DEFAULT_FILTERS: PoolFilters = { gen: 9, speciesGen: 9, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: 800 };
 

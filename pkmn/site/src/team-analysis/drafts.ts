@@ -1,5 +1,6 @@
 import { GENS, type Gen } from "@/analysis/dex";
 import { DEFAULT_FILTERS, type PoolFilters } from "@/analysis/pool";
+import { MAX_BST, MIN_BST } from "../../shared/pool";
 
 export interface CompareSlot {
   name: string;
@@ -31,7 +32,7 @@ export const EMPTY: Drafts = {
 function filters(raw: unknown): PoolFilters {
   const f = { ...DEFAULT_FILTERS, ...(typeof raw === "object" && raw ? raw : {}) } as PoolFilters;
   const gen = GENS.includes(f.gen as Gen) ? f.gen : DEFAULT_FILTERS.gen;
-  const maxBst = Number.isFinite(f.maxBst) ? Math.min(800, Math.max(150, f.maxBst)) : DEFAULT_FILTERS.maxBst;
+  const maxBst = Number.isFinite(f.maxBst) ? Math.min(MAX_BST, Math.max(MIN_BST, Math.round(f.maxBst))) : DEFAULT_FILTERS.maxBst;
   const speciesGen = GENS.includes(f.speciesGen as Gen) ? f.speciesGen : gen;
   return {
     gen,

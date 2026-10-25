@@ -8,6 +8,7 @@ import { saveSlots } from "../api/_lib/export/save-zip.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
 import { ingest, savePrefix } from "../api/_lib/ingest.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
+import { DEFAULT_POOL } from "../shared/pool.js";
 import { suggestMilestone } from "../shared/save-upload.js";
 import type { MilestoneMark } from "../shared/series.js";
 import type { Snapshot } from "../shared/snapshot.js";
@@ -130,6 +131,7 @@ async function seedTheSeries() {
       scene: "route",
       ingestion: "manual",
       rules,
+      pool: DEFAULT_POOL,
       state: "running",
       startedAt: new Date(),
     });
@@ -212,7 +214,7 @@ async function seedTheEarlierSnapshot(seriesId: string, userId: string, laterId:
 }
 
 async function seedTheTeam(): Promise<string | null> {
-  const [row] = await db.select({ id: series.id }).from(series).where(eq(series.number, seedSeries.number));
+  const [row] = await db.select({ id: series.id, pool: series.pool }).from(series).where(eq(series.number, seedSeries.number));
   const [player] = await db.select({ id: user.id }).from(user).where(eq(user.username, seedSnapshot.player.toLowerCase()));
   if (!row || !player) throw new Error(`${seedSeries.name} or ${seedSnapshot.player} is missing`);
   const [made] = await db.select({ id: team.id }).from(team).where(eq(team.ownerId, player.id));
@@ -239,7 +241,7 @@ async function seedTheTeam(): Promise<string | null> {
   });
   const id = crypto.randomUUID();
   await db.transaction(async (tx) => {
-    await tx.insert(team).values({ id, ownerId: player.id, name: seedTeam.name, slots });
+    await tx.insert(team).values({ id, ownerId: player.id, name: seedTeam.name, slots, pool: row.pool });
     await tx.insert(teamSource).values({ teamId: id, snapshotId: latest.id, position: 0 });
   });
   return `${seedSnapshot.player}'s ${seedTeam.name} of ${Math.min(seedTeam.members, latest.data.pokemon.length)} on their ${latest.milestone} snapshot`;
@@ -273,6 +275,7 @@ async function seedTheFinishedSeries(): Promise<string | null> {
       scene: "night",
       ingestion: "manual",
       rules: first.rules,
+      pool: first.pool,
       state: "finished",
       startedAt: now,
       finishedAt: now,

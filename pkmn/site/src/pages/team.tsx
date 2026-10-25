@@ -50,6 +50,7 @@ import {
   type Stocks,
 } from "@/teams/team";
 import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
+import type { TeamPool } from "../../shared/pool";
 
 const FROM = "/teams/$id";
 
@@ -154,6 +155,7 @@ function Builder({ page }: { page: TeamPage }) {
   const wide = useMediaQuery("(min-width: 64rem)");
   const [sources, setSources] = useState<readonly TeamSource[]>(page.sources);
   const [anyPokemon, setAnyPokemon] = useState(page.anyPokemon);
+  const [pool, setPool] = useState<TeamPool>(page.pool);
   const held = useMemo(() => holding(sources), [sources]);
   const stocks = useMemo(() => new Map(held.map((h) => [h.id, h])), [held]);
   const [name, setName] = useState(page.name);
@@ -179,7 +181,7 @@ function Builder({ page }: { page: TeamPage }) {
     savePick(page.id, next);
   }
 
-  function write(body: { slots?: Slots; name?: string; sources?: string[]; anyPokemon?: boolean }, after?: () => Promise<void>) {
+  function write(body: { slots?: Slots; name?: string; sources?: string[]; anyPokemon?: boolean; pool?: TeamPool }, after?: () => Promise<void>) {
     writes.current = writes.current
       .then(async () => {
         await api(`/teams/${encodeURIComponent(page.id)}`, teamDone, { method: "PUT", body });
@@ -217,6 +219,11 @@ function Builder({ page }: { page: TeamPage }) {
     });
   }
 
+  function choosePool(next: TeamPool) {
+    setPool(next);
+    write({ pool: next });
+  }
+
   function save(next: Slots | null) {
     if (!next) return;
     setStored(next);
@@ -240,7 +247,7 @@ function Builder({ page }: { page: TeamPage }) {
   };
 
   async function pasted(next: Slots): Promise<string> {
-    const made = await api("/teams", teamMade, { body: { sources: sources.map((s) => s.id), anyPokemon, slots: next } });
+    const made = await api("/teams", teamMade, { body: { sources: sources.map((s) => s.id), anyPokemon, slots: next, pool } });
     return made.id;
   }
 
@@ -297,7 +304,7 @@ function Builder({ page }: { page: TeamPage }) {
   const analysis = (
     <>
       {size > TEAM_SIZE && <ScopeSwitch scope={pickMode ? "six" : "all"} filled={filledAt(slots).length} picked={picked.length} onScope={(scope) => choosePick({ ...pick, scope })} />}
-      <SheetAnalysis slots={analysed} stocks={stocks} name={name} />
+      <SheetAnalysis slots={analysed} stocks={stocks} name={name} pool={pool} onPool={editable ? choosePool : undefined} />
     </>
   );
 
@@ -494,6 +501,7 @@ function Builder({ page }: { page: TeamPage }) {
           stocks={stocks}
           sources={held}
           anyPokemon={anyPokemon}
+          pool={pool}
           onClose={() => setAdding(null)}
           onPut={(slot, mon, source) => {
             save(putMember(slots, slot, mon, source));
@@ -512,7 +520,7 @@ function Builder({ page }: { page: TeamPage }) {
       {editable && (
         <PasteDialog
           stocks={stocks}
-          any={anyPokemon ? { species: poolIds() } : null}
+          any={anyPokemon ? { species: poolIds(pool) } : null}
           open={pasting}
           onOpenChange={setPasting}
           onImport={pasted}

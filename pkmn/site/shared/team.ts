@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { teamPool } from "./pool.js";
 import { exportReport, snapshotSchema } from "./snapshot.js";
 
 export const TEAM_SIZE = 6;
@@ -60,6 +61,7 @@ export const newTeamInput = z.object({
   anyPokemon: z.boolean().optional(),
   name: teamName.optional(),
   slots: teamSlots.optional(),
+  pool: teamPool.optional(),
 });
 
 export const teamInput = z.object({
@@ -67,6 +69,7 @@ export const teamInput = z.object({
   slots: teamSlots.optional(),
   sources: teamSourceIds.optional(),
   anyPokemon: z.boolean().optional(),
+  pool: teamPool.optional(),
 });
 
 const person = z.object({ id: z.string(), name: z.string() });
@@ -105,6 +108,7 @@ export const teamPage = z.object({
   sources: z.array(teamSource),
   anyPokemon: z.boolean(),
   slots: teamSlots,
+  pool: teamPool,
   updatedAt: z.string(),
 });
 

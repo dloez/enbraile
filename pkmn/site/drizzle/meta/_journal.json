@@ -78,6 +78,13 @@
       "when": 1792898258196,
       "tag": "0010_any_pokemon",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792899391582,
+      "tag": "0011_pools",
+      "breakpoints": true
     }
   ]
 }
