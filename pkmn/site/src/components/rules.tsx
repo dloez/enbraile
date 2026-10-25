@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { toolPage } from "@/components/page";
+import { readPage } from "@/components/page";
 import { cn } from "@/lib/utils";
 
 interface MdNode {
@@ -18,13 +18,20 @@ interface Entry {
   depth: number;
 }
 
+const SOURCE = "https://github.com/dloez/enbraile/blob/main/docs/pkmn/series/1/reference/rules.md";
+
 function slug(text: string): string {
   return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replace(/[^\p{L}\p{N}\s_-]/gu, "")
+    .replace(/\s/g, "-");
+}
+
+function target(href: string | undefined): { href: string | undefined; away: boolean } {
+  if (!href || href.startsWith("#")) return { href, away: false };
+  if (/^[a-z]+:/i.test(href)) return { href, away: true };
+  return { href: new URL(href, SOURCE).href, away: true };
 }
 
 function textOf(node: MdNode): string {
@@ -35,9 +42,9 @@ function ids() {
   const taken = new Map<string, number>();
   return (text: string) => {
     const base = slug(text) || "section";
-    const n = (taken.get(base) ?? 0) + 1;
-    taken.set(base, n);
-    return n === 1 ? base : `${base}-${n}`;
+    const n = taken.get(base) ?? 0;
+    taken.set(base, n + 1);
+    return n === 0 ? base : `${base}-${n}`;
   };
 }
 
@@ -77,11 +84,19 @@ const RULES: Components = {
   ul: ({ children }) => <ul className="m-0 mb-3 list-disc pl-5">{children}</ul>,
   ol: ({ children }) => <ol className="m-0 mb-3 list-decimal pl-5">{children}</ol>,
   li: ({ children }) => <li className="mb-1.5">{children}</li>,
-  a: ({ children, href }) => (
-    <a href={href} className="text-primary underline underline-offset-2">
-      {children}
-    </a>
-  ),
+  a: ({ children, href }) => {
+    const link = target(href);
+    return (
+      <a
+        href={link.href}
+        target={link.away ? "_blank" : undefined}
+        rel={link.away ? "noreferrer" : undefined}
+        className="text-primary underline underline-offset-2"
+      >
+        {children}
+      </a>
+    );
+  },
   strong: ({ children }) => <strong className="font-extrabold text-white">{children}</strong>,
   code: ({ children }) => <code className="rounded-sm bg-muted px-1 text-base">{children}</code>,
   blockquote: ({ children }) => <blockquote className="m-0 mb-3 border-l-3 border-cell-hi pl-3.5 text-subtle">{children}</blockquote>,
@@ -134,7 +149,7 @@ export function Rules({ rules }: { rules: string }) {
   }, [entries]);
   if (rules.trim() === "") return null;
   return (
-    <section aria-labelledby="rules-title" className={cn(toolPage, "flex-none gap-3 pt-2 pb-10 sm:gap-3.5 sm:pb-14")}>
+    <section aria-labelledby="rules-title" className={cn(readPage, "flex-none gap-3 pt-2 pb-10 sm:gap-3.5 sm:pb-14")}>
       <h2 id="rules-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
         Rules
       </h2>
@@ -147,7 +162,7 @@ export function Rules({ rules }: { rules: string }) {
             <Index entries={entries} active={active} />
           </nav>
         )}
-        <div className="min-w-0 max-w-5xl flex-1 rounded-2xl border-3 bg-card px-4.5 pt-4.5 pb-1 text-base leading-relaxed sm:px-8 sm:py-6.5 sm:text-lg">
+        <div className="min-w-0 flex-1 rounded-2xl border-3 bg-card px-4.5 pt-4.5 pb-1 text-base leading-relaxed sm:px-8 sm:py-6.5 sm:text-lg">
           {entries.length > 0 && (
             <details className="mb-4 rounded-xl border-3 bg-box lg:hidden">
               <summary className="min-h-11 cursor-pointer list-inside px-3.5 py-2 font-heading text-[1.375rem] text-subtle">Contents</summary>

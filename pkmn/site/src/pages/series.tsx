@@ -1,7 +1,7 @@
 import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { buttonClass, Segmented } from "@/components/controls";
-import { toolPage } from "@/components/page";
+import { readPage } from "@/components/page";
 import { Rules } from "@/components/rules";
 import { PixelIcon } from "@/components/pixel-icon";
 import { PLAYER_FILL, PLAYER_RING, PlayerBadge, playerColour } from "@/components/player-badge";
@@ -38,19 +38,19 @@ export function SeriesPage() {
 
   if (error) {
     return (
-      <main className={cn(toolPage, "py-7 sm:py-9")}>
+      <main className={cn(readPage, "py-7 sm:py-9")}>
         <p role="alert" className="m-0 text-destructive">
           {error}
         </p>
       </main>
     );
   }
-  if (!series) return <main className={toolPage} />;
+  if (!series) return <main className={readPage} />;
 
   return (
     <>
       <SeriesHeader series={series} />
-      <main className={cn(toolPage, "flex-none gap-3 pt-5 pb-6 sm:gap-3.5 sm:pt-6 sm:pb-8")}>
+      <main className={cn(readPage, "flex-none gap-3 pt-5 pb-6 sm:gap-3.5 sm:pt-6 sm:pb-8")}>
         <League />
         <Trainers series={series} onChanged={reload} />
       </main>
@@ -81,7 +81,7 @@ function SeriesHeader({ series }: { series: Series }) {
   return (
     <section aria-labelledby="series-title" className={cn("relative h-55 overflow-hidden sm:h-65", look.ground)}>
       <SceneArt scene={series.scene} width={desktop ? 360 : 98} height={desktop ? 65 : 55} />
-      <div className={cn(toolPage, "relative h-full items-start gap-4.5 pt-7 sm:gap-5.5 sm:pt-10")}>
+      <div className={cn(readPage, "relative h-full items-start gap-4.5 pt-7 sm:gap-5.5 sm:pt-10")}>
         <h1
           id="series-title"
           className={cn("m-0 font-heading text-[4.75rem] leading-[0.8] font-normal text-white sm:text-8xl", look.title)}
