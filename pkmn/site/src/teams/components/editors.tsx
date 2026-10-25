@@ -5,9 +5,9 @@ import { ItemIcon } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/summary";
 import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
-import { currentAbility, describeItem, displayName, type Mon } from "@/teams/dex";
+import { ANY_ITEMS, currentAbility, describeItem, displayName, type Mon } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
-import { heldCount, MINI_SETA, memberMon, type Member, type Slots, type Stocks } from "@/teams/team";
+import { heldCount, isFree, MINI_SETA, memberMon, ownOf, type Member, type Slots, type Stocks } from "@/teams/team";
 
 export const editorScroll = "-mr-2.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]";
 
@@ -60,7 +60,9 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
   const member = slots[slot] as Member;
   const mon = memberMon(member, stocks) as Mon;
   const name = displayName(mon);
-  const items = useMemo(() => sheet.items.filter((i) => i.item !== MINI_SETA).map(describeItem).filter((i) => i.known), [sheet]);
+  const own = ownOf(member);
+  const free = own === null;
+  const items = useMemo(() => (free ? ANY_ITEMS : sheet.items.filter((i) => i.item !== MINI_SETA).map(describeItem).filter((i) => i.known)), [sheet, free]);
   const holding = member.item ? items.find((i) => i.id === member.item) : undefined;
   const [pocket, setPocket] = useState<PocketId>(holding?.pocket ?? "items");
   const [query, setQuery] = useState("");
@@ -68,14 +70,14 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
   const q = query.trim().toLowerCase();
   const shown = items.filter((i) => i.pocket === pocket && (!q || i.name.toLowerCase().includes(q)));
   const selected = shown.find((i) => i.id === picked) ?? shown[0];
-  const leftOf = (id: string, quantity: number) => quantity - heldCount(slots, member.source, id);
+  const leftOf = (id: string, quantity: number) => (own ? quantity - heldCount(slots, own.source, id) : Infinity);
   const left = selected ? leftOf(selected.id, selected.quantity) : 0;
   const holds = selected !== undefined && member.item === selected.id;
   const blocked = !selected || holds || left <= 0;
 
   return (
     <>
-      <EditorHead who={name} what="item" back={back} onBack={onBack} aside={<span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{owner}'s bag</span>} />
+      <EditorHead who={name} what="item" back={back} onBack={onBack} aside={<span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{free ? "Any item" : `${owner}'s bag`}</span>} />
       <div className="flex flex-none gap-2">
         <div role="tablist" aria-label="Pockets" className={segTrack}>
           {(
@@ -99,7 +101,7 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
         {shown.map((item) => {
           const remaining = leftOf(item.id, item.quantity);
           const holders = slots.flatMap((m, at) => {
-            const holder = m?.source === member.source && m.item === item.id ? memberMon(m, stocks) : undefined;
+            const holder = own && ownOf(m)?.source === own.source && m?.item === item.id ? memberMon(m, stocks) : undefined;
             return holder ? [{ at, mon: holder }] : [];
           });
           return (
@@ -120,7 +122,7 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
                   </span>
                 ))}
               </span>
-              <span className={cn("min-w-8.5 flex-none text-right font-heading text-[1.375rem]", remaining <= 0 ? "text-faint" : "text-subtle")}>×{remaining}</span>
+              {!free && <span className={cn("min-w-8.5 flex-none text-right font-heading text-[1.375rem]", remaining <= 0 ? "text-faint" : "text-subtle")}>×{remaining}</span>}
             </button>
           );
         })}
@@ -133,7 +135,7 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate font-heading text-[1.75rem] leading-none">{selected.name}</span>
               <span className="font-heading text-[1.1875rem] text-muted-foreground">
-                {left} left of {selected.quantity}
+                {free ? "Any item: free member" : `${left} left of ${selected.quantity}`}
               </span>
             </span>
           </div>
@@ -173,6 +175,7 @@ export function AbilityEditor({ slots, stocks, slot, setasLeft, back, onBack, on
 }) {
   const member = slots[slot] as Member;
   const mon = memberMon(member, stocks) as Mon;
+  const free = isFree(member);
   const current = currentAbility(mon);
   const using = member.ability ?? current;
   return (
@@ -182,7 +185,7 @@ export function AbilityEditor({ slots, stocks, slot, setasLeft, back, onBack, on
         {mon.abilities.length === 0 && <p className="my-6 text-center font-heading text-2xl text-muted-foreground">No abilities in this export</p>}
         {mon.abilities.map((a) => {
           const on = a.id === using;
-          const off = !a.current && !on && member.ability === null && setasLeft <= 0;
+          const off = !free && !a.current && !on && member.ability === null && setasLeft <= 0;
           return (
             <button
               key={a.id}
@@ -201,7 +204,7 @@ export function AbilityEditor({ slots, stocks, slot, setasLeft, back, onBack, on
                   {a.marked && <UnknownMark />}
                 </span>
                 {a.hidden && <span className="rounded-sm border-2 border-cell-hi px-1.5 font-heading text-[1.0625rem] text-subtle">Hidden</span>}
-                {a.current ? (
+                {free ? null : a.current ? (
                   <span className="rounded-sm bg-cyan px-1.75 font-heading text-[1.0625rem] text-ink">In game</span>
                 ) : (
                   <span className="rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">1 Mini Seta</span>

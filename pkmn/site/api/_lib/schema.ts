@@ -211,6 +211,7 @@ export const team = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     size: integer("size").notNull().default(6),
+    anyPokemon: boolean("any_pokemon").notNull().default(false),
     slots: jsonb("slots").$type<TeamSlots>().notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")

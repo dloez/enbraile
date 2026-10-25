@@ -8,9 +8,10 @@ import { PcBox, SummaryAside, SummarySheet } from "@/components/pc/pc-box";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { segButton, segTrack } from "@/teams/components/editors";
+import { FreePicker } from "@/teams/components/free-member";
 import { displayName, type Mon } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
-import { memberMon, type Slots, type Stocks } from "@/teams/team";
+import { memberMon, ownOf, type FreeMember, type Slots, type Stocks } from "@/teams/team";
 import type { ExportGap } from "../../../shared/snapshot";
 
 export interface AddSource {
@@ -21,25 +22,37 @@ export interface AddSource {
   gaps: readonly ExportGap[];
 }
 
-export function AddDialog({ slot, slots, stocks, sources, onClose, onPut }: {
+export const ANY = "any";
+
+export function AddDialog({ slot, slots, stocks, sources, anyPokemon, onClose, onPut, onPutFree }: {
   slot: number | null;
   slots: Slots;
   stocks: Stocks;
   sources: readonly AddSource[];
+  anyPokemon: boolean;
   onClose: () => void;
   onPut: (slot: number, mon: Mon, source: string) => void;
+  onPutFree: (slot: number, member: FreeMember) => void;
 }) {
   const wide = useMediaQuery("(min-width: 64rem)");
   const [picked, setPicked] = useState<number | null>(null);
   const [from, setFrom] = useState<string | null>(null);
-  const source = sources.find((s) => s.id === from) ?? sources[0];
+  const tabs = [...sources.map((s) => ({ id: s.id, label: s.label })), ...(anyPokemon ? [{ id: ANY, label: "Any Pokémon" }] : [])];
+  const tab = tabs.find((t) => t.id === from) ?? tabs[0];
+  const free = tab?.id === ANY;
+  const source = free ? undefined : sources.find((s) => s.id === tab?.id);
   const mons = source?.mons ?? [];
   const sheet = source?.sheet;
   const gaps = source?.gaps ?? [];
-  const taken = new Set(slots.flatMap((m) => (m && m.source === source?.id ? [m.index] : [])));
+  const taken = new Set(
+    slots.flatMap((m) => {
+      const own = ownOf(m);
+      return own && own.source === source?.id ? [own.index] : [];
+    }),
+  );
   const selected = picked ?? (wide && mons.length > 0 ? 0 : null);
   const mon = selected === null ? undefined : mons[selected];
-  const open = slot !== null && source !== undefined;
+  const open = slot !== null && tab !== undefined;
 
   function close() {
     setPicked(null);
@@ -76,19 +89,19 @@ export function AddDialog({ slot, slots, stocks, sources, onClose, onPut }: {
         <div className="flex min-h-19 flex-none flex-wrap items-center gap-x-4 gap-y-2 border-b-4 border-red bg-ink py-3 pr-4 pl-4 sm:pr-8 sm:pl-10">
           <DialogTitle className="m-0 font-heading text-[2.5rem] leading-none font-normal">Add to slot {(slot ?? 0) + 1}</DialogTitle>
           <div role="tablist" aria-label="From" className={cn(segTrack, "max-w-full overflow-x-auto bg-background")}>
-            {sources.map((s) => (
+            {tabs.map((t) => (
               <button
-                key={s.id}
+                key={t.id}
                 type="button"
                 role="tab"
-                aria-selected={s.id === source?.id}
+                aria-selected={t.id === tab?.id}
                 onClick={() => {
-                  setFrom(s.id);
+                  setFrom(t.id);
                   setPicked(null);
                 }}
-                className={cn(segButton(s.id === source?.id), "min-h-9.5 px-3.5 text-[1.375rem] whitespace-nowrap")}
+                className={cn(segButton(t.id === tab?.id), "min-h-9.5 px-3.5 text-[1.375rem] whitespace-nowrap")}
               >
-                {s.label}
+                {t.label}
               </button>
             ))}
           </div>
@@ -120,10 +133,16 @@ export function AddDialog({ slot, slots, stocks, sources, onClose, onPut }: {
           </DialogPrimitive.Close>
         </div>
         <div className="flex min-h-0 flex-1 gap-6 px-4 pt-5 pb-4 sm:px-10 sm:pb-8">
-          <PcBox key={source?.id} mons={mons} selected={selected} onPick={setPicked} taken={taken} />
-          {wide && mon && sheet && <SummaryAside mon={mon} sheet={sheet} gaps={gaps} footer={put(mon)} />}
+          {free && slot !== null ? (
+            <FreePicker slot={slot} wide={wide} onPut={(member) => onPutFree(slot, member)} />
+          ) : (
+            <>
+              <PcBox key={source?.id} mons={mons} selected={selected} onPick={setPicked} taken={taken} />
+              {wide && mon && sheet && <SummaryAside mon={mon} sheet={sheet} gaps={gaps} footer={put(mon)} />}
+            </>
+          )}
         </div>
-        {!wide && sheet && <SummarySheet mon={mon} sheet={sheet} gaps={gaps} open={open && mon !== undefined} onClose={() => setPicked(null)} footer={mon && put(mon)} />}
+        {!wide && !free && sheet && <SummarySheet mon={mon} sheet={sheet} gaps={gaps} open={open && mon !== undefined} onClose={() => setPicked(null)} footer={mon && put(mon)} />}
       </DialogContent>
     </Dialog>
   );

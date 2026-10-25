@@ -27,11 +27,12 @@ export function changed(iso: string, now = Date.now()): string {
   return `Changed in ${at.toLocaleString("en", { month: "long" })}`;
 }
 
-export function sourceLine(team: Pick<TeamRow, "owner" | "sources">): string {
-  if (team.sources.length === 0) return "No source";
+export function sourceLine(team: Pick<TeamRow, "owner" | "sources" | "anyPokemon">): string {
+  const any = team.anyPokemon ? ["Any Pokémon"] : [];
+  if (team.sources.length === 0) return any[0] ?? "No source";
   const series = [...new Set(team.sources.map((s) => s.series.number))].map((n) => `Series ${n}`).join(", ");
   const from = team.sources.map((s) => (s.player.id === team.owner.id ? s.milestone : `${s.player.name}'s ${s.milestone}`));
-  return `${series} · ${from.join(" · ")}`;
+  return `${series} · ${[...from, ...any].join(" · ")}`;
 }
 
 export function TeamsPage() {
@@ -64,12 +65,12 @@ export function TeamsPage() {
     };
   }, [filter]);
 
-  async function newTeam(sources?: string[]) {
+  async function newTeam(sources?: string[], anyPokemon?: boolean) {
     setMaking(true);
     setError(null);
     setStarting(null);
     try {
-      const made = await api("/teams", teamMade, { body: sources ? { sources } : {} });
+      const made = await api("/teams", teamMade, { body: sources ? { sources, anyPokemon } : {} });
       await navigate({ to: "/teams/$id", params: { id: made.id } });
     } catch (caught) {
       if (!sources && caught instanceof ApiError && caught.status === 400) setStarting(caught.message);
@@ -100,6 +101,7 @@ export function TeamsPage() {
                 className="top-full right-0 mt-2"
                 onClose={() => setStarting(null)}
                 onPick={(row) => void newTeam([row.id])}
+                onAny={() => void newTeam([], true)}
               />
             )}
           </span>

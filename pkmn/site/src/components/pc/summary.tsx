@@ -84,7 +84,7 @@ export function GapWarning({ children }: { children: ReactNode }) {
   );
 }
 
-function tint(ratio: number): string {
+export function tint(ratio: number): string {
   return ratio < 1 / 3 ? "bg-coral" : ratio < 0.5 ? "bg-yellow" : ratio < 2 / 3 ? "bg-green" : "bg-cyan";
 }
 
@@ -286,7 +286,7 @@ function Stats({ mon }: { mon: Mon }) {
                 <>
                   <span className={cn("text-right font-heading text-[1.375rem]", s.iv === 31 ? "text-yellow" : "text-subtle")}>{iv}</span>
                   <span className="text-right font-heading text-[1.375rem] text-subtle">
-                    {mode === "fifty" ? "1" : s.ev === null ? "—" : s.ev}
+                    {mode === "fifty" && !mon.free ? "1" : s.ev === null ? "—" : s.ev}
                   </span>
                 </>
               )}
@@ -307,7 +307,9 @@ function Stats({ mon }: { mon: Mon }) {
         </div>
       </div>
       {mode === "fifty" && (
-        <p className="m-0 text-sm text-muted-foreground">As in the league's Showdown fights: its IVs and nature, 1 EV in every stat.</p>
+        <p className="m-0 text-sm text-muted-foreground">
+          {mon.free ? "At Level 50 with its IVs, EVs and nature." : "As in the league's Showdown fights: its IVs and nature, 1 EV in every stat."}
+        </p>
       )}
     </>
   );

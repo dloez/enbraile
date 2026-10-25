@@ -1,6 +1,7 @@
 import { Dex, type Species, type StatID, type StatsTable } from "@pkmn/dex";
 import { Icons, Sprites } from "@pkmn/img";
 import type { SheetItem, SheetPokemon, SheetTm } from "@/teams/schema";
+import type { FreeMember } from "../../shared/team";
 
 const gen = Dex.forGen(9);
 
@@ -14,6 +15,8 @@ export const STAT_LABELS: Record<StatID, string> = {
   spd: "SpD",
   spe: "Spe",
 };
+
+const MINI_SETA_ID = "tinymushroom";
 
 const HAND_LABELS: Record<string, string> = {
   tinymushroom: "Mini Seta (Tiny Mushroom)",
@@ -65,6 +68,7 @@ export interface Mon {
   stats: StatLine[] | null;
   sprite: string | null;
   learnable: Learnable | null;
+  free: boolean;
 }
 
 export interface Learnable {
@@ -214,8 +218,71 @@ export function describePokemon(p: SheetPokemon, index: number): Mon {
         }).url
       : null,
     learnable: learnable(p),
+    free: false,
   };
 }
+
+export const NATURES: readonly Nature[] = gen.natures
+  .all()
+  .map((entry) => nature(entry.id) as Nature)
+  .sort((a, b) => Number(a.plus === null) - Number(b.plus === null) || a.name.localeCompare(b.name));
+
+export function speciesAbilities(species: string): { base: string[]; hidden: string[] } {
+  const entry = gen.species.get(species);
+  if (!entry.exists) return { base: [], hidden: [] };
+  const id = (name: string | undefined): string | null => (name ? gen.abilities.get(name).id : null);
+  const base = [id(entry.abilities[0]), id(entry.abilities[1])].filter((a): a is string => a !== null && a !== "");
+  const hidden = [id(entry.abilities.H)].filter((a): a is string => a !== null && a !== "" && !base.includes(a));
+  return { base, hidden };
+}
+
+export function freeMon(member: FreeMember): Mon {
+  const entry = gen.species.get(member.species);
+  const mon = describePokemon(
+    {
+      species: member.species,
+      nickname: null,
+      gender: null,
+      shiny: false,
+      level: member.level,
+      nature: member.nature,
+      ability: member.ability,
+      abilities: speciesAbilities(member.species),
+      types: entry.exists ? entry.types.map((t) => t.toLowerCase()) : [],
+      ivs: member.ivs,
+      evs: member.evs,
+      stats: null,
+      moves: undefined,
+    },
+    -1,
+  );
+  const nat = mon.nature;
+  return {
+    ...mon,
+    free: true,
+    stats: entry.exists
+      ? STATS.map((stat) => {
+          const fight = statAt(stat, entry, member.ivs[stat], nat, 50, member.evs[stat]);
+          return {
+            stat,
+            base: entry.baseStats[stat],
+            iv: member.ivs[stat],
+            ev: member.evs[stat],
+            current: statAt(stat, entry, member.ivs[stat], nat, member.level, member.evs[stat]),
+            fight,
+            low: fight,
+            high: fight,
+          };
+        })
+      : null,
+  };
+}
+
+export const ANY_ITEMS: readonly BagItem[] = gen.items
+  .all()
+  .filter((entry) => entry.exists && !entry.isNonstandard && entry.id !== MINI_SETA_ID)
+  .map((entry) => describeItem({ item: entry.id, quantity: 1 }))
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 export function describeItem(i: SheetItem): BagItem {
   const entry = gen.items.get(i.item);

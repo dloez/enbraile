@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { canLearn, currentAbility, describeItem, describeMove, displayName, type Mon } from "@/teams/dex";
 import type { Member } from "@/teams/team";
 
-export type Focus = "look" | "item" | "ability" | { move: number } | null;
+export type Focus = "look" | "item" | "ability" | "set" | { move: number } | null;
 
 const field = (on: boolean) =>
   cn(
@@ -21,11 +21,10 @@ export interface PickToggle {
   onToggle: () => void;
 }
 
-export function MemberCard({ member, mon, from, colour, focus, glow, editable, pick, onLook, onItem, onAbility, onMove, onRemove }: {
+export function MemberCard({ member, mon, from, focus, glow, editable, pick, onLook, onItem, onAbility, onMove, onSet, onRemove }: {
   member: Member;
   mon: Mon;
-  from: string;
-  colour: number;
+  from: { owner: string; colour: number } | null;
   focus: Focus;
   glow: boolean;
   editable: boolean;
@@ -34,6 +33,7 @@ export function MemberCard({ member, mon, from, colour, focus, glow, editable, p
   onItem: () => void;
   onAbility: () => void;
   onMove: (at: number) => void;
+  onSet: () => void;
   onRemove: () => void;
 }) {
   const name = displayName(mon);
@@ -41,7 +41,7 @@ export function MemberCard({ member, mon, from, colour, focus, glow, editable, p
   const current = currentAbility(mon);
   const abilityId = member.ability ?? current;
   const ability = mon.abilities.find((a) => a.id === abilityId);
-  const costs = member.ability !== null;
+  const costs = from !== null && member.ability !== null;
   const looking = focus === "look";
   const lit = focus !== null && !looking;
   return (
@@ -69,7 +69,7 @@ export function MemberCard({ member, mon, from, colour, focus, glow, editable, p
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.75">
             <span className="min-w-0 truncate font-heading text-[1.75rem] leading-[0.9]">{name}</span>
-            <span className="flex min-w-0 items-center gap-1.25">
+            <span className="flex min-w-0 items-center gap-1.25 overflow-hidden">
               {(mon.showdownTypes ?? mon.types).map((t) => (
                 <TypeTag key={t} type={t} className="flex-none px-2 text-[1.0625rem] leading-5.25" />
               ))}
@@ -78,7 +78,11 @@ export function MemberCard({ member, mon, from, colour, focus, glow, editable, p
               </span>
             </span>
           </span>
-          <span className={cn("flex-none rounded-sm px-1.75 font-heading text-[1.0625rem] text-ink", PLAYER_FILL[colour % PLAYER_FILL.length])}>{from}'s PC</span>
+          {from ? (
+            <span className={cn("flex-none rounded-sm px-1.75 font-heading text-[1.0625rem] text-ink", PLAYER_FILL[from.colour % PLAYER_FILL.length])}>{from.owner}'s PC</span>
+          ) : (
+            <span className="flex-none rounded-sm border-2 border-dashed border-faint px-1.5 font-heading text-[1.0625rem] text-subtle">Free</span>
+          )}
           <ChevronRight className={cn("size-5 flex-none", looking ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
         </button>
         {pick && (
@@ -94,6 +98,20 @@ export function MemberCard({ member, mon, from, colour, focus, glow, editable, p
             )}
           >
             {pick.in ? "In" : "Out"}
+          </button>
+        )}
+        {editable && !from && (
+          <button
+            type="button"
+            aria-pressed={focus === "set"}
+            onClick={onSet}
+            title="Level, nature, EVs and IVs"
+            className={cn(
+              "h-8.5 flex-none cursor-pointer rounded-lg border-3 bg-cell px-2.25 font-heading text-lg text-subtle outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50",
+              focus === "set" ? "border-primary" : "border-cell-hi",
+            )}
+          >
+            Set
           </button>
         )}
         {editable && (

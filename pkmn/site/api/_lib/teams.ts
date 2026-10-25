@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import {
+  backedBy,
   emptySlots,
   newTeamInput,
   nextTeamName,
@@ -49,10 +50,6 @@ function sourceOf(row: SourceRow): TeamSourceRow {
   };
 }
 
-function backed(slots: TeamSlots, sources: readonly string[]): boolean {
-  return slots.every((member) => member === null || sources.includes(member.source));
-}
-
 async function owned(id: string, ownerId: string) {
   const [row] = await db.select({ id: team.id }).from(team).where(and(eq(team.id, id), eq(team.ownerId, ownerId)));
   return row !== undefined;
@@ -63,9 +60,9 @@ async function sourceIds(teamId: string): Promise<string[]> {
   return rows.map((row) => row.id);
 }
 
-async function stored(id: string): Promise<TeamSlots> {
-  const [row] = await db.select({ slots: team.slots }).from(team).where(eq(team.id, id));
-  return row?.slots ?? [];
+async function stored(id: string): Promise<{ slots: TeamSlots; anyPokemon: boolean }> {
+  const [row] = await db.select({ slots: team.slots, anyPokemon: team.anyPokemon }).from(team).where(eq(team.id, id));
+  return row ?? { slots: [], anyPokemon: false };
 }
 
 async function latestSnapshot(userId: string): Promise<string | undefined> {
@@ -82,6 +79,7 @@ async function latestSnapshot(userId: string): Promise<string | undefined> {
 }
 
 async function shownSnapshots(ids: readonly string[]): Promise<boolean> {
+  if (ids.length === 0) return true;
   const rows = await db
     .select({ id: snapshot.id })
     .from(snapshot)
@@ -108,7 +106,7 @@ teams.get("/snapshots", async (c) => {
 teams.get("/", async (c) => {
   const owner = c.req.query("owner");
   const rows = await db
-    .select({ id: team.id, name: team.name, slots: team.slots, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
+    .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, slots: team.slots, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
     .from(team)
     .innerJoin(user, eq(user.id, team.ownerId))
     .where(owner ? eq(team.ownerId, owner) : undefined)
@@ -120,6 +118,7 @@ teams.get("/", async (c) => {
     name: row.name,
     owner: { id: row.ownerId, name: row.ownerName },
     sources: sources.filter((s) => s.teamId === row.id).map(sourceOf),
+    anyPokemon: row.anyPokemon,
     members: row.slots.map((member) => member?.species ?? null),
     updatedAt: row.updatedAt.toISOString(),
   }));
@@ -130,7 +129,7 @@ teams.get("/:id", async (c) => {
   const reader = await viewer(c.req.raw);
   if (!reader) return c.json({ error: "Sign in first" }, 401);
   const [row] = await db
-    .select({ id: team.id, name: team.name, slots: team.slots, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
+    .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, slots: team.slots, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
     .from(team)
     .innerJoin(user, eq(user.id, team.ownerId))
     .where(eq(team.id, c.req.param("id")));
@@ -151,6 +150,7 @@ teams.get("/:id", async (c) => {
     owner: { id: row.ownerId, name: row.ownerName },
     canEdit: reader.id === row.ownerId,
     sources: sources.map((s) => ({ ...sourceOf(s), snapshot: s.data, missing: s.missing })),
+    anyPokemon: row.anyPokemon,
     slots: row.slots,
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -163,17 +163,18 @@ teams.post("/", async (c) => {
   if (reader.admin) return c.json({ error: "Admins have no teams" }, 403);
   const input = await body(c.req.raw, newTeamInput);
   if (!input) return c.json({ error: "Not a team" }, 400);
-  const latest = input.sources ? undefined : await latestSnapshot(reader.id);
+  const anyPokemon = input.anyPokemon ?? false;
+  const latest = input.sources || anyPokemon ? undefined : await latestSnapshot(reader.id);
   const sources = input.sources ?? (latest ? [latest] : []);
-  if (sources.length === 0) return c.json({ error: "Upload a snapshot to the running series first" }, 400);
+  if (sources.length === 0 && !anyPokemon) return c.json({ error: input.sources ? "A team needs a source" : "Upload a snapshot to the running series first" }, 400);
   if (!(await shownSnapshots(sources))) return c.json({ error: "No such snapshot" }, 400);
   const slots = input.slots ?? emptySlots();
-  if (!backed(slots, sources)) return c.json({ error: "A member comes from outside the team's sources" }, 400);
+  if (!backedBy(slots, sources, anyPokemon)) return c.json({ error: "A member comes from outside the team's sources" }, 400);
   const names = await db.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
   const id = crypto.randomUUID();
   await db.transaction(async (tx) => {
-    await tx.insert(team).values({ id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name)), size: slots.length, slots });
-    await tx.insert(teamSource).values(sources.map((snapshotId, position) => ({ teamId: id, snapshotId, position })));
+    await tx.insert(team).values({ id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name)), size: slots.length, anyPokemon, slots });
+    if (sources.length > 0) await tx.insert(teamSource).values(sources.map((snapshotId, position) => ({ teamId: id, snapshotId, position })));
   });
   return c.json({ id });
 });
@@ -185,18 +186,27 @@ teams.put("/:id", async (c) => {
   if (!(await owned(id, reader.id))) return c.json({ error: "Only the team's owner changes it" }, 403);
   const input = await body(c.req.raw, teamInput);
   if (!input) return c.json({ error: "Not a team" }, 400);
+  const resourcing = input.sources !== undefined || input.anyPokemon !== undefined;
+  const now = resourcing || input.slots ? await stored(id) : undefined;
   const sources = input.sources ?? (await sourceIds(id));
+  const anyPokemon = input.anyPokemon ?? now?.anyPokemon ?? false;
+  if (resourcing && sources.length === 0 && !anyPokemon) return c.json({ error: "A team needs a source" }, 400);
   if (input.sources && !(await shownSnapshots(input.sources))) return c.json({ error: "No such snapshot" }, 400);
-  const slots = input.slots ?? (input.sources ? (await stored(id)) : undefined);
-  if (slots && !backed(slots, sources)) return c.json({ error: "A member comes from outside the team's sources" }, 400);
+  const slots = input.slots ?? (resourcing ? now?.slots : undefined);
+  if (slots && !backedBy(slots, sources, anyPokemon)) return c.json({ error: "A member comes from outside the team's sources" }, 400);
   await db.transaction(async (tx) => {
     await tx
       .update(team)
-      .set({ ...(input.name ? { name: input.name } : {}), ...(input.slots ? { size: input.slots.length, slots: input.slots } : {}), updatedAt: new Date() })
+      .set({
+        ...(input.name ? { name: input.name } : {}),
+        ...(input.slots ? { size: input.slots.length, slots: input.slots } : {}),
+        ...(input.anyPokemon !== undefined ? { anyPokemon: input.anyPokemon } : {}),
+        updatedAt: new Date(),
+      })
       .where(eq(team.id, id));
     if (input.sources) {
       await tx.delete(teamSource).where(eq(teamSource.teamId, id));
-      await tx.insert(teamSource).values(input.sources.map((snapshotId, position) => ({ teamId: id, snapshotId, position })));
+      if (input.sources.length > 0) await tx.insert(teamSource).values(input.sources.map((snapshotId, position) => ({ teamId: id, snapshotId, position })));
     }
   });
   return c.json({});

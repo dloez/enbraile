@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { describeMember, displayName, type Mon } from "@/teams/dex";
-import { addMember, newMember } from "@/teams/team";
+import { addMember, isFree, newMember } from "@/teams/team";
 import { emptySlots, teamDone, teamList, teamMade, teamPage, type TeamRow } from "../../../shared/team";
 
 function message(error: unknown): string {
@@ -55,7 +55,7 @@ export function AddToTeam({ mon, snapshot, teams, className }: { mon: Mon; snaps
   const into = (id: string) =>
     run(async () => {
       const team = await api(`/teams/${encodeURIComponent(id)}`, teamPage);
-      if (team.slots.some((m) => m?.source === snapshot && m.index === mon.index)) return id;
+      if (team.slots.some((m) => m !== null && !isFree(m) && m.source === snapshot && m.index === mon.index)) return id;
       const slots = addMember(team.slots, mon, snapshot);
       if (!slots) throw new Error(`${team.name} is full`);
       await api(`/teams/${encodeURIComponent(id)}`, teamDone, { method: "PUT", body: { slots } });

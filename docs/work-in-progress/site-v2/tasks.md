@@ -79,25 +79,6 @@ The PC's one link to teams is "Add to team" in its summary, a menu of the reader
 - Does another player's PC summary show "Add to team" at all? Recommended: yes, since it is the PC's one link to teams and discovery names scouting an opponent as a reason for any player's snapshot; the alternative keeps it on the reader's own PC and adds others' snapshots only from the team page's **+ Source**.
 - If it shows, does its menu list every team of the reader's, picking one adding this snapshot to that team's sources when it is not one already, and "New team" making a team on this snapshot? Recommended: yes; the alternative lists only the reader's teams that already have this snapshot as a source.
 
-## Add free members, and import unbacked sets as free members
-
-A free member is a full Showdown set (any species in the team's pool, item, ability, nature, EVs, IVs, level, four moves), marked as free and counted against no bag. With "Any Pokémon" among a team's sources, the pasted sets the other sources cannot back come in as free members, listed in the dialog ([Team Building](discovery.md#team-building)).
-
-**Do:**
-- [ ] The free member editor; free members in the stored slots, the copy and the analysis.
-- [ ] "Any Pokémon" as a source, added and removed like a snapshot; the import keeps backed matching and makes free members of the rest when it is a source.
-- [ ] The paste dialog's list of what it left out survives the import: today `submit` in `src/teams/components/paste-dialog.tsx` awaits `onImport`, whose `pasted` in `src/pages/team.tsx` navigates to the new team before the dialog sets its outcome, so a paste that imports some sets and leaves others out lands on the new team without showing what was left out (seen in the browser by the several-sources entry, 2026-10-25).
-
-**Acceptance:**
-- Claude-run: `npm run gate`.
-- Human-run: make a team whose only source is "Any Pokémon" with six free members, copy it to Showdown and check it imports there; paste a team mixing your Pokémon and others and see the free ones marked and listed.
-- Reuse: `src/analysis/paste.ts`, `src/teams/components/move-picker.tsx`; `SHEET_POOL` in `src/teams/components/sheet-analysis.tsx`, the pool every team reads until the pool entry below gives each its own.
-- Neighbors: `src/teams/showdown.ts`; `team_source` in `api/_lib/schema.ts`, whose `snapshot_id` is not null, so "Any Pokémon" as a source needs a change of schema and its migration.
-- Forbidden: free members counted against a bag.
-
-**Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Build teams from several snapshots, any player's
-
 ## Give each team its pool, the Pool view, Speed Tiers and Tera
 
 Team Analysis's pool bar per team, defaulted from the series, the Pool view, Speed Tiers and the Tera toggle (gen 9 pools) join the team's Analysis ([The pool?](discovery.md#team-building)).

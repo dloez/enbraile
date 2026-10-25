@@ -1,0 +1,1 @@
+ALTER TABLE "team" ADD COLUMN "any_pokemon" boolean DEFAULT false NOT NULL;

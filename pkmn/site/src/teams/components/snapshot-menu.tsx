@@ -12,13 +12,22 @@ function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
 }
 
-export function SnapshotMenu({ label, taken = [], note, className, onClose, onPick }: {
+export function AnyMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 7 7" shapeRendering="crispEdges" aria-hidden="true" className={cn("size-4 flex-none fill-subtle", className)}>
+      <path d="M3 0h1v7H3zM0 3h7v1H0zM1 1h1v1H1zM5 1h1v1H5zM1 5h1v1H1zM5 5h1v1H5z" />
+    </svg>
+  );
+}
+
+export function SnapshotMenu({ label, taken = [], note, className, onClose, onPick, onAny }: {
   label: string;
   taken?: readonly string[];
   note?: ReactNode;
   className?: string;
   onClose: () => void;
   onPick: (row: TeamSourceRow) => void;
+  onAny?: () => void;
 }) {
   const [rows, setRows] = useState<TeamSourceRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +64,7 @@ export function SnapshotMenu({ label, taken = [], note, className, onClose, onPi
           </p>
         )}
         {!error && rows === null && <p className="m-0 px-2.5 py-2 font-heading text-xl text-muted-foreground">Loading…</p>}
-        {rows !== null && left.length === 0 && <p className="m-0 px-2.5 py-2 font-heading text-xl text-muted-foreground">No other snapshots</p>}
+        {rows !== null && left.length === 0 && !onAny && <p className="m-0 px-2.5 py-2 font-heading text-xl text-muted-foreground">No other snapshots</p>}
         {series.map((number) => (
           <div key={number} role="group" aria-label={`Series ${number}`} className="flex flex-col gap-0.5">
             {series.length > 1 && <p className="m-0 px-2.5 pt-1.5 font-heading text-lg text-muted-foreground">Series {number}</p>}
@@ -80,6 +89,22 @@ export function SnapshotMenu({ label, taken = [], note, className, onClose, onPi
               ))}
           </div>
         ))}
+        {onAny && (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onClose();
+              onAny();
+            }}
+            className="flex min-h-11 flex-none cursor-pointer items-center gap-2.5 rounded-lg border-none bg-transparent px-2.5 text-left font-heading text-[1.3125rem] text-foreground outline-none hover:bg-cell focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <span className="grid size-5 flex-none place-items-center rounded-[5px] border-2 border-dashed border-faint">
+              <AnyMark className="size-2.5" />
+            </span>
+            Any Pokémon
+          </button>
+        )}
       </div>
     </>
   );

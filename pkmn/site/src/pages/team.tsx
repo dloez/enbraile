@@ -12,25 +12,32 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AddDialog, type AddSource } from "@/teams/components/add-dialog";
+import { poolIds, SetEditor } from "@/teams/components/free-member";
 import { AbilityEditor, ItemEditor, segButton, segTrack } from "@/teams/components/editors";
 import { EmptyCard, MemberCard, type Focus } from "@/teams/components/member-card";
 import { MoveEditor } from "@/teams/components/move-picker";
 import { PasteDialog } from "@/teams/components/paste-dialog";
-import { SnapshotMenu, sourceLabel } from "@/teams/components/snapshot-menu";
+import { AnyMark, SnapshotMenu, sourceLabel } from "@/teams/components/snapshot-menu";
 import { SheetAnalysis } from "@/teams/components/sheet-analysis";
 import { currentAbility, describeMove, describePokemon, type Mon } from "@/teams/dex";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
 import { showdownTeam } from "@/teams/showdown";
 import {
+  EMPTY_SHEET,
+  freeCount,
   giveItem,
+  isFree,
   lastFilled,
   liveSlots,
   memberMon,
+  ownOf,
+  putFree,
   putMember,
   removeMember,
   resized,
   setAbility,
   setasLeft,
+  setFree,
   setMove,
   takeItem,
   usedBy,
@@ -57,7 +64,8 @@ type Panel =
   | { t: "sum"; slot: number }
   | { t: "item"; slot: number; back: Back }
   | { t: "ability"; slot: number; back: Back }
-  | { t: "move"; slot: number; at: number; back: Back };
+  | { t: "move"; slot: number; at: number; back: Back }
+  | { t: "set"; slot: number; back: Back };
 
 export function TeamBuilderPage() {
   const { id } = useParams({ from: FROM });
@@ -87,7 +95,7 @@ export function TeamBuilderPage() {
     );
   }
   if (!page) return <main className={toolPage} />;
-  if (page.sources.length === 0) {
+  if (page.sources.length === 0 && !page.anyPokemon) {
     return (
       <main className={cn(toolPage, "gap-4 pt-5")}>
         <BackLink />
@@ -145,6 +153,7 @@ function Builder({ page }: { page: TeamPage }) {
   const navigate = useNavigate();
   const wide = useMediaQuery("(min-width: 64rem)");
   const [sources, setSources] = useState<readonly TeamSource[]>(page.sources);
+  const [anyPokemon, setAnyPokemon] = useState(page.anyPokemon);
   const held = useMemo(() => holding(sources), [sources]);
   const stocks = useMemo(() => new Map(held.map((h) => [h.id, h])), [held]);
   const [name, setName] = useState(page.name);
@@ -170,7 +179,7 @@ function Builder({ page }: { page: TeamPage }) {
     savePick(page.id, next);
   }
 
-  function write(body: { slots?: Slots; name?: string; sources?: string[] }, after?: () => Promise<void>) {
+  function write(body: { slots?: Slots; name?: string; sources?: string[]; anyPokemon?: boolean }, after?: () => Promise<void>) {
     writes.current = writes.current
       .then(async () => {
         await api(`/teams/${encodeURIComponent(page.id)}`, teamDone, { method: "PUT", body });
@@ -187,6 +196,12 @@ function Builder({ page }: { page: TeamPage }) {
     setSources(next);
     setStored(slots);
     write({ sources: next.map((s) => s.id), slots });
+  }
+
+  function chooseAny(next: boolean) {
+    setAnyPokemon(next);
+    setStored(slots);
+    write({ anyPokemon: next, slots });
   }
 
   function addSource(row: TeamSourceRow) {
@@ -224,24 +239,25 @@ function Builder({ page }: { page: TeamPage }) {
     return panel.t;
   };
 
-  async function pasted(next: Slots) {
-    const made = await api("/teams", teamMade, { body: { sources: sources.map((s) => s.id), slots: next } });
-    await navigate({ to: FROM, params: { id: made.id } });
+  async function pasted(next: Slots): Promise<string> {
+    const made = await api("/teams", teamMade, { body: { sources: sources.map((s) => s.id), anyPokemon, slots: next } });
+    return made.id;
   }
+
+  const sourceCount = held.length + (anyPokemon ? 1 : 0);
 
   const cards = (
     <ol aria-label="Members" className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:auto-rows-[minmax(206px,1fr)] lg:overflow-y-auto">
       {slots.map((member, slot) => {
         const mon = memberMon(member, stocks);
-        const own = member ? stocks.get(member.source) : undefined;
+        const own = stocks.get(ownOf(member)?.source ?? "");
         return (
           <li key={slot} className="flex min-h-0">
-            {member && mon && own ? (
+            {member && mon && (own || isFree(member)) ? (
               <MemberCard
                 member={member}
                 mon={mon}
-                from={own.owner}
-                colour={own.colour}
+                from={own ? { owner: own.owner, colour: own.colour } : null}
                 focus={focusOf(slot)}
                 glow={glow === slot}
                 editable={editable}
@@ -261,6 +277,7 @@ function Builder({ page }: { page: TeamPage }) {
                 onItem={() => show({ t: "item", slot, back: backOf(slot) })}
                 onAbility={() => show({ t: "ability", slot, back: backOf(slot) })}
                 onMove={(at) => show({ t: "move", slot, at, back: backOf(slot) })}
+                onSet={() => show({ t: "set", slot, back: backOf(slot) })}
                 onRemove={() => {
                   show({ t: "ana" });
                   if (pick.slots?.includes(slot)) choosePick({ ...pick, slots: pick.slots.filter((at) => at !== slot) });
@@ -288,9 +305,9 @@ function Builder({ page }: { page: TeamPage }) {
     if (panel.t === "ana") return null;
     const member = slots[panel.slot];
     const mon = memberMon(member, stocks);
-    const own = member ? stocks.get(member.source) : undefined;
-    if (!member || !mon || !own) return null;
-    const sheet = own.sheet;
+    const own = stocks.get(ownOf(member)?.source ?? "");
+    if (!member || !mon || (!own && !isFree(member))) return null;
+    const sheet = own?.sheet ?? EMPTY_SHEET;
     if (panel.t === "sum") {
       const shown = asSet(mon, member);
       return (
@@ -306,11 +323,15 @@ function Builder({ page }: { page: TeamPage }) {
             </button>
           </div>
           <SummaryHead mon={shown} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
-          <SummaryBody key={`${panel.slot}:${member.source}:${mon.index}`} mon={shown} sheet={sheet} gaps={own.gaps} />
+          <SummaryBody key={`${panel.slot}:${ownOf(member)?.source ?? "free"}:${mon.index}`} mon={shown} sheet={sheet} gaps={own?.gaps ?? []} />
         </>
       );
     }
     const back = () => show(done(panel));
+    if (panel.t === "set") {
+      if (!isFree(member)) return null;
+      return <SetEditor key={panel.slot} member={member} back={backLabel(panel)} onBack={back} onChange={(set) => save(setFree(slots, panel.slot, set))} />;
+    }
     if (panel.t === "item") {
       return (
         <ItemEditor
@@ -319,7 +340,7 @@ function Builder({ page }: { page: TeamPage }) {
           slots={slots}
           stocks={stocks}
           slot={panel.slot}
-          owner={own.owner}
+          owner={own?.owner ?? ""}
           back={backLabel(panel)}
           onBack={back}
           onGive={(item) => {
@@ -340,11 +361,11 @@ function Builder({ page }: { page: TeamPage }) {
           slots={slots}
           stocks={stocks}
           slot={panel.slot}
-          setasLeft={setasLeft(slots, stocks, member.source)}
+          setasLeft={own ? setasLeft(slots, stocks, own.id) : 0}
           back={backLabel(panel)}
           onBack={back}
           onPick={(ability) => {
-            save(setAbility(slots, panel.slot, ability, currentAbility(mon)));
+            save(setAbility(slots, panel.slot, ability, isFree(member) ? null : currentAbility(mon)));
             back();
           }}
         />
@@ -387,10 +408,11 @@ function Builder({ page }: { page: TeamPage }) {
                 key={h.id}
                 held={h}
                 setas={setasLeft(slots, stocks, h.id)}
-                onRemove={editable && held.length > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
+                onRemove={editable && sourceCount > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
               />
             ))}
-            {editable && <SourceMenu taken={held.map((h) => h.id)} busy={joining} onPick={addSource} />}
+            {anyPokemon && <AnyChip onRemove={editable && sourceCount > 1 && freeCount(slots) === 0 ? () => chooseAny(false) : undefined} />}
+            {editable && <SourceMenu taken={held.map((h) => h.id)} busy={joining} onPick={addSource} onAny={anyPokemon ? undefined : () => chooseAny(true)} />}
           </div>
         </div>
         <div className="flex-1" />
@@ -471,6 +493,7 @@ function Builder({ page }: { page: TeamPage }) {
           slots={slots}
           stocks={stocks}
           sources={held}
+          anyPokemon={anyPokemon}
           onClose={() => setAdding(null)}
           onPut={(slot, mon, source) => {
             save(putMember(slots, slot, mon, source));
@@ -478,9 +501,24 @@ function Builder({ page }: { page: TeamPage }) {
             setPanel({ t: "ana" });
             setGlow(slot);
           }}
+          onPutFree={(slot, member) => {
+            save(putFree(slots, slot, member));
+            setAdding(null);
+            setPanel({ t: "ana" });
+            setGlow(slot);
+          }}
         />
       )}
-      {editable && <PasteDialog stocks={stocks} open={pasting} onOpenChange={setPasting} onImport={pasted} />}
+      {editable && (
+        <PasteDialog
+          stocks={stocks}
+          any={anyPokemon ? { species: poolIds() } : null}
+          open={pasting}
+          onOpenChange={setPasting}
+          onImport={pasted}
+          onOpen={(made) => void navigate({ to: FROM, params: { id: made } })}
+        />
+      )}
     </main>
   );
 }
@@ -512,7 +550,27 @@ function SourceChip({ held, setas, onRemove }: { held: Held; setas: number; onRe
   );
 }
 
-function SourceMenu({ taken, busy, onPick }: { taken: readonly string[]; busy: boolean; onPick: (row: TeamSourceRow) => void }) {
+function AnyChip({ onRemove }: { onRemove?: () => void }) {
+  return (
+    <span className={cn("flex min-h-8.5 items-center gap-2 rounded-lg border-3 border-dashed border-faint bg-ink pl-2 font-heading text-xl", onRemove ? "pr-1" : "pr-3")}>
+      <AnyMark />
+      Any Pokémon
+      {onRemove && (
+        <button
+          type="button"
+          aria-label="Remove Any Pokémon"
+          title="Remove this source"
+          onClick={onRemove}
+          className="grid size-6 cursor-pointer place-items-center rounded-md border-2 border-cell-hi bg-cell p-0 text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <X className="size-3" aria-hidden="true" />
+        </button>
+      )}
+    </span>
+  );
+}
+
+function SourceMenu({ taken, busy, onPick, onAny }: { taken: readonly string[]; busy: boolean; onPick: (row: TeamSourceRow) => void; onAny?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="relative flex">
@@ -527,7 +585,7 @@ function SourceMenu({ taken, busy, onPick }: { taken: readonly string[]; busy: b
         <Plus className="size-3.5 text-primary" aria-hidden="true" />
         Source
       </button>
-      {open && <SnapshotMenu label="Add a source" taken={taken} onClose={() => setOpen(false)} onPick={onPick} className="top-10 left-0" />}
+      {open && <SnapshotMenu label="Add a source" taken={taken} onClose={() => setOpen(false)} onPick={onPick} onAny={onAny} className="top-10 left-0" />}
     </span>
   );
 }
