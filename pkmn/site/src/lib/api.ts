@@ -23,10 +23,8 @@ export function prefetch(path: string): Promise<void> {
 }
 
 function settled(response: Promise<Response>): Promise<void> {
-  return response.then(
-    () => undefined,
-    () => undefined,
-  );
+  const none = () => undefined;
+  return response.then((r) => r.clone().arrayBuffer().then(none, none), none);
 }
 
 export function forgetEarly() {
