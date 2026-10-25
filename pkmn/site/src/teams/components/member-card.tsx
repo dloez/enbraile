@@ -196,7 +196,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, onL
 
 export function EmptyCard({ editable, on, onAdd }: { editable: boolean; on: boolean; onAdd: () => void }) {
   if (!editable) {
-    return <span className="grid min-h-30 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-2xl text-faint">Empty</span>;
+    return <span className="grid min-h-61.5 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-2xl text-faint">Empty</span>;
   }
   return (
     <button
@@ -204,7 +204,7 @@ export function EmptyCard({ editable, on, onAdd }: { editable: boolean; on: bool
       aria-pressed={on}
       onClick={onAdd}
       className={cn(
-        "flex min-h-30 flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border-3 border-dashed font-heading text-muted-foreground outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50",
+        "flex min-h-61.5 flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border-3 border-dashed font-heading text-muted-foreground outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50",
         on ? "border-primary bg-primary/10" : "border-cell-hi bg-transparent",
       )}
     >
