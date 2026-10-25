@@ -14,6 +14,8 @@
     --font-heading: 'Jersey 10', sans-serif;
     --font-sans: 'Nunito', system-ui, sans-serif;
     --animate-track-bob: track-bob 0.5s steps(2) infinite alternate;
+    --animate-pc-nudge-up: pc-nudge-up 0.5s steps(2) infinite alternate;
+    --animate-pc-nudge-down: pc-nudge-down 0.5s steps(2) infinite alternate;
     --color-ink: var(--ink);
     --color-red: var(--red);
     --color-red-hi: var(--red-hi);
@@ -61,6 +63,23 @@
     --color-scene-route-panel: var(--scene-route-panel);
     --color-scene-route-panel-sub: var(--scene-route-panel-sub);
     --color-box: var(--box);
+    --color-pc: var(--pc);
+    --color-pc-check: var(--pc-check);
+    --color-pc-cell: var(--pc-cell);
+    --color-pc-cell-on: var(--pc-cell-on);
+    --color-pc-fade: var(--pc-fade);
+    --color-mult-4: var(--mult-4);
+    --color-mult-2: var(--mult-2);
+    --color-mult-half: var(--mult-half);
+    --color-mult-quarter: var(--mult-quarter);
+    --color-mult-0: var(--mult-0);
+    --color-stat-up: var(--stat-up);
+    --color-stat-down: var(--stat-down);
+    --color-cat-physical: var(--cat-physical);
+    --color-cat-special: var(--cat-special);
+    --color-female: var(--female);
+    --color-prose: var(--prose);
+    --color-green: var(--green);
     --color-cell: var(--cell);
     --color-cell-hi: var(--cell-hi);
     --color-chart-4: var(--chart-4);
@@ -142,6 +161,22 @@
     --box: #1b2232;
     --cell: #2c3549;
     --cell-hi: #44506d;
+    --pc: #1d4650;
+    --pc-check: #21505b;
+    --pc-cell: rgba(16, 20, 29, 0.35);
+    --pc-cell-on: rgba(90, 209, 240, 0.22);
+    --pc-fade: rgba(14, 34, 40, 0.95);
+    --mult-4: #b0302a;
+    --mult-2: #c8642f;
+    --mult-half: #3d8550;
+    --mult-quarter: #2a6338;
+    --mult-0: #0b0e15;
+    --stat-up: #ff9d94;
+    --stat-down: #8fc8ff;
+    --cat-physical: #ff9d70;
+    --cat-special: var(--stat-down);
+    --female: #ff9ec4;
+    --prose: #d5dae5;
     --face: rgba(255, 255, 255, 0.1);
     --face-hi: rgba(255, 255, 255, 0.18);
     --edge: rgba(0, 0, 0, 0.35);
@@ -203,24 +238,24 @@
     --pixel-red: #e3403a;
     --pixel-case: #3a4150;
     --pixel-notch: #2c3240;
-    --type-normal: #9fa19f;
-    --type-fire: #e62829;
-    --type-water: #2980ef;
-    --type-grass: #3fa129;
-    --type-electric: #fac000;
-    --type-ice: #3dcef3;
-    --type-fighting: #ff8000;
-    --type-poison: #9141cb;
+    --type-normal: #7d7f7d;
+    --type-fire: #d62223;
+    --type-water: #2575dc;
+    --type-grass: #358a22;
+    --type-electric: #b98c00;
+    --type-ice: #1f95b3;
+    --type-fighting: #d46a00;
+    --type-poison: #8139b8;
     --type-ground: #915121;
-    --type-flying: #81b9ef;
-    --type-psychic: #ef4179;
-    --type-bug: #91a119;
-    --type-rock: #afa981;
+    --type-flying: #4f88c2;
+    --type-psychic: #d93a6c;
+    --type-bug: #76840f;
+    --type-rock: #857f57;
     --type-ghost: #704170;
-    --type-dragon: #5060e1;
+    --type-dragon: #4a58d0;
     --type-dark: #624d4e;
-    --type-steel: #60a1b8;
-    --type-fairy: #ef70ef;
+    --type-steel: #4a8499;
+    --type-fairy: #c44fc4;
 }
 
 @layer base {
@@ -263,8 +298,19 @@
   to { transform: translateX(6px); }
 }
 
+@keyframes pc-nudge-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+@keyframes pc-nudge-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(4px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .scene-art * {
+  .scene-art *,
+  .pc-nudge {
     animation: none !important;
   }
 }

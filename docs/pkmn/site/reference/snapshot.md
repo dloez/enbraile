@@ -150,4 +150,4 @@ The series page's row and the PC page read the report as "Export missing: no IVs
 | Vicky's, 2026-10-16 | 55 | `ivs`, `evs`, `stats`, `moves` |
 | MIRAMEEE's, 2026-10-17 | 48 | `ivs`, `evs`, `stats`, `tmRolls` |
 
-The PC shows what an old export lacks the way it shows any absent value: "—" for IVs, EVs and stats, the Stats tab's "At Level 50" ranges over IVs 0 to 31, no Moves tab without `moves`.
+The PC shows what an old export lacks the way it shows any absent value: "—" for IVs, EVs and stats, the Stats tab opening on its Lv 50 view with ranges over IVs 0 to 31, and "No moves in this export" on the Moves tab without `moves`.

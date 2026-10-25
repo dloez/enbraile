@@ -49,7 +49,7 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 - Claude-run: none.
 - Human-run: as a player of series 1 on production, upload your save zip from your row, see the suggested milestone, save it and read "<milestone> saved" with the Pokémon count and the TM rolls row; download the rolled zip from the done step and from the snapshot chip, and see it named as your zip; click "Open PC" and see your PC at that snapshot, its summary and its bag; as another player, open the first player's row and see their snapshot chips without a download button; as admin, upload for a player and replace their snapshot, and read the amber warning first.
 - Human-run: as admin on production, correct a snapshot's milestone with Move and see it on the series page; set a player's progress by hand and see their track move to it; clear it and see the latest snapshot's milestone again.
-- Human-run: as admin on production, upload Vicky's export for her and read the done step's "Missing: IVs, EVs, stats · moves" chip, with no TM rolls row; upload MIRAMEEE's and read "Missing: IVs, EVs, stats · TM rolls"; on `/series/1` see each row's amber "Export missing" line and no download button on their chips; open each one's PC, read the line above the picker, and open a Pokémon's Stats tab and see "—" for IVs, EVs and stats with the "At Level 50" ranges ([Snapshot Format → Old Exports](../../pkmn/site/reference/snapshot.md#old-exports)).
+- Human-run: as admin on production, upload Vicky's export for her and read the done step's "Missing: IVs, EVs, stats · moves" chip, with no TM rolls row; upload MIRAMEEE's and read "Missing: IVs, EVs, stats · TM rolls"; on `/series/1` see each row's amber "Export missing" line and no download button on their chips; open each one's PC, read the line above the picker, and open a Pokémon's Stats tab and see "—" for IVs, EVs and stats with the Lv 50 ranges ([Snapshot Format → Old Exports](../../pkmn/site/reference/snapshot.md#old-exports)).
 - Reuse: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) → Verification.
 - Neighbors: none.
 - Forbidden: snapshots made on production by `npm run seed` or by SQL.
@@ -57,22 +57,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **Touches:** `docs/pkmn/site/`
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
-
-## The PC box and summary take the signed-off look
-
-The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424` kept them so and left `pc.dc.html`'s teal box "for when its `Summary` board is signed off" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's build choices). No other entry restyles them, and the team builder reuses all three.
-
-**Do:**
-- [ ] The box after `pc.dc.html` and the summary after the signed-off `Summary` board (`summary.dc.html`), in `src/components/pc/`, so the PC page and Open Sheet both take it; new colours as tokens; [Design System](../../pkmn/site/reference/design-system.md) → Box and cells and the PC's components updated; the PC page's build choice rewritten.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, open a seeded snapshot's PC at desktop width and at 390×844, select a Pokémon and read its summary's tabs, open the bag; compare against the boards with `browser_take_screenshot`; upload `saves/Vicky-open-sheet.json` for a test player and open its PC, and read the "Export missing" line above the picker and, in a Pokémon's summary, "—" for IVs, EVs and stats, the "At Level 50" ranges and no Moves tab, as [Snapshot Format → Old Exports](../../pkmn/site/reference/snapshot.md#old-exports) says (added by the gardener pass after `e87655d`, which put the line on the PC page's head).
-- Human-run: open your PC on production and read a Pokémon's summary.
-- Reuse: `SnapshotPc`, `PcBox`, `SummaryAside`, `SummarySheet` in `src/components/pc/pc-box.tsx`; `src/components/pc/summary.tsx`, `bag.tsx`.
-- Neighbors: `pkmn/site/design/pc.dc.html`.
-- Forbidden: a second box or summary for the PC page; raw colours in components.
-
-**Touches:** `pkmn/site/src/components/pc/`, `pkmn/site/src/index.css`, `docs/pkmn/site/`
 
 ## Build teams locked to a snapshot, stored in the account
 

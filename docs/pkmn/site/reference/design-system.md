@@ -26,7 +26,10 @@ All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through
 | `muted` | `var(--ink)` | Inset wells: segmented-control tracks, inputs (`fieldClass`), stat-bar tracks, inline rename fields |
 | `card` | `#222a3b` | Panels, cards, the summary aside, dialogs and sheets; an inactive tab's hover |
 | `popover` | `var(--card)` | shadcn's dialog and sheet default surface |
-| `box` | `#1b2232` | The PC box and team strip, the recessed area a grid of cells sits in; icon tiles |
+| `box` | `#1b2232` | The team strip, the recessed area a grid of cells sits in; the summary's head and its nature, ability, stat and move wells; icon tiles |
+| `pc`, `pc-check` | `#1d4650`, `#21505b` | The PC box: a teal ground checkered in 56px squares of `pc-check` |
+| `pc-cell`, `pc-cell-on` | `rgba(16,20,29,0.35)`, `rgba(90,209,240,0.22)` | A PC cell and the selected one |
+| `pc-fade` | `rgba(14,34,40,0.95)` | The PC box's fade where more cells scroll past its edge |
 | `cell` | `#2c3549` | A cell inside a box; a lift card's resting border |
 | `cell-hi` | `#44506d` | A selected cell; empty slot outlines |
 | `secondary` | `var(--cell)` | Pill tags; the analysis panels' bar tracks and the pool histogram's bars |
@@ -57,7 +60,12 @@ All in `src/index.css`'s `:root`; Tailwind sees each as `--color-<name>` through
 | `primary` | `var(--cyan)` | Selection borders, a lift card's hover border, a pressed `Toggle`'s fill, links' arrows, a nature's raised stat, the top value of a bar |
 | `primary-foreground` | `var(--ink)` | Text on `primary` |
 | `yellow` | `#ffd34d` | You and winners |
-| `green` | `#7be08a` | The good side, through `chart-2` |
+| `green` | `#7be08a` | The good side, through `chart-2`; a stat bar in the third quarter |
+| `stat-up`, `stat-down` | `#ff9d94`, `#8fc8ff` | A nature's raised and lowered stat in the summary; `stat-down` is also ♂ and, as `cat-special`, a special move's tag |
+| `cat-physical` | `#ff9d70` | A physical move's tag (a status move's is `subtle`) |
+| `female` | `#ff9ec4` | ♀ |
+| `prose` | `#d5dae5` | A selected move's description |
+| `mult-4`, `mult-2`, `mult-half`, `mult-quarter`, `mult-0` | `#b0302a`, `#c8642f`, `#3d8550`, `#2a6338`, `#0b0e15` | A type defense cell's damage taken: ×4, ×2, ½, ¼ and immune |
 | `destructive` | `#ff6a5e` | Errors, refusals, unknown marks (`?`), weaknesses, delete actions |
 | `destructive-soft` | `color-mix(in srgb, var(--destructive) 20%, var(--card))` | Fill behind an error or a weakness cell |
 | `warning` | `#ffc878` | Amber, a soft warning that never blocks: its border and icon (a snapshot about to be replaced), the "Export missing" line's text, the done step's "Missing:" chip (border, icon and text) and the file row's `zip` icon for an export |
@@ -104,7 +112,7 @@ Scales of one hue are built with opacity on the token (`bg-chart-2/10`, `/15`, `
 
 ### Types
 
-`--type-<type>` for the 18 types, lower-case (`--type-fire: #e62829`…), used only through `var(--type-${type.toLowerCase()}, var(--muted-foreground))`. Values are in `src/index.css`.
+`--type-<type>` for the 18 types, lower-case (`--type-fire: #d62223`…), deep enough to carry white pixel-face text, as the Site v2 Screens draw them: the summary's type tags and type defense heads, and the type dots and squares elsewhere, used only through `var(--type-${type.toLowerCase()}, …)`. Values are in `src/index.css`.
 
 ## Typography
 
@@ -189,8 +197,8 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 | `PlayerBadge` | `src/components/player-badge.tsx` | A player, boxed, never round: their initial in the pixel face on their colour, a 3px `ink` border and a ring in their colour; `size="xs"` (`size-8 rounded-[7px] ring-2`, the header's menu), `"sm"` (`size-9 rounded-md ring-2`) or `"lg"` (`size-12.5 rounded-lg ring-3`), after the boards' header and trainer rows, `"xl"`, the profile's, `size-16 rounded-xl ring-3` below `sm` and `size-21 rounded-[14px] ring-4` from it, both with a 4px border, and `"row"`, a trainer row's, `size-8.5 rounded-lg ring-2` below `sm` and `"lg"` from it; `colour` picks `player-1`…`player-6`; `playerColour(id)` picks one from a player's id, and `PLAYER_FILL` and `PLAYER_RING` beside it hold each colour's `bg-player-N` and `ring-player-N` for anything else drawn in a player's colour, as the series page's track is. Shown in the header, on the profile, on the waiting page, on the allowlist, on the series page's trainer rows and on the admin series form's players |
 | `UploadDialog` | `src/components/upload-dialog.tsx` | The snapshot upload, after the `upload-*.dc.html` boards: a `Dialog` (`sm:max-w-150`, `border-3`, `px-6 pt-5.5 pb-6`, a bottom sheet below `sm`) titled in `text-4xl` pixel face, with the drop zone, the file row (a `zip` icon on `bg-ink`, in `primary` for a save zip and `warning` for an export (a `.json`), name, size, the percentage or "Uploaded" in `chart-2`, and a segmented `h-4` bar in `primary`, `destructive` when it failed), the error alert, the slot radios (`min-h-15 rounded-xl border-3`, chosen `border-primary bg-primary/12`), the milestone grid (`bg-ink` well of `bg-cell` cells, the chosen one `bg-red`, a 7px square on one that has a snapshot), the amber replace warning and the done step, which for an old export ends with its chips (`ExportGaps`, Patterns → Warning); actions `min-h-13`, the go button `go` ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)) |
 | `TrainerAdmin` | `src/components/trainer-admin.tsx` | The admin overrides at the end of an admin's open trainer row on the series page ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), built without a board as an Admin panel (Patterns): Progress, the shown snapshot's fainted count and its milestone, each a `fieldClass` select or number input with `buttonClass` actions, Delete in the destructive button, confirmed by a second press |
-| `SnapshotPc`, `PcBox`, `SummaryAside`, `SummarySheet`, `BagButton` | `src/components/pc/pc-box.tsx` | The PC, shown by the PC page (`SnapshotPc`, read-only) and Open Sheet: the box ([Box and cells](#patterns)) with its search, type filter and an `actions` slot, the summary as an `aside` from `lg` or a bottom sheet below, each with an optional footer, and the Bag button |
-| `MonSprite`, `SummaryHead`, `SummaryBody` | `src/components/pc/summary.tsx` | A Pokémon's sprite (`MonSprite` takes anything with a `sprite`, a fallen Pokémon on the player's series page too) and its summary: head, then Info, Stats and Moves tabs |
+| `SnapshotPc`, `PcBox`, `SummaryAside`, `SummarySheet`, `BagButton` | `src/components/pc/pc-box.tsx` | The PC, shown by the PC page (`SnapshotPc`, read-only) and Open Sheet: the box ([Box and cells](#patterns)) with its count, search, type filter and an `actions` slot, the summary as a `w-95` `aside` from `lg`, the two filling the screen's height, or a bottom sheet below (its head leaving room for the close button), each with an optional footer, and the Bag button |
+| `MonSprite`, `SummaryHead`, `SummaryBody` | `src/components/pc/summary.tsx` | A Pokémon's sprite (`MonSprite` takes anything with a `sprite`, a fallen Pokémon on the player's series page too) and its summary, after `summary.dc.html`: the head on `box` (the sprite on an oval of its first type, the name, species, level and gender in the pixel face, deep type tags, a Shiny tag); a track of Info, Stats and Moves; Info holds the nature with its raised and lowered stat, the abilities as a list whose picked one shows its description ("In use" and "Hidden" tags) and the 18 type defenses in two rows of nine; Stats switches between the level, Lv 50 (the league's fight stats, ranges where the IVs are missing, the default then) and Base, with IV, EV, a bar tinted by quarter of the best stat possible, and a total; Moves lists the current moves, then what it can learn with each TM's label, and the selected move's type, category, power, accuracy, TM and whole description, or "No moves in this export" |
 | `Bag`, `ItemIcon` | `src/components/pc/bag.tsx` | The bag dialog (Items, Berries, TMs, search); with a `team` it gives items and teaches TMs to its members, without one it only shows the bag; an item's icon |
 | `listPage`, `toolPage`, `messageWidth` | `src/components/page.ts` | The page column classes ([Layout Shell](#layout-shell)) |
 | `TypeDot`, `TypeChip`, `TypeSquare`, `UnknownMark` | `src/components/marks.tsx` | A type as its colour with the white symbol (dot 16px, chip with name, square 24px); `?` in `destructive` for anything Showdown lacks |
@@ -207,7 +215,7 @@ A tool's own components stay in `src/<tool>/components/` (Open Sheet's `TeamView
 ### Patterns
 
 - **Card:** `rounded-2xl border-3 bg-card`, padded `p-3`–`p-4`. A card that is a link as a whole is `liftCardClass` and ends in a cyan `ArrowRight` (the admin home's and `/admin/series`'s links, `px-5 py-4.5`).
-- **Box and cells** (the Pokémon PC look): a `bg-box rounded-2xl` (the team strip `rounded-xl`) container with a pixel-face title and count, holding a responsive grid (`grid-cols-[repeat(auto-fill,minmax(72px,1fr))] sm:…minmax(112px,1fr)`) of square `bg-cell rounded-lg` buttons. Selected: `border-2 border-primary bg-cell-hi`. A cell overlays the level (`tabular-nums`, top-left), a `?` mark (top-right) and the name (bottom, hidden on phones).
+- **Box and cells** (the Pokémon PC look, after `pc.dc.html`): a `card` panel (`rounded-[18px] border-3 p-3.5`) with the count in the pixel face ("79 Pokémon", "12 of 79 Pokémon" while filtering), a search and a type select on `ink` (`h-12 rounded-[10px] border-3`) and its actions; under it the box, `bg-pc` checkered in `pc-check`, `rounded-xl`, holding 106px square cells from `sm` (four to a row below), centred. A cell is `bg-pc-cell rounded-xl` with the sprite at 96px, the level top-left in the pixel face with an `ink` drop, a yellow star for a shiny and a `?` for an unknown species; hovered or selected it takes a 3px inset `cyan` ring, selected also `bg-pc-cell-on`. Where the box scrolls (from `lg`, inside the page's height), a fade and a nudging cyan arrow button sit at the edge with more, scrolling a page; they stand still under `prefers-reduced-motion`. The team strip keeps the `bg-box` cells.
 - **Actions:** `buttonClass` (or `<Button>`) for every action, with `iconButtonClass` for icon-only tools (`aria-label` and `title`). Destructive tools add `text-destructive`.
 - **Quiet icon button:** `quietIconClass`, `size-7 rounded-md text-muted-foreground hover:bg-face hover:text-foreground` (tab rename/close, dialog and sheet close).
 - **Focus:** every interactive element `outline-none focus-visible:ring-3 focus-visible:ring-ring/50`.
