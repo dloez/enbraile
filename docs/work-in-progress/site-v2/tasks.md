@@ -95,42 +95,21 @@ A team holds six members by default and up to eight; its size is set like its so
 
 ## A trainer row's Teams tile opens their teams
 
-The series page's trainer row has a Teams tile, drawn in `series.dc.html` as a link and specified as "their teams (count, opens them)" ([First page after sign-in?](discovery.md#pages)). The count comes with the team builder; where it opens is settled nowhere: `/teams` lists every team with the reader's first, and no route lists one player's teams.
+The series page's trainer row has a Teams tile, drawn in `series.dc.html` as a link and specified as "their teams (count, opens them)" ([First page after sign-in?](discovery.md#pages)). It opens the team list filtered to that trainer, `/teams?player=<id>`, with a chip naming the trainer that clears the filter ([Where does a trainer row's Teams tile open?](discovery.md#team-building), 2026-10-25).
 
 **Do:**
-- [ ] The tile's link to where the author settles.
+- [ ] `/teams` takes a `player` search param and lists only that player's teams, with a chip above the list naming them (their badge and name) whose close button clears it; the Teams tab keeps opening the whole list.
+- [ ] The trainer row's Teams tile links to `/teams?player=<id>`, at both widths.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with a seeded team for a test player, open their row's Teams tile and land where it is settled.
+- Claude-run: `npm run gate`; through `verify-site`, with a seeded team for a test player, open their row's Teams tile, land on `/teams?player=<id>` listing only their teams under the chip, clear the chip and see every team.
 - Human-run: open another trainer's Teams tile from the series page and see their teams.
-- Reuse: the team list from the entry above; `Tile` in `src/pages/series.tsx`.
+- Reuse: the team list from the entry above; `Tile` in `src/pages/series.tsx`; `PlayerBadge`.
 - Neighbors: the row's PC tile.
-- Forbidden: a route for one player's teams that the author did not settle.
+- Forbidden: a `/players/<player>/teams` route.
 
 **Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
 **After:** Build teams locked to a snapshot, stored in the account
-**Needs the author:** where does a trainer row's Teams tile open: `/teams` filtered to that trainer, a new `/players/<player>/teams`, or the trainer's teams on their series page?
-
-## Mark an old export's unrolled TM moves unchecked in the team builder
-
-Split out of the old exports' entry, which landed in `e87655d`, the one part of it that needs the team builder: an export whose `moves` predate TM rolling has them marked unchecked when they are picked for a team ([Exports from older versions](discovery.md#snapshots-in)), and a team built from each old export shows its Level 50 ranges.
-
-What landed does not carry what this needs. The missing-field report (`missing` on the `snapshot` row, `exportReport` in `shared/snapshot.ts`) holds `tmRolls` once for the whole snapshot, set when any Pokémon's `moves` has an `unchecked` key, empty or not (`readExport`); the per-Pokémon `unchecked` lists themselves are dropped from `data`, since `pokemonSchema`'s `moves` keeps only `current`, `relearner` and `tms` (the raw `.json` stays in the bucket at the snapshot's `file_key`). And MIRAMEEE's export, the only old one with `moves`, holds `unchecked: []` on all 48 Pokémon against 101 bag TMs (read 2026-10-23): every bag TM had a game roll for each, so its `tms` are pairs the game kept, not unrolled ones ([Save Export → Rolling TMs](../../pkmn/site/explanation/save-export.md#rolling-tms)), and discovery's "unrolled TM moves" for it does not hold.
-
-**Do:**
-- [ ] `moves` without rolled TMs marked unchecked in the move picker, as the author settles below.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, upload `saves/Vicky-open-sheet.json` and `saves/MIRAMEEE-open-sheet.json` for two test players through the series page's upload dialog, build a team from each, see Level 50 ranges shown, and see the TM moves the author's answer marks shown unchecked in the move picker while a save zip's snapshot's are not.
-- Human-run: build a team from MIRAMEEE's export on production and see its TM moves marked as the author settled.
-- Reuse: `src/open-sheet/components/move-picker.tsx` as the team builder moved it; `missing` on the `snapshot` row (`exportReport`, `readExport` in `shared/snapshot.ts`).
-- Neighbors: the team builder's member cards.
-- Forbidden: refusing a move for being unchecked; a second move picker.
-
-**Touches:** `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** Build teams locked to a snapshot, stored in the account
-**Needs the author:** what does "marked unchecked" mark? (a) every TM move of a snapshot whose report holds `tmRolls`, which would mark MIRAMEEE's game-kept rolls unchecked; (b) only each Pokémon's `unchecked` TMs, offered in the picker with the mark, which means keeping `unchecked` in the stored snapshot (or re-reading the raw export) and marks nothing for series 1's exports; (c) nothing, the entry dropped, since no export in hand has an unrolled TM, keeping only its Level 50 check for the team builder's own entry. Recommended: (c), or (b) if exports from other series are expected.
-
 ## Build teams from several snapshots, any player's
 
 A team's sources picker takes any number of snapshots, any player's; the PC shows each source's Pokémon, and each member draws its item and Mini Setas from its own snapshot ([Item limits across several sources?](discovery.md#team-building)).
