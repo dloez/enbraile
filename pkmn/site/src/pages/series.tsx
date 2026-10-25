@@ -4,6 +4,7 @@ import { buttonClass, Segmented } from "@/components/controls";
 import { readPage } from "@/components/page";
 import { Rules } from "@/components/rules";
 import { PixelIcon } from "@/components/pixel-icon";
+import { Placeholder } from "@/components/placeholder";
 import { PLAYER_FILL, PLAYER_RING, PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
 import { TrainerAdmin } from "@/components/trainer-admin";
@@ -45,7 +46,22 @@ export function SeriesPage() {
       </main>
     );
   }
-  if (!series) return <main className={readPage} />;
+  if (!series) {
+    return (
+      <>
+        <Placeholder className="h-55 sm:h-65" />
+        <main className={cn(readPage, "flex-none gap-3 pt-5 pb-6 sm:gap-3.5 sm:pt-6 sm:pb-8")}>
+          <League />
+          <section aria-labelledby="trainers-title" className="flex flex-col gap-3 sm:gap-3.5">
+            <h2 id="trainers-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
+              Trainers
+            </h2>
+            <Placeholder className="h-60 rounded-2xl" />
+          </section>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>

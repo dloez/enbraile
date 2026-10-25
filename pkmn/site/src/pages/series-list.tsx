@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { liftCardClass } from "@/components/controls";
+import { Placeholder } from "@/components/placeholder";
 import { toolPage } from "@/components/page";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -19,6 +20,12 @@ export function gameLine(game: string): string {
 export function SeriesListPage() {
   const [list, setList] = useState<SeriesBanner[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const listed = list !== null && list.length > 0;
+
+  useEffect(() => {
+    if (listed) void router.loadRouteChunk(router.routesById["/series/$number"]);
+  }, [listed, router]);
 
   useEffect(() => {
     api("/series", seriesBannerList).then(setList, (caught: unknown) =>
@@ -33,6 +40,12 @@ export function SeriesListPage() {
         <p role="alert" className="m-0 text-destructive">
           {error}
         </p>
+      )}
+      {!list && !error && (
+        <div className="flex flex-col gap-4 sm:gap-6">
+          <Placeholder className="h-35 rounded-2xl" />
+          <Placeholder className="h-35 rounded-2xl" />
+        </div>
       )}
       {list && (
         <ul className="m-0 flex list-none flex-col gap-4 p-0 sm:gap-6">

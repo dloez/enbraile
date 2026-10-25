@@ -12,11 +12,10 @@
     <title>Enbraile Pokémon</title>
   </head>
   <body>
-    <div id="root">
-      <span role="progressbar" aria-label="Loading the site" class="pointer-events-none fixed inset-x-0 top-0 h-1 overflow-hidden">
-        <span class="block h-full w-2/5 animate-nav-sweep bg-primary motion-reduce:w-full motion-reduce:animate-none"></span>
-      </span>
-    </div>
+    <div id="root"></div>
+    <span role="progressbar" aria-label="Loading the site" class="pointer-events-none fixed inset-x-0 top-0 hidden h-1 overflow-hidden [#root:empty+&]:block">
+      <span class="block h-full w-2/5 animate-nav-sweep bg-primary motion-reduce:w-full motion-reduce:animate-none"></span>
+    </span>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

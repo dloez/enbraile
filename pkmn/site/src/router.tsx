@@ -14,14 +14,18 @@ const homeRoute = createRoute({
 const seriesListRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/series",
-  loader: () => prefetch("/series"),
+  loader: () => {
+    void prefetch("/series");
+  },
   component: lazyRouteComponent(() => import("@/pages/series-list"), "SeriesListPage"),
 });
 
 const seriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/series/$number",
-  loader: ({ params }) => prefetch(`/series/${encodeURIComponent(params.number)}`),
+  loader: ({ params }) => {
+    void prefetch(`/series/${encodeURIComponent(params.number)}`);
+  },
   component: lazyRouteComponent(() => import("@/pages/series"), "SeriesPage"),
 });
 
