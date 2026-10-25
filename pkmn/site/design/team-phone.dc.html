@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Team on a phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#161b26}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+.ph-menu:hover{background:#222a3b!important;color:#ffffff!important}
+.ph-item:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}
+.btn:not(:disabled):hover{background:rgba(255,255,255,0.18)!important}
+.seg:not([aria-checked="true"]):not([aria-selected="true"]):not(:disabled):hover{background:#2c3549!important;color:#ffffff!important}
+.mvb:not(:disabled):hover{border-color:#5ad1f0!important}
+.who:hover{border-color:#5ad1f0!important}
+.x:not(:disabled):hover{border-color:#5ad1f0!important;color:#ffffff!important}
+.addc:hover{border-color:#5ad1f0!important;color:#ffffff!important}
+.row:not(:disabled):hover{border-color:#5ad1f0!important}
+.cell:hover{box-shadow:inset 0 0 0 3px #5ad1f0!important}
+.ico{background-image:url(/_blob/60638f84e12716d49b223430466fcd7f);background-repeat:no-repeat;image-rendering:pixelated}
+.field:focus-within{border-color:#5ad1f0!important}
+select option{background:#10141d;color:#eef1f7}
+.sheetbody>*{flex-shrink:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="position: relative; z-index: 2; flex: none; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="MainPhone.dc.html" aria-label="Home" style="flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px">
+<svg width="32" height="32" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<span style="flex: 1; display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #ffffff"><svg width="16" height="16" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z" fill="#d93a30"></path></svg>Teams</span>
+<button type="button" class="ph-menu" aria-label="Menu" aria-expanded="{{open}}" aria-controls="ph-panel" onClick="{{toggle}}" style="flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: {{btnBg}}; color: #ffffff; display: grid; place-items: center; cursor: pointer">
+<sc-if value="{{closed}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z" fill="currentColor"></path></svg></sc-if>
+</button>
+</header>
+
+<sc-if value="{{pageOn}}" hint-placeholder-val="{{ true }}">
+<main style="padding: 16px 16px 32px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<a href="TeamsListPhone.dc.html" style="align-self: flex-start; display: flex; align-items: center; gap: 8px; min-height: 32px; font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none"><svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M12 2L2 9l10 7z" fill="currentColor"></path></svg>Teams</a>
+<h1 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 44px; line-height: 0.9">{{title}}</h1>
+<sc-if value="{{ro}}" hint-placeholder-val="{{ false }}">
+<span style="align-self: flex-start; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #10141d; background: {{ownerC}}; padding: 1px 8px; border-radius: 4px">{{owner}}'s team</span>
+</sc-if>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{chips}}" as="sc" hint-placeholder-count="2">
+<span style="display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 10px 0 6px; box-sizing: border-box; border-radius: 8px; border: 3px {{sc.line}} {{sc.border}}; background: #10141d; font-family: 'Jersey 10', sans-serif; font-size: 19px">
+<sc-if value="{{sc.isPc}}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="width: 20px; height: 20px; border-radius: 5px; background: {{sc.c}}; color: #10141d; display: grid; place-items: center; font-size: 16px">{{sc.i}}</span></sc-if>
+{{sc.label}}
+<sc-if value="{{sc.isPc}}" hint-placeholder-val="{{ true }}"><span title="Mini Setas left" style="display: flex; align-items: center; gap: 3px; color: {{sc.setaInk}}"><svg width="14" height="14" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h4v1H4zM2 2h8v1H2zM1 3h10v3H1z" fill="#e3403a"></path><path d="M3 3h2v2H3zM8 2h1v2H8zM6 4h1v1H6z" fill="#ffffff"></path><path d="M4 6h4v4H4zM3 10h6v1H3z" fill="#f2ead6"></path></svg>{{sc.seta}}<span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Mini Setas left</span></span></sc-if>
+</span>
+</sc-for>
+<sc-if value="{{rw}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="btn" style="display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 19px; cursor: pointer"><span style="color: #5ad1f0; display: flex"><svg width="11" height="11" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h2v10H4zM0 4h10v2H0z" fill="currentColor"></path></svg></span>Source</button>
+</sc-if>
+</div>
+<sc-if value="{{rw}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div role="radiogroup" aria-label="Members" style="display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px; align-items: center">
+<span aria-hidden="true" style="flex: 1; padding-left: 8px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Members</span>
+<sc-for list="{{sizes}}" as="z" hint-placeholder-count="3">
+<button type="button" class="seg" role="radio" aria-checked="{{z.on}}" aria-label="{{z.n}} members" disabled="{{z.off}}" onClick="{{z.pick}}" style="width: 52px; min-height: 40px; border: none; border-radius: 8px; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer; background: {{z.bg}}; color: {{z.fg}}; opacity: {{z.fade}}; cursor: {{z.cursor}}">{{z.n}}</button>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px">
+<button type="button" class="btn" style="min-height: 44px; padding: 0 14px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Paste</button>
+<button type="button" class="btn" style="min-height: 44px; padding: 0 14px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Copy for Showdown</button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ro}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" style="min-height: 44px; padding: 0 14px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Copy for Showdown</button>
+</sc-if>
+
+<div role="tablist" aria-label="Team view" style="display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{tabsView}}" as="tv" hint-placeholder-count="2">
+<button type="button" class="seg" role="tab" aria-selected="{{tv.on}}" onClick="{{tv.pick}}" style="flex: 1; min-height: 40px; border: none; border-radius: 8px; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer; background: {{tv.bg}}; color: {{tv.fg}}">{{tv.name}}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{onMembers}}" hint-placeholder-val="{{ true }}">
+<ol aria-label="Members" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{cards}}" as="cd" hint-placeholder-count="6">
+<li style="display: flex">
+<sc-if value="{{cd.filled}}" hint-placeholder-val="{{ true }}">
+<article aria-label="{{cd.name}}" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 6px 8px 8px 6px; box-sizing: border-box; border-radius: 14px; background: #222a3b; border: 3px solid {{cd.border}}; opacity: {{cd.dim}}">
+<div style="display: flex; align-items: center; gap: 6px">
+<button type="button" class="who" onClick="{{cd.look}}" aria-label="Summary of {{cd.name}}" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; min-height: 60px; padding: 0 8px 0 0; box-sizing: border-box; border: 3px solid #2c3549; border-radius: 10px; background: #1b2232; color: #eef1f7; font: inherit; text-align: left; cursor: pointer">
+<span style="flex: none; width: 60px; height: 56px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{cd.sprite}}" alt="" width="72" height="72" style="flex: none; display: block; margin: -12px -6px -8px; image-rendering: pixelated"></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{cd.name}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #a3acbf">{{cd.sub}}</span>
+<span style="display: flex; flex-wrap: wrap; gap: 4px">
+<sc-for list="{{cd.types}}" as="t" hint-placeholder-count="2"><span style="font-family: 'Jersey 10', sans-serif; font-size: 15px; line-height: 19px; color: #ffffff; background: {{t.c}}; border-radius: 5px; padding: 0 6px; text-shadow: 0 1px 0 rgba(0,0,0,0.45)">{{t.name}}</span></sc-for>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 15px; line-height: 15px; padding: 0 5px; border-radius: 4px; color: {{cd.tagInk}}; background: {{cd.tagBg}}; border: 2px {{cd.tagLine}} {{cd.tagBorder}}">{{cd.tag}}</span>
+</span>
+</span>
+<svg width="9" height="15" viewBox="0 0 3 5" shape-rendering="crispEdges" aria-hidden="true" style="flex: none; color: #a3acbf"><path d="M0 0h1v1h1v1h1v1H2v1H1v1H0z" fill="currentColor"></path></svg>
+</button>
+<sc-if value="{{cd.pickable}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="x" aria-pressed="{{cd.inSix}}" disabled="{{cd.pickOff}}" onClick="{{cd.togglePick}}" title="{{cd.pickTitle}}" style="flex: none; min-width: 44px; height: 44px; padding: 0 8px; box-sizing: border-box; border-radius: 10px; border: 3px solid {{cd.pickBorder}}; background: {{cd.pickBg}}; color: {{cd.pickInk}}; font-family: 'Jersey 10', sans-serif; font-size: 19px; cursor: {{cd.pickCursor}}">{{cd.pickLabel}}</button>
+</sc-if>
+<sc-if value="{{cd.canSet}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="x" onClick="{{cd.setPick}}" title="Level, nature, EVs and IVs" style="flex: none; height: 44px; padding: 0 8px; box-sizing: border-box; border-radius: 10px; border: 3px solid #44506d; background: #2c3549; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 19px; cursor: pointer">Set</button>
+</sc-if>
+<sc-if value="{{cd.rw}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="x" aria-label="Take {{cd.name}} out" title="Take out of the team" onClick="{{cd.remove}}" style="flex: none; width: 44px; height: 44px; box-sizing: border-box; border-radius: 10px; border: 3px solid #44506d; background: #2c3549; color: #c3cad8; display: grid; place-items: center; cursor: pointer"><svg width="11" height="11" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h2v1h1v1h2V1h1V0h2v2H7v1H6v2h1v1h1v2H6V7H5V6H3v1H2v1H0V6h1V5h1V3H1V2H0z" fill="currentColor"></path></svg></button>
+</sc-if>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<button type="button" class="mvb" disabled="{{cd.ro}}" onClick="{{cd.itPick}}" style="display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px 0 4px; box-sizing: border-box; background: #1b2232; border: 3px solid #2c3549; border-radius: 10px; min-width: 0; color: #eef1f7; font: inherit; text-align: left; cursor: {{cd.cursor}}">
+<sc-if value="{{cd.hasItem}}" hint-placeholder-val="{{ true }}"><span class="ico" style="flex: none; display: block; width: 24px; height: 24px; background-position: {{cd.itemPos}}"></span></sc-if>
+<sc-if value="{{cd.noItem}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding-left: 4px; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #a3acbf">Item</span></sc-if>
+<span style="flex: 1; min-width: 0; font-weight: 800; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: {{cd.itemInk}}">{{cd.itemName}}</span>
+</button>
+<button type="button" class="mvb" disabled="{{cd.ro}}" onClick="{{cd.abPick}}" style="display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; box-sizing: border-box; background: #1b2232; border: 3px solid #2c3549; border-radius: 10px; min-width: 0; color: #eef1f7; font: inherit; text-align: left; cursor: {{cd.cursor}}">
+<span style="flex: 1; min-width: 0; font-weight: 800; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{cd.abName}}</span>
+<sc-if value="{{cd.seta}}" hint-placeholder-val="{{ false }}"><span title="Costs 1 Mini Seta" style="flex: none; display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h4v1H4zM2 2h8v1H2zM1 3h10v3H1z" fill="#e3403a"></path><path d="M3 3h2v2H3zM8 2h1v2H8zM6 4h1v1H6z" fill="#ffffff"></path><path d="M4 6h4v4H4zM3 10h6v1H3z" fill="#f2ead6"></path></svg></span></sc-if>
+</button>
+<sc-for list="{{cd.moves}}" as="mv" hint-placeholder-count="4">
+<button type="button" class="mvb" disabled="{{cd.ro}}" onClick="{{mv.pick}}" style="display: grid; grid-template-columns: 6px minmax(0, 1fr) auto; align-items: center; column-gap: 7px; min-height: 44px; padding: 0 8px 0 5px; box-sizing: border-box; border-radius: 10px; background: #1b2232; border: 3px solid #2c3549; color: #eef1f7; font: inherit; text-align: left; cursor: {{cd.cursor}}">
+<span aria-hidden="true" style="height: 26px; border-radius: 3px; background: {{mv.c}}"></span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 800; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{mv.name}}</span><span style="font-size: 11px; font-weight: 700; color: #a3acbf">{{mv.type}}</span></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #c3cad8">{{mv.power}}</span>
+</button>
+</sc-for>
+</div>
+</article>
+</sc-if>
+<sc-if value="{{cd.empty}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{cd.rw}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="addc" onClick="{{cd.add}}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 72px; border-radius: 14px; border: 3px dashed #44506d; background: transparent; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer"><svg width="11" height="11" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h2v10H4zM0 4h10v2H0z" fill="currentColor"></path></svg>Add a Pokémon</button>
+</sc-if>
+<sc-if value="{{cd.ro}}" hint-placeholder-val="{{ false }}">
+<span style="flex: 1; display: grid; place-items: center; min-height: 72px; border-radius: 14px; border: 3px dashed #343f58; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #6b7489">Empty</span>
+</sc-if>
+</sc-if>
+</li>
+</sc-for>
+</ol>
+</sc-if>
+
+<sc-if value="{{onAnalysis}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{scopeOn}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 10px">
+<div role="radiogroup" aria-label="Analyse" style="display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{scopes}}" as="sv" hint-placeholder-count="2">
+<button type="button" class="seg" role="radio" aria-checked="{{sv.on}}" onClick="{{sv.pick}}" style="padding: 0 12px; min-height: 40px; border: none; border-radius: 8px; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer; background: {{sv.bg}}; color: {{sv.fg}}">{{sv.name}}</button>
+</sc-for>
+</div>
+<span role="status" style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: {{scopeInk}}">{{scopeNote}}</span>
+</div>
+</sc-if>
+<section aria-label="Analysis" style="height: 760px; display: flex; flex-direction: column; padding: 12px; box-sizing: border-box; background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
+<dc-import name="TeamAnalysis" mode="panel" members="{{anaMembers}}" team-name="{{title}}" style="flex: 1; min-height: 0; display: flex; flex-direction: column" hint-size="100%,100%"></dc-import>
+</section>
+</sc-if>
+</main>
+</sc-if>
+
+<sc-if value="{{sheetOn}}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-modal="true" aria-labelledby="sheet-title" style="position: absolute; left: 0; right: 0; top: 0; height: {{sheetH}}; min-height: 844px; z-index: 5; display: flex; flex-direction: column; background-color: #161b26">
+<div style="flex: none; height: 60px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #10141d; border-bottom: 4px solid #d93a30">
+<button type="button" class="x" aria-label="Back" onClick="{{closeSheet}}" style="flex: none; width: 44px; height: 44px; box-sizing: border-box; border-radius: 10px; border: 3px solid #44506d; background: #2c3549; color: #c3cad8; display: grid; place-items: center; cursor: pointer"><svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M12 2L2 9l10 7z" fill="currentColor"></path></svg></button>
+<h2 id="sheet-title" style="flex: 1; min-width: 0; margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 24px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><span style="color: #a3acbf">{{sheetWho}}</span>{{sheetWhat}}</h2>
+</div>
+<div class="sheetbody" style="flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+
+<sc-if value="{{onSum}}" hint-placeholder-val="{{ false }}">
+<div style="flex: none; align-self: center; width: 380px; height: 868px; margin: -14px -11px 0; display: flex"><dc-import name="Summary" mon="{{sumMon}}" style="flex: 1; display: flex; flex-direction: column" hint-size="380px,868px"></dc-import></div>
+</sc-if>
+
+<sc-if value="{{onItem}}" hint-placeholder-val="{{ false }}">
+<div role="tablist" aria-label="Pockets" style="display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px">
+<sc-for list="{{pockets}}" as="pk" hint-placeholder-count="2"><button type="button" class="seg" role="tab" aria-selected="{{pk.on}}" onClick="{{pk.pick}}" style="flex: 1; min-height: 40px; border: none; border-radius: 8px; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer; background: {{pk.bg}}; color: {{pk.fg}}">{{pk.name}}</button></sc-for>
+</div>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">{{bagName}}</span>
+<sc-for list="{{bagRows}}" as="br" hint-placeholder-count="10">
+<button type="button" class="row" onClick="{{br.pick}}" disabled="{{br.off}}" aria-pressed="{{br.on}}" style="display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 4px 12px 4px 6px; box-sizing: border-box; border-radius: 12px; border: 3px solid {{br.border}}; background: {{br.bg}}; color: #eef1f7; font: inherit; text-align: left; cursor: pointer; opacity: {{br.fade}}">
+<span class="ico" style="flex: none; display: block; width: 24px; height: 24px; transform: scale(1.5); margin: 0 6px; background-position: {{br.pos}}"></span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 800; font-size: 15px">{{br.name}}</span><span style="font-size: 12px; line-height: 1.35; color: #c3cad8; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical">{{br.desc}}</span></span>
+<span style="flex: none; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: {{br.leftInk}}">{{br.left}}</span>
+</button>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{onAb}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{abOpts}}" as="ao" hint-placeholder-count="3">
+<button type="button" class="row" aria-pressed="{{ao.on}}" disabled="{{ao.off}}" onClick="{{ao.pick}}" style="display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px; border: 3px solid {{ao.border}}; background: {{ao.bg}}; color: #eef1f7; font: inherit; text-align: left; cursor: {{ao.cursor}}; opacity: {{ao.fade}}">
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%">
+<span style="flex: 1; min-width: 0; font-weight: 800; font-size: 17px">{{ao.name}}</span>
+<sc-if value="{{ao.hidden}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #c3cad8; border: 2px solid #44506d; padding: 0 6px; border-radius: 4px">Hidden</span></sc-if>
+<sc-if value="{{ao.game}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #10141d; background: #5ad1f0; padding: 0 7px; border-radius: 4px">In game</span></sc-if>
+<sc-if value="{{ao.cost}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #10141d; background: #ffc878; padding: 0 6px; border-radius: 4px">1 Mini Seta</span></sc-if>
+</span>
+<span style="font-size: 14px; line-height: 1.45; color: #d5dae5">{{ao.desc}}</span>
+</button>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{onMove}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{options}}" as="op" hint-placeholder-count="12">
+<button type="button" class="row" onClick="{{op.pick}}" disabled="{{op.taken}}" style="display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 12px; border: 3px solid #2c3549; background: #1b2232; color: #eef1f7; font: inherit; text-align: left; cursor: {{op.cursor}}; opacity: {{op.fade}}">
+<span style="width: 100%; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto 30px; align-items: center; column-gap: 8px">
+<span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 21px; color: #ffffff; background: {{op.c}}; border-radius: 5px; text-shadow: 0 1px 0 rgba(0,0,0,0.5)">{{op.type}}</span>
+<span style="font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{op.name}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 21px; padding: 0 7px; color: #10141d; background: {{op.catBg}}; border-radius: 5px">{{op.cat}}</span>
+<span style="text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 21px">{{op.power}}</span>
+</span>
+<span style="font-size: 12px; line-height: 1.35; color: #c3cad8">{{op.desc}}</span>
+</button>
+</sc-for>
+</sc-if>
+
+<sc-if value="{{onSet}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px">
+<label class="field" style="display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 10px; box-sizing: border-box; background: #1b2232; border: 3px solid #2c3549; border-radius: 10px"><span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Level</span><input type="number" min="1" max="100" value="{{form.lv}}" onChange="{{form.onLv}}" style="flex: 1; min-width: 0; border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 24px; text-align: right; outline: none"></label>
+<label class="field" style="display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 10px; box-sizing: border-box; background: #1b2232; border: 3px solid #2c3549; border-radius: 10px; min-width: 0"><span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Nature</span><select value="{{form.nat}}" onChange="{{form.onNat}}" style="flex: 1; min-width: 0; border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; outline: none; cursor: pointer"><sc-for list="{{form.natOpts}}" as="no" hint-placeholder-count="25"><option value="{{no.v}}">{{no.label}}</option></sc-for></select></label>
+</div>
+<div style="display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 50px 40px; align-items: center; column-gap: 6px; padding: 0 4px; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #a3acbf"><span></span><span>Base</span><span style="text-align: right">EVs</span><span style="text-align: right">IVs</span><span style="text-align: right">Lv {{form.lv}}</span></div>
+<sc-for list="{{form.rows}}" as="fr" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 36px minmax(0, 1fr) 60px 50px 40px; align-items: center; column-gap: 6px; min-height: 48px; padding: 0 4px; border-radius: 8px; background: #1b2232">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: {{fr.ink}}">{{fr.name}}</span>
+<span style="display: flex; align-items: center; gap: 4px; min-width: 0"><span style="flex: 1; height: 10px; border-radius: 4px; background: #10141d; overflow: hidden; display: block"><span style="display: block; height: 100%; width: {{fr.w}}%; background: {{fr.bar}}"></span></span><span style="flex: none; width: 26px; text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #c3cad8">{{fr.base}}</span></span>
+<input type="number" aria-label="{{fr.name}} EVs" min="0" max="252" step="4" value="{{fr.ev}}" onChange="{{fr.onEv}}" style="width: 100%; box-sizing: border-box; height: 40px; padding: 0 6px; border-radius: 7px; border: 2px solid #343f58; background: #10141d; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 20px; text-align: right; outline: none">
+<input type="number" aria-label="{{fr.name}} IVs" min="0" max="31" value="{{fr.iv}}" onChange="{{fr.onIv}}" style="width: 100%; box-sizing: border-box; height: 40px; padding: 0 6px; border-radius: 7px; border: 2px solid #343f58; background: #10141d; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 20px; text-align: right; outline: none">
+<span style="text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 22px">{{fr.v}}</span>
+</div>
+</sc-for>
+<span style="padding: 0 4px; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: {{form.evInk}}">EVs {{form.evTotal}} / 510</span>
+</sc-if>
+
+<sc-if value="{{onAdd}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{addSum}}" hint-placeholder-val="{{ false }}">
+<div style="flex: none; align-self: center; width: 380px; height: 868px; margin: -14px -11px 0; display: flex"><dc-import name="Summary" mon="{{addMon}}" action="{{addAction}}" style="flex: 1; display: flex; flex-direction: column" hint-size="380px,868px"></dc-import></div>
+</sc-if>
+<sc-if value="{{addGrid}}" hint-placeholder-val="{{ false }}">
+<div role="tablist" aria-label="From" style="flex: none; display: flex; gap: 4px; padding: 4px; background: #10141d; border: 3px solid #343f58; border-radius: 12px; flex-wrap: wrap">
+<sc-for list="{{srcTabs}}" as="sv" hint-placeholder-count="2"><button type="button" class="seg" role="tab" aria-selected="{{sv.on}}" onClick="{{sv.pick}}" style="flex: 1 1 auto; padding: 0 10px; min-height: 40px; border: none; border-radius: 8px; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer; font-size: 19px; background: {{sv.bg}}; color: {{sv.fg}}">{{sv.name}}</button></sc-for>
+</div>
+<span style="flex: none; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">{{addNote}}</span>
+<div style="flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 76px); grid-auto-rows: 76px; justify-content: space-between; align-content: start; row-gap: 8px; padding: 10px; border-radius: 12px; background-color: #1d4650; background-image: linear-gradient(45deg, #21505b 25%, transparent 25%, transparent 75%, #21505b 75%), linear-gradient(45deg, #21505b 25%, transparent 25%, transparent 75%, #21505b 75%); background-size: 56px 56px; background-position: 0 0, 28px 28px">
+<sc-for list="{{cells}}" as="sp" hint-placeholder-count="24">
+<sc-if value="{{sp.filled}}" hint-placeholder-val="{{ true }}"><button type="button" class="cell" onClick="{{sp.pick}}" aria-label="{{sp.name}}" style="width: 76px; height: 76px; padding: 0; border: none; border-radius: 10px; background: rgba(16,20,29,0.35); display: flex; align-items: center; justify-content: center; overflow: hidden; opacity: {{sp.fade}}; cursor: pointer"><img src="{{sp.sprite}}" alt="" width="68" height="68" style="flex: none; display: block; image-rendering: pixelated"></button></sc-if>
+<sc-if value="{{sp.blank}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="width: 76px; height: 76px; box-sizing: border-box; border-radius: 10px; border: 2px dashed rgba(255,255,255,0.18)"></span></sc-if>
+</sc-for>
+</div>
+</sc-if>
+</sc-if>
+
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
+<div onClick="{{toggle}}" style="position: absolute; inset: 60px 0 0; z-index: 1; background: rgba(0,0,0,0.6)"></div>
+<nav id="ph-panel" aria-label="Sections" style="position: absolute; left: 0; right: 0; top: 60px; z-index: 2; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 14px; background: #10141d; border-bottom: 4px solid #343f58">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<a href="{{t.href}}" class="ph-item" aria-current="{{t.current}}" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; background: {{t.bg}}; color: {{t.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="{{t.icon}}" fill="currentColor"></path></svg>{{t.name}}</a>
+</sc-for>
+<span aria-hidden="true" style="height: 3px; margin: 6px 2px; background: #2c3549"></span>
+<a href="ProfilePhone.dc.html" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border-radius: 10px; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-decoration: none">
+<span aria-hidden="true" style="width: 32px; height: 32px; margin-left: -7px; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px #ffd34d; background: #ffd34d; box-sizing: border-box; display: grid; place-items: center; font-size: 22px; color: #10141d">D</span>Dloez</a>
+<button type="button" class="ph-item" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 14px; border: none; border-radius: 10px; background: transparent; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-align: left; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg>Sign out</button>
+</nav>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"preset":{"editor":"enum","options":["elesa","ban","mira"],"default":"elesa"},"view":{"editor":"enum","options":["members","analysis"],"default":"members"},"sheet":{"editor":"enum","options":["none","summary","item","ability","move","set","add"],"default":"none"},"addKey":{"editor":"int","default":-1,"min":-1,"max":47},"$preview":{"width":390,"height":1760}}'>
+const SHEET = '/_blob/df227043f0b439b7c33cd72640e52ca1';
+const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
+  '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
+const TYPE = {Normal:'#7d7f7d',Fire:'#d62223',Water:'#2575dc',Grass:'#358a22',Electric:'#b98c00',Ice:'#1f95b3',Fighting:'#d46a00',Poison:'#8139b8',Ground:'#915121',Flying:'#4f88c2',Psychic:'#d93a6c',Bug:'#76840f',Rock:'#857f57',Ghost:'#704170',Dragon:'#4a58d0',Dark:'#624d4e',Steel:'#4a8499',Fairy:'#c44fc4'};
+const ORDER = ['Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'];
+const MULT = {0: 1, 1: 2, 2: 0.5, 3: 0};
+const CELL = {4: ['×4', '#b0302a', '#ffffff'], 2: ['×2', '#c8642f', '#ffffff'], 1: ['', '#222a3b', '#ffffff'], 0.5: ['½', '#3d8550', '#ffffff'], 0.25: ['¼', '#2a6338', '#ffffff'], 0: ['0', '#0b0e15', '#eef1f7']};
+const HIT = {2: ['×2', '#3d8550', '#ffffff'], 1: ['', '#222a3b', '#ffffff'], 0.5: ['½', '#c8642f', '#ffffff'], 0: ['0', '#b0302a', '#ffffff'], '-': ['—', '#222a3b', '#6b7489']};
+const SRC = {
+  own: {id: 'own', kind: 'pc', label: "Dloez's PC · Gym 5", c: '#ffd34d', i: 'D'},
+  mira: {id: 'mira', kind: 'pc', label: "MIRAMEEE's PC · Post-League", c: '#ff9ec4', i: 'M'},
+  vicky: {id: 'vicky', kind: 'pc', label: "Vicky's PC · Gym 5", c: '#7be08a', i: 'V'},
+  any: {id: 'any', kind: 'any', label: 'Any Pokémon', c: 'transparent', i: ''}
+};
+const PRESETS = {
+  elesa: {name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', srcs: ['own'], members: [{key: 0, item: 'icyrock'}, {key: 5, item: 'lightclay'}, {key: 11, item: ''}, {key: 17, item: 'machobrace'}, null, null]},
+  rain: {name: 'Rain test', owner: 'Dloez', c: '#ffd34d', srcs: ['own', 'any'], members: [{key: 2, item: 'seaincense'}, {key: 8, item: 'waveincense'}, {key: 14, item: 'toxicorb'}, {key: 20, item: 'laggingtail'}, {key: 26, item: 'bindingband'}, {key: 32, item: 'sachet', free: true}]},
+  mira: {name: 'League run', owner: 'MIRAMEEE', c: '#ff9ec4', srcs: ['mira'], members: [{key: 3, item: 'lightball', from: 'mira'}, {key: 9, item: 'toxicorb', from: 'mira'}, {key: 21, item: 'heatrock', from: 'mira'}, {key: 27, item: 'icyrock', from: 'mira'}, {key: 33, item: 'blackbelt', from: 'mira'}, {key: 40, item: 'twistedspoon', from: 'mira'}]},
+  vicky: {name: 'Gym 6 attempt', owner: 'Vicky', c: '#7be08a', srcs: ['vicky'], members: [{key: 6, item: 'machobrace', from: 'vicky'}, {key: 12, item: '', from: 'vicky'}, {key: 18, item: 'powerband', from: 'vicky'}, {key: 24, item: 'miracleseed', from: 'vicky'}, {key: 30, item: 'stickybarb', from: 'vicky'}, null]},
+  ban: {name: 'Ban round', owner: 'Dloez', c: '#ffd34d', size: 8, srcs: ['own', 'any'], members: [{key: 1, item: 'icyrock'}, {key: 7, item: 'lightclay'}, {key: 13, item: 'toxicorb'}, {key: 19, item: ''}, {key: 25, item: 'machobrace'}, {key: 31, item: 'seaincense'}, {key: 37, item: 'sachet', free: true}, null]},
+  new: {name: 'New team', owner: 'Dloez', c: '#ffd34d', srcs: ['own'], members: [null, null, null, null, null, null]}
+};
+const NAT = {Lonely:['atk','def'],Brave:['atk','spe'],Adamant:['atk','spa'],Naughty:['atk','spd'],Bold:['def','atk'],Relaxed:['def','spe'],Impish:['def','spa'],Lax:['def','spd'],Timid:['spe','atk'],Hasty:['spe','def'],Jolly:['spe','spa'],Naive:['spe','spd'],Modest:['spa','atk'],Mild:['spa','def'],Quiet:['spa','spe'],Rash:['spa','spd'],Calm:['spd','atk'],Gentle:['spd','def'],Sassy:['spd','spe'],Careful:['spd','spa']};
+const NEUTRAL = ['Hardy', 'Docile', 'Serious', 'Bashful', 'Quirky'];
+const SHORT = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe'};
+const SK = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+function lvStat(b, iv, ev, lv, key, nat) {
+  const core = Math.floor((2 * b + iv + Math.floor(ev / 4)) * lv / 100);
+  if (key === 'hp') return core + lv + 10;
+  const m = nat && nat[0] === key ? 1.1 : nat && nat[1] === key ? 0.9 : 1;
+  return Math.floor((core + 5) * m);
+}
+function formFor(p, set, change) {
+  const nat = NAT[set.nat];
+  const evTotal = SK.reduce((s, k) => s + set.evs[k], 0);
+  const num = (e, lo, hi) => Math.max(lo, Math.min(hi, parseInt(e.target.value, 10) || 0));
+  return {lv: set.lv, onLv: (e) => change({lv: num(e, 1, 100)}), nat: set.nat, onNat: (e) => change({nat: e.target.value}),
+    natOpts: Object.keys(NAT).map((n) => ({v: n, label: n + ' (+' + SHORT[NAT[n][0]] + ' −' + SHORT[NAT[n][1]] + ')'})).concat(NEUTRAL.map((n) => ({v: n, label: n + ' (neutral)'}))),
+    evTotal: String(evTotal), evInk: evTotal > 510 ? '#ff8a80' : '#a3acbf',
+    rows: SK.map((k) => ({name: SHORT[k], base: p.base[k], w: Math.min(100, Math.round(p.base[k] / 180 * 100)), bar: p.base[k] < 60 ? '#ff8a80' : p.base[k] < 90 ? '#ffd34d' : p.base[k] < 120 ? '#7be08a' : '#5ad1f0',
+      ev: set.evs[k], iv: set.ivs[k], v: lvStat(p.base[k], set.ivs[k], set.evs[k], set.lv, k, nat), ink: nat && nat[0] === k ? '#ff9d94' : nat && nat[1] === k ? '#8fc8ff' : '#a3acbf',
+      onEv: (e) => change({evs: {...set.evs, [k]: num(e, 0, 252)}}), onIv: (e) => change({ivs: {...set.ivs, [k]: num(e, 0, 31)}})}))};
+}
+const STATS6 = [0, 1, 2, 3, 4, 5];
+function rng(seed) { let x = (seed * 7919 + 13) % 2147483648; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
+function sample(p, tms) {
+  const r = rng(p.key + 1);
+  const ivs = {};
+  ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].forEach((k) => { ivs[k] = Math.floor(r() * 32); r(); });
+  const pick = (n) => { const out = [], seen = {}; while (out.length < n) { const t = tms[Math.floor(r() * tms.length)]; if (!seen[t.id]) { seen[t.id] = 1; out.push(t); } } return out; };
+  const top = Math.max(2, p.level || 2);
+  const relearner = pick(9).map((t, i) => ({...t, lv: i < 2 ? 1 : 2 + Math.floor(r() * (top - 1))})).sort((a, b) => a.lv - b.lv);
+  const tmMoves = pick(9).sort((a, b) => a.name.localeCompare(b.name));
+  return {ivs, current: pick(4), relearner, tms: tmMoves};
+}
+function move(t) { return {name: t.name, type: t.type, cat: t.cat, c: TYPE[t.type] || '#7d7f7d', power: t.power == null ? '—' : String(t.power), catBg: t.cat === 'Physical' ? '#ff9d70' : t.cat === 'Special' ? '#8fc8ff' : '#c3cad8', desc: t.desc}; }
+function seg(on) { return {on, bg: on ? '#343f58' : 'transparent', fg: on ? '#ffffff' : '#a3acbf'}; }
+const TABS = [
+  {name: 'Series', href: 'SeriesListPhone.dc.html', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
+  {name: 'PC', href: 'Pc.dc.html', icon: 'M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z'},
+  {name: 'Teams', href: 'TeamsListPhone.dc.html', icon: 'M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z'}
+];
+class Component extends DCLogic {
+  componentDidMount() {
+    fetch(SHEET).then((r) => r.json()).then((d) => this.setState({d})).catch(() => this.setState({fail: true}));
+  }
+  st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
+  renderVals() {
+    const pre = PRESETS[this.props.preset] || PRESETS.elesa;
+    const ro = pre.owner !== 'Dloez';
+    const menuOpen = this.st('menu', false);
+    const size = this.st('size', pre.size || 6);
+    const held = this.st('team', null);
+    const lastFilled = (held || pre.members).reduce((n, m, i) => (m ? i + 1 : n), 0);
+    const view = this.st('view', this.props.view || 'members');
+    const sizes = [6, 7, 8].map((n) => {
+      const on = n === size, off = !on && n < lastFilled;
+      return {n: String(n), on, off, fade: off ? '0.45' : '1', cursor: off ? 'default' : 'pointer', ...seg(on),
+        pick: () => { if (!off) this.setState({size: n, team: held ? (held.length >= n ? held.slice(0, n) : held.concat(Array(n - held.length).fill(null))) : null}); }};
+    });
+    const tabsView = [['members', 'Members'], ['analysis', 'Analysis']].map(([id, name]) => ({name, ...seg(view === id), pick: () => this.setState({view: id})}));
+    const base = {open: menuOpen, closed: !menuOpen, btnBg: menuOpen ? '#222a3b' : 'transparent', toggle: () => this.setState({menu: !menuOpen}),
+      tabs: TABS.map((t, i) => ({name: t.name, href: t.href, icon: t.icon, current: i === 2 ? 'page' : null, bg: i === 2 ? '#d93a30' : 'transparent', fg: i === 2 ? '#ffffff' : '#c3cad8'})),
+      title: pre.name, owner: pre.owner, ownerC: pre.c, ro, rw: !ro, chips: [], sizes, tabsView, onMembers: view === 'members', onAnalysis: view === 'analysis', cards: [],
+      sheetH: '844px', pageOn: true, scopeOn: false, scopes: [], scopeNote: '', scopeInk: '#a3acbf', anaMembers: [], sheetOn: false, sheetWho: '', sheetWhat: '', closeSheet: () => {},
+      onSum: false, sumMon: null, onItem: false, pockets: [], bagName: '', bagRows: [], onAb: false, abOpts: [], onMove: false, options: [], onSet: false, form: {}, onAdd: false, addGrid: false, addSum: false, addMon: null, addAction: null, srcTabs: [], addNote: '', cells: []};
+    const d = this.state && this.state.d;
+    if (!d) return base;
+    const all = d.pokemon;
+    const byKey = (k) => all.find((p) => p.key === k);
+    const samples = {};
+    const smpOf = (p) => samples[p.key] || (samples[p.key] = sample(p, d.tms));
+    const fresh = (s) => s && {key: s.key, item: s.item, free: !!s.free, from: s.free ? 'any' : (s.from || pre.srcs[0]), ab: byKey(s.key).ability.id, moves: smpOf(byKey(s.key)).current.map((m) => m.id),
+      ...(s.free ? {lv: 50, nat: byKey(s.key).nature || 'Hardy', evs: {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0}, ivs: {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31}} : {})};
+    const fit = (t) => (t.length >= size ? t.slice(0, size) : t.concat(Array(size - t.length).fill(null)));
+    const team = held ? fit(held) : fit(pre.members).map(fresh);
+    const firstFilled = team.findIndex(Boolean), firstEmpty = team.findIndex((m) => !m);
+    const propSheet = this.props.sheet && this.props.sheet !== 'none' ? {t: this.props.sheet === 'summary' ? 'sum' : this.props.sheet === 'ability' ? 'ab' : this.props.sheet, i: this.props.sheet === 'add' ? firstEmpty : (this.props.sheet === 'set' ? team.findIndex((m) => m && m.free) : firstFilled), s: 0} : null;
+    const sheet = this.st('sheet', propSheet);
+    const setTeam = (t, extra) => this.setState({team: t, ...(extra || {})});
+    const close = () => this.setState({team, sheet: null});
+    const itemOf = (id) => d.items.find((x) => x.id === id);
+    const moveOf = (p, id) => { const s = smpOf(p); return s.current.concat(s.relearner, s.tms).find((m) => m.id === id) || d.tms.find((m) => m.id === id); };
+    const setaTotal = (itemOf('tinymushroom') || {qty: 0}).qty;
+    const setaLeft = setaTotal - team.filter((m) => m && !m.free && m.ab !== byKey(m.key).ability.id).length;
+    const used = {};
+    team.forEach((m) => { if (m && !m.free && m.item) used[m.item] = (used[m.item] || 0) + 1; });
+    const bagItems = d.items.filter((x) => x.id !== 'tinymushroom');
+    const scope = size > 6 ? this.st('scope', 'all') : 'all';
+    const pickMode = scope === 'six';
+    const filledAt = team.map((m, i) => (m ? i : -1)).filter((i) => i >= 0);
+    const picked = (this.st('pick', null) || filledAt.slice(0, 6)).filter((i) => team[i]);
+    const open = (t, i, extra) => this.setState({team, sheet: {t, i, ...(extra || {})}, addKey: null});
+
+    const cards = team.map((m, i) => {
+      if (!m) return {filled: false, empty: true, rw: !ro, ro, add: () => open('add', i)};
+      const p = byKey(m.key), it = m.item ? itemOf(m.item) : null;
+      const inSix = picked.includes(i), pickOff = pickMode && !inSix && picked.length >= 6;
+      return {filled: true, empty: false, rw: !ro, ro, cursor: ro ? 'default' : 'pointer', name: p.nickname || p.name, sub: m.free ? 'Lv. ' + m.lv + ' · ' + m.nat : 'Lv. ' + p.level + ' · ' + (p.nature || '?'), sprite: SPRITES[p.key],
+        types: (p.sdTypes || p.types).map((t) => ({name: t, c: TYPE[t]})),
+        tag: m.free ? 'Free' : SRC[m.from].i + "'s PC", tagInk: m.free ? '#c3cad8' : '#10141d', tagBg: m.free ? 'transparent' : SRC[m.from].c, tagLine: m.free ? 'dashed' : 'solid', tagBorder: m.free ? '#6b7489' : SRC[m.from].c,
+        border: '#343f58', dim: pickMode && !inSix ? '0.55' : '1',
+        pickable: pickMode, inSix: inSix ? 'true' : 'false', pickOff, pickLabel: inSix ? 'In' : 'Out', pickTitle: inSix ? 'Leave out of the six' : 'Put in the six',
+        pickBg: inSix ? '#5ad1f0' : '#2c3549', pickInk: inSix ? '#10141d' : '#c3cad8', pickBorder: inSix ? '#5ad1f0' : '#44506d', pickCursor: pickOff ? 'default' : 'pointer',
+        togglePick: () => { if (!pickOff) this.setState({team, pick: inSix ? picked.filter((x) => x !== i) : picked.concat([i])}); },
+        canSet: !ro && m.free, setPick: () => open('set', i),
+        look: () => open('sum', i),
+        hasItem: !!it, noItem: !it, itemPos: it ? it.ix + 'px ' + it.iy + 'px' : '0 0', itemName: it ? it.name : 'No item', itemInk: it ? '#eef1f7' : '#a3acbf', itPick: () => { if (!ro) open('item', i); },
+        abName: ((p.abilities || []).concat([p.ability]).find((a) => a.id === m.ab) || p.ability).name, seta: !m.free && m.ab !== p.ability.id, abPick: () => { if (!ro) open('ab', i); },
+        moves: m.moves.map((id, s) => ({...move(moveOf(p, id)), pick: () => { if (!ro) open('move', i, {s}); }})),
+        remove: () => { const t = team.slice(); t[i] = null; setTeam(t); }};
+    });
+    const chips = pre.srcs.map((id) => {
+      const s = SRC[id];
+      const seta = setaTotal - team.filter((m) => m && !m.free && m.from === id && m.ab !== byKey(m.key).ability.id).length;
+      return {label: s.label, c: s.c, i: s.i, isPc: s.kind === 'pc', line: s.kind === 'any' ? 'dashed' : 'solid', border: s.kind === 'any' ? '#6b7489' : '#343f58', seta: String(seta), setaInk: seta <= 0 ? '#ff8a80' : '#c3cad8'};
+    });
+    const scopes = [['all', 'All ' + filledAt.length], ['six', 'Pick 6']].map(([id, name]) => ({name, ...seg(scope === id), pick: () => this.setState({team, scope: id})}));
+    const anaMembers = team.filter((m, i) => m && (!pickMode || picked.includes(i))).map((m) => ({key: m.key, item: m.item, ab: m.ab, moves: m.moves, free: m.free, lv: m.lv, nat: m.nat, evs: m.evs, ivs: m.free ? m.ivs : smpOf(byKey(m.key)).ivs}));
+    const out = {...base, chips, cards, scopeOn: size > 6, scopes, scopeNote: pickMode ? picked.length + ' of 6 in' : '', scopeInk: pickMode && picked.length < 6 ? '#ffc878' : '#a3acbf', anaMembers, closeSheet: close};
+    if (!sheet || sheet.i < 0) return out;
+    const m = team[sheet.i];
+    const p = m ? byKey(m.key) : null, nm = p ? (p.nickname || p.name) : '';
+    const sheetBase = {...out, sheetH: '844px', pageOn: false, sheetOn: true, sheetWho: nm ? nm + ' · ' : ''};
+    if (sheet.t === 'sum' && m) return {...sheetBase, sheetH: 'auto', sheetWho: '', sheetWhat: nm, onSum: true, sumMon: {key: m.key, ab: m.ab, moves: m.moves, free: m.free, lv: m.lv, nat: m.nat, evs: m.evs, ivs: m.ivs}};
+    if (sheet.t === 'set' && m && m.free) return {...sheetBase, sheetWhat: 'level, nature, EVs, IVs', onSet: true, form: formFor(p, m, (patch) => { const t = team.slice(); t[sheet.i] = {...m, ...patch}; setTeam(t); })};
+    if (sheet.t === 'item' && m) {
+      const pocket = this.st('pocket', 'items');
+      const pockets = [['items', 'Items'], ['berries', 'Berries']].map(([id, name]) => ({name, ...seg(pocket === id), pick: () => this.setState({pocket: id})}));
+      const rows = [{id: '', name: 'No item', desc: m.item ? 'Take ' + nm + "'s item back to the bag." : '', ix: 0, iy: 0, qty: null, none: true}].concat(bagItems.filter((x) => (pocket === 'berries' ? x.berry : !x.berry)));
+      const bagRows = rows.map((x) => {
+        const left = x.none || m.free ? null : x.qty - (used[x.id] || 0), on = (m.item || '') === x.id, off = !on && left === 0;
+        return {name: x.name, desc: x.desc, pos: x.none ? '-999px 0' : x.ix + 'px ' + x.iy + 'px', left: left === null ? '' : '×' + left, leftInk: left === 0 ? '#6b7489' : '#c3cad8', on: on ? 'true' : 'false', off, fade: off ? '0.5' : '1',
+          bg: on ? '#2c3549' : '#1b2232', border: on ? '#5ad1f0' : '#2c3549', pick: () => { if (off) return; const t = team.slice(); t[sheet.i] = {...m, item: x.id}; setTeam(t, {sheet: null}); }};
+      });
+      return {...sheetBase, sheetWhat: 'item', onItem: true, pockets, bagName: m.free ? 'Any item' : SRC[m.from].i + "'s bag", bagRows};
+    }
+    if (sheet.t === 'ab' && m) {
+      const abList = (p.abilities || []).slice();
+      if (!abList.some((a) => a.id === p.ability.id)) abList.unshift(p.ability);
+      const abOpts = abList.map((a) => {
+        const game = a.id === p.ability.id, on = a.id === m.ab;
+        const off = !m.free && !game && !on && m.ab === p.ability.id && setaLeft <= 0;
+        return {name: a.name, desc: a.desc, hidden: !!a.hidden, game: !m.free && game, cost: !m.free && !game, on: on ? 'true' : 'false', off, fade: off ? '0.45' : '1', cursor: off ? 'default' : 'pointer',
+          bg: on ? '#2c3549' : '#1b2232', border: on ? '#5ad1f0' : '#2c3549', pick: () => { if (off) return; const t = team.slice(); t[sheet.i] = {...m, ab: a.id}; setTeam(t, {sheet: null}); }};
+      });
+      return {...sheetBase, sheetWhat: 'ability', onAb: true, abOpts};
+    }
+    if (sheet.t === 'move' && m) {
+      const smp = smpOf(p);
+      const options = smp.current.concat(smp.relearner, smp.tms).filter((mv, i, a) => a.findIndex((x) => x.id === mv.id) === i).map((mv) => {
+        const taken = m.moves.includes(mv.id);
+        return {...move(mv), taken, fade: taken ? '0.4' : '1', cursor: taken ? 'default' : 'pointer',
+          pick: () => { if (taken) return; const t = team.slice(), mvs = m.moves.slice(); mvs[sheet.s] = mv.id; t[sheet.i] = {...m, moves: mvs}; setTeam(t, {sheet: null}); }};
+      });
+      return {...sheetBase, sheetWhat: 'replace ' + moveOf(p, m.moves[sheet.s || 0]).name, onMove: true, options};
+    }
+    if (sheet.t === 'add' && !m) {
+      const src = pre.srcs.includes(this.st('src', null)) ? this.st('src', null) : pre.srcs[0];
+      const any = src === 'any';
+      const srcTabs = pre.srcs.map((id) => ({name: SRC[id].label, ...seg(src === id), pick: () => this.setState({src: id, addKey: null})}));
+      const onTeam = team.filter((x) => x && x.from === src).map((x) => x.key);
+      const propKey = this.props.addKey ?? -1;
+      const addKey = this.st('addKey', propKey >= 0 ? propKey : null);
+      const slot = 'Add to slot ' + (sheet.i + 1);
+      if (addKey !== null && byKey(addKey)) {
+        const sp = byKey(addKey), taken = !any && onTeam.includes(addKey);
+        const put = () => { if (taken) return; const t = team.slice(); t[sheet.i] = fresh({key: addKey, item: '', free: any, from: src}); setTeam(t, {sheet: null, addKey: null}); };
+        const freeSet = any ? {free: true, lv: 50, nat: sp.nature || 'Hardy', evs: {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0}, ivs: {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31}} : {};
+        return {...sheetBase, sheetWho: slot + ' · ', sheetWhat: sp.nickname || sp.name, closeSheet: () => this.setState({team, addKey: null}), sheetH: 'auto', onAdd: true, addSum: true,
+          addMon: {key: addKey, ...freeSet}, addAction: {kind: 'put', blocked: taken, label: taken ? 'In the team' : 'Put in slot ' + (sheet.i + 1), bg: taken ? '#2c3549' : '#d93a30', fg: taken ? '#a3acbf' : '#ffffff', cursor: taken ? 'default' : 'pointer', go: put}};
+      }
+      const cells = all.slice(0, 48).map((sp) => {
+        const taken = !any && onTeam.includes(sp.key);
+        return {filled: true, blank: false, name: sp.nickname || sp.name, sprite: SPRITES[sp.key], taken, fade: taken ? '0.35' : '1', pick: () => this.setState({team, addKey: sp.key})};
+      });
+      while (!any && cells.length % 4) cells.push({filled: false, blank: true, name: '', sprite: '', fade: '1', pick: () => {}});
+      return {...sheetBase, sheetWho: '', sheetWhat: slot, onAdd: true, addGrid: true, srcTabs, cells, addNote: any ? 'Gen 9 data · species up to Gen 5 · fully evolved' : SRC[src].label};
+    }
+    return out;
+  }
+}
+</script>
+</body>
+</html>

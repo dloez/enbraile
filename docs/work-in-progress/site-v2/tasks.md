@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill once that entry has landed, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. A route on a method other than `GET`, `POST`, `PUT` or `DELETE` also gets that method's export in `api/index.ts`: the local API (`scripts/dev-api.ts`) serves every method, Vercel only the exported ones.
 
-## Design the team builder and the PC's summary
-
-The screens still undrawn, desktop and phone, in the signed-off look ([Pages → Design](discovery.md#pages)): the team builder (sources picker, the team's size up to eight and the analysis over a pick of six ([How many members does a team hold?](discovery.md#team-building)), free member editor, the analysis views including Pool and Compare), the team list's rows at sizes above six, and the PC's `Summary` board, which `pc.dc.html` places beside the box but which is not signed off ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's sign-off). The team views carry their content over from Open Sheet and Team Analysis. The phone layouts of the player pages, the series list and the series page were signed off on 2026-10-23 (`94d12ec`) and are frozen in `pkmn/site/design/` with the earlier boards. The team list, and the team builder at desktop width (sizes up to eight and the pick of six included), were signed off on 2026-10-25 and are frozen as `teams-list.dc.html`, `teams-list-phone.dc.html`, `team.dc.html`, `team-analysis.dc.html`, `team-member.dc.html`, `team-eight.dc.html` and `compare.dc.html`; left are the builder's phone layouts, Compare's columns for another trainer's team, and the `Summary` board.
-
-**Do:**
-- [ ] Build them on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas.
-- [ ] Get the owner's sign-off; copy the signed-off boards into `pkmn/site/design/` and record the sign-off in `docs/pkmn/site/explanation/site.md` → Look and Decisions.
-
-**Acceptance:**
-- Claude-run: none (no code).
-- Human-run: the owner opens the boards and signs them off, or lists changes.
-- Reuse: the frozen boards in `pkmn/site/design/`; [Open Sheet Screens](https://claude.ai/artifact/SfpFcW5UoLVLeLAmdJZMG1) and [Team Analysis Screens](https://claude.ai/artifact/4tyDvGNZXHqSRAvABaszfH) for what each view holds.
-- Neighbors: `pkmn/site/design/pc.dc.html`.
-- Forbidden: colours or pieces outside the look without naming them as additions; helper text.
-
-**Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
-**Needs the author:** sign-off on these screens.
-
 ## Owner-run: Discord sign-in on production
 
 Discord sign-in and the allowlist are built and checked on the local stack (2026-10-23); production needs the owner's half, as [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 describes.
@@ -81,7 +63,7 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424` kept them so and left `pc.dc.html`'s teal box "for when its `Summary` board is signed off" ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the PC page's build choices). No other entry restyles them, and the team builder reuses all three.
 
 **Do:**
-- [ ] The box after `pc.dc.html` and the summary after the signed-off `Summary` board, in `src/components/pc/`, so the PC page and Open Sheet both take it; new colours as tokens; [Design System](../../pkmn/site/reference/design-system.md) → Box and cells and the PC's components updated; the PC page's build choice rewritten.
+- [ ] The box after `pc.dc.html` and the summary after the signed-off `Summary` board (`summary.dc.html`), in `src/components/pc/`, so the PC page and Open Sheet both take it; new colours as tokens; [Design System](../../pkmn/site/reference/design-system.md) → Box and cells and the PC's components updated; the PC page's build choice rewritten.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, open a seeded snapshot's PC at desktop width and at 390×844, select a Pokémon and read its summary's tabs, open the bag; compare against the boards with `browser_take_screenshot`; upload `saves/Vicky-open-sheet.json` for a test player and open its PC, and read the "Export missing" line above the picker and, in a Pokémon's summary, "—" for IVs, EVs and stats, the "At Level 50" ranges and no Moves tab, as [Snapshot Format → Old Exports](../../pkmn/site/reference/snapshot.md#old-exports) says (added by the gardener pass after `e87655d`, which put the line on the PC page's head).
@@ -91,7 +73,6 @@ The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424`
 - Forbidden: a second box or summary for the PC page; raw colours in components.
 
 **Touches:** `pkmn/site/src/components/pc/`, `pkmn/site/src/index.css`, `docs/pkmn/site/`
-**After:** Design the team builder and the PC's summary
 
 ## Build teams locked to a snapshot, stored in the account
 
@@ -110,7 +91,6 @@ The PC page shows Open Sheet's box, summary and bag in their old look: `fe84424`
 - Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Design the team builder and the PC's summary
 
 ## Teams of up to eight, analysed whole or as a pick of six
 

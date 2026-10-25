@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compare teams on a phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#161b26}
+.x:hover{border-color:#5ad1f0!important;color:#ffffff!important}
+.btn:hover{background:rgba(255,255,255,0.18)!important}
+.field:focus-within{border-color:#5ad1f0!important}
+select option{background:#10141d;color:#eef1f7}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+<div style="flex: none; height: 60px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #10141d; border-bottom: 4px solid #d93a30">
+<a href="TeamsListPhone.dc.html" class="x" aria-label="Back to Teams" style="flex: none; width: 44px; height: 44px; box-sizing: border-box; border-radius: 10px; border: 3px solid #44506d; background: #2c3549; color: #c3cad8; display: grid; place-items: center"><svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M12 2L2 9l10 7z" fill="currentColor"></path></svg></a>
+<h1 style="flex: 1; margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 30px; line-height: 1">Compare {{count}} teams</h1>
+</div>
+<sc-if value="{{loading}}" hint-placeholder-val="{{ false }}"><p style="margin: 40px auto; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #a3acbf">Loading…</p></sc-if>
+<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+<main style="padding: 16px 16px 32px; display: flex; flex-direction: column; gap: 16px">
+<span style="align-self: flex-start; padding: 4px 12px; border-radius: 999px; border: 2px solid #343f58; font-size: 13px; font-weight: 700; color: #8fc8ff">Gen 9 · species ≤ Gen 5 · fully evolved · Level 50</span>
+
+<ol aria-label="Teams" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{heads}}" as="h" hint-placeholder-count="3">
+<li style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #222a3b; border: 3px solid #343f58; border-radius: 14px">
+<span style="flex: none; width: 28px; font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 1; color: #5ad1f0; text-align: center">{{h.no}}</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 20px; height: 20px; border-radius: 5px; background: {{h.c}}; color: #10141d; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 16px">{{h.i}}</span><span style="font-size: 13px; font-weight: 700; color: #a3acbf">{{h.owner}}</span></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 26px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{h.name}}</span>
+<span style="display: flex; flex-wrap: wrap"><sc-for list="{{h.sprites}}" as="sp" hint-placeholder-count="6"><span style="width: 34px; height: 30px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{sp}}" alt="" width="40" height="40" style="flex: none; display: block; margin: -6px -3px -3px; image-rendering: pixelated"></span></sc-for></span>
+</span>
+</li>
+</sc-for>
+</ol>
+
+<section aria-labelledby="sb-title" style="display: flex; flex-direction: column; background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
+<div style="display: flex; align-items: center; padding: 10px 14px; background: #1b2232">
+<h2 id="sb-title" style="flex: 1; margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px; line-height: 1">Scoreboard</h2>
+</div>
+<div role="table" aria-labelledby="sb-title" style="display: flex; flex-direction: column">
+<div role="row" style="display: grid; grid-template-columns: {{cmpGrid}}; border-top: 2px solid #2c3549; background: #1b2232">
+<sc-for list="{{heads}}" as="h" hint-placeholder-count="3"><span role="columnheader" style="padding: 4px 10px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #5ad1f0">{{h.no}}<span style="position: absolute; width: 1px; height: 1px; overflow: hidden"> {{h.name}}</span></span></sc-for>
+</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="11">
+<div role="rowgroup" style="display: flex; flex-direction: column; border-top: 2px solid #2c3549">
+<span style="padding: 6px 12px 0; font-weight: 700; font-size: 13px; color: #c3cad8">{{r.label}}</span>
+<div role="row" style="display: grid; grid-template-columns: {{cmpGrid}}">
+<sc-for list="{{r.cells}}" as="c" hint-placeholder-count="3">
+<span role="cell" style="min-width: 0; display: flex; flex-direction: column; padding: 2px 10px 8px; background: {{c.bg}}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1; color: {{c.ink}}">{{c.v}}</span><span style="min-width: 0; font-size: 11px; font-weight: 700; color: #a3acbf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.note}}</span></span>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="hh-title" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
+<h2 id="hh-title" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px; line-height: 1">Head to head</h2>
+<sc-for list="{{sides}}" as="sd" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: #1b2232; border: 3px solid #2c3549; border-radius: 12px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">{{sd.label}}</span>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="flex: none; width: 56px; height: 52px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{sd.sprite}}" alt="" width="68" height="68" style="flex: none; display: block; margin: -8px -6px -6px; image-rendering: pixelated"></span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<label class="field" style="display: flex; align-items: center; height: 44px; padding: 0 8px; box-sizing: border-box; background: #10141d; border: 3px solid #343f58; border-radius: 9px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Team</span><select value="{{sd.team}}" onChange="{{sd.onTeam}}" style="flex: 1; min-width: 0; border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; outline: none"><sc-for list="{{teamOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.label}}</option></sc-for></select></label>
+<label class="field" style="display: flex; align-items: center; height: 44px; padding: 0 8px; box-sizing: border-box; background: #10141d; border: 3px solid #343f58; border-radius: 9px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Pokémon</span><select value="{{sd.mon}}" onChange="{{sd.onMon}}" style="flex: 1; min-width: 0; border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; outline: none"><sc-for list="{{sd.monOpts}}" as="o" hint-placeholder-count="6"><option value="{{o.v}}">{{o.label}}</option></sc-for></select></label>
+</div>
+</div>
+<span style="font-size: 12px; font-weight: 700; color: #a3acbf">{{sd.statLine}}</span>
+</div>
+</sc-for>
+<label class="field" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 10px; box-sizing: border-box; background: #10141d; border: 3px solid #343f58; border-radius: 10px"><span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Move</span><select value="{{calc.move}}" onChange="{{calc.onMove}}" style="flex: 1; min-width: 0; border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; outline: none"><sc-for list="{{calc.moveOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.label}}</option></sc-for></select></label>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 12px; background: #10141d; border: 3px solid {{calc.border}}">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 36px; line-height: 1; color: {{calc.ink}}">{{calc.range}}</span>
+<span style="height: 14px; border-radius: 5px; background: #2c3549; overflow: hidden; display: flex"><span style="display: block; width: {{calc.lo}}%; background: {{calc.ink}}"></span><span style="display: block; width: {{calc.span}}%; background: {{calc.ink}}; opacity: 0.45"></span></span>
+<span style="font-weight: 800; font-size: 15px">{{calc.ko}}</span>
+<span style="font-size: 13px; line-height: 1.4; color: #c3cad8">{{calc.detail}}</span>
+</div>
+<button type="button" class="btn" onClick="{{calc.swap}}" style="align-self: flex-start; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 3px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -3px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">⇄ Swap sides</button>
+</section>
+</main>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"teams":{"editor":null},"onClose":{"editor":null},"$preview":{"width":390,"height":1800}}'>
+const SHEET = '/_blob/df227043f0b439b7c33cd72640e52ca1';
+const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
+  '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
+const TYPE = {Normal:'#7d7f7d',Fire:'#d62223',Water:'#2575dc',Grass:'#358a22',Electric:'#b98c00',Ice:'#1f95b3',Fighting:'#d46a00',Poison:'#8139b8',Ground:'#915121',Flying:'#4f88c2',Psychic:'#d93a6c',Bug:'#76840f',Rock:'#857f57',Ghost:'#704170',Dragon:'#4a58d0',Dark:'#624d4e',Steel:'#4a8499',Fairy:'#c44fc4'};
+const ORDER = Object.keys(TYPE);
+const MULT = {0: 1, 1: 2, 2: 0.5, 3: 0};
+const NAT = {Lonely:['atk','def'],Brave:['atk','spe'],Adamant:['atk','spa'],Naughty:['atk','spd'],Bold:['def','atk'],Relaxed:['def','spe'],Impish:['def','spa'],Lax:['def','spd'],Timid:['spe','atk'],Hasty:['spe','def'],Jolly:['spe','spa'],Naive:['spe','spd'],Modest:['spa','atk'],Mild:['spa','def'],Quiet:['spa','spe'],Rash:['spa','spd'],Calm:['spd','atk'],Gentle:['spd','def'],Sassy:['spd','spe'],Careful:['spd','spa']};
+const SK = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+const TEAMS = {
+  'For Elesa': {name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', keys: [0, 5, 11, 17]},
+  'Rain test': {name: 'Rain test', owner: 'Dloez', c: '#ffd34d', keys: [2, 8, 14, 20, 26, 32]},
+  'Ban round': {name: 'Ban round', owner: 'Dloez', c: '#ffd34d', size: 8, keys: [1, 7, 13, 19, 25, 31, 37]},
+  'Scouting Vicky': {name: 'Scouting Vicky', owner: 'Dloez', c: '#ffd34d', keys: [6, 12, 18, 24, 30]},
+  'Final': {name: 'Final', owner: 'Dloez', c: '#ffd34d', keys: [1, 7, 13, 19, 25, 31]},
+  'League run': {name: 'League run', owner: 'MIRAMEEE', c: '#ff9ec4', keys: [3, 9, 21, 27, 33, 40]},
+  'Gym 6 attempt': {name: 'Gym 6 attempt', owner: 'Vicky', c: '#7be08a', keys: [6, 12, 18, 24, 30]}
+};
+const TAGS = {hazard: ['stealthrock', 'spikes', 'toxicspikes', 'stickyweb'], removal: ['rapidspin', 'defog', 'courtchange', 'mortalspin', 'tidyup'], recovery: ['recover', 'roost', 'softboiled', 'slackoff', 'moonlight', 'morningsun', 'synthesis', 'wish', 'rest', 'shoreup', 'milkdrink', 'strengthsap', 'painsplit', 'leechseed', 'drainpunch', 'gigadrain', 'hornleech'],
+  speed: ['thunderwave', 'tailwind', 'trickroom', 'stickyweb', 'icywind', 'electroweb', 'glare', 'stunspore', 'quickattack', 'extremespeed', 'aquajet', 'machpunch', 'bulletpunch', 'iceshard', 'shadowsneak', 'suckerpunch', 'vacuumwave', 'fakeout', 'accelerock']};
+function rng(seed) { let x = (seed * 7919 + 13) % 2147483648; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
+function sample(p, tms) {
+  const r = rng(p.key + 1);
+  const ivs = {};
+  SK.forEach((k) => { ivs[k] = Math.floor(r() * 32); r(); });
+  const pick = (n) => { const out = [], seen = {}; while (out.length < n) { const t = tms[Math.floor(r() * tms.length)]; if (!seen[t.id]) { seen[t.id] = 1; out.push(t); } } return out; };
+  pick(9).forEach((_, i) => { if (i >= 2) r(); });
+  pick(9);
+  return {ivs, moves: pick(4)};
+}
+function stat(b, iv, lv, key, nat) {
+  const core = Math.floor((2 * b + iv) * lv / 100);
+  if (key === 'hp') return core + lv + 10;
+  const m = nat && nat[0] === key ? 1.1 : nat && nat[1] === key ? 0.9 : 1;
+  return Math.floor((core + 5) * m);
+}
+class Component extends DCLogic {
+  componentDidMount() {
+    fetch(SHEET).then((r) => r.json()).then((d) => this.setState({d})).catch(() => this.setState({fail: true}));
+  }
+  st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
+  renderVals() {
+    const ids = (this.props.teams && this.props.teams.length ? this.props.teams : ['For Elesa', 'League run', 'Gym 6 attempt']).filter((id) => TEAMS[id]);
+    const base = {count: String(ids.length), loading: true, ready: false, close: () => { if (this.props.onClose) this.props.onClose(); }, heads: [], cmpGrid: '210px', rows: [], sides: [], teamOpts: [], calc: {moveOpts: []}};
+    const d = this.state && this.state.d;
+    if (!d) return base;
+    const byKey = (k) => d.pokemon.find((p) => p.key === k);
+    const mon = (k) => {
+      const p = byKey(k), s = sample(p, d.tms), nat = NAT[p.nature], types = p.sdTypes || p.types;
+      const st = {};
+      SK.forEach((x) => { st[x] = stat(p.base[x], s.ivs[x], 50, x, nat); });
+      const def = {};
+      ORDER.forEach((t) => { def[t] = types.reduce((m, dt) => m * (d.chart[dt] ? MULT[d.chart[dt][t] || 0] : 1), 1); });
+      return {key: k, p, name: p.nickname || p.name, sprite: SPRITES[p.key], moves: s.moves, st, types, def, has: (tag) => s.moves.some((m) => TAGS[tag].includes(m.id))};
+    };
+    const teams = ids.map((id) => ({id, ...TEAMS[id], mons: TEAMS[id].keys.map(mon)}));
+    const off = (m, t) => { const h = m.moves.filter((x) => x.cat !== 'Status').map((x) => d.chart[t] ? MULT[d.chart[t][x.type] || 0] : 1); return h.length ? Math.max(...h) : 0; };
+    const metric = (label, fn, better, fmt) => {
+      const vals = teams.map(fn);
+      const nums = vals.map((v) => v.n);
+      const best = better === 'high' ? Math.max(...nums) : better === 'low' ? Math.min(...nums) : null;
+      return {label, cells: vals.map((v) => { const win = best !== null && v.n === best && nums.filter((x) => x === best).length < nums.length; return {v: fmt ? fmt(v.n) : String(v.n), note: v.note || '', bg: win ? 'rgba(123,224,138,0.12)' : 'transparent', ink: win ? '#7be08a' : '#eef1f7'}; })};
+    };
+    const names = (arr) => arr.map((m) => m.name).join(', ');
+    const rows = [
+      metric('Members', (t) => ({n: t.mons.length, note: t.mons.length < (t.size || 6) ? ((t.size || 6) - t.mons.length) + ' empty of ' + (t.size || 6) : ''}), 'high'),
+      metric('Average Speed', (t) => ({n: Math.round(t.mons.reduce((s, m) => s + m.st.spe, 0) / t.mons.length)}), 'high'),
+      metric('Fastest', (t) => { const f = t.mons.slice().sort((a, b) => b.st.spe - a.st.spe)[0]; return {n: f.st.spe, note: f.name}; }, 'high'),
+      metric('Average bulk', (t) => ({n: Math.round(t.mons.reduce((s, m) => s + m.st.hp * (m.st.def + m.st.spd) / 2, 0) / t.mons.length / 100)}), 'high'),
+      metric('Types hitting 3+ ×2', (t) => { const ts = ORDER.filter((x) => t.mons.filter((m) => m.def[x] > 1).length >= 3); return {n: ts.length, note: ts.join(', ')}; }, 'low'),
+      metric('Types none resists', (t) => { const ts = ORDER.filter((x) => t.mons.every((m) => m.def[x] >= 1)); return {n: ts.length, note: ts.slice(0, 4).join(', ') + (ts.length > 4 ? '…' : '')}; }, 'low'),
+      metric('Types hit ×2', (t) => ({n: ORDER.filter((x) => t.mons.some((m) => off(m, x) > 1)).length, note: 'of 18'}), 'high'),
+      metric('Coverage holes', (t) => { const ts = ORDER.filter((x) => t.mons.every((m) => off(m, x) < 1)); return {n: ts.length, note: ts.join(', ')}; }, 'low'),
+      metric('Hazards · removal', (t) => { const h = t.mons.filter((m) => m.has('hazard')).length, r = t.mons.filter((m) => m.has('removal')).length; return {n: h + r, note: h + ' setters · ' + r + ' removal'}; }, 'high'),
+      metric('Speed control', (t) => { const s = t.mons.filter((m) => m.has('speed')); return {n: s.length, note: names(s)}; }, 'high'),
+      metric('Recovery', (t) => { const s = t.mons.filter((m) => m.has('recovery')); return {n: s.length, note: names(s)}; }, 'high')
+    ];
+    const heads = teams.map((t) => ({name: t.name, owner: t.owner, c: t.c, i: t.owner[0], sprites: t.mons.map((m) => m.sprite)}));
+    const teamOpts = teams.map((t) => ({v: t.id, label: t.name + ' · ' + t.owner}));
+    const sel = this.st('sel', {a: ids[0], am: null, b: ids[1] || ids[0], bm: 0, mv: 0});
+    const setSel = (patch) => this.setState({sel: {...sel, ...patch}});
+    const ta = teams.find((t) => t.id === sel.a) || teams[0], tb = teams.find((t) => t.id === sel.b) || teams[teams.length - 1];
+    const amI = sel.am === null ? Math.max(0, ta.mons.findIndex((m) => m.moves.some((x) => x.cat !== 'Status' && x.power))) : Math.min(sel.am, ta.mons.length - 1);
+    const A = ta.mons[amI], B = tb.mons[Math.min(sel.bm, tb.mons.length - 1)];
+    const atks = A.moves.filter((m) => m.cat !== 'Status' && m.power);
+    const mvIdx = Math.min(sel.mv, Math.max(0, atks.length - 1));
+    const M = atks[mvIdx];
+    let calc;
+    if (!M) {
+      calc = {range: '—', lo: 0, span: 0, ko: A.name + ' has no damaging move.', detail: '', ink: '#a3acbf', border: '#343f58'};
+    } else {
+      const phys = M.cat === 'Physical';
+      const atk = phys ? A.st.atk : A.st.spa, df = phys ? B.st.def : B.st.spd;
+      const eff = B.def[M.type], stab = A.types.includes(M.type) ? 1.5 : 1;
+      const baseDmg = Math.floor(Math.floor(Math.floor(2 * 50 / 5 + 2) * M.power * atk / df) / 50) + 2;
+      const lo = Math.floor(Math.floor(baseDmg * 0.85) * stab * eff), hi = Math.floor(baseDmg * stab * eff);
+      const lp = lo / B.st.hp * 100, hp = hi / B.st.hp * 100;
+      const hits = (x) => x <= 0 ? Infinity : Math.ceil(100 / x);
+      const ko = eff === 0 ? 'No effect' : hits(lp) === hits(hp) ? (hits(hp) === 1 ? 'Guaranteed OHKO' : 'Guaranteed ' + hits(hp) + 'HKO') : 'Possible ' + hits(hp) + 'HKO';
+      calc = {range: lp.toFixed(1) + '–' + hp.toFixed(1) + '%', lo: Math.min(100, lp), span: Math.max(0, Math.min(100, hp) - Math.min(100, lp)), ko,
+        detail: (phys ? 'Atk ' + atk + ' vs Def ' + df : 'SpA ' + atk + ' vs SpD ' + df) + ' · ' + M.name + ' ' + M.power + ' power · ×' + eff + (stab > 1 ? ' · STAB' : '') + ' · Level 50, no items or abilities.',
+        ink: hp >= 100 ? '#ff8a80' : hp >= 50 ? '#ffc878' : '#7be08a', border: hp >= 100 ? '#ff8a80' : '#343f58'};
+    }
+    const side = (label, t, m, mi, onTeam, onMon) => ({label, team: t.id, onTeam, mon: String(mi), onMon, sprite: m.sprite, monOpts: t.mons.map((x, i) => ({v: String(i), label: x.name})),
+      statLine: 'HP ' + m.st.hp + ' · Atk ' + m.st.atk + ' · Def ' + m.st.def + ' · SpA ' + m.st.spa + ' · SpD ' + m.st.spd + ' · Spe ' + m.st.spe});
+    const sides = [
+      side('Attacker', ta, A, amI, (e) => setSel({a: e.target.value, am: null, mv: 0}), (e) => setSel({am: Number(e.target.value), mv: 0})),
+      side('Defender', tb, B, Math.min(sel.bm, tb.mons.length - 1), (e) => setSel({b: e.target.value, bm: 0}), (e) => setSel({bm: Number(e.target.value)}))
+    ];
+    Object.assign(calc, {move: String(mvIdx), moveOpts: atks.length ? atks.map((m, i) => ({v: String(i), label: m.name + ' · ' + m.type + ' · ' + m.power})) : [{v: '0', label: 'No damaging move'}], onMove: (e) => setSel({mv: Number(e.target.value)}),
+      swap: () => setSel({a: sel.b, am: sel.bm, b: sel.a, bm: amI, mv: 0})});
+    return {...base, loading: false, ready: true, heads: heads.map((h, i) => ({...h, no: String(i + 1)})), cmpGrid: 'repeat(' + heads.length + ', minmax(0, 1fr))', rows, sides, teamOpts, calc};
+  }
+}
+</script>
+</body>
+</html>

@@ -149,7 +149,7 @@ class Component extends DCLogic {
     const n = picked.length;
     const cmp = this.st('cmp', false);
     const mine = this.props.noTeams ? [] : TEAMS.filter((t) => t.mine).map(row);
-    const picks = TEAMS.filter((t) => picked.includes(t.name)).map((t) => t.preset);
+    const picks = TEAMS.filter((t) => picked.includes(t.name)).map((t) => t.name);
     return {noAdd: -1, onList: !open && !cmp, onTeam: !!open, onCmp: cmp && !open, picked: picks, closeCmp: () => this.setState({cmp: false, selecting: false, picked: []}), open: open || 'elesa',
       groups: [{id: 'g-mine', title: 'Yours', empty: mine.length === 0, rows: mine}, {id: 'g-others', title: 'Other trainers', empty: false, rows: TEAMS.filter((t) => !t.mine).map(row)}],
       newTeam: () => this.setState({open: 'new'}),

@@ -36,7 +36,7 @@ select option{background:#10141d;color:#eef1f7}
 <span role="columnheader" style="min-width: 0; padding: 10px 12px 8px; border-left: 3px solid #2c3549; display: flex; flex-direction: column; justify-content: flex-end">
 <span style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px"><span aria-hidden="true" style="width: 20px; height: 20px; border-radius: 5px; background: {{h.c}}; color: #10141d; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 16px">{{h.i}}</span><span style="font-size: 13px; font-weight: 700; color: #a3acbf">{{h.owner}}</span></span>
 <span style="display: block; font-family: 'Jersey 10', sans-serif; font-size: 30px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{h.name}}</span>
-<span style="display: flex; margin-top: 4px"><sc-for list="{{h.sprites}}" as="sp" hint-placeholder-count="6"><span style="width: 40px; height: 36px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{sp}}" alt="" width="48" height="48" style="flex: none; display: block; margin: -8px -4px -4px; image-rendering: pixelated"></span></sc-for></span>
+<span style="display: flex; flex-wrap: wrap; margin-top: 4px"><sc-for list="{{h.sprites}}" as="sp" hint-placeholder-count="6"><span style="width: 40px; height: 36px; display: flex; align-items: center; justify-content: center; overflow: hidden"><img src="{{sp}}" alt="" width="48" height="48" style="flex: none; display: block; margin: -8px -4px -4px; image-rendering: pixelated"></span></sc-for></span>
 </span>
 </sc-for>
 </div>
@@ -90,11 +90,13 @@ const MULT = {0: 1, 1: 2, 2: 0.5, 3: 0};
 const NAT = {Lonely:['atk','def'],Brave:['atk','spe'],Adamant:['atk','spa'],Naughty:['atk','spd'],Bold:['def','atk'],Relaxed:['def','spe'],Impish:['def','spa'],Lax:['def','spd'],Timid:['spe','atk'],Hasty:['spe','def'],Jolly:['spe','spa'],Naive:['spe','spd'],Modest:['spa','atk'],Mild:['spa','def'],Quiet:['spa','spe'],Rash:['spa','spd'],Calm:['spd','atk'],Gentle:['spd','def'],Sassy:['spd','spe'],Careful:['spd','spa']};
 const SK = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
 const TEAMS = {
-  elesa: {name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', keys: [0, 5, 11, 17]},
-  rain: {name: 'Rain test', owner: 'Dloez', c: '#ffd34d', keys: [2, 8, 14, 20, 26, 32]},
-  cup: {name: 'Cup · Round 1', owner: 'Dloez', c: '#ffd34d', keys: [0, 5, 11]},
-  mira: {name: 'League run', owner: 'MIRAMEEE', c: '#ff9ec4', keys: [3, 9, 21, 27, 33, 40]},
-  vicky: {name: 'Gym 6 attempt', owner: 'Vicky', c: '#7be08a', keys: [6, 12, 18, 24, 30]}
+  'For Elesa': {name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', keys: [0, 5, 11, 17]},
+  'Rain test': {name: 'Rain test', owner: 'Dloez', c: '#ffd34d', keys: [2, 8, 14, 20, 26, 32]},
+  'Ban round': {name: 'Ban round', owner: 'Dloez', c: '#ffd34d', size: 8, keys: [1, 7, 13, 19, 25, 31, 37]},
+  'Scouting Vicky': {name: 'Scouting Vicky', owner: 'Dloez', c: '#ffd34d', keys: [6, 12, 18, 24, 30]},
+  'Final': {name: 'Final', owner: 'Dloez', c: '#ffd34d', keys: [1, 7, 13, 19, 25, 31]},
+  'League run': {name: 'League run', owner: 'MIRAMEEE', c: '#ff9ec4', keys: [3, 9, 21, 27, 33, 40]},
+  'Gym 6 attempt': {name: 'Gym 6 attempt', owner: 'Vicky', c: '#7be08a', keys: [6, 12, 18, 24, 30]}
 };
 const TAGS = {hazard: ['stealthrock', 'spikes', 'toxicspikes', 'stickyweb'], removal: ['rapidspin', 'defog', 'courtchange', 'mortalspin', 'tidyup'], recovery: ['recover', 'roost', 'softboiled', 'slackoff', 'moonlight', 'morningsun', 'synthesis', 'wish', 'rest', 'shoreup', 'milkdrink', 'strengthsap', 'painsplit', 'leechseed', 'drainpunch', 'gigadrain', 'hornleech'],
   speed: ['thunderwave', 'tailwind', 'trickroom', 'stickyweb', 'icywind', 'electroweb', 'glare', 'stunspore', 'quickattack', 'extremespeed', 'aquajet', 'machpunch', 'bulletpunch', 'iceshard', 'shadowsneak', 'suckerpunch', 'vacuumwave', 'fakeout', 'accelerock']};
@@ -120,7 +122,7 @@ class Component extends DCLogic {
   }
   st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
   renderVals() {
-    const ids = (this.props.teams && this.props.teams.length ? this.props.teams : ['elesa', 'mira']).filter((id) => TEAMS[id]);
+    const ids = (this.props.teams && this.props.teams.length ? this.props.teams : ['For Elesa', 'League run']).filter((id) => TEAMS[id]);
     const base = {count: String(ids.length), loading: true, ready: false, close: () => { if (this.props.onClose) this.props.onClose(); }, heads: [], cmpGrid: '210px', rows: [], sides: [], teamOpts: [], calc: {moveOpts: []}};
     const d = this.state && this.state.d;
     if (!d) return base;
@@ -143,7 +145,7 @@ class Component extends DCLogic {
     };
     const names = (arr) => arr.map((m) => m.name).join(', ');
     const rows = [
-      metric('Members', (t) => ({n: t.mons.length, note: t.mons.length < 6 ? (6 - t.mons.length) + ' empty' : ''}), 'high'),
+      metric('Members', (t) => ({n: t.mons.length, note: t.mons.length < (t.size || 6) ? ((t.size || 6) - t.mons.length) + ' empty of ' + (t.size || 6) : ''}), 'high'),
       metric('Average Speed', (t) => ({n: Math.round(t.mons.reduce((s, m) => s + m.st.spe, 0) / t.mons.length)}), 'high'),
       metric('Fastest', (t) => { const f = t.mons.slice().sort((a, b) => b.st.spe - a.st.spe)[0]; return {n: f.st.spe, note: f.name}; }, 'high'),
       metric('Average bulk', (t) => ({n: Math.round(t.mons.reduce((s, m) => s + m.st.hp * (m.st.def + m.st.spd) / 2, 0) / t.mons.length / 100)}), 'high'),
