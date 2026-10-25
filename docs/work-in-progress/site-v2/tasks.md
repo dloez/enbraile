@@ -24,7 +24,7 @@ Discord sign-in and the allowlist are built and checked on the local stack (2026
 The series pages, the admin series form and the phone header are built and checked on the local stack (2026-10-23), where the seed makes series 1; on production series 1 is created through the form, its rules pasted from `docs/pkmn/series/1/reference/rules.md`, as the series entry that landed in `f799e09` asked. Its production checks left the queue with it.
 
 **Do:**
-- [ ] Owner-run: as admin at `/admin/series`, make series 1 on the Añil game, the daytime route, manual ingestion, its players from the allowlist (invite them by Discord user ID at `/admin/players` first, or add them once it runs), milestones Gym 1 to Gym 8, Post-League and Tournament with rounds as its rules set, and its rules pasted from `docs/pkmn/series/1/reference/rules.md`; start it.
+- [ ] Owner-run: as admin at `/admin/games`, make the game "Pokémon Añil + Randomlocke" and upload its zip (production was emptied of test data on 2026-10-25, the old "Test game" with it); then at `/admin/series`, make series 1 on that game, the daytime route, manual ingestion, its players from the allowlist (invite them by Discord user ID at `/admin/players` first, or add them once it runs), milestones Gym 1 to Gym 8, Post-League and Tournament with rounds as its rules set, and its rules pasted from `docs/pkmn/series/1/reference/rules.md`; start it.
 
 **Acceptance:**
 - Claude-run: none.
