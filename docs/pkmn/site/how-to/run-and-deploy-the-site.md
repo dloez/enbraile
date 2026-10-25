@@ -40,7 +40,7 @@ Copy `.env.example` to `.env.local` (untracked). Its values fit the local stack;
 - `BETTER_AUTH_SECRET`: a random secret of at least 32 characters, e.g. from `openssl rand -base64 32`.
 - `BETTER_AUTH_URL`: `http://localhost:5173`, the Vite dev URL.
 - `API_PORT`: the port the API listens on behind Vite, 8787.
-- `DEV_SIGN_IN`: `1` turns on the dev-only test sign-in ([How to Verify the Site](verify-the-site.md)). Never set it anywhere but a local `.env.local`.
+- `DEV_SIGN_IN`: `1` turns on the test sign-in ([How to Verify the Site](verify-the-site.md)). Set it only in a local `.env.local` and in Vercel's Preview environment, never in Production.
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`: the Discord application's OAuth2 client (step 6). Left empty, Discord sign-in is not registered and its button answers "Sign-in failed"; the local stack signs players in with the test sign-in instead.
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`: the file store; the example's point at the local MinIO and its `pkmn-site` bucket. With a second stack's `MINIO_PORT`, match the port in `S3_ENDPOINT`.
 
@@ -99,7 +99,7 @@ Set the project's environment variables:
 
 Neon's connection strings carry `sslmode=require`, which `pg` already treats as `verify-full` and warns about on every connection; write `sslmode=verify-full` in every Neon string, in Vercel and in the shell, which keeps the same certificate checks and silences the warning.
 
-`API_PORT` and `DEV_SIGN_IN` stay unset in Vercel: without `DEV_SIGN_IN` the test sign-in does not exist. Each branch is migrated by its environment's next deploy (step 7). Then make the admins with that branch's direct connection string (the one without `-pooler`) and its environment's `BETTER_AUTH_SECRET` set in the shell, since `admin:create` loads the site's auth setup, which refuses to start without one:
+`API_PORT` stays unset in Vercel, and `DEV_SIGN_IN` is `1` in Preview alone, where Vercel's Deployment Protection (Vercel Authentication, on every deployment but the custom domain) keeps the previews to the team; without it, in Production, the test sign-in does not exist. Each branch is migrated by its environment's next deploy (step 7). Then make the admins with that branch's direct connection string (the one without `-pooler`) and its environment's `BETTER_AUTH_SECRET` set in the shell, since `admin:create` loads the site's auth setup, which refuses to start without one:
 
 ```sh
 export DATABASE_URL='<the branch's direct connection string>'
@@ -111,6 +111,18 @@ unset DATABASE_URL BETTER_AUTH_SECRET
 ### 7. Deploy
 
 Push to `main`. Vercel's build runs `npm run build` and then `npm run db:migrate` (`buildCommand` in `vercel.json`) against that environment's `DATABASE_URL`, so a deploy migrates its own branch, production or `dev`, before it goes live, and a build that fails migrates nothing. A migration that drops or renames something the live code still reads goes out in two deploys: first the code that no longer reads it, then the migration. Vercel builds and deploys every push that touches `pkmn/site/` to production, and a branch push gets a public preview URL, shown on the commit's GitHub status and in the Vercel dashboard. There is no manual deploy command.
+
+### Seed the preview
+
+The preview deploys share the Neon `dev` branch and the `pkmn-site-preview-enbraile` bucket, so one seed fills every preview with the local stack's data: the admin, the test players, the game with its stand-in zip, series 1 with Red's snapshots, and series 2. From `pkmn/site/`, with the Vercel CLI signed in (`npx vercel login`, once per machine) and linked (`npx vercel link --project enbraile-pkmn`, which also writes a short-lived token into `.env.local`), pull the Preview variables to a file outside the repository and seed with them:
+
+```sh
+npx vercel env pull <scratch>/preview.env --environment=preview
+SEED_TARGET=preview SEED_ADMIN_PASSWORD='<a password>' npx tsx --env-file=<scratch>/preview.env scripts/seed.ts
+rm <scratch>/preview.env
+```
+
+The seed refuses any database or store off the local stack unless `SEED_TARGET` is `preview` and `S3_BUCKET` is the preview bucket, so the Production variables cannot be seeded by mistake, and off the local stack it takes the admin's password from `SEED_ADMIN_PASSWORD` instead of `admin-password`. Seeding twice adds nothing it already holds. Push a branch for a preview URL (step 7), open it signed in to Vercel, and sign in as a test player at `/api/auth/dev/sign-in?username=red`, or as the admin at `/admin`. An agent's browser passes the protection with the project's Protection Bypass for Automation secret, read from `npx vercel api /v9/projects/enbraile-pkmn` (`protectionBypass`), by opening a preview URL once with `?x-vercel-protection-bypass=<secret>&x-vercel-set-bypass-cookie=true`.
 
 ### 8. Roll back
 

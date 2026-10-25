@@ -15,6 +15,7 @@ import { partSizeFor, uploadParts } from "../shared/upload.js";
 import { createAdmin, createTestPlayer, usernameTaken } from "./accounts.js";
 
 const admin = { name: "admin", password: "admin-password" };
+const previewBucket = "pkmn-site-preview-enbraile";
 const testPlayers = [
   { name: "Red", allowed: true },
   { name: "Blue", allowed: true },
@@ -253,12 +254,16 @@ async function seedTheFinishedSeries(): Promise<string | null> {
 }
 
 async function main() {
-  for (const variable of ["DATABASE_URL", "S3_ENDPOINT"]) {
-    const host = new URL(requireEnv(variable)).hostname;
-    if (host !== "localhost" && host !== "127.0.0.1") throw new Error(`Refusing to seed ${host}: the seed is for the local stack only`);
+  const remote = ["DATABASE_URL", "S3_ENDPOINT"]
+    .map((variable) => new URL(requireEnv(variable)).hostname)
+    .filter((host) => host !== "localhost" && host !== "127.0.0.1");
+  const preview = remote.length > 0;
+  if (preview && (process.env.SEED_TARGET !== "preview" || requireEnv("S3_BUCKET") !== previewBucket)) {
+    throw new Error(`Refusing to seed ${remote.join(" and ")}: the seed is for the local stack, or for the preview environment with SEED_TARGET=preview and the ${previewBucket} bucket`);
   }
+  const adminPassword = preview ? requireEnv("SEED_ADMIN_PASSWORD") : admin.password;
 
-  if (!(await usernameTaken(admin.name))) await createAdmin(admin.name, admin.password);
+  if (!(await usernameTaken(admin.name))) await createAdmin(admin.name, adminPassword);
   for (const { name, allowed } of testPlayers) {
     if (!(await usernameTaken(name.toLowerCase()))) await createTestPlayer(name, allowed);
   }
@@ -267,7 +272,7 @@ async function main() {
   const seededSnapshot = await seedTheSnapshot();
   const seededFinished = await seedTheFinishedSeries();
   console.log(
-    `Seeded admin ${admin.name} (password ${admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
+    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
   );
 }
 
