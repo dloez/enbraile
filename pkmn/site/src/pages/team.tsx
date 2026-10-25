@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ClipboardCheck, ClipboardCopy, Plus, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -11,6 +11,7 @@ import { PLAYER_FILL, playerColour } from "@/components/player-badge";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { TeamFrame, TeamsBackLink } from "@/components/page-frames";
 import { AddDialog, type AddSource } from "@/teams/components/add-dialog";
 import { poolIds, SetEditor } from "@/teams/components/free-member";
 import { AbilityEditor, ItemEditor, segButton, segTrack } from "@/teams/components/editors";
@@ -71,11 +72,11 @@ export function TeamBuilderPage() {
       </main>
     );
   }
-  if (!page) return <main className={toolPage} />;
+  if (!page) return <TeamFrame />;
   if (page.sources.length === 0 && !page.anyPokemon) {
     return (
       <main className={cn(toolPage, "gap-4 pt-5")}>
-        <BackLink />
+        <TeamsBackLink />
         <h1 className="m-0 font-heading text-5xl leading-[0.85] font-normal">{page.name}</h1>
         <p className="m-0 rounded-2xl border-3 border-dashed border-cell-hi bg-box px-5 py-10 text-center font-heading text-3xl text-subtle">
           This team's snapshot was deleted
@@ -84,18 +85,6 @@ export function TeamBuilderPage() {
     );
   }
   return <Builder key={page.id} page={page} />;
-}
-
-function BackLink() {
-  return (
-    <Link
-      to="/teams"
-      className="-my-2.5 flex min-h-11 w-fit items-center gap-1.5 font-heading text-[1.375rem] text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
-    >
-      <ChevronLeft className="size-4" aria-hidden="true" />
-      Teams
-    </Link>
-  );
 }
 
 function asSet(mon: Mon, member: Member): Mon {
@@ -382,7 +371,7 @@ function Builder({ page }: { page: TeamPage }) {
     <main className={cn(toolPage, "gap-4 pt-4.5 pb-6 lg:max-h-[calc(100svh-4rem)] lg:min-h-160 lg:pb-7")}>
       <div className="flex flex-none flex-wrap items-end gap-x-6 gap-y-3">
         <div className="flex min-w-0 flex-col gap-2">
-          <BackLink />
+          <TeamsBackLink />
           <div className="flex flex-wrap items-center gap-3.5">
             <Title name={name} editable={editable} onRename={(next) => {
               setName(next);

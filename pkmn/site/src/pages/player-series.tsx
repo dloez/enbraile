@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { money, playTime } from "@/lib/records";
 import { cn } from "@/lib/utils";
+import { PlayerSeriesFrame } from "@/components/page-frames";
 import { type FallenMon, type JourneyPage, type JourneyRecord, journeyPage } from "../../shared/journey";
 
 const FROM = "/players/$player/series/$number";
@@ -50,7 +51,7 @@ export function PlayerSeriesPage() {
       </main>
     );
   }
-  if (!page) return <main className={toolPage} />;
+  if (!page) return <PlayerSeriesFrame />;
 
   return (
     <main className={cn(toolPage, "gap-6 pt-3 pb-9 sm:gap-7 sm:pt-5 sm:pb-10")}>

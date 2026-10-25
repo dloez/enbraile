@@ -4,7 +4,7 @@ import { buttonClass, Segmented } from "@/components/controls";
 import { readPage } from "@/components/page";
 import { Rules } from "@/components/rules";
 import { PixelIcon } from "@/components/pixel-icon";
-import { Placeholder } from "@/components/placeholder";
+import { League, SeriesFrame } from "@/components/page-frames";
 import { PLAYER_FILL, PLAYER_RING, PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
 import { TrainerAdmin } from "@/components/trainer-admin";
@@ -46,22 +46,7 @@ export function SeriesPage() {
       </main>
     );
   }
-  if (!series) {
-    return (
-      <>
-        <Placeholder className="h-55 sm:h-65" />
-        <main className={cn(readPage, "flex-none gap-3 pt-5 pb-6 sm:gap-3.5 sm:pt-6 sm:pb-8")}>
-          <League />
-          <section aria-labelledby="trainers-title" className="flex flex-col gap-3 sm:gap-3.5">
-            <h2 id="trainers-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
-              Trainers
-            </h2>
-            <Placeholder className="h-60 rounded-2xl" />
-          </section>
-        </main>
-      </>
-    );
-  }
+  if (!series) return <SeriesFrame />;
 
   return (
     <>
@@ -131,20 +116,6 @@ function SeriesHeader({ series }: { series: Series }) {
             {download}
           </p>
         )}
-      </div>
-    </section>
-  );
-}
-
-function League() {
-  return (
-    <section aria-labelledby="league-title" className="mb-4 flex flex-col gap-3 sm:mb-5.5 sm:gap-3.5">
-      <h2 id="league-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
-        League
-      </h2>
-      <div className="flex min-h-24 items-center justify-center gap-3.5 rounded-2xl border-3 border-dashed border-cell-hi bg-box sm:min-h-35 sm:gap-4.5">
-        <PixelIcon name="barrier" className="size-10 sm:size-14" />
-        <span className="font-heading text-[1.75rem] text-yellow sm:text-4xl">Work in progress</span>
       </div>
     </section>
   );

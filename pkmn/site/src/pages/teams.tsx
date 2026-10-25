@@ -1,12 +1,14 @@
-import { Link, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { Check, Plus, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { toolPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { api, ApiError } from "@/lib/api";
+import { teamPage } from "@/lib/lazy-pages";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { TwoBlocks } from "@/components/page-frames";
 import { spriteOfName } from "@/analysis/sprite";
 import { SnapshotMenu } from "@/teams/components/snapshot-menu";
 import { profilePage } from "../../shared/profile";
@@ -51,12 +53,11 @@ export function TeamsPage() {
   const [picked, setPicked] = useState<string[]>([]);
   const [comparing, setComparing] = useState<string[] | null>(null);
   const [compareOpened, setCompareOpened] = useState(false);
-  const router = useRouter();
   const listed = list !== null && list.length > 0;
 
   useEffect(() => {
-    if (listed) void router.loadRouteChunk(router.routesById["/teams/$id"]);
-  }, [listed, router]);
+    if (listed) teamPage.load();
+  }, [listed]);
 
   useEffect(() => {
     let live = true;
@@ -167,6 +168,7 @@ export function TeamsPage() {
         </p>
       )}
       {named && <OwnerChip owner={named} />}
+      {!list && !error && <TwoBlocks className="h-32 rounded-2xl" />}
       {list && (
         <div className="flex flex-col gap-3.5">
           {player && (!filter || filter === player.id) && <Group id="teams-yours" title="Yours" rows={yours} pick={pick} />}

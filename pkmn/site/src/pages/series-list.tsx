@@ -1,11 +1,12 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { liftCardClass } from "@/components/controls";
-import { Placeholder } from "@/components/placeholder";
+import { TwoBlocks } from "@/components/page-frames";
 import { toolPage } from "@/components/page";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
+import { seriesPage } from "@/lib/lazy-pages";
 import { cn } from "@/lib/utils";
 import { type Scene, type SeriesBanner, seriesBannerList } from "../../shared/series";
 
@@ -20,12 +21,11 @@ export function gameLine(game: string): string {
 export function SeriesListPage() {
   const [list, setList] = useState<SeriesBanner[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
   const listed = list !== null && list.length > 0;
 
   useEffect(() => {
-    if (listed) void router.loadRouteChunk(router.routesById["/series/$number"]);
-  }, [listed, router]);
+    if (listed) seriesPage.load();
+  }, [listed]);
 
   useEffect(() => {
     api("/series", seriesBannerList).then(setList, (caught: unknown) =>
@@ -41,12 +41,7 @@ export function SeriesListPage() {
           {error}
         </p>
       )}
-      {!list && !error && (
-        <div className="flex flex-col gap-4 sm:gap-6">
-          <Placeholder className="h-35 rounded-2xl" />
-          <Placeholder className="h-35 rounded-2xl" />
-        </div>
-      )}
+      {!list && !error && <TwoBlocks className="h-35 rounded-2xl" />}
       {list && (
         <ul className="m-0 flex list-none flex-col gap-4 p-0 sm:gap-6">
           {list.map((s) => (

@@ -1,6 +1,7 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { prefetch } from "@/lib/api";
+import { pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
 import { HomePage } from "@/pages/home";
 
 const rootRoute = createRootRoute({ component: SiteShell });
@@ -15,32 +16,40 @@ const seriesListRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/series",
   loader: () => {
-    void prefetch("/series");
+    seriesListPage.load();
+    prefetch("/series");
   },
-  component: lazyRouteComponent(() => import("@/pages/series-list"), "SeriesListPage"),
+  component: seriesListPage.Page,
 });
 
 const seriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/series/$number",
   loader: ({ params }) => {
-    void prefetch(`/series/${encodeURIComponent(params.number)}`);
+    seriesPage.load();
+    prefetch(`/series/${encodeURIComponent(params.number)}`);
   },
-  component: lazyRouteComponent(() => import("@/pages/series"), "SeriesPage"),
+  component: seriesPage.Page,
 });
 
 const playerProfileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/players/$player",
-  loader: ({ params }) => prefetch(`/profiles/${encodeURIComponent(params.player)}`),
-  component: lazyRouteComponent(() => import("@/pages/player-profile"), "PlayerProfilePage"),
+  loader: ({ params }) => {
+    profilePage.load();
+    prefetch(`/profiles/${encodeURIComponent(params.player)}`);
+  },
+  component: profilePage.Page,
 });
 
 const playerSeriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/players/$player/series/$number",
-  loader: ({ params }) => prefetch(`/series/${encodeURIComponent(params.number)}/trainers/${encodeURIComponent(params.player)}/journey`),
-  component: lazyRouteComponent(() => import("@/pages/player-series"), "PlayerSeriesPage"),
+  loader: ({ params }) => {
+    playerSeriesPage.load();
+    prefetch(`/series/${encodeURIComponent(params.number)}/trainers/${encodeURIComponent(params.player)}/journey`);
+  },
+  component: playerSeriesPage.Page,
 });
 
 export type PcSearch = { snapshot?: string };
@@ -51,11 +60,11 @@ const pcRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): PcSearch =>
     typeof search.snapshot === "string" && search.snapshot !== "" ? { snapshot: search.snapshot } : {},
   loaderDeps: ({ search }) => search,
-  loader: ({ params, deps }) =>
-    prefetch(
-      `/series/${encodeURIComponent(params.number)}/trainers/${encodeURIComponent(params.player)}/pc${deps.snapshot === undefined ? "" : `?snapshot=${encodeURIComponent(deps.snapshot)}`}`,
-    ),
-  component: lazyRouteComponent(() => import("@/pages/pc"), "PcPage"),
+  loader: ({ params, deps }) => {
+    pcPage.load();
+    prefetch(`/series/${encodeURIComponent(params.number)}/trainers/${encodeURIComponent(params.player)}/pc${deps.snapshot === undefined ? "" : `?snapshot=${encodeURIComponent(deps.snapshot)}`}`);
+  },
+  component: pcPage.Page,
 });
 
 export type TeamsSearch = { player?: string };
@@ -66,15 +75,21 @@ const teamsRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): TeamsSearch =>
     typeof search.player === "string" && search.player !== "" ? { player: search.player } : {},
   loaderDeps: ({ search }) => search,
-  loader: ({ deps }) => prefetch(deps.player ? `/teams?owner=${encodeURIComponent(deps.player)}` : "/teams"),
-  component: lazyRouteComponent(() => import("@/pages/teams"), "TeamsPage"),
+  loader: ({ deps }) => {
+    teamsPage.load();
+    prefetch(deps.player ? `/teams?owner=${encodeURIComponent(deps.player)}` : "/teams");
+  },
+  component: teamsPage.Page,
 });
 
 const teamRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/teams/$id",
-  loader: ({ params }) => prefetch(`/teams/${encodeURIComponent(params.id)}`),
-  component: lazyRouteComponent(() => import("@/pages/team"), "TeamBuilderPage"),
+  loader: ({ params }) => {
+    teamPage.load();
+    prefetch(`/teams/${encodeURIComponent(params.id)}`);
+  },
+  component: teamPage.Page,
 });
 
 const adminRoute = createRoute({

@@ -6,6 +6,7 @@ import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { PcFrame } from "@/components/page-frames";
 import { SnapshotPc } from "@/components/pc/pc-box";
 import { AddToTeam, useOwnTeams } from "@/teams/components/add-to-team";
 import { unpackPc } from "../../shared/mon";
@@ -54,7 +55,7 @@ export function PcPage() {
       </main>
     );
   }
-  if (!page) return <main className={toolPage} />;
+  if (!page) return <PcFrame />;
   const builds = mine ? page.snapshotId : null;
 
   function pick(milestone: string) {

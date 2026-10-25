@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { playTime } from "@/lib/records";
 import { cn } from "@/lib/utils";
+import { ProfileFrame } from "@/components/page-frames";
 import { BANNER_SIZE, gameLine, PHONE_BANNER_SIZE } from "@/pages/series-list";
 import { type CareerTotals, type ProfilePage, type ProfileSeries, profilePage } from "../../shared/profile";
 
@@ -50,7 +51,7 @@ export function PlayerProfilePage() {
       </main>
     );
   }
-  if (!page) return <main className={toolPage} />;
+  if (!page) return <ProfileFrame />;
 
   return (
     <main className={cn(toolPage, "gap-7 pt-5.5 pb-9 sm:gap-8 sm:pt-9 sm:pb-12")}>

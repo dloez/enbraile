@@ -21,10 +21,18 @@ const myToolRoute = createRoute({
 });
 ```
 
-A page that reads from the API when it mounts starts that read from its route's `loader` with `prefetch`, from `src/lib/api.ts`, on the exact path the page passes to `api()`, so the read runs while the page's chunk loads ([The pkmn Site → Decisions](../explanation/site.md#decisions)):
+A player page is its own chunk that draws its frame first: add a frame for it to `src/components/page-frames.tsx`, the page's `<main>` with its fixed headings and a `Placeholder` for each piece of data, and the page to `src/lib/lazy-pages.tsx` with `lazyPage`. The page draws the same frame while its read is in flight. A page that reads from the API when it mounts starts that read from its route's `loader` with `prefetch`, from `src/lib/api.ts`, on the exact path the page passes to `api()`, beside its chunk ([The pkmn Site → Decisions](../explanation/site.md#decisions)):
 
 ```tsx
-loader: ({ params }) => prefetch(`/my-tool/${encodeURIComponent(params.id)}`),
+export const myToolPage = lazyPage(() => import("@/pages/my-tool").then((m) => m.MyToolPage), MyToolFrame);
+```
+
+```tsx
+loader: ({ params }) => {
+  myToolPage.load();
+  prefetch(`/my-tool/${encodeURIComponent(params.id)}`);
+},
+component: myToolPage.Page,
 ```
 
 The header's tabs are the site's sections, each a `Tab` in `src/components/site-header.tsx` with a label, a [pixel icon](../reference/design-system.md#imagery-and-icons), the route it opens and the paths it is open on, put in the reader's tabs in `SiteHeader`; a page joins them only when it is a section of its own.
