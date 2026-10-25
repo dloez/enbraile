@@ -100,12 +100,12 @@ function Info({ mon }: { mon: Mon }) {
   });
   return (
     <>
-      <section aria-labelledby="sum-nature" className="flex min-h-14.5 items-center gap-3 rounded-xl border-3 border-cell bg-box pr-3 pl-3.5">
-        <div className="flex min-w-0 flex-1 flex-col gap-0.75">
+      <section aria-labelledby="sum-nature" className="flex items-center gap-3 rounded-xl border-3 border-cell bg-box px-3.5 py-2.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h3 id="sum-nature" className="m-0 font-heading text-xl leading-none font-normal text-muted-foreground">
             Nature
           </h3>
-          <span className="font-heading text-[1.875rem] leading-[0.9]">
+          <span className="font-heading text-[1.625rem] leading-none">
             {n?.name ?? "—"}
             {n?.marked && <UnknownMark />}
           </span>
@@ -138,7 +138,7 @@ function Info({ mon }: { mon: Mon }) {
 
       {mon.abilities.length > 0 && (
         <section aria-labelledby="sum-ability" className="flex flex-col rounded-xl border-3 border-cell bg-box px-2 pt-2.5">
-          <h3 id="sum-ability" className="m-0 px-1.5 pb-1.5 font-heading text-xl leading-none font-normal text-muted-foreground">
+          <h3 id="sum-ability" className="m-0 px-1.5 pb-2 font-heading text-xl leading-none font-normal text-muted-foreground">
             Ability
           </h3>
           <div role="tablist" aria-label="Abilities" aria-orientation="vertical" className="flex flex-col gap-0.5">
@@ -150,7 +150,7 @@ function Info({ mon }: { mon: Mon }) {
                 aria-selected={a.id === shown?.id}
                 onClick={() => setPicked(a.id)}
                 className={cn(
-                  "flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border-none px-2.5 text-left text-[1.0625rem] font-extrabold outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                  "flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border-none px-3 text-left text-[0.9375rem] font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                   a.id === shown?.id ? "bg-cell text-white" : "bg-transparent text-subtle hover:bg-cell hover:text-white",
                 )}
               >
@@ -159,13 +159,13 @@ function Info({ mon }: { mon: Mon }) {
                   {a.marked && <UnknownMark />}
                 </span>
                 {a.hidden && (
-                  <span className="rounded-sm border-2 border-cell-hi px-1.5 font-heading text-lg font-normal text-subtle">Hidden</span>
+                  <span className="flex-none rounded-md border-2 border-cell-hi px-1.5 font-heading text-base leading-5 font-normal text-subtle">Hidden</span>
                 )}
-                {a.current && <span className="rounded-sm bg-cyan px-1.75 font-heading text-lg font-normal text-ink">In use</span>}
+                {a.current && <span className="flex-none rounded-md bg-cyan px-2 py-0.5 font-heading text-base leading-5 font-normal text-ink">In use</span>}
               </button>
             ))}
           </div>
-          <p role="tabpanel" className="-mx-2 mt-1.5 mb-0 min-h-21 border-t-3 border-cell px-4 py-2.5 text-[0.9375rem] leading-[1.4] text-subtle">
+          <p role="tabpanel" className="-mx-2 mt-2 mb-0 min-h-20 border-t-3 border-cell px-4 py-3 text-sm leading-relaxed text-subtle">
             {shown?.desc || "—"}
           </p>
         </section>
