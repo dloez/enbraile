@@ -44,9 +44,13 @@ const pcRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/pc"), "PcPage"),
 });
 
+export type TeamsSearch = { player?: string };
+
 const teamsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/teams",
+  validateSearch: (search: Record<string, unknown>): TeamsSearch =>
+    typeof search.player === "string" && search.player !== "" ? { player: search.player } : {},
   component: lazyRouteComponent(() => import("@/pages/teams"), "TeamsPage"),
 });
 

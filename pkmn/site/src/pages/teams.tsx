@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { toolPage } from "@/components/page";
@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { describeMember } from "@/teams/dex";
+import { profilePage } from "../../shared/profile";
 import { teamList, teamMade, type TeamRow } from "../../shared/team";
 
 function message(error: unknown): string {
@@ -36,20 +37,30 @@ export function TeamsPage() {
   const { data } = authClient.useSession();
   const me = data?.user;
   const navigate = useNavigate();
+  const { player: filter } = useSearch({ from: "/teams" });
   const [list, setList] = useState<TeamRow[] | null>(null);
+  const [named, setNamed] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [making, setMaking] = useState(false);
 
   useEffect(() => {
     let live = true;
-    api("/teams", teamList).then(
-      (next) => live && setList(next),
-      (caught: unknown) => live && setError(message(caught)),
-    );
+    setList(null);
+    setNamed(null);
+    setError(null);
+    const load = async () => {
+      const next = await api(filter ? `/teams?owner=${encodeURIComponent(filter)}` : "/teams", teamList);
+      if (!live) return;
+      setList(next);
+      if (!filter) return;
+      const owner = next[0]?.owner ?? (await api(`/profiles/${encodeURIComponent(filter)}`, profilePage)).player;
+      if (live) setNamed(owner);
+    };
+    load().catch((caught: unknown) => live && setError(message(caught)));
     return () => {
       live = false;
     };
-  }, []);
+  }, [filter]);
 
   async function newTeam() {
     setMaking(true);
@@ -84,13 +95,32 @@ export function TeamsPage() {
           {error}
         </p>
       )}
+      {named && <OwnerChip owner={named} />}
       {list && (
         <div className="flex flex-col gap-3.5">
-          {player && <Group id="teams-yours" title="Yours" rows={yours} />}
-          <Group id="teams-others" title={player ? "Other trainers" : "Every team"} rows={others} showOwner />
+          {player && (!filter || filter === player.id) && <Group id="teams-yours" title="Yours" rows={yours} />}
+          {(!filter || filter !== player?.id) && <Group id="teams-others" title={player ? "Other trainers" : "Every team"} rows={others} showOwner />}
         </div>
       )}
     </main>
+  );
+}
+
+function OwnerChip({ owner }: { owner: { id: string; name: string } }) {
+  return (
+    <div className="flex">
+      <span className="flex min-h-12 items-center gap-2.5 rounded-full border-3 bg-card py-1 pr-1 pl-1.5">
+        <PlayerBadge name={owner.name} colour={playerColour(owner.id)} size="xs" />
+        <span className="font-heading text-2xl leading-none">{owner.name}</span>
+        <Link
+          to="/teams"
+          aria-label={`Show every team, not only ${owner.name}'s`}
+          className="grid size-9 place-items-center rounded-full text-muted-foreground outline-none hover:bg-cell hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <X className="size-5" aria-hidden="true" />
+        </Link>
+      </span>
+    </div>
   );
 }
 

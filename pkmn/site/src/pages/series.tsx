@@ -360,7 +360,7 @@ function TrainerRow({
             value={shown?.pokemon}
             link={shown && { player: trainer.id, number: String(seriesNumber), label: `Open ${trainer.name}'s PC at ${shown.milestone}`, snapshot: shown.milestone }}
           />
-          <Tile label="Teams" value={trainer.teams} />
+          <Tile label="Teams" value={trainer.teams} link={{ player: trainer.id, label: `Open ${trainer.name}'s teams`, teams: true }} />
           <Tile
             label="Fainted"
             value={shown?.fainted}
@@ -555,7 +555,7 @@ function Track({
   );
 }
 
-type TileLink = { player: string; number: string; label: string; hash?: "fallen" | "journey"; snapshot?: string };
+type TileLink = { player: string; label: string } & ({ teams: true } | { number: string; hash?: "fallen" | "journey"; snapshot?: string });
 
 function Tile({ label, value, alarm, wide, link }: { label: string; value?: number | string; alarm?: boolean; wide?: boolean; link?: TileLink }) {
   const body = (
@@ -585,6 +585,13 @@ function Tile({ label, value, alarm, wide, link }: { label: string; value?: numb
   if (!link) return <div className={tile}>{body}</div>;
   const lift =
     "outline-none transition-[translate,border-color] duration-120 ease-[steps(2)] hover:-translate-y-0.5 hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  if ("teams" in link) {
+    return (
+      <Link to="/teams" search={{ player: link.player }} aria-label={link.label} className={cn(tile, lift)}>
+        {body}
+      </Link>
+    );
+  }
   if (link.hash) {
     return (
       <Link

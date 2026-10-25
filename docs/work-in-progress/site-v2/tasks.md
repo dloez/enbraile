@@ -59,24 +59,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## A trainer row's Teams tile opens their teams
-
-The series page's trainer row has a Teams tile, drawn in `series.dc.html` as a link and specified as "their teams (count, opens them)" ([First page after sign-in?](discovery.md#pages)). It opens the team list filtered to that trainer, `/teams?player=<id>`, with a chip naming the trainer that clears the filter ([Where does a trainer row's Teams tile open?](discovery.md#team-building), 2026-10-25).
-
-**Do:**
-- [ ] `/teams` takes a `player` search param and lists only that player's teams, with a chip above the list naming them (their badge and name) whose close button clears it; the Teams tab keeps opening the whole list.
-- [ ] The trainer row's Teams tile links to `/teams?player=<id>`, at both widths.
-- [ ] Rewrite what the stored teams' entry left stale in the docs, to say what is true now: `site.md`'s series page paragraph (line 58, where the Teams tile still reads "—") and the profile's build choices (line 106, where the Teams box reads "—" until the team builder counts them), both of which now count teams (`trainersOf` in `api/_lib/series-data.ts`, `api/_lib/profiles.ts`); and `team-builder.md`'s Adding From the PC, whose menu reads `<filled>/<size>`, not "n/6" (`src/teams/components/add-to-team.tsx:92`).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with a seeded team for a test player, open their row's Teams tile, land on `/teams?player=<id>` listing only their teams under the chip, clear the chip and see every team.
-- Human-run: open another trainer's Teams tile from the series page and see their teams.
-- Reuse: the team list, `src/pages/teams.tsx`; `GET /api/teams?owner=<id>`, which already lists one player's teams (`api/_lib/teams.ts`); `Tile` in `src/pages/series.tsx`; `PlayerBadge`.
-- Neighbors: the row's PC tile.
-- Forbidden: a `/players/<player>/teams` route.
-
-**Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
-
 ## Build teams from several snapshots, any player's
 
 A team's sources picker takes any number of snapshots, any player's; the PC shows each source's Pokémon, and each member draws its item and Mini Setas from its own snapshot ([Item limits across several sources?](discovery.md#team-building)).
