@@ -5,9 +5,8 @@ import { buildTeam } from "@/analysis/member";
 import { parsePaste } from "@/analysis/paste";
 import { buildPool, legality, type PoolFilters } from "@/analysis/pool";
 import { analyze } from "@/analysis/team";
-import type { Mon } from "@/teams/dex";
 import { showdownTeam } from "@/teams/showdown";
-import { MAX_TEAM_SIZE, type Slots } from "@/teams/team";
+import { MAX_TEAM_SIZE, type Slots, type Stocks } from "@/teams/team";
 import { TeamAnalysis } from "@/teams/components/team-analysis";
 import { ArchetypeCard, Checklist } from "@/components/analysis/archetype";
 import { ArchetypeMap } from "@/components/analysis/charts";
@@ -47,16 +46,16 @@ function Tabs({ view, onView, className }: { view: View; onView: (view: View) =>
   );
 }
 
-function useAnalysis(slots: Slots, mons: readonly Mon[]) {
+function useAnalysis(slots: Slots, stocks: Stocks) {
   const pool = buildPool(SHEET_POOL);
-  const text = showdownTeam(slots, mons);
+  const text = showdownTeam(slots, stocks);
   const team = useMemo(() => buildTeam(SHEET_POOL.gen, parsePaste(text, MAX_TEAM_SIZE)).team, [text]);
   const analysis = useMemo(() => (team.length ? analyze(team, pool) : null), [team, pool]);
   return { pool, team, analysis };
 }
 
-function Views({ view, slots, mons, narrow }: { view: View; slots: Slots; mons: readonly Mon[]; narrow: boolean }) {
-  const { pool, team, analysis } = useAnalysis(slots, mons);
+function Views({ view, slots, stocks, narrow }: { view: View; slots: Slots; stocks: Stocks; narrow: boolean }) {
+  const { pool, team, analysis } = useAnalysis(slots, stocks);
   if (!analysis) return <p className="m-auto font-heading text-2xl text-muted-foreground">Add a Pokémon to analyse the team</p>;
   const pair = narrow ? "flex flex-col gap-3.5" : "grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]";
   return (
@@ -67,7 +66,7 @@ function Views({ view, slots, mons, narrow }: { view: View; slots: Slots; mons: 
             <ArchetypeCard analysis={analysis} />
             <Checklist analysis={analysis} />
           </div>
-          <TeamAnalysis slots={slots} mons={mons} stacked={narrow} />
+          <TeamAnalysis slots={slots} stocks={stocks} stacked={narrow} />
         </>
       )}
       {view === "graph" && <TeamGraph team={team} analysis={analysis} height={narrow ? 420 : 520} />}
@@ -103,7 +102,7 @@ function PoolChip({ className }: { className?: string }) {
   );
 }
 
-export function SheetAnalysis({ slots, mons, name }: { slots: Slots; mons: readonly Mon[]; name: string }) {
+export function SheetAnalysis({ slots, stocks, name }: { slots: Slots; stocks: Stocks; name: string }) {
   const [view, setView] = useState<View>("summary");
   const [full, setFull] = useState(false);
   return (
@@ -117,7 +116,7 @@ export function SheetAnalysis({ slots, mons, name }: { slots: Slots; mons: reado
       </div>
       <Tabs view={view} onView={setView} />
       <div className="-mr-2 flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto pr-2 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]">
-        <Views view={view} slots={slots} mons={mons} narrow />
+        <Views view={view} slots={slots} stocks={stocks} narrow />
       </div>
       <Dialog open={full} onOpenChange={setFull}>
         <DialogContent
@@ -140,7 +139,7 @@ export function SheetAnalysis({ slots, mons, name }: { slots: Slots; mons: reado
             </DialogPrimitive.Close>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-5 sm:px-10">
-            <Views view={view} slots={slots} mons={mons} narrow={false} />
+            <Views view={view} slots={slots} stocks={stocks} narrow={false} />
           </div>
         </DialogContent>
       </Dialog>

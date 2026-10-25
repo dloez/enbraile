@@ -1,7 +1,6 @@
 import { toID } from "@pkmn/dex";
 import { parsePaste } from "@/analysis/paste";
 import { currentAbility, describeItem, describeMove, displayName, STAT_LABELS, STATS, type Mon } from "@/teams/dex";
-import type { Sheet } from "@/teams/schema";
 import {
   emptySlots,
   itemsLeft,
@@ -11,6 +10,7 @@ import {
   MOVE_SLOTS,
   type Member,
   type Slots,
+  type Stocks,
 } from "@/teams/team";
 
 export const LEAGUE_EVS = "EVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe";
@@ -49,10 +49,10 @@ export function showdownMember(member: Member, mon: Mon): string {
   return lines.join("\n");
 }
 
-export function showdownTeam(slots: Slots, mons: readonly Mon[]): string {
+export function showdownTeam(slots: Slots, stocks: Stocks): string {
   return slots
     .flatMap((member) => {
-      const mon = memberMon(member, mons);
+      const mon = memberMon(member, stocks);
       return member && mon && mon.species.known ? [showdownMember(member, mon)] : [];
     })
     .join("\n\n");
@@ -69,26 +69,28 @@ export interface ReadTeam {
   left: string[];
 }
 
-export function readShowdownTeam(text: string, sheet: Sheet, mons: readonly Mon[], source: string): ReadTeam {
+export function readShowdownTeam(text: string, stocks: Stocks): ReadTeam {
   const sets = parsePaste(text, MAX_TEAM_SIZE);
   const slots = emptySlots(MAX_TEAM_SIZE);
   const left: string[] = [];
-  const used = new Set<number>();
+  const used = new Set<string>();
+  const all = [...stocks].flatMap(([source, stock]) => stock.mons.map((mon) => ({ source, stock, mon })));
   let added = 0;
 
   for (const set of sets) {
     const id = toID(set.species);
-    const same = mons.filter((mon) => mon.species.id === id && !used.has(mon.index));
-    const mon = same.find((m) => set.nickname !== "" && m.nickname === set.nickname) ?? same[0];
-    if (!mon) {
+    const same = all.filter(({ source, mon }) => mon.species.id === id && !used.has(`${source}:${mon.index}`));
+    const found = same.find(({ mon }) => set.nickname !== "" && mon.nickname === set.nickname) ?? same[0];
+    if (!found) {
       left.push(
-        mons.some((m) => m.species.id === id)
-          ? `${set.species}: every one in this sheet is already on the team`
-          : `${set.species}: not in this sheet`,
+        all.some(({ mon }) => mon.species.id === id)
+          ? `${set.species}: every one in the team's sources is already on the team`
+          : `${set.species}: not in the team's sources`,
       );
       continue;
     }
-    used.add(mon.index);
+    const { source, stock, mon } = found;
+    used.add(`${source}:${mon.index}`);
     const name = displayName(mon);
     const member: Member = {
       source,
@@ -102,7 +104,7 @@ export function readShowdownTeam(text: string, sheet: Sheet, mons: readonly Mon[
     if (set.item) {
       const item = describeItem({ item: toID(set.item), quantity: 1 });
       if (!item.known) left.push(`${name}'s ${set.item}: not an item the site can give`);
-      else if (itemsLeft(sheet, slots, item.id) <= 0) left.push(`${name}'s ${item.name}: none left in the bag`);
+      else if (itemsLeft(stock.sheet, slots, source, item.id) <= 0) left.push(`${name}'s ${item.name}: none left in its bag`);
       else member.item = item.id;
     }
 

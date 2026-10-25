@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Panel } from "@/components/controls";
-import { displayName, type Mon } from "@/teams/dex";
-import type { Slots } from "@/teams/team";
+import { displayName } from "@/teams/dex";
+import type { Slots, Stocks } from "@/teams/team";
 import { analysed, defensiveChart, offensiveCoverage, speedOrder } from "@/teams/analysis";
 import { TypeDot } from "@/components/marks";
 import { MonSprite } from "@/components/pc/summary";
@@ -10,8 +10,8 @@ function Count({ value, className }: { value: number; className: string }) {
   return <span className={cn("tabular-nums text-xs", value === 0 ? "text-muted-foreground/40" : className)}>{value}</span>;
 }
 
-export function TeamAnalysis({ slots, mons, stacked = false }: { slots: Slots; mons: readonly Mon[]; stacked?: boolean }) {
-  const team = analysed(slots, mons);
+export function TeamAnalysis({ slots, stocks, stacked = false }: { slots: Slots; stocks: Stocks; stacked?: boolean }) {
+  const team = analysed(slots, stocks);
   if (team.length === 0) return null;
   const speed = speedOrder(team);
   const chart = defensiveChart(team);

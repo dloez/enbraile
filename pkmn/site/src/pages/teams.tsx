@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { toolPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { describeMember } from "@/teams/dex";
+import { SnapshotMenu } from "@/teams/components/snapshot-menu";
 import { profilePage } from "../../shared/profile";
 import { teamList, teamMade, type TeamRow } from "../../shared/team";
 
@@ -42,6 +43,7 @@ export function TeamsPage() {
   const [named, setNamed] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [making, setMaking] = useState(false);
+  const [starting, setStarting] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -62,14 +64,16 @@ export function TeamsPage() {
     };
   }, [filter]);
 
-  async function newTeam() {
+  async function newTeam(sources?: string[]) {
     setMaking(true);
     setError(null);
+    setStarting(null);
     try {
-      const made = await api("/teams", teamMade, { body: {} });
+      const made = await api("/teams", teamMade, { body: sources ? { sources } : {} });
       await navigate({ to: "/teams/$id", params: { id: made.id } });
     } catch (caught) {
-      setError(message(caught));
+      if (!sources && caught instanceof ApiError && caught.status === 400) setStarting(caught.message);
+      else setError(message(caught));
       setMaking(false);
     }
   }
@@ -84,10 +88,21 @@ export function TeamsPage() {
         <h1 className="m-0 font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">Teams</h1>
         <div className="flex-1" />
         {player && (
-          <button type="button" disabled={making} onClick={() => void newTeam()} className={buttonVariants({ variant: "go", className: "min-h-13 text-[1.625rem]" })}>
-            <Plus className="size-5" aria-hidden="true" />
-            New team
-          </button>
+          <span className="relative flex">
+            <button type="button" disabled={making} onClick={() => void newTeam()} className={buttonVariants({ variant: "go", className: "min-h-13 text-[1.625rem]" })}>
+              <Plus className="size-5" aria-hidden="true" />
+              New team
+            </button>
+            {starting !== null && (
+              <SnapshotMenu
+                label="Start from"
+                note={<p role="alert" className="m-0 px-2.5 pt-1 pb-1.5 text-sm text-muted-foreground">{starting}. Or start from:</p>}
+                className="top-full right-0 mt-2"
+                onClose={() => setStarting(null)}
+                onPick={(row) => void newTeam([row.id])}
+              />
+            )}
+          </span>
         )}
       </div>
       {error && (

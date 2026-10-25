@@ -7,7 +7,7 @@ import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
 import { currentAbility, describeItem, displayName, type Mon } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
-import { heldCount, MINI_SETA, memberMon, type Member, type Slots } from "@/teams/team";
+import { heldCount, MINI_SETA, memberMon, type Member, type Slots, type Stocks } from "@/teams/team";
 
 export const editorScroll = "-mr-2.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]";
 
@@ -46,10 +46,10 @@ export function EditorHead({ who, what, back, onBack, aside }: { who: string; wh
 
 type PocketId = "items" | "berries";
 
-export function ItemEditor({ sheet, slots, mons, slot, owner, back, onBack, onGive, onTake }: {
+export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, onGive, onTake }: {
   sheet: Sheet;
   slots: Slots;
-  mons: readonly Mon[];
+  stocks: Stocks;
   slot: number;
   owner: string;
   back: string;
@@ -58,7 +58,7 @@ export function ItemEditor({ sheet, slots, mons, slot, owner, back, onBack, onGi
   onTake: () => void;
 }) {
   const member = slots[slot] as Member;
-  const mon = memberMon(member, mons) as Mon;
+  const mon = memberMon(member, stocks) as Mon;
   const name = displayName(mon);
   const items = useMemo(() => sheet.items.filter((i) => i.item !== MINI_SETA).map(describeItem).filter((i) => i.known), [sheet]);
   const holding = member.item ? items.find((i) => i.id === member.item) : undefined;
@@ -68,7 +68,7 @@ export function ItemEditor({ sheet, slots, mons, slot, owner, back, onBack, onGi
   const q = query.trim().toLowerCase();
   const shown = items.filter((i) => i.pocket === pocket && (!q || i.name.toLowerCase().includes(q)));
   const selected = shown.find((i) => i.id === picked) ?? shown[0];
-  const leftOf = (id: string, quantity: number) => quantity - heldCount(slots, id);
+  const leftOf = (id: string, quantity: number) => quantity - heldCount(slots, member.source, id);
   const left = selected ? leftOf(selected.id, selected.quantity) : 0;
   const holds = selected !== undefined && member.item === selected.id;
   const blocked = !selected || holds || left <= 0;
@@ -99,7 +99,7 @@ export function ItemEditor({ sheet, slots, mons, slot, owner, back, onBack, onGi
         {shown.map((item) => {
           const remaining = leftOf(item.id, item.quantity);
           const holders = slots.flatMap((m, at) => {
-            const holder = m?.item === item.id ? memberMon(m, mons) : undefined;
+            const holder = m?.source === member.source && m.item === item.id ? memberMon(m, stocks) : undefined;
             return holder ? [{ at, mon: holder }] : [];
           });
           return (
@@ -162,9 +162,9 @@ export function ItemEditor({ sheet, slots, mons, slot, owner, back, onBack, onGi
   );
 }
 
-export function AbilityEditor({ slots, mons, slot, setasLeft, back, onBack, onPick }: {
+export function AbilityEditor({ slots, stocks, slot, setasLeft, back, onBack, onPick }: {
   slots: Slots;
-  mons: readonly Mon[];
+  stocks: Stocks;
   slot: number;
   setasLeft: number;
   back: string;
@@ -172,7 +172,7 @@ export function AbilityEditor({ slots, mons, slot, setasLeft, back, onBack, onPi
   onPick: (ability: string) => void;
 }) {
   const member = slots[slot] as Member;
-  const mon = memberMon(member, mons) as Mon;
+  const mon = memberMon(member, stocks) as Mon;
   const current = currentAbility(mon);
   const using = member.ability ?? current;
   return (

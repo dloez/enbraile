@@ -26,8 +26,10 @@ export const teamSlots = z.array(teamMember.nullable()).min(TEAM_SIZE).max(MAX_T
 
 export const teamName = z.string().trim().min(1).max(60);
 
+export const teamSourceIds = z.array(id).min(1).refine((ids) => new Set(ids).size === ids.length);
+
 export const newTeamInput = z.object({
-  snapshot: id.optional(),
+  sources: teamSourceIds.optional(),
   name: teamName.optional(),
   slots: teamSlots.optional(),
 });
@@ -35,6 +37,7 @@ export const newTeamInput = z.object({
 export const teamInput = z.object({
   name: teamName.optional(),
   slots: teamSlots.optional(),
+  sources: teamSourceIds.optional(),
 });
 
 const person = z.object({ id: z.string(), name: z.string() });
@@ -56,6 +59,8 @@ export const teamRow = z.object({
 });
 
 export const teamList = z.array(teamRow);
+
+export const snapshotList = z.array(teamSourceRow);
 
 export const teamSource = teamSourceRow.extend({
   snapshot: snapshotSchema,

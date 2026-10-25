@@ -10,16 +10,26 @@ export type Member = TeamMember;
 
 export type Slots = TeamSlots;
 
-export function memberMon(member: Member | null, mons: readonly Mon[]): Mon | undefined {
+export interface Stock {
+  sheet: Sheet;
+  mons: readonly Mon[];
+}
+
+export type Stocks = ReadonlyMap<string, Stock>;
+
+export function memberMon(member: Member | null, stocks: Stocks): Mon | undefined {
   if (!member) return undefined;
-  const mon = mons[member.index];
+  const mon = stocks.get(member.source)?.mons[member.index];
   return mon && mon.species.id === member.species ? mon : undefined;
 }
 
-export function liveSlots(slots: Slots, mons: readonly Mon[], source: string): Slots {
-  return slots.map((member) => (member?.source === source && memberMon(member, mons) ? member : null));
+export function liveSlots(slots: Slots, stocks: Stocks): Slots {
+  return slots.map((member) => (memberMon(member, stocks) ? member : null));
 }
 
+export function usedBy(slots: Slots, source: string): number {
+  return slots.filter((member) => member?.source === source).length;
+}
 
 export function newMember(mon: Mon, source: string): Member {
   return {
@@ -58,27 +68,27 @@ function change(slots: Slots, slot: number, edit: (member: Member) => Member): S
   return next;
 }
 
-export function heldCount(slots: Slots, item: string, except?: number): number {
-  return slots.filter((member, slot) => slot !== except && member?.item === item).length;
+export function heldCount(slots: Slots, source: string, item: string, except?: number): number {
+  return slots.filter((member, slot) => slot !== except && member?.source === source && member.item === item).length;
 }
 
 export function quantityOf(sheet: Sheet, item: string): number {
   return sheet.items.filter((entry) => entry.item === item).reduce((sum, entry) => sum + entry.quantity, 0);
 }
 
-export function itemsLeft(sheet: Sheet, slots: Slots, item: string, except?: number): number {
-  return quantityOf(sheet, item) - heldCount(slots, item, except);
+export function itemsLeft(sheet: Sheet, slots: Slots, source: string, item: string, except?: number): number {
+  return quantityOf(sheet, item) - heldCount(slots, source, item, except);
 }
 
 export function giveItem(sheet: Sheet, slots: Slots, slot: number, item: string): Slots | null {
-  if (itemsLeft(sheet, slots, item, slot) <= 0) return null;
+  const member = slots[slot];
+  if (!member || itemsLeft(sheet, slots, member.source, item, slot) <= 0) return null;
   return change(slots, slot, (member) => ({ ...member, item }));
 }
 
 export function takeItem(slots: Slots, slot: number): Slots {
   return change(slots, slot, (member) => ({ ...member, item: null }));
 }
-
 
 export function setMove(slots: Slots, slot: number, at: number, move: string | null): Slots {
   return change(slots, slot, (member) => {
@@ -92,6 +102,11 @@ export function setAbility(slots: Slots, slot: number, ability: string | null, c
   return change(slots, slot, (member) => ({ ...member, ability: ability === current ? null : ability }));
 }
 
-export function setasNeeded(slots: Slots, mons: readonly Mon[]): number {
-  return slots.filter((member) => member !== null && member.ability !== null && memberMon(member, mons)).length;
+export function setasNeeded(slots: Slots, stocks: Stocks, source: string): number {
+  return slots.filter((member) => member !== null && member.source === source && member.ability !== null && memberMon(member, stocks)).length;
+}
+
+export function setasLeft(slots: Slots, stocks: Stocks, source: string): number {
+  const stock = stocks.get(source);
+  return stock ? quantityOf(stock.sheet, MINI_SETA) - setasNeeded(slots, stocks, source) : 0;
 }

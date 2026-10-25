@@ -59,24 +59,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## Build teams from several snapshots, any player's
-
-A team's sources picker takes any number of snapshots, any player's; the PC shows each source's Pokémon, and each member draws its item and Mini Setas from its own snapshot ([Item limits across several sources?](discovery.md#team-building)).
-
-**Do:**
-- [ ] The sources picker; per-source PC sections and limits.
-- [ ] Lift what the one-snapshot build holds back until sources may be any player's ([Team Builder → Decisions](../../pkmn/site/explanation/team-builder.md#decisions), "The team builder's build choices"): `ownSnapshot`'s 403 in `POST /api/teams`, a route or `PUT` field that adds and removes `team_source` rows (today only `POST` writes one, at position 0), `page.sources[0]` as the one source in `src/pages/team.tsx:88` (the head's chip, the bag and Mini Setas of every editor, the add dialog, Paste's matching), and the "Not yet" line of `team-builder.md`.
-- [ ] A source's chip has a remove button only while no member uses it, and **+ Source** opens a menu of the snapshots not yet sources ([Where do members come from?](discovery.md#team-building); `team.dc.html`, [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the team builder signed off at desktop width).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, as `red`, add Red's earlier Series 1 snapshot (the seed makes one before the latest) to the Seed team, put one of its Pokémon in a slot, see its item editor read that snapshot's bag and the head's chips each carry their own Mini Setas, reload and see it kept; as `blue`, who has no snapshot, add Red's latest snapshot as a source of a new team and put one of Red's Pokémon in it.
-- Human-run: add another player's snapshot to a team, put one of their Pokémon in it, and see its item limited by their bag, not yours; see that source's chip carry no remove button while that member is in the team, take the member out, and remove the source.
-- Reuse: the team builder, `src/pages/team.tsx` and `src/teams/`; `teamMember.source` in `shared/team.ts`, which already names each member's snapshot; `backed` in `api/_lib/teams.ts`.
-- Neighbors: `src/components/pc/pc-box.tsx`, `src/teams/components/add-dialog.tsx`, `src/teams/components/add-to-team.tsx`.
-- Forbidden: one pooled bag across sources; removing a source a member still uses.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-
 ## "Add to team" on another player's PC
 
 The PC's one link to teams is "Add to team" in its summary, a menu of the reader's teams and "New team" ([How do the PC and the team pages split?](discovery.md#team-building)). The one-snapshot build shows it only on the reader's own PC, "until sources may be any player's" ([Team Builder → Decisions](../../pkmn/site/explanation/team-builder.md#decisions), "The team builder's build choices"; `src/teams/components/add-to-team.tsx`, which lists only the reader's teams on that snapshot). Once a team may hold any player's snapshot, scouting an opponent from their PC is the case discovery names for it, and neither discovery nor the boards say what the menu does there.
@@ -104,6 +86,7 @@ A free member is a full Showdown set (any species in the team's pool, item, abil
 **Do:**
 - [ ] The free member editor; free members in the stored slots, the copy and the analysis.
 - [ ] "Any Pokémon" as a source, added and removed like a snapshot; the import keeps backed matching and makes free members of the rest when it is a source.
+- [ ] The paste dialog's list of what it left out survives the import: today `submit` in `src/teams/components/paste-dialog.tsx` awaits `onImport`, whose `pasted` in `src/pages/team.tsx` navigates to the new team before the dialog sets its outcome, so a paste that imports some sets and leaves others out lands on the new team without showing what was left out (seen in the browser by the several-sources entry, 2026-10-25).
 
 **Acceptance:**
 - Claude-run: `npm run gate`.

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ClipboardCheck, ClipboardCopy, X } from "lucide-react";
+import { ChevronLeft, ClipboardCheck, ClipboardCopy, Plus, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { toolPage } from "@/components/page";
 import { MiniSeta } from "@/components/pc/bag";
@@ -11,11 +11,12 @@ import { PLAYER_FILL, playerColour } from "@/components/player-badge";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { AddDialog } from "@/teams/components/add-dialog";
+import { AddDialog, type AddSource } from "@/teams/components/add-dialog";
 import { AbilityEditor, ItemEditor, segButton, segTrack } from "@/teams/components/editors";
 import { EmptyCard, MemberCard, type Focus } from "@/teams/components/member-card";
 import { MoveEditor } from "@/teams/components/move-picker";
 import { PasteDialog } from "@/teams/components/paste-dialog";
+import { SnapshotMenu, sourceLabel } from "@/teams/components/snapshot-menu";
 import { SheetAnalysis } from "@/teams/components/sheet-analysis";
 import { currentAbility, describeMove, describePokemon, type Mon } from "@/teams/dex";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
@@ -25,22 +26,23 @@ import {
   lastFilled,
   liveSlots,
   memberMon,
-  MINI_SETA,
   putMember,
-  quantityOf,
   removeMember,
   resized,
   setAbility,
-  setasNeeded,
+  setasLeft,
   setMove,
   takeItem,
+  usedBy,
   PICK_SIZE,
   TEAM_SIZE,
   TEAM_SIZES,
   type Member,
   type Slots,
+  type Stock,
+  type Stocks,
 } from "@/teams/team";
-import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource } from "../../shared/team";
+import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
 
 const FROM = "/teams/$id";
 
@@ -85,8 +87,7 @@ export function TeamBuilderPage() {
     );
   }
   if (!page) return <main className={toolPage} />;
-  const source = page.sources[0];
-  if (!source) {
+  if (page.sources.length === 0) {
     return (
       <main className={cn(toolPage, "gap-4 pt-5")}>
         <BackLink />
@@ -97,7 +98,7 @@ export function TeamBuilderPage() {
       </main>
     );
   }
-  return <Builder key={page.id} page={page} source={source} />;
+  return <Builder key={page.id} page={page} />;
 }
 
 function BackLink() {
@@ -121,15 +122,34 @@ function asSet(mon: Mon, member: Member): Mon {
   };
 }
 
-function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
+interface Held extends Stock, AddSource {
+  source: TeamSource;
+  owner: string;
+  colour: number;
+}
+
+function holding(sources: readonly TeamSource[]): Held[] {
+  return sources.map((source) => ({
+    id: source.id,
+    source,
+    label: sourceLabel(source),
+    owner: source.player.name,
+    colour: playerColour(source.player.id),
+    sheet: source.snapshot,
+    mons: source.snapshot.pokemon.map(describePokemon),
+    gaps: source.missing?.missing ?? [],
+  }));
+}
+
+function Builder({ page }: { page: TeamPage }) {
   const navigate = useNavigate();
   const wide = useMediaQuery("(min-width: 64rem)");
-  const sheet = source.snapshot;
-  const gaps = source.missing?.missing ?? [];
-  const mons = useMemo(() => sheet.pokemon.map(describePokemon), [sheet]);
+  const [sources, setSources] = useState<readonly TeamSource[]>(page.sources);
+  const held = useMemo(() => holding(sources), [sources]);
+  const stocks = useMemo(() => new Map(held.map((h) => [h.id, h])), [held]);
   const [name, setName] = useState(page.name);
   const [stored, setStored] = useState<Slots>(page.slots);
-  const slots = useMemo(() => liveSlots(stored, mons, source.id), [stored, mons, source.id]);
+  const slots = useMemo(() => liveSlots(stored, stocks), [stored, stocks]);
   const [panel, setPanel] = useState<Panel>({ t: "ana" });
   const [adding, setAdding] = useState<number | null>(null);
   const [glow, setGlow] = useState<number | null>(null);
@@ -137,11 +157,9 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
   const [pasting, setPasting] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const [pick, setPick] = useState<Pick>(() => loadPick(page.id));
+  const [joining, setJoining] = useState(false);
   const writes = useRef<Promise<unknown>>(Promise.resolve());
   const editable = page.canEdit;
-  const from = source.player.name;
-  const colour = playerColour(source.player.id);
-  const setasLeft = quantityOf(sheet, MINI_SETA) - setasNeeded(slots, mons);
   const size = slots.length;
   const pickMode = size > TEAM_SIZE && pick.scope === "six";
   const picked = pickedOf(slots, pick);
@@ -152,13 +170,36 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
     savePick(page.id, next);
   }
 
-  function write(body: { slots?: Slots; name?: string }) {
+  function write(body: { slots?: Slots; name?: string; sources?: string[] }, after?: () => Promise<void>) {
     writes.current = writes.current
-      .then(() => api(`/teams/${encodeURIComponent(page.id)}`, teamDone, { method: "PUT", body }))
+      .then(async () => {
+        await api(`/teams/${encodeURIComponent(page.id)}`, teamDone, { method: "PUT", body });
+        await after?.();
+      })
       .then(
         () => setFailed(null),
         (caught: unknown) => setFailed(message(caught)),
       );
+  }
+
+  function removeSource(id: string) {
+    const next = sources.filter((s) => s.id !== id);
+    setSources(next);
+    setStored(slots);
+    write({ sources: next.map((s) => s.id), slots });
+  }
+
+  function addSource(row: TeamSourceRow) {
+    setJoining(true);
+    setStored(slots);
+    write({ sources: [...sources.map((s) => s.id), row.id], slots }, async () => {
+      try {
+        const next = await api(`/teams/${encodeURIComponent(page.id)}`, teamPage);
+        setSources(next.sources);
+      } finally {
+        setJoining(false);
+      }
+    });
   }
 
   function save(next: Slots | null) {
@@ -184,22 +225,23 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
   };
 
   async function pasted(next: Slots) {
-    const made = await api("/teams", teamMade, { body: { snapshot: source.id, slots: next } });
+    const made = await api("/teams", teamMade, { body: { sources: sources.map((s) => s.id), slots: next } });
     await navigate({ to: FROM, params: { id: made.id } });
   }
 
   const cards = (
     <ol aria-label="Members" className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:auto-rows-[minmax(206px,1fr)] lg:overflow-y-auto">
       {slots.map((member, slot) => {
-        const mon = memberMon(member, mons);
+        const mon = memberMon(member, stocks);
+        const own = member ? stocks.get(member.source) : undefined;
         return (
           <li key={slot} className="flex min-h-0">
-            {member && mon ? (
+            {member && mon && own ? (
               <MemberCard
                 member={member}
                 mon={mon}
-                from={from}
-                colour={colour}
+                from={own.owner}
+                colour={own.colour}
                 focus={focusOf(slot)}
                 glow={glow === slot}
                 editable={editable}
@@ -238,15 +280,17 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
   const analysis = (
     <>
       {size > TEAM_SIZE && <ScopeSwitch scope={pickMode ? "six" : "all"} filled={filledAt(slots).length} picked={picked.length} onScope={(scope) => choosePick({ ...pick, scope })} />}
-      <SheetAnalysis slots={analysed} mons={mons} name={name} />
+      <SheetAnalysis slots={analysed} stocks={stocks} name={name} />
     </>
   );
 
   function panelBody() {
     if (panel.t === "ana") return null;
     const member = slots[panel.slot];
-    const mon = memberMon(member, mons);
-    if (!member || !mon) return null;
+    const mon = memberMon(member, stocks);
+    const own = member ? stocks.get(member.source) : undefined;
+    if (!member || !mon || !own) return null;
+    const sheet = own.sheet;
     if (panel.t === "sum") {
       const shown = asSet(mon, member);
       return (
@@ -262,7 +306,7 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
             </button>
           </div>
           <SummaryHead mon={shown} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
-          <SummaryBody key={`${panel.slot}:${mon.index}`} mon={shown} sheet={sheet} gaps={gaps} />
+          <SummaryBody key={`${panel.slot}:${member.source}:${mon.index}`} mon={shown} sheet={sheet} gaps={own.gaps} />
         </>
       );
     }
@@ -273,9 +317,9 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
           key={panel.slot}
           sheet={sheet}
           slots={slots}
-          mons={mons}
+          stocks={stocks}
           slot={panel.slot}
-          owner={from}
+          owner={own.owner}
           back={backLabel(panel)}
           onBack={back}
           onGive={(item) => {
@@ -294,9 +338,9 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
         <AbilityEditor
           key={panel.slot}
           slots={slots}
-          mons={mons}
+          stocks={stocks}
           slot={panel.slot}
-          setasLeft={setasLeft}
+          setasLeft={setasLeft(slots, stocks, member.source)}
           back={backLabel(panel)}
           onBack={back}
           onPick={(ability) => {
@@ -338,17 +382,15 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
             {!editable && (
               <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.id) % PLAYER_FILL.length])}>{page.owner.name}'s team</span>
             )}
-            <span className="flex min-h-8.5 items-center gap-2 rounded-lg border-3 bg-ink pr-3 pl-1.5 font-heading text-xl">
-              <span aria-hidden="true" className={cn("grid size-5 place-items-center rounded-[5px] text-base text-ink", PLAYER_FILL[colour % PLAYER_FILL.length])}>
-                {from.charAt(0).toUpperCase()}
-              </span>
-              {from}'s PC · {source.milestone}
-              <span title="Mini Setas left" className={cn("ml-0.5 flex items-center gap-0.75", setasLeft < 0 ? "text-coral" : "text-subtle")}>
-                <MiniSeta className="size-4" />
-                {setasLeft}
-                <span className="sr-only">Mini Setas left</span>
-              </span>
-            </span>
+            {held.map((h) => (
+              <SourceChip
+                key={h.id}
+                held={h}
+                setas={setasLeft(slots, stocks, h.id)}
+                onRemove={editable && held.length > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
+              />
+            ))}
+            {editable && <SourceMenu taken={held.map((h) => h.id)} busy={joining} onPick={addSource} />}
           </div>
         </div>
         <div className="flex-1" />
@@ -359,7 +401,7 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
               Paste
             </button>
           )}
-          <CopyButton slots={slots} mons={mons} />
+          <CopyButton slots={slots} stocks={stocks} />
           {editable && <DeleteButton id={page.id} name={name} />}
         </div>
       </div>
@@ -427,21 +469,66 @@ function Builder({ page, source }: { page: TeamPage; source: TeamSource }) {
         <AddDialog
           slot={adding}
           slots={slots}
-          mons={mons}
-          sheet={sheet}
-          gaps={gaps}
-          source={`${from}'s PC · ${source.milestone}`}
+          stocks={stocks}
+          sources={held}
           onClose={() => setAdding(null)}
-          onPut={(slot, mon) => {
-            save(putMember(slots, slot, mon, source.id));
+          onPut={(slot, mon, source) => {
+            save(putMember(slots, slot, mon, source));
             setAdding(null);
             setPanel({ t: "ana" });
             setGlow(slot);
           }}
         />
       )}
-      {editable && <PasteDialog sheet={sheet} source={source.id} mons={mons} open={pasting} onOpenChange={setPasting} onImport={pasted} />}
+      {editable && <PasteDialog stocks={stocks} open={pasting} onOpenChange={setPasting} onImport={pasted} />}
     </main>
+  );
+}
+
+function SourceChip({ held, setas, onRemove }: { held: Held; setas: number; onRemove?: () => void }) {
+  return (
+    <span className={cn("flex min-h-8.5 items-center gap-2 rounded-lg border-3 bg-ink pl-1.5 font-heading text-xl", onRemove ? "pr-1" : "pr-3")}>
+      <span aria-hidden="true" className={cn("grid size-5 place-items-center rounded-[5px] text-base text-ink", PLAYER_FILL[held.colour % PLAYER_FILL.length])}>
+        {held.owner.charAt(0).toUpperCase()}
+      </span>
+      {held.label}
+      <span title="Mini Setas left" className={cn("ml-0.5 flex items-center gap-0.75", setas < 0 ? "text-coral" : "text-subtle")}>
+        <MiniSeta className="size-4" />
+        {setas}
+        <span className="sr-only">Mini Setas left</span>
+      </span>
+      {onRemove && (
+        <button
+          type="button"
+          aria-label={`Remove ${held.label}`}
+          title="Remove this source"
+          onClick={onRemove}
+          className="grid size-6 cursor-pointer place-items-center rounded-md border-2 border-cell-hi bg-cell p-0 text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <X className="size-3" aria-hidden="true" />
+        </button>
+      )}
+    </span>
+  );
+}
+
+function SourceMenu({ taken, busy, onPick }: { taken: readonly string[]; busy: boolean; onPick: (row: TeamSourceRow) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative flex">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={busy}
+        onClick={() => setOpen(!open)}
+        className="flex min-h-8.5 cursor-pointer items-center gap-2 rounded-lg border-none bg-white/10 px-3 font-heading text-xl text-subtle outline-none enabled:hover:bg-white/18 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-45"
+      >
+        <Plus className="size-3.5 text-primary" aria-hidden="true" />
+        Source
+      </button>
+      {open && <SnapshotMenu label="Add a source" taken={taken} onClose={() => setOpen(false)} onPick={onPick} className="top-10 left-0" />}
+    </span>
   );
 }
 
@@ -553,9 +640,9 @@ function Title({ name, editable, onRename }: { name: string; editable: boolean; 
   );
 }
 
-function CopyButton({ slots, mons }: { slots: Slots; mons: readonly Mon[] }) {
+function CopyButton({ slots, stocks }: { slots: Slots; stocks: Stocks }) {
   const [copied, setCopied] = useState<"copied" | "failed" | null>(null);
-  const text = showdownTeam(slots, mons);
+  const text = showdownTeam(slots, stocks);
 
   useEffect(() => {
     if (!copied) return;

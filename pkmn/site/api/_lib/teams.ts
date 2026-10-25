@@ -38,7 +38,7 @@ function sourcesQuery() {
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId));
 }
 
-type SourceRow = Awaited<ReturnType<typeof sourcesQuery>>[number];
+type SourceRow = Omit<Awaited<ReturnType<typeof sourcesQuery>>[number], "teamId">;
 
 function sourceOf(row: SourceRow): TeamSourceRow {
   return {
@@ -63,6 +63,11 @@ async function sourceIds(teamId: string): Promise<string[]> {
   return rows.map((row) => row.id);
 }
 
+async function stored(id: string): Promise<TeamSlots> {
+  const [row] = await db.select({ slots: team.slots }).from(team).where(eq(team.id, id));
+  return row?.slots ?? [];
+}
+
 async function latestSnapshot(userId: string): Promise<string | undefined> {
   const [row] = await db
     .select({ id: snapshot.id })
@@ -76,15 +81,29 @@ async function latestSnapshot(userId: string): Promise<string | undefined> {
   return row?.id;
 }
 
-async function ownSnapshot(snapshotId: string, userId: string): Promise<boolean> {
-  const [row] = await db
+async function shownSnapshots(ids: readonly string[]): Promise<boolean> {
+  const rows = await db
     .select({ id: snapshot.id })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .innerJoin(series, eq(series.id, save.seriesId))
-    .where(and(eq(snapshot.id, snapshotId), eq(save.userId, userId), ne(series.state, "draft")));
-  return row !== undefined;
+    .where(and(inArray(snapshot.id, [...ids]), ne(series.state, "draft")));
+  return rows.length === ids.length;
 }
+
+teams.get("/snapshots", async (c) => {
+  const rows = await db
+    .select({ id: snapshot.id, playerId: user.id, playerName: user.name, seriesNumber: series.number, seriesName: series.name, milestone: milestone.name })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .innerJoin(user, eq(user.id, save.userId))
+    .innerJoin(series, eq(series.id, save.seriesId))
+    .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .where(ne(series.state, "draft"))
+    .orderBy(desc(series.number), asc(user.name), desc(milestone.position));
+  const list: TeamSourceRow[] = rows.map(sourceOf);
+  return c.json(list);
+});
 
 teams.get("/", async (c) => {
   const owner = c.req.query("owner");
@@ -144,16 +163,17 @@ teams.post("/", async (c) => {
   if (reader.admin) return c.json({ error: "Admins have no teams" }, 403);
   const input = await body(c.req.raw, newTeamInput);
   if (!input) return c.json({ error: "Not a team" }, 400);
-  const source = input.snapshot ?? (await latestSnapshot(reader.id));
-  if (!source) return c.json({ error: "Upload a snapshot to the running series first" }, 400);
-  if (!(await ownSnapshot(source, reader.id))) return c.json({ error: "Build only from your own snapshots" }, 403);
+  const latest = input.sources ? undefined : await latestSnapshot(reader.id);
+  const sources = input.sources ?? (latest ? [latest] : []);
+  if (sources.length === 0) return c.json({ error: "Upload a snapshot to the running series first" }, 400);
+  if (!(await shownSnapshots(sources))) return c.json({ error: "No such snapshot" }, 400);
   const slots = input.slots ?? emptySlots();
-  if (!backed(slots, [source])) return c.json({ error: "A member comes from outside the team's snapshot" }, 400);
+  if (!backed(slots, sources)) return c.json({ error: "A member comes from outside the team's sources" }, 400);
   const names = await db.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
   const id = crypto.randomUUID();
   await db.transaction(async (tx) => {
     await tx.insert(team).values({ id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name)), size: slots.length, slots });
-    await tx.insert(teamSource).values({ teamId: id, snapshotId: source, position: 0 });
+    await tx.insert(teamSource).values(sources.map((snapshotId, position) => ({ teamId: id, snapshotId, position })));
   });
   return c.json({ id });
 });
@@ -165,11 +185,20 @@ teams.put("/:id", async (c) => {
   if (!(await owned(id, reader.id))) return c.json({ error: "Only the team's owner changes it" }, 403);
   const input = await body(c.req.raw, teamInput);
   if (!input) return c.json({ error: "Not a team" }, 400);
-  if (input.slots && !backed(input.slots, await sourceIds(id))) return c.json({ error: "A member comes from outside the team's snapshot" }, 400);
-  await db
-    .update(team)
-    .set({ ...(input.name ? { name: input.name } : {}), ...(input.slots ? { size: input.slots.length, slots: input.slots } : {}), updatedAt: new Date() })
-    .where(eq(team.id, id));
+  const sources = input.sources ?? (await sourceIds(id));
+  if (input.sources && !(await shownSnapshots(input.sources))) return c.json({ error: "No such snapshot" }, 400);
+  const slots = input.slots ?? (input.sources ? (await stored(id)) : undefined);
+  if (slots && !backed(slots, sources)) return c.json({ error: "A member comes from outside the team's sources" }, 400);
+  await db.transaction(async (tx) => {
+    await tx
+      .update(team)
+      .set({ ...(input.name ? { name: input.name } : {}), ...(input.slots ? { size: input.slots.length, slots: input.slots } : {}), updatedAt: new Date() })
+      .where(eq(team.id, id));
+    if (input.sources) {
+      await tx.delete(teamSource).where(eq(teamSource.teamId, id));
+      await tx.insert(teamSource).values(input.sources.map((snapshotId, position) => ({ teamId: id, snapshotId, position })));
+    }
+  });
   return c.json({});
 });
 

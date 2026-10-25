@@ -2,7 +2,7 @@ import { Dex } from "@pkmn/dex";
 import { damageTaken, typeMultiplier } from "@/analysis/chart";
 import { TYPES, type TypeName } from "@/analysis/dex";
 import { currentAbility, type Mon } from "@/teams/dex";
-import { memberMon, type Member, type Slots } from "@/teams/team";
+import { memberMon, type Member, type Slots, type Stocks } from "@/teams/team";
 
 const gen = Dex.forGen(9);
 
@@ -25,9 +25,9 @@ export interface Analysed {
   types: string[];
 }
 
-export function analysed(slots: Slots, mons: readonly Mon[]): Analysed[] {
+export function analysed(slots: Slots, stocks: Stocks): Analysed[] {
   return slots.flatMap((member, slot) => {
-    const mon = memberMon(member, mons);
+    const mon = memberMon(member, stocks);
     if (!member || !mon || !mon.showdownTypes || !mon.stats) return [];
     return [{ slot, member, mon, types: mon.showdownTypes }];
   });

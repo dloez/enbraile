@@ -1,15 +1,11 @@
 import { useState } from "react";
-import type { Mon } from "@/teams/dex";
-import type { Sheet } from "@/teams/schema";
 import { readShowdownTeam } from "@/teams/showdown";
-import type { Slots } from "@/teams/team";
+import type { Slots, Stocks } from "@/teams/team";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 
 interface PasteDialogProps {
-  sheet: Sheet;
-  source: string;
-  mons: readonly Mon[];
+  stocks: Stocks;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImport: (slots: Slots) => Promise<void>;
@@ -20,7 +16,7 @@ interface Outcome {
   left: string[];
 }
 
-export function PasteDialog({ sheet, source, mons, open, onOpenChange, onImport }: PasteDialogProps) {
+export function PasteDialog({ stocks, open, onOpenChange, onImport }: PasteDialogProps) {
   const [text, setText] = useState("");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
 
@@ -33,7 +29,7 @@ export function PasteDialog({ sheet, source, mons, open, onOpenChange, onImport 
   }
 
   async function submit() {
-    const read = readShowdownTeam(text, sheet, mons, source);
+    const read = readShowdownTeam(text, stocks);
     if (read.added > 0) await onImport(read.slots);
     if (read.added > 0 && read.left.length === 0) close(false);
     else setOutcome({ added: read.added, left: read.left });

@@ -7,27 +7,39 @@ import { MonSprite } from "@/components/pc/summary";
 import { PcBox, SummaryAside, SummarySheet } from "@/components/pc/pc-box";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { segButton, segTrack } from "@/teams/components/editors";
 import { displayName, type Mon } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
-import { memberMon, type Slots } from "@/teams/team";
+import { memberMon, type Slots, type Stocks } from "@/teams/team";
 import type { ExportGap } from "../../../shared/snapshot";
 
-export function AddDialog({ slot, slots, mons, sheet, gaps, source, onClose, onPut }: {
+export interface AddSource {
+  id: string;
+  label: string;
+  sheet: Sheet;
+  mons: readonly Mon[];
+  gaps: readonly ExportGap[];
+}
+
+export function AddDialog({ slot, slots, stocks, sources, onClose, onPut }: {
   slot: number | null;
   slots: Slots;
-  mons: readonly Mon[];
-  sheet: Sheet;
-  gaps: readonly ExportGap[];
-  source: string;
+  stocks: Stocks;
+  sources: readonly AddSource[];
   onClose: () => void;
-  onPut: (slot: number, mon: Mon) => void;
+  onPut: (slot: number, mon: Mon, source: string) => void;
 }) {
   const wide = useMediaQuery("(min-width: 64rem)");
   const [picked, setPicked] = useState<number | null>(null);
-  const taken = new Set(slots.flatMap((m) => (m ? [m.index] : [])));
-  const selected = picked ?? (wide ? 0 : null);
+  const [from, setFrom] = useState<string | null>(null);
+  const source = sources.find((s) => s.id === from) ?? sources[0];
+  const mons = source?.mons ?? [];
+  const sheet = source?.sheet;
+  const gaps = source?.gaps ?? [];
+  const taken = new Set(slots.flatMap((m) => (m && m.source === source?.id ? [m.index] : [])));
+  const selected = picked ?? (wide && mons.length > 0 ? 0 : null);
   const mon = selected === null ? undefined : mons[selected];
-  const open = slot !== null;
+  const open = slot !== null && source !== undefined;
 
   function close() {
     setPicked(null);
@@ -42,9 +54,9 @@ export function AddDialog({ slot, slots, mons, sheet, gaps, source, onClose, onP
           type="button"
           disabled={blocked || slot === null}
           onClick={() => {
-            if (slot === null) return;
+            if (slot === null || !source) return;
             setPicked(null);
-            onPut(slot, target);
+            onPut(slot, target, source.id);
           }}
           className={buttonVariants({ variant: "go", className: "min-h-13 w-full rounded-[10px] text-[1.625rem]" })}
         >
@@ -63,12 +75,28 @@ export function AddDialog({ slot, slots, mons, sheet, gaps, source, onClose, onP
       >
         <div className="flex min-h-19 flex-none flex-wrap items-center gap-x-4 gap-y-2 border-b-4 border-red bg-ink py-3 pr-4 pl-4 sm:pr-8 sm:pl-10">
           <DialogTitle className="m-0 font-heading text-[2.5rem] leading-none font-normal">Add to slot {(slot ?? 0) + 1}</DialogTitle>
-          <span className="rounded-[10px] border-3 bg-background px-3.5 py-1 font-heading text-[1.375rem] text-white">{source}</span>
+          <div role="tablist" aria-label="From" className={cn(segTrack, "max-w-full overflow-x-auto bg-background")}>
+            {sources.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                role="tab"
+                aria-selected={s.id === source?.id}
+                onClick={() => {
+                  setFrom(s.id);
+                  setPicked(null);
+                }}
+                className={cn(segButton(s.id === source?.id), "min-h-9.5 px-3.5 text-[1.375rem] whitespace-nowrap")}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
           <div className="flex-1" />
           <span className="font-heading text-xl text-muted-foreground max-sm:hidden">Team</span>
           <div className="flex gap-1 max-sm:hidden">
             {slots.map((m, at) => {
-              const held = memberMon(m, mons);
+              const held = memberMon(m, stocks);
               const target = at === slot;
               return (
                 <span
@@ -92,10 +120,10 @@ export function AddDialog({ slot, slots, mons, sheet, gaps, source, onClose, onP
           </DialogPrimitive.Close>
         </div>
         <div className="flex min-h-0 flex-1 gap-6 px-4 pt-5 pb-4 sm:px-10 sm:pb-8">
-          <PcBox mons={mons} selected={selected} onPick={setPicked} taken={taken} />
-          {wide && mon && <SummaryAside mon={mon} sheet={sheet} gaps={gaps} footer={put(mon)} />}
+          <PcBox key={source?.id} mons={mons} selected={selected} onPick={setPicked} taken={taken} />
+          {wide && mon && sheet && <SummaryAside mon={mon} sheet={sheet} gaps={gaps} footer={put(mon)} />}
         </div>
-        {!wide && <SummarySheet mon={mon} sheet={sheet} gaps={gaps} open={open && mon !== undefined} onClose={() => setPicked(null)} footer={mon && put(mon)} />}
+        {!wide && sheet && <SummarySheet mon={mon} sheet={sheet} gaps={gaps} open={open && mon !== undefined} onClose={() => setPicked(null)} footer={mon && put(mon)} />}
       </DialogContent>
     </Dialog>
   );

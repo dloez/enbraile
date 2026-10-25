@@ -49,7 +49,7 @@ export function AddToTeam({ mon, snapshot, teams, className }: { mon: Mon; snaps
     run(async () => {
       const slots = emptySlots();
       slots[0] = newMember(mon, snapshot);
-      return (await api("/teams", teamMade, { body: { snapshot, slots } })).id;
+      return (await api("/teams", teamMade, { body: { sources: [snapshot], slots } })).id;
     });
 
   const into = (id: string) =>

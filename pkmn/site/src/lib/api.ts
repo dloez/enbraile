@@ -1,6 +1,13 @@
 import type * as z from "zod";
 
-export class ApiError extends Error {}
+export class ApiError extends Error {
+  status: number | undefined;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.status = status;
+  }
+}
 
 export async function api<T extends z.ZodType>(path: string, schema: T, init?: { method?: string; body?: unknown }): Promise<z.infer<T>> {
   const response = await fetch(`/api${path}`, {
@@ -11,7 +18,7 @@ export async function api<T extends z.ZodType>(path: string, schema: T, init?: {
   const json: unknown = await response.json().catch(() => undefined);
   if (!response.ok) {
     const message = typeof json === "object" && json !== null && "error" in json ? String(json.error) : response.statusText;
-    throw new ApiError(message || `Request failed (${response.status})`);
+    throw new ApiError(message || `Request failed (${response.status})`, response.status);
   }
   return schema.parse(json);
 }
