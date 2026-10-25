@@ -364,7 +364,7 @@ function rollTms(compatibility: Compatibility, pokemon: RubyObject[], save: Save
   return rolled;
 }
 
-function relearnerMoves(pokemon: RubyObject, learnsets: unknown, perForm: boolean, label: string, notices: string[]): string[] {
+function relearnerMoves(pokemon: RubyObject, learnsets: unknown, perForm: boolean, label: string, notices: string[]): { moves: string[]; levels: Map<string, number> } {
   const found: (string | null)[] = list(pokemon.get("first_moves")).map(moveId);
   let form = pokemon.get("forced_form");
   if (form === null || form === undefined) form = truthy(pokemon.get("form")) ? pokemon.get("form") : 0;
@@ -375,14 +375,18 @@ function relearnerMoves(pokemon: RubyObject, learnsets: unknown, perForm: boolea
     learnset = [];
   }
   const level = pokemon.get("level");
+  const levels = new Map<string, number>();
   for (const entry of learnset as unknown[]) {
-    if (Array.isArray(entry) && entry.length === 2 && isInt(level) && (entry[0] as number) <= level) found.push(moveId(entry[1]));
+    if (!Array.isArray(entry) || entry.length !== 2 || !isInt(level) || (entry[0] as number) > level) continue;
+    const move = moveId(entry[1]);
+    found.push(move);
+    if (move && isInt(entry[0]) && !(levels.get(move)! <= entry[0])) levels.set(move, entry[0]);
   }
-  return unique(found.filter((move): move is string => !!move));
+  return { moves: unique(found.filter((move): move is string => !!move)), levels };
 }
 
 function learnableMoves(pokemon: RubyObject, context: MovesContext, label: string, notices: string[]): NonNullable<SheetPokemon["moves"]> {
-  const relearner = relearnerMoves(pokemon, context.learnsets, context.perForm, label, notices);
+  const { moves: relearner, levels } = relearnerMoves(pokemon, context.learnsets, context.perForm, label, notices);
   const species = text(pokemon.get("species"));
   const rolled = new Map(context.compatibility.get(species) ?? []);
   const current = unique(
@@ -402,7 +406,8 @@ function learnableMoves(pokemon: RubyObject, context: MovesContext, label: strin
     if (own(names, move) === undefined) notices.push(`Left out the move ${move} of ${label}: it has no Showdown ID.`);
   }
   const named = (moves: string[]) => moves.filter((move) => own(names, move) !== undefined).map((move) => names[move]);
-  return { current: named(current), relearner: named(relearner), tms: named(tms) };
+  const learnedAt = Object.fromEntries(relearner.filter((move) => levels.has(move) && own(names, move) !== undefined).map((move) => [names[move], levels.get(move)!]));
+  return { current: named(current), relearner: named(relearner), tms: named(tms), levels: learnedAt };
 }
 
 function exportPokemon(pokemon: RubyObject, table: RubyHash, capsules: unknown, moves: MovesContext, notices: string[]): SheetPokemon | null {

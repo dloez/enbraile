@@ -71,6 +71,7 @@ export interface Learnable {
   current: MoveInfo[];
   relearner: MoveInfo[];
   tms: MoveInfo[];
+  levels: Record<string, number> | null;
 }
 
 export type Learn = "yes" | "no";
@@ -154,8 +155,9 @@ function learnable(p: SheetPokemon): Learnable | null {
   if (!p.moves) return null;
   return {
     current: p.moves.current.map(describeMove),
-    relearner: p.moves.relearner.map(describeMove),
+    relearner: p.moves.relearner.map(describeMove).sort((a, b) => (p.moves?.levels?.[a.id] ?? 0) - (p.moves?.levels?.[b.id] ?? 0)),
     tms: p.moves.tms.map(describeMove),
+    levels: p.moves.levels ?? null,
   };
 }
 

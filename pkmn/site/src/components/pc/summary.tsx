@@ -327,7 +327,7 @@ function Moves({ mon, sheet, gaps }: { mon: Mon; sheet: Sheet; gaps: readonly Ex
     if (!learn) return [];
     return [
       ...learn.current.map((move) => ({ key: `c${move.id}`, move, known: true, label: labels.get(move.id) ?? "" })),
-      ...learn.relearner.map((move) => ({ key: `r${move.id}`, move, known: false, label: "" })),
+      ...learn.relearner.map((move) => ({ key: `r${move.id}`, move, known: false, label: learn.levels?.[move.id] !== undefined ? `Lv ${learn.levels[move.id]}` : "" })),
       ...learn.tms.map((move) => ({ key: `t${move.id}`, move, known: false, label: labels.get(move.id) ?? "" })),
     ];
   }, [learn, labels]);
@@ -382,6 +382,11 @@ function Moves({ mon, sheet, gaps }: { mon: Mon; sheet: Sheet; gaps: readonly Ex
               </h3>
               <span className="text-right">Pow</span>
             </div>
+            {learn.relearner.length > 0 && learn.levels === null && (
+              <div className="mb-1">
+                <GapWarning>No move levels in this snapshot: upload its save again to see them</GapWarning>
+              </div>
+            )}
             {gaps.includes("tmRolls") && (
               <div className="mb-1">
                 <GapWarning>No TM rolls in this export: TMs the game has not rolled for it yet are missing</GapWarning>

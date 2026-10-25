@@ -27,6 +27,7 @@ const pokemonFields = {
     current: z.array(id).max(4),
     relearner: z.array(id),
     tms: z.array(id),
+    levels: z.record(id, z.int()).optional(),
   }),
 };
 

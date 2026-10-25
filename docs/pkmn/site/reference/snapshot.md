@@ -21,7 +21,7 @@ What a snapshot holds: the JSON object the site's export (`pkmn/site/api/_lib/ex
       "ivs": {"hp": 31, "atk": 4, "def": 22, "spa": 29, "spd": 17, "spe": 9},
       "evs": {"hp": 12, "atk": 0, "def": 6, "spa": 40, "spd": 3, "spe": 8},
       "stats": {"hp": 140, "atk": 63, "def": 75, "spa": 85, "spd": 66, "spe": 53},
-      "moves": {"current": ["surf", "icebeam"], "relearner": ["powdersnow", "surf"], "tms": ["icebeam"]},
+      "moves": {"current": ["surf", "icebeam"], "relearner": ["powdersnow", "surf"], "tms": ["icebeam"], "levels": {"surf": 32}},
       "personalId": 2078334086
     }
   ],
@@ -80,7 +80,7 @@ The values above are illustrative; `bag` always holds all eight pockets.
 | `ivs` | object or null | Its IVs, 0 to 31, keyed `hp`, `atk`, `def`, `spa`, `spd`, `spe`; a Hyper-Trained stat counts 31; null, with a notice, when the save has not filled them in |
 | `evs` | object or null | Its EVs, keyed the same way; null, with a notice, when the save has not filled them in |
 | `stats` | object or null | Its stats at its own level as the game stores and shows them, keyed the same way; null, with a notice, when the save has not filled them in |
-| `moves` | object | Always in a save zip's snapshot; a Python export holds it only when run with its moves option: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks, every one of them rolled by then ([Rolling TMs](../explanation/save-export.md#rolling-tms)). All three are arrays of move IDs, each move once |
+| `moves` | object | Always in a save zip's snapshot; a Python export holds it only when run with its moves option: `current`, the moves it knows now, in slot order; `relearner`, its first moves then its rolled learnset up to its level; `tms`, the moves of the bag's TMs it is compatible with that `relearner` lacks, every one of them rolled by then ([Rolling TMs](../explanation/save-export.md#rolling-tms)). All three are arrays of move IDs, each move once; `levels`, an object from a `relearner` move's ID to the lowest level its learnset teaches it at, for the moves the learnset holds (a first move it lacks has none). A snapshot exported before 2026-10-25, and every Python export, has no `levels`, and the summary says so over "Can learn" |
 | `personalId` | integer or null | Snapshots only: its `@personalID`, which it keeps for life |
 
 ## `items[]`
