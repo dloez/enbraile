@@ -170,8 +170,8 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 
   | Class | Width | Page kind |
   |-------|-------|-----------|
-  | `listPage` | `max-w-240` (60rem) | A page listing links or a form: the admin pages |
-  | `toolPage` | `max-w-344` (86rem) | A tool, a series or a PC page: Open Sheet (its tab bar, PC and team views), Team Analysis, `/series`, `/series/<n>` (whose scene header runs the full width, its content on this column), the player's profile, the player's series page, the PC page |
+  | `listPage` | `max-w-344` (86rem) | A page listing links or a form: the admin pages |
+  | `toolPage` | the full width, `px-12` from `2xl` | A tool, a series or a PC page: Open Sheet (its tab bar, PC and team views), Team Analysis, `/series`, `/series/<n>` (whose scene header runs the full width, its content on this column), the player's profile, the player's series page, the PC page |
   | `messageWidth` | `max-w-180` (45rem) | A single message or form inside a page: drop zone, refusal, storage error |
 
   The page's own spacing (`gap-…`, `py-…`) is added with `cn(toolPage, "…")`; nothing inside a page adds a gutter of its own. Both classes carry `flex-1`, so a page's one column grows to the screen's height; a page built of several columns, such as `/series/<n>`'s trainers and rules, adds `flex-none` to each, so a short one never leaves a gap under it.

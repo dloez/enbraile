@@ -56,7 +56,7 @@ export function PcPage() {
   }
 
   return (
-    <main className={cn(toolPage, "pt-5")}>
+    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-176")}>
       <PcHead page={page} onPick={pick} />
       {page.snapshot ? (
         <SnapshotPc key={page.milestone} sheet={page.snapshot} />
@@ -73,7 +73,7 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
   const { data } = authClient.useSession();
   const you = data?.user.id === page.player.id;
   return (
-    <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
       <div className="flex min-w-0 flex-col gap-2">
         <nav aria-label="Breadcrumb" className="flex font-heading text-[1.375rem]">
           <Link
@@ -104,19 +104,14 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
         {page.missing && missingLine(page.missing) && (
           <span className="text-sm font-bold text-warning">Export missing: {missingLine(page.missing)}</span>
         )}
-        <div className="flex max-w-full flex-wrap items-center gap-3">
-          <span id="snapshot-label" className="font-heading text-[1.375rem] text-muted-foreground">
-            Snapshot
-          </span>
-          <Segmented
-            labelledBy="snapshot-label"
-            size="lg"
-            className="max-w-full flex-wrap"
-            options={page.milestones.map((m) => ({ value: m.name, label: m.name, disabled: !m.taken }))}
-            value={page.milestone ?? ""}
-            onChange={onPick}
-          />
-        </div>
+        <Segmented
+          label="Snapshot"
+          size="lg"
+          className="max-w-full flex-wrap"
+          options={page.milestones.map((m) => ({ value: m.name, label: m.name, disabled: !m.taken }))}
+          value={page.milestone ?? ""}
+          onChange={onPick}
+        />
       </div>
     </div>
   );

@@ -180,7 +180,7 @@ export function SummaryAside({ mon, sheet, footer }: { mon: Mon; sheet: Sheet; f
   return (
     <aside
       aria-label="Summary"
-      className="sticky top-4 flex max-h-[calc(100svh-2rem)] w-95 flex-none flex-col self-start overflow-hidden rounded-[18px] border-3 bg-card lg:self-stretch"
+      className="sticky top-4 flex max-h-[calc(100svh-2rem)] w-95 flex-none flex-col self-start overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0 lg:self-stretch"
     >
       <SummaryHead mon={mon} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
       <SummaryBody key={mon.index} mon={mon} sheet={sheet} />
@@ -225,7 +225,7 @@ export function SnapshotPc({ sheet }: { sheet: Sheet }) {
 
   return (
     <>
-      <div className="flex flex-1 gap-6 pt-3.5 pb-3 sm:pb-6 lg:h-[calc(100svh-17.5rem)] lg:min-h-160 lg:flex-none">
+      <div className="flex flex-1 gap-6 pt-3.5 pb-3 sm:pb-6 lg:min-h-0">
         <PcBox mons={mons} selected={selected} onPick={setPicked} actions={<BagButton onClick={() => setBagOpen(true)} />} />
         {wide && selectedMon && <SummaryAside mon={selectedMon} sheet={sheet} />}
       </div>
