@@ -55,7 +55,7 @@ export function PcPage() {
   }
 
   return (
-    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-176")}>
+    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
       <PcHead page={page} onPick={pick} />
       {page.snapshot ? (
         <SnapshotPc key={page.milestone} sheet={page.snapshot} gaps={page.missing?.missing ?? []} />
