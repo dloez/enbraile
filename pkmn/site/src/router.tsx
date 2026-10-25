@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
+import { prefetch } from "@/lib/api";
 import { HomePage } from "@/pages/home";
 
 const rootRoute = createRootRoute({ component: SiteShell });
@@ -13,24 +14,28 @@ const homeRoute = createRoute({
 const seriesListRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/series",
+  loader: () => prefetch("/series"),
   component: lazyRouteComponent(() => import("@/pages/series-list"), "SeriesListPage"),
 });
 
 const seriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/series/$number",
+  loader: ({ params }) => prefetch(`/series/${encodeURIComponent(params.number)}`),
   component: lazyRouteComponent(() => import("@/pages/series"), "SeriesPage"),
 });
 
 const playerProfileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/players/$player",
+  loader: ({ params }) => prefetch(`/profiles/${encodeURIComponent(params.player)}`),
   component: lazyRouteComponent(() => import("@/pages/player-profile"), "PlayerProfilePage"),
 });
 
 const playerSeriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/players/$player/series/$number",
+  loader: ({ params }) => prefetch(`/series/${encodeURIComponent(params.number)}/trainers/${encodeURIComponent(params.player)}/journey`),
   component: lazyRouteComponent(() => import("@/pages/player-series"), "PlayerSeriesPage"),
 });
 
@@ -41,6 +46,11 @@ const pcRoute = createRoute({
   path: "/players/$player/series/$number/pc",
   validateSearch: (search: Record<string, unknown>): PcSearch =>
     typeof search.snapshot === "string" && search.snapshot !== "" ? { snapshot: search.snapshot } : {},
+  loaderDeps: ({ search }) => search,
+  loader: ({ params, deps }) =>
+    prefetch(
+      `/series/${encodeURIComponent(params.number)}/trainers/${encodeURIComponent(params.player)}/pc${deps.snapshot === undefined ? "" : `?snapshot=${encodeURIComponent(deps.snapshot)}`}`,
+    ),
   component: lazyRouteComponent(() => import("@/pages/pc"), "PcPage"),
 });
 
@@ -51,12 +61,15 @@ const teamsRoute = createRoute({
   path: "/teams",
   validateSearch: (search: Record<string, unknown>): TeamsSearch =>
     typeof search.player === "string" && search.player !== "" ? { player: search.player } : {},
+  loaderDeps: ({ search }) => search,
+  loader: ({ deps }) => prefetch(deps.player ? `/teams?owner=${encodeURIComponent(deps.player)}` : "/teams"),
   component: lazyRouteComponent(() => import("@/pages/teams"), "TeamsPage"),
 });
 
 const teamRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/teams/$id",
+  loader: ({ params }) => prefetch(`/teams/${encodeURIComponent(params.id)}`),
   component: lazyRouteComponent(() => import("@/pages/team"), "TeamBuilderPage"),
 });
 
