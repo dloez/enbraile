@@ -60,12 +60,6 @@ const teamRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/team"), "TeamBuilderPage"),
 });
 
-const teamAnalysisRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/team-analysis",
-  component: lazyRouteComponent(() => import("@/pages/team-analysis"), "TeamAnalysisPage"),
-});
-
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin",
@@ -105,7 +99,6 @@ const routeTree = rootRoute.addChildren([
   pcRoute,
   teamsRoute,
   teamRoute,
-  teamAnalysisRoute,
   adminRoute,
   adminGamesRoute,
   adminPlayersRoute,

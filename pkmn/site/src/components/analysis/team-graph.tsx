@@ -5,7 +5,7 @@ import type { Member } from "@/analysis/member";
 import type { Analysis, SynergyEdge } from "@/analysis/team";
 import { typeIconSvg } from "@/lib/type-icons";
 import { TypeDot } from "@/components/marks";
-import { buttonClass, fieldClass, Toggle } from "@/components/controls";
+import { buttonClass, SelectField, Toggle } from "@/components/controls";
 import { spriteOf } from "@/analysis/sprite";
 
 export type Layer = "synergy" | "weak" | "resist" | "offense";
@@ -477,25 +477,18 @@ export function TeamGraph({ team, analysis, height = 600 }: { team: readonly Mem
           </Toggle>
         ))}
         <div className="flex-1" />
-        <label className={`${fieldClass} pr-1.5`}>
-          <span className="text-muted-foreground">Layout</span>
-          <select
-            value={layout}
-            onChange={(e) => {
-              const name = e.target.value as LayoutName;
-              layoutRef.current = name;
-              setLayout(name);
-              relayout(name);
-            }}
-            className="bg-transparent text-foreground"
-          >
-            {LAYOUTS.map((l) => (
-              <option key={l.value} value={l.value} className="bg-card">
-                {l.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Layout"
+          size="sm"
+          value={layout}
+          options={LAYOUTS}
+          onChange={(value) => {
+            const name = value as LayoutName;
+            layoutRef.current = name;
+            setLayout(name);
+            relayout(name);
+          }}
+        />
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Min synergy
           <input

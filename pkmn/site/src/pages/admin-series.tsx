@@ -10,7 +10,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AdminGate } from "@/pages/admin";
 import { STATE_NAMES } from "@/pages/admin-series-list";
-import { PoolBar } from "@/team-analysis/components/pool-bar";
+import { PoolBar } from "@/components/pool-bar";
 import { type Game, gameList } from "../../shared/games";
 import { type Player, playerList } from "../../shared/players";
 import {

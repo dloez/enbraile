@@ -1,5 +1,5 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { Plus, X } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { toolPage } from "@/components/page";
@@ -8,7 +8,9 @@ import { api, ApiError } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { describeMember } from "@/teams/dex";
+import { CompareDialog } from "@/teams/components/compare-view";
 import { SnapshotMenu } from "@/teams/components/snapshot-menu";
+import { MAX_COMPARED, MIN_COMPARED } from "@/teams/team";
 import { profilePage } from "../../shared/profile";
 import { teamList, teamMade, type TeamRow } from "../../shared/team";
 
@@ -45,6 +47,9 @@ export function TeamsPage() {
   const [error, setError] = useState<string | null>(null);
   const [making, setMaking] = useState(false);
   const [starting, setStarting] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [comparing, setComparing] = useState<string[] | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -82,13 +87,54 @@ export function TeamsPage() {
   const player = me && !me.admin ? me : null;
   const yours = player ? (list ?? []).filter((t) => t.owner.id === player.id) : [];
   const others = (list ?? []).filter((t) => t.owner.id !== player?.id);
+  const pick: Picking | null = picking
+    ? {
+        picked,
+        full: picked.length >= MAX_COMPARED,
+        onToggle: (id) => setPicked((now) => (now.includes(id) ? now.filter((x) => x !== id) : now.length < MAX_COMPARED ? [...now, id] : now)),
+      }
+    : null;
+
+  function stopPicking() {
+    setPicking(false);
+    setPicked([]);
+  }
 
   return (
     <main className={cn(toolPage, "gap-5 pt-5.5 pb-8 sm:gap-6 sm:pt-6")}>
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
         <h1 className="m-0 font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">Teams</h1>
         <div className="flex-1" />
-        {player && (
+        {picking ? (
+          <div className="flex items-center gap-3 max-sm:order-last max-sm:w-full">
+            <span role="status" className="font-heading text-2xl text-primary max-sm:flex-1">
+              {picked.length} picked
+            </span>
+            <button type="button" onClick={stopPicking} className={buttonVariants({ className: "min-h-12 px-4.5 text-2xl sm:min-h-13" })}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={picked.length < MIN_COMPARED}
+              onClick={() => setComparing(picked)}
+              className={buttonVariants({ variant: "go", className: "min-h-12 px-4 text-2xl sm:min-h-13 sm:px-5 sm:text-[1.625rem]" })}
+            >
+              Compare teams
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setPicked([]);
+              setPicking(true);
+            }}
+            className={buttonVariants({ className: "min-h-12 px-4.5 text-2xl max-sm:order-last max-sm:w-full sm:min-h-13" })}
+          >
+            Compare
+          </button>
+        )}
+        {player && !picking && (
           <span className="relative flex">
             <button type="button" disabled={making} onClick={() => void newTeam()} className={buttonVariants({ variant: "go", className: "min-h-13 text-[1.625rem]" })}>
               <Plus className="size-5" aria-hidden="true" />
@@ -115,10 +161,17 @@ export function TeamsPage() {
       {named && <OwnerChip owner={named} />}
       {list && (
         <div className="flex flex-col gap-3.5">
-          {player && (!filter || filter === player.id) && <Group id="teams-yours" title="Yours" rows={yours} />}
-          {(!filter || filter !== player?.id) && <Group id="teams-others" title={player ? "Other trainers" : "Every team"} rows={others} showOwner />}
+          {player && (!filter || filter === player.id) && <Group id="teams-yours" title="Yours" rows={yours} pick={pick} />}
+          {(!filter || filter !== player?.id) && <Group id="teams-others" title={player ? "Other trainers" : "Every team"} rows={others} pick={pick} showOwner />}
         </div>
       )}
+      <CompareDialog
+        ids={comparing}
+        onClose={() => {
+          setComparing(null);
+          stopPicking();
+        }}
+      />
     </main>
   );
 }
@@ -141,7 +194,13 @@ function OwnerChip({ owner }: { owner: { id: string; name: string } }) {
   );
 }
 
-function Group({ id, title, rows, showOwner = false }: { id: string; title: string; rows: TeamRow[]; showOwner?: boolean }) {
+interface Picking {
+  picked: readonly string[];
+  full: boolean;
+  onToggle: (id: string) => void;
+}
+
+function Group({ id, title, rows, pick, showOwner = false }: { id: string; title: string; rows: TeamRow[]; pick: Picking | null; showOwner?: boolean }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2">
       <h2 id={id} className="m-0 px-1 font-heading text-[1.75rem] leading-none font-normal text-subtle">
@@ -153,7 +212,7 @@ function Group({ id, title, rows, showOwner = false }: { id: string; title: stri
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {rows.map((team) => (
             <li key={team.id}>
-              <TeamLink team={team} showOwner={showOwner} />
+              <TeamLink team={team} showOwner={showOwner} pick={pick} />
             </li>
           ))}
         </ul>
@@ -162,15 +221,43 @@ function Group({ id, title, rows, showOwner = false }: { id: string; title: stri
   );
 }
 
-function TeamLink({ team, showOwner }: { team: TeamRow; showOwner: boolean }) {
+const rowClass =
+  "flex min-h-23 w-full flex-wrap items-center gap-x-5 gap-y-2 rounded-[14px] border-3 bg-card py-3 pr-6 pl-4 text-left text-foreground no-underline outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-nowrap sm:py-0";
+
+function TeamLink({ team, showOwner, pick }: { team: TeamRow; showOwner: boolean; pick: Picking | null }) {
   const filled = team.members.filter((m) => m !== null).length;
+  if (!pick) {
+    return (
+      <Link to="/teams/$id" params={{ id: team.id }} className={cn(rowClass, "hover:border-primary")}>
+        <RowBody team={team} showOwner={showOwner} filled={filled} />
+      </Link>
+    );
+  }
+  const on = pick.picked.includes(team.id);
+  const off = !on && (pick.full || filled === 0);
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      disabled={off}
+      onClick={() => pick.onToggle(team.id)}
+      className={cn(rowClass, "font-[inherit]", on ? "border-primary bg-accent" : "cursor-pointer hover:border-primary", off && "cursor-default opacity-45 hover:border-border")}
+    >
+      <span
+        aria-hidden="true"
+        className={cn("grid size-8 flex-none place-items-center rounded-lg border-3 text-ink", on ? "border-primary bg-primary" : "border-cell-hi bg-ink")}
+      >
+        {on && <Check className="size-4.5" strokeWidth={3.5} />}
+      </span>
+      <RowBody team={team} showOwner={showOwner} filled={filled} />
+    </button>
+  );
+}
+
+function RowBody({ team, showOwner, filled }: { team: TeamRow; showOwner: boolean; filled: number }) {
   const size = team.members.length;
   return (
-    <Link
-      to="/teams/$id"
-      params={{ id: team.id }}
-      className="flex min-h-23 flex-wrap items-center gap-x-5 gap-y-2 rounded-[14px] border-3 bg-card py-3 pr-6 pl-4 text-foreground no-underline outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-nowrap sm:py-0"
-    >
+    <>
       <PlayerBadge name={team.owner.name} colour={playerColour(team.owner.id)} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:w-75 sm:flex-none">
         <span className="truncate font-heading text-[2.125rem] leading-[0.9]">{team.name}</span>
@@ -202,6 +289,6 @@ function TeamLink({ team, showOwner }: { team: TeamRow; showOwner: boolean }) {
           );
         })}
       </span>
-    </Link>
+    </>
   );
 }

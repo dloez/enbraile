@@ -1,31 +1,21 @@
 import { moveVsMon } from "@/analysis/chart";
 import { typesIn, type Gen } from "@/analysis/dex";
-import { hasTag, STATS, type Member, type MoveData } from "@/analysis/member";
-import type { Pool } from "@/analysis/pool";
-import { relBulk, type Analysis } from "@/analysis/team";
-
-export const OHKO = 100;
-export const TWOHKO = 50;
-export const WALL = 34;
+import { hasTag, type Member, type MoveData } from "@/analysis/member";
+import type { Analysis } from "@/analysis/team";
 
 const FIXED_DAMAGE = new Set(["seismictoss", "nightshade"]);
 const USES_DEF = new Set(["psyshock", "psystrike", "secretsword"]);
+const SPEED_CONTROL = new Set(
+  `thunderwave tailwind trickroom stickyweb icywind electroweb glare stunspore quickattack extremespeed aquajet
+  machpunch bulletpunch iceshard shadowsneak suckerpunch vacuumwave fakeout accelerock`.split(/\s+/),
+);
 
-const usable = (m: Member) => m.moves.filter((mv) => !mv.unknown && !mv.notInGen && mv.category !== "Status" && mv.power);
-
-export function geomean(xs: readonly number[]): number {
-  return Math.exp(xs.reduce((s, x) => s + Math.log(Math.max(x, 0.05)), 0) / (xs.length || 1));
+export function memberName(m: Member): string {
+  return m.set.nickname || m.species;
 }
 
-export function weaknessLoad(team: readonly Member[], a: Analysis, pool: Pool): number {
-  let load = 0;
-  team.forEach((m, i) => {
-    for (const t of typesIn(a.gen)) {
-      const mult = a.members[i].def[t];
-      if (mult > 1) load += mult / relBulk(m, t, pool);
-    }
-  });
-  return load;
+export function attacks(m: Member): MoveData[] {
+  return m.moves.filter((mv) => !mv.unknown && !mv.notInGen && (FIXED_DAMAGE.has(mv.id) || (mv.category !== "Status" && mv.power > 0)));
 }
 
 export interface Damage {
@@ -64,181 +54,126 @@ export function calcHit(gen: Gen, a: Member, mv: MoveData, b: Member): Damage | 
   return { min: ((Math.floor(base * 0.85) * mod) / hp) * 100, max: ((base * mod) / hp) * 100, mult };
 }
 
-export interface BestHit extends Damage {
-  move: MoveData | null;
+const hitsToKo = (pct: number) => (pct <= 0 ? Infinity : Math.ceil(100 / pct));
+
+export function koLine(d: Damage | null): string {
+  if (!d) return "No effect";
+  if (d.max <= 0) return "No damage";
+  const sure = hitsToKo(d.min);
+  const best = hitsToKo(d.max);
+  const name = (n: number) => (n === 1 ? "OHKO" : `${n}HKO`);
+  if (sure === best) return `Guaranteed ${name(best)}`;
+  return `Possible ${name(best)}`;
 }
 
-export function bestHit(gen: Gen, a: Member, b: Member): BestHit {
-  let best: BestHit | null = null;
-  const moves = [...usable(a), ...a.moves.filter((m) => FIXED_DAMAGE.has(m.id) && !m.notInGen)];
-  for (const mv of moves) {
-    const h = calcHit(gen, a, mv, b);
-    if (h && (!best || h.max > best.max)) best = { ...h, move: mv };
-  }
-  return best ?? { min: 0, max: 0, mult: 1, move: null };
+export interface Side {
+  team: readonly Member[];
+  analysis: Analysis;
+  size: number;
 }
 
-export interface DefenderHit extends BestHit {
-  def: Member;
-  by: Member | null;
+export interface ScoreCell {
+  value: number;
+  note: string;
+  best: boolean;
 }
 
-export interface Pressure {
-  per: DefenderHit[];
-  mean: number;
-  ohko: number;
-  twohko: number;
-  walls: number;
+export interface ScoreRow {
+  label: string;
+  cells: ScoreCell[];
 }
 
-export function pressure(gen: Gen, attackers: readonly Member[], defenders: readonly Member[]): Pressure {
-  const per = defenders.map((def) => {
-    let top: DefenderHit = { def, by: null, min: 0, max: 0, mult: 1, move: null };
-    for (const a of attackers) {
-      const h = bestHit(gen, a, def);
-      if (h.max > top.max) top = { ...h, def, by: a };
-    }
-    return top;
+type Measure = { label: string; better: 1 | -1; of: (side: Side) => { value: number; note?: string } };
+
+const mean = (xs: readonly number[]) => xs.reduce((s, x) => s + x, 0) / (xs.length || 1);
+
+const names = (team: readonly Member[]) => team.map(memberName).join(", ");
+
+function typeList(types: readonly string[], cap = Infinity): string {
+  return types.slice(0, cap).join(", ") + (types.length > cap ? "…" : "");
+}
+
+function measures(gen: Gen): Measure[] {
+  const all = typesIn(gen).length;
+  return [
+    {
+      label: "Members",
+      better: 1,
+      of: ({ team, size }) => ({ value: team.length, note: team.length < size ? `${size - team.length} empty of ${size}` : "" }),
+    },
+    { label: "Average Speed", better: 1, of: ({ team }) => ({ value: Math.round(mean(team.map((m) => m.stats.spe))) }) },
+    {
+      label: "Fastest",
+      better: 1,
+      of: ({ team }) => {
+        const fast = [...team].sort((a, b) => b.stats.spe - a.stats.spe)[0];
+        return { value: fast.stats.spe, note: memberName(fast) };
+      },
+    },
+    {
+      label: "Average bulk",
+      better: 1,
+      of: ({ team }) => ({ value: Math.round(mean(team.map((m) => (m.stats.hp * (m.stats.def + m.stats.spd)) / 2)) / 100) }),
+    },
+    {
+      label: "Types hitting 3+ ×2",
+      better: -1,
+      of: ({ analysis }) => {
+        const types = analysis.tDef.filter((t) => t.weak >= 3).map((t) => t.type);
+        return { value: types.length, note: typeList(types) };
+      },
+    },
+    {
+      label: "Types none resists",
+      better: -1,
+      of: ({ analysis }) => {
+        const types = analysis.tDef.filter((t) => t.resist === 0).map((t) => t.type);
+        return { value: types.length, note: typeList(types, 4) };
+      },
+    },
+    { label: "Types hit ×2", better: 1, of: ({ analysis }) => ({ value: analysis.tOff.filter((t) => t.se > 0).length, note: `of ${all}` }) },
+    {
+      label: "Coverage holes",
+      better: -1,
+      of: ({ analysis }) => {
+        const types = analysis.tOff.filter((t) => t.uncovered).map((t) => t.type);
+        return { value: types.length, note: typeList(types) };
+      },
+    },
+    {
+      label: "Hazards · removal",
+      better: 1,
+      of: ({ team }) => {
+        const hazards = team.filter((m) => hasTag(m, "hazard")).length;
+        const removal = team.filter((m) => hasTag(m, "removal")).length;
+        return { value: hazards + removal, note: `${hazards} ${hazards === 1 ? "setter" : "setters"} · ${removal} removal` };
+      },
+    },
+    {
+      label: "Speed control",
+      better: 1,
+      of: ({ team }) => {
+        const users = team.filter((m) => m.moves.some((mv) => SPEED_CONTROL.has(mv.id)));
+        return { value: users.length, note: names(users) };
+      },
+    },
+    {
+      label: "Recovery",
+      better: 1,
+      of: ({ team }) => {
+        const users = team.filter((m) => hasTag(m, "recovery"));
+        return { value: users.length, note: names(users) };
+      },
+    },
+  ];
+}
+
+export function scoreboard(gen: Gen, sides: readonly Side[]): ScoreRow[] {
+  return measures(gen).map(({ label, better, of }) => {
+    const read = sides.map(of);
+    const values = read.map((r) => r.value);
+    const target = better > 0 ? Math.max(...values) : Math.min(...values);
+    const tied = values.every((v) => v === target);
+    return { label, cells: read.map((r) => ({ value: r.value, note: r.note ?? "", best: !tied && r.value === target })) };
   });
-  const mean = per.reduce((s, p) => s + Math.min((p.min + p.max) / 2, 100), 0) / (per.length || 1);
-  return {
-    per,
-    mean,
-    ohko: per.filter((p) => p.min >= OHKO).length,
-    twohko: per.filter((p) => p.min >= TWOHKO && p.min < OHKO).length,
-    walls: per.filter((p) => p.max < WALL).length,
-  };
-}
-
-export function verdict(p: Damage): string {
-  if (p.min >= OHKO) return "OHKO";
-  if (p.max >= OHKO) return "possible OHKO";
-  if (p.min >= TWOHKO) return "2HKO";
-  if (p.max < WALL) return "walls it";
-  return "";
-}
-
-export type Metrics = Record<string, number | string>;
-
-export function metricsFor(team: readonly Member[], a: Analysis, pool: Pool): Metrics {
-  const n = team.length || 1;
-  const sum = (k: (typeof STATS)[number] | "bst") => team.reduce((s, m) => s + (k === "bst" ? m.bst : m.base[k]), 0);
-  const top = a.archetype[0];
-  return {
-    size: team.length,
-    archetype: top ? `${top.name} (${Math.round(top.pct * 100)}%)` : "",
-    bst: sum("bst"),
-    meanBst: sum("bst") / n,
-    ...Object.fromEntries(STATS.map((k) => [`sum_${k}`, sum(k)])),
-    meanPctBst: a.members.reduce((s, m) => s + m.pct.bst, 0) / n,
-    meanSpe: team.reduce((s, m) => s + m.stats.spe, 0) / n,
-    maxSpe: Math.max(...team.map((m) => m.stats.spe)),
-    weakTotal: a.tDef.reduce((s, t) => s + t.weak, 0),
-    resistTotal: a.tDef.reduce((s, t) => s + t.resist, 0),
-    immuneTotal: a.tDef.reduce((s, t) => s + t.immune, 0),
-    stacked: a.tDef.filter((t) => t.weak >= 3).length,
-    unresisted: a.tDef.filter((t) => t.unresisted && t.weak > 0).length,
-    weakLoad: weaknessLoad(team, a, pool),
-    defScore: geomean(a.tDef.map((t) => t.best.D)),
-    noAnswer: a.tDef.filter((t) => t.best.D < 1).length,
-    seCovered: a.tOff.filter((t) => t.se > 0).length,
-    uncovered: a.tOff.filter((t) => t.uncovered).length,
-    offScore: geomean(a.tOff.map((t) => t.bestO.O)),
-    offTotal: a.tOff.reduce((s, t) => s + t.bestO.O, 0),
-    lowPressure: a.tOff.filter((t) => t.bestO.O < 1).length,
-    synEdges: a.edges.length,
-    synTotal: a.edges.reduce((s, e) => s + e.score, 0),
-    mutual: a.edges.filter((e) => e.mutual).length / 2,
-    hazards: team.filter((m) => hasTag(m, "hazard")).length,
-    removal: team.filter((m) => hasTag(m, "removal")).length,
-    recovery: team.filter((m) => hasTag(m, "recovery")).length,
-    pivots: team.filter((m) => hasTag(m, "pivot")).length,
-    priority: team.filter((m) => usable(m).some((mv) => mv.priority > 0)).length,
-  };
-}
-
-export type Format = "int" | "f0" | "f2" | "pct" | "text";
-
-export type ScoreRow =
-  | { group: string }
-  | { k: string; label: string; dir: -1 | 0 | 1; fmt: Format; hint?: string };
-
-const STAT_LABEL = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as const;
-
-export const SCORE_ROWS: readonly ScoreRow[] = [
-  { group: "Overview" },
-  { k: "size", label: "Pokémon", dir: 0, fmt: "int" },
-  { k: "archetype", label: "Closest archetype", dir: 0, fmt: "text" },
-  { group: "Stats" },
-  { k: "bst", label: "Total BST", dir: 1, fmt: "int" },
-  { k: "meanBst", label: "Mean BST", dir: 1, fmt: "f0" },
-  { k: "meanPctBst", label: "Mean BST percentile in pool", dir: 1, fmt: "pct" },
-  ...STATS.map((k) => ({ k: `sum_${k}`, label: `Σ base ${STAT_LABEL[k]}`, dir: 1 as const, fmt: "int" as const })),
-  { k: "meanSpe", label: "Mean final Speed", dir: 1, fmt: "f0" },
-  { k: "maxSpe", label: "Fastest member (final Speed)", dir: 1, fmt: "int" },
-  { group: "Defence" },
-  { k: "weakTotal", label: "Weaknesses (member × type)", dir: -1, fmt: "int", hint: "Sum over types of members weak to it" },
-  { k: "resistTotal", label: "Resistances (member × type)", dir: 1, fmt: "int" },
-  { k: "immuneTotal", label: "Immunities", dir: 1, fmt: "int" },
-  { k: "stacked", label: "Stacked weaknesses (≥3 weak)", dir: -1, fmt: "int" },
-  { k: "unresisted", label: "Weaknesses nobody resists", dir: -1, fmt: "int" },
-  {
-    k: "weakLoad",
-    label: "Weighted weakness load",
-    dir: -1,
-    fmt: "f2",
-    hint: "Σ multiplier ÷ relative bulk over every weakness: frail members' weaknesses weigh more",
-  },
-  {
-    k: "defScore",
-    label: "Weighted defensive coverage",
-    dir: 1,
-    fmt: "f2",
-    hint: "Geometric mean over attacking types of the best switch-in's effective bulk D. 1.00 = average pool member taking a neutral hit",
-  },
-  { k: "noAnswer", label: "Types with no solid switch-in (< 1.00)", dir: -1, fmt: "int" },
-  { group: "Offence" },
-  { k: "seCovered", label: "Types hit super-effectively", dir: 1, fmt: "int" },
-  { k: "uncovered", label: "Types nothing hits neutrally", dir: -1, fmt: "int" },
-  {
-    k: "offScore",
-    label: "Weighted offensive coverage",
-    dir: 1,
-    fmt: "f2",
-    hint: "Geometric mean over defending types of the team's best hit O. 1.00 = neutral 100 BP hit from an average attacker",
-  },
-  { k: "offTotal", label: "Σ weighted offence (all types)", dir: 1, fmt: "f2" },
-  { k: "lowPressure", label: "Types with weak pressure (< 1.00)", dir: -1, fmt: "int" },
-  { group: "Synergy" },
-  { k: "synEdges", label: "Defensive synergy links", dir: 1, fmt: "int" },
-  { k: "mutual", label: "Mutual cores", dir: 1, fmt: "int" },
-  { k: "synTotal", label: "Σ weighted synergy", dir: 1, fmt: "f2" },
-  { group: "Utility" },
-  { k: "hazards", label: "Hazard setters", dir: 0, fmt: "int" },
-  { k: "removal", label: "Hazard removal", dir: 0, fmt: "int" },
-  { k: "recovery", label: "Reliable recovery", dir: 0, fmt: "int" },
-  { k: "pivots", label: "Pivots", dir: 0, fmt: "int" },
-  { k: "priority", label: "Priority users", dir: 0, fmt: "int" },
-];
-
-export function format(v: number | string, fmt: Format): string {
-  if (typeof v === "string") return v;
-  if (fmt === "f0") return v.toFixed(0);
-  if (fmt === "pct") return String(Math.round(v * 100));
-  if (fmt === "f2") return v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
-  return String(v);
-}
-
-export function winners(row: ScoreRow, metrics: readonly Metrics[]): boolean[] {
-  if ("group" in row || row.dir === 0) return metrics.map(() => false);
-  const vals = metrics.map((m) => m[row.k] as number);
-  const target = row.dir > 0 ? Math.max(...vals) : Math.min(...vals);
-  if (vals.every((v) => v === target)) return metrics.map(() => false);
-  return vals.map((v) => v === target);
-}
-
-export function winCounts(metrics: readonly Metrics[]): number[] {
-  const wins = metrics.map(() => 0);
-  for (const row of SCORE_ROWS) winners(row, metrics).forEach((w, i) => w && wins[i]++);
-  return wins;
 }

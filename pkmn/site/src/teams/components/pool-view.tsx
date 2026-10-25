@@ -5,7 +5,7 @@ import type { Member } from "@/analysis/member";
 import type { Metric, Pool, PoolMember } from "@/analysis/pool";
 import { BASE_STATS, correlations, describe, histogram, typeBreakdown } from "@/analysis/stats";
 import { TypeDot } from "@/components/marks";
-import { fieldClass, Panel, Segmented, Toggle } from "@/components/controls";
+import { fieldClass, Panel, Segmented, SelectField, Toggle } from "@/components/controls";
 import { spriteOf, spriteOfName } from "@/analysis/sprite";
 
 const LABEL: Record<string, string> = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe", bst: "BST", phys: "Phys bulk", spec: "Spec bulk" };
@@ -120,19 +120,7 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
           <span className="text-muted-foreground">Search</span>
           <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent outline-none" />
         </label>
-        <label className={cn(fieldClass, "pr-1.5")}>
-          <span className="text-muted-foreground">Type</span>
-          <select value={type} onChange={(e) => setType(e.target.value)} className="bg-transparent">
-            <option value="" className="bg-card">
-              All
-            </option>
-            {typesIn(pool.filters.gen).map((t) => (
-              <option key={t} value={t} className="bg-card">
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField label="Type" size="sm" all="All types" value={type} options={typesIn(pool.filters.gen).map((t) => ({ value: t, label: t }))} onChange={setType} />
         <Segmented
           label="Cell values"
           value={mode}

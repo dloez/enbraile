@@ -4,12 +4,12 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { buildTeam } from "@/analysis/member";
 import { parsePaste } from "@/analysis/paste";
 import { buildPool, legality, type PoolFilters } from "@/analysis/pool";
-import { PoolBar } from "@/team-analysis/components/pool-bar";
-import { PoolView } from "@/team-analysis/components/pool-view";
+import { PoolBar } from "@/components/pool-bar";
+import { PoolView } from "@/teams/components/pool-view";
 import { analyze } from "@/analysis/team";
 import { showdownTeam } from "@/teams/showdown";
 import { MAX_TEAM_SIZE, type Slots, type Stocks } from "@/teams/team";
-import { TeamAnalysis } from "@/teams/components/team-analysis";
+import { TeamAnalysis } from "@/teams/components/summary-panels";
 import { ArchetypeCard, Checklist } from "@/components/analysis/archetype";
 import { ArchetypeMap, SpeedTiers } from "@/components/analysis/charts";
 import { buttonClass } from "@/components/controls";
@@ -118,7 +118,7 @@ function Views({ view, slots, stocks, filters, useTera, teras, onTera, onPool, n
   );
 }
 
-function PoolChip({ filters, className }: { filters: PoolFilters; className?: string }) {
+export function PoolChip({ filters, className }: { filters: PoolFilters; className?: string }) {
   const pool = buildPool(filters);
   return (
     <span title="The team's pool" className={cn("rounded-full border-2 px-3 py-1 text-[0.8125rem] font-bold whitespace-nowrap text-stat-down", className)}>

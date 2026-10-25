@@ -79,25 +79,6 @@ The PC's one link to teams is "Add to team" in its summary, a menu of the reader
 - Does another player's PC summary show "Add to team" at all? Recommended: yes, since it is the PC's one link to teams and discovery names scouting an opponent as a reason for any player's snapshot; the alternative keeps it on the reader's own PC and adds others' snapshots only from the team page's **+ Source**.
 - If it shows, does its menu list every team of the reader's, picking one adding this snapshot to that team's sources when it is not one already, and "New team" making a team on this snapshot? Recommended: yes; the alternative lists only the reader's teams that already have this snapshot as a source.
 
-## Compare teams, and /team-analysis and the tools list go
-
-Compare puts 2–4 teams side by side, the player's or other trainers', picked on the team list after its Compare button, with the scoreboard and damage calc. With it, `/team-analysis`, its page, drafts and `carryTeam`, `src/tools.ts` and the tools home are deleted ([Team Building](discovery.md#team-building), [Pages](discovery.md#pages)).
-
-**Do:**
-- [ ] Compare in the team builder over stored teams.
-- [ ] Delete `src/pages/team-analysis.tsx`, `src/team-analysis/drafts.ts`, the route and the old `localStorage` drafts on load; rewrite `team-analysis.md` into the team builder's doc; update `docs/pkmn/index.md`. (`src/tools.ts`, the tools in `add-a-page-to-the-site.md`, `pkmn/site/CLAUDE.md`'s Routes rule and `site.md` went with the series page, 2026-10-23.) Rewrite the decisions in `site.md` that name `carryTeam` or `/team-analysis` to say what is true now, so the grep below holds.
-- [ ] Move what of `src/team-analysis/` the team builder still uses (`components/compare-view.tsx`, `pool-bar.tsx`, `pool-view.tsx`, and the `MAX_TEAMS`, `MIN_TEAMS` and `CompareSlot` that `compare-view.tsx` imports from `drafts.ts`) to `src/teams/`, its one user once the tool goes ([Site Design System](../../pkmn/site/reference/design-system.md): a tool's own components stay in `src/<tool>/components/`), and delete the rest of `src/team-analysis/`: every `@/team-analysis/…` import matches the grep below.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `grep -rn "team-analysis:drafts\|carryTeam\|tools.ts\|/team-analysis" pkmn/site/src docs/pkmn` finds nothing but the one line that removes the old drafts' `localStorage` key on load.
-- Human-run: compare two of your teams and another trainer's and read the scoreboard and a damage calc; open `/team-analysis` and see the not-found page.
-- Reuse: `src/team-analysis/components/compare-view.tsx`, `src/analysis/compare.ts`.
-- Neighbors: the team builder.
-- Forbidden: keeping `/team-analysis` as a redirect.
-
-**Touches:** `pkmn/site/src/`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-**After:** Give each team its pool, the Pool view, Speed Tiers and Tera
-
 ## Make the site crisp and fast, pass one
 
 The owner wants the site to feel crisp and fast, and to hold up under load: one of four identical passes, each taking the biggest measured cost it finds (owner, 2026-10-25). Nothing measures the site's speed today; the one standing performance decision is a chunk per route ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).

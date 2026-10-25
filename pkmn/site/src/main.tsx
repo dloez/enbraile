@@ -4,15 +4,16 @@ import { RouterProvider } from "@tanstack/react-router";
 import { router } from "@/router";
 import "./index.css";
 
-function forgetOpenSheet() {
+function forget(step: () => void) {
   try {
-    indexedDB.deleteDatabase("open-sheet");
+    step();
   } catch {
     return;
   }
 }
 
-forgetOpenSheet();
+forget(() => indexedDB.deleteDatabase("open-sheet"));
+forget(() => localStorage.removeItem("team-analysis:drafts"));
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

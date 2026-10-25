@@ -130,11 +130,11 @@ Sizes are Tailwind's scale only, no pixel sizes:
 | Size | Where |
 |------|-------|
 | `text-5xl`–`text-6xl`, pixel | A page's `h1` (the series list, the admin pages), a series banner's name; the archetype's name |
-| `text-4xl`, pixel | Section `h2` (a team's name, "Team", "Members", "Matrices"); admin cards (the admin home, the series list) |
-| `text-3xl`, pixel | The summary's name, the drop zone's line; a head-to-head's big percentage (Nunito) |
+| `text-4xl`, pixel | Section `h2` (a team's name, "Team", "Members", "Matrices"); admin cards (the admin home, the series list); Compare's Head to head percentage on a phone (`text-[2.5rem]` from `lg`) |
+| `text-3xl`, pixel | The summary's name, the drop zone's line |
 | `text-2xl`, pixel | Tabs, buttons, `Panel` titles, dialog titles, member card and graph node names, box titles ("PC 56"), the phone summary's sheet title |
 | `text-xl`, pixel | `Segmented` options, file tabs, small group headings inside a card ("Ability"), the vendored dialog and sheet titles' default |
-| `text-lg`, pixel | The smallest labels: the pool bar's "Pool", a compare table's group rows |
+| `text-lg`, pixel | The smallest labels: the pool bar's "Pool" |
 | `text-sm` | Fields, secondary body text |
 | `text-xs` | Table cells, chips, small labels, cell overlays (level, name), pills, chart labels |
 
@@ -150,7 +150,7 @@ The one exception is the team graph's Cytoscape canvas (`src/components/analysis
 | `rounded-xl` | Inner cards (ability rows), refusals, empty-slot placeholders, dialogs, the team strip |
 | `rounded-lg` | Tabs' top corners (`rounded-t-lg`), fields, selects, segmented tracks, PC cells, the large player badge |
 | `rounded-md` | Buttons, the home mark's box, segments inside a track, the small player badge, item icons, type squares |
-| `rounded-sm` | Bar tracks and fills, small tags, compare matrix cells |
+| `rounded-sm` | Bar tracks and fills, small tags |
 | `rounded-full` | Type dots and chips, pills |
 
 Radii come from this scale only, never as pixel values in brackets.
@@ -164,14 +164,14 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 ## Layout Shell
 
 - **Root** (`SiteShell`, `src/components/site-shell.tsx`, the root route's component in `src/router.tsx`): a `flex min-h-svh flex-col` column holding `SiteHeader` and the route's `<Outlet />`. Outside `/admin`, a signed-out reader gets the sign-in page and a player not yet allowed the waiting page instead, both without the header. Each page renders its own `<main>`.
-- **Header** (`src/components/site-header.tsx`): `bg-ink` with a red `border-b-4`, `h-16 px-8` from `sm`. The pixel Poké Ball (`size-9` in a `size-12` box) links home; then the tabs, Series, PC and Teams for a player, Series, Teams and Admin (the pixel key, opening `/admin`) for an admin: each `h-12 rounded-t-lg px-5`, a pixel icon and its label in `text-2xl` pixel face, sitting on the red line. The open tab is `bg-red text-white`, joined to the line; the others `text-subtle`, `hover:bg-card hover:text-white`. Series (flag) opens `/series` and is open on every series page; PC (monitor) opens the player's own PC in the running series (`/series` while none runs) and is open on every PC page; Teams (people) opens Team Analysis until the page replacing it exists. At the right (`ml-auto`), for a signed-in reader: a player's `PlayerBadge` and name in `text-2xl` pixel face, one `min-h-11 rounded-lg px-2` link to their profile, `hover:bg-card` and `bg-card` while the profile is open (an admin's name alone, plain, without a badge), and sign-out, a `size-11` icon button (`SignOutIcon`), `text-muted-foreground`, `hover:bg-card hover:text-white`. No page title and no other navigation.
+- **Header** (`src/components/site-header.tsx`): `bg-ink` with a red `border-b-4`, `h-16 px-8` from `sm`. The pixel Poké Ball (`size-9` in a `size-12` box) links home; then the tabs, Series, PC and Teams for a player, Series, Teams and Admin (the pixel key, opening `/admin`) for an admin: each `h-12 rounded-t-lg px-5`, a pixel icon and its label in `text-2xl` pixel face, sitting on the red line. The open tab is `bg-red text-white`, joined to the line; the others `text-subtle`, `hover:bg-card hover:text-white`. Series (flag) opens `/series` and is open on every series page; PC (monitor) opens the player's own PC in the running series (`/series` while none runs) and is open on every PC page; Teams (people) opens `/teams` and is open on every team page. At the right (`ml-auto`), for a signed-in reader: a player's `PlayerBadge` and name in `text-2xl` pixel face, one `min-h-11 rounded-lg px-2` link to their profile, `hover:bg-card` and `bg-card` while the profile is open (an admin's name alone, plain, without a badge), and sign-out, a `size-11` icon button (`SignOutIcon`), `text-muted-foreground`, `hover:bg-card hover:text-white`. No page title and no other navigation.
 - **Header below `sm`** (after `header-phone.dc.html` and its two open boards): a compact `h-15` bar, `pl-3 pr-2 gap-2`: the Poké Ball (`size-8` in a `size-11` box), the open section's icon (`size-4`, in `red`) and name in `text-[1.625rem]` pixel face filling the middle (empty where no tab is open), and a `size-11` menu button, white, with the pixel `menu` icon, `bg-card` and the pixel `cross` while open (`aria-expanded`). The menu is a `nav` under the bar's red line, full width, `bg-ink` with a `border-b-4 border-border`, `px-3 pt-2.5 pb-3.5 gap-1`, over a `bg-scrim` covering the page below the header; it lists the tabs as `min-h-13 rounded-lg px-3.5` rows in `text-[1.75rem]` pixel face with their icons (the open one `bg-red text-white`, the others `text-subtle`, `hover:bg-card hover:text-white`), then, for a signed-in reader, a `h-0.75 bg-cell` divider, the badge (`size="xs"`) and name in white, a link to the player's profile, `hover:bg-card` and `bg-card` while it is open (an admin's name alone, plain), and sign-out with `SignOutIcon` in `text-muted-foreground`. Choosing a tab, the scrim, Escape or any route change closes it. The tabs, the account and the menu never show at the other width.
 - **Page column** (`src/components/page.ts`): every page is a centred column with the gutter `px-4 sm:px-8` (the header's from `sm`; below it the header's compact bar keeps its own, `pl-3 pr-2`), and one width per page kind:
 
   | Class | Width | Page kind |
   |-------|-------|-----------|
   | `listPage` | `max-w-344` (86rem) | A page listing links or a form: the admin pages |
-  | `toolPage` | the full width, `px-12` from `2xl` | A tool, a series or a PC page: the team list and the team page, Team Analysis, `/series`, the player's profile, the player's series page, the PC page |
+  | `toolPage` | the full width, `px-12` from `2xl` | A tool, a series or a PC page: the team list and the team page, `/series`, the player's profile, the player's series page, the PC page |
   | `readPage` | `max-w-344` (86rem) | A page read more than worked in: `/series/<n>` (its scene header runs the full width, its sections on this column) |
   | `messageWidth` | `max-w-180` (45rem) | A single message or form inside a page: drop zone, refusal, storage error |
 
@@ -210,9 +210,10 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
 | `liftCardClass` | same | The lift-on-hover card, for a card that is a link as a whole, after the series list's banner: `rounded-2xl border-4 border-cell bg-card`; on hover or focus it rises `-translate-y-1` in two steps, its border turns `primary` and it drops a `drop` shadow; still under `prefers-reduced-motion` |
 | `fieldClass` | same | A field: `min-h-10 rounded-lg border bg-muted text-sm` |
 | `buttonClass`, `iconButtonClass`, `quietIconClass` | same | `buttonVariants` for a hand-built `<button>` or `<label>`: the quiet button, the `size-11` icon button, the `size-7` ghost icon button |
-| `ArchetypeCard`, `Checklist`, `ArchetypeMap`, `SpeedTiers`, `MemberCards`, `Matrices`, `TeamGraph` | `src/components/analysis/` | Team analysis panels, shown by Team Analysis and by the team page's analysis, there in one column (Patterns → Team page); sprites from `src/analysis/sprite.ts` |
+| `ArchetypeCard`, `Checklist`, `ArchetypeMap`, `SpeedTiers`, `MemberCards`, `Matrices`, `TeamGraph` | `src/components/analysis/` | Team analysis panels, shown by the team page's analysis, in one column in its panel and wider in Full analysis (Patterns → Team page); sprites from `src/analysis/sprite.ts` |
+| `PoolBar` | `src/components/pool-bar.tsx` | A pool's rules: Data and Species up to as rows of generations, the three toggles, the BST cap and the pool's size; the team builder's Pool view and the series form's default pool, disabled where the reader cannot change it |
 
-A tool's own components stay in `src/<tool>/components/` (the team builder's `MemberCard` in `src/teams/components/member-card.tsx`, its editors in `editors.tsx` and `move-picker.tsx`, `AddDialog` in `add-dialog.tsx`, the free member's `SetForm`, `SetEditor` and `FreePicker` in `free-member.tsx`, `AddToTeam` in `add-to-team.tsx`, `SnapshotMenu` in `snapshot-menu.tsx`), and no tool imports another tool's components: what two tools show goes in `src/components/`.
+A tool's own components stay in `src/<tool>/components/` (the team builder's `MemberCard` in `src/teams/components/member-card.tsx`, its editors in `editors.tsx` and `move-picker.tsx`, `AddDialog` in `add-dialog.tsx`, the free member's `SetForm`, `SetEditor` and `FreePicker` in `free-member.tsx`, `AddToTeam` in `add-to-team.tsx`, `SnapshotMenu` in `snapshot-menu.tsx`, the Pool view's `PoolView` in `pool-view.tsx`, `CompareDialog` in `compare-view.tsx`), and no tool imports another tool's components: what two tools show goes in `src/components/`.
 
 ### Patterns
 
