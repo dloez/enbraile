@@ -138,6 +138,7 @@ export async function adminView(row: SeriesRow): Promise<AdminSeries> {
   const milestones = await milestonesOf(row.id);
   const chosen = await gameOf(row);
   const running = await otherRunning(row);
+  const [taken] = await db.select({ snapshots: count() }).from(snapshot).innerJoin(save, eq(save.id, snapshot.saveId)).where(eq(save.seriesId, row.id));
   return {
     id: row.id,
     number: row.number,
@@ -150,6 +151,7 @@ export async function adminView(row: SeriesRow): Promise<AdminSeries> {
     state: row.state,
     playerIds: players.map((p) => p.id),
     milestones,
+    snapshots: taken?.snapshots ?? 0,
     checklist:
       row.state === "draft"
         ? startChecklist({ rules: row.rules, gameHasFile: chosen?.fileKey != null, milestones: milestones.length, otherRunning: running })

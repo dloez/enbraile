@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
-import { toolPage, readPage } from "@/components/page";
+import { AdminNav } from "@/components/admin-nav";
+import { listPage, toolPage, readPage } from "@/components/page";
 import { PixelIcon } from "@/components/pixel-icon";
 import { Placeholder } from "@/components/placeholder";
 import { cn } from "@/lib/utils";
@@ -134,6 +135,80 @@ export function TeamFrame() {
           ))}
         </div>
         <Placeholder className="hidden flex-1 rounded-[18px] lg:block" />
+      </div>
+    </main>
+  );
+}
+
+export const adminPage = cn(listPage, "gap-5 pt-4 pb-8 sm:gap-5.5 sm:pt-6.5 sm:pb-9");
+
+export function AdminHomeFrame() {
+  return (
+    <main className={adminPage}>
+      <AdminNav />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-5">
+        <Placeholder className="h-47 rounded-2xl lg:h-68" />
+        <Placeholder className="h-44 rounded-2xl lg:h-68" />
+        <Placeholder className="h-60 rounded-2xl" />
+        <Placeholder className="h-24 rounded-2xl lg:h-60" />
+      </div>
+    </main>
+  );
+}
+
+export function AdminSeriesListFrame() {
+  return (
+    <main className={adminPage}>
+      <AdminNav />
+      <Placeholder className="h-56 rounded-2xl sm:h-22" />
+      <div className="flex flex-col gap-4.5">
+        <Placeholder className="h-37.5 rounded-2xl" />
+        <Placeholder className="h-37.5 rounded-2xl" />
+      </div>
+    </main>
+  );
+}
+
+export function AdminSeriesFrame() {
+  return (
+    <main className={adminPage}>
+      <AdminNav />
+      <Placeholder className="h-37.5 rounded-2xl sm:h-42.5" />
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-6">
+        <div className="flex min-w-0 flex-1 flex-col gap-5">
+          <Placeholder className="h-80 rounded-2xl sm:h-72" />
+          <Placeholder className="h-60 rounded-2xl sm:h-44" />
+          <Placeholder className="h-160 rounded-2xl sm:h-180" />
+        </div>
+        <Placeholder className="h-72 rounded-2xl lg:w-90 lg:flex-none" />
+      </div>
+    </main>
+  );
+}
+
+export function AdminPlayersFrame() {
+  return (
+    <main className={adminPage}>
+      <AdminNav />
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_23.75rem] lg:gap-6">
+        <div className="flex flex-col gap-5">
+          <Placeholder className="h-72 rounded-2xl" />
+          <Placeholder className="h-96 rounded-2xl" />
+        </div>
+        <Placeholder className="h-80 rounded-2xl" />
+      </div>
+    </main>
+  );
+}
+
+export function AdminGamesFrame() {
+  return (
+    <main className={adminPage}>
+      <AdminNav />
+      <Placeholder className="h-38 rounded-2xl sm:h-22" />
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <Placeholder className="h-64 rounded-2xl" />
+        <Placeholder className="h-64 rounded-2xl" />
       </div>
     </main>
   );

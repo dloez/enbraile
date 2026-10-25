@@ -1,7 +1,7 @@
-import { GENS, type Gen } from "../../shared/dex";
+import type { Gen } from "../../shared/dex";
 import type { Pool, PoolFilters } from "@/analysis/pool";
 import { fieldClass, Segmented, Toggle } from "@/components/controls";
-import { MAX_BST, MIN_BST } from "../../shared/pool";
+import { MAX_BST, MIN_BST, POOL_GENS } from "../../shared/pool";
 
 export function PoolBar({
   filters,
@@ -27,7 +27,7 @@ export function PoolBar({
         Data
         <Segmented
           label="Generation"
-          options={GENS.map((g) => ({ value: g, label: g, disabled: fixed }))}
+          options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: fixed }))}
           value={filters.gen}
           onChange={(gen: Gen) => set({ gen, speciesGen: Math.min(filters.speciesGen, gen) as Gen })}
         />
@@ -36,7 +36,7 @@ export function PoolBar({
         Species up to
         <Segmented
           label="Species up to"
-          options={GENS.map((g) => ({ value: g, label: g, disabled: fixed || g > filters.gen }))}
+          options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: fixed || g > filters.gen }))}
           value={Math.min(filters.speciesGen, filters.gen) as Gen}
           onChange={(speciesGen: Gen) => set({ speciesGen })}
         />

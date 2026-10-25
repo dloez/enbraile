@@ -13,6 +13,11 @@ const ICONS = {
   monitor: { size: 10, paths: [["fill-current", "M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z"]] },
   people: { size: 10, paths: [["fill-current", "M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z"]] },
   key: { size: 10, paths: [["fill-current", "M1 2h3v1H1zM0 3h1v3H0zM4 3h1v3H4zM1 6h3v1H1zM5 4h5v1H5zM7 5h1v2H7zM9 5h1v2H9z"]] },
+  arrow: { size: 10, paths: [["fill-current", "M2 1h2v1H2zM3 2h2v1H3zM4 3h2v1H4zM5 4h2v2H5zM4 6h2v1H4zM3 7h2v1H3zM2 8h2v1H2z"]] },
+  plus: { size: 10, paths: [["fill-current", "M4 0h2v10H4zM0 4h10v2H0z"]] },
+  up: { size: 10, paths: [["fill-current", "M4 1h2v1H4zM3 2h4v1H3zM2 3h6v1H2zM1 4h8v1H1zM4 5h2v4H4z"]] },
+  down: { size: 10, paths: [["fill-current", "M4 1h2v4H4zM1 5h8v1H1zM2 6h6v1H2zM3 7h4v1H3zM4 8h2v1H4z"]] },
+  alert: { size: 10, paths: [["fill-current", "M4 0h2v6H4zM4 8h2v2H4z"]] },
   menu: { size: 10, paths: [["fill-current", "M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z"]] },
   cross: {
     size: 10,

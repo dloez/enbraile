@@ -109,6 +109,11 @@ export function Toggle({
 export const fieldClass =
   "flex min-h-10 min-w-0 items-center gap-2 rounded-lg border bg-muted px-2.5 text-sm text-foreground";
 
+export const formFieldClass =
+  "h-11.5 min-w-0 rounded-[10px] border-3 bg-ink px-3 font-sans text-[1.0625rem] font-bold text-foreground outline-none placeholder:font-semibold placeholder:text-faint focus:border-primary focus:ring-3 focus:ring-ring/30 disabled:opacity-55 aria-invalid:border-destructive";
+
+export const formLabelClass = "flex min-w-0 flex-col gap-1 font-heading text-xl text-muted-foreground";
+
 export const buttonClass = buttonVariants();
 
 export const iconButtonClass = buttonVariants({ size: "icon" });

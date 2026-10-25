@@ -1,7 +1,7 @@
-import { createRootRoute, createRoute, createRouter, lazyRouteComponent } from "@tanstack/react-router";
+import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { prefetch } from "@/lib/api";
-import { pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
+import { adminGamesPage, adminHomePage, adminPlayersPage, adminSeriesListPage, adminSeriesPage, pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
 import { HomePage } from "@/pages/home";
 
 const rootRoute = createRootRoute({ component: SiteShell });
@@ -95,31 +95,51 @@ const teamRoute = createRoute({
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin",
-  component: lazyRouteComponent(() => import("@/pages/admin"), "AdminPage"),
+  loader: () => {
+    adminHomePage.load();
+    for (const path of ["/admin/series", "/players", "/games"]) prefetch(path);
+  },
+  component: adminHomePage.Page,
 });
 
 const adminGamesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin/games",
-  component: lazyRouteComponent(() => import("@/pages/admin-games"), "AdminGamesPage"),
+  loader: () => {
+    adminGamesPage.load();
+    for (const path of ["/games", "/admin/series", "/players"]) prefetch(path);
+  },
+  component: adminGamesPage.Page,
 });
 
 const adminPlayersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin/players",
-  component: lazyRouteComponent(() => import("@/pages/admin-players"), "AdminPlayersPage"),
+  loader: () => {
+    adminPlayersPage.load();
+    for (const path of ["/players"]) prefetch(path);
+  },
+  component: adminPlayersPage.Page,
 });
 
 const adminSeriesListRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin/series",
-  component: lazyRouteComponent(() => import("@/pages/admin-series-list"), "AdminSeriesListPage"),
+  loader: () => {
+    adminSeriesListPage.load();
+    for (const path of ["/admin/series", "/games", "/players"]) prefetch(path);
+  },
+  component: adminSeriesListPage.Page,
 });
 
 const adminSeriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin/series/$id",
-  component: lazyRouteComponent(() => import("@/pages/admin-series"), "AdminSeriesPage"),
+  loader: ({ params }) => {
+    adminSeriesPage.load();
+    for (const path of [`/admin/series/${encodeURIComponent(params.id)}`, "/games", "/players", "/admin/series"]) prefetch(path);
+  },
+  component: adminSeriesPage.Page,
 });
 
 const routeTree = rootRoute.addChildren([

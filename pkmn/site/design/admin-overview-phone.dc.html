@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin overview, phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+@keyframes twinkle{0%{opacity:1}100%{opacity:0.15}}
+@keyframes glow{0%{opacity:1}100%{opacity:0.25}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+.go:not(:disabled):hover{background:#ef5148!important}
+.ph-menu:hover{background:#222a3b!important}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1000px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="flex: none; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="AdminHomePhone.dc.html" aria-label="Home" style="flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px">
+<svg width="32" height="32" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<span style="flex: 1; display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #ffffff"><svg width="16" height="16" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 2h3v1H1zM0 3h1v3H0zM4 3h1v3H4zM1 6h3v1H1zM5 4h5v1H5zM7 5h1v2H7zM9 5h1v2H9z" fill="#d93a30"></path></svg>Admin</span>
+<a href="PhoneHeaderOpen.dc.html" class="ph-menu" aria-label="Menu" style="flex: none; width: 44px; height: 44px; border-radius: 8px; color: #ffffff; display: grid; place-items: center"><svg width="22" height="22" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z" fill="currentColor"></path></svg></a>
+</header>
+
+<main style="display: flex; flex-direction: column; gap: 16px; padding: 16px 16px 28px">
+<h1 style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0">Admin overview</h1>
+<nav aria-label="Admin pages" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<a href="AdminHomePhone.dc.html" aria-current="page" style="display: grid; place-items: center; min-height: 40px; border-radius: 8px; background: #2c3549; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 21px; text-decoration: none">Overview</a>
+<a href="AdminSeriesList.dc.html" style="display: grid; place-items: center; min-height: 40px; border-radius: 8px; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 21px; text-decoration: none">Series</a>
+<a href="AdminPlayersPhone.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 40px; border-radius: 8px; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 21px; text-decoration: none">Players<sc-if value="{{hasWaiting}}" hint-placeholder-val="{{ true }}"><span style="min-width: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #ffd34d; color: #10141d; font-size: 16px; line-height: 18px; text-align: center">{{waitingCount}}</span></sc-if></a>
+<a href="AdminGames.dc.html" style="display: grid; place-items: center; min-height: 40px; border-radius: 8px; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 21px; text-decoration: none">Games</a>
+</nav>
+
+<a href="AdminSeriesPhone.dc.html" style="position: relative; display: block; height: 188px; box-sizing: border-box; border: 4px solid #2c3549; border-radius: 16px; overflow: hidden; text-decoration: none; color: #ffffff">
+<svg width="100%" height="100%" viewBox="0 0 90 47" preserveAspectRatio="xMidYMax slice" shape-rendering="crispEdges" aria-hidden="true" style="position: absolute; inset: 0; display: block">
+<sc-for list="{{scene}}" as="r" hint-placeholder-count="120"><rect x="{{r.x}}" y="{{r.y}}" width="{{r.w}}" height="{{r.h}}" fill="{{r.c}}" style="animation: {{r.a}}"></rect></sc-for>
+</svg>
+<span style="position: absolute; left: 16px; top: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #cfe0ff">Running series</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 52px; line-height: 0.8; text-shadow: 0 4px 0 #0a1a4a">Series 2</span>
+</span>
+<span style="position: absolute; right: 12px; top: 12px; padding: 0 10px; border-radius: 7px; border: 3px solid #10141d; background: #5ad1f0; color: #10141d; font-family: 'Jersey 10', sans-serif; font-size: 20px">Playing now</span>
+<span style="position: absolute; left: 12px; right: 12px; bottom: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+<span style="display: flex; flex-direction: column; padding: 4px 10px; border-radius: 9px; background: rgba(10,16,38,0.85)"><span style="font-family: 'Jersey 10', sans-serif; font-size: 15px; color: #9fb3dd">Players</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1">6</span></span>
+<span style="display: flex; flex-direction: column; padding: 4px 10px; border-radius: 9px; background: rgba(10,16,38,0.85)"><span style="font-family: 'Jersey 10', sans-serif; font-size: 15px; color: #9fb3dd">Milestones</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1">11</span></span>
+<span style="display: flex; flex-direction: column; padding: 4px 10px; border-radius: 9px; background: rgba(10,16,38,0.85)"><span style="font-family: 'Jersey 10', sans-serif; font-size: 15px; color: #9fb3dd">Snapshots</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1">23</span></span>
+</span>
+</a>
+
+<section aria-labelledby="w-title" style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b">
+<div style="display: flex; align-items: center; gap: 10px">
+<h2 id="w-title" style="margin: 0; flex: 1; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1">Waiting to be let in</h2>
+<a href="AdminPlayersPhone.dc.html" style="font-family: 'Jersey 10', sans-serif; font-size: 20px; text-decoration: none">All</a>
+</div>
+<sc-if value="{{noWaiting}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: center; min-height: 64px; border-radius: 12px; border: 3px dashed #343f58; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #a3acbf">Nobody is waiting</div>
+</sc-if>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{waiting}}" as="p" hint-placeholder-count="3">
+<li style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 8px 0 10px; border-radius: 12px; background: #1b2232; border: 2px solid #2c3549">
+<span aria-hidden="true" style="flex: none; width: 36px; height: 36px; border-radius: 8px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{p.c}}; background: {{p.c}}; box-sizing: border-box; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">{{p.i}}</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 25px; line-height: 1">{{p.name}}</span>
+<span style="font-size: 12px; font-weight: 700; color: #a3acbf">{{p.when}}</span>
+</span>
+<button type="button" class="go" onClick="{{p.allow}}" style="min-height: 44px; padding: 0 14px 3px; border: none; border-radius: 8px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Let in</button>
+</li>
+</sc-for>
+</ul>
+</section>
+
+<a href="AdminSeriesList.dc.html" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b; color: #eef1f7; text-decoration: none">
+<span style="display: flex; align-items: center; justify-content: space-between"><span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 1">Series</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #a3acbf">3 in all</span></span>
+<span style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 2px dashed #44506d; font-family: 'Jersey 10', sans-serif; font-size: 22px"><span style="flex: 1">Series 3</span><span style="font-size: 18px; color: #ffc878">Draft · 3/4</span></span>
+<span style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 10px; background: #1b2232; font-family: 'Jersey 10', sans-serif; font-size: 22px"><span style="flex: 1">Series 1</span><span style="font-size: 18px; color: #a3acbf">Finished</span></span>
+</a>
+
+<a href="AdminGames.dc.html" style="display: flex; align-items: center; gap: 14px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b; color: #eef1f7; text-decoration: none">
+<svg width="42" height="42" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true" style="flex: none"><path d="M2 1h8v1H2zM1 2h1v9H1zM10 2h1v9H10zM2 11h8v1H2z" fill="#10141d"></path><path d="M2 2h8v9H2z" fill="#4a5470"></path><path d="M3 3h6v4H3z" fill="#e3403a"></path><path d="M3 8h1v2H3zM5 8h1v2H5zM7 8h1v2H7z" fill="#ffd34d"></path></svg>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 1">Games</span>
+<span style="font-size: 13px; font-weight: 700; color: #a3acbf">2 games · 1 without a zip</span>
+</span>
+<svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v1H2zM3 2h2v1H3zM4 3h2v1H4zM5 4h2v2H5zM4 6h2v1H4zM3 7h2v1H3zM2 8h2v1H2z" fill="#5ad1f0"></path></svg>
+</a>
+</main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+function rng(seed) { let x = seed; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
+function blink(name, rand, lo, hi) { return name + ' ' + (lo + rand() * (hi - lo)).toFixed(2) + 's steps(2) ' + (rand() * 2).toFixed(2) + 's infinite alternate'; }
+function bandsTo(r, W, bands) {
+  bands.forEach(([y, h, c], i) => {
+    r(0, y, W, h, c);
+    if (i > 0) { const prev = bands[i - 1][2]; for (let x = (i % 2); x < W; x += 2) r(x, y, 1, 1, prev); }
+  });
+}
+function nightScene(W, H) {
+  const R = [];
+  const r = (x, y, w, h, c, a) => R.push({x, y, w, h, c, a: a || 'none'});
+  const k = H / 65;
+  bandsTo(r, W, [[0, Math.round(16 * k), '#0d1430'], [Math.round(16 * k), Math.round(13 * k), '#111a3b'], [Math.round(29 * k), Math.round(11 * k), '#162147'], [Math.round(40 * k), Math.round(9 * k), '#1c2954'], [Math.round(49 * k), H - Math.round(49 * k), '#223262']]);
+  const rand = rng(7);
+  const sky = Math.round(44 * k);
+  for (let i = 0; i < W / 3; i++) {
+    const x = Math.floor(rand() * W), y = Math.floor(rand() * sky), lit = rand() < 0.45;
+    r(x, y, 1, 1, lit ? '#ffffff' : '#7f96c8', lit ? blink('twinkle', rand, 0.6, 1.6) : 'none');
+  }
+  const mx = W - 14, my = Math.round(20 * k);
+  for (let dy = -5; dy <= 5; dy++) { const w = Math.round(Math.sqrt(28 - dy * dy)); r(mx - w, my + dy, w * 2 + 1, 1, '#f2ead6'); }
+  r(mx - 3, my - 3, 2, 2, '#d8ccb0'); r(mx + 1, my + 1, 2, 2, '#d8ccb0');
+  const farBase = Math.round(48 * k), nearBase = Math.round(57 * k);
+  for (let x = 0; x < W; x++) { const t = farBase + Math.round(4 * Math.sin(x / 19) + 2 * Math.sin(x / 7)); r(x, t, 1, H - t, '#16224d'); }
+  const near = [];
+  for (let x = 0; x < W; x++) { const t = nearBase + Math.round(3 * Math.sin(x / 13 + 2) + 2 * Math.sin(x / 5)); near.push(t); r(x, t, 1, H - t, '#0a1026'); }
+  for (let x = 8; x < W - 4; x += 13 + Math.floor(rand() * 10)) {
+    const y = near[x] + 2;
+    if (y < H - 1) r(x, y, 1, 1, '#ffd34d', blink('glow', rand, 1.2, 2.6));
+  }
+  return R;
+}
+const WAITING = [
+  {name: 'Kenji', c: '#8fc8ff', when: '2 hours ago'},
+  {name: 'Lucía', c: '#ff9ec4', when: 'Yesterday'},
+  {name: 'Tomás', c: '#7be08a', when: '3 days ago'}
+];
+class Component extends DCLogic {
+  renderVals() {
+    const gone = (this.state && this.state.gone) || [];
+    const list = WAITING.filter((p) => !gone.includes(p.name));
+    return {
+      scene: nightScene(90, 47),
+      waitingCount: list.length, hasWaiting: list.length > 0, noWaiting: list.length === 0,
+      waiting: list.map((p) => ({...p, i: p.name[0], allow: () => this.setState({gone: gone.concat([p.name])})}))
+    };
+  }
+}
+</script>
+</body>
+</html>

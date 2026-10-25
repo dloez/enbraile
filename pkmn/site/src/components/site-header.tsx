@@ -124,7 +124,10 @@ function Account({ user }: { user: User }) {
   return (
     <div className="ml-auto hidden min-w-0 items-center gap-3 sm:flex">
       {user.admin ? (
-        <span className="truncate font-heading text-2xl text-white">{user.name}</span>
+        <span className="flex min-w-0 items-center gap-2.5 font-heading text-2xl text-yellow">
+          <PixelIcon name="key" className="size-4.5" />
+          <span className="truncate">{user.name}</span>
+        </span>
       ) : (
         <Link
           to="/players/$player"
@@ -223,7 +226,8 @@ function PhoneMenu({
             <>
               <span aria-hidden="true" className="mx-0.5 my-1.5 h-0.75 bg-cell" />
               {user.admin ? (
-                <div className={cn(menuItem, "text-white")}>
+                <div className={cn(menuItem, "text-yellow")}>
+                  <PixelIcon name="key" />
                   <span className="truncate">{user.name}</span>
                 </div>
               ) : (

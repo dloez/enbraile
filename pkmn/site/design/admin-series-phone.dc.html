@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin: edit a series, phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+.go:not(:disabled):hover{background:#ef5148!important}
+.btn:not(:disabled):hover{background:rgba(255,255,255,0.18)!important}
+.danger:not(:disabled):hover{background:rgba(255,106,94,0.16)!important}
+.quiet:not(:disabled):hover{background:#2c3549!important;color:#ffffff!important}
+.field:focus{border-color:#5ad1f0!important;box-shadow:0 0 0 3px rgba(90,209,240,0.3)}
+.pick:not(:disabled):hover{border-color:#5ad1f0!important}
+.ph-menu:hover{background:#222a3b!important}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 2900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="flex: none; height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="AdminHomePhone.dc.html" aria-label="Home" style="flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px">
+<svg width="32" height="32" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<span style="flex: 1; display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #ffffff"><svg width="16" height="16" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 2h3v1H1zM0 3h1v3H0zM4 3h1v3H4zM1 6h3v1H1zM5 4h5v1H5zM7 5h1v2H7zM9 5h1v2H9z" fill="#d93a30"></path></svg>Admin</span>
+<a href="PhoneHeaderOpen.dc.html" class="ph-menu" aria-label="Menu" style="flex: none; width: 44px; height: 44px; border-radius: 8px; color: #ffffff; display: grid; place-items: center"><svg width="22" height="22" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h8v2H1zM1 4h8v2H1zM1 7h8v2H1z" fill="currentColor"></path></svg></a>
+</header>
+
+<main style="display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 110px">
+<h1 style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0">Edit {{name}}</h1>
+<a href="AdminSeriesList.dc.html" style="align-self: flex-start; display: flex; align-items: center; gap: 8px; min-height: 44px; font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none"><svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true" style="fill: currentColor"><path d="M12 2L2 9l10 7z"></path></svg>Series</a>
+
+<section aria-label="How the series will look" style="position: relative; height: 150px; box-sizing: border-box; border: 4px solid #2c3549; border-radius: 16px; overflow: hidden">
+<svg width="100%" height="100%" viewBox="{{vb}}" preserveAspectRatio="xMidYMax slice" shape-rendering="crispEdges" aria-hidden="true" style="position: absolute; inset: 0; display: block">
+<sc-for list="{{scene}}" as="r" hint-placeholder-count="120"><rect x="{{r.x}}" y="{{r.y}}" width="{{r.w}}" height="{{r.h}}" fill="{{r.c}}"></rect></sc-for>
+</svg>
+<span style="position: absolute; left: 14px; top: 16px; font-family: 'Jersey 10', sans-serif; font-size: 56px; line-height: 0.8; color: #ffffff; text-shadow: {{shadow}}">{{name}}</span>
+<span style="position: absolute; right: 10px; top: 10px; padding: 0 10px; border-radius: 7px; border: 3px solid #10141d; background: #ffc878; color: #10141d; font-family: 'Jersey 10', sans-serif; font-size: 20px">Draft</span>
+</section>
+
+<section aria-labelledby="pm-start" style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<h2 id="pm-start" style="margin: 0; flex: 1; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1">Before it starts</h2>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #ffc878">{{readyCount}}</span>
+</div>
+<ul aria-label="Checklist" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{checklist}}" as="c" hint-placeholder-count="4">
+<li style="display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 10px; border-radius: 9px; background: {{c.bg}}">
+<span role="img" aria-label="{{c.state}}" style="flex: none; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; background: {{c.dot}}; color: #10141d">
+<sc-if value="{{c.done}}" hint-placeholder-val="{{ true }}"><svg width="11" height="11" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M8 2h2v2H8zM7 3h2v2H7zM6 4h2v2H6zM5 5h2v2H5zM4 6h2v2H4zM3 7h2v1H3zM1 5h2v2H1zM2 6h2v2H2z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{c.todo}}" hint-placeholder-val="{{ false }}"><svg width="9" height="9" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z" fill="currentColor"></path></svg></sc-if>
+</span>
+<span style="font-weight: 700; font-size: 14px; color: {{c.ink}}">{{c.label}}</span>
+</li>
+</sc-for>
+</ul>
+</section>
+
+<section aria-labelledby="pm-details" style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b">
+<h2 id="pm-details" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1">Series</h2>
+<div style="display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 4px; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Number
+<span style="display: flex; align-items: center; height: 46px; padding: 0 12px; box-sizing: border-box; border-radius: 10px; border: 3px solid #343f58; background: #1b2232; color: #a3acbf; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 18px">3</span>
+</div>
+<label style="display: flex; flex-direction: column; gap: 4px; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Name
+<input class="field" value="{{name}}" onInput="{{onName}}" style="height: 46px; padding: 0 10px; box-sizing: border-box; border-radius: 10px; border: 3px solid #343f58; background: #10141d; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 17px; outline: none">
+</label>
+</div>
+<label style="display: flex; flex-direction: column; gap: 4px; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Game
+<select class="field" style="height: 46px; padding: 0 8px; box-sizing: border-box; border-radius: 10px; border: 3px solid #343f58; background: #10141d; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 16px; outline: none"><option>Pokémon Añil · Randomlocke</option><option>No game</option></select>
+</label>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Snapshots arrive</span>
+<div role="group" aria-label="Ingestion" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<sc-for list="{{ingestion}}" as="o" hint-placeholder-count="2"><button type="button" aria-pressed="{{o.on}}" onClick="{{o.pick}}" style="min-height: 40px; border: none; border-radius: 8px; background: {{o.bg}}; color: {{o.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 21px; cursor: pointer">{{o.label}}</button></sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #a3acbf">Scene</span>
+<div role="radiogroup" aria-label="Scene" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{scenes}}" as="sc" hint-placeholder-count="2">
+<button type="button" role="radio" class="pick" aria-checked="{{sc.on}}" onClick="{{sc.pick}}" style="position: relative; height: 70px; padding: 0; border-radius: 11px; border: 3px solid {{sc.line}}; background: #10141d; overflow: hidden; cursor: pointer">
+<svg width="100%" height="100%" viewBox="{{sc.vb}}" preserveAspectRatio="xMidYMax slice" shape-rendering="crispEdges" aria-hidden="true" style="position: absolute; inset: 0; display: block"><sc-for list="{{sc.rects}}" as="r" hint-placeholder-count="60"><rect x="{{r.x}}" y="{{r.y}}" width="{{r.w}}" height="{{r.h}}" fill="{{r.c}}"></rect></sc-for></svg>
+<span style="position: absolute; left: 6px; bottom: 6px; padding: 0 8px; border-radius: 6px; background: rgba(16,20,29,0.88); font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #ffffff">{{sc.label}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="pm-players" style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<h2 id="pm-players" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1">Players</h2>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{playerCount}}</span>
+</div>
+<ul style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{players}}" as="p" hint-placeholder-count="6">
+<li><button type="button" class="pick" aria-pressed="{{p.on}}" onClick="{{p.flip}}" style="width: 100%; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 10px; box-sizing: border-box; border-radius: 11px; border: 3px solid {{p.line}}; background: {{p.bg}}; color: #eef1f7; text-align: left; cursor: pointer">
+<span aria-hidden="true" style="flex: none; width: 30px; height: 30px; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{p.c}}; background: {{p.c}}; box-sizing: border-box; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #10141d">{{p.i}}</span>
+<span style="flex: 1; min-width: 0; font-family: 'Jersey 10', sans-serif; font-size: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.name}}</span>
+</button></li>
+</sc-for>
+</ul>
+</section>
+
+<section aria-labelledby="pm-ms" style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<h2 id="pm-ms" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1">Milestones</h2>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{msCount}}</span>
+</div>
+<div aria-hidden="true" style="display: grid; grid-template-columns: {{msCols}}; border-radius: 10px; background: #1b2232; overflow: hidden">
+<sc-for list="{{track}}" as="t" hint-placeholder-count="10">
+<span style="display: grid; place-items: center; min-height: 34px; background: {{t.tint}}; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: {{t.ink}}">{{t.short}}</span>
+</sc-for>
+</div>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{milestones}}" as="m" hint-placeholder-count="10">
+<li style="display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 12px; background: #1b2232; border: 2px solid #2c3549">
+<div style="display: flex; align-items: center; gap: 6px">
+<span style="width: 20px; text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #6b7489">{{m.n}}</span>
+<input class="field" aria-label="{{m.label}}" value="{{m.name}}" style="flex: 1; min-width: 0; height: 40px; padding: 0 10px; box-sizing: border-box; border-radius: 9px; border: 2px solid #343f58; background: #10141d; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; outline: none">
+<button type="button" class="quiet" aria-label="Move up" title="Move up" disabled="{{m.first}}" onClick="{{m.up}}" style="flex: none; width: 34px; height: 40px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; display: grid; place-items: center; cursor: pointer; opacity: {{m.upFade}}"><svg width="13" height="13" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h2v1H4zM3 2h4v1H3zM2 3h6v1H2zM1 4h8v1H1zM4 5h2v4H4z" fill="currentColor"></path></svg></button>
+<button type="button" class="quiet" aria-label="Move down" title="Move down" disabled="{{m.last}}" onClick="{{m.down}}" style="flex: none; width: 34px; height: 40px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; display: grid; place-items: center; cursor: pointer; opacity: {{m.downFade}}"><svg width="13" height="13" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 1h2v4H4zM1 5h8v1H1zM2 6h6v1H2zM3 7h4v1H3zM4 8h2v1H4z" fill="currentColor"></path></svg></button>
+<button type="button" class="quiet" aria-label="Remove" title="Remove" onClick="{{m.remove}}" style="flex: none; width: 34px; height: 40px; border: none; border-radius: 8px; background: transparent; color: #ff6a5e; display: grid; place-items: center; cursor: pointer"><svg width="11" height="11" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h2v1H1zM7 1h2v1H7zM2 2h2v1H2zM6 2h2v1H6zM3 3h2v1H3zM5 3h2v1H5zM4 4h2v2H4zM3 6h2v1H3zM5 6h2v1H5zM2 7h2v1H2zM6 7h2v1H6zM1 8h2v1H1zM7 8h2v1H7z" fill="currentColor"></path></svg></button>
+</div>
+<div role="group" aria-label="{{m.kindLabel}}" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 9px; background: #10141d; border: 2px solid #343f58">
+<sc-for list="{{m.kinds}}" as="k" hint-placeholder-count="3"><button type="button" aria-pressed="{{k.on}}" onClick="{{k.pick}}" style="min-height: 34px; border: none; border-radius: 6px; background: {{k.bg}}; color: {{k.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 18px; cursor: pointer">{{k.label}}</button></sc-for>
+</div>
+</li>
+</sc-for>
+</ol>
+<button type="button" class="pick" onClick="{{addMs}}" style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; border-radius: 12px; border: 3px dashed #44506d; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer"><svg width="13" height="13" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h2v10H4zM0 4h10v2H0z" fill="currentColor"></path></svg>Add milestone</button>
+</section>
+
+<section aria-labelledby="pm-pool" style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<h2 id="pm-pool" style="margin: 0; flex: 1; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1">Default pool</h2>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px">412 <span style="color: #a3acbf">species</span></span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<label style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #a3acbf">Data<select style="border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 19px; outline: none"><option>Gen 9</option></select></label>
+<label style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #a3acbf">Species up to<select style="border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 19px; outline: none"><option>Gen 5</option></select></label>
+<label style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #c3cad8"><input type="checkbox" checked="{{ true }}" style="width: 16px; height: 16px; accent-color: #5ad1f0">Fully evolved</label>
+<label style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #c3cad8"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #5ad1f0">No legendaries</label>
+<label style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #c3cad8"><input type="checkbox" style="width: 16px; height: 16px; accent-color: #5ad1f0">No mythicals</label>
+</div>
+</section>
+
+<section aria-labelledby="pm-rules" style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 3px solid #343f58; border-radius: 16px; background: #222a3b">
+<h2 id="pm-rules" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1">Rules</h2>
+<div style="display: flex; gap: 8px">
+<label style="flex: 1; display: flex; align-items: center; gap: 6px; height: 42px; padding: 0 10px; border-radius: 9px; background: #10141d; border: 2px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #a3acbf">Copy from<select style="flex: 1; border: none; background: transparent; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 19px; outline: none"><option>Series 2</option><option>Series 1</option></select></label>
+<button type="button" class="btn" style="min-height: 42px; padding: 0 14px 3px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 21px; cursor: pointer">Copy</button>
+</div>
+<textarea aria-label="Rules in Markdown" rows="10" style="min-height: 240px; padding: 12px; box-sizing: border-box; border-radius: 12px; border: 3px solid #343f58; background: #10141d; color: #eef1f7; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 13px; line-height: 1.6; outline: none; resize: vertical">## The run
+
+Play Pokémon Añil with the Randomlocke mod. Catch only the first encounter on each route.
+
+## League rounds
+
+At each round milestone, upload your save.</textarea>
+</section>
+
+<button type="button" class="danger" onClick="{{del}}" style="min-height: 46px; border: 2px solid {{delLine}}; border-radius: 10px; background: {{delBg}}; color: {{delInk}}; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">{{delLabel}}</button>
+</main>
+
+<div style="position: sticky; bottom: 0; margin-top: -86px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px; padding: 12px 16px 16px; background: #10141d; border-top: 3px solid #343f58">
+<button type="button" class="btn" onClick="{{save}}" style="min-height: 52px; border: none; border-radius: 10px; background: rgba(255,255,255,0.1); color: {{saveInk}}; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 25px; cursor: pointer">{{saveLabel}}</button>
+<button type="button" disabled="{{ true }}" style="min-height: 52px; border: none; border-radius: 10px; background: #2c3549; color: #6b7489; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 25px; cursor: default">Start {{name}}</button>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2900}}'>
+function rng(seed) { let x = seed; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
+function bandsTo(r, W, bands) {
+  bands.forEach(([y, h, c], i) => {
+    r(0, y, W, h, c);
+    if (i > 0) { const prev = bands[i - 1][2]; for (let x = (i % 2); x < W; x += 2) r(x, y, 1, 1, prev); }
+  });
+}
+function nightScene(W, H) {
+  const R = [];
+  const r = (x, y, w, h, c) => R.push({x, y, w, h, c});
+  const k = H / 65;
+  bandsTo(r, W, [[0, Math.round(16 * k), '#0d1430'], [Math.round(16 * k), Math.round(13 * k), '#111a3b'], [Math.round(29 * k), Math.round(11 * k), '#162147'], [Math.round(40 * k), Math.round(9 * k), '#1c2954'], [Math.round(49 * k), H - Math.round(49 * k), '#223262']]);
+  const rand = rng(7);
+  const sky = Math.round(44 * k);
+  for (let i = 0; i < W / 3; i++) { const x = Math.floor(rand() * W), y = Math.floor(rand() * sky); r(x, y, 1, 1, rand() < 0.45 ? '#ffffff' : '#7f96c8'); }
+  const mx = W - 14, my = Math.round(20 * k);
+  for (let dy = -5; dy <= 5; dy++) { const w = Math.round(Math.sqrt(28 - dy * dy)); r(mx - w, my + dy, w * 2 + 1, 1, '#f2ead6'); }
+  const farBase = Math.round(48 * k), nearBase = Math.round(57 * k);
+  for (let x = 0; x < W; x++) { const t = farBase + Math.round(4 * Math.sin(x / 19) + 2 * Math.sin(x / 7)); r(x, t, 1, H - t, '#16224d'); }
+  for (let x = 0; x < W; x++) { const t = nearBase + Math.round(3 * Math.sin(x / 13 + 2) + 2 * Math.sin(x / 5)); r(x, t, 1, H - t, '#0a1026'); }
+  return R;
+}
+function tree(r, tx, base) {
+  [5, 7, 9, 9, 9, 9, 7, 5].forEach((w, i) => r(tx - Math.floor(w / 2), base - 11 + i, w, 1, '#2f7d3a'));
+  r(tx - 3, base - 10, 3, 1, '#4fa556'); r(tx - 4, base - 9, 3, 2, '#4fa556');
+  r(tx + 2, base - 5, 2, 2, '#256a30'); r(tx - 1, base - 3, 2, 3, '#7a5230');
+}
+function dayScene(W, H) {
+  const R = [];
+  const r = (x, y, w, h, c) => R.push({x, y, w, h, c});
+  bandsTo(r, W, [[0, 10, '#58aee8'], [10, 10, '#6dbbec'], [20, 8, '#85c8f0'], [28, 8, '#a3d7f3']]);
+  for (let x = 0; x < W; x++) { const t = 31 + Math.round(3 * Math.sin(x / 23) + 2 * Math.sin(x / 9 + 1)); r(x, t, 1, 38 - t, '#8db7d6'); }
+  r(0, 38, W, H - 38, '#6cbf4f'); r(0, 38, W, 1, '#8ad66a');
+  const rand = rng(5);
+  for (let x = 4; x < W; x += 10) tree(r, x + Math.floor(rand() * 4), 41);
+  for (let x = 9; x < W; x += 13) tree(r, x + Math.floor(rand() * 4), 46);
+  r(0, 48, W, 5, '#e0c080'); r(0, 48, W, 1, '#f0d8a0'); r(0, 52, W, 1, '#b8945a');
+  return R;
+}
+const OUTLINE = '0 -3px 0 #10141d, 3px 0 0 #10141d, 0 3px 0 #10141d, -3px 0 0 #10141d, 3px 3px 0 #10141d, -3px -3px 0 #10141d, 3px -3px 0 #10141d, -3px 3px 0 #10141d, 0 6px 0 #10141d';
+const NIGHT = nightScene(110, 42), DAY = dayScene(110, 55), NIGHT_S = nightScene(70, 40), DAY_S = dayScene(70, 55);
+const PLAYERS = [['Dloez', '#ffd34d', true], ['MIRAMEEE', '#ff9ec4', true], ['Vicky', '#7be08a', true], ['Pablo', '#8fc8ff', true], ['Andrea', '#ffc878', true], ['Sergio', '#c9a7ff', false]];
+const START = [['Gym 1', 'round'], ['Gym 2', 'round'], ['Gym 3', 'round'], ['Gym 4', 'none'], ['Gym 5', 'round'], ['Gym 6', 'none'], ['Gym 7', 'round'], ['Gym 8', 'none'], ['Post-League', 'none'], ['Tournament', 'tournament']];
+const KINDS = [['none', 'Checkpoint'], ['round', 'Round'], ['tournament', 'Tournament']];
+function short(name) { const n = /(\d+)$/.exec(name); if (n) return n[1]; return (name.split(/[\s-]+/).pop() || name).charAt(0).toUpperCase(); }
+class Component extends DCLogic {
+  st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
+  renderVals() {
+    const name = this.st('name', 'Series 3');
+    const scene = this.st('scene', 'route');
+    const ing = this.st('ing', 'manual');
+    const picked = this.st('picked', PLAYERS.filter((p) => p[2]).map((p) => p[0]));
+    const ms = this.st('ms', START);
+    const saved = this.st('saved', false), confirm = this.st('confirm', false);
+    const set = (patch) => this.setState(Object.assign({saved: false}, patch));
+    const night = scene === 'night';
+    let round = 0;
+    const track = ms.map(([n, mark]) => { const r = mark === 'round' ? ++round : 0; return {short: mark === 'tournament' ? '★' : short(n), tint: r ? 'rgba(193,45,36,0.16)' : 'transparent', ink: r ? '#ff9d94' : mark === 'tournament' ? '#ffd34d' : '#a3acbf'}; });
+    const move = (i, by) => { const l = ms.slice(); const [t] = l.splice(i, 1); l.splice(i + by, 0, t); set({ms: l}); };
+    const checks = [['Rules written', true], ['A game with its file', true], ['At least one milestone', ms.length > 0], ['Series 2 finished', false]];
+    return {
+      name, onName: (e) => set({name: e.target.value}),
+      vb: night ? '0 0 110 42' : '0 0 110 55', scene: night ? NIGHT : DAY, shadow: night ? '0 4px 0 #0a1a4a' : OUTLINE,
+      readyCount: checks.filter((c) => c[1]).length + ' of ' + checks.length,
+      checklist: checks.map(([label, done]) => ({label, done, todo: !done, state: done ? 'Done' : 'Missing', dot: done ? '#7be08a' : '#ff6a5e', bg: done ? '#1b2232' : 'rgba(255,106,94,0.1)', ink: done ? '#eef1f7' : '#ffb3ab'})),
+      ingestion: [['manual', 'Manual'], ['automatic', 'Automatic']].map(([v, label]) => ({label, on: ing === v, bg: ing === v ? '#2c3549' : 'transparent', ink: ing === v ? '#ffffff' : '#a3acbf', pick: () => set({ing: v})})),
+      scenes: [['route', 'Daytime route', '0 0 70 55', DAY_S], ['night', 'Night sky', '0 0 70 40', NIGHT_S]].map(([v, label, vbs, rects]) => ({label, vb: vbs, rects, on: scene === v, line: scene === v ? '#5ad1f0' : '#343f58', pick: () => set({scene: v})})),
+      playerCount: picked.length + ' of ' + PLAYERS.length,
+      players: PLAYERS.map(([n, c]) => { const on = picked.includes(n); return {name: n, c, i: n[0], on, line: on ? '#5ad1f0' : '#2c3549', bg: on ? '#1d3242' : '#1b2232', flip: () => set({picked: on ? picked.filter((x) => x !== n) : picked.concat([n])})}; }),
+      msCount: ms.length, msCols: 'repeat(' + Math.max(ms.length, 1) + ', minmax(0, 1fr))', track,
+      milestones: ms.map(([n, mark], i) => ({n: i + 1, name: n, label: 'Milestone ' + (i + 1), kindLabel: 'Milestone ' + (i + 1) + ' kind',
+        kinds: KINDS.map(([v, label]) => ({label, on: mark === v, bg: mark === v ? (v === 'round' ? '#c12d24' : v === 'tournament' ? '#ffd34d' : '#2c3549') : 'transparent', ink: mark === v ? (v === 'tournament' ? '#10141d' : '#ffffff') : '#a3acbf', pick: () => set({ms: ms.map((m, j) => (j === i ? [m[0], v] : m))})})),
+        first: i === 0, last: i === ms.length - 1, upFade: i === 0 ? 0.35 : 1, downFade: i === ms.length - 1 ? 0.35 : 1,
+        up: () => move(i, -1), down: () => move(i, 1), remove: () => set({ms: ms.filter((_, j) => j !== i)})})),
+      addMs: () => set({ms: ms.concat([['New milestone', 'none']])}),
+      saveLabel: saved ? 'Saved' : 'Save', saveInk: saved ? '#7be08a' : '#ffffff', save: () => this.setState({saved: true}),
+      delLabel: confirm ? 'Delete ' + name + ' for good' : 'Delete draft', delBg: confirm ? '#ff6a5e' : 'transparent', delInk: confirm ? '#10141d' : '#ff6a5e', delLine: confirm ? '#ff6a5e' : 'rgba(255,106,94,0.5)',
+      del: () => this.setState({confirm: !confirm})
+    };
+  }
+}
+</script>
+</body>
+</html>

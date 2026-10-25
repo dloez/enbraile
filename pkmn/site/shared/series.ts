@@ -60,6 +60,7 @@ export const adminSeries = z.object({
   state: seriesState,
   playerIds: z.array(z.string()),
   milestones: z.array(milestone),
+  snapshots: z.number().int(),
   checklist: z.array(checklistItem),
   otherRunning: z.string().nullable(),
   startedAt: z.string().nullable(),

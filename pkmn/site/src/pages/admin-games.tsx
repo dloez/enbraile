@@ -1,70 +1,65 @@
-import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { buttonClass, fieldClass, Panel } from "@/components/controls";
-import { listPage } from "@/components/page";
+import { type FormEvent, useEffect, useState } from "react";
+import { AdminNav } from "@/components/admin-nav";
+import { buttonClass, formFieldClass, formLabelClass } from "@/components/controls";
+import { adminPage, AdminGamesFrame } from "@/components/page-frames";
+import { PixelIcon } from "@/components/pixel-icon";
+import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { formatSize, joinedOn } from "@/lib/admin-format";
 import { sendFile } from "@/lib/upload";
 import { cn } from "@/lib/utils";
-import { AdminGate } from "@/pages/admin";
 import { downloadLink, game, gameList, type Game } from "../../shared/games";
-
-const sizeUnits = ["B", "KB", "MB", "GB"];
-
-function formatSize(bytes: number): string {
-  let value = bytes;
-  let unit = 0;
-  while (value >= 1024 && unit < sizeUnits.length - 1) {
-    value /= 1024;
-    unit += 1;
-  }
-  return `${unit === 0 ? value : value.toFixed(1)} ${sizeUnits[unit]}`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
-}
+import { type AdminSeries, adminSeriesList } from "../../shared/series";
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
 }
 
 export function AdminGamesPage() {
-  return (
-    <AdminGate>
-      <AdminGames />
-    </AdminGate>
-  );
-}
-
-function AdminGames() {
   const [games, setGames] = useState<Game[] | null>(null);
+  const [series, setSeries] = useState<AdminSeries[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      setGames(await api("/games", gameList));
-    } catch (caught) {
-      setError(message(caught));
-    }
+  useEffect(() => {
+    Promise.all([api("/games", gameList), api("/admin/series", adminSeriesList)]).then(
+      ([gameRows, seriesRows]) => {
+        setGames(gameRows);
+        setSeries(seriesRows);
+      },
+      (caught: unknown) => setError(message(caught)),
+    );
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
-
+  if (!games && !error) return <AdminGamesFrame />;
   const replace = (updated: Game) => setGames((current) => current?.map((g) => (g.id === updated.id ? updated : g)) ?? null);
 
   return (
-    <main className={cn(listPage, "gap-7 py-7 sm:py-9")}>
-      <h1 className="m-0 font-heading text-5xl leading-none sm:text-6xl">Games</h1>
-      <NewGame onCreated={(created) => setGames((current) => [...(current ?? []), created])} />
+    <main className={adminPage}>
+      <h1 className="sr-only">Admin games</h1>
+      <AdminNav />
       {error && (
-        <p role="alert" className="m-0 text-sm text-destructive">
+        <p role="alert" className="m-0 text-destructive">
           {error}
         </p>
       )}
-      {games?.map((g) => (
-        <GameRow key={g.id} game={g} onChange={replace} />
-      ))}
+      {games && (
+        <>
+          <NewGame onCreated={(created) => setGames((current) => [...(current ?? []), created])} />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+            {games.map((g) => (
+              <GameCard
+                key={g.id}
+                game={g}
+                usedBy={series
+                  .filter((s) => s.gameId === g.id)
+                  .map((s) => s.number)
+                  .sort((a, b) => a - b)}
+                onChange={replace}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </main>
   );
 }
@@ -88,38 +83,50 @@ function NewGame({ onCreated }: { onCreated: (created: Game) => void }) {
   }
 
   return (
-    <Panel title="New game">
-      <form onSubmit={submit} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1.5 text-sm text-muted-foreground">
-          Name
-          <input
-            name="name"
-            required
-            maxLength={100}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className={cn(fieldClass, "outline-none focus-visible:ring-3 focus-visible:ring-ring/50")}
-          />
-        </label>
-        {error && (
-          <p role="alert" className="m-0 text-sm text-destructive">
-            {error}
-          </p>
-        )}
-        <button type="submit" disabled={busy} className={cn(buttonClass, "self-start")}>
-          Create
-        </button>
-      </form>
-    </Panel>
+    <form onSubmit={submit} className="flex flex-col gap-3 rounded-2xl border-3 bg-card px-4 pt-3.5 pb-4 sm:flex-row sm:items-end sm:gap-3.5 sm:px-5 sm:pt-4 sm:pb-4.5">
+      <h2 className="m-0 font-heading text-[1.75rem] leading-none font-normal sm:mr-1.5 sm:self-center sm:text-3xl">New game</h2>
+      <label className={cn(formLabelClass, "flex-1")}>
+        Name
+        <input
+          name="name"
+          required
+          maxLength={100}
+          placeholder="As players will see it, e.g. Pokémon Añil · Randomlocke"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          className={formFieldClass}
+        />
+      </label>
+      <button type="submit" disabled={busy} className={buttonVariants({ variant: "go", className: "min-h-11.5 px-5 text-[1.625rem]" })}>
+        <PixelIcon name="plus" className="size-3.5" />
+        Create
+      </button>
+      {error && (
+        <p role="alert" className="m-0 text-sm text-destructive sm:self-center">
+          {error}
+        </p>
+      )}
+    </form>
   );
 }
 
-function GameRow({ game: current, onChange }: { game: Game; onChange: (updated: Game) => void }) {
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="flex min-w-0 flex-col rounded-[10px] bg-box px-3 py-2">
+      <span className="font-heading text-base text-muted-foreground sm:text-[1.0625rem]">{label}</span>
+      <span className="truncate font-heading text-[1.375rem] leading-none sm:text-[1.625rem]">{value}</span>
+    </span>
+  );
+}
+
+function GameCard({ game: current, usedBy, onChange }: { game: Game; usedBy: number[]; onChange: (updated: Game) => void }) {
   const [progress, setProgress] = useState<number | null>(null);
+  const [sending, setSending] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function upload(file: File) {
     setError(null);
+    setSending(file.name);
     setProgress(0);
     try {
       onChange(await sendFile(`/games/${current.id}`, file, game, setProgress));
@@ -140,30 +147,57 @@ function GameRow({ game: current, onChange }: { game: Game; onChange: (updated: 
   }
 
   const uploading = progress !== null;
+  const hasFile = current.fileName !== null;
 
   return (
-    <Panel
-      title={current.name}
-      aside={
-        current.fileSize !== null && current.uploadedAt ? (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {formatSize(current.fileSize)} · {formatDate(current.uploadedAt)}
-          </span>
-        ) : (
-          <span className="text-sm text-muted-foreground">No file</span>
+    <article className={cn("flex flex-col gap-4 rounded-2xl border-3 bg-card p-4 sm:px-6 sm:py-5.5", uploading && "border-primary")}>
+      <div className="flex items-center gap-4 sm:gap-4.5">
+        <PixelIcon name="cartridge" className={cn("size-13 sm:size-16", !hasFile && "opacity-45")} />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <h2 className="m-0 font-heading text-3xl leading-[0.95] font-normal sm:text-4xl">{current.name}</h2>
+          <span className={cn("text-[0.8125rem] font-bold break-all sm:text-sm", hasFile ? "text-subtle" : "text-warning")}>{current.fileName ?? "No file"}</span>
+        </div>
+      </div>
+      {hasFile && current.fileSize !== null && current.uploadedAt ? (
+        <div className="grid grid-cols-3 gap-2">
+          <Fact label="Size" value={formatSize(current.fileSize)} />
+          <Fact label="Uploaded" value={joinedOn(current.uploadedAt)} />
+          <Fact label="Used by" value={usedBy.length ? `Series ${usedBy.join(", ")}` : "No series"} />
+        </div>
+      ) : (
+        !uploading && (
+          <div className="flex min-h-16.5 items-center gap-3 rounded-xl border-3 border-dashed border-cell-hi px-4 text-[0.8125rem] text-subtle sm:text-sm">
+            <PixelIcon name="alert" className="size-5 text-warning" />
+            No zip yet. A series can't start on this game until it has one.
+          </div>
         )
-      }
-    >
-      {current.fileName && <p className="m-0 text-sm break-all">{current.fileName}</p>}
-      <div className="flex flex-wrap items-center gap-3">
+      )}
+      {uploading && (
+        <div role="status" className="flex flex-col gap-1.5">
+          <div className="flex justify-between gap-3 font-heading text-xl">
+            <span className="truncate text-subtle">Uploading {sending}</span>
+            <span className="tabular-nums">{Math.round(progress * 100)}%</span>
+          </div>
+          <span className="block h-3 overflow-hidden rounded-md bg-ink">
+            <span className="block h-full bg-primary" style={{ width: `${Math.round(progress * 100)}%` }} />
+          </span>
+          <span className="text-[0.8125rem] text-muted-foreground">Sent in parts; a dropped part is retried on its own. Leaving the page stops it.</span>
+        </div>
+      )}
+      {error && (
+        <p role="alert" className="m-0 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2.5">
         <label
           className={cn(
-            buttonClass,
-            "relative focus-within:ring-3 focus-within:ring-ring/50",
-            uploading && "pointer-events-none opacity-50",
+            buttonVariants({ variant: hasFile ? "default" : "go", className: "relative px-4.5 text-2xl focus-within:ring-3 focus-within:ring-ring/50" }),
+            uploading && "pointer-events-none opacity-45",
           )}
         >
-          {current.fileName ? "Replace" : "Upload"}
+          <PixelIcon name="upload" className="size-4" />
+          {hasFile ? "Replace zip" : "Upload zip"}
           <input
             type="file"
             accept=".zip,application/zip"
@@ -177,22 +211,13 @@ function GameRow({ game: current, onChange }: { game: Game; onChange: (updated: 
             }}
           />
         </label>
-        {current.fileName && (
-          <button type="button" disabled={uploading} onClick={() => void download()} className={buttonClass}>
+        {hasFile && (
+          <button type="button" disabled={uploading} onClick={() => void download()} className={cn(buttonClass, "px-4.5")}>
+            <PixelIcon name="download" className="size-4" />
             Download
           </button>
         )}
-        {uploading && (
-          <span role="status" className="font-heading text-2xl tabular-nums">
-            {Math.round(progress * 100)}%
-          </span>
-        )}
       </div>
-      {error && (
-        <p role="alert" className="m-0 text-sm text-destructive">
-          {error}
-        </p>
-      )}
-    </Panel>
+    </article>
   );
 }

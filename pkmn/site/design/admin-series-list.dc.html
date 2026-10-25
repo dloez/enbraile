@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin series</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+@keyframes twinkle{0%{opacity:1}100%{opacity:0.15}}
+@keyframes sparkle{0%{opacity:0}100%{opacity:1}}
+@keyframes glow{0%{opacity:1}100%{opacity:0.25}}
+@keyframes drift{0%{transform:translateX(0)}100%{transform:translateX(6px)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+.tab:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}.out:hover{color:#ffffff!important;background:#222a3b!important}
+.sub:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}
+.banner{transition:transform 0.12s steps(2),box-shadow 0.12s steps(2)}
+.banner:hover,.banner:focus-visible{border-color:#5ad1f0!important;transform:translateY(-4px);box-shadow:0 8px 0 0 #0a0d14}
+.go:not(:disabled):hover{background:#ef5148!important}
+.field:focus{border-color:#5ad1f0!important;box-shadow:0 0 0 3px rgba(90,209,240,0.3)}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="flex: none; height: 64px; display: flex; align-items: center; gap: 28px; padding: 0 32px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="AdminHome.dc.html" aria-label="Home" style="flex: none; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 8px">
+<svg width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<nav aria-label="Sections" style="align-self: stretch; display: flex; align-items: flex-end; gap: 4px">
+<a href="SeriesList.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z" fill="currentColor"></path></svg>Series</a>
+<a href="TeamsList.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z" fill="currentColor"></path></svg>Teams</a>
+<a href="AdminHome.dc.html" class="tab" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: #d93a30; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 2h3v1H1zM0 3h1v3H0zM4 3h1v3H4zM1 6h3v1H1zM5 4h5v1H5zM7 5h1v2H7zM9 5h1v2H9z" fill="currentColor"></path></svg>Admin</a>
+</nav>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="display: flex; align-items: center; gap: 10px; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #ffd34d"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 2h3v1H1zM0 3h1v3H0zM4 3h1v3H4zM1 6h3v1H1zM5 4h5v1H5zM7 5h1v2H7zM9 5h1v2H9z" fill="currentColor"></path></svg>admin</span>
+<button type="button" class="out" aria-label="Sign out" title="Sign out" style="width: 44px; height: 44px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; display: grid; place-items: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg></button>
+</div>
+</header>
+
+<main style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 22px; padding: 30px 40px 36px; box-sizing: border-box">
+<div style="display: flex; align-items: flex-end; gap: 24px">
+<h1 style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0">Admin series</h1>
+<nav aria-label="Admin pages" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<a href="AdminHome.dc.html" class="sub" style="display: flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 8px; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 23px; text-decoration: none">Overview</a>
+<a href="AdminSeriesList.dc.html" class="sub" aria-current="page" style="display: flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 8px; background: #2c3549; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 23px; text-decoration: none">Series</a>
+<a href="AdminPlayers.dc.html" class="sub" style="display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 8px; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 23px; text-decoration: none">Players<span style="min-width: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #ffd34d; color: #10141d; font-size: 19px; line-height: 22px; text-align: center">3</span></a>
+<a href="AdminGames.dc.html" class="sub" style="display: flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 8px; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 23px; text-decoration: none">Games</a>
+</nav>
+</div>
+
+<form onSubmit="{{create}}" style="display: flex; align-items: flex-end; gap: 14px; padding: 16px 20px 18px; box-sizing: border-box; border: 3px solid #343f58; border-radius: 18px; background: #222a3b">
+<span style="align-self: center; margin-right: 6px; font-family: 'Jersey 10', sans-serif; font-size: 30px; line-height: 1">New series</span>
+<div style="display: flex; flex-direction: column; gap: 4px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Number
+<span style="display: flex; align-items: center; width: 110px; height: 46px; padding: 0 12px; box-sizing: border-box; border-radius: 10px; border: 3px solid #343f58; background: #1b2232; color: #a3acbf; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 18px">{{nextNumber}}</span>
+</div>
+<label style="flex: 1; display: flex; flex-direction: column; gap: 4px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Name
+<input class="field" maxlength="100" value="{{nextName}}" style="height: 46px; padding: 0 12px; box-sizing: border-box; border-radius: 10px; border: 3px solid #343f58; background: #10141d; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 18px; outline: none">
+</label>
+<button type="submit" class="go" style="display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 20px 3px; border: none; border-radius: 10px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 26px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h2v10H4zM0 4h10v2H0z" fill="currentColor"></path></svg>Create draft</button>
+</form>
+
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 18px">
+<sc-for list="{{series}}" as="s" hint-placeholder-count="3">
+<li>
+<a href="AdminSeries.dc.html" class="banner" style="position: relative; display: block; height: 150px; box-sizing: border-box; border: 4px {{s.border}} {{s.line}}; border-radius: 18px; overflow: hidden; text-decoration: none; color: #ffffff; background: #10141d">
+<svg width="1352" height="142" viewBox="{{s.vb}}" preserveAspectRatio="xMidYMax slice" shape-rendering="crispEdges" aria-hidden="true" style="position: absolute; left: 0; top: 0; display: block; opacity: {{s.fade}}">
+<sc-for list="{{s.scene}}" as="r" hint-placeholder-count="200"><rect x="{{r.x}}" y="{{r.y}}" width="{{r.w}}" height="{{r.h}}" fill="{{r.c}}" style="animation: {{r.a}}"></rect></sc-for>
+</svg>
+<span style="position: absolute; left: 30px; top: 22px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 64px; line-height: 0.8; color: #ffffff; text-shadow: {{s.shadow}}">{{s.name}}</span>
+<span style="padding: 2px 12px; border-radius: 8px; background: {{s.subBg}}; font-weight: 800; font-size: 17px; color: {{s.sub}}">{{s.game}}</span>
+</span>
+<span style="position: absolute; right: 22px; top: 18px; padding: 2px 14px; border-radius: 8px; border: 3px solid #10141d; background: {{s.chipBg}}; color: {{s.chipInk}}; font-family: 'Jersey 10', sans-serif; font-size: 24px">{{s.status}}</span>
+<span style="position: absolute; right: 22px; bottom: 16px; display: flex; gap: 8px">
+<sc-for list="{{s.facts}}" as="f" hint-placeholder-count="3">
+<span style="display: flex; align-items: baseline; gap: 6px; padding: 4px 12px; border-radius: 10px; background: rgba(16,20,29,0.85); font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #c3cad8"><span style="font-size: 26px; line-height: 1; color: {{f.ink}}">{{f.v}}</span>{{f.label}}</span>
+</sc-for>
+</span>
+</a>
+</li>
+</sc-for>
+</ul>
+</main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+function rng(seed) { let x = seed; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
+function blink(name, rand, lo, hi) { return name + ' ' + (lo + rand() * (hi - lo)).toFixed(2) + 's steps(2) ' + (rand() * 2).toFixed(2) + 's infinite alternate'; }
+function bandsTo(r, W, bands) {
+  bands.forEach(([y, h, c], i) => {
+    r(0, y, W, h, c);
+    if (i > 0) { const prev = bands[i - 1][2]; for (let x = (i % 2); x < W; x += 2) r(x, y, 1, 1, prev); }
+  });
+}
+function nightScene(W, H) {
+  const R = [];
+  const r = (x, y, w, h, c, a) => R.push({x, y, w, h, c, a: a || 'none'});
+  const k = H / 65;
+  bandsTo(r, W, [[0, Math.round(16 * k), '#0d1430'], [Math.round(16 * k), Math.round(13 * k), '#111a3b'], [Math.round(29 * k), Math.round(11 * k), '#162147'], [Math.round(40 * k), Math.round(9 * k), '#1c2954'], [Math.round(49 * k), H - Math.round(49 * k), '#223262']]);
+  const rand = rng(7);
+  const sky = Math.round(44 * k);
+  for (let i = 0; i < W / 4; i++) {
+    const x = Math.floor(rand() * W), y = Math.floor(rand() * sky), lit = rand() < 0.45;
+    r(x, y, 1, 1, lit ? '#ffffff' : '#7f96c8', lit ? blink('twinkle', rand, 0.6, 1.6) : 'none');
+  }
+  for (let i = 0; i < 6; i++) {
+    const x = 6 + Math.floor(rand() * (W - 60)), y = 3 + Math.floor(rand() * (sky - 12)), a = blink('sparkle', rand, 0.9, 1.8);
+    r(x, y - 1, 1, 3, '#cfe0ff', a); r(x - 1, y, 3, 1, '#cfe0ff', a); r(x, y, 1, 1, '#ffffff', a);
+  }
+  const mx = W - 42, my = Math.round(16 * k);
+  for (let dy = -6; dy <= 6; dy++) { const w = Math.round(Math.sqrt(40 - dy * dy)); r(mx - w, my + dy, w * 2 + 1, 1, '#f2ead6'); }
+  r(mx - 4, my - 4, 2, 2, '#d8ccb0'); r(mx + 2, my + 1, 3, 2, '#d8ccb0'); r(mx - 2, my + 4, 2, 1, '#d8ccb0');
+  const farBase = Math.round(48 * k), nearBase = Math.round(57 * k);
+  for (let x = 0; x < W; x++) { const t = farBase + Math.round(4 * Math.sin(x / 19) + 2 * Math.sin(x / 7)); r(x, t, 1, H - t, '#16224d'); }
+  const near = [];
+  for (let x = 0; x < W; x++) { const t = nearBase + Math.round(3 * Math.sin(x / 13 + 2) + 2 * Math.sin(x / 5)); near.push(t); r(x, t, 1, H - t, '#0a1026'); }
+  for (let x = 12; x < W - 6; x += 17 + Math.floor(rand() * 14)) {
+    const y = near[x] + 2;
+    if (y < H - 1) { const a = blink('glow', rand, 1.2, 2.6); r(x, y, 1, 1, '#ffd34d', a); if (rand() < 0.5) r(x + 2, y, 1, 1, '#ffb347', a); }
+  }
+  return R;
+}
+function tree(r, tx, base) {
+  [5, 7, 9, 9, 9, 9, 7, 5].forEach((w, i) => r(tx - Math.floor(w / 2), base - 11 + i, w, 1, '#2f7d3a'));
+  r(tx - 3, base - 10, 3, 1, '#4fa556'); r(tx - 4, base - 9, 3, 2, '#4fa556');
+  r(tx + 2, base - 5, 2, 2, '#256a30'); r(tx - 1, base - 3, 2, 3, '#7a5230');
+}
+function dayScene(W, H) {
+  const R = [];
+  const r = (x, y, w, h, c, a) => R.push({x, y, w, h, c, a: a || 'none'});
+  bandsTo(r, W, [[0, 10, '#58aee8'], [10, 10, '#6dbbec'], [20, 8, '#85c8f0'], [28, 8, '#a3d7f3']]);
+  [[W - 190, 22, 30, 7], [W - 112, 26, 20, 9], [W - 52, 21, 24, 6]].forEach(([x, y, w, d], i) => {
+    const a = 'drift ' + d + 's steps(6) ' + (-i * 1.3) + 's infinite alternate';
+    r(x + 4, y, w - 10, 1, '#ffffff', a); r(x + 2, y + 1, w - 4, 2, '#ffffff', a); r(x, y + 3, w, 2, '#ffffff', a); r(x + 1, y + 5, w - 2, 1, '#d6ecf8', a);
+  });
+  for (let x = 0; x < W; x++) { const t = 31 + Math.round(3 * Math.sin(x / 23) + 2 * Math.sin(x / 9 + 1)); r(x, t, 1, 38 - t, '#8db7d6'); }
+  r(0, 38, W, H - 38, '#6cbf4f'); r(0, 38, W, 1, '#8ad66a');
+  const rand = rng(5);
+  for (let x = 4; x < W; x += 10) tree(r, x + Math.floor(rand() * 4), 41);
+  for (let x = 9; x < W; x += 13) tree(r, x + Math.floor(rand() * 4), 46);
+  r(0, 48, W, 5, '#e0c080'); r(0, 48, W, 1, '#f0d8a0'); r(0, 52, W, 1, '#b8945a');
+  for (let x = 7; x < W - 4; x += 15 + Math.floor(rand() * 12)) {
+    const y = 53 + Math.floor(rand() * 2), c = rand() < 0.5 ? '#ffffff' : '#ff8a80';
+    r(x, y, 1, 1, c, blink('glow', rand, 1, 2.4)); r(x + 1, y, 1, 1, '#ffd34d');
+  }
+  return R;
+}
+const OUTLINE = '0 -4px 0 #10141d, 4px 0 0 #10141d, 0 4px 0 #10141d, -4px 0 0 #10141d, 4px 4px 0 #10141d, -4px -4px 0 #10141d, 4px -4px 0 #10141d, -4px 4px 0 #10141d, 0 8px 0 #10141d';
+class Component extends DCLogic {
+  renderVals() {
+    const made = (this.state && this.state.made) || [];
+    const night = nightScene(338, 35), day = dayScene(338, 55);
+    const draft = (n) => ({name: 'Series ' + n, game: 'No game yet', vb: '0 0 338 55', scene: day, fade: 0.35, border: 'dashed', line: '#44506d', shadow: OUTLINE, sub: '#c3cad8', subBg: 'rgba(16,20,29,0.85)', status: 'Draft', chipBg: '#ffc878', chipInk: '#10141d',
+      facts: [{v: '0', label: 'players', ink: '#ffffff'}, {v: '0', label: 'milestones', ink: '#ffffff'}, {v: '1/4', label: 'ready to start', ink: '#ffc878'}]});
+    const series = made.map(draft).concat([
+      {name: 'Series 3', game: 'Pokémon Añil · Randomlocke', vb: '0 0 338 55', scene: day, fade: 0.35, border: 'dashed', line: '#44506d', shadow: OUTLINE, sub: '#10141d', subBg: 'rgba(255,255,255,0.88)', status: 'Draft', chipBg: '#ffc878', chipInk: '#10141d',
+        facts: [{v: '5', label: 'players', ink: '#ffffff'}, {v: '11', label: 'milestones', ink: '#ffffff'}, {v: '3/4', label: 'ready to start', ink: '#ffc878'}]},
+      {name: 'Series 2', game: 'Pokémon Añil · Randomlocke', vb: '0 0 338 35', scene: night, fade: 1, border: 'solid', line: '#2c3549', shadow: '0 5px 0 #0a1a4a', sub: '#cfe0ff', subBg: 'rgba(10,16,38,0.8)', status: 'Playing now', chipBg: '#5ad1f0', chipInk: '#10141d',
+        facts: [{v: '6', label: 'players', ink: '#ffffff'}, {v: '11', label: 'milestones', ink: '#ffffff'}, {v: '23', label: 'snapshots', ink: '#ffffff'}]},
+      {name: 'Series 1', game: 'Pokémon Añil · Randomlocke', vb: '0 0 338 55', scene: day, fade: 1, border: 'solid', line: '#2c3549', shadow: OUTLINE, sub: '#10141d', subBg: 'rgba(255,255,255,0.88)', status: 'Finished', chipBg: '#10141d', chipInk: '#eef1f7',
+        facts: [{v: '5', label: 'players', ink: '#ffffff'}, {v: '10', label: 'milestones', ink: '#ffffff'}, {v: '41', label: 'snapshots', ink: '#ffffff'}]}
+    ]).slice(0, 3);
+    const next = 4 + made.length;
+    return {series, nextNumber: next, nextName: 'Series ' + next,
+      create: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({made: [next].concat(made)}); }};
+  }
+}
+</script>
+</body>
+</html>

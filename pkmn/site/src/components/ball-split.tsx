@@ -1,13 +1,26 @@
 import type { ReactNode } from "react";
+import { PixelIcon } from "@/components/pixel-icon";
+import { cn } from "@/lib/utils";
 
-export function BallSplit({ title, className, children }: { title: ReactNode; className: string; children: ReactNode }) {
+export function BallSplit({ title, admin = false, className, children }: { title: ReactNode; admin?: boolean; className: string; children: ReactNode }) {
   return (
     <div className="flex min-h-svh flex-col">
-      <div className="flex h-[51svh] min-h-60 flex-none flex-col items-center justify-center gap-2.5 bg-red px-6 pb-10 sm:h-[52svh] sm:gap-3 sm:pb-15">
+      <div
+        className={cn(
+          "flex flex-none flex-col items-center justify-center gap-2.5 px-6 pb-10 sm:gap-3 sm:pb-15",
+          admin ? "h-[37svh] min-h-56 bg-ink" : "h-[51svh] min-h-60 bg-red sm:h-[52svh]",
+        )}
+      >
+        {admin && (
+          <span className="flex items-center gap-3 font-heading text-2xl text-yellow sm:text-3xl">
+            <PixelIcon name="key" className="size-6 sm:size-7.5" />
+            Admin
+          </span>
+        )}
         {title}
-        <span className="font-heading text-2xl text-blush sm:text-3xl">.enbraile.vip</span>
+        {!admin && <span className="font-heading text-2xl text-blush sm:text-3xl">.enbraile.vip</span>}
       </div>
-      <div className="relative h-3.5 flex-none bg-ink sm:h-4.5">
+      <div className={cn("relative h-3.5 flex-none sm:h-4.5", admin ? "bg-red" : "bg-ink")}>
         <div
           aria-hidden="true"
           className="absolute top-1/2 left-1/2 grid size-20 -translate-1/2 place-items-center rounded-full border-10 border-ink bg-foreground sm:size-30 sm:border-14"
