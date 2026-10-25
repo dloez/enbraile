@@ -114,15 +114,11 @@ Push to `main`. Vercel's build runs `npm run build` and then `npm run db:migrate
 
 ### Seed the preview
 
-The preview deploys share the Neon `dev` branch and the `pkmn-site-preview-enbraile` bucket, so one seed fills every preview with the local stack's data: the admin, the test players, the game with its stand-in zip, series 1 with Red's snapshots, and series 2. From `pkmn/site/`, with the Vercel CLI signed in (`npx vercel login`, once per machine) and linked (`npx vercel link --project enbraile-pkmn`, which also writes a short-lived token into `.env.local`), pull the Preview variables to a file outside the repository and seed with them:
+The preview deploys share the Neon `dev` branch and the `pkmn-site-preview-enbraile` bucket, and every preview build seeds them after migrating: `buildCommand` in `vercel.json` runs `npm run seed` with `SEED_TARGET=preview` when `VERCEL_ENV` is `preview`. The seed fills them with the local stack's data (the admin, the test players, the game with its stand-in zip, series 1 with Red's snapshots, and series 2) and adds nothing it already holds, so later previews keep what reviewers did. It runs in the build because the Preview variables are sensitive: `vercel env pull` hands them back blank.
 
-```sh
-npx vercel env pull <scratch>/preview.env --environment=preview
-SEED_TARGET=preview SEED_ADMIN_PASSWORD='<a password>' npx tsx --env-file=<scratch>/preview.env scripts/seed.ts
-rm <scratch>/preview.env
-```
+The seed refuses any database or store off the local stack unless `SEED_TARGET` is `preview` and `S3_BUCKET` is the preview bucket, so the Production variables are never seeded, and off the local stack it takes the admin's password from `SEED_ADMIN_PASSWORD`, set for Preview in Vercel (the owner reads or changes it there).
 
-The seed refuses any database or store off the local stack unless `SEED_TARGET` is `preview` and `S3_BUCKET` is the preview bucket, so the Production variables cannot be seeded by mistake, and off the local stack it takes the admin's password from `SEED_ADMIN_PASSWORD` instead of `admin-password`. Seeding twice adds nothing it already holds. Push a branch for a preview URL (step 7), open it signed in to Vercel, and sign in as a test player at `/api/auth/dev/sign-in?username=red`, or as the admin at `/admin`. An agent's browser passes the protection with the project's Protection Bypass for Automation secret, read from `npx vercel api /v9/projects/enbraile-pkmn` (`protectionBypass`), by opening a preview URL once with `?x-vercel-protection-bypass=<secret>&x-vercel-set-bypass-cookie=true`.
+Push a branch for a preview URL (step 7), open it signed in to Vercel, and sign in as a test player at `/api/auth/dev/sign-in?username=red`, or as the admin at `/admin`. An agent's browser passes the protection with the project's Protection Bypass for Automation secret, read from `npx vercel api /v9/projects/enbraile-pkmn` (`protectionBypass`) once the CLI is signed in (`npx vercel login`, once per machine), by opening a preview URL once with `?x-vercel-protection-bypass=<secret>&x-vercel-set-bypass-cookie=true`.
 
 ### 8. Roll back
 
