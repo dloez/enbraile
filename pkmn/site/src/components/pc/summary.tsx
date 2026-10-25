@@ -38,7 +38,7 @@ function typeStyle(type: string | null) {
   return { background: type ? `var(--type-${type.toLowerCase()}, var(--faint))` : "var(--faint)" };
 }
 
-function TypeTag({ type, className }: { type: string | null; className?: string }) {
+export function TypeTag({ type, className }: { type: string | null; className?: string }) {
   return (
     <span
       className={cn("rounded-[5px] px-2.5 text-center font-heading text-xl text-white [text-shadow:0_1px_0_rgb(0_0_0/0.45)]", className)}
@@ -49,7 +49,7 @@ function TypeTag({ type, className }: { type: string | null; className?: string 
   );
 }
 
-function CategoryTag({ category, className }: { category: string | null; className?: string }) {
+export function CategoryTag({ category, className }: { category: string | null; className?: string }) {
   if (!category) return null;
   return (
     <span

@@ -1,29 +1,54 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
-import { canLearn, describeItem, describeTm, displayName, type BagItem, type BagTm, type Learn, type Mon } from "@/open-sheet/dex";
+import { canLearn, describeItem, describeTm, displayName, type BagItem, type Learn, type Mon } from "@/open-sheet/dex";
 import type { Sheet } from "@/open-sheet/schema";
 import { GapWarning } from "@/components/pc/summary";
 import type { ExportGap } from "../../../shared/snapshot";
 import { heldCount, memberMon, type Slots } from "@/open-sheet/team";
-import { TypeSquare, UnknownMark } from "@/components/marks";
-import { MonSprite } from "@/components/pc/summary";
+import { UnknownMark } from "@/components/marks";
+import { CategoryTag, MonSprite, TypeTag } from "@/components/pc/summary";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 type PocketId = "items" | "berries" | "tms";
 
-export function ItemIcon({ item }: { item: BagItem }) {
+export function ItemIcon({ item, scale = 1 }: { item: BagItem; scale?: 1 | 2 | 3 }) {
+  const box = scale === 3 ? "size-18" : scale === 2 ? "size-12" : "size-6";
+  if (item.id === "tinymushroom") {
+    return (
+      <span className={cn("grid flex-none place-items-center", box)}>
+        <svg viewBox="0 0 12 12" shapeRendering="crispEdges" aria-hidden="true" className="size-3/4">
+          <path d="M4 1h4v1H4zM2 2h8v1H2zM1 3h10v3H1z" className="fill-pixel-red" />
+          <path d="M3 3h2v2H3zM8 2h1v2H8zM6 4h1v1H6z" className="fill-white" />
+          <path d="M4 6h4v4H4zM3 10h6v1H3z" className="fill-seta-stem" />
+        </svg>
+      </span>
+    );
+  }
   return (
-    <span className={cn("relative block size-6 overflow-hidden rounded-md", !item.icon && "bg-muted")}>
+    <span className={cn("relative grid flex-none place-items-center overflow-hidden rounded-md", box, !item.icon && "bg-muted")}>
       {item.icon && (
         <span
           aria-hidden="true"
-          className="block size-6 [image-rendering:pixelated]"
+          className={cn("block size-6 flex-none [image-rendering:pixelated]", scale === 3 ? "scale-300" : scale === 2 ? "scale-200" : "")}
           style={{ background: `url(${item.icon.url}) no-repeat ${item.icon.left}px ${item.icon.top}px` }}
         />
       )}
     </span>
+  );
+}
+
+function TmDisc({ type, className }: { type: string | null; className?: string }) {
+  return (
+    <svg viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true" className={className}>
+      <path
+        fillRule="evenodd"
+        d="M3 0h4v1H3zM1 1h8v1H1zM0 2h10v6H0zM1 8h8v1H1zM3 9h4v1H3zM4 4h2v2H4z"
+        style={{ fill: type ? `var(--type-${type.toLowerCase()}, var(--faint))` : "var(--faint)" }}
+      />
+      <path d="M2 2h2v1H2zM1 3h1v2H1z" className="fill-white/55" />
+    </svg>
   );
 }
 
@@ -58,68 +83,6 @@ function TargetButton({ target, move, onGive }: { target: Target; move?: string;
       </span>
     </div>
   );
-}
-
-function Row({ icon, name, marked, sub, desc, qty, spent, usable, readOnly, open, targets, onClick, onGive }: {
-  icon: ReactNode;
-  name: string;
-  marked: boolean;
-  sub?: string;
-  desc: string;
-  qty?: string;
-  spent?: boolean;
-  usable: boolean;
-  readOnly: boolean;
-  open: boolean;
-  targets: Target[];
-  onClick: () => void;
-  onGive: (slot: number) => void;
-}) {
-  return (
-    <li className={cn("rounded-lg border-b", open && "bg-muted")}>
-      <button
-        type="button"
-        disabled={!usable}
-        aria-expanded={open}
-        onClick={onClick}
-        className={cn(
-          "grid w-full cursor-pointer grid-cols-[28px_1fr_auto] items-center gap-x-3 gap-y-1 px-2 py-2.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default",
-          !readOnly && "disabled:opacity-50",
-        )}
-      >
-        {icon}
-        <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="font-semibold">
-            {name}
-            {marked && <UnknownMark />}
-          </span>
-          {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
-          {desc && <span className="text-sm text-muted-foreground">{desc}</span>}
-        </span>
-        <span
-          className={cn(
-            "text-right tabular-nums text-sm whitespace-nowrap",
-            spent ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
-          {qty}
-        </span>
-      </button>
-      {open && (
-        <div className="flex flex-wrap gap-2 pr-2 pb-3 pl-12">
-          {targets.map((target) => (
-            <TargetButton key={target.slot} target={target} move={name} onGive={onGive} />
-          ))}
-        </div>
-      )}
-    </li>
-  );
-}
-
-function tmSub(tm: BagTm): string {
-  return [tm.label, tm.type, tm.category, tm.power, tm.accuracy !== null ? `${tm.accuracy}%` : null]
-    .filter((part) => part !== null)
-    .join(" · ");
 }
 
 interface BagTeam {
@@ -169,7 +132,7 @@ export function Bag({ sheet, gaps = [], open, onOpenChange, team }: BagProps) {
 
   function choose(key: string, give: (slot: number) => void) {
     if (giveTo !== null && giveMon) give(giveTo);
-    else setPicked(picked === key ? null : key);
+    else setPicked(key);
   }
 
   const pockets: [PocketId, string, number][] = [
@@ -177,28 +140,42 @@ export function Bag({ sheet, gaps = [], open, onOpenChange, team }: BagProps) {
     ["berries", "Berries", items.filter((i) => i.pocket === "berries").length],
     ...(giveTo === null ? [["tms", "TMs", tms.length] as [PocketId, string, number]] : []),
   ];
+  const shownTms = pocket === "tms" ? tms.filter((tm) => !q || tm.move.name.toLowerCase().includes(q) || tm.label.toLowerCase().includes(q)) : [];
+  const shownItems = pocket === "tms" ? [] : items.filter((item) => item.pocket === pocket && (!q || item.name.toLowerCase().includes(q)));
+  const firstKey = pocket === "tms" ? (shownTms[0] && `tm:${shownTms[0].label}`) : (shownItems[0] && `item:${shownItems[0].id}`);
+  const selectedKey = picked ?? firstKey ?? null;
+  const selectedTm = shownTms.find((tm) => `tm:${tm.label}` === selectedKey);
+  const selectedItem = shownItems.find((item) => `item:${item.id}` === selectedKey);
+  const rowClass = (on: boolean) =>
+    cn(
+      "w-full cursor-pointer rounded-[10px] border-3 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default",
+      on ? "border-primary bg-cell" : "border-cell bg-card hover:border-primary",
+    );
+  const detailTargets = selectedTm
+    ? targets.map((target) => ({ ...target, can: canLearn(target.mon, selectedTm.move.id) }))
+    : selectedItem && selectedItem.known && selectedItem.quantity - heldCount(slots, selectedItem.id) > 0
+      ? targets
+      : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        className="top-auto bottom-0 flex h-[90svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-2xl rounded-b-none border bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[calc(100svh-80px)] sm:max-w-180 sm:-translate-y-1/2 sm:rounded-2xl"
+        className="top-auto bottom-0 flex h-[90svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-2xl rounded-b-none border-3 border-cell-hi bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[min(780px,calc(100svh-80px))] sm:w-[min(1040px,calc(100vw-4rem))] sm:max-w-none sm:-translate-y-1/2 sm:rounded-[18px] sm:shadow-[0_12px_0_0_var(--edge)]"
       >
-        <div className="flex flex-none items-center gap-3 pt-3 pr-2 pl-4.5">
-          <DialogTitle className="min-w-0 flex-1 truncate font-heading text-2xl leading-normal">
+        <div className="flex flex-none flex-wrap items-center gap-x-4 gap-y-3 border-b-3 py-3 pr-3 pl-5 sm:py-4 sm:pr-4 sm:pl-6">
+          <svg viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true" className="size-7.5 flex-none">
+            <path d="M3 0h4v1H3zM2 1h1v2H2zM7 1h1v2H7z" className="fill-trophy-rim" />
+            <path d="M1 3h8v1H1zM0 4h10v5H0zM1 9h8v1H1z" className="fill-orange" />
+            <path d="M0 5h10v1H0z" className="fill-bag-strap" />
+            <path d="M4 5h2v2H4z" className="fill-yellow" />
+          </svg>
+          <DialogTitle className="m-0 min-w-0 truncate font-heading text-[2.75rem] leading-none font-normal">
             {giveMon ? `Bag → ${displayName(giveMon)}` : "Bag"}
           </DialogTitle>
           {giveMon && <MonSprite mon={giveMon} className="size-10" />}
-          <DialogPrimitive.Close
-            aria-label="Close the bag"
-            className="grid size-11 cursor-pointer place-items-center rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <X className="size-5" aria-hidden="true" />
-          </DialogPrimitive.Close>
-        </div>
-        <div className="flex flex-none flex-wrap items-end gap-2 border-b px-4.5 pt-2">
-          <div role="tablist" aria-label="Pockets" className="flex gap-1">
+          <div role="tablist" aria-label="Pockets" className="order-last flex w-full gap-1 rounded-xl border-3 bg-ink p-1 sm:order-none sm:ml-3 sm:w-auto">
             {pockets.map(([id, name, count]) => (
               <button
                 key={id}
@@ -210,17 +187,18 @@ export function Bag({ sheet, gaps = [], open, onOpenChange, team }: BagProps) {
                   setPicked(null);
                 }}
                 className={cn(
-                  "-mb-px min-h-11 cursor-pointer border-b-3 px-2.5 py-2 font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                  pocket === id ? "border-primary text-foreground" : "border-transparent text-muted-foreground",
+                  "flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border-none px-3.5 font-heading text-[1.4375rem] outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-none",
+                  pocket === id ? "bg-border text-white" : "bg-transparent text-muted-foreground hover:bg-cell hover:text-white",
                 )}
               >
-                {name} <span className="font-normal text-muted-foreground">{count}</span>
+                {name}
+                <span className={pocket === id ? "text-subtle" : "text-faint"}>{count}</span>
               </button>
             ))}
           </div>
           <div className="flex-1" />
-          <label className="mb-1.5 flex min-h-9.5 max-w-55 flex-[1_1_140px] items-center gap-1.5 rounded-lg border px-2.5">
-            <Search className="size-3.75 flex-none" aria-hidden="true" />
+          <label className="order-last flex h-12 w-full items-center gap-2 rounded-[10px] border-3 bg-ink px-3 focus-within:border-primary sm:order-none sm:w-55">
+            <Search className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
             <span className="sr-only">Search the bag</span>
             <input
               type="search"
@@ -230,64 +208,120 @@ export function Bag({ sheet, gaps = [], open, onOpenChange, team }: BagProps) {
               className="min-w-0 flex-1 bg-transparent outline-none"
             />
           </label>
+          <DialogPrimitive.Close
+            aria-label="Close the bag"
+            className="grid size-12 flex-none cursor-pointer place-items-center rounded-[10px] border-3 border-cell-hi bg-cell text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <X className="size-5" aria-hidden="true" />
+          </DialogPrimitive.Close>
         </div>
-        {(pocket === "tms" ? gaps.includes("tms") : gaps.includes("items")) && (
-          <div className="px-4 pt-2">
-            <GapWarning>No {pocket === "tms" ? "TMs" : "items"} in this export</GapWarning>
+        <div className="min-h-0 flex-1 overflow-auto bg-box px-4 py-3.5">
+          {(pocket === "tms" ? gaps.includes("tms") : gaps.includes("items")) && (
+            <div className="mb-3">
+              <GapWarning>No {pocket === "tms" ? "TMs" : "items"} in this export</GapWarning>
+            </div>
+          )}
+          {pocket === "tms" ? (
+            <ul className="m-0 grid list-none gap-1.5 p-0 lg:grid-cols-2">
+              {shownTms.map((tm) => {
+                const key = `tm:${tm.label}`;
+                const usable = readOnly || targets.some((target) => canLearn(target.mon, tm.move.id) !== "no");
+                return (
+                  <li key={tm.label}>
+                    <button
+                      type="button"
+                      aria-pressed={key === selectedKey}
+                      disabled={!usable}
+                      onClick={() => choose(key, (slot) => onTeach(slot, tm.move.id))}
+                      className={cn(rowClass(key === selectedKey), "grid min-h-13 grid-cols-[52px_56px_minmax(0,1fr)_auto_30px] items-center gap-x-2.5 px-3 disabled:opacity-50")}
+                    >
+                      <span className="font-heading text-[1.375rem] text-muted-foreground">{tm.label}</span>
+                      <TypeTag type={tm.type} className="px-0 text-[1.0625rem] leading-5.5" />
+                      <span className="min-w-0 truncate text-[0.9375rem] font-bold">
+                        {tm.move.name}
+                        {tm.move.marked && <UnknownMark />}
+                      </span>
+                      <CategoryTag category={tm.category} />
+                      <span className="text-right font-heading text-[1.3125rem] text-white">{tm.power ?? "—"}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <ul className="m-0 grid list-none gap-1.5 p-0 sm:grid-cols-2 lg:grid-cols-3">
+              {shownItems.map((item) => {
+                const held = heldCount(slots, item.id);
+                const left = item.quantity - held;
+                const holder = giveTo !== null && slots[giveTo]?.item === item.id;
+                const usable = readOnly || (item.known && targets.length > 0 && (left > 0 || holder));
+                const key = `item:${item.id}`;
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      aria-pressed={key === selectedKey}
+                      disabled={!usable}
+                      onClick={() => choose(key, (slot) => onGive(slot, item.id))}
+                      className={cn(rowClass(key === selectedKey), "flex min-h-14 items-center gap-2.5 py-0.5 pr-3.5 pl-1 disabled:opacity-50")}
+                    >
+                      <ItemIcon item={item} scale={2} />
+                      <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-bold">
+                        {item.name}
+                        {item.marked && <UnknownMark />}
+                      </span>
+                      <span className={cn("flex-none font-heading text-2xl", left <= 0 ? "text-destructive" : "text-subtle")}>
+                        {held > 0 ? `${left}/${item.quantity}` : `×${item.quantity}`}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {(pocket === "tms" ? shownTms : shownItems).length === 0 && (
+            <p className="my-10 text-center font-heading text-[1.625rem] text-prose">{q ? "Nothing matches" : "Empty"}</p>
+          )}
+        </div>
+        {(selectedTm || selectedItem) && (
+          <div className="flex min-h-33 flex-none items-center gap-5 border-t-3 bg-card px-5 py-4 sm:px-6">
+            <span className="grid size-24 flex-none place-items-center rounded-[14px] border-3 bg-box max-sm:size-18">
+              {selectedTm ? <TmDisc type={selectedTm.type} className="size-16 max-sm:size-12" /> : selectedItem && <ItemIcon item={selectedItem} scale={3} />}
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <span className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1.5">
+                {selectedTm && <span className="font-heading text-[1.625rem] text-muted-foreground">{selectedTm.label}</span>}
+                <span className="font-heading text-[2.125rem] leading-none">{selectedTm ? selectedTm.move.name : selectedItem?.name}</span>
+                {selectedItem && <span className="font-heading text-[1.625rem] text-subtle">×{selectedItem.quantity}</span>}
+                {selectedTm && (
+                  <span className="flex flex-wrap items-center gap-2">
+                    <TypeTag type={selectedTm.type} />
+                    <CategoryTag category={selectedTm.category} className="text-xl leading-normal" />
+                    <span className="font-heading text-[1.375rem] text-muted-foreground">
+                      Pow. <span className="text-foreground">{selectedTm.power ?? "—"}</span>
+                    </span>
+                    <span className="font-heading text-[1.375rem] text-muted-foreground">
+                      Acc. <span className="text-foreground">{selectedTm.accuracy ?? "—"}</span>
+                    </span>
+                  </span>
+                )}
+              </span>
+              <p className="m-0 text-base leading-[1.45] text-prose">{(selectedTm ? selectedTm.desc : selectedItem?.desc) || "—"}</p>
+              {!readOnly && !giveMon && detailTargets.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {detailTargets.map((target) => (
+                    <TargetButton
+                      key={target.slot}
+                      target={target}
+                      move={selectedTm?.move.name}
+                      onGive={(slot) => (selectedTm ? onTeach(slot, selectedTm.move.id) : selectedItem && onGive(slot, selectedItem.id))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
-        <ul className="m-0 min-h-0 flex-1 list-none overflow-auto px-2.5 py-1.5">
-          {pocket === "tms" && giveTo === null
-            ? tms
-                .filter((tm) => !q || tm.move.name.toLowerCase().includes(q) || tm.label.toLowerCase().includes(q))
-                .map((tm) => {
-                  const key = `tm:${tm.label}`;
-                  const tmTargets = targets.map((target) => ({ ...target, can: canLearn(target.mon, tm.move.id) }));
-                  const usable = tmTargets.some((target) => target.can !== "no");
-                  return (
-                    <Row
-                      key={tm.label}
-                      icon={<TypeSquare type={tm.type} />}
-                      name={tm.move.name}
-                      marked={tm.move.marked}
-                      sub={tmSub(tm)}
-                      desc={tm.desc}
-                      usable={usable}
-                      readOnly={readOnly}
-                      open={!giveMon && picked === key}
-                      targets={tmTargets}
-                      onClick={() => choose(key, (slot) => onTeach(slot, tm.move.id))}
-                      onGive={(slot) => onTeach(slot, tm.move.id)}
-                    />
-                  );
-                })
-            : items
-                .filter((item) => item.pocket === pocket && (!q || item.name.toLowerCase().includes(q)))
-                .map((item) => {
-                  const held = heldCount(slots, item.id);
-                  const left = item.quantity - held;
-                  const holder = giveTo !== null && slots[giveTo]?.item === item.id;
-                  const usable = item.known && targets.length > 0 && (left > 0 || holder);
-                  const key = `item:${item.id}`;
-                  return (
-                    <Row
-                      key={item.id}
-                      icon={<ItemIcon item={item} />}
-                      name={item.name}
-                      marked={item.marked}
-                      desc={item.desc}
-                      qty={held > 0 ? `${left}/${item.quantity}` : `×${item.quantity}`}
-                      spent={left <= 0}
-                      usable={usable}
-                      readOnly={readOnly}
-                      open={usable && !giveMon && picked === key}
-                      targets={targets}
-                      onClick={() => choose(key, (slot) => onGive(slot, item.id))}
-                      onGive={(slot) => onGive(slot, item.id)}
-                    />
-                  );
-                })}
-        </ul>
       </DialogContent>
     </Dialog>
   );

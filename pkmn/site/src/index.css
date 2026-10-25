@@ -80,6 +80,9 @@
     --color-female: var(--female);
     --color-prose: var(--prose);
     --color-green: var(--green);
+    --color-orange: var(--orange);
+    --color-bag-strap: var(--bag-strap);
+    --color-seta-stem: var(--seta-stem);
     --color-cell: var(--cell);
     --color-cell-hi: var(--cell-hi);
     --color-chart-4: var(--chart-4);
@@ -177,6 +180,8 @@
     --cat-special: var(--stat-down);
     --female: #ff9ec4;
     --prose: #d5dae5;
+    --bag-strap: #c97a1e;
+    --seta-stem: #f2ead6;
     --face: rgba(255, 255, 255, 0.1);
     --face-hi: rgba(255, 255, 255, 0.18);
     --edge: rgba(0, 0, 0, 0.35);

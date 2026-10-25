@@ -25,7 +25,7 @@ function Cell({ mon, selected, onPick }: { mon: Mon; selected: boolean; onPick: 
       aria-label={`${displayName(mon)}, ${mon.species.name}, level ${mon.level ?? "unknown"}`}
       aria-pressed={selected}
       className={cn(
-        "relative grid aspect-square cursor-pointer snap-start place-items-center overflow-hidden rounded-xl border-none p-0 outline-none hover:shadow-[inset_0_0_0_3px_var(--cyan)] focus-visible:ring-3 focus-visible:ring-ring/50 sm:size-26.5",
+        "relative grid aspect-square cursor-pointer snap-start place-items-center overflow-hidden rounded-xl border-none p-0 outline-none hover:shadow-[inset_0_0_0_3px_var(--cyan)] focus-visible:ring-3 focus-visible:ring-ring/50",
         selected ? "bg-pc-cell-on shadow-[inset_0_0_0_3px_var(--cyan)]" : "bg-pc-cell",
       )}
     >
@@ -163,7 +163,7 @@ export function PcBox({ mons, selected, onPick, actions }: {
           onScroll={measure}
           className="min-h-0 flex-1 snap-y snap-proximity scroll-py-3.5 overflow-x-hidden overflow-y-auto overscroll-contain px-3 pt-3.5 pb-11 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-[repeat(auto-fill,106px)] sm:auto-rows-[106px] sm:justify-center">
+          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(106px,1fr))]">
             {shown.map((mon) => (
               <Cell key={mon.index} mon={mon} selected={mon.index === selected} onPick={() => onPick(mon.index)} />
             ))}
