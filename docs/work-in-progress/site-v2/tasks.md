@@ -7,7 +7,7 @@ Decisions are in [discovery.md](discovery.md). Every entry runs `npm run gate` f
 Discord sign-in and the allowlist are built and checked on the local stack (2026-10-23); production needs the owner's half, as [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) step 6 describes.
 
 **Do:**
-- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; then push `main`, whose build migrates production (`0002_allowlist` to `0007_exports`, which the code already on `main` and deployed needs) and deploys it; check the deploy's build log shows the migrations applied.
+- [ ] Owner-run: the Discord application with redirect URIs `https://pkmn.enbraile.vip/api/auth/callback/discord` and `http://localhost:5173/api/auth/callback/discord`; `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` in Vercel; then push `main`, whose build migrates production (`0002_allowlist` to `0009_team_size`, which the code already on `main` and deployed needs) and deploys it; check the deploy's build log shows the migrations applied.
 
 **Acceptance:**
 - Claude-run: none.
@@ -50,6 +50,7 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 - Human-run: as a player of series 1 on production, upload your save zip from your row, see the suggested milestone, save it and read "<milestone> saved" with the Pokémon count and the TM rolls row; download the rolled zip from the done step and from the snapshot chip, and see it named as your zip; click "Open PC" and see your PC at that snapshot, its summary and its bag; as another player, open the first player's row and see their snapshot chips without a download button; as admin, upload for a player and replace their snapshot, and read the amber warning first.
 - Human-run: as admin on production, correct a snapshot's milestone with Move and see it on the series page; set a player's progress by hand and see their track move to it; clear it and see the latest snapshot's milestone again.
 - Human-run: as admin on production, upload Vicky's export for her and read the done step's "Missing: IVs, EVs, stats · moves" chip, with no TM rolls row; upload MIRAMEEE's and read "Missing: IVs, EVs, stats · TM rolls"; on `/series/1` see no download button on their chips; open each one's PC and see the Stats tab's warning of the missing IVs, EVs and stats with "—" for them and the Lv 50 ranges, and on Vicky's the Moves tab's "No moves in this export", on MIRAMEEE's the missing TM rolls over "Can learn" ([Snapshot Format → Old Exports](../../pkmn/site/reference/snapshot.md#old-exports)).
+- Human-run: as a player of series 1 on production, "Add to team" from your PC's summary into a new team, open it from `/teams` on another device and see it there, the production half of the stored teams' entry (`1270388`, `0324efe`), whose checks ran on the local stack only ([Team Builder → Stored Teams](../../pkmn/site/explanation/team-builder.md#stored-teams)).
 - Reuse: [How to Run and Deploy the Site](../../pkmn/site/how-to/run-and-deploy-the-site.md) → Verification.
 - Neighbors: none.
 - Forbidden: snapshots made on production by `npm run seed` or by SQL.
@@ -65,32 +66,54 @@ The series page's trainer row has a Teams tile, drawn in `series.dc.html` as a l
 **Do:**
 - [ ] `/teams` takes a `player` search param and lists only that player's teams, with a chip above the list naming them (their badge and name) whose close button clears it; the Teams tab keeps opening the whole list.
 - [ ] The trainer row's Teams tile links to `/teams?player=<id>`, at both widths.
+- [ ] Rewrite what the stored teams' entry left stale in the docs, to say what is true now: `site.md`'s series page paragraph (line 58, where the Teams tile still reads "—") and the profile's build choices (line 106, where the Teams box reads "—" until the team builder counts them), both of which now count teams (`trainersOf` in `api/_lib/series-data.ts`, `api/_lib/profiles.ts`); and `team-builder.md`'s Adding From the PC, whose menu reads `<filled>/<size>`, not "n/6" (`src/teams/components/add-to-team.tsx:92`).
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, with a seeded team for a test player, open their row's Teams tile, land on `/teams?player=<id>` listing only their teams under the chip, clear the chip and see every team.
 - Human-run: open another trainer's Teams tile from the series page and see their teams.
-- Reuse: the team list from the entry above; `Tile` in `src/pages/series.tsx`; `PlayerBadge`.
+- Reuse: the team list, `src/pages/teams.tsx`; `GET /api/teams?owner=<id>`, which already lists one player's teams (`api/_lib/teams.ts`); `Tile` in `src/pages/series.tsx`; `PlayerBadge`.
 - Neighbors: the row's PC tile.
 - Forbidden: a `/players/<player>/teams` route.
 
 **Touches:** `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** Build teams locked to a snapshot, stored in the account
+
 ## Build teams from several snapshots, any player's
 
 A team's sources picker takes any number of snapshots, any player's; the PC shows each source's Pokémon, and each member draws its item and Mini Setas from its own snapshot ([Item limits across several sources?](discovery.md#team-building)).
 
 **Do:**
 - [ ] The sources picker; per-source PC sections and limits.
+- [ ] Lift what the one-snapshot build holds back until sources may be any player's ([Team Builder → Decisions](../../pkmn/site/explanation/team-builder.md#decisions), "The team builder's build choices"): `ownSnapshot`'s 403 in `POST /api/teams`, a route or `PUT` field that adds and removes `team_source` rows (today only `POST` writes one, at position 0), `page.sources[0]` as the one source in `src/pages/team.tsx:88` (the head's chip, the bag and Mini Setas of every editor, the add dialog, Paste's matching), and the "Not yet" line of `team-builder.md`.
+- [ ] A source's chip has a remove button only while no member uses it, and **+ Source** opens a menu of the snapshots not yet sources ([Where do members come from?](discovery.md#team-building); `team.dc.html`, [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), the team builder signed off at desktop width).
 
 **Acceptance:**
-- Claude-run: `npm run gate`.
-- Human-run: add another player's snapshot to a team, put one of their Pokémon in it, and see its item limited by their bag, not yours; remove that source and see the member flagged.
-- Reuse: the team builder from the entry above.
-- Neighbors: `src/components/pc/pc-box.tsx`, `src/teams/components/add-dialog.tsx`.
-- Forbidden: one pooled bag across sources.
+- Claude-run: `npm run gate`; through `verify-site`, as `red`, add Red's earlier Series 1 snapshot (the seed makes one before the latest) to the Seed team, put one of its Pokémon in a slot, see its item editor read that snapshot's bag and the head's chips each carry their own Mini Setas, reload and see it kept; as `blue`, who has no snapshot, add Red's latest snapshot as a source of a new team and put one of Red's Pokémon in it.
+- Human-run: add another player's snapshot to a team, put one of their Pokémon in it, and see its item limited by their bag, not yours; see that source's chip carry no remove button while that member is in the team, take the member out, and remove the source.
+- Reuse: the team builder, `src/pages/team.tsx` and `src/teams/`; `teamMember.source` in `shared/team.ts`, which already names each member's snapshot; `backed` in `api/_lib/teams.ts`.
+- Neighbors: `src/components/pc/pc-box.tsx`, `src/teams/components/add-dialog.tsx`, `src/teams/components/add-to-team.tsx`.
+- Forbidden: one pooled bag across sources; removing a source a member still uses.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** Build teams locked to a snapshot, stored in the account
+
+## "Add to team" on another player's PC
+
+The PC's one link to teams is "Add to team" in its summary, a menu of the reader's teams and "New team" ([How do the PC and the team pages split?](discovery.md#team-building)). The one-snapshot build shows it only on the reader's own PC, "until sources may be any player's" ([Team Builder → Decisions](../../pkmn/site/explanation/team-builder.md#decisions), "The team builder's build choices"; `src/teams/components/add-to-team.tsx`, which lists only the reader's teams on that snapshot). Once a team may hold any player's snapshot, scouting an opponent from their PC is the case discovery names for it, and neither discovery nor the boards say what the menu does there.
+
+**Do:**
+- [ ] Per the author's answers: "Add to team" on another player's PC summary, its menu, and what picking a team or "New team" does to the team's sources.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, as `blue`, open Red's PC, "Add to team" a Pokémon into one of Blue's teams and see it there with Red's snapshot among its sources.
+- Human-run: from another trainer's PC, add one of their Pokémon to a team of yours and open it.
+- Reuse: `src/teams/components/add-to-team.tsx`; the sources routes from the entry above.
+- Neighbors: `src/components/pc/summary.tsx`, `src/pages/pc.tsx`.
+- Forbidden: writing to another player's team.
+
+**Touches:** `pkmn/site/src/teams/components/add-to-team.tsx`, `pkmn/site/src/components/pc/`, `pkmn/site/src/pages/pc.tsx`, `docs/pkmn/site/explanation/team-builder.md`
+**After:** Build teams from several snapshots, any player's
+**Needs the author:**
+- Does another player's PC summary show "Add to team" at all? Recommended: yes, since it is the PC's one link to teams and discovery names scouting an opponent as a reason for any player's snapshot; the alternative keeps it on the reader's own PC and adds others' snapshots only from the team page's **+ Source**.
+- If it shows, does its menu list every team of the reader's, picking one adding this snapshot to that team's sources when it is not one already, and "New team" making a team on this snapshot? Recommended: yes; the alternative lists only the reader's teams that already have this snapshot as a source.
 
 ## Add free members, and import unbacked sets as free members
 
@@ -103,11 +126,11 @@ A free member is a full Showdown set (any species in the team's pool, item, abil
 **Acceptance:**
 - Claude-run: `npm run gate`.
 - Human-run: make a team whose only source is "Any Pokémon" with six free members, copy it to Showdown and check it imports there; paste a team mixing your Pokémon and others and see the free ones marked and listed.
-- Reuse: `src/analysis/paste.ts`, `src/teams/components/move-picker.tsx`.
-- Neighbors: `src/teams/showdown.ts`.
+- Reuse: `src/analysis/paste.ts`, `src/teams/components/move-picker.tsx`; `SHEET_POOL` in `src/teams/components/sheet-analysis.tsx`, the pool every team reads until the pool entry below gives each its own.
+- Neighbors: `src/teams/showdown.ts`; `team_source` in `api/_lib/schema.ts`, whose `snapshot_id` is not null, so "Any Pokémon" as a source needs a change of schema and its migration.
 - Forbidden: free members counted against a bag.
 
-**Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
+**Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** Build teams from several snapshots, any player's
 
 ## Give each team its pool, the Pool view, Speed Tiers and Tera
@@ -120,23 +143,23 @@ Team Analysis's pool bar per team, defaulted from the series, the Pool view, Spe
 **Acceptance:**
 - Claude-run: `npm run gate`.
 - Human-run: change a team's pool to Gen 5 and see the Tera toggle go and the percentiles change; reload and see the pool kept; open the Pool view.
-- Reuse: `src/team-analysis/components/pool-bar.tsx`, `pool-view.tsx`, `src/analysis/pool.ts`.
+- Reuse: `src/team-analysis/components/pool-bar.tsx`, `pool-view.tsx`, `src/analysis/pool.ts`; `SHEET_POOL` in `src/teams/components/sheet-analysis.tsx`, the fixed pool every team reads today and the series 1 default.
 - Neighbors: `src/pages/team-analysis.tsx`.
 - Forbidden: a second pool implementation.
 
-**Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Build teams locked to a snapshot, stored in the account
+**Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
 
-## Compare teams; /team-analysis and the tools list go
+## Compare teams, and /team-analysis and the tools list go
 
 Compare puts 2–4 teams side by side, the player's or other trainers', picked on the team list after its Compare button, with the scoreboard and damage calc. With it, `/team-analysis`, its page, drafts and `carryTeam`, `src/tools.ts` and the tools home are deleted ([Team Building](discovery.md#team-building), [Pages](discovery.md#pages)).
 
 **Do:**
 - [ ] Compare in the team builder over stored teams.
 - [ ] Delete `src/pages/team-analysis.tsx`, `src/team-analysis/drafts.ts`, the route and the old `localStorage` drafts on load; rewrite `team-analysis.md` into the team builder's doc; update `docs/pkmn/index.md`. (`src/tools.ts`, the tools in `add-a-page-to-the-site.md`, `pkmn/site/CLAUDE.md`'s Routes rule and `site.md` went with the series page, 2026-10-23.) Rewrite the decisions in `site.md` that name `carryTeam` or `/team-analysis` to say what is true now, so the grep below holds.
+- [ ] Move what of `src/team-analysis/` the team builder still uses (`components/compare-view.tsx`, `pool-bar.tsx`, `pool-view.tsx`, and the `MAX_TEAMS`, `MIN_TEAMS` and `CompareSlot` that `compare-view.tsx` imports from `drafts.ts`) to `src/teams/`, its one user once the tool goes ([Site Design System](../../pkmn/site/reference/design-system.md): a tool's own components stay in `src/<tool>/components/`), and delete the rest of `src/team-analysis/`: every `@/team-analysis/…` import matches the grep below.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; `grep -rn "team-analysis:drafts\|carryTeam\|tools.ts\|/team-analysis" pkmn/site/src docs/pkmn` finds nothing.
+- Claude-run: `npm run gate`; `grep -rn "team-analysis:drafts\|carryTeam\|tools.ts\|/team-analysis" pkmn/site/src docs/pkmn` finds nothing but the one line that removes the old drafts' `localStorage` key on load.
 - Human-run: compare two of your teams and another trainer's and read the scoreboard and a damage calc; open `/team-analysis` and see the not-found page.
 - Reuse: `src/team-analysis/components/compare-view.tsx`, `src/analysis/compare.ts`.
 - Neighbors: the team builder.
@@ -162,7 +185,7 @@ The owner wants the site to feel crisp and fast, and to hold up under load: one 
 - Forbidden: removing or hiding anything a page shows to make it faster; a new outside service, host or runtime dependency without the owner's call (queue it as a question instead); a figure in a doc that the pass did not measure.
 
 **Touches:** `pkmn/site/`, `docs/pkmn/site/`
-**After:** Compare teams; /team-analysis and the tools list go
+**After:** Compare teams, and /team-analysis and the tools list go
 
 ## Make the site crisp and fast, pass two
 
