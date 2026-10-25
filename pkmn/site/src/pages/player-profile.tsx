@@ -158,7 +158,7 @@ function SeriesBanner({ player, series }: { player: string; series: ProfileSerie
     { label: "Reached", value: series.reached ?? "—", ink: series.reachedEnd ? "text-yellow" : "text-white" },
     { label: "Play time", value: playTime(series.playTime), ink: "text-white" },
     { label: "Fallen", value: count(series.fallen), ink: series.fallen ? "text-coral" : "text-white" },
-    { label: "Teams", value: "—", ink: "text-white" },
+    { label: "Teams", value: String(series.teams), ink: "text-white" },
   ];
   return (
     <Link

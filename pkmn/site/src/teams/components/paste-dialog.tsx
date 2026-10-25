@@ -1,13 +1,14 @@
 import { useState } from "react";
-import type { Mon } from "@/open-sheet/dex";
-import type { Sheet } from "@/open-sheet/schema";
-import { readShowdownTeam } from "@/open-sheet/showdown";
-import type { Slots } from "@/open-sheet/team";
+import type { Mon } from "@/teams/dex";
+import type { Sheet } from "@/teams/schema";
+import { readShowdownTeam } from "@/teams/showdown";
+import type { Slots } from "@/teams/team";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 
 interface PasteDialogProps {
   sheet: Sheet;
+  source: string;
   mons: readonly Mon[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -19,7 +20,7 @@ interface Outcome {
   left: string[];
 }
 
-export function PasteDialog({ sheet, mons, open, onOpenChange, onImport }: PasteDialogProps) {
+export function PasteDialog({ sheet, source, mons, open, onOpenChange, onImport }: PasteDialogProps) {
   const [text, setText] = useState("");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
 
@@ -32,7 +33,7 @@ export function PasteDialog({ sheet, mons, open, onOpenChange, onImport }: Paste
   }
 
   async function submit() {
-    const read = readShowdownTeam(text, sheet, mons);
+    const read = readShowdownTeam(text, sheet, mons, source);
     if (read.added > 0) await onImport(read.slots);
     if (read.added > 0 && read.left.length === 0) close(false);
     else setOutcome({ added: read.added, left: read.left });
@@ -43,7 +44,7 @@ export function PasteDialog({ sheet, mons, open, onOpenChange, onImport }: Paste
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogContent aria-describedby={undefined} className="bg-card sm:max-w-lg">
-        <DialogTitle className="font-heading text-2xl">Import from Showdown</DialogTitle>
+        <DialogTitle className="font-heading text-2xl">Paste from Showdown</DialogTitle>
         {!done && (
           <textarea
             autoFocus

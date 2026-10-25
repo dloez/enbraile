@@ -1,6 +1,6 @@
 # pkmn/site
 
-Adds to the root and `pkmn/` `CLAUDE.md`; never repeats them. The site's docs live in `docs/pkmn/site/`, never under `pkmn/site/`: [The pkmn Site](../../docs/pkmn/site/explanation/site.md), [Open Sheet](../../docs/pkmn/site/explanation/open-sheet.md), [Site Design System](../../docs/pkmn/site/reference/design-system.md), [How to Run and Deploy the Site](../../docs/pkmn/site/how-to/run-and-deploy-the-site.md) and [How to Verify the Site](../../docs/pkmn/site/how-to/verify-the-site.md).
+Adds to the root and `pkmn/` `CLAUDE.md`; never repeats them. The site's docs live in `docs/pkmn/site/`, never under `pkmn/site/`: [The pkmn Site](../../docs/pkmn/site/explanation/site.md), [Team Builder](../../docs/pkmn/site/explanation/team-builder.md), [Site Design System](../../docs/pkmn/site/reference/design-system.md), [How to Run and Deploy the Site](../../docs/pkmn/site/how-to/run-and-deploy-the-site.md) and [How to Verify the Site](../../docs/pkmn/site/how-to/verify-the-site.md).
 
 - **Gate:** `npm run gate` (`tsc -b`), from `pkmn/site/`. It must pass before a change is done; a change to pages, the API or the schema is also driven in the browser through the `verify-site` skill.
 - **Versions:** every package is pinned exactly (`.npmrc` sets `save-exact`); a new one goes in at its latest stable version, and `npm outdated` stays empty.

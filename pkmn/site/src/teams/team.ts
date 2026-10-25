@@ -1,23 +1,14 @@
-import type { Mon } from "@/open-sheet/dex";
-import type { Sheet } from "@/open-sheet/schema";
+import type { Mon } from "@/teams/dex";
+import type { Sheet } from "@/teams/schema";
+import { MOVE_SLOTS, type TeamMember, type TeamSlots } from "../../shared/team";
 
-export const TEAM_SIZE = 6;
-export const MOVE_SLOTS = 4;
+export { emptySlots, MOVE_SLOTS, nextTeamName, TEAM_SIZE } from "../../shared/team";
+
 export const MINI_SETA = "tinymushroom";
 
-export interface Member {
-  index: number;
-  species: string;
-  item: string | null;
-  ability: string | null;
-  moves: (string | null)[];
-}
+export type Member = TeamMember;
 
-export type Slots = (Member | null)[];
-
-export function emptySlots(): Slots {
-  return Array.from({ length: TEAM_SIZE }, () => null);
-}
+export type Slots = TeamSlots;
 
 export function memberMon(member: Member | null, mons: readonly Mon[]): Mon | undefined {
   if (!member) return undefined;
@@ -25,26 +16,32 @@ export function memberMon(member: Member | null, mons: readonly Mon[]): Mon | un
   return mon && mon.species.id === member.species ? mon : undefined;
 }
 
-export function liveSlots(slots: Slots, mons: readonly Mon[]): Slots {
-  return slots.map((member) => (memberMon(member, mons) ? member : null));
+export function liveSlots(slots: Slots, mons: readonly Mon[], source: string): Slots {
+  return slots.map((member) => (member?.source === source && memberMon(member, mons) ? member : null));
 }
 
-export function slotOf(slots: Slots, mons: readonly Mon[], index: number): number {
-  return slots.findIndex((member) => member !== null && member.index === index && memberMon(member, mons) !== undefined);
-}
 
-export function addMember(slots: Slots, mon: Mon): Slots | null {
-  const free = slots.findIndex((member) => member === null);
-  if (free < 0) return null;
-  const next = [...slots];
-  next[free] = {
+export function newMember(mon: Mon, source: string): Member {
+  return {
+    source,
     index: mon.index,
     species: mon.species.id,
     item: null,
     ability: null,
     moves: Array.from({ length: MOVE_SLOTS }, (_, at) => mon.learnable?.current[at]?.id ?? null),
   };
+}
+
+export function putMember(slots: Slots, slot: number, mon: Mon, source: string): Slots {
+  const next = [...slots];
+  next[slot] = newMember(mon, source);
   return next;
+}
+
+export function addMember(slots: Slots, mon: Mon, source: string): Slots | null {
+  const free = slots.findIndex((member) => member === null);
+  if (free < 0) return null;
+  return putMember(slots, free, mon, source);
 }
 
 export function removeMember(slots: Slots, slot: number): Slots {
@@ -82,15 +79,6 @@ export function takeItem(slots: Slots, slot: number): Slots {
   return change(slots, slot, (member) => ({ ...member, item: null }));
 }
 
-export function teach(slots: Slots, slot: number, move: string): Slots {
-  return change(slots, slot, (member) => {
-    if (member.moves.includes(move)) return member;
-    const moves = [...member.moves];
-    const free = moves.indexOf(null);
-    moves[free >= 0 ? free : MOVE_SLOTS - 1] = move;
-    return { ...member, moves };
-  });
-}
 
 export function setMove(slots: Slots, slot: number, at: number, move: string | null): Slots {
   return change(slots, slot, (member) => {
@@ -106,10 +94,4 @@ export function setAbility(slots: Slots, slot: number, ability: string | null, c
 
 export function setasNeeded(slots: Slots, mons: readonly Mon[]): number {
   return slots.filter((member) => member !== null && member.ability !== null && memberMon(member, mons)).length;
-}
-
-export function nextTeamName(names: readonly string[]): string {
-  let n = 1;
-  while (names.includes(`Team ${n}`)) n += 1;
-  return `Team ${n}`;
 }

@@ -58,24 +58,6 @@ The snapshot upload, the rolled zip and the PC page are built and checked on the
 **After:** Owner-run: start series 1 on production
 **Needs the author:** the owner-run steps above.
 
-## Build teams locked to a snapshot, stored in the account
-
-`/teams` lists every team, the player's first and others' read-only; `/teams/<id>` builds one from one snapshot as six member cards edited in place, with the snapshot's item and Mini Seta limits, a picker of the snapshot's PC for empty slots, Analysis (Summary, Graph, Archetype, Members, Matrices) beside the cards, giving way to a member's summary when its header row is clicked, Showdown copy and import (unbacked sets left out, as today). The PC page stays read-only; "Add to team" in its summary adds the Pokémon to a team or a new one ([How do the PC and the team pages split?](discovery.md#team-building)). A new team starts on the player's latest snapshot of the running series. `/open-sheet`, the Dexie database and its local data go.
-
-**Do:**
-- [ ] Teams table and migration (owner, sources, slots); team routes, the owner alone writing; `npm run seed` extended with a team on the seeded snapshot; the header's Teams tab opening `/teams` (`TEAMS_TAB` in `src/components/site-header.tsx`, today `/team-analysis`); the trainer row's Teams tile counting the trainer's teams, and the Teams box on each of the profile's series banners (`src/pages/player-profile.tsx`, `api/_lib/profiles.ts`, `shared/profile.ts`, "—" today) counting the player's teams in that series.
-- [ ] Move Open Sheet's builder under `/teams/<id>` on stored snapshots; delete `/open-sheet`, `src/open-sheet/db.ts`, the import tabs and Dexie, and the browser's old database on first load.
-- [ ] Rewrite `open-sheet.md` as the team builder's doc (rename it) and update `docs/pkmn/index.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `grep -rn "dexie\|open-sheet:tab" pkmn/site/src pkmn/site/package.json` finds nothing.
-- Human-run: make a team on your series 1 snapshot, give items until one runs out, switch an ability and see the Mini Seta count, copy it for Showdown and paste it back as a new team; reload on another device and see the teams; open another player's team read-only.
-- Reuse: `src/open-sheet/team.ts`, `showdown.ts`, `components/team-view.tsx`, `sheet-analysis.tsx`; the PC's pieces in `src/components/pc/` (`pc-box.tsx`, `summary.tsx`, `bag.tsx`), not copies; `snapshotSchema` in `shared/snapshot.ts` for the stored snapshot; `src/analysis/`; `src/open-sheet/dex.ts`, which `src/components/pc/` and the player's series page's fallen (`describeMember` in `src/pages/player-series.tsx`) import, moved with its importers rather than copied.
-- Neighbors: `src/open-sheet/components/team-bar.tsx`.
-- Forbidden: teams in `localStorage` or IndexedDB; another player able to write a team.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `pkmn/site/package.json`, `pkmn/site/package-lock.json`, `docs/pkmn/site/`, `docs/pkmn/index.md`
-
 ## Colour type defenses as Pokémon Database does
 
 The summary's type defenses colour damage taken the other way round from Pokémon Database: ×4 and ×2 red and orange, ½ and ¼ green (`--mult-*` in `src/index.css`, read only by `MULT` in `src/components/pc/summary.tsx`). The owner wants Pokémon Database's reading: ½ and ¼ red, ×2 and ×4 green, immune staying black (owner, 2026-10-25). `design/summary.dc.html` is frozen with the old colours, so the change is a decision recorded in [The pkmn Site](../../pkmn/site/explanation/site.md) rather than an edit to the board.
@@ -137,7 +119,7 @@ A team's sources picker takes any number of snapshots, any player's; the PC show
 - Claude-run: `npm run gate`.
 - Human-run: add another player's snapshot to a team, put one of their Pokémon in it, and see its item limited by their bag, not yours; remove that source and see the member flagged.
 - Reuse: the team builder from the entry above.
-- Neighbors: `src/components/pc/pc-box.tsx`, `src/open-sheet/components/pc.tsx`.
+- Neighbors: `src/components/pc/pc-box.tsx`, `src/teams/components/add-dialog.tsx`.
 - Forbidden: one pooled bag across sources.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/shared/`, `docs/pkmn/site/`
@@ -154,8 +136,8 @@ A free member is a full Showdown set (any species in the team's pool, item, abil
 **Acceptance:**
 - Claude-run: `npm run gate`.
 - Human-run: make a team whose only source is "Any Pokémon" with six free members, copy it to Showdown and check it imports there; paste a team mixing your Pokémon and others and see the free ones marked and listed.
-- Reuse: `src/analysis/paste.ts`, `src/open-sheet/components/move-picker.tsx`.
-- Neighbors: `src/open-sheet/showdown.ts`.
+- Reuse: `src/analysis/paste.ts`, `src/teams/components/move-picker.tsx`.
+- Neighbors: `src/teams/showdown.ts`.
 - Forbidden: free members counted against a bag.
 
 **Touches:** `pkmn/site/src/`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`

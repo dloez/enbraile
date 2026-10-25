@@ -1,8 +1,8 @@
-import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, ne, sql } from "drizzle-orm";
 import { type AdminSeries, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
-import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
+import { game, milestone, save, series, seriesPlayer, snapshot, team, user } from "./schema.js";
 
 export type SeriesRow = typeof series.$inferSelect;
 
@@ -67,6 +67,13 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
     .where(eq(save.seriesId, seriesId))
     .orderBy(asc(milestone.position));
+  const teamCounts = players.length
+    ? await db
+        .select({ ownerId: team.ownerId, teams: count() })
+        .from(team)
+        .where(inArray(team.ownerId, players.map((p) => p.id)))
+        .groupBy(team.ownerId)
+    : [];
   const names = reader.admin
     ? await namesOf([...saves.map((s) => s.progressSetBy), ...taken.flatMap((t) => [t.faintedSetBy, t.movedBy])])
     : new Map<string, string>();
@@ -90,6 +97,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
     return {
       ...player,
       progress: handProgress ?? snapshots.at(-1)?.milestone ?? null,
+      teams: teamCounts.find((t) => t.ownerId === player.id)?.teams ?? 0,
       snapshots,
       ...(reader.admin ? { sources: { progress: handProgress === null ? null : byHand(own?.progressSetBy ?? null, own?.progressSetAt ?? null) } } : {}),
     };

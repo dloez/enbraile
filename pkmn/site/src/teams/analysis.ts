@@ -1,8 +1,8 @@
 import { Dex } from "@pkmn/dex";
 import { damageTaken, typeMultiplier } from "@/analysis/chart";
 import { TYPES, type TypeName } from "@/analysis/dex";
-import { currentAbility, type Mon } from "@/open-sheet/dex";
-import { memberMon, type Member, type Slots } from "@/open-sheet/team";
+import { currentAbility, type Mon } from "@/teams/dex";
+import { memberMon, type Member, type Slots } from "@/teams/team";
 
 const gen = Dex.forGen(9);
 

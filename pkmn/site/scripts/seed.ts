@@ -7,10 +7,11 @@ import { requireEnv } from "../api/_lib/env.js";
 import { saveSlots } from "../api/_lib/export/save-zip.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
 import { ingest, savePrefix } from "../api/_lib/ingest.js";
-import { game, milestone, save, series, seriesPlayer, snapshot, user } from "../api/_lib/schema.js";
+import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
 import { suggestMilestone } from "../shared/save-upload.js";
 import type { MilestoneMark } from "../shared/series.js";
 import type { Snapshot } from "../shared/snapshot.js";
+import { emptySlots, MOVE_SLOTS } from "../shared/team.js";
 import { partSizeFor, uploadParts } from "../shared/upload.js";
 import { createAdmin, createTestPlayer, usernameTaken } from "./accounts.js";
 
@@ -43,6 +44,8 @@ const seedSeries = {
 const finishedSeries = { number: 2, name: "Series 2", players: ["Red", "Blue"], milestone: "Tournament", extraPlayTime: 7200 };
 
 const seedSnapshot = { player: "Red", saves: new URL("../saves/", import.meta.url), fallback: "Post-League" };
+
+const seedTeam = { name: "Seed team", members: 3 };
 
 function standInZip(): Uint8Array {
   const name = Buffer.from("stand-in.txt");
@@ -208,6 +211,40 @@ async function seedTheEarlierSnapshot(seriesId: string, userId: string, laterId:
   return member.nickname ?? species.name;
 }
 
+async function seedTheTeam(): Promise<string | null> {
+  const [row] = await db.select({ id: series.id }).from(series).where(eq(series.number, seedSeries.number));
+  const [player] = await db.select({ id: user.id }).from(user).where(eq(user.username, seedSnapshot.player.toLowerCase()));
+  if (!row || !player) throw new Error(`${seedSeries.name} or ${seedSnapshot.player} is missing`);
+  const [made] = await db.select({ id: team.id }).from(team).where(eq(team.ownerId, player.id));
+  if (made) return null;
+  const [latest] = await db
+    .select({ id: snapshot.id, data: snapshot.data, milestone: milestone.name })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .where(and(eq(save.seriesId, row.id), eq(save.userId, player.id)))
+    .orderBy(desc(milestone.position))
+    .limit(1);
+  if (!latest) return null;
+  const slots = emptySlots();
+  latest.data.pokemon.slice(0, seedTeam.members).forEach((p, index) => {
+    slots[index] = {
+      source: latest.id,
+      index,
+      species: p.species,
+      item: null,
+      ability: null,
+      moves: Array.from({ length: MOVE_SLOTS }, (_, at) => p.moves?.current[at] ?? null),
+    };
+  });
+  const id = crypto.randomUUID();
+  await db.transaction(async (tx) => {
+    await tx.insert(team).values({ id, ownerId: player.id, name: seedTeam.name, slots });
+    await tx.insert(teamSource).values({ teamId: id, snapshotId: latest.id, position: 0 });
+  });
+  return `${seedSnapshot.player}'s ${seedTeam.name} of ${Math.min(seedTeam.members, latest.data.pokemon.length)} on their ${latest.milestone} snapshot`;
+}
+
 async function seedTheFinishedSeries(): Promise<string | null> {
   const [existing] = await db.select({ id: series.id }).from(series).where(eq(series.number, finishedSeries.number));
   if (existing) return null;
@@ -270,9 +307,10 @@ async function main() {
   await seedTheGame();
   await seedTheSeries();
   const seededSnapshot = await seedTheSnapshot();
+  const seededTeam = await seedTheTeam();
   const seededFinished = await seedTheFinishedSeries();
   console.log(
-    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
+    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
   );
 }
 

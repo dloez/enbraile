@@ -77,6 +77,7 @@ seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
     series: { number: row.number, name: row.name },
     milestones: taken.map((m) => ({ name: m.milestone, taken: m.snapshotId !== null })),
     milestone: held ? (chosen?.milestone ?? null) : null,
+    snapshotId: held ? (chosen?.snapshotId ?? null) : null,
     snapshot: held?.data ?? null,
     missing: held?.missing ?? null,
   };

@@ -1,6 +1,6 @@
 import { Dex, type Species, type StatID, type StatsTable } from "@pkmn/dex";
 import { Icons, Sprites } from "@pkmn/img";
-import type { SheetItem, SheetPokemon, SheetTm } from "@/open-sheet/schema";
+import type { SheetItem, SheetPokemon, SheetTm } from "@/teams/schema";
 
 const gen = Dex.forGen(9);
 

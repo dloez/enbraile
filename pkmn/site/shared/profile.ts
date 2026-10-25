@@ -26,6 +26,7 @@ export const profileSeries = z.object({
   reachedEnd: z.boolean(),
   playTime: z.number().nullable(),
   fallen: count,
+  teams: z.int(),
 });
 
 export const profilePage = z.object({

@@ -360,7 +360,7 @@ function TrainerRow({
             value={shown?.pokemon}
             link={shown && { player: trainer.id, number: String(seriesNumber), label: `Open ${trainer.name}'s PC at ${shown.milestone}`, snapshot: shown.milestone }}
           />
-          <Tile label="Teams" />
+          <Tile label="Teams" value={trainer.teams} />
           <Tile
             label="Fainted"
             value={shown?.fainted}

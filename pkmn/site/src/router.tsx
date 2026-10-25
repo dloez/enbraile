@@ -44,10 +44,16 @@ const pcRoute = createRoute({
   component: lazyRouteComponent(() => import("@/pages/pc"), "PcPage"),
 });
 
-const openSheetRoute = createRoute({
+const teamsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/open-sheet",
-  component: lazyRouteComponent(() => import("@/pages/open-sheet"), "OpenSheetPage"),
+  path: "/teams",
+  component: lazyRouteComponent(() => import("@/pages/teams"), "TeamsPage"),
+});
+
+const teamRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/teams/$id",
+  component: lazyRouteComponent(() => import("@/pages/team"), "TeamBuilderPage"),
 });
 
 const teamAnalysisRoute = createRoute({
@@ -93,7 +99,8 @@ const routeTree = rootRoute.addChildren([
   playerProfileRoute,
   playerSeriesRoute,
   pcRoute,
-  openSheetRoute,
+  teamsRoute,
+  teamRoute,
   teamAnalysisRoute,
   adminRoute,
   adminGamesRoute,

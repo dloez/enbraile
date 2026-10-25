@@ -8,6 +8,7 @@ export const pcPage = z.object({
   series: z.object({ number: z.number().int(), name: z.string() }),
   milestones: z.array(pcMilestone),
   milestone: z.string().nullable(),
+  snapshotId: z.string().nullable(),
   snapshot: snapshotSchema.nullable(),
   missing: exportReport.nullable(),
 });

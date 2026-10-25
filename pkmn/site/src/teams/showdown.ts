@@ -1,7 +1,7 @@
 import { toID } from "@pkmn/dex";
 import { parsePaste } from "@/analysis/paste";
-import { currentAbility, describeItem, describeMove, displayName, STAT_LABELS, STATS, type Mon } from "@/open-sheet/dex";
-import type { Sheet } from "@/open-sheet/schema";
+import { currentAbility, describeItem, describeMove, displayName, STAT_LABELS, STATS, type Mon } from "@/teams/dex";
+import type { Sheet } from "@/teams/schema";
 import {
   emptySlots,
   itemsLeft,
@@ -9,7 +9,7 @@ import {
   MOVE_SLOTS,
   type Member,
   type Slots,
-} from "@/open-sheet/team";
+} from "@/teams/team";
 
 export const LEAGUE_EVS = "EVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe";
 const MAX_IV = 31;
@@ -67,7 +67,7 @@ export interface ReadTeam {
   left: string[];
 }
 
-export function readShowdownTeam(text: string, sheet: Sheet, mons: readonly Mon[]): ReadTeam {
+export function readShowdownTeam(text: string, sheet: Sheet, mons: readonly Mon[], source: string): ReadTeam {
   const sets = parsePaste(text);
   const slots = emptySlots();
   const left: string[] = [];
@@ -89,6 +89,7 @@ export function readShowdownTeam(text: string, sheet: Sheet, mons: readonly Mon[
     used.add(mon.index);
     const name = displayName(mon);
     const member: Member = {
+      source,
       index: mon.index,
       species: mon.species.id,
       item: null,

@@ -1,9 +1,9 @@
-import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, countDistinct, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { careerOf, type LatestRecord, type ProfilePage } from "../../shared/profile.js";
 import type { Snapshot } from "../../shared/snapshot.js";
 import { db } from "./db.js";
-import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
+import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
 
 export const profiles = new Hono();
 
@@ -52,6 +52,16 @@ profiles.get("/:player", async (c) => {
         .innerJoin(milestone, eq(milestone.id, save.progressId))
         .where(and(eq(save.userId, player.id), inArray(save.seriesId, ids)))
     : [];
+  const teamCounts = ids.length
+    ? await db
+        .select({ seriesId: save.seriesId, teams: countDistinct(team.id) })
+        .from(team)
+        .innerJoin(teamSource, eq(teamSource.teamId, team.id))
+        .innerJoin(snapshot, eq(snapshot.id, teamSource.snapshotId))
+        .innerJoin(save, eq(save.id, snapshot.saveId))
+        .where(and(eq(team.ownerId, player.id), inArray(save.seriesId, ids)))
+        .groupBy(save.seriesId)
+    : [];
   const rows = played.map((s) => {
     const last = taken.findLast((t) => t.seriesId === s.id);
     const reached = progress.find((p) => p.seriesId === s.id)?.milestone ?? last?.milestone ?? null;
@@ -84,6 +94,7 @@ profiles.get("/:player", async (c) => {
       reachedEnd: reached !== null && reached === end,
       playTime: latest?.playTime ?? null,
       fallen: latest?.fallen ?? null,
+      teams: teamCounts.find((t) => t.seriesId === s.id)?.teams ?? 0,
     })),
   };
   return c.json(page);

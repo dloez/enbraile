@@ -96,6 +96,7 @@ export const trainer = z.object({
   name: z.string(),
   canUpload: z.boolean(),
   progress: z.string().nullable(),
+  teams: z.int(),
   snapshots: z.array(trainerSnapshot),
   sources: trainerSources.optional(),
 });

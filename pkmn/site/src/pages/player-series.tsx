@@ -10,7 +10,7 @@ import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { money, playTime } from "@/lib/records";
 import { cn } from "@/lib/utils";
-import { describeMember } from "@/open-sheet/dex";
+import { describeMember } from "@/teams/dex";
 import { type FallenMon, type JourneyPage, type JourneyRecord, journeyPage } from "../../shared/journey";
 
 const FROM = "/players/$player/series/$number";

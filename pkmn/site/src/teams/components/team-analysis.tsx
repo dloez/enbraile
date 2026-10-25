@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Panel } from "@/components/controls";
-import { displayName, type Mon } from "@/open-sheet/dex";
-import type { Slots } from "@/open-sheet/team";
-import { analysed, defensiveChart, offensiveCoverage, speedOrder } from "@/open-sheet/analysis";
+import { displayName, type Mon } from "@/teams/dex";
+import type { Slots } from "@/teams/team";
+import { analysed, defensiveChart, offensiveCoverage, speedOrder } from "@/teams/analysis";
 import { TypeDot } from "@/components/marks";
 import { MonSprite } from "@/components/pc/summary";
 
@@ -10,7 +10,7 @@ function Count({ value, className }: { value: number; className: string }) {
   return <span className={cn("tabular-nums text-xs", value === 0 ? "text-muted-foreground/40" : className)}>{value}</span>;
 }
 
-export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon[] }) {
+export function TeamAnalysis({ slots, mons, stacked = false }: { slots: Slots; mons: readonly Mon[]; stacked?: boolean }) {
   const team = analysed(slots, mons);
   if (team.length === 0) return null;
   const speed = speedOrder(team);
@@ -24,7 +24,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
   };
 
   return (
-    <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2 xl:grid-cols-3">
+    <div className={cn("grid grid-cols-1 gap-3.5", !stacked && "lg:grid-cols-2 xl:grid-cols-3")}>
       <Panel title="Speed order">
         <ol className="m-0 flex list-none flex-col gap-1.5 p-0">
           {speed.map((entry, rank) => (
@@ -74,7 +74,7 @@ export function TeamAnalysis({ slots, mons }: { slots: Slots; mons: readonly Mon
           {holes.length === 0 ? "No holes." : `Holes: ${holes.map((h) => h.type).join(", ")}.`}
         </p>
       </Panel>
-      <Panel title="Coverage" className="lg:col-span-2 xl:col-span-1">
+      <Panel title="Coverage" className={cn(!stacked && "lg:col-span-2 xl:col-span-1")}>
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {sources.map((source) => (
             <li key={source.slot} className="flex flex-wrap items-center gap-2 text-sm">

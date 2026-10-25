@@ -73,7 +73,3 @@ export function saveDrafts(drafts: Drafts) {
     return;
   }
 }
-
-export function carryTeam(paste: string) {
-  saveDrafts({ ...loadDrafts(), paste });
-}

@@ -7,8 +7,8 @@ import { MonSprite, SummaryBody, SummaryHead } from "@/components/pc/summary";
 import { Sheet as BottomSheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
-import { describePokemon, displayName, type Mon } from "@/open-sheet/dex";
-import type { Sheet } from "@/open-sheet/schema";
+import { describePokemon, displayName, type Mon } from "@/teams/dex";
+import type { Sheet } from "@/teams/schema";
 import type { ExportGap } from "../../../shared/snapshot";
 
 function matches(mon: Mon, query: string, type: string): boolean {
@@ -17,16 +17,17 @@ function matches(mon: Mon, query: string, type: string): boolean {
   return named && (!type || mon.filterTypes.includes(type));
 }
 
-function Cell({ mon, selected, onPick }: { mon: Mon; selected: boolean; onPick: () => void }) {
+function Cell({ mon, selected, taken, onPick }: { mon: Mon; selected: boolean; taken: boolean; onPick: () => void }) {
   return (
     <button
       type="button"
       onClick={onPick}
-      aria-label={`${displayName(mon)}, ${mon.species.name}, level ${mon.level ?? "unknown"}`}
+      aria-label={`${displayName(mon)}, ${mon.species.name}, level ${mon.level ?? "unknown"}${taken ? ", in the team" : ""}`}
       aria-pressed={selected}
       className={cn(
         "relative grid aspect-square cursor-pointer snap-start place-items-center overflow-hidden rounded-xl border-none p-0 outline-none hover:shadow-[inset_0_0_0_3px_var(--cyan)] focus-visible:ring-3 focus-visible:ring-ring/50",
         selected ? "bg-pc-cell-on shadow-[inset_0_0_0_3px_var(--cyan)]" : "bg-pc-cell",
+        taken && "opacity-45",
       )}
     >
       <MonSprite mon={mon} className="pointer-events-none w-[92%] sm:size-24" />
@@ -92,11 +93,12 @@ export function BagButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function PcBox({ mons, selected, onPick, actions }: {
+export function PcBox({ mons, selected, onPick, actions, taken }: {
   mons: readonly Mon[];
   selected: number | null;
   onPick: (index: number) => void;
   actions?: ReactNode;
+  taken?: ReadonlySet<number>;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("");
@@ -151,7 +153,7 @@ export function PcBox({ mons, selected, onPick, actions }: {
         >
           <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(106px,1fr))]">
             {shown.map((mon) => (
-              <Cell key={mon.index} mon={mon} selected={mon.index === selected} onPick={() => onPick(mon.index)} />
+              <Cell key={mon.index} mon={mon} selected={mon.index === selected} taken={taken?.has(mon.index) ?? false} onPick={() => onPick(mon.index)} />
             ))}
           </div>
           {shown.length === 0 && <p className="my-10 text-center font-heading text-[1.625rem] text-prose">Nothing matches</p>}
@@ -203,7 +205,7 @@ export function SummarySheet({ mon, sheet, open, onClose, footer, gaps }: {
   );
 }
 
-export function SnapshotPc({ sheet, gaps = [] }: { sheet: Sheet; gaps?: readonly ExportGap[] }) {
+export function SnapshotPc({ sheet, gaps = [], footer }: { sheet: Sheet; gaps?: readonly ExportGap[]; footer?: (mon: Mon, done: () => void) => ReactNode }) {
   const wide = useMediaQuery("(min-width: 64rem)");
   const mons = useMemo(() => sheet.pokemon.map(describePokemon), [sheet]);
   const [picked, setPicked] = useState<number | null>(null);
@@ -215,9 +217,18 @@ export function SnapshotPc({ sheet, gaps = [] }: { sheet: Sheet; gaps?: readonly
     <>
       <div className="flex flex-1 gap-6 pt-3.5 pb-3 sm:pb-6 lg:min-h-0">
         <PcBox mons={mons} selected={selected} onPick={setPicked} actions={<BagButton onClick={() => setBagOpen(true)} />} />
-        {wide && selectedMon && <SummaryAside mon={selectedMon} sheet={sheet} gaps={gaps} />}
+        {wide && selectedMon && <SummaryAside mon={selectedMon} sheet={sheet} gaps={gaps} footer={footer?.(selectedMon, () => undefined)} />}
       </div>
-      {!wide && <SummarySheet mon={selectedMon} sheet={sheet} gaps={gaps} open={selectedMon !== undefined} onClose={() => setPicked(null)} />}
+      {!wide && (
+        <SummarySheet
+          mon={selectedMon}
+          sheet={sheet}
+          gaps={gaps}
+          open={selectedMon !== undefined}
+          onClose={() => setPicked(null)}
+          footer={selectedMon && footer?.(selectedMon, () => setPicked(null))}
+        />
+      )}
       <Bag sheet={sheet} gaps={gaps} open={bagOpen} onOpenChange={setBagOpen} />
     </>
   );

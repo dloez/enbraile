@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { SnapshotPc } from "@/components/pc/pc-box";
+import { AddToTeam, useOwnTeams } from "@/teams/components/add-to-team";
 import { type PcPage as Pc, pcPage } from "../../shared/pc";
 
 const FROM = "/players/$player/series/$number/pc";
@@ -19,8 +20,11 @@ export function PcPage() {
   const { player, number } = useParams({ from: FROM });
   const { snapshot } = useSearch({ from: FROM });
   const navigate = useNavigate();
+  const { data } = authClient.useSession();
   const [page, setPage] = useState<Pc | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const mine = data?.user && !data.user.admin && data.user.id === player ? player : null;
+  const teams = useOwnTeams(mine, page?.snapshotId ?? null);
 
   useEffect(() => {
     let live = true;
@@ -49,6 +53,7 @@ export function PcPage() {
     );
   }
   if (!page) return <main className={toolPage} />;
+  const builds = mine ? page.snapshotId : null;
 
   function pick(milestone: string) {
     void navigate({ to: FROM, params: { player, number }, search: { snapshot: milestone } });
@@ -58,7 +63,12 @@ export function PcPage() {
     <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
       <PcHead page={page} onPick={pick} />
       {page.snapshot ? (
-        <SnapshotPc key={page.milestone} sheet={page.snapshot} gaps={page.missing?.missing ?? []} />
+        <SnapshotPc
+          key={page.milestone}
+          sheet={page.snapshot}
+          gaps={page.missing?.missing ?? []}
+          footer={builds ? (mon) => <AddToTeam mon={mon} snapshot={builds} teams={teams} className="px-4.5 py-3.5" /> : undefined}
+        />
       ) : (
         <p className="my-6 rounded-2xl border-3 border-dashed border-cell-hi bg-box px-5 py-10 text-center font-heading text-3xl text-subtle">
           No snapshot yet

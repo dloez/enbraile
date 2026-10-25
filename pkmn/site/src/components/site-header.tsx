@@ -8,7 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { seriesBannerList } from "../../shared/series";
 
-type Target = { to: "/series" | "/team-analysis" | "/admin" } | { to: "/players/$player/series/$number/pc"; player: string; number: string };
+type Target = { to: "/series" | "/teams" | "/admin" } | { to: "/players/$player/series/$number/pc"; player: string; number: string };
 
 type Tab = { label: string; icon: PixelIconName; target: Target; open: (pathname: string) => boolean };
 
@@ -18,7 +18,7 @@ const onPc = (pathname: string) => /^\/players\/[^/]+\/series\/[^/]+\/pc\/?$/.te
 
 const SERIES_TAB: Tab = { label: "Series", icon: "flag", target: { to: "/series" }, open: under("/series") };
 
-const TEAMS_TAB: Tab = { label: "Teams", icon: "people", target: { to: "/team-analysis" }, open: under("/team-analysis") };
+const TEAMS_TAB: Tab = { label: "Teams", icon: "people", target: { to: "/teams" }, open: under("/teams") };
 
 const ADMIN_TAB: Tab = { label: "Admin", icon: "key", target: { to: "/admin" }, open: under("/admin") };
 

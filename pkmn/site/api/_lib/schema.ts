@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
+import type { TeamSlots } from "../../shared/team.js";
 import type { TmRolls } from "./export/export.js";
 import { INGESTION_MODES, MILESTONE_MARKS, SCENES, SERIES_STATES } from "../../shared/series.js";
 
@@ -199,4 +200,36 @@ export const snapshot = pgTable(
     check("snapshot_fainted_source", sql`${table.faintedSet} IS NULL OR (${table.faintedSetBy} IS NOT NULL AND ${table.faintedSetAt} IS NOT NULL)`),
     check("snapshot_moved_source", sql`(${table.movedBy} IS NULL) = (${table.movedAt} IS NULL)`),
   ],
+);
+
+export const team = pgTable(
+  "team",
+  {
+    id: text("id").primaryKey(),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slots: jsonb("slots").$type<TeamSlots>().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index("team_owner_id_idx").on(table.ownerId)],
+);
+
+export const teamSource = pgTable(
+  "team_source",
+  {
+    teamId: text("team_id")
+      .notNull()
+      .references(() => team.id, { onDelete: "cascade" }),
+    snapshotId: text("snapshot_id")
+      .notNull()
+      .references(() => snapshot.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.teamId, table.snapshotId] }), index("team_source_snapshot_id_idx").on(table.snapshotId)],
 );

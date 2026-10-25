@@ -3,8 +3,8 @@ import { TriangleAlert } from "lucide-react";
 import type { StatID } from "@pkmn/dex";
 import { damageTaken } from "@/analysis/chart";
 import { cn } from "@/lib/utils";
-import { displayName, fightStat, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/open-sheet/dex";
-import type { Sheet } from "@/open-sheet/schema";
+import { displayName, fightStat, learnCount, STAT_LABELS, tmLabels, type Mon, type MoveInfo } from "@/teams/dex";
+import type { Sheet } from "@/teams/schema";
 import { UnknownMark } from "@/components/marks";
 import type { ExportGap } from "../../../shared/snapshot";
 

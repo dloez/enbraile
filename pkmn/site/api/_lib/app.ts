@@ -8,6 +8,7 @@ import { players } from "./players.js";
 import { profiles } from "./profiles.js";
 import { saveUploads } from "./save-uploads.js";
 import { seriesRoutes } from "./series.js";
+import { teams } from "./teams.js";
 
 export const app = new Hono().basePath("/api");
 
@@ -22,3 +23,4 @@ app.route("/series", seriesRoutes);
 app.route("/series", saveUploads);
 app.route("/series", overrides);
 app.route("/admin/series", adminSeries);
+app.route("/teams", teams);
