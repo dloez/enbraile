@@ -214,6 +214,15 @@ Before, the team list showed nothing for 2.7 s on a phone after a row was tapped
 | Team list → team | phone | 2828 → 2682 ms |
 | Series → player profile | phone | 282 → 121 ms |
 
+**The team page's chunk from the team list (2026-10-25).** Opening a team waited on the team page's chunk, `@pkmn/dex` with it, 2.7 s on a phone. The team list now loads that chunk once it shows at least one team (`router.loadRouteChunk` in `src/pages/teams.tsx`), so the chunk is usually in by the time a row is tapped. Team list → team, measured after the reader has been on the list for 1.5 s and for 4 s:
+
+| Width | Time on the list | Ready before → after |
+|-------|------------------|----------------------|
+| desktop | 1.5 s | 415 → 90 ms |
+| desktop | 4 s | 413 → 90 ms |
+| phone | 1.5 s | 2678 → 1258 ms |
+| phone | 4 s | 2687 → 343 ms |
+
 ## Decisions
 
 - **A running series' milestones are edited in place:** renamed, re-marked, reordered and added, and removed only when no snapshot is at one. **Why:** the owner wants to change a started series' milestones and their order; saving a draft replaces every milestone, which on a running series would delete their snapshots with them (`snapshot.milestone_id` cascades), so a running series' save keeps each milestone's id. Reordering moves a player's progress with it, since progress is their latest milestone with a snapshot. _(owner, 2026-10-24; replaces a running series changing only its rules and players)_
@@ -290,3 +299,4 @@ Before, the team list showed nothing for 2.7 s on a phone after a row was tapped
 - **A route loading shows a bar sweeping along the header's red line, and the old page stays until the new route's chunk and first read are in.** **Why:** the owner found navigating unresponsive; measured, a team list row gave no sign of the click for 2.7 s on a phone, and with the bar the first change comes within 70 ms on every measured flow ([Click Feedback](#click-feedback)); the bar's look (`primary`, two-fifths wide, a 0.9 s linear sweep, static and full width for reduced motion) is a build choice. _(owner, 2026-10-25)_
 - **Loading is shown by the bar alone, never by words:** the site's waits show `LoadingBar`, with no "Loading…" text and no spinner beside it; its label is for screen readers only. **Why:** the owner: an animation is fine, loading text is not. _(owner, 2026-10-25)_
 - **Links preload their route on intent:** hover for 50 ms, focus or touch starts the route's chunk and its first read, and the click runs the loader again rather than reusing the preload. **Why:** measured, the pages a header tab or a row opens show 0.1 to 0.17 s sooner on a phone and about twice as fast on desktop with 150 ms of hover ([Click Feedback](#click-feedback)); a preload that is not followed by a click costs one read and a chunk the browser caches. Not reusing the preload is forced by the held answers' 10 s against the router's 30 s default: a reused preload would show a route whose read had expired, blank until it was fetched again. _(settled 2026-10-25)_
+- **The team list loads the team page's chunk as soon as it lists a team.** **Why:** a reader on the team list is there to open a team, and that chunk (`@pkmn/dex` with it) made opening one take 2.7 s on a phone; loaded ahead, it takes 0.34 s after 4 s on the list ([Click Feedback](#click-feedback)). A reader who opens no team pays the chunk's download, which the team page's own visit would cost anyway. _(settled 2026-10-25)_

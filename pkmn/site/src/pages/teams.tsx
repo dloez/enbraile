@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import { Check, Plus, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
@@ -51,6 +51,12 @@ export function TeamsPage() {
   const [picked, setPicked] = useState<string[]>([]);
   const [comparing, setComparing] = useState<string[] | null>(null);
   const [compareOpened, setCompareOpened] = useState(false);
+  const router = useRouter();
+  const listed = list !== null && list.length > 0;
+
+  useEffect(() => {
+    if (listed) void router.loadRouteChunk(router.routesById["/teams/$id"]);
+  }, [listed, router]);
 
   useEffect(() => {
     let live = true;
