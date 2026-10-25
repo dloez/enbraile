@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { LoadingBar } from "@/components/loading-bar";
 import { PLAYER_FILL, playerColour } from "@/components/player-badge";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -63,7 +64,7 @@ export function SnapshotMenu({ label, taken = [], note, className, onClose, onPi
             {error}
           </p>
         )}
-        {!error && rows === null && <p className="m-0 px-2.5 py-2 font-heading text-xl text-muted-foreground">Loading…</p>}
+        {!error && rows === null && <LoadingBar label="Loading the snapshots" className="relative my-4 block rounded-sm" />}
         {rows !== null && left.length === 0 && !onAny && <p className="m-0 px-2.5 py-2 font-heading text-xl text-muted-foreground">No other snapshots</p>}
         {series.map((number) => (
           <div key={number} role="group" aria-label={`Series ${number}`} className="flex flex-col gap-0.5">

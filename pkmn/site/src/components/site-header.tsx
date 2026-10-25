@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { LoadingBar } from "@/components/loading-bar";
 import { PixelIcon, type PixelIconName } from "@/components/pixel-icon";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { SignOutIcon, useSignOut } from "@/components/sign-out";
@@ -115,11 +116,7 @@ export function SiteHeader() {
 function NavProgress() {
   const loading = useRouterState({ select: (state) => state.status === "pending" || state.isLoading });
   if (!loading) return null;
-  return (
-    <span role="progressbar" aria-label="Loading the page" className="pointer-events-none absolute inset-x-0 -bottom-1 h-1 overflow-hidden">
-      <span className="block h-full w-2/5 animate-nav-sweep bg-primary motion-reduce:w-full motion-reduce:animate-none" />
-    </span>
-  );
+  return <LoadingBar label="Loading the page" className="absolute -bottom-1" />;
 }
 
 function Account({ user }: { user: User }) {
