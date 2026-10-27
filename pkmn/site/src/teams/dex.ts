@@ -101,11 +101,49 @@ export const ANY_ITEMS: readonly BagItem[] = gen.items
   .map((entry) => describeItem({ item: entry.id, quantity: 1 }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
-export const MOVES: readonly MoveInfo[] = [
-  ...new Map(
-    gen.moves
-      .all()
-      .filter((move) => move.num > 0 && move.gen <= 5 && move.id !== "struggle")
-      .map((move) => [move.id, describeMove(move.id)] as const),
-  ).values(),
-].sort((a, b) => a.name.localeCompare(b.name));
+const ALL_MOVES = gen.moves
+  .all()
+  .filter((move) => move.num > 0 && move.id !== "struggle" && !move.isZ && !move.isMax && !["CAP", "LGPE", "Custom", "Future"].includes(move.isNonstandard ?? ""))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const movesByGen = new Map<number, readonly MoveInfo[]>();
+
+export function movesUpTo(upTo: number): readonly MoveInfo[] {
+  let moves = movesByGen.get(upTo);
+  if (!moves) {
+    moves = ALL_MOVES.filter((move) => move.gen <= upTo).map((move) => describeMove(move.id));
+    movesByGen.set(upTo, moves);
+  }
+  return moves;
+}
+
+export function moveGen(id: string): number | null {
+  const move = gen.moves.get(id);
+  return move.exists ? move.gen : null;
+}
+
+const learnsets = new Map<string, Promise<ReadonlySet<string>>>();
+
+async function learnsetOf(species: string): Promise<ReadonlySet<string>> {
+  const moves = new Set<string>();
+  const seen = new Set<string>();
+  let entry = gen.species.get(species);
+  while (entry.exists && !seen.has(entry.id)) {
+    seen.add(entry.id);
+    const own = (await gen.learnsets.get(entry.id))?.learnset;
+    const base = !own && entry.baseSpecies !== entry.name ? (await gen.learnsets.get(entry.baseSpecies))?.learnset : undefined;
+    for (const move of Object.keys(own ?? base ?? {})) moves.add(move);
+    entry = gen.species.get(entry.prevo || (entry.changesFrom ?? ""));
+  }
+  return moves;
+}
+
+export function learnset(species: string): Promise<ReadonlySet<string>> {
+  const id = gen.species.get(species).id;
+  let moves = learnsets.get(id);
+  if (!moves) {
+    moves = learnsetOf(id);
+    learnsets.set(id, moves);
+  }
+  return moves;
+}

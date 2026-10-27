@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { canLearn, currentAbility, displayName, type Mon } from "../../../shared/mon";
 import { describeItem, describeMove } from "../../../shared/describe";
 import { setasLabel } from "@/teams/components/editors";
+import { moveGen } from "@/teams/dex";
 import type { Member } from "@/teams/team";
 
 export type Focus = "look" | "item" | "ability" | "nature" | "set" | { move: number } | null;
@@ -24,7 +25,7 @@ export interface PickToggle {
   onToggle: () => void;
 }
 
-export function MemberCard({ member, mon, from, focus, glow, editable, pick, natureFrom, setaCost, onLook, onItem, onAbility, onNature, onMove, onSet, onRemove }: {
+export function MemberCard({ member, mon, from, focus, glow, editable, pick, natureFrom, setaCost, movesGen, onLook, onItem, onAbility, onNature, onMove, onSet, onRemove }: {
   member: Member;
   mon: Mon;
   from: { owner: string; colour: number } | null;
@@ -34,6 +35,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
   pick?: PickToggle;
   natureFrom: "mint" | "money" | null;
   setaCost: number;
+  movesGen: number;
   onLook: () => void;
   onItem: () => void;
   onAbility: () => void;
@@ -187,7 +189,9 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
       <div className="grid grid-cols-2 gap-1.5">
         {member.moves.map((id, at) => {
           const move = id ? describeMove(id) : null;
-          const wrong = id !== null && canLearn(mon, id) === "no";
+          const introduced = id !== null && mon.free ? moveGen(id) : null;
+          const late = introduced !== null && introduced > movesGen;
+          const wrong = late || (id !== null && canLearn(mon, id) === "no");
           const on = typeof focus === "object" && focus !== null && focus.move === at;
           return (
             <button
@@ -196,7 +200,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
               aria-pressed={on}
               disabled={!editable}
               onClick={() => onMove(at)}
-              title={wrong ? `${name} can't learn ${move?.name} in this save` : move?.desc}
+              title={late ? `${move?.name} is from Gen ${introduced}, past the pool's moves up to Gen ${movesGen}` : wrong ? `${name} can't learn ${move?.name} in this save` : move?.desc}
               className={cn(
                 field(on),
                 "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px] gap-x-1.75 pr-2 pl-1.25",

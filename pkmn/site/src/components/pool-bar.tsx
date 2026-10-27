@@ -29,7 +29,7 @@ export function PoolBar({
           label="Generation"
           options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: fixed }))}
           value={filters.gen}
-          onChange={(gen: Gen) => set({ gen, speciesGen: Math.min(filters.speciesGen, gen) as Gen })}
+          onChange={(gen: Gen) => set({ gen, speciesGen: Math.min(filters.speciesGen, gen) as Gen, movesGen: Math.min(filters.movesGen, gen) as Gen })}
         />
       </span>
       <span className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -39,6 +39,15 @@ export function PoolBar({
           options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: fixed || g > filters.gen }))}
           value={Math.min(filters.speciesGen, filters.gen) as Gen}
           onChange={(speciesGen: Gen) => set({ speciesGen })}
+        />
+      </span>
+      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+        Moves up to
+        <Segmented
+          label="Moves up to"
+          options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: fixed || g > filters.gen }))}
+          value={Math.min(filters.movesGen, filters.gen) as Gen}
+          onChange={(movesGen: Gen) => set({ movesGen })}
         />
       </span>
       <Toggle pressed={filters.noLegendary} disabled={fixed} onChange={(noLegendary) => set({ noLegendary })}>

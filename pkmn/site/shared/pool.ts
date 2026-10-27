@@ -11,6 +11,7 @@ const poolGen = z.literal(POOL_GENS);
 export const teamPool = z.object({
   gen: poolGen,
   speciesGen: poolGen,
+  movesGen: poolGen,
   noLegendary: z.boolean(),
   noMythical: z.boolean(),
   fullyEvolved: z.boolean(),
@@ -19,10 +20,10 @@ export const teamPool = z.object({
 
 export type TeamPool = z.infer<typeof teamPool>;
 
-export const DEFAULT_POOL: TeamPool = { gen: 9, speciesGen: 5, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: MAX_BST };
+export const DEFAULT_POOL: TeamPool = { gen: 9, speciesGen: 5, movesGen: 5, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: MAX_BST };
 
 export function poolLabel(pool: TeamPool): string {
-  return [`Gen ${pool.gen}`, `species ≤ Gen ${Math.min(pool.gen, pool.speciesGen)}`, pool.fullyEvolved && "fully evolved", pool.noLegendary && "no legendaries", pool.noMythical && "no mythicals", pool.maxBst < MAX_BST && `BST ≤ ${pool.maxBst}`]
+  return [`Gen ${pool.gen}`, `species ≤ Gen ${Math.min(pool.gen, pool.speciesGen)}`, `moves ≤ Gen ${Math.min(pool.gen, pool.movesGen)}`, pool.fullyEvolved && "fully evolved", pool.noLegendary && "no legendaries", pool.noMythical && "no mythicals", pool.maxBst < MAX_BST && `BST ≤ ${pool.maxBst}`]
     .filter(Boolean)
     .join(" · ");
 }

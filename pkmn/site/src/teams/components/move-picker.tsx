@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { CategoryTag, TypeTag } from "@/components/pc/summary";
 import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
 import { describeMove, describeTm } from "../../../shared/describe";
 import { displayName, tmLabels, type Mon, type MoveInfo } from "../../../shared/mon";
-import { MOVES } from "@/teams/dex";
+import { learnset, movesUpTo } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
 import { EditorHead, editorScroll } from "@/teams/components/editors";
 
@@ -14,7 +14,7 @@ interface Option {
   label: string;
 }
 
-function options(sheet: Sheet, mon: Mon, labels: Map<string, string>): { name: string; moves: Option[] }[] {
+function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: number, learned: ReadonlySet<string> | null): { name: string; moves: Option[] }[] {
   const learn = mon.learnable;
   if (learn) {
     const level = (id: string) => (learn.levels?.[id] !== undefined ? String(learn.levels[id]) : "");
@@ -24,16 +24,25 @@ function options(sheet: Sheet, mon: Mon, labels: Map<string, string>): { name: s
       { name: "TMs", moves: learn.tms.map((move) => ({ move, label: labels.get(move.id) ?? "" })) },
     ];
   }
+  const all = movesUpTo(movesGen).map((move) => ({ move, label: "" }));
+  if (mon.free) {
+    if (!learned) return [{ name: "All moves", moves: all }];
+    return [
+      { name: "Can learn", moves: all.filter((o) => learned.has(o.move.id)) },
+      { name: "Other moves", moves: all.filter((o) => !learned.has(o.move.id)) },
+    ];
+  }
   const tms = sheet.tms.map(describeTm);
   return [
     { name: "TMs", moves: tms.map((tm) => ({ move: describeMove(tm.move.id), label: tm.label })) },
-    { name: "All moves", moves: MOVES.map((move) => ({ move, label: "" })) },
+    { name: "All moves", moves: all },
   ];
 }
 
-export function MoveEditor({ sheet, mon, moves, at, back, onBack, onPick }: {
+export function MoveEditor({ sheet, mon, movesGen, moves, at, back, onBack, onPick }: {
   sheet: Sheet;
   mon: Mon;
+  movesGen: number;
   moves: readonly (string | null)[];
   at: number;
   back: string;
@@ -42,7 +51,20 @@ export function MoveEditor({ sheet, mon, moves, at, back, onBack, onPick }: {
 }) {
   const [query, setQuery] = useState("");
   const labels = useMemo(() => tmLabels(sheet.tms), [sheet]);
-  const groups = useMemo(() => options(sheet, mon, labels), [sheet, mon, labels]);
+  const [learned, setLearned] = useState<ReadonlySet<string> | null>(null);
+  const species = mon.free ? mon.species.id : null;
+  useEffect(() => {
+    if (species === null) return;
+    let live = true;
+    learnset(species).then(
+      (next) => live && setLearned(next),
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [species]);
+  const groups = useMemo(() => options(sheet, mon, labels, movesGen, learned), [sheet, mon, labels, movesGen, learned]);
   const q = query.trim().toLowerCase();
   const replacing = moves[at];
   const seen = new Set<string>();

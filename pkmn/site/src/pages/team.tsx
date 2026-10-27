@@ -124,6 +124,7 @@ function Builder({ page }: { page: TeamPage }) {
   const [sources, setSources] = useState<readonly TeamSource[]>(page.sources);
   const [anyPokemon, setAnyPokemon] = useState(page.anyPokemon);
   const [pool, setPool] = useState<TeamPool>(page.pool);
+  const movesGen = Math.min(pool.gen, pool.movesGen);
   const held = useMemo(() => holding(sources), [sources]);
   const stocks = useMemo(() => new Map(held.map((h) => [h.id, h])), [held]);
   const [name, setName] = useState(page.name);
@@ -256,6 +257,7 @@ function Builder({ page }: { page: TeamPage }) {
                 onNature={() => show({ t: "nature", slot, back: backOf(slot) })}
                 natureFrom={natureFrom(slots, stocks, slot)}
                 setaCost={own?.costs.abilitySetas ?? 0}
+                movesGen={movesGen}
                 onMove={(at) => show({ t: "move", slot, at, back: backOf(slot) })}
                 onSet={() => show({ t: "set", slot, back: backOf(slot) })}
                 onRemove={() => {
@@ -371,6 +373,7 @@ function Builder({ page }: { page: TeamPage }) {
         key={`${panel.slot}:${panel.at}`}
         sheet={sheet}
         mon={mon}
+        movesGen={movesGen}
         moves={member.moves}
         at={panel.at}
         back={backLabel(panel)}

@@ -37,6 +37,29 @@ At 360×800, `/team-analysis` is 379px wide: its `Segmented` view switch (`inlin
 
 **Touches:** `pkmn/site/src/components/controls.tsx`, `pkmn/site/src/pages/`
 
+### pkmn/site: a waiting player uploads their save, so they join a series already onboarded
+
+A player's first Discord sign-in lands on the waiting page until an admin lets them in, and the API answers a waiting player only with 403 ([The pkmn Site → Accounts](../pkmn/site/explanation/site.md)), so today a new player joins with nothing and uploads their save afterwards from their row on the series page. The owner wants the waiting page to take the player's save zip, so that when an admin lets them in they are already in a series with their data. Series 1 is the one case now: the site arrives mid-series, so its players come with saves already played (and MIRAMEEE and Vicky with only old Open Sheet exports, `pkmn/site/saves/*-open-sheet.json`, which an admin uploads for them); the aim is that every player who joins arrives onboarded. It waits for the [league](league/discovery.md) on the site. _(owner, 2026-10-27)_
+
+**Do:**
+- [ ] Per the author's answers: the waiting page takes a save zip, held until an admin lets the player in, who then joins a series with it as their snapshot.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, as `leaf` (waiting), upload a save zip from the waiting page; as admin, let Leaf in and see Leaf in the series with that snapshot.
+- Human-run: on production, sign in with Discord as someone new, upload a save from the waiting page, get let in, and land in the series with it.
+- Reuse: the snapshot upload (`api/_lib/ingest.ts`) and its flow on the series page; `src/pages/waiting.tsx`.
+- Neighbors: `api/_lib/access.ts`; `/admin/players` (`src/pages/admin-players.tsx`, `api/_lib/players.ts`).
+- Forbidden: a waiting player reading any series' data.
+
+**Touches:** `pkmn/site/src/pages/waiting.tsx`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
+**After:** the league on the site ([league](league/tasks.md)).
+**Needs the author:**
+- Which series the upload joins: the running one, one the player picks, or one the admin picks when letting them in?
+- Does letting them in also put them in that series, or does the admin still add them to it?
+- Which milestone the snapshot lands on: the save's suggestion, as an upload's, or the admin's?
+- What the league needs of a player joining mid-league ([the question above](#pkmnsite-what-does-the-league-do-with-a-player-who-joins-mid-league)).
+- What happens to the held zip when the admin removes or deletes the player before letting them in.
+
 ### pkmn/site: let a series hide league teams and pairings until the match
 
 The [league](league/discovery.md#team-locking) is fully open for series 1: every round team, locked or not, and every round's pairs are seen by all. A later series may want the old app's behaviour, or the series 1 rule that a player knows the opponent's box sheet, not their team: a round's team hidden from all but its owner and admins until its match has a result, and a player's pairing shown only once they lock in. Whether it is hidden is a series' choice, read from the league's rules (`shared/league.ts`) until a series' rules are data. _(owner, 2026-10-27)_

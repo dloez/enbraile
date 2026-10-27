@@ -160,22 +160,6 @@ function OwnerMark({ owner, className }: { owner: Compared["owner"]; className?:
   );
 }
 
-function Sprites({ team, size }: { team: readonly Member[]; size: "md" | "sm" }) {
-  return (
-    <span className="flex flex-wrap">
-      {team.map((m, at) => (
-        <span key={at} title={memberName(m)} className={cn("flex items-center justify-center overflow-hidden", size === "md" ? "h-9 w-10" : "h-7.5 w-8.5")}>
-          <img
-            src={spriteOf(m)}
-            alt=""
-            className={cn("flex-none [image-rendering:pixelated]", size === "md" ? "-mx-1 -mt-2 -mb-1 size-12" : "-mx-0.75 -mt-1.5 -mb-0.75 size-10")}
-          />
-        </span>
-      ))}
-    </span>
-  );
-}
-
 const cellBest = (best: boolean) => (best ? "bg-green/12 text-green" : "text-foreground");
 
 function WideScoreboard({ teams, rows }: { teams: readonly Compared[]; rows: readonly ScoreRow[] }) {
@@ -191,9 +175,6 @@ function WideScoreboard({ teams, rows }: { teams: readonly Compared[]; rows: rea
             <span key={t.id} role="columnheader" className="flex min-w-0 flex-col justify-end border-l-3 border-cell px-3 pt-2.5 pb-2">
               <OwnerMark owner={t.owner} className="mb-0.5" />
               <span className="truncate font-heading text-[1.875rem] leading-none">{t.name}</span>
-              <span className="mt-1">
-                <Sprites team={t.team} size="md" />
-              </span>
             </span>
           ))}
         </div>
@@ -224,7 +205,6 @@ function TeamHeads({ teams }: { teams: readonly Compared[] }) {
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <OwnerMark owner={t.owner} />
             <span className="truncate font-heading text-[1.625rem] leading-none">{t.name}</span>
-            <Sprites team={t.team} size="sm" />
           </span>
         </li>
       ))}
