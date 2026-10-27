@@ -18,6 +18,7 @@ forget(() => localStorage.removeItem("team-analysis:drafts"));
 
 prefetch("/auth/get-session");
 prefetch("/series");
+prefetch("/series/owed");
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

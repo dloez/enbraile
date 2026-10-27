@@ -129,7 +129,11 @@ adminSeries.put("/:id/players", async (c) => {
     if (played) return c.json({ error: "A player with a snapshot in this series stays in it" }, 409);
     await db.delete(seriesPlayer).where(and(eq(seriesPlayer.seriesId, row.id), inArray(seriesPlayer.userId, dropped)));
   }
-  if (added.length > 0) await db.insert(seriesPlayer).values(added.map((userId) => ({ seriesId: row.id, userId }))).onConflictDoNothing();
+  if (added.length > 0)
+    await db
+      .insert(seriesPlayer)
+      .values(added.map((userId) => ({ seriesId: row.id, userId, needsSave: row.ingestion === "manual" })))
+      .onConflictDoNothing();
   return c.json(await adminView(row));
 });
 

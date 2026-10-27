@@ -79,6 +79,10 @@ export const seriesBanner = z.object({
 
 export const seriesBannerList = z.array(seriesBanner);
 
+export const owedSeries = z.object({ number: z.number(), name: z.string(), milestones: z.array(milestone) });
+
+export const owedSeriesList = z.array(owedSeries);
+
 export const setByHand = z.object({ by: z.string(), at: z.string() });
 
 export const snapshotSources = z.object({ savedFainted: z.number().int(), fainted: setByHand.nullable(), moved: setByHand.nullable() });
@@ -149,6 +153,8 @@ export type AdminSeries = z.infer<typeof adminSeries>;
 export type SeriesBanner = z.infer<typeof seriesBanner>;
 
 export type SeriesPage = z.infer<typeof seriesPage>;
+
+export type OwedSeries = z.infer<typeof owedSeries>;
 
 export type Trainer = z.infer<typeof trainer>;
 

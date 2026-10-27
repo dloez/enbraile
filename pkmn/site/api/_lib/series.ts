@@ -3,10 +3,10 @@ import { Hono } from "hono";
 import { fallenAcross, type JourneyPage } from "../../shared/journey.js";
 import type { PcPage } from "../../shared/pc.js";
 import type { Snapshot } from "../../shared/snapshot.js";
-import type { SeriesBanner, SeriesPage } from "../../shared/series.js";
+import type { OwedSeries, SeriesBanner, SeriesPage } from "../../shared/series.js";
 import { db } from "./db.js";
 import { downloadUrl } from "./files.js";
-import { game, milestone, save, series, snapshot, user } from "./schema.js";
+import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
 import { findShown, gameOf, mayUpload, milestonesOf, plays, trainersOf, viewer } from "./series-data.js";
 
 export const seriesRoutes = new Hono();
@@ -19,6 +19,19 @@ seriesRoutes.get("/", async (c) => {
     .where(ne(series.state, "draft"))
     .orderBy(desc(series.number));
   return c.json(rows satisfies SeriesBanner[]);
+});
+
+seriesRoutes.get("/owed", async (c) => {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  const rows = await db
+    .select({ id: series.id, number: series.number, name: series.name })
+    .from(seriesPlayer)
+    .innerJoin(series, eq(series.id, seriesPlayer.seriesId))
+    .where(and(eq(seriesPlayer.userId, reader.id), eq(seriesPlayer.needsSave, true), eq(series.state, "running"), eq(series.ingestion, "manual")))
+    .orderBy(asc(series.number));
+  const owed: OwedSeries[] = await Promise.all(rows.map(async (row) => ({ number: row.number, name: row.name, milestones: await milestonesOf(row.id) })));
+  return c.json(owed);
 });
 
 seriesRoutes.get("/:number", async (c) => {

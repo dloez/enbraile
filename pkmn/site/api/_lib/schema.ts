@@ -131,6 +131,7 @@ export const seriesPlayer = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    needsSave: boolean("needs_save").notNull().default(false),
   },
   (table) => [primaryKey({ columns: [table.seriesId, table.userId] }), index("series_player_user_id_idx").on(table.userId)],
 );

@@ -4,7 +4,7 @@ import { db } from "./db.js";
 import { ExportError, type TmRolls } from "./export/export.js";
 import { exportZipSlot } from "./export/save-zip.js";
 import { deleteObject, putObject, readObject } from "./files.js";
-import { save, snapshot } from "./schema.js";
+import { save, seriesPlayer, snapshot } from "./schema.js";
 
 export type RawSave = {
   seriesId: string;
@@ -141,6 +141,10 @@ export async function ingest(raw: RawSave): Promise<Ingested> {
         .insert(snapshot)
         .values({ id: crypto.randomUUID(), saveId, milestoneId: raw.milestoneId, ...values })
         .onConflictDoUpdate({ target: [snapshot.saveId, snapshot.milestoneId], set: values });
+      await tx
+        .update(seriesPlayer)
+        .set({ needsSave: false })
+        .where(and(eq(seriesPlayer.seriesId, raw.seriesId), eq(seriesPlayer.userId, raw.userId), eq(seriesPlayer.needsSave, true)));
       return existing;
     });
   } catch (error) {

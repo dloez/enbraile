@@ -10,7 +10,7 @@ The series page's trainer panel wants a trainer's lives, for a series that plays
 
 ### pkmn/site: what does the league do with a player who joins mid-league?
 
-A running series takes new players, and the [league](league/discovery.md) draws each round among the series' players. Open: whether a player added mid-league joins the draw from the next round, gets catch-up matches against those they missed, or stays out until the next series; and how the standings and the cup treat them. The waiting-page upload below depends on it. Left open while scoping the league. _(owner, 2026-10-27)_
+A running series takes new players, and the [league](league/discovery.md) draws each round among the series' players. Open: whether a player added mid-league joins the draw from the next round, gets catch-up matches against those they missed, or stays out until the next series; and how the standings and the cup treat them. A player added to a running manual series now uploads their save before they reach the site, so they arrive with their snapshot ([The pkmn Site → Series](../pkmn/site/explanation/site.md#series)); the league still has to place them. Left open while scoping the league. _(owner, 2026-10-27)_
 
 ## Tasks
 
@@ -37,28 +37,27 @@ At 360×800, `/team-analysis` is 379px wide: its `Segmented` view switch (`inlin
 
 **Touches:** `pkmn/site/src/components/controls.tsx`, `pkmn/site/src/pages/`
 
-### pkmn/site: a waiting player uploads their save, so they join a series already onboarded
+### pkmn/site: several series run at once
 
-A player's first Discord sign-in lands on the waiting page until an admin lets them in, and the API answers a waiting player only with 403 ([The pkmn Site → Accounts](../pkmn/site/explanation/site.md)), so today a new player joins with nothing and uploads their save afterwards from their row on the series page. The owner wants the waiting page to take the player's save zip, so that when an admin lets them in they are already in a series with their data. Series 1 is the one case now: the site arrives mid-series, so its players come with saves already played (and MIRAMEEE and Vicky with only old Open Sheet exports, `pkmn/site/saves/*-open-sheet.json`, which an admin uploads for them); the aim is that every player who joins arrives onboarded. It waits for the [league](league/discovery.md) on the site. _(owner, 2026-10-27)_
+The owner wants more than one series running at a time (2026-10-27). A partial unique index, `series_one_running_idx` in `api/_lib/schema.ts`, lets one run, and the site leans on that: `/` sends a player to the running series (`src/pages/home.tsx`), the header's PC tab opens their PC in it (`src/components/site-header.tsx`), the team builder takes the sources a player may start from and a new team's pool from it (`api/_lib/teams.ts`), the admin overview shows one running banner (`src/pages/admin.tsx`), and starting a series needs the running one finished (`startChecklist` in `shared/series.ts`, `otherRunning` in `api/_lib/series-data.ts`). Joining mid-series already handles several: the waiting page offers an upload per owed series ([The pkmn Site → Series](../pkmn/site/explanation/site.md#series)).
 
 **Do:**
-- [ ] Per the author's answers: the waiting page takes a save zip, held until an admin lets the player in, who then joins a series with it as their snapshot.
+- [ ] Per the author's answers: drop the index with its migration, and make each place above handle several running series.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, as `leaf` (waiting), upload a save zip from the waiting page; as admin, let Leaf in and see Leaf in the series with that snapshot.
-- Human-run: on production, sign in with Discord as someone new, upload a save from the waiting page, get let in, and land in the series with it.
-- Reuse: the snapshot upload (`api/_lib/ingest.ts`) and its flow on the series page; `src/pages/waiting.tsx`.
-- Neighbors: `api/_lib/access.ts`; `/admin/players` (`src/pages/admin-players.tsx`, `api/_lib/players.ts`).
-- Forbidden: a waiting player reading any series' data.
+- Claude-run: `npm run gate`; through `verify-site`, start a second series beside the seeded Series 1, add Leaf to both mid-way, and see the waiting page offer both uploads; read `/`, the PC tab, New team and the admin overview with both running.
+- Human-run: none.
+- Reuse: `owedSeries` and the waiting page's per-series buttons; the series list's banners (`src/pages/series-list.tsx`).
+- Neighbors: the league ([league](league/discovery.md)), which draws its rounds per series.
+- Forbidden: none yet.
 
-**Touches:** `pkmn/site/src/pages/waiting.tsx`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-**After:** the league on the site ([league](league/tasks.md)).
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/series.ts`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
 **Needs the author:**
-- Which series the upload joins: the running one, one the player picks, or one the admin picks when letting them in?
-- Does letting them in also put them in that series, or does the admin still add them to it?
-- Which milestone the snapshot lands on: the save's suggestion, as an upload's, or the admin's?
-- What the league needs of a player joining mid-league ([the question above](#pkmnsite-what-does-the-league-do-with-a-player-who-joins-mid-league)).
-- What happens to the held zip when the admin removes or deletes the player before letting them in.
+- Where `/` sends a player in several running series: the series list, the newest, or the one they last opened?
+- Which series the header's PC tab opens.
+- Which running series' snapshots and pool the team builder starts a new team from.
+- How the admin overview shows several running series.
+- Whether starting a series still asks for anything about the ones running.
 
 ### pkmn/site: let a series hide league teams and pairings until the match
 

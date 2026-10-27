@@ -317,6 +317,7 @@ export function UploadDialog({
                 to="/players/$player/series/$number/pc"
                 params={{ player: trainer.id, number: String(seriesNumber) }}
                 search={{ snapshot: step.saved.milestone }}
+                onClick={() => close(false)}
                 className={cn(buttonVariants({ variant: "go" }), goClass)}
               >
                 Open PC

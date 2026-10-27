@@ -1,0 +1,1 @@
+ALTER TABLE "series_player" ADD COLUMN "needs_save" boolean DEFAULT false NOT NULL;
