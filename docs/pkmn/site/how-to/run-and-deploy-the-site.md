@@ -51,7 +51,7 @@ npm run db:migrate
 npm run seed
 ```
 
-`seed` makes the admin `admin` with the password `admin-password`, the test players Red and Blue, allowed, and Leaf, waiting for an admin, the game "Pokémon Añil + Randomlocke" with a small stand-in zip put in the bucket, Series 1 running on it, on the daytime route, with Red and Blue as its players, ten milestones and the rules of `docs/pkmn/series/1/reference/rules.md`, and, when `pkmn/site/saves/` (gitignored) holds a save zip, a snapshot for Red from the first one, at the milestone its save suggests or else Post-League, through the same pipeline as an upload, and beside it, at the milestone before, a copy of that snapshot with its last permafainted Pokémon alive again and an hour less play time, so Red's series page shows a Pokémon fallen between two milestones; it skips both when Red already has a snapshot. Then Series 2, finished, on the night sky, with Red and Blue as its players and the same milestones and rules, holding, when Red has a Series 1 snapshot, a copy of the latest at its Tournament with two hours more play time, so Red's profile sums two series; it skips Series 2 when it exists. When Red has a Series 1 snapshot and no team, it also makes Red a "Seed team" of that snapshot's first three Pokémon. The seed refuses a `DATABASE_URL` or `S3_ENDPOINT` whose host is not `localhost` or `127.0.0.1`. To make a real admin instead, `npm run admin:create <name>` asks for the password twice; it refuses a name already taken and a password under 8 characters. Every script reads `.env.local`; a variable already set in the shell wins over it.
+`seed` makes the admin `admin` with the password `admin-password`, the test players Red and Blue, allowed, and Leaf, waiting for an admin, the game "Pokémon Añil + Randomlocke" with a small stand-in zip put in the bucket, holding the game's item icons from `pkmn/games/anil/game/base/es-v4.14/Graphics/Items/` when [`anil install`](../../games/anil/how-to/install-the-game.md) has fetched the game, so its icon sheet is built as an upload's is, Series 1 running on it, on the daytime route, with Red and Blue as its players, ten milestones and the rules of `docs/pkmn/series/1/reference/rules.md`, and, when `pkmn/site/saves/` (gitignored) holds a save zip, a snapshot for Red from the first one, at the milestone its save suggests or else Post-League, through the same pipeline as an upload, and beside it, at the milestone before, a copy of that snapshot with its last permafainted Pokémon alive again and an hour less play time, so Red's series page shows a Pokémon fallen between two milestones; it skips both when Red already has a snapshot. Then Series 2, finished, on the night sky, with Red and Blue as its players and the same milestones and rules, holding, when Red has a Series 1 snapshot, a copy of the latest at its Tournament with two hours more play time, so Red's profile sums two series; it skips Series 2 when it exists. When Red has a Series 1 snapshot and no team, it also makes Red a "Seed team" of that snapshot's Pokémon that were the save's first three party members (the export shuffles them, so the seed reads the party from the zip). The seed refuses a `DATABASE_URL` or `S3_ENDPOINT` whose host is not `localhost` or `127.0.0.1`. To make a real admin instead, `npm run admin:create <name>` asks for the password twice; it refuses a name already taken and a password under 8 characters. Every script reads `.env.local`; a variable already set in the shell wins over it.
 
 After changing `api/_lib/schema.ts`, write the next migration with `npm run db:generate`, check the migrations with `npx drizzle-kit check`, and commit the new files in `drizzle/`. A migration only goes forward: to undo a change, generate another.
 
@@ -143,6 +143,27 @@ Neither CLI is installed: run both through `npx` from `pkmn/site/`, where `.verc
 | Run SQL on a branch | `npx neonctl connection-string dev --project-id wandering-pine-85287086 --psql -- -c "<sql>"` |
 
 `vercel env ls` names the variables and never shows their values, since they are sensitive. A branch's connection string carries its password: keep it out of commits and logs. The number of rows in `drizzle.__drizzle_migrations` is how many migrations a branch has applied, so `select count(*) from drizzle.__drizzle_migrations` on `dev` and on `main` shows how far each one has been migrated. Without `psql` on the `PATH`, `neonctl` runs its own.
+
+### Rebuild a game's item icons
+
+A game's item icon sheet is built when its zip is uploaded ([The pkmn Site → Games](../explanation/site.md#games)). For a zip uploaded before the sheet existed, or to rebuild them all, run from `pkmn/site/` with the environment's `DATABASE_URL` and `S3_*` variables set in the shell (a shell variable wins over `.env.local`):
+
+```sh
+npm run item-icons
+```
+
+It prints each game's icon count, or that its zip holds no `Graphics/Items`.
+
+### Wipe the imported data
+
+When the snapshot format changes in a way old snapshots cannot follow, the imported data is wiped and players upload again. From `pkmn/site/`, with the environment's `DATABASE_URL`, `S3_*` variables set in the shell:
+
+```sh
+npm run wipe-imports            # prints the database host and bucket it would wipe
+npm run wipe-imports -- --yes   # deletes every team, save and snapshot, and every file under saves/
+```
+
+It keeps the accounts, the allowlist, the games with their zips and icons, and the series with their players and milestones. For production that is the `main` branch's connection string and the production bucket; for the previews the `dev` branch and `pkmn-site-preview-enbraile`. It cannot be undone, short of Neon's point-in-time restore for the database; the bucket's files are gone.
 
 ### 8. Roll back
 

@@ -61,21 +61,40 @@ function endRecord(view: DataView): number {
   throw new ZipError("not a zip");
 }
 
-export function zipEntries(data: Uint8Array): ZipEntry[] {
-  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-  if (data.byteLength < 22) throw new ZipError("not a zip");
+export type ZipDirectory = { start: number; size: number; count: number };
+
+export type Zip64Locator = { record: number };
+
+export function zipDirectory(tail: Uint8Array, tailStart: number, zip64Record?: Uint8Array): ZipDirectory | Zip64Locator {
+  const view = new DataView(tail.buffer, tail.byteOffset, tail.byteLength);
+  if (tail.byteLength < 22) throw new ZipError("not a zip");
   const end = endRecord(view);
-  let count = view.getUint16(end + 10, true);
-  let start = view.getUint32(end + 16, true);
-  if ((count === 0xffff || start === 0xffffffff) && end >= 20 && view.getUint32(end - 20, true) === 0x07064b50) {
+  const directory = { count: view.getUint16(end + 10, true), size: view.getUint32(end + 12, true), start: view.getUint32(end + 16, true) };
+  if ((directory.count === 0xffff || directory.start === 0xffffffff || directory.size === 0xffffffff) && end >= 20 && view.getUint32(end - 20, true) === 0x07064b50) {
     const record = Number(view.getBigUint64(end - 12, true));
-    if (record + 56 <= data.byteLength && view.getUint32(record, true) === 0x06064b50) {
-      count = Number(view.getBigUint64(record + 32, true));
-      start = Number(view.getBigUint64(record + 48, true));
+    const local = record - tailStart;
+    const bytes = zip64Record ?? (local >= 0 && local + 56 <= tail.byteLength ? tail.subarray(local, local + 56) : undefined);
+    if (!bytes) return { record };
+    const recordView = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (bytes.byteLength >= 56 && recordView.getUint32(0, true) === 0x06064b50) {
+      directory.count = Number(recordView.getBigUint64(32, true));
+      directory.size = Number(recordView.getBigUint64(40, true));
+      directory.start = Number(recordView.getBigUint64(48, true));
     }
   }
+  return directory;
+}
+
+export function zipEntries(data: Uint8Array): ZipEntry[] {
+  const directory = zipDirectory(data, 0);
+  if ("record" in directory) throw new ZipError("a broken zip");
+  return directoryEntries(data.subarray(directory.start), directory.count);
+}
+
+export function directoryEntries(data: Uint8Array, count: number): ZipEntry[] {
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const entries: ZipEntry[] = [];
-  let at = start;
+  let at = 0;
   for (let i = 0; i < count; i += 1) {
     if (at + 46 > data.byteLength || view.getUint32(at, true) !== 0x02014b50) throw new ZipError("a broken zip");
     const flags = view.getUint16(at + 8, true);
@@ -109,17 +128,18 @@ export function zipEntries(data: Uint8Array): ZipEntry[] {
   return entries;
 }
 
-function storedBytes(data: Uint8Array, entry: ZipEntry): Uint8Array {
+function storedBytes(data: Uint8Array, entry: ZipEntry, dataStart = 0): Uint8Array {
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-  if (entry.offset + 30 > data.byteLength || view.getUint32(entry.offset, true) !== 0x04034b50) throw new ZipError(`a broken entry ${entry.name}`);
-  const begin = entry.offset + 30 + view.getUint16(entry.offset + 26, true) + view.getUint16(entry.offset + 28, true);
+  const offset = entry.offset - dataStart;
+  if (offset < 0 || offset + 30 > data.byteLength || view.getUint32(offset, true) !== 0x04034b50) throw new ZipError(`a broken entry ${entry.name}`);
+  const begin = offset + 30 + view.getUint16(offset + 26, true) + view.getUint16(offset + 28, true);
   const stored = data.subarray(begin, begin + entry.compressedSize);
   if (stored.length !== entry.compressedSize) throw new ZipError(`a broken entry ${entry.name}`);
   return stored;
 }
 
-export function readEntry(data: Uint8Array, entry: ZipEntry): Uint8Array {
-  const stored = storedBytes(data, entry);
+export function readEntry(data: Uint8Array, entry: ZipEntry, dataStart = 0): Uint8Array {
+  const stored = storedBytes(data, entry, dataStart);
   if (entry.method === 0) return stored;
   if (entry.method !== 8) throw new ZipError(`${entry.name} is compressed in a way the site cannot read`);
   try {

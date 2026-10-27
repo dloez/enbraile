@@ -87,7 +87,7 @@ seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
   const [held] = chosen?.snapshotId ? await db.select({ data: snapshot.data, missing: snapshot.missing }).from(snapshot).where(eq(snapshot.id, chosen.snapshotId)) : [];
   const page: PcPage = {
     player,
-    series: { number: row.number, name: row.name },
+    series: { number: row.number, name: row.name, gameId: row.gameId },
     milestones: taken.map((m) => ({ name: m.milestone, taken: m.snapshotId !== null })),
     milestone: held ? (chosen?.milestone ?? null) : null,
     snapshotId: held ? (chosen?.snapshotId ?? null) : null,

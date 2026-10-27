@@ -1,7 +1,7 @@
 import { and, eq, isNotNull, or } from "drizzle-orm";
 import { type ExportReport, readExport, type Sheet, type Snapshot } from "../../shared/snapshot.js";
 import { db } from "./db.js";
-import { ExportError, type TmRolls } from "./export/export.js";
+import { ExportError, itemFromShowdown, type TmRolls, type World } from "./export/export.js";
 import { exportZipSlot } from "./export/save-zip.js";
 import { deleteObject, putObject, readObject } from "./files.js";
 import { save, seriesPlayer, snapshot } from "./schema.js";
@@ -36,7 +36,7 @@ export function parseExport(file: Uint8Array): { sheet: Sheet; report: ExportRep
   } catch {
     throw new ExportError("This file is not JSON");
   }
-  const read = readExport(data);
+  const read = readExport(data, itemFromShowdown);
   if ("refused" in read) throw new ExportError(read.refused);
   return read;
 }
@@ -45,7 +45,6 @@ function fromExport(sheet: Sheet): Snapshot {
   return {
     ...sheet,
     fainted: [],
-    party: [],
     bag: [],
     trainer: { name: null, id: null, publicId: null, money: null, badges: [] },
     playTime: null,
@@ -59,18 +58,18 @@ function fromExport(sheet: Sheet): Snapshot {
   };
 }
 
-type Read = { data: Snapshot; tmRolls: TmRolls | null; rolledKey: string | null; rolled: number | null; sideFile: string | null; missing: ExportReport | null };
+type Read = { data: Snapshot; world: World | null; tmRolls: TmRolls | null; rolledKey: string | null; rolled: number | null; sideFile: string | null; missing: ExportReport | null };
 
 async function read(raw: RawSave, file: Uint8Array): Promise<Read> {
   if (isExportKey(raw.fileKey)) {
     const { sheet, report } = parseExport(file);
-    return { data: fromExport(sheet), tmRolls: null, rolledKey: null, rolled: null, sideFile: null, missing: report };
+    return { data: fromExport(sheet), world: null, tmRolls: null, rolledKey: null, rolled: null, sideFile: null, missing: report };
   }
   if (!raw.slot) throw new ExportError("Pick a slot of the zip");
   const exported = exportZipSlot(file, raw.slot, await keptRolls(raw.fileKey, raw.slot));
   const rolledKey = `${savePrefix(raw.seriesId, raw.userId)}${crypto.randomUUID()}-rolled.zip`;
   await putObject(rolledKey, exported.rolledZip);
-  return { data: exported.snapshot, tmRolls: exported.tmRolls, rolledKey, rolled: exported.rolled, sideFile: exported.sideFile, missing: null };
+  return { data: exported.snapshot, world: exported.world, tmRolls: exported.tmRolls, rolledKey, rolled: exported.rolled, sideFile: exported.sideFile, missing: null };
 }
 
 export function savePrefix(seriesId: string, userId: string): string {
@@ -111,7 +110,7 @@ export async function dropIfUnused(key: string | null | undefined) {
 
 export async function ingest(raw: RawSave): Promise<Ingested> {
   const file = await readObject(raw.fileKey);
-  const { data, tmRolls, rolledKey, rolled, sideFile, missing } = await read(raw, file);
+  const { data, world, tmRolls, rolledKey, rolled, sideFile, missing } = await read(raw, file);
   const saveId = await saveFor(raw.seriesId, raw.userId);
   const values = {
     fileKey: raw.fileKey,
@@ -119,6 +118,7 @@ export async function ingest(raw: RawSave): Promise<Ingested> {
     fileSize: file.length,
     slot: isExportKey(raw.fileKey) ? null : raw.slot,
     data,
+    world,
     tmRolls,
     rolledKey,
     missing,

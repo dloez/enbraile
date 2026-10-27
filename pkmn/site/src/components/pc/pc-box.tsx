@@ -223,10 +223,12 @@ export function SummarySheet({ mon, tms, open, onClose, footer, gaps }: {
   );
 }
 
-export function SnapshotPc({ mons, items, tms, gaps = [], footer }: {
+export function SnapshotPc({ mons, items, tms, setas, money, gaps = [], footer }: {
   mons: readonly Mon[];
   items: readonly BagItem[];
   tms: readonly BagTm[];
+  setas: number | null;
+  money: number | null;
   gaps?: readonly ExportGap[];
   footer?: (mon: Mon, done: () => void) => ReactNode;
 }) {
@@ -265,7 +267,7 @@ export function SnapshotPc({ mons, items, tms, gaps = [], footer }: {
           footer={selectedMon && footer?.(selectedMon, () => setPicked(null))}
         />
       )}
-      <Bag items={items} tms={tms} gaps={gaps} open={bagOpen} onOpenChange={setBagOpen} />
+      <Bag items={items} tms={tms} setas={setas} money={money} gaps={gaps} open={bagOpen} onOpenChange={setBagOpen} />
     </>
   );
 }

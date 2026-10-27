@@ -2,6 +2,10 @@ import * as z from "zod";
 
 const id = z.string().min(1);
 
+export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
+
+const json: z.ZodType<Json> = z.lazy(() => z.union([z.null(), z.boolean(), z.number(), z.string(), z.array(json), z.record(z.string(), json)]));
+
 const spread = z
   .object({ hp: z.int(), atk: z.int(), def: z.int(), spa: z.int(), spd: z.int(), spe: z.int() })
   .nullable();
@@ -36,10 +40,7 @@ const intOrNull = z.int().nullable();
 const pokemonDetails = z.object({
   gameSpecies: id,
   form: intOrNull,
-  place: z.object({ box: intOrNull, slot: z.int() }),
   heldItem: z.object({ item: id, showdown: id.nullable() }).nullable(),
-  hp: intOrNull,
-  status: z.string().nullable(),
   exp: intOrNull,
   happiness: intOrNull,
   ball: z.string().nullable(),
@@ -53,8 +54,8 @@ const pokemonDetails = z.object({
   markings: z.array(z.int()),
   ribbons: z.array(z.string()),
   contest: z.object({ cool: intOrNull, beauty: intOrNull, cute: intOrNull, smart: intOrNull, tough: intOrNull, sheen: intOrNull }),
-  expShare: z.boolean().nullable(),
   superShiny: z.boolean(),
+  rest: z.record(z.string(), json).optional(),
 });
 
 export const pokemonSchema = z.object({
@@ -76,6 +77,13 @@ export const pokemonSchema = z.object({
 });
 
 export const itemSchema = z.object({
+  item: id,
+  showdown: id.nullable(),
+  pocket: z.int().nullable(),
+  quantity: z.int().positive(),
+});
+
+export const legacyItemSchema = z.object({
   item: id,
   quantity: z.int().positive(),
 });
@@ -119,7 +127,18 @@ const saveDetails = z.object({
   steps: intOrNull,
   saveCount: intOrNull,
   gameVersion: z.string().nullable(),
-  pokedex: z.object({ seen: z.array(id), owned: z.array(id) }),
+  pokedex: z.object({
+    seen: z.array(id),
+    owned: z.array(id),
+    seenForms: z.record(z.string(), json).optional(),
+    lastSeenForms: z.record(z.string(), json).optional(),
+    seenEggs: z.array(id).optional(),
+    caughtCounts: z.record(z.string(), z.int()).optional(),
+    defeatedCounts: z.record(z.string(), z.int()).optional(),
+    ownedShadow: z.array(id).optional(),
+    unlockedDexes: z.array(z.boolean()).optional(),
+    accessibleDexes: z.array(z.int()).optional(),
+  }),
   gameStats: z.record(z.string(), z.number()),
   challenge: z.object({ rules: z.array(z.string()), outcomes: z.array(z.string()) }),
   vial: z.object({ charges: intOrNull, max: intOrNull }).nullable(),
@@ -129,7 +148,6 @@ const saveDetails = z.object({
 
 export const snapshotSchema = sheetSchema.extend({
   fainted: z.array(faintedSchema),
-  party: z.array(member.extend({ fainted: z.boolean() })),
   bag: z.array(pocketSchema),
   trainer: z.object({
     name: z.string().nullable(),
@@ -202,10 +220,13 @@ function entries<T extends z.ZodType>(list: unknown, schema: T): { read: z.infer
   return { read, raw, skipped: list.length - read.length, absent: false };
 }
 
-export function readExport(data: unknown): { sheet: Sheet; report: ExportReport } | { refused: string } {
+export function readExport(
+  data: unknown,
+  item: (showdown: string, quantity: number) => SheetItem,
+): { sheet: Sheet; report: ExportReport } | { refused: string } {
   if (!record(data)) return { refused: "This file is not an export" };
   const pokemon = entries(data.pokemon, pokemonSchema);
-  const items = entries(data.items, itemSchema);
+  const items = entries(data.items, legacyItemSchema);
   const tms = entries(data.tms, tmSchema);
   if (pokemon.read.length + items.read.length + tms.read.length === 0) return { refused: "Nothing in this export can be read" };
   const gaps = new Set<ExportGap>();
@@ -217,7 +238,7 @@ export function readExport(data: unknown): { sheet: Sheet; report: ExportReport 
   if (items.absent) gaps.add("items");
   if (tms.absent) gaps.add("tms");
   return {
-    sheet: { pokemon: pokemon.read, items: items.read, tms: tms.read },
+    sheet: { pokemon: pokemon.read, items: items.read.map((entry) => item(entry.item, entry.quantity)), tms: tms.read },
     report: { missing: EXPORT_GAPS.filter((gap) => gaps.has(gap)), skipped: pokemon.skipped + items.skipped + tms.skipped },
   };
 }

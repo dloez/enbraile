@@ -3,6 +3,7 @@ import { requireAllowed } from "./access.js";
 import { adminSeries } from "./admin-series.js";
 import { auth } from "./auth.js";
 import { games } from "./games.js";
+import { itemIconRoutes } from "./item-icons.js";
 import { overrides } from "./overrides.js";
 import { players } from "./players.js";
 import { profiles } from "./profiles.js";
@@ -17,6 +18,7 @@ app.use(requireAllowed);
 app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
 
 app.route("/games", games);
+app.route("/item-icons", itemIconRoutes);
 app.route("/players", players);
 app.route("/profiles", profiles);
 app.route("/series", seriesRoutes);

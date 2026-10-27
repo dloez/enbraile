@@ -1,6 +1,6 @@
 # Snapshot Format
 
-What a snapshot holds: the JSON object the site's export (`pkmn/site/api/_lib/export/`) makes from one `Partida N.rxdata` slot of a save zip, or that the site reads from an old export's JSON ([Old Exports](#old-exports)), stored as the `snapshot` row's `data` ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and its zod schema, `snapshotSchema` in `pkmn/site/shared/snapshot.ts`. Its first three keys, `pokemon`, `items` and `tms`, are the Open Sheet JSON the retired Python export wrote, and the site's export writes them the same way; the rest is what the Python export left out. Why each of the three keys' fields is there, and what is left out, is in [Save Export](../explanation/save-export.md). Where each value sits in the save is in [State](../../games/anil/reference/state.md). Every ID in `pokemon`, `items` and `tms` is a Showdown ID: the English Showdown name lowercased, with everything but letters and digits removed.
+What a snapshot holds: the JSON object the site's export (`pkmn/site/api/_lib/export/`) makes from one `Partida N.rxdata` slot of a save zip, or that the site reads from an old export's JSON ([Old Exports](#old-exports)), stored as the `snapshot` row's `data` ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and its zod schema, `snapshotSchema` in `pkmn/site/shared/snapshot.ts`. Its first three keys, `pokemon`, `items` and `tms`, are the Open Sheet JSON the retired Python export wrote, and the site's export writes them the same way; the rest is what the Python export left out. Why each of the three keys' fields is there, and what is left out, is in [Save Export](../explanation/save-export.md). Where each value sits in the save is in [State](../../games/anil/reference/state.md). Every ID in `pokemon` and `tms` is a Showdown ID: the English Showdown name lowercased, with everything but letters and digits removed; `items` holds the save's own item IDs with a Showdown ID beside each. The rest of the save, which no page reads, is kept in the row's `world` column, never sent to a browser ([World](#world)).
 
 ```json
 {
@@ -23,13 +23,12 @@ What a snapshot holds: the JSON object the site's export (`pkmn/site/api/_lib/ex
       "stats": {"hp": 140, "atk": 63, "def": 75, "spa": 85, "spd": 66, "spe": 53},
       "moves": {"current": ["surf", "icebeam"], "relearner": ["powdersnow", "surf"], "tms": ["icebeam"], "levels": {"surf": 32}},
       "personalId": 2078334086,
-      "details": {"gameSpecies": "WALREIN", "place": {"box": null, "slot": 0}, "heldItem": {"item": "LEFTOVERS", "showdown": "leftovers"}, "ball": "ULTRABALL", "…": "…"}
+      "details": {"gameSpecies": "WALREIN", "heldItem": {"item": "LEFTOVERS", "showdown": "leftovers"}, "ball": "ULTRABALL", "rest": {"evo_step_count": 0, "…": "…"}, "…": "…"}
     }
   ],
-  "items": [{"item": "leftovers", "quantity": 2}],
+  "items": [{"item": "LEFTOVERS", "showdown": "leftovers", "pocket": 1, "quantity": 2}, {"item": "REPEL", "showdown": null, "pocket": 1, "quantity": 3}],
   "tms": [{"item": "tm13", "move": "icebeam"}],
   "fainted": [{"species": "remoraid", "gameSpecies": "REMORAID", "nickname": "TRAMPANTOJO", "level": 14, "personalId": 2026315114, "…": "every other key of a pokemon[] entry"}],
-  "party": [{"species": "walrein", "gameSpecies": "WALREIN", "nickname": null, "level": 42, "personalId": 2078334086, "fainted": false}],
   "bag": [{"pocket": 1, "items": [{"item": "LEFTOVERS", "showdown": "leftovers", "quantity": 1}]}],
   "trainer": {"name": "MIRAMEEE", "id": 2550780501, "publicId": 53845, "money": 1168806, "badges": [true, true, false, false, false, false, false, false]},
   "playTime": 134379.17,
@@ -50,11 +49,10 @@ The values above are illustrative; `bag` always holds all eight pockets.
 
 | Key | Type | Holds |
 |-----|------|-------|
-| `pokemon` | array of objects | Each living Pokémon of the party, then of each PC box in order |
-| `items` | array of objects | The shared items, bag first in pocket order, then held items not yet listed |
+| `pokemon` | array of objects | Each living Pokémon of the party, the PC boxes and the Day Care, in one random order the export draws each time, so nothing tells where a player keeps a Pokémon |
+| `items` | array of objects | Every item the player has: the bag first, in pocket order, then held items, then the PC's item storage, each item once ([`items[]`](#items)) |
 | `tms` | array of objects | The TMs, in the order first found |
-| `fainted` | array of objects | Each permafainted Pokémon (`@perma_faint`) of the party, then of each PC box in order, with every key of a `pokemon[]` entry ([`fainted[]`](#fainted)) |
-| `party` | array of objects | The party in slot order, eggs left out |
+| `fainted` | array of objects | Each permafainted Pokémon (`@perma_faint`), in the same random order, with every key of a `pokemon[]` entry ([`fainted[]`](#fainted)) |
 | `bag` | array of objects | The bag's eight pockets in order, every item in each |
 | `trainer` | object | The trainer's name, ID, money and badges |
 | `playTime` | number or null | `GameStats@play_time`, in seconds; null when the save has none |
@@ -91,10 +89,12 @@ The values above are illustrative; `bag` always holds all eight pockets.
 
 | Key | Type | Holds |
 |-----|------|-------|
-| `item` | string | The item's ID, listed once; a key of Showdown's `data/items.ts`, except `tinymushroom`, which Showdown does not model |
-| `quantity` | integer | The bag's quantity plus 1 for each Pokémon holding it, permafainted ones included |
+| `item` | string | The item's game ID (`LEFTOVERS`, `TINYMUSHROOM`), listed once |
+| `showdown` | string or null | Its Showdown ID when it is a key of Showdown's `data/items.ts` (a TM's `tm01` label too, and `tinymushroom`); null otherwise (`REPEL`, `POTION`, the key items) |
+| `pocket` | integer or null | Its pocket in `items.dat`, 1 to 8 as in [`bag[]`](#bag); null for an old export's item the site's data does not know |
+| `quantity` | integer | The bag's quantity, plus 1 for each Pokémon holding it, permafainted ones included, plus the PC item storage's |
 
-Holds the items of pocket 1 (Objetos) and pocket 5 (Bayas), and the held items that belong to those pockets.
+Every pocket goes in, TMs and HMs too. The PC's bag and the team builder use only the fight items: those with a Showdown ID in pocket 1 (Objetos) or 5 (Bayas), the Mini Seta (`TINYMUSHROOM`) aside, which they count apart (`fightItems` and `setasOf` in `shared/items.ts`).
 
 ## `tms[]`
 
@@ -113,17 +113,6 @@ Every key of a [`pokemon[]`](#pokemon) entry, read the same way, with two differ
 | `gameSpecies` | string | The species-form's game ID (`REMORAID`, `ROTOM_1`) |
 
 A snapshot exported before 2026-10-27 holds only `species`, `gameSpecies`, `nickname`, `level` and `personalId`; the rest reads as absent, as in an old export's `pokemon[]` ([Old Exports](#old-exports)).
-
-## `party[]`
-
-| Key | Type | Holds |
-|-----|------|-------|
-| `species` | string or null | The species-form's Showdown ID; null when it has none |
-| `gameSpecies` | string | The species-form's game ID (`REMORAID`, `ROTOM_1`) |
-| `nickname` | string or null | The nickname; null when it has none |
-| `level` | integer or null | Its level |
-| `personalId` | integer or null | Its `@personalID` |
-| `fainted` | boolean | Whether it is permafainted |
 
 ## `bag[]`
 
@@ -152,10 +141,7 @@ What the save holds beyond a fight, kept so later features can use it ([Save Exp
 |-----|------|-------|
 | `gameSpecies` | string | The species-form's game ID |
 | `form` | integer or null | `@forced_form`, else `@form` |
-| `place` | object | `box`, the box's index from 0, null in the party; `slot`, the slot from 0 |
 | `heldItem` | object or null | `item`, the game ID of `@item`, and `showdown`, its Showdown ID or null |
-| `hp` | integer or null | `@hp`, its current HP |
-| `status` | string or null | `@status` (`NONE`, `SLEEP`, …) |
 | `exp`, `happiness` | integer or null | `@exp`, `@happiness` |
 | `ball` | string or null | `@poke_ball` |
 | `mintedFrom` | string or null | The Showdown ID of `@nature` when a mint set `@nature_for_stats`, else null |
@@ -167,8 +153,10 @@ What the save holds beyond a fight, kept so later features can use it ([Save Exp
 | `pokerus` | integer or null | `@pokerus` |
 | `markings`, `ribbons` | arrays | `@markings` (integers), `@ribbons` (IDs) |
 | `contest` | object | `cool`, `beauty`, `cute`, `smart`, `tough`, `sheen` |
-| `expShare` | boolean or null | `@expshare` |
 | `superShiny` | boolean | `@super_shiny` |
+| `rest` | object, or absent | Every other field the save holds of it, keyed by its name without `@` and converted as [World](#world) says (`ability`, `forced_ability`, `steps_to_hatch`, `evo_step_count`, `ready_to_evolve`, …), so a field the mod adds later is kept too; absent before 2026-10-27 |
+
+Its current HP and status, its Exp. Share flag and its `legacy_data` (time in the party, battles fought, foes defeated) are not here but in [`world.pokemon`](#world): each changes with where it sits, so they would tell the party apart.
 
 ### The snapshot's `details`
 
@@ -181,18 +169,36 @@ What the save holds beyond a fight, kept so later features can use it ([Save Exp
 | `steps` | integer or null | `$PokemonGlobal@stepcount` |
 | `saveCount` | integer or null | `game_system@save_count` |
 | `gameVersion` | string or null | The save's `game_version` (`4.1.1`) |
-| `pokedex` | object | `seen` and `owned`: the species IDs the Pokédex marks |
+| `pokedex` | object | `seen`, `owned`, `seenEggs` and `ownedShadow`: the species IDs the Pokédex marks; `seenForms` and `lastSeenForms`, `@seen_forms` and `@last_seen_forms` by species as [World](#world) converts them; `caughtCounts` and `defeatedCounts`, how many of each species were caught and defeated; `unlockedDexes` and `accessibleDexes`. All but `seen` and `owned` absent before 2026-10-27 |
 | `gameStats` | object | Every number `GameStats` holds, keyed by its field without `@` (`distance_walked`, `money_spent_at_marts`, …) |
 | `challenge` | object | `rules`, `$PokemonGlobal@challenge_rules`; `outcomes`, each challenge's outcome in `@challenge_state` (`VICTORY`) |
 | `vial` | object or null | The Pokévial's `charges` and `max`; null before the game gives it |
-| `hallOfFame` | array of arrays | Each Hall of Fame team, its members as in [`party[]`](#party) without `fainted` |
+| `hallOfFame` | array of arrays | Each Hall of Fame team, each member's `species` (Showdown ID or null), `gameSpecies`, `nickname`, `level` and `personalId` |
 | `itemsFound` | array of strings | `item_log@found_items`, game IDs |
+
+## World
+
+The `snapshot` row's `world` column (`World` in `api/_lib/export/export.ts`) holds the rest of the save that one export reads, kept because a save is only exported once though its zip is stored: no page reads it, no route answers it, and it stays out of `data`, which the team builder sends whole to any player. A Ruby value is converted as is: a symbol to its name, a hash to an object keyed by its keys as text, an object to its fields without `@` plus `_class`, a `Time` to ISO 8601, a `GameData` object to its ID, a `Set` to its members, bytes to base64, a link back to an object still being converted to `"[cycle]"`; a Pokémon object inside these fields (a trainer's, the Day Care's, one in a variable) is cut to its species, form, nickname, level, gender, shininess, ability, nature, item, IVs, EVs, personal ID and move IDs. About 600 KB for a finished run.
+
+| Key | Holds |
+|-----|-------|
+| `randomizer` | The run's randomized world: `abilities` (`randomized_data`'s table), `learnsets` (`@random_moves`), `encounters` (`@random_encounter_table`, by map and method: weight, species, levels), `trainers` (`@random_trainer_teams`, each trainer's team) and `tmMoves` (`@tm_move_map`) |
+| `pokemon` | Each Pokémon of `pokemon` and `fainted`, in their random order: `personalId`, `gameSpecies`, and its `hp`, `status`, `statusCount`, `expshare`, `legacy_data` and `last_update_time` |
+| `metadata` | Every other field of `$PokemonGlobal`: the randomizer's settings and rules, the Day Care, the PC item storage, eggs, followers, roamers, fossils, the phone, the visited maps and the trail, the Pokévial and the rest |
+| `player` | Every field of `$player` but the party and the Pokédex: mystery gifts, online stats, defeated and reset combats and the rest |
+| `bag` | The bag's fields but its pockets: registered, favourite and new items, the last pockets viewed |
+| `storage` | `unlockedWallpapers` and each box's `backgrounds`; never which box is open |
+| `switches`, `variables`, `selfSwitches` | The game's switches and variables, and each event's self switches |
+| `mapMetadata`, `options` | `map_metadata`'s fields and the player's options (`pokemon_system`) |
+| `frameCount`, `essentialsVersion` | The save's `frame_count` and `essentials_version` |
+
+An old export's snapshot has no `world`.
 
 ## Old Exports
 
-The upload also takes the `.json` a Python export wrote ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and reads it as far as it goes rather than refusing it for a gap (`readExport` in `pkmn/site/shared/snapshot.ts`). Its `pokemon`, `items` and `tms` are read with the same `pokemonSchema`, `itemSchema` and `tmSchema` as a save zip's snapshot: in `pokemon[]` every key but `species` reads as absent when it is missing or not of its type (null, `shiny` false, `types` empty, `moves` left out), and an entry of any of the three lists that still fails, a Pokémon without a non-empty `species` among them, is skipped and counted. A list that is missing reads as empty. Only a file that is not JSON ("This file is not JSON"), not an object ("This file is not an export"), or with no entry read in any of the three lists ("Nothing in this export can be read") is refused.
+The upload also takes the `.json` a Python export wrote ([The pkmn Site → Snapshots](../explanation/site.md#snapshots)), and reads it as far as it goes rather than refusing it for a gap (`readExport` in `pkmn/site/shared/snapshot.ts`). Its `pokemon` and `tms` are read with the same `pokemonSchema` and `tmSchema` as a save zip's snapshot, and its `items`, Showdown IDs with a quantity, are turned into `items[]` entries through the site's data, the game ID and pocket of the first game item with that Showdown ID (`itemFromShowdown`): in `pokemon[]` every key but `species` reads as absent when it is missing or not of its type (null, `shiny` false, `types` empty, `moves` left out), and an entry of any of the three lists that still fails, a Pokémon without a non-empty `species` among them, is skipped and counted. A list that is missing reads as empty. Only a file that is not JSON ("This file is not JSON"), not an object ("This file is not an export"), or with no entry read in any of the three lists ("Nothing in this export can be read") is refused.
 
-The rest of the snapshot, which no export ever held, reads as absent: `details` and each Pokémon's `details` left out, `fainted`, `party`, `bag`, `usedEncounters` and `notices` empty, `trainer`'s values null and its `badges` empty, `playTime`, `pokedex`'s counts, every `records` count, `hallOfFame`, `saveSlot` and `randomlockeVersion` null. Its fainted count is 0 until an admin sets it by hand.
+The rest of the snapshot, which no export ever held, reads as absent: `details` and each Pokémon's `details` left out, `fainted`, `bag`, `usedEncounters` and `notices` empty, `trainer`'s values null and its `badges` empty, `playTime`, `pokedex`'s counts, every `records` count, `hallOfFame`, `saveSlot` and `randomlockeVersion` null. Its fainted count is 0 until an admin sets it by hand.
 
 Beside `data`, the snapshot row keeps the export's missing-field report (`missing`, `exportReport` in `shared/snapshot.ts`; null for a save zip's snapshot): `missing`, the gaps found in the order below, and `skipped`, how many entries were skipped.
 

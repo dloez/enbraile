@@ -150,7 +150,7 @@ teams.get("/:id", async (c) => {
     .where(eq(team.id, c.req.param("id")));
   if (!row) return c.json({ error: "No such team" }, 404);
   const sources = await db
-    .select({ ...sourceColumns, data: snapshot.data, missing: snapshot.missing, abilitySetas: game.abilitySetas, mintPrice: game.mintPrice })
+    .select({ ...sourceColumns, gameId: series.gameId, data: snapshot.data, missing: snapshot.missing, abilitySetas: game.abilitySetas, mintPrice: game.mintPrice })
     .from(teamSource)
     .innerJoin(snapshot, eq(snapshot.id, teamSource.snapshotId))
     .innerJoin(save, eq(save.id, snapshot.saveId))
@@ -167,6 +167,7 @@ teams.get("/:id", async (c) => {
     canEdit: reader.id === row.ownerId,
     sources: sources.map((s) => ({
       ...sourceOf(s),
+      gameId: s.gameId,
       snapshot: s.data,
       missing: s.missing,
       costs: s.abilitySetas === null || s.mintPrice === null ? DEFAULT_COSTS : { abilitySetas: s.abilitySetas, mintPrice: s.mintPrice },

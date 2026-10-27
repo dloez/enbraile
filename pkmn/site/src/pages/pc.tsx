@@ -5,6 +5,7 @@ import { toolPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { GameIconsProvider } from "@/lib/item-icons";
 import { cn } from "@/lib/utils";
 import { PcFrame } from "@/components/page-frames";
 import { SnapshotPc } from "@/components/pc/pc-box";
@@ -66,14 +67,18 @@ export function PcPage() {
     <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
       <PcHead page={page} onPick={pick} />
       {page.pc && mons ? (
-        <SnapshotPc
-          key={page.milestone}
-          mons={mons}
-          items={page.pc.items}
-          tms={page.pc.tms}
-          gaps={page.missing?.missing ?? []}
-          footer={builds ? (mon) => (mon.fainted ? null : <AddToTeam mon={mon} snapshot={builds} teams={teams} className="px-4.5 py-3.5" />) : undefined}
-        />
+        <GameIconsProvider game={page.series.gameId}>
+          <SnapshotPc
+            key={page.milestone}
+            mons={mons}
+            items={page.pc.items}
+            setas={page.pc.setas}
+            money={page.pc.money}
+            tms={page.pc.tms}
+            gaps={page.missing?.missing ?? []}
+            footer={builds ? (mon) => (mon.fainted ? null : <AddToTeam mon={mon} snapshot={builds} teams={teams} className="px-4.5 py-3.5" />) : undefined}
+          />
+        </GameIconsProvider>
       ) : (
         <p className="my-6 rounded-2xl border-3 border-dashed border-cell-hi bg-box px-5 py-10 text-center font-heading text-3xl text-subtle">
           No snapshot yet

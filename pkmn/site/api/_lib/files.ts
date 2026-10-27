@@ -99,8 +99,8 @@ export async function objectSize(key: string): Promise<number | undefined> {
   }
 }
 
-export async function putObject(key: string, body: Uint8Array): Promise<void> {
-  await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: "application/zip" }));
+export async function putObject(key: string, body: Uint8Array, contentType = "application/zip"): Promise<void> {
+  await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }));
 }
 
 export async function deleteObject(key: string): Promise<void> {
@@ -109,6 +109,12 @@ export async function deleteObject(key: string): Promise<void> {
 
 export async function readObject(key: string): Promise<Uint8Array> {
   const { Body } = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  if (!Body) throw new Error("The file store sent nothing back");
+  return Body.transformToByteArray();
+}
+
+export async function readRange(key: string, start: number, end: number): Promise<Uint8Array> {
+  const { Body } = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key, Range: `bytes=${start}-${end - 1}` }));
   if (!Body) throw new Error("The file store sent nothing back");
   return Body.transformToByteArray();
 }

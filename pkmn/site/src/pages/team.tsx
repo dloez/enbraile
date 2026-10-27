@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/u
 import { PLAYER_FILL, playerColour } from "@/components/player-badge";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
+import { GameIconsProvider } from "@/lib/item-icons";
 import { cn } from "@/lib/utils";
 import { TeamFrame, TeamsBackLink } from "@/components/page-frames";
 import { AddDialog, type AddSource } from "@/teams/components/add-dialog";
@@ -85,7 +86,11 @@ export function TeamBuilderPage() {
       </main>
     );
   }
-  return <Builder key={page.id} page={page} />;
+  return (
+    <GameIconsProvider game={page.sources.find((source) => source.gameId !== null)?.gameId ?? null}>
+      <Builder key={page.id} page={page} />
+    </GameIconsProvider>
+  );
 }
 
 function asSet(mon: Mon, member: Member): Mon {

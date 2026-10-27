@@ -4,9 +4,13 @@ import { Dex } from "@pkmn/dex";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { db, pool } from "../api/_lib/db.js";
 import { requireEnv } from "../api/_lib/env.js";
+import { readSave } from "../api/_lib/export/export.js";
+import { RubyObject } from "../api/_lib/export/marshal.js";
 import { saveSlots } from "../api/_lib/export/save-zip.js";
+import { readEntry, zipEntries } from "../api/_lib/export/zip.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
 import { ingest, savePrefix } from "../api/_lib/ingest.js";
+import { refreshItemIcons } from "../api/_lib/item-icons.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
 import { DEFAULT_POOL } from "../shared/pool.js";
 import { suggestMilestone } from "../shared/save-upload.js";
@@ -48,33 +52,50 @@ const seedSnapshot = { player: "Red", saves: new URL("../saves/", import.meta.ur
 
 const seedTeam = { name: "Seed team", members: 3 };
 
-function standInZip(): Uint8Array {
-  const name = Buffer.from("stand-in.txt");
-  const data = Buffer.from("A stand-in for the game's files on the local stack.\n");
-  const crc = crc32(data);
-  const local = Buffer.alloc(30);
-  local.writeUInt32LE(0x04034b50, 0);
-  local.writeUInt16LE(20, 4);
-  local.writeUInt32LE(crc, 14);
-  local.writeUInt32LE(data.length, 18);
-  local.writeUInt32LE(data.length, 22);
-  local.writeUInt16LE(name.length, 26);
-  const central = Buffer.alloc(46);
-  central.writeUInt32LE(0x02014b50, 0);
-  central.writeUInt16LE(20, 4);
-  central.writeUInt16LE(20, 6);
-  central.writeUInt32LE(crc, 16);
-  central.writeUInt32LE(data.length, 20);
-  central.writeUInt32LE(data.length, 24);
-  central.writeUInt16LE(name.length, 28);
-  const centralOffset = local.length + name.length + data.length;
+const gameItems = new URL("../../games/anil/game/base/es-v4.14/Graphics/Items/", import.meta.url);
+
+async function standInFiles(): Promise<{ name: string; data: Buffer }[]> {
+  const files = [{ name: "stand-in.txt", data: Buffer.from("A stand-in for the game's files on the local stack.\n") }];
+  const icons = (await readdir(gameItems).catch(() => [])).filter((name) => name.toLowerCase().endsWith(".png")).sort();
+  for (const name of icons) files.push({ name: `Graphics/Items/${name}`, data: await readFile(new URL(encodeURIComponent(name), gameItems)) });
+  return files;
+}
+
+function standInZip(files: { name: string; data: Buffer }[]): Uint8Array {
+  const locals: Buffer[] = [];
+  const centrals: Buffer[] = [];
+  let offset = 0;
+  for (const file of files) {
+    const name = Buffer.from(file.name);
+    const crc = crc32(file.data);
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(file.data.length, 18);
+    local.writeUInt32LE(file.data.length, 22);
+    local.writeUInt16LE(name.length, 26);
+    const central = Buffer.alloc(46);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt32LE(crc, 16);
+    central.writeUInt32LE(file.data.length, 20);
+    central.writeUInt32LE(file.data.length, 24);
+    central.writeUInt16LE(name.length, 28);
+    central.writeUInt32LE(offset, 42);
+    locals.push(local, name, file.data);
+    centrals.push(central, name);
+    offset += local.length + name.length + file.data.length;
+  }
+  const directory = Buffer.concat(centrals);
   const end = Buffer.alloc(22);
   end.writeUInt32LE(0x06054b50, 0);
-  end.writeUInt16LE(1, 8);
-  end.writeUInt16LE(1, 10);
-  end.writeUInt32LE(central.length + name.length, 12);
-  end.writeUInt32LE(centralOffset, 16);
-  return Buffer.concat([local, name, data, central, name, end]);
+  end.writeUInt16LE(files.length, 8);
+  end.writeUInt16LE(files.length, 10);
+  end.writeUInt32LE(directory.length, 12);
+  end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...locals, directory, end]);
 }
 
 async function uploadZip(key: string, zip: Uint8Array) {
@@ -102,7 +123,7 @@ async function seedTheGame() {
   if (existing) return;
   const id = crypto.randomUUID();
   const key = `games/${id}/${crypto.randomUUID()}.zip`;
-  const zip = standInZip();
+  const zip = standInZip(await standInFiles());
   await uploadZip(key, zip);
   await db.insert(game).values({
     id,
@@ -112,6 +133,7 @@ async function seedTheGame() {
     fileSize: zip.length,
     uploadedAt: new Date(),
   });
+  await refreshItemIcons(id, key, null);
 }
 
 async function seedTheSeries() {
@@ -140,6 +162,18 @@ async function seedTheSeries() {
       seedSeries.milestones.map(([name, mark], position) => ({ id: crypto.randomUUID(), seriesId: id, position, name, mark })),
     );
   });
+}
+
+async function seedParty(): Promise<number[]> {
+  const [first] = (await readdir(seedSnapshot.saves).catch(() => [])).filter((name) => name.toLowerCase().endsWith(".zip")).sort();
+  if (!first) return [];
+  const zip = new Uint8Array(await readFile(new URL(encodeURIComponent(first), seedSnapshot.saves)));
+  const [slot] = saveSlots(zip);
+  const entry = zipEntries(zip).find((candidate) => candidate.name === slot.entry);
+  if (!entry) return [];
+  const trainer = readSave(readEntry(zip, entry), entry.name).get("player") as RubyObject;
+  const party = trainer.get("party");
+  return Array.isArray(party) ? party.flatMap((pokemon) => (pokemon instanceof RubyObject && typeof pokemon.get("personalID") === "number" ? [pokemon.get("personalID") as number] : [])) : [];
 }
 
 async function seedTheSnapshot(): Promise<string | null> {
@@ -184,7 +218,6 @@ async function seedTheEarlierSnapshot(seriesId: string, userId: string, laterId:
   if (!member?.species) return null;
   const { gameSpecies: _gameSpecies, ...alive } = member;
   data.pokemon.push({ ...alive, species: member.species });
-  data.party = data.party.map((m) => (m.personalId === member.personalId ? { ...m, fainted: false } : m));
   data.playTime = data.playTime === null ? null : Math.max(0, data.playTime - 3600);
   const { id: _id, milestoneId: _later, takenAt: _takenAt, ...kept } = later.snapshot;
   await db.insert(snapshot).values({
@@ -213,9 +246,18 @@ async function seedTheTeam(): Promise<string | null> {
     .orderBy(desc(milestone.position))
     .limit(1);
   if (!latest) return null;
+  const party = await seedParty();
+  const rank = (personalId: number | null | undefined) => {
+    const at = party.indexOf(personalId ?? -1);
+    return at < 0 ? party.length : at;
+  };
+  const picked = latest.data.pokemon
+    .map((p, index) => ({ p, index }))
+    .sort((a, b) => rank(a.p.personalId) - rank(b.p.personalId))
+    .slice(0, seedTeam.members);
   const slots = emptySlots();
-  latest.data.pokemon.slice(0, seedTeam.members).forEach((p, index) => {
-    slots[index] = {
+  picked.forEach(({ p, index }, slot) => {
+    slots[slot] = {
       source: latest.id,
       index,
       species: p.species,

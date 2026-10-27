@@ -14,7 +14,7 @@ Names, descriptions, base stats and the type chart come from `@pkmn/dex`, Showdo
 
 Showdown's types and base stats drive the analysis, since Showdown sets a species' types from its own data whatever the save says. The summary shows the export's `types` and flags a species whose export types differ from Showdown's; the mod's types are modern (Clefairy is `FAIRY` in the mod's `types.txt`), so a mismatch should be rare. An ID `@pkmn/dex` does not know is shown by its raw ID with a marker and kept out of the analysis; `tinymushroom` is the one expected case and gets a hand-kept label, "Mini Seta (Tiny Mushroom)", without the marker.
 
-Sprites are Showdown's Gen 5 static set, which fits the Gen 1–5 roster, shiny and female where they apply, with a "?" in place of an unknown species'; item icons come from `@pkmn/img` too.
+Sprites are Showdown's Gen 5 static set, which fits the Gen 1–5 roster, shiny and female where they apply, with a "?" in place of an unknown species'; item icons are the game's own sprites, read from its zip ([The pkmn Site → Games](site.md#games)), and `@pkmn/img`'s for an item the game has none of (an "Any item" outside Añil) or while the sheet loads.
 
 ## Stored Teams
 

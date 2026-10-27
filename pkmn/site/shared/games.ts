@@ -49,6 +49,7 @@ export const game = z.object({
   fileName: z.string().nullable(),
   fileSize: z.number().nullable(),
   uploadedAt: z.string().nullable(),
+  itemIcons: z.int().nullable(),
   costs: gameCosts,
 });
 

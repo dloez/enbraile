@@ -7,8 +7,9 @@ import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
 import { currentAbility, displayName, STAT_LABELS, type Mon } from "../../../shared/mon";
 import { describeItem } from "../../../shared/describe";
+import { fightItems } from "../../../shared/items";
 import { ANY_ITEMS, memberMon, NATURES } from "@/teams/dex";
-import { formatMoney, heldCount, MINI_SETA, mintsLeft, moneyLeft, naturePrice, ownMon, ownOf, setasLeft, type Member, type Slots, type Stocks } from "@/teams/team";
+import { formatMoney, heldCount, mintsLeft, moneyLeft, naturePrice, ownMon, ownOf, setasLeft, type Member, type Slots, type Stocks } from "@/teams/team";
 import type { Sheet } from "@/teams/schema";
 
 export const editorScroll = "-mr-2.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]";
@@ -64,7 +65,7 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
   const name = displayName(mon);
   const own = ownOf(member);
   const free = own === null;
-  const items = useMemo(() => (free ? ANY_ITEMS : sheet.items.filter((i) => i.item !== MINI_SETA).map(describeItem).filter((i) => i.known)), [sheet, free]);
+  const items = useMemo(() => (free ? ANY_ITEMS : fightItems(sheet.items).map(describeItem).filter((i) => i.known)), [sheet, free]);
   const holding = member.item ? items.find((i) => i.id === member.item) : undefined;
   const [pocket, setPocket] = useState<PocketId>(holding?.pocket ?? "items");
   const [query, setQuery] = useState("");

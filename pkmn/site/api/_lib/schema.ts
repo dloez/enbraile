@@ -4,7 +4,8 @@ import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
 import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
-import type { TmRolls } from "./export/export.js";
+import type { ItemIcons } from "../../shared/items.js";
+import type { TmRolls, World } from "./export/export.js";
 import { INGESTION_MODES, MILESTONE_MARKS, SCENES, SERIES_STATES } from "../../shared/series.js";
 
 export const user = pgTable("user", {
@@ -90,6 +91,7 @@ export const game = pgTable("game", {
   fileName: text("file_name"),
   fileSize: bigint("file_size", { mode: "number" }),
   uploadedAt: timestamp("uploaded_at"),
+  itemIcons: jsonb("item_icons").$type<ItemIcons>(),
   abilitySetas: integer("ability_setas").notNull().default(DEFAULT_ABILITY_SETAS),
   mintPrice: integer("mint_price").notNull().default(DEFAULT_MINT_PRICE),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -187,6 +189,7 @@ export const snapshot = pgTable(
     fileSize: bigint("file_size", { mode: "number" }).notNull(),
     slot: text("slot"),
     data: jsonb("data").$type<Snapshot>().notNull(),
+    world: jsonb("world").$type<World>(),
     missing: jsonb("missing").$type<ExportReport>(),
     tmRolls: jsonb("tm_rolls").$type<TmRolls>(),
     rolledKey: text("rolled_key"),

@@ -8,6 +8,8 @@ import type { ExportGap } from "../../../shared/snapshot";
 import { UnknownMark } from "@/components/marks";
 import { CategoryTag, TypeTag } from "@/components/pc/summary";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useGameIcons, type GameIcons } from "@/lib/item-icons";
+import { money as formatMoney } from "@/lib/records";
 
 type PocketId = "items" | "berries" | "tms";
 
@@ -31,12 +33,35 @@ export function Mint({ className }: { className?: string }) {
   );
 }
 
+const GAME_ICON_SIZE = 48;
+
+function GameSprite({ icons, at, scale }: { icons: GameIcons; at: [number, number, number, number]; scale: number }) {
+  const k = (scale * 24) / GAME_ICON_SIZE;
+  const [x, y, w, h] = at;
+  return (
+    <span
+      aria-hidden="true"
+      className="block flex-none [image-rendering:pixelated]"
+      style={{
+        width: w * k,
+        height: h * k,
+        backgroundImage: `url(${icons.url})`,
+        backgroundPosition: `${-x * k}px ${-y * k}px`,
+        backgroundSize: `${icons.width * k}px ${icons.height * k}px`,
+      }}
+    />
+  );
+}
+
 export function ItemIcon({ item, scale = 1 }: { item: BagItem; scale?: 1 | 2 | 3 }) {
   const box = scale === 3 ? "size-18" : scale === 2 ? "size-12" : "size-6";
-  if (item.id === "tinymushroom") {
+  const icons = useGameIcons();
+  const stem = icons && (item.game ?? icons.showdown[item.id]);
+  const at = stem ? icons?.at[stem] : undefined;
+  if (icons && at) {
     return (
-      <span className={cn("grid flex-none place-items-center", box)}>
-        <MiniSeta className="size-3/4" />
+      <span className={cn("grid flex-none place-items-center overflow-hidden", box)}>
+        <GameSprite icons={icons} at={at} scale={scale} />
       </span>
     );
   }
@@ -51,6 +76,13 @@ export function ItemIcon({ item, scale = 1 }: { item: BagItem; scale?: 1 | 2 | 3
       )}
     </span>
   );
+}
+
+function TmIcon({ type, className }: { type: string | null; className?: string }) {
+  const icons = useGameIcons();
+  const at = icons && type ? icons.at[`machine_${type.toUpperCase()}`] : undefined;
+  if (icons && at) return <GameSprite icons={icons} at={at} scale={3} />;
+  return <TmDisc type={type} className={className} />;
 }
 
 function TmDisc({ type, className }: { type: string | null; className?: string }) {
@@ -69,12 +101,14 @@ function TmDisc({ type, className }: { type: string | null; className?: string }
 interface BagProps {
   items: readonly BagItem[];
   tms: readonly BagTm[];
+  setas: number | null;
+  money: number | null;
   gaps?: readonly ExportGap[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function Bag({ items, tms, gaps = [], open, onOpenChange }: BagProps) {
+export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }: BagProps) {
   const [pocket, setPocket] = useState<PocketId>("items");
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
@@ -118,6 +152,17 @@ export function Bag({ items, tms, gaps = [], open, onOpenChange }: BagProps) {
           <DialogTitle className="m-0 min-w-0 truncate font-heading text-[2.75rem] leading-none font-normal">
             Bag
           </DialogTitle>
+          <div className="flex items-center gap-3 font-heading text-[1.625rem] leading-none text-subtle">
+            <span title="Mini Setas" className="flex items-center gap-1.5">
+              <MiniSeta className="size-6" />
+              {setas ?? "?"}
+              <span className="sr-only"> Mini Setas</span>
+            </span>
+            <span title="Money" className="tabular-nums">
+              {formatMoney(money)}
+              <span className="sr-only"> money</span>
+            </span>
+          </div>
           <div role="tablist" aria-label="Pockets" className="order-last flex w-full gap-1 rounded-xl border-3 bg-ink p-1 sm:order-none sm:ml-3 sm:w-auto">
             {pockets.map(([id, name, count]) => (
               <button
@@ -220,7 +265,7 @@ export function Bag({ items, tms, gaps = [], open, onOpenChange }: BagProps) {
         {(selectedTm || selectedItem) && (
           <div className="flex min-h-33 flex-none items-center gap-5 border-t-3 bg-card px-5 py-4 sm:px-6">
             <span className="grid size-24 flex-none place-items-center rounded-[14px] border-3 bg-box max-sm:size-18">
-              {selectedTm ? <TmDisc type={selectedTm.type} className="size-16 max-sm:size-12" /> : selectedItem && <ItemIcon item={selectedItem} scale={3} />}
+              {selectedTm ? <TmIcon type={selectedTm.type} className="size-16 max-sm:size-12" /> : selectedItem && <ItemIcon item={selectedItem} scale={3} />}
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <span className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1.5">

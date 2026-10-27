@@ -1,14 +1,13 @@
 import type { Mon } from "../../shared/mon";
 import { describePokemon } from "../../shared/describe";
 import { DEFAULT_COSTS, type GameCosts } from "../../shared/games";
+import { fightItems, setasOf } from "../../shared/items";
 import type { Sheet } from "@/teams/schema";
 import { isFree, MAX_IV, MOVE_SLOTS, type FreeMember, type OwnMember, type TeamMember, type TeamSlots, type TeamSource } from "../../shared/team";
 
 export { emptySlots, isFree, lastFilled, MAX_TEAM_SIZE, MOVE_SLOTS, nextTeamName, PICK_SIZE, resized, TEAM_SIZE, TEAM_SIZES } from "../../shared/team";
 
 export type { FreeMember, OwnMember } from "../../shared/team";
-
-export const MINI_SETA = "tinymushroom";
 
 export type Member = TeamMember;
 
@@ -30,11 +29,9 @@ const MINT = /^([a-z]+)mint$/;
 
 function mintsOf(source: TeamSource): Map<string, number> {
   const mints = new Map<string, number>();
-  for (const pocket of source.snapshot.bag) {
-    for (const entry of pocket.items) {
-      const nature = MINT.exec(entry.item.toLowerCase())?.[1];
-      if (nature && entry.quantity > 0) mints.set(nature, (mints.get(nature) ?? 0) + entry.quantity);
-    }
+  for (const entry of source.snapshot.items) {
+    const nature = MINT.exec(entry.item.toLowerCase())?.[1];
+    if (nature) mints.set(nature, (mints.get(nature) ?? 0) + entry.quantity);
   }
   return mints;
 }
@@ -138,7 +135,7 @@ export function heldCount(slots: Slots, source: string, item: string, except?: n
 }
 
 export function quantityOf(sheet: Sheet, item: string): number {
-  return sheet.items.filter((entry) => entry.item === item).reduce((sum, entry) => sum + entry.quantity, 0);
+  return fightItems(sheet.items).find((entry) => entry.item === item)?.quantity ?? 0;
 }
 
 export function itemsLeft(sheet: Sheet, slots: Slots, source: string, item: string, except?: number): number {
@@ -182,7 +179,7 @@ export function setasNeeded(slots: Slots, stocks: Stocks, source: string, except
 
 export function setasLeft(slots: Slots, stocks: Stocks, source: string, except?: number): number {
   const stock = stocks.get(source);
-  return stock ? quantityOf(stock.sheet, MINI_SETA) - setasNeeded(slots, stocks, source, except) : 0;
+  return stock ? setasOf(stock.sheet.items) - setasNeeded(slots, stocks, source, except) : 0;
 }
 
 export function setNature(slots: Slots, slot: number, nature: string, current: string | null): Slots {

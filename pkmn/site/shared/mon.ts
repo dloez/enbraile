@@ -114,6 +114,7 @@ export const POCKETS = ["items", "berries"] as const;
 export type Pocket = (typeof POCKETS)[number];
 
 export const bagItem = named.extend({
+  game: z.string().nullable(),
   quantity: z.number(),
   desc: z.string(),
   pocket: z.enum(POCKETS),
@@ -139,11 +140,13 @@ export const pcView = z.object({
   moves: z.record(z.string(), moveInfo),
   items: z.array(bagItem),
   tms: z.array(bagTm),
+  setas: z.int(),
+  money: z.int().nullable(),
 });
 
 export type PcView = z.infer<typeof pcView>;
 
-export function packPc(mons: readonly Mon[], items: BagItem[], tms: BagTm[]): PcView {
+export function packPc(mons: readonly Mon[], items: BagItem[], tms: BagTm[], setas: number, money: number | null): PcView {
   const moves: Record<string, MoveInfo> = {};
   const ids = (list: readonly MoveInfo[]) =>
     list.map((move) => {
@@ -158,6 +161,8 @@ export function packPc(mons: readonly Mon[], items: BagItem[], tms: BagTm[]): Pc
     moves,
     items,
     tms,
+    setas,
+    money,
   };
 }
 

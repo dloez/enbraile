@@ -159,10 +159,11 @@ function GameCard({ game: current, usedBy, onChange }: { game: Game; usedBy: num
         </div>
       </div>
       {hasFile && current.fileSize !== null && current.uploadedAt ? (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Fact label="Size" value={formatSize(current.fileSize)} />
           <Fact label="Uploaded" value={joinedOn(current.uploadedAt)} />
           <Fact label="Used by" value={usedBy.length ? `Series ${usedBy.join(", ")}` : "No series"} />
+          <Fact label="Item icons" value={current.itemIcons === null ? "None found" : String(current.itemIcons)} />
         </div>
       ) : (
         !uploading && (

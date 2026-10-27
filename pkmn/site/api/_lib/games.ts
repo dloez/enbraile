@@ -15,6 +15,7 @@ import {
   partUrl,
   startUpload,
 } from "./files.js";
+import { refreshItemIcons } from "./item-icons.js";
 import { game } from "./schema.js";
 
 type GameRow = typeof game.$inferSelect;
@@ -26,6 +27,7 @@ function view(row: GameRow): Game {
     fileName: row.fileName,
     fileSize: row.fileSize,
     uploadedAt: row.uploadedAt?.toISOString() ?? null,
+    itemIcons: row.itemIcons ? Object.keys(row.itemIcons.at).length : null,
     costs: { abilitySetas: row.abilitySetas, mintPrice: row.mintPrice },
   };
 }
@@ -118,7 +120,8 @@ games.post("/:id/file", async (c) => {
     .where(eq(game.id, row.id))
     .returning();
   if (row.fileKey && row.fileKey !== input.key) await deleteObject(row.fileKey).catch(() => undefined);
-  return c.json(view(updated ?? row));
+  const itemIcons = await refreshItemIcons(row.id, input.key, row.itemIcons).catch(() => row.itemIcons);
+  return c.json(view({ ...(updated ?? row), itemIcons }));
 });
 
 games.get("/:id/download", async (c) => {

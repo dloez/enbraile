@@ -2,7 +2,8 @@ import { Dex, type Species } from "@pkmn/dex";
 import { Icons, Sprites } from "@pkmn/img";
 import { damageTaken } from "./chart.js";
 import { packPc, STATS, tmLabel, TYPES, typeName, type Ability, type BagItem, type BagTm, type Learnable, type Mon, type MoveInfo, type Named, type Nature, type PcView, type StatID } from "./mon.js";
-import type { FaintedPokemon, Sheet, SheetItem, SheetPokemon, SheetTm } from "./snapshot.js";
+import { BERRY_POCKET, fightItems, setasOf } from "./items.js";
+import type { FaintedPokemon, Sheet, SheetPokemon, SheetTm, Snapshot } from "./snapshot.js";
 
 const gen = Dex.forGen(9);
 
@@ -123,14 +124,16 @@ export function describePokemon(p: SheetPokemon, index: number, fainted = false)
   };
 }
 
-export function describeItem(i: SheetItem): BagItem {
+export function describeItem(i: { item: string; quantity: number; game?: string | null; pocket?: number | null }): BagItem {
   const entry = gen.items.get(i.item);
   const icon = entry.exists ? Icons.getItem(entry.name) : null;
+  const berry = i.pocket === undefined || i.pocket === null ? entry.exists && entry.isBerry : i.pocket === BERRY_POCKET;
   return {
     ...named(i.item, entry),
+    game: i.game ?? null,
     quantity: i.quantity,
     desc: entry.exists ? entry.shortDesc || entry.desc : "",
-    pocket: entry.exists && entry.isBerry ? "berries" : "items",
+    pocket: berry ? "berries" : "items",
     icon: icon && { left: icon.left, top: icon.top, url: icon.url },
   };
 }
@@ -169,7 +172,13 @@ function describeFainted(list: readonly FaintedPokemon[], from: number): Mon[] {
   return list.flatMap((p, at) => (p.species === null ? [] : [describePokemon({ ...p, species: p.species }, from + at, true)]));
 }
 
-export function describePc(sheet: Sheet & { fainted?: readonly FaintedPokemon[] }): PcView {
+export function describePc(sheet: Sheet & { fainted?: readonly FaintedPokemon[]; trainer?: Snapshot["trainer"] }): PcView {
   const living = sheet.pokemon.map((p, index) => describePokemon(p, index));
-  return packPc([...living, ...describeFainted(sheet.fainted ?? [], living.length)], sheet.items.map(describeItem), sheet.tms.map(describeTm));
+  return packPc(
+    [...living, ...describeFainted(sheet.fainted ?? [], living.length)],
+    fightItems(sheet.items).map(describeItem),
+    sheet.tms.map(describeTm),
+    setasOf(sheet.items),
+    sheet.trainer?.money ?? null,
+  );
 }

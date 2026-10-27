@@ -102,6 +102,7 @@ export const teamList = z.array(teamRow);
 export const snapshotList = z.array(teamSourceRow);
 
 export const teamSource = teamSourceRow.extend({
+  gameId: z.string().nullable(),
   snapshot: snapshotSchema,
   missing: exportReport.nullable(),
   costs: gameCosts,
