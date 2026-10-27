@@ -4,7 +4,7 @@ Decisions are in [discovery.md](discovery.md). Every code entry runs `npm run ga
 
 ## Design the league on the canvas
 
-Owner-run. Every screen of the league is designed anew on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas, desktop and phone, not after the old app ([discovery → Goal and Scope](discovery.md#goal-and-scope), [Surfaces](discovery.md#surfaces)): the league page's Standings, Rounds, Pokémon League and Cup, each with its admin tools in place; the series page's League summary; the Teams tab's flag and the locked badge on a round or cup team; logging a Pokémon League try (pick a team or paste one); the player profile's league record.
+Owner-run. Every screen of the league is designed anew on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas, desktop and phone, on League pages of its own placed by the canvas's page rules ([The pkmn Site → Look](../../pkmn/site/explanation/site.md#look)), not after the old app ([discovery → Goal and Scope](discovery.md#goal-and-scope), [Surfaces](discovery.md#surfaces)): the league page's Standings, Rounds, Pokémon League and Cup, each with its admin tools in place; the series page's League summary; the Teams tab's flag and the locked badge on a round or cup team; logging a Pokémon League try (pick a team or paste one); the player profile's league record.
 
 **Do:**
 - [ ] Owner-run: design the boards and sign them off.
