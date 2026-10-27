@@ -180,11 +180,15 @@ adminSeries.post("/:id/start", async (c) => {
   const missing = view.checklist.filter((item) => !item.done);
   if (missing.length > 0) return c.json({ error: `Missing: ${missing.map((item) => item.label.toLowerCase()).join(", ")}` }, 409);
   try {
-    const [started] = await db
-      .update(series)
-      .set({ state: "running", startedAt: new Date() })
-      .where(and(eq(series.id, row.id), eq(series.state, "draft")))
-      .returning();
+    const started = await db.transaction(async (tx) => {
+      const [done] = await tx
+        .update(series)
+        .set({ state: "running", startedAt: new Date() })
+        .where(and(eq(series.id, row.id), eq(series.state, "draft")))
+        .returning();
+      if (done?.ingestion === "manual") await tx.update(seriesPlayer).set({ needsSave: true }).where(eq(seriesPlayer.seriesId, row.id));
+      return done;
+    });
     if (!started) return c.json({ error: "Only a draft starts" }, 409);
     return c.json(await adminView(started));
   } catch (error) {
