@@ -1,7 +1,25 @@
 import type { Gen } from "../../shared/dex";
 import type { Pool, PoolFilters } from "@/analysis/pool";
 import { fieldClass, Segmented, Toggle } from "@/components/controls";
+import { SelectField } from "@/components/select-field";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { MAX_BST, MIN_BST, POOL_GENS } from "../../shared/pool";
+
+function GenPick({ label, value, disabled, onChange }: { label: string; value: Gen; disabled: (gen: Gen) => boolean; onChange: (gen: Gen) => void }) {
+  const desktop = useMediaQuery("(min-width: 40rem)");
+  return desktop ? (
+    <Segmented label={label} options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: disabled(g) }))} value={value} onChange={onChange} />
+  ) : (
+    <SelectField
+      label={label}
+      size="sm"
+      disabled={POOL_GENS.every(disabled)}
+      options={POOL_GENS.map((g) => ({ value: String(g), label: `Gen ${g}`, disabled: disabled(g) }))}
+      value={String(value)}
+      onChange={(v) => onChange(Number(v) as Gen)}
+    />
+  );
+}
 
 export function PoolBar({
   filters,
@@ -25,29 +43,29 @@ export function PoolBar({
       <span className="font-heading text-lg">Pool</span>
       <span className="flex items-center gap-2 text-sm text-muted-foreground">
         Data
-        <Segmented
+        <GenPick
           label="Generation"
-          options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: fixed }))}
+          disabled={() => fixed}
           value={filters.gen}
-          onChange={(gen: Gen) => set({ gen, speciesGen: Math.min(filters.speciesGen, gen) as Gen, movesGen: Math.min(filters.movesGen, gen) as Gen })}
+          onChange={(gen) => set({ gen, speciesGen: Math.min(filters.speciesGen, gen) as Gen, movesGen: Math.min(filters.movesGen, gen) as Gen })}
         />
       </span>
       <span className="flex items-center gap-2 text-sm text-muted-foreground">
         Species up to
-        <Segmented
+        <GenPick
           label="Species up to"
-          options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: fixed || g > filters.gen }))}
+          disabled={(g) => fixed || g > filters.gen}
           value={Math.min(filters.speciesGen, filters.gen) as Gen}
-          onChange={(speciesGen: Gen) => set({ speciesGen })}
+          onChange={(speciesGen) => set({ speciesGen })}
         />
       </span>
       <span className="flex items-center gap-2 text-sm text-muted-foreground">
         Moves up to
-        <Segmented
+        <GenPick
           label="Moves up to"
-          options={POOL_GENS.map((g) => ({ value: g, label: g, disabled: fixed || g > filters.gen }))}
+          disabled={(g) => fixed || g > filters.gen}
           value={Math.min(filters.movesGen, filters.gen) as Gen}
-          onChange={(movesGen: Gen) => set({ movesGen })}
+          onChange={(movesGen) => set({ movesGen })}
         />
       </span>
       <Toggle pressed={filters.noLegendary} disabled={fixed} onChange={(noLegendary) => set({ noLegendary })}>

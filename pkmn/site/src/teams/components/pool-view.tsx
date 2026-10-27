@@ -7,6 +7,7 @@ import { BASE_STATS, correlations, describe, histogram, typeBreakdown } from "@/
 import { TypeDot } from "@/components/marks";
 import { fieldClass, Panel, Segmented, Toggle } from "@/components/controls";
 import { SelectField } from "@/components/select-field";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { spriteOf, spriteOfName } from "@/analysis/sprite";
 
 const LABEL: Record<string, string> = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe", bst: "BST", phys: "Phys bulk", spec: "Spec bulk" };
@@ -38,17 +39,17 @@ function Histogram({ pool, team }: { pool: Pool; team: readonly Member[] }) {
   const { min, max: top } = pool.dist[k];
   const x = (v: number) => `${(((v - min) / Math.max(1, top - min)) * 100).toFixed(1)}%`;
   const median = pool.quantile(k, 0.5);
+  const desktop = useMediaQuery("(min-width: 40rem)");
+  const stats = HIST.map((m) => ({ value: m, label: LABEL[m] }));
   return (
     <Panel
       title="Distribution"
       aside={
-        <Segmented
-          className="ml-auto"
-          label="Stat"
-          value={k}
-          onChange={setK}
-          options={HIST.map((m) => ({ value: m, label: LABEL[m] }))}
-        />
+        desktop ? (
+          <Segmented className="ml-auto" label="Stat" value={k} onChange={setK} options={stats} />
+        ) : (
+          <SelectField className="ml-auto" label="Stat" size="sm" value={k} onChange={(v) => setK(v as Metric)} options={stats} />
+        )
       }
     >
       <div className="relative flex h-57.5 items-end gap-0.75 border-b pb-5.5">

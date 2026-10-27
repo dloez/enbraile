@@ -31,12 +31,6 @@ A game's upload is a multipart upload that `POST /api/games/<id>/file` completes
 **Touches:** `pkmn/site/api/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
 **Needs the author:** how it runs: a script the owner runs by hand, or something scheduled?
 
-### pkmn/site: Team Analysis's view switch scrolls a 360px phone sideways
-
-At 360×800, `/team-analysis` is 379px wide: its `Segmented` view switch (`inline-flex gap-0.5 rounded-lg border bg-muted p-0.75`, `src/components/controls.tsx`) overflows the page column by 19px, so the page scrolls sideways (seen through `verify-site` on 2026-10-23 while checking the phone header, whose own width measured 360px). Make the switch fit or wrap at 360px, or confirm that the team pages replacing `/team-analysis` ([Site v2 → Compare teams](site-v2/tasks.md)) drop it.
-
-**Touches:** `pkmn/site/src/components/controls.tsx`, `pkmn/site/src/pages/`
-
 ### pkmn/site: several series run at once
 
 The owner wants more than one series running at a time (2026-10-27). A partial unique index, `series_one_running_idx` in `api/_lib/schema.ts`, lets one run, and the site leans on that: `/` sends a player to the running series (`src/pages/home.tsx`), the header's PC tab opens their PC in it (`src/components/site-header.tsx`), the team builder takes the sources a player may start from and a new team's pool from it (`api/_lib/teams.ts`), the admin overview shows one running banner (`src/pages/admin.tsx`), and starting a series needs the running one finished (`startChecklist` in `shared/series.ts`, `otherRunning` in `api/_lib/series-data.ts`). Joining mid-series already handles several: the waiting page offers an upload per owed series ([The pkmn Site → Series](../pkmn/site/explanation/site.md#series)).
