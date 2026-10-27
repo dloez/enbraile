@@ -8,9 +8,9 @@ Laid out as the `/scope` skill's work-in-progress layout says. An entry's headin
 
 The series page's trainer panel wants a trainer's lives, for a series that plays with a lives clause (series 1 plays without one), and nothing gives them yet. The rest of what the panel wants now comes from the snapshot, fainted Pokémon included, through a per-series ingestion mode ([Site v2 → Model](site-v2/discovery.md#model), [Snapshots In](site-v2/discovery.md#snapshots-in), 2026-10-23). Raised in the site v2 design pass. _(owner, 2026-10-22)_
 
-### pkmn/series: which snapshot is a series 1 player's tournament sheet?
+### pkmn/site: what does the league do with a player who joins mid-league?
 
-For the [league](league/discovery.md) idea. [Series 1 Rules → Final Tournament](../pkmn/series/1/reference/rules.md#final-tournament)'s open-sheet rule (`rules.md:262`) still has each player "export their whole PC with the Open Sheet export … when they decide they are done playing", and that export is their sheet; the export now runs on the site from an uploaded save zip, and a series' snapshots sit at milestones, Tournament among them ([The pkmn Site → Snapshots](../pkmn/site/explanation/site.md#snapshots), retired script 2026-10-23). Open: is the sheet the player's snapshot at the Tournament milestone, their latest, or one they pick, and does the rule's wording change to the upload? A rule is the owner's, so it is not rewritten without them. Raised in site v2's final gardener pass. _(2026-10-23)_
+A running series takes new players, and the [league](league/discovery.md) draws each round among the series' players. Open: whether a player added mid-league joins the draw from the next round, gets catch-up matches against those they missed, or stays out until the next series; and how the standings and the cup treat them. The waiting-page upload below depends on it. Left open while scoping the league. _(owner, 2026-10-27)_
 
 ## Tasks
 
@@ -37,7 +37,47 @@ At 360×800, `/team-analysis` is 379px wide: its `Segmented` view switch (`inlin
 
 **Touches:** `pkmn/site/src/components/controls.tsx`, `pkmn/site/src/pages/`
 
+### pkmn/site: let a series hide league teams and pairings until the match
+
+The [league](league/discovery.md#team-locking) is fully open for series 1: every round team, locked or not, and every round's pairs are seen by all. A later series may want the old app's behaviour, or the series 1 rule that a player knows the opponent's box sheet, not their team: a round's team hidden from all but its owner and admins until its match has a result, and a player's pairing shown only once they lock in. Whether it is hidden is a series' choice, read from the league's rules (`shared/league.ts`) until a series' rules are data. _(owner, 2026-10-27)_
+
+**Do:**
+- [ ] Per the author's answers: a series setting for hidden teams and pairings, enforced by the API, not only the page.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, on a hidden series, a second test player cannot read the first's round team or pairing before the result, by page or by route.
+- Human-run: none until a series uses it.
+- Reuse: the league's round teams and lock.
+- Neighbors: `api/_lib/access.ts`.
+- Forbidden: hiding in the browser only.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/league.ts`, `pkmn/site/src/`, `docs/pkmn/site/`
+**After:** the league's round teams ([league](league/tasks.md)).
+**Needs the author:** what is hidden (teams, pairings, both), from whom, and until when (the result, the opponent's lock-in).
+
+### pkmn/site: track what a locked league team spends in a manual series
+
+A locked round or cup team spends Mini Setas, mints and held items that the player must spend in the game too, and the site only sees that at the next snapshot. Series 1 does nothing about it ([league → Team Locking](league/discovery.md#team-locking)). A later series may deduct a locked team's spending from the bag the player's other teams see, or flag a next snapshot that does not show it spent, within manual series' trust stance ([Site v2 → Snapshots In](site-v2/discovery.md#snapshots-in)). _(owner, 2026-10-27)_
+
+**Do:**
+- [ ] Per the author's answers.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, the chosen behaviour on a locked team.
+- Human-run: none until a series uses it.
+- Reuse: the team builder's per-snapshot limits (`src/teams/`).
+- Neighbors: none.
+- Forbidden: blocking an upload or a team.
+
+**Touches:** `pkmn/site/src/teams/`, `pkmn/site/api/`, `docs/pkmn/site/`
+**After:** the league's round teams ([league](league/tasks.md)).
+**Needs the author:** deduct, warn, or both, and for which spends.
+
 ## Ideas
+
+### pkmn/site: a private Showdown tied to the site
+
+A Pokémon Showdown server and client of the group's own, so a league or cup match needs no challenge sent: the site gives a link, both players sign in with their site account, see their site teams there with edits synced both ways in real time, and play a battle the site set up with their locked teams; the finished log is kept by the site, permanently, and the result recorded with it. Only worth it if replays stay as permanent as Showdown's saved replays. Showdown is open source; a server needs an always-on host (Vercel cannot hold its websockets). The [league](league/discovery.md#results) builds no stand-in for it: admins enter results until this lands. _(owner, 2026-10-27)_
 
 ### pkmn/site: enforce a series' rules in team building
 
