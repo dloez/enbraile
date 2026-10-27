@@ -13,6 +13,20 @@ function forget(step: () => void) {
   }
 }
 
+const RELOADED_AT = "chunk-reload-at";
+
+function reloadForNewDeploy() {
+  let last = 0;
+  forget(() => {
+    last = Number(sessionStorage.getItem(RELOADED_AT));
+  });
+  if (Date.now() - last < 10_000) return;
+  forget(() => sessionStorage.setItem(RELOADED_AT, String(Date.now())));
+  window.location.reload();
+}
+
+window.addEventListener("vite:preloadError", reloadForNewDeploy);
+
 forget(() => indexedDB.deleteDatabase("open-sheet"));
 forget(() => localStorage.removeItem("team-analysis:drafts"));
 
