@@ -188,12 +188,12 @@ function Info({ mon }: { mon: Mon }) {
 function Stats({ mon }: { mon: Mon }) {
   const n = mon.nature;
   const known = mon.stats?.some((s) => s.current !== null) ?? false;
-  const [mode, setMode] = useState<StatMode>(known ? "level" : "fifty");
+  const [mode, setMode] = useState<StatMode>("base");
   const stats = mon.stats ?? [];
   const modes: [StatMode, string][] = [
+    ["base", "Base"],
     ["level", `Lv ${mon.level ?? "?"}`],
     ["fifty", "Lv 50"],
-    ["base", "Base"],
   ];
   const mark = (stat: StatID) => {
     const up = n?.plus === stat && n.minus !== stat;
