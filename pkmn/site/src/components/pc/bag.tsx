@@ -21,6 +21,16 @@ export function MiniSeta({ className }: { className?: string }) {
   );
 }
 
+export function Mint({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 12" shapeRendering="crispEdges" aria-hidden="true" className={className}>
+      <path d="M6 1h3v1H6zM4 2h6v1H4zM3 3h7v2H3zM2 5h7v2H2zM2 7h5v1H2zM3 8h2v1H3z" className="fill-green" />
+      <path d="M8 3h1v1H8zM7 4h1v1H7zM6 5h1v1H6zM5 6h1v1H5zM4 7h1v1H4z" className="fill-ink" />
+      <path d="M2 9h2v1H2zM1 10h2v1H1z" className="fill-seta-stem" />
+    </svg>
+  );
+}
+
 export function ItemIcon({ item, scale = 1 }: { item: BagItem; scale?: 1 | 2 | 3 }) {
   const box = scale === 3 ? "size-18" : scale === 2 ? "size-12" : "size-6";
   if (item.id === "tinymushroom") {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
-import { buttonClass } from "@/components/controls";
+import { buttonClass, Toggle } from "@/components/controls";
 import { SelectField } from "@/components/select-field";
 import { Bag } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
@@ -22,7 +22,7 @@ function Cell({ mon, selected, taken, onPick }: { mon: Mon; selected: boolean; t
     <button
       type="button"
       onClick={onPick}
-      aria-label={`${displayName(mon)}, ${mon.species.name}, level ${mon.level ?? "unknown"}${taken ? ", in the team" : ""}`}
+      aria-label={`${displayName(mon)}, ${mon.species.name}, level ${mon.level ?? "unknown"}${mon.fainted ? ", fainted" : ""}${taken ? ", in the team" : ""}`}
       aria-pressed={selected}
       className={cn(
         "relative grid aspect-square cursor-pointer snap-start place-items-center overflow-hidden rounded-xl border-none p-0 outline-none hover:shadow-[inset_0_0_0_3px_var(--cyan)] focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -30,7 +30,7 @@ function Cell({ mon, selected, taken, onPick }: { mon: Mon; selected: boolean; t
         taken && "opacity-45",
       )}
     >
-      <MonSprite mon={mon} className="pointer-events-none w-[92%] sm:size-24" />
+      <MonSprite mon={mon} className={cn("pointer-events-none w-[92%] sm:size-24", mon.fainted && "opacity-60 grayscale")} />
       <span className="absolute top-0.5 left-2 font-heading text-xl text-foreground [text-shadow:0_2px_0_var(--ink)]">{mon.level ?? "?"}</span>
       {mon.shiny && (
         <svg viewBox="0 0 7 7" shapeRendering="crispEdges" aria-hidden="true" className="absolute top-1.25 right-1.5 size-3 fill-yellow">
@@ -38,7 +38,25 @@ function Cell({ mon, selected, taken, onPick }: { mon: Mon; selected: boolean; t
         </svg>
       )}
       {mon.species.marked && <span className="absolute right-1.5 bottom-0.5 font-heading text-lg text-destructive">?</span>}
+      {mon.fainted && <FaintedMark className="absolute bottom-1 left-1.5" />}
     </button>
+  );
+}
+
+export function FaintedMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 7 7" shapeRendering="crispEdges" aria-hidden="true" className={cn("size-3.5 fill-destructive", className)}>
+      <path d="M0 0h2v1H0zM5 0h2v1H5zM1 1h2v1H1zM4 1h2v1H4zM2 2h3v1H2zM3 3h1v1H3zM2 4h3v1H2zM1 5h2v1H1zM4 5h2v1H4zM0 6h2v1H0zM5 6h2v1H5z" />
+    </svg>
+  );
+}
+
+export function FaintedToggle({ count, shown, onChange }: { count: number; shown: boolean; onChange: (shown: boolean) => void }) {
+  return (
+    <Toggle pressed={shown} onChange={onChange} title={shown ? "Hide the fainted Pokémon" : "Show the fainted Pokémon"}>
+      <FaintedMark className={shown ? "fill-current" : undefined} />
+      Fainted · {count}
+    </Toggle>
   );
 }
 
@@ -215,13 +233,26 @@ export function SnapshotPc({ mons, items, tms, gaps = [], footer }: {
   const wide = useMediaQuery("(min-width: 64rem)");
   const [picked, setPicked] = useState<number | null>(null);
   const [bagOpen, setBagOpen] = useState(false);
-  const selected = picked ?? (wide ? 0 : null);
-  const selectedMon = selected === null ? undefined : mons[selected];
+  const [showFainted, setShowFainted] = useState(false);
+  const faintedCount = mons.filter((mon) => mon.fainted).length;
+  const shown = showFainted ? mons : mons.filter((mon) => !mon.fainted);
+  const selectedMon = shown.find((mon) => mon.index === picked) ?? (wide ? shown[0] : undefined);
+  const selected = selectedMon?.index ?? null;
 
   return (
     <>
       <div className="flex flex-1 gap-6 pt-3.5 pb-3 sm:pb-6 lg:min-h-0">
-        <PcBox mons={mons} selected={selected} onPick={setPicked} actions={<BagButton onClick={() => setBagOpen(true)} />} />
+        <PcBox
+          mons={shown}
+          selected={selected}
+          onPick={setPicked}
+          actions={
+            <>
+              {faintedCount > 0 && <FaintedToggle count={faintedCount} shown={showFainted} onChange={setShowFainted} />}
+              <BagButton onClick={() => setBagOpen(true)} />
+            </>
+          }
+        />
         {wide && selectedMon && <SummaryAside mon={selectedMon} tms={tms} gaps={gaps} footer={footer?.(selectedMon, () => undefined)} />}
       </div>
       {!wide && (

@@ -8,7 +8,7 @@ import { api } from "@/lib/api";
 import { formatSize, joinedOn } from "@/lib/admin-format";
 import { sendFile } from "@/lib/upload";
 import { cn } from "@/lib/utils";
-import { downloadLink, game, gameList, type Game } from "../../shared/games";
+import { downloadLink, game, gameCosts, gameList, MAX_COST, type Game } from "../../shared/games";
 import { type AdminSeries, adminSeriesList } from "../../shared/series";
 
 function message(error: unknown): string {
@@ -189,6 +189,7 @@ function GameCard({ game: current, usedBy, onChange }: { game: Game; usedBy: num
           {error}
         </p>
       )}
+      <CostsForm game={current} onChange={onChange} />
       <div className="flex flex-wrap items-center gap-2.5">
         <label
           className={cn(
@@ -219,5 +220,67 @@ function GameCard({ game: current, usedBy, onChange }: { game: Game; usedBy: num
         )}
       </div>
     </article>
+  );
+}
+
+function CostsForm({ game: current, onChange }: { game: Game; onChange: (updated: Game) => void }) {
+  const [setas, setSetas] = useState(String(current.costs.abilitySetas));
+  const [price, setPrice] = useState(String(current.costs.mintPrice));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const input = gameCosts.safeParse({ abilitySetas: Number(setas), mintPrice: Number(price) });
+  const valid = setas.trim() !== "" && price.trim() !== "" && input.success;
+  const changed = valid && (input.data.abilitySetas !== current.costs.abilitySetas || input.data.mintPrice !== current.costs.mintPrice);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!input.success) return;
+    setBusy(true);
+    setError(null);
+    try {
+      onChange(await api(`/games/${current.id}/costs`, game, { method: "PUT", body: input.data }));
+    } catch (caught) {
+      setError(message(caught));
+    }
+    setBusy(false);
+  }
+
+  return (
+    <form onSubmit={submit} aria-label={`Team builder costs of ${current.name}`} className="flex flex-col gap-2.5 rounded-xl bg-box px-3.5 pt-2.5 pb-3.5">
+      <h3 className="m-0 font-heading text-[1.375rem] leading-none font-normal text-subtle">Team builder costs</h3>
+      <div className="flex flex-wrap items-end gap-2.5">
+        <label className={cn(formLabelClass, "flex-[1_1_9rem]")}>
+          Mini Setas per ability
+          <input
+            inputMode="numeric"
+            value={setas}
+            onChange={(event) => setSetas(event.target.value)}
+            aria-invalid={!valid && setas.trim() !== ""}
+            className={formFieldClass}
+          />
+        </label>
+        <label className={cn(formLabelClass, "flex-[1_1_9rem]")}>
+          Money per mint
+          <input
+            inputMode="numeric"
+            value={price}
+            onChange={(event) => setPrice(event.target.value)}
+            aria-invalid={!valid && price.trim() !== ""}
+            className={formFieldClass}
+          />
+        </label>
+        <button type="submit" disabled={busy || !changed} className={cn(buttonClass, "min-h-11.5 px-4.5")}>
+          Save
+        </button>
+      </div>
+      <p className="m-0 text-[0.8125rem] text-muted-foreground">
+        What the team builder charges a snapshot's Pokémon for a new ability and for a new nature, a mint of that nature from the bag first. 0 to 99 Mini Setas, 0 to {MAX_COST.toLocaleString("en")} money.
+      </p>
+      {error && (
+        <p role="alert" className="m-0 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </form>
   );
 }

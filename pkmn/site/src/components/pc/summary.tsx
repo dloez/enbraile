@@ -440,6 +440,7 @@ export function SummaryHead({ mon, title, closeRoom = false }: { mon: Mon; title
           {mon.types.map((t) => (
             <TypeTag key={t} type={t} />
           ))}
+          {mon.fainted && <span className="rounded-sm border-2 border-destructive bg-destructive-soft px-1.5 font-heading text-lg leading-6 text-destructive">Fainted</span>}
         </span>
       </div>
       {mon.shiny && (

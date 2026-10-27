@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { newGame, partRequest, uploadAbort, uploadDone, uploadRequest, type Game } from "../../shared/games.js";
+import { gameCosts, newGame, partRequest, uploadAbort, uploadDone, uploadRequest, type Game } from "../../shared/games.js";
 import { partRange, partSizeFor } from "../../shared/upload.js";
 import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
@@ -26,6 +26,7 @@ function view(row: GameRow): Game {
     fileName: row.fileName,
     fileSize: row.fileSize,
     uploadedAt: row.uploadedAt?.toISOString() ?? null,
+    costs: { abilitySetas: row.abilitySetas, mintPrice: row.mintPrice },
   };
 }
 
@@ -57,6 +58,14 @@ games.post("/", async (c) => {
     .returning();
   if (!row) return c.json({ error: "A game by that name exists" }, 409);
   return c.json(view(row), 201);
+});
+
+games.put("/:id/costs", async (c) => {
+  const input = await body(c.req.raw, gameCosts);
+  if (!input) return c.json({ error: "Costs are whole numbers of Mini Setas and money" }, 400);
+  const [row] = await db.update(game).set(input).where(eq(game.id, c.req.param("id"))).returning();
+  if (!row) return c.json({ error: "No such game" }, 404);
+  return c.json(view(row));
 });
 
 games.post("/:id/upload", async (c) => {

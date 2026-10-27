@@ -182,23 +182,8 @@ async function seedTheEarlierSnapshot(seriesId: string, userId: string, laterId:
   if (index < 0) return null;
   const [member] = data.fainted.splice(index, 1);
   if (!member?.species) return null;
-  const species = Dex.species.get(member.species);
-  data.pokemon.push({
-    species: member.species,
-    nickname: member.nickname,
-    gender: null,
-    shiny: false,
-    level: member.level,
-    nature: null,
-    ability: null,
-    abilities: null,
-    types: species.types.map((type) => type.toLowerCase()),
-    ivs: null,
-    evs: null,
-    stats: null,
-    moves: { current: [], relearner: [], tms: [] },
-    personalId: member.personalId,
-  });
+  const { gameSpecies: _gameSpecies, ...alive } = member;
+  data.pokemon.push({ ...alive, species: member.species });
   data.party = data.party.map((m) => (m.personalId === member.personalId ? { ...m, fainted: false } : m));
   data.playTime = data.playTime === null ? null : Math.max(0, data.playTime - 3600);
   const { id: _id, milestoneId: _later, takenAt: _takenAt, ...kept } = later.snapshot;
@@ -210,7 +195,7 @@ async function seedTheEarlierSnapshot(seriesId: string, userId: string, laterId:
     pokemon: data.pokemon.length,
     fainted: data.fainted.length,
   });
-  return member.nickname ?? species.name;
+  return member.nickname ?? Dex.species.get(member.species).name;
 }
 
 async function seedTheTeam(): Promise<string | null> {
@@ -236,6 +221,7 @@ async function seedTheTeam(): Promise<string | null> {
       species: p.species,
       item: null,
       ability: null,
+      nature: null,
       moves: Array.from({ length: MOVE_SLOTS }, (_, at) => p.moves?.current[at] ?? null),
     };
   });

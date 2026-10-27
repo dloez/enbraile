@@ -4,6 +4,19 @@ export const gameName = z.string().trim().min(1).max(100);
 
 export const newGame = z.object({ name: gameName });
 
+export const DEFAULT_ABILITY_SETAS = 1;
+
+export const DEFAULT_MINT_PRICE = 30000;
+
+export const MAX_COST = 9999999;
+
+export const gameCosts = z.object({
+  abilitySetas: z.number().int().min(0).max(99),
+  mintPrice: z.number().int().min(0).max(MAX_COST),
+});
+
+export const DEFAULT_COSTS: GameCosts = { abilitySetas: DEFAULT_ABILITY_SETAS, mintPrice: DEFAULT_MINT_PRICE };
+
 export const zipName = z
   .string()
   .trim()
@@ -36,6 +49,7 @@ export const game = z.object({
   fileName: z.string().nullable(),
   fileSize: z.number().nullable(),
   uploadedAt: z.string().nullable(),
+  costs: gameCosts,
 });
 
 export const gameList = z.array(game);
@@ -43,5 +57,7 @@ export const gameList = z.array(game);
 export const downloadLink = z.object({ url: z.string() });
 
 export type Game = z.infer<typeof game>;
+
+export type GameCosts = z.infer<typeof gameCosts>;
 
 export type UploadTicket = z.infer<typeof uploadTicket>;

@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { gameCosts } from "./games.js";
 import { teamPool } from "./pool.js";
 import { exportReport, snapshotSchema } from "./snapshot.js";
 
@@ -37,6 +38,7 @@ export const ownMember = z.object({
   species: id,
   item: id.nullable(),
   ability: id.nullable(),
+  nature: id.nullable().default(null),
   moves,
 });
 
@@ -102,6 +104,7 @@ export const snapshotList = z.array(teamSourceRow);
 export const teamSource = teamSourceRow.extend({
   snapshot: snapshotSchema,
   missing: exportReport.nullable(),
+  costs: gameCosts,
 });
 
 export const teamPage = z.object({

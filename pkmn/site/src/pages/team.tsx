@@ -14,16 +14,16 @@ import { cn } from "@/lib/utils";
 import { TeamFrame, TeamsBackLink } from "@/components/page-frames";
 import { AddDialog, type AddSource } from "@/teams/components/add-dialog";
 import { poolIds, SetEditor } from "@/teams/components/free-member";
-import { AbilityEditor, ItemEditor, segButton, segTrack } from "@/teams/components/editors";
+import { AbilityEditor, ItemEditor, NatureEditor, segButton, segTrack } from "@/teams/components/editors";
 import { EmptyCard, MemberCard, type Focus } from "@/teams/components/member-card";
 import { MoveEditor } from "@/teams/components/move-picker";
 import { PasteDialog } from "@/teams/components/paste-dialog";
 import { AnyMark, SnapshotMenu, sourceLabel } from "@/teams/components/snapshot-menu";
 import { preloadGraph, SheetAnalysis } from "@/teams/components/sheet-analysis";
 import { currentAbility, type Mon } from "../../shared/mon";
-import { defensesOf, describeMove, describePokemon, describeTm } from "../../shared/describe";
+import { defensesOf, describeMove, describeTm } from "../../shared/describe";
 import { liveSlots, memberMon } from "@/teams/dex";
-import { EMPTY_SHEET, freeCount, giveItem, isFree, lastFilled, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
+import { EMPTY_SHEET, formatMoney, freeCount, giveItem, isFree, lastFilled, moneyLeft, natureFrom, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, setNature, stockOf, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
 import { showdownTeam } from "@/teams/showdown";
 import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
@@ -42,6 +42,7 @@ type Panel =
   | { t: "sum"; slot: number }
   | { t: "item"; slot: number; back: Back }
   | { t: "ability"; slot: number; back: Back }
+  | { t: "nature"; slot: number; back: Back }
   | { t: "move"; slot: number; at: number; back: Back }
   | { t: "set"; slot: number; back: Back };
 
@@ -111,8 +112,7 @@ function holding(sources: readonly TeamSource[]): Held[] {
     label: sourceLabel(source),
     owner: source.player.name,
     colour: playerColour(source.player.id),
-    sheet: source.snapshot,
-    mons: source.snapshot.pokemon.map(describePokemon),
+    ...stockOf(source),
     tms: source.snapshot.tms.map(describeTm),
     gaps: source.missing?.missing ?? [],
   }));
@@ -253,6 +253,9 @@ function Builder({ page }: { page: TeamPage }) {
                 onLook={() => show(panel.t === "sum" && panel.slot === slot ? { t: "ana" } : { t: "sum", slot })}
                 onItem={() => show({ t: "item", slot, back: backOf(slot) })}
                 onAbility={() => show({ t: "ability", slot, back: backOf(slot) })}
+                onNature={() => show({ t: "nature", slot, back: backOf(slot) })}
+                natureFrom={natureFrom(slots, stocks, slot)}
+                setaCost={own?.costs.abilitySetas ?? 0}
                 onMove={(at) => show({ t: "move", slot, at, back: backOf(slot) })}
                 onSet={() => show({ t: "set", slot, back: backOf(slot) })}
                 onRemove={() => {
@@ -338,11 +341,26 @@ function Builder({ page }: { page: TeamPage }) {
           slots={slots}
           stocks={stocks}
           slot={panel.slot}
-          setasLeft={own ? setasLeft(slots, stocks, own.id) : 0}
           back={backLabel(panel)}
           onBack={back}
           onPick={(ability) => {
             save(setAbility(slots, panel.slot, ability, isFree(member) ? null : currentAbility(mon)));
+            back();
+          }}
+        />
+      );
+    }
+    if (panel.t === "nature") {
+      return (
+        <NatureEditor
+          key={panel.slot}
+          slots={slots}
+          stocks={stocks}
+          slot={panel.slot}
+          back={backLabel(panel)}
+          onBack={back}
+          onPick={(nature, current) => {
+            save(isFree(member) ? setFree(slots, panel.slot, { nature }) : setNature(slots, panel.slot, nature, current));
             back();
           }}
         />
@@ -385,6 +403,7 @@ function Builder({ page }: { page: TeamPage }) {
                 key={h.id}
                 held={h}
                 setas={setasLeft(slots, stocks, h.id)}
+                money={moneyLeft(slots, stocks, h.id)}
                 onRemove={editable && sourceCount > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
               />
             ))}
@@ -501,7 +520,7 @@ function Builder({ page }: { page: TeamPage }) {
   );
 }
 
-function SourceChip({ held, setas, onRemove }: { held: Held; setas: number; onRemove?: () => void }) {
+function SourceChip({ held, setas, money, onRemove }: { held: Held; setas: number; money: number | null; onRemove?: () => void }) {
   return (
     <span className={cn("flex min-h-8.5 items-center gap-2 rounded-lg border-3 bg-ink pl-1.5 font-heading text-xl", onRemove ? "pr-1" : "pr-3")}>
       <span aria-hidden="true" className={cn("grid size-5 place-items-center rounded-[5px] text-base text-ink", PLAYER_FILL[held.colour % PLAYER_FILL.length])}>
@@ -512,6 +531,10 @@ function SourceChip({ held, setas, onRemove }: { held: Held; setas: number; onRe
         <MiniSeta className="size-4" />
         {setas}
         <span className="sr-only">Mini Setas left</span>
+      </span>
+      <span title={money === null ? "No money in this snapshot" : "Money left for mints"} className={cn("tabular-nums", money !== null && money < 0 ? "text-coral" : "text-subtle")}>
+        {money === null ? "$?" : formatMoney(money)}
+        <span className="sr-only">{money === null ? " No money in this snapshot" : " money left for mints"}</span>
       </span>
       {onRemove && (
         <button

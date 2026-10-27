@@ -5,10 +5,10 @@ import { ItemIcon } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
-import { currentAbility, displayName, type Mon } from "../../../shared/mon";
+import { currentAbility, displayName, STAT_LABELS, type Mon } from "../../../shared/mon";
 import { describeItem } from "../../../shared/describe";
-import { ANY_ITEMS, memberMon } from "@/teams/dex";
-import { heldCount, isFree, MINI_SETA, ownOf, type Member, type Slots, type Stocks } from "@/teams/team";
+import { ANY_ITEMS, memberMon, NATURES } from "@/teams/dex";
+import { formatMoney, heldCount, MINI_SETA, mintsLeft, moneyLeft, naturePrice, ownMon, ownOf, setasLeft, type Member, type Slots, type Stocks } from "@/teams/team";
 import type { Sheet } from "@/teams/schema";
 
 export const editorScroll = "-mr-2.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]";
@@ -166,28 +166,40 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
   );
 }
 
-export function AbilityEditor({ slots, stocks, slot, setasLeft, back, onBack, onPick }: {
+export function setasLabel(count: number): string {
+  return `${count} Mini Seta${count === 1 ? "" : "s"}`;
+}
+
+export function AbilityEditor({ slots, stocks, slot, back, onBack, onPick }: {
   slots: Slots;
   stocks: Stocks;
   slot: number;
-  setasLeft: number;
   back: string;
   onBack: () => void;
   onPick: (ability: string) => void;
 }) {
   const member = slots[slot] as Member;
   const mon = memberMon(member, stocks) as Mon;
-  const free = isFree(member);
+  const own = ownOf(member);
+  const free = own === null;
+  const cost = own ? (stocks.get(own.source)?.costs.abilitySetas ?? 0) : 0;
+  const left = own ? setasLeft(slots, stocks, own.source, slot) : 0;
   const current = currentAbility(mon);
   const using = member.ability ?? current;
   return (
     <>
-      <EditorHead who={displayName(mon)} what="ability" back={back} onBack={onBack} />
+      <EditorHead
+        who={displayName(mon)}
+        what="ability"
+        back={back}
+        onBack={onBack}
+        aside={!free && <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{setasLabel(left)} left</span>}
+      />
       <div className={cn(editorScroll, "gap-2")}>
         {mon.abilities.length === 0 && <p className="my-6 text-center font-heading text-2xl text-muted-foreground">No abilities in this export</p>}
         {mon.abilities.map((a) => {
           const on = a.id === using;
-          const off = !free && !a.current && !on && member.ability === null && setasLeft <= 0;
+          const off = !free && !a.current && !on && left < cost;
           return (
             <button
               key={a.id}
@@ -209,7 +221,7 @@ export function AbilityEditor({ slots, stocks, slot, setasLeft, back, onBack, on
                 {free ? null : a.current ? (
                   <span className="rounded-sm bg-cyan px-1.75 font-heading text-[1.0625rem] text-ink">In game</span>
                 ) : (
-                  <span className="rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">1 Mini Seta</span>
+                  <span className="rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">{cost === 0 ? "Free" : setasLabel(cost)}</span>
                 )}
               </span>
               <span className="text-sm leading-[1.45] text-prose">{a.desc || "—"}</span>
@@ -217,6 +229,78 @@ export function AbilityEditor({ slots, stocks, slot, setasLeft, back, onBack, on
           );
         })}
       </div>
+    </>
+  );
+}
+
+function natureEffect(plus: string | null, minus: string | null): string {
+  if (!plus || !minus) return "Neutral";
+  return `+${STAT_LABELS[plus as keyof typeof STAT_LABELS]} −${STAT_LABELS[minus as keyof typeof STAT_LABELS]}`;
+}
+
+export function NatureEditor({ slots, stocks, slot, back, onBack, onPick }: {
+  slots: Slots;
+  stocks: Stocks;
+  slot: number;
+  back: string;
+  onBack: () => void;
+  onPick: (nature: string, current: string | null) => void;
+}) {
+  const member = slots[slot] as Member;
+  const mon = memberMon(member, stocks) as Mon;
+  const own = ownOf(member);
+  const inGame = own ? (ownMon(own, stocks)?.nature?.id ?? null) : null;
+  const using = mon.nature?.id ?? null;
+  const money = own ? moneyLeft(slots, stocks, own.source, slot) : null;
+  return (
+    <>
+      <EditorHead
+        who={displayName(mon)}
+        what="nature"
+        back={back}
+        onBack={onBack}
+        aside={
+          own && (
+            <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground" title="Money left for mints">
+              {money === null ? "No money in this snapshot" : `${formatMoney(money)} left`}
+            </span>
+          )
+        }
+      />
+      <div className={cn(editorScroll, "gap-0.75")}>
+        {NATURES.map((n) => {
+          const on = n.id === using;
+          const price = own && n.id !== inGame ? naturePrice(slots, stocks, own.source, slot, n.id) : null;
+          const off = !on && price !== null && price.by === "money" && !price.affordable;
+          const mints = own && price?.by === "mint" ? mintsLeft(slots, stocks, own.source, n.id, slot) : 0;
+          return (
+            <button
+              key={n.id}
+              type="button"
+              aria-pressed={on}
+              disabled={off}
+              onClick={() => onPick(n.id, inGame)}
+              className={cn(pickRow(on), "flex min-h-11 flex-none items-center gap-2.5 px-2.5 disabled:opacity-45")}
+            >
+              <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-extrabold">{n.name}</span>
+              <span className="flex-none font-heading text-[1.1875rem] text-subtle">{natureEffect(n.plus, n.minus)}</span>
+              {own &&
+                (n.id === inGame ? (
+                  <span className="flex-none rounded-sm bg-cyan px-1.75 font-heading text-[1.0625rem] text-ink">In game</span>
+                ) : price?.by === "mint" ? (
+                  <span className="flex-none rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">Mint in bag ×{mints}</span>
+                ) : (
+                  <span className="flex-none rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">{price && price.price === 0 ? "Free" : `Mint ${formatMoney(price?.price ?? 0)}`}</span>
+                ))}
+            </button>
+          );
+        })}
+      </div>
+      {own && (
+        <p className="m-0 flex-none text-sm leading-[1.4] text-prose">
+          A new nature takes a mint of it: one from the bag first, else one bought at the game's mart. The in-game nature costs nothing.
+        </p>
+      )}
     </>
   );
 }

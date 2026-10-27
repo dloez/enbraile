@@ -1,5 +1,5 @@
 import { ChevronRight, Plus, X } from "lucide-react";
-import { ItemIcon, MiniSeta } from "@/components/pc/bag";
+import { ItemIcon, MiniSeta, Mint } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import { TypeTag } from "@/components/pc/summary";
 import { UnknownMark } from "@/components/marks";
@@ -7,9 +7,10 @@ import { PLAYER_FILL } from "@/components/player-badge";
 import { cn } from "@/lib/utils";
 import { canLearn, currentAbility, displayName, type Mon } from "../../../shared/mon";
 import { describeItem, describeMove } from "../../../shared/describe";
+import { setasLabel } from "@/teams/components/editors";
 import type { Member } from "@/teams/team";
 
-export type Focus = "look" | "item" | "ability" | "set" | { move: number } | null;
+export type Focus = "look" | "item" | "ability" | "nature" | "set" | { move: number } | null;
 
 const field = (on: boolean) =>
   cn(
@@ -23,7 +24,7 @@ export interface PickToggle {
   onToggle: () => void;
 }
 
-export function MemberCard({ member, mon, from, focus, glow, editable, pick, onLook, onItem, onAbility, onMove, onSet, onRemove }: {
+export function MemberCard({ member, mon, from, focus, glow, editable, pick, natureFrom, setaCost, onLook, onItem, onAbility, onNature, onMove, onSet, onRemove }: {
   member: Member;
   mon: Mon;
   from: { owner: string; colour: number } | null;
@@ -31,9 +32,12 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, onL
   glow: boolean;
   editable: boolean;
   pick?: PickToggle;
+  natureFrom: "mint" | "money" | null;
+  setaCost: number;
   onLook: () => void;
   onItem: () => void;
   onAbility: () => void;
+  onNature: () => void;
   onMove: (at: number) => void;
   onSet: () => void;
   onRemove: () => void;
@@ -44,6 +48,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, onL
   const abilityId = member.ability ?? current;
   const ability = mon.abilities.find((a) => a.id === abilityId);
   const costs = from !== null && member.ability !== null;
+  const mintTitle = natureFrom === "mint" ? "A mint from the bag" : "A mint bought with money";
   const looking = focus === "look";
   const lit = focus !== null && !looking;
   return (
@@ -76,7 +81,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, onL
                 <TypeTag key={t} type={t} className="flex-none px-2 text-[1.0625rem] leading-5.25" />
               ))}
               <span className="ml-1 min-w-0 truncate font-heading text-[1.1875rem] text-muted-foreground">
-                Lv. {mon.level ?? "?"} · {mon.nature?.name ?? "?"}
+                Lv. {mon.level ?? "?"}
               </span>
             </span>
           </span>
@@ -128,7 +133,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, onL
           </button>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(6rem,0.75fr)] gap-2">
         <button
           type="button"
           aria-pressed={focus === "item"}
@@ -151,12 +156,30 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, onL
           title={ability?.desc}
           className={cn(field(focus === "ability"), "h-9.5 gap-1.5 px-2")}
         >
-          <span className="flex-none font-heading text-lg text-muted-foreground">Ability</span>
+          <span className="sr-only">Ability: </span>
           <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{ability?.name ?? "—"}</span>
           {costs && (
-            <span title="Costs 1 Mini Seta" className="grid size-5 flex-none place-items-center">
+            <span title={`Costs ${setasLabel(setaCost)}`} className="grid size-5 flex-none place-items-center">
               <MiniSeta className="size-4" />
-              <span className="sr-only">Costs 1 Mini Seta</span>
+              <span className="sr-only">Costs {setasLabel(setaCost)}</span>
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          aria-pressed={focus === "nature"}
+          disabled={!editable}
+          onClick={onNature}
+          title={mon.nature ? `${mon.nature.name} Nature${natureFrom ? `: ${mintTitle.toLowerCase()}` : ""}` : undefined}
+          className={cn(field(focus === "nature"), "h-9.5 gap-1 px-2")}
+        >
+          <span className="sr-only">Nature: </span>
+          <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{mon.nature?.name ?? "No nature"}</span>
+          {natureFrom && (
+            <span title={mintTitle} className="flex flex-none items-center gap-0.5">
+              <Mint className="size-4" />
+              {natureFrom === "money" && <span className="font-heading text-base leading-none text-warning">$</span>}
+              <span className="sr-only">{mintTitle}</span>
             </span>
           )}
         </button>

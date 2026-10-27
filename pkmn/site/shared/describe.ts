@@ -2,7 +2,7 @@ import { Dex, type Species } from "@pkmn/dex";
 import { Icons, Sprites } from "@pkmn/img";
 import { damageTaken } from "./chart.js";
 import { packPc, STATS, tmLabel, TYPES, typeName, type Ability, type BagItem, type BagTm, type Learnable, type Mon, type MoveInfo, type Named, type Nature, type PcView, type StatID } from "./mon.js";
-import type { Sheet, SheetItem, SheetPokemon, SheetTm } from "./snapshot.js";
+import type { FaintedPokemon, Sheet, SheetItem, SheetPokemon, SheetTm } from "./snapshot.js";
 
 const gen = Dex.forGen(9);
 
@@ -77,7 +77,7 @@ export function defensesOf(types: readonly string[], abilities: readonly Ability
   return Object.fromEntries(TYPES.map((attack) => [attack, damageTaken(9, attack, types, current?.id ?? null)]));
 }
 
-export function describePokemon(p: SheetPokemon, index: number): Mon {
+export function describePokemon(p: SheetPokemon, index: number, fainted = false): Mon {
   const entry = gen.species.get(p.species);
   const types = p.types.map(typeName);
   const showdownTypes = entry.exists ? [...entry.types] : null;
@@ -119,6 +119,7 @@ export function describePokemon(p: SheetPokemon, index: number): Mon {
       : null,
     learnable: learnable(p),
     free: false,
+    fainted,
   };
 }
 
@@ -164,6 +165,11 @@ export function describeMove(id: string): MoveInfo {
   };
 }
 
-export function describePc(sheet: Sheet): PcView {
-  return packPc(sheet.pokemon.map(describePokemon), sheet.items.map(describeItem), sheet.tms.map(describeTm));
+function describeFainted(list: readonly FaintedPokemon[], from: number): Mon[] {
+  return list.flatMap((p, at) => (p.species === null ? [] : [describePokemon({ ...p, species: p.species }, from + at, true)]));
+}
+
+export function describePc(sheet: Sheet & { fainted?: readonly FaintedPokemon[] }): PcView {
+  const living = sheet.pokemon.map((p, index) => describePokemon(p, index));
+  return packPc([...living, ...describeFainted(sheet.fainted ?? [], living.length)], sheet.items.map(describeItem), sheet.tms.map(describeTm));
 }

@@ -3,7 +3,7 @@ import { parsePaste, type PokemonSet } from "@/analysis/paste";
 import { currentAbility, displayName, type Mon, STAT_LABELS, STATS } from "../../shared/mon";
 import { describeItem, describeMove } from "../../shared/describe";
 import { memberMon, NATURES, speciesAbilities } from "@/teams/dex";
-import { emptySlots, freeSet, isFree, itemsLeft, MAX_TEAM_SIZE, TEAM_SIZE, MOVE_SLOTS, type FreeMember, type Member, type OwnMember, type Slots, type Stocks } from "@/teams/team";
+import { emptySlots, freeSet, isFree, itemsLeft, MAX_TEAM_SIZE, naturePrice, TEAM_SIZE, MOVE_SLOTS, type FreeMember, type Member, type OwnMember, type Slots, type Stocks } from "@/teams/team";
 import { describeMember } from "../../shared/species";
 import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL } from "../../shared/team";
 import type { StatsTable } from "@pkmn/dex";
@@ -170,8 +170,19 @@ export function readShowdownTeam(text: string, stocks: Stocks, any: AnyPokemon |
       species: mon.species.id,
       item: null,
       ability: null,
+      nature: null,
       moves: Array.from({ length: MOVE_SLOTS }, () => null),
     };
+
+    if (set.natureGiven) {
+      const nature = NATURES.find((n) => n.id === toID(set.nature));
+      if (!nature) left.push(`${name}'s ${set.nature} Nature: not a nature Showdown knows`);
+      else if (nature.id !== mon.nature?.id) {
+        const price = naturePrice(slots, stocks, source, added, nature.id);
+        if (price.by === "mint" || price.affordable) member.nature = nature.id;
+        else left.push(`${name}'s ${nature.name} Nature: no mint of it in its bag and not enough money to buy one`);
+      }
+    }
 
     if (set.item) {
       const item = describeItem({ item: toID(set.item), quantity: 1 });

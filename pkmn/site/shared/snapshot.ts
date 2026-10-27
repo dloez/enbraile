@@ -31,6 +31,32 @@ const pokemonFields = {
   }),
 };
 
+const intOrNull = z.int().nullable();
+
+const pokemonDetails = z.object({
+  gameSpecies: id,
+  form: intOrNull,
+  place: z.object({ box: intOrNull, slot: z.int() }),
+  heldItem: z.object({ item: id, showdown: id.nullable() }).nullable(),
+  hp: intOrNull,
+  status: z.string().nullable(),
+  exp: intOrNull,
+  happiness: intOrNull,
+  ball: z.string().nullable(),
+  mintedFrom: id.nullable(),
+  abilityIndex: intOrNull,
+  moveSlots: z.array(z.object({ move: id, showdown: id.nullable(), pp: intOrNull, ppUp: intOrNull })),
+  firstMoves: z.array(id),
+  owner: z.object({ name: z.string().nullable(), id: intOrNull, gender: intOrNull }).nullable(),
+  obtained: z.object({ method: intOrNull, map: intOrNull, level: intOrNull, text: z.string().nullable(), at: intOrNull, hatchedMap: intOrNull, hatchedAt: intOrNull }),
+  pokerus: intOrNull,
+  markings: z.array(z.int()),
+  ribbons: z.array(z.string()),
+  contest: z.object({ cool: intOrNull, beauty: intOrNull, cute: intOrNull, smart: intOrNull, tough: intOrNull, sheen: intOrNull }),
+  expShare: z.boolean().nullable(),
+  superShiny: z.boolean(),
+});
+
 export const pokemonSchema = z.object({
   species: id,
   nickname: pokemonFields.nickname.catch(null),
@@ -46,6 +72,7 @@ export const pokemonSchema = z.object({
   stats: pokemonFields.stats.catch(null),
   moves: pokemonFields.moves.optional().catch(undefined),
   personalId: z.int().nullable().optional().catch(null),
+  details: pokemonDetails.optional().catch(undefined),
 });
 
 export const itemSchema = z.object({
@@ -77,8 +104,31 @@ export const pocketSchema = z.object({
   items: z.array(z.object({ item: id, showdown: id.nullable(), quantity: z.int() })),
 });
 
+export const faintedSchema = pokemonSchema.extend({
+  species: id.nullable(),
+  gameSpecies: id,
+  personalId: z.int().nullable().catch(null),
+});
+
+const saveDetails = z.object({
+  trainer: z.object({ gender: intOrNull, trainerType: z.string().nullable(), coins: intOrNull, battlePoints: intOrNull, soot: intOrNull }),
+  boxes: z.array(z.object({ name: z.string().nullable(), size: z.int() })),
+  position: z.object({ map: intOrNull, x: intOrNull, y: intOrNull, direction: intOrNull }),
+  startedAt: z.string().nullable(),
+  savedAt: z.string().nullable(),
+  steps: intOrNull,
+  saveCount: intOrNull,
+  gameVersion: z.string().nullable(),
+  pokedex: z.object({ seen: z.array(id), owned: z.array(id) }),
+  gameStats: z.record(z.string(), z.number()),
+  challenge: z.object({ rules: z.array(z.string()), outcomes: z.array(z.string()) }),
+  vial: z.object({ charges: intOrNull, max: intOrNull }).nullable(),
+  hallOfFame: z.array(z.array(member)),
+  itemsFound: z.array(z.string()),
+});
+
 export const snapshotSchema = sheetSchema.extend({
-  fainted: z.array(member),
+  fainted: z.array(faintedSchema),
   party: z.array(member.extend({ fainted: z.boolean() })),
   bag: z.array(pocketSchema),
   trainer: z.object({
@@ -102,6 +152,7 @@ export const snapshotSchema = sheetSchema.extend({
   saveSlot: z.string().nullable(),
   randomlockeVersion: z.int().nullable(),
   notices: z.array(z.string()),
+  details: saveDetails.optional().catch(undefined),
 });
 
 export const EXPORT_GAPS = [
@@ -207,3 +258,6 @@ export type SheetItem = z.infer<typeof itemSchema>;
 export type SheetTm = z.infer<typeof tmSchema>;
 export type Snapshot = z.infer<typeof snapshotSchema>;
 export type SnapshotMember = z.infer<typeof member>;
+export type FaintedPokemon = z.infer<typeof faintedSchema>;
+export type PokemonDetails = z.infer<typeof pokemonDetails>;
+export type SaveDetails = z.infer<typeof saveDetails>;

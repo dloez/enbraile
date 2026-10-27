@@ -1,4 +1,4 @@
-import type { SheetItem, SheetPokemon, SheetTm, Snapshot, SnapshotMember } from "../../../shared/snapshot.js";
+import type { FaintedPokemon, PokemonDetails, SaveDetails, SheetItem, SheetPokemon, SheetTm, Snapshot, SnapshotMember } from "../../../shared/snapshot.js";
 import DATA from "./data.json" with { type: "json" };
 import { hashGet, isHash, isInt, MarshalError, MarshalReader, MarshalWriter, type RubyHash, RubyObject, RubySymbol, text, truthy } from "./marshal.js";
 
@@ -208,18 +208,29 @@ function hatched(pokemon: unknown): pokemon is RubyObject {
   return !truthy(steps) || (steps as number) <= 0;
 }
 
-function storedPokemon(save: Save): RubyObject[] {
-  const found = [...list(player(save).get("party"))];
+type Place = { box: number | null; slot: number };
+
+type Stored = { pokemon: RubyObject; place: Place };
+
+function boxesOf(save: Save): unknown[] {
   const storage = object(save.get("storage_system"));
-  for (const box of storage ? list(storage.get("boxes")) : []) {
-    const pokemon = object(box)?.get("pokemon");
-    found.push(...list(pokemon));
-  }
-  return found.filter(hatched);
+  return storage ? list(storage.get("boxes")) : [];
 }
 
-function fieldablePokemon(save: Save): RubyObject[] {
-  return storedPokemon(save).filter((pokemon) => !truthy(pokemon.get("perma_faint")));
+function storedWithPlaces(save: Save): Stored[] {
+  const found: { pokemon: unknown; place: Place }[] = list(player(save).get("party")).map((pokemon, slot) => ({ pokemon, place: { box: null, slot } }));
+  boxesOf(save).forEach((box, index) => {
+    list(object(box)?.get("pokemon")).forEach((pokemon, slot) => found.push({ pokemon, place: { box: index, slot } }));
+  });
+  return found.filter((entry): entry is Stored => hatched(entry.pokemon));
+}
+
+function storedPokemon(save: Save): RubyObject[] {
+  return storedWithPlaces(save).map((entry) => entry.pokemon);
+}
+
+function fainted(pokemon: RubyObject): boolean {
+  return truthy(pokemon.get("perma_faint"));
 }
 
 function moveId(move: unknown): string | null {
@@ -410,7 +421,67 @@ function learnableMoves(pokemon: RubyObject, context: MovesContext, label: strin
   return { current: named(current), relearner: named(relearner), tms: named(tms), levels: learnedAt };
 }
 
-function exportPokemon(pokemon: RubyObject, table: RubyHash, capsules: unknown, moves: MovesContext, notices: string[]): SheetPokemon | null {
+function gameIdOrNull(value: unknown): string | null {
+  return truthy(value) ? text(value) : null;
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function details(pokemon: RubyObject, place: Place): PokemonDetails {
+  const item = gameIdOrNull(pokemon.get("item"));
+  const owner = object(pokemon.get("owner"));
+  const minted = truthy(pokemon.get("nature_for_stats")) ? gameIdOrNull(pokemon.get("nature")) : null;
+  return {
+    gameSpecies: speciesForm(pokemon),
+    form: intOrNull(pokemon.get("forced_form") ?? pokemon.get("form")),
+    place,
+    heldItem: item ? { item, showdown: own(showdown.items, item) ?? null } : null,
+    hp: intOrNull(pokemon.get("hp")),
+    status: gameIdOrNull(pokemon.get("status")),
+    exp: intOrNull(pokemon.get("exp")),
+    happiness: intOrNull(pokemon.get("happiness")),
+    ball: gameIdOrNull(pokemon.get("poke_ball")),
+    mintedFrom: minted ? (own(showdown.natures, minted) ?? null) : null,
+    abilityIndex: intOrNull(pokemon.get("ability_index")),
+    moveSlots: list(pokemon.get("moves"))
+      .filter((move): move is RubyObject => move instanceof RubyObject && moveId(move.get("id")) !== null)
+      .map((move) => {
+        const id = moveId(move.get("id")) as string;
+        return { move: id, showdown: own(showdown.moves, id) ?? null, pp: intOrNull(move.get("pp")), ppUp: intOrNull(move.get("ppup")) };
+      }),
+    firstMoves: list(pokemon.get("first_moves"))
+      .map(moveId)
+      .filter((move): move is string => move !== null),
+    owner: owner ? { name: stringOrNull(owner.get("name")), id: intOrNull(owner.get("id")), gender: intOrNull(owner.get("gender")) } : null,
+    obtained: {
+      method: intOrNull(pokemon.get("obtain_method")),
+      map: intOrNull(pokemon.get("obtain_map")),
+      level: intOrNull(pokemon.get("obtain_level")),
+      text: stringOrNull(pokemon.get("obtain_text")),
+      at: intOrNull(pokemon.get("timeReceived")),
+      hatchedMap: intOrNull(pokemon.get("hatched_map")),
+      hatchedAt: intOrNull(pokemon.get("timeEggHatched")),
+    },
+    pokerus: intOrNull(pokemon.get("pokerus")),
+    markings: list(pokemon.get("markings")).filter(isInt),
+    ribbons: list(pokemon.get("ribbons")).filter(truthy).map(text),
+    contest: {
+      cool: intOrNull(pokemon.get("cool")),
+      beauty: intOrNull(pokemon.get("beauty")),
+      cute: intOrNull(pokemon.get("cute")),
+      smart: intOrNull(pokemon.get("smart")),
+      tough: intOrNull(pokemon.get("tough")),
+      sheen: intOrNull(pokemon.get("sheen")),
+    },
+    expShare: typeof pokemon.get("expshare") === "boolean" ? (pokemon.get("expshare") as boolean) : null,
+    superShiny: pokemon.get("super_shiny") === true,
+  };
+}
+
+function exportPokemon(stored: Stored, table: RubyHash, capsules: unknown, moves: MovesContext, notices: string[]): SheetPokemon | null {
+  const { pokemon, place } = stored;
   const gameId = speciesForm(pokemon);
   const level = pokemon.get("level");
   const label = `${gameId} (level ${text(level)})`;
@@ -419,6 +490,31 @@ function exportPokemon(pokemon: RubyObject, table: RubyHash, capsules: unknown, 
     notices.push(`Left out ${label}: ${gameId} has no Showdown species.`);
     return null;
   }
+  return { species, ...pokemonFields(pokemon, gameId, label, table, capsules, moves, notices), details: details(pokemon, place) };
+}
+
+function exportFainted(stored: Stored, table: RubyHash, capsules: unknown, moves: MovesContext): FaintedPokemon {
+  const { pokemon, place } = stored;
+  const gameId = speciesForm(pokemon);
+  const unshown: string[] = [];
+  return {
+    species: own(showdown.species, gameId) ?? null,
+    gameSpecies: gameId,
+    ...pokemonFields(pokemon, gameId, gameId, table, capsules, moves, unshown),
+    details: details(pokemon, place),
+  };
+}
+
+function pokemonFields(
+  pokemon: RubyObject,
+  gameId: string,
+  label: string,
+  table: RubyHash,
+  capsules: unknown,
+  moves: MovesContext,
+  notices: string[],
+): Omit<SheetPokemon, "species" | "details" | "personalId"> & { personalId: number | null } {
+  const level = pokemon.get("level");
   const lists = abilityLists(gameId, pokemon, table, capsules);
   const ability = currentAbility(pokemon, lists, capsules);
   let named: { base: string[]; hidden: string[] } | null = null;
@@ -447,7 +543,6 @@ function exportPokemon(pokemon: RubyObject, table: RubyHash, capsules: unknown, 
   }
   const nickname = pokemon.get("name");
   return {
-    species,
     nickname: truthy(nickname) ? text(nickname) : null,
     gender: isInt(gender) ? (GENDERS[gender] ?? null) : null,
     shiny: isShiny(pokemon),
@@ -455,7 +550,7 @@ function exportPokemon(pokemon: RubyObject, table: RubyHash, capsules: unknown, 
     nature: nature !== null && nature !== undefined ? (own(showdown.natures, text(nature)) ?? null) : null,
     ability: current,
     abilities: named,
-    types: data.types[gameId],
+    types: data.types[gameId] ?? [],
     ivs,
     evs,
     stats,
@@ -501,6 +596,67 @@ function stat(stats: RubyObject | undefined, name: string): number | null {
   return intOrNull(stats?.get(name));
 }
 
+function rubyTime(value: unknown): string | null {
+  const dumped = object(value)?.ivars.get("_dump");
+  if (!(dumped instanceof Uint8Array) || dumped.length < 8) return null;
+  const view = new DataView(dumped.buffer, dumped.byteOffset, dumped.byteLength);
+  const high = view.getUint32(0, true);
+  const low = view.getUint32(4, true);
+  if ((high & 0x80000000) === 0) return null;
+  const at = Date.UTC(((high >>> 14) & 0xffff) + 1900, (high >>> 10) & 0xf, (high >>> 5) & 0x1f, high & 0x1f, (low >>> 26) & 0x3f, (low >>> 20) & 0x3f, Math.floor((low & 0xfffff) / 1000));
+  return Number.isNaN(at) ? null : new Date(at).toISOString();
+}
+
+function marked(value: unknown): string[] {
+  return isHash(value) ? [...value].filter(([, flag]) => flag === true).map(([key]) => text(key)) : [];
+}
+
+function saveDetails(save: Save, metadata: RubyObject, stats: RubyObject | undefined): SaveDetails {
+  const trainer = player(save);
+  const factory = object(save.get("map_factory"));
+  const maps = factory ? list(factory.get("maps")) : [];
+  const mapIndex = factory?.get("mapIndex");
+  const map = object(maps[isInt(mapIndex) ? mapIndex : 0]);
+  const walker = object(save.get("game_player"));
+  const pokedex = object(trainer.get("pokedex"));
+  const system = object(save.get("game_system"));
+  const state = metadata.get("challenge_state");
+  const charges = metadata.get("vial_charges");
+  const log = object(save.get("item_log"));
+  return {
+    trainer: {
+      gender: intOrNull(trainer.get("gender")),
+      trainerType: gameIdOrNull(trainer.get("trainer_type")),
+      coins: intOrNull(trainer.get("coins")),
+      battlePoints: intOrNull(trainer.get("battle_points")),
+      soot: intOrNull(trainer.get("soot")),
+    },
+    boxes: boxesOf(save).map((box) => ({ name: stringOrNull(object(box)?.get("name")), size: list(object(box)?.get("pokemon")).length })),
+    position: {
+      map: intOrNull(map?.get("map_id")),
+      x: intOrNull(walker?.get("x")),
+      y: intOrNull(walker?.get("y")),
+      direction: intOrNull(walker?.get("direction")),
+    },
+    startedAt: rubyTime(metadata.get("startTime")),
+    savedAt: rubyTime(trainer.get("last_time_saved")),
+    steps: intOrNull(metadata.get("stepcount")),
+    saveCount: intOrNull(system?.get("save_count")),
+    gameVersion: stringOrNull(save.get("game_version")),
+    pokedex: { seen: marked(pokedex?.get("seen")), owned: marked(pokedex?.get("owned")) },
+    gameStats: Object.fromEntries(
+      [...(stats?.ivars ?? [])].filter(([, value]) => typeof value === "number" && Number.isFinite(value)).map(([key, value]) => [key.replace(/^@/, ""), value as number]),
+    ),
+    challenge: {
+      rules: list(metadata.get("challenge_rules")).filter(truthy).map(text),
+      outcomes: isHash(state) ? [...state.values()].map((entry) => (Array.isArray(entry) && truthy(entry[0]) ? text(entry[0]) : "None")) : [],
+    },
+    vial: isInt(charges) ? { charges, max: intOrNull(metadata.get("max_vial_charges")) } : null,
+    hallOfFame: list(metadata.get("hallOfFame")).map((team) => list(team).filter((pokemon): pokemon is RubyObject => pokemon instanceof RubyObject).map(member)),
+    itemsFound: log ? list(log.get("found_items")).filter(truthy).map(text) : [],
+  };
+}
+
 export type Exported = { snapshot: Snapshot; rolled: number; compatibility: Compatibility };
 
 export function exportSave(save: Save, side: Uint8Array | null, sideLabel: string, kept: TmRolls | null): Exported {
@@ -512,7 +668,8 @@ export function exportSave(save: Save, side: Uint8Array | null, sideLabel: strin
   const notices: string[] = [];
   const tmMap = metadata.get("tm_move_map");
   const compatibility = kept ? seeded(kept) : tmCompatibility(side, sideLabel, metadata, notices);
-  const seen = fieldablePokemon(save).filter((pokemon) => own(showdown.species, speciesForm(pokemon)) !== undefined);
+  const stored = storedWithPlaces(save);
+  const seen = stored.map((entry) => entry.pokemon).filter((pokemon) => own(showdown.species, speciesForm(pokemon)) !== undefined);
   const rolled = rollTms(compatibility, seen, save, tmMap);
   const moves: MovesContext = {
     learnsets: metadata.get("random_moves"),
@@ -521,8 +678,9 @@ export function exportSave(save: Save, side: Uint8Array | null, sideLabel: strin
     bagTms: bagTms(save),
     tmMap,
   };
-  const exported = fieldablePokemon(save)
-    .map((pokemon) => exportPokemon(pokemon, table, capsules, moves, notices))
+  const exported = stored
+    .filter((entry) => !fainted(entry.pokemon))
+    .map((entry) => exportPokemon(entry, table, capsules, moves, notices))
     .filter((entry): entry is SheetPokemon => entry !== null);
   const [items, tms] = exportItems(save, tmMap, notices);
   const version = metadata.get("randomlocke_version");
@@ -541,12 +699,10 @@ export function exportSave(save: Save, side: Uint8Array | null, sideLabel: strin
     pokemon: exported,
     items,
     tms,
-    fainted: storedPokemon(save)
-      .filter((pokemon) => truthy(pokemon.get("perma_faint")))
-      .map(member),
+    fainted: stored.filter((entry) => fainted(entry.pokemon)).map((entry) => exportFainted(entry, table, capsules, moves)),
     party: list(trainer.get("party"))
       .filter(hatched)
-      .map((pokemon) => ({ ...member(pokemon), fainted: truthy(pokemon.get("perma_faint")) })),
+      .map((pokemon) => ({ ...member(pokemon), fainted: fainted(pokemon) })),
     bag: bag(save),
     trainer: {
       name: truthy(trainer.get("name")) ? text(trainer.get("name")) : null,
@@ -574,6 +730,7 @@ export function exportSave(save: Save, side: Uint8Array | null, sideLabel: strin
     saveSlot: truthy(trainer.get("save_slot")) ? text(trainer.get("save_slot")) : null,
     randomlockeVersion: intOrNull(version),
     notices,
+    details: saveDetails(save, metadata, stats),
   };
   return { snapshot, rolled, compatibility };
 }

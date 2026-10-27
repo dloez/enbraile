@@ -72,7 +72,7 @@ export function PcPage() {
           items={page.pc.items}
           tms={page.pc.tms}
           gaps={page.missing?.missing ?? []}
-          footer={builds ? (mon) => <AddToTeam mon={mon} snapshot={builds} teams={teams} className="px-4.5 py-3.5" /> : undefined}
+          footer={builds ? (mon) => (mon.fainted ? null : <AddToTeam mon={mon} snapshot={builds} teams={teams} className="px-4.5 py-3.5" />) : undefined}
         />
       ) : (
         <p className="my-6 rounded-2xl border-3 border-dashed border-cell-hi bg-box px-5 py-10 text-center font-heading text-3xl text-subtle">

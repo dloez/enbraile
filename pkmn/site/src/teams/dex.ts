@@ -64,13 +64,31 @@ export function freeMon(member: FreeMember): Mon {
   };
 }
 
+export function withNature(mon: Mon, id: string): Mon {
+  const entry = gen.species.get(mon.species.id);
+  const nat = describeNature(id);
+  if (!entry.exists || !mon.stats) return { ...mon, nature: nat };
+  return {
+    ...mon,
+    nature: nat,
+    stats: mon.stats.map((line) => ({
+      ...line,
+      current: line.iv !== null && line.ev !== null && mon.level !== null ? statAt(line.stat, entry, line.iv, nat, mon.level, line.ev) : line.current,
+      fight: line.iv !== null ? statAt(line.stat, entry, line.iv, nat) : null,
+      low: statAt(line.stat, entry, 0, nat),
+      high: statAt(line.stat, entry, 31, nat),
+    })),
+  };
+}
+
 export function memberMon(member: Member | null, stocks: Stocks): Mon | undefined {
   if (!member) return undefined;
   if (isFree(member)) {
     const mon = freeMon(member);
     return mon.species.known ? mon : undefined;
   }
-  return ownMon(member, stocks);
+  const mon = ownMon(member, stocks);
+  return mon && member.nature !== null ? withNature(mon, member.nature) : mon;
 }
 
 export function liveSlots(slots: Slots, stocks: Stocks): Slots {

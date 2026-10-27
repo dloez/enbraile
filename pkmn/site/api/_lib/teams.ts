@@ -11,10 +11,11 @@ import {
   type TeamSlots,
   type TeamSourceRow,
 } from "../../shared/team.js";
+import { DEFAULT_COSTS } from "../../shared/games.js";
 import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
-import { milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
+import { game, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
 import { viewer } from "./series-data.js";
 
 export const teams = new Hono();
@@ -149,13 +150,14 @@ teams.get("/:id", async (c) => {
     .where(eq(team.id, c.req.param("id")));
   if (!row) return c.json({ error: "No such team" }, 404);
   const sources = await db
-    .select({ ...sourceColumns, data: snapshot.data, missing: snapshot.missing })
+    .select({ ...sourceColumns, data: snapshot.data, missing: snapshot.missing, abilitySetas: game.abilitySetas, mintPrice: game.mintPrice })
     .from(teamSource)
     .innerJoin(snapshot, eq(snapshot.id, teamSource.snapshotId))
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .innerJoin(user, eq(user.id, save.userId))
     .innerJoin(series, eq(series.id, save.seriesId))
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .leftJoin(game, eq(game.id, series.gameId))
     .where(eq(teamSource.teamId, row.id))
     .orderBy(asc(teamSource.position));
   const page: TeamPage = {
@@ -163,7 +165,12 @@ teams.get("/:id", async (c) => {
     name: row.name,
     owner: { id: row.ownerId, name: row.ownerName },
     canEdit: reader.id === row.ownerId,
-    sources: sources.map((s) => ({ ...sourceOf(s), snapshot: s.data, missing: s.missing })),
+    sources: sources.map((s) => ({
+      ...sourceOf(s),
+      snapshot: s.data,
+      missing: s.missing,
+      costs: s.abilitySetas === null || s.mintPrice === null ? DEFAULT_COSTS : { abilitySetas: s.abilitySetas, mintPrice: s.mintPrice },
+    })),
     anyPokemon: row.anyPokemon,
     slots: row.slots,
     pool: row.pool,

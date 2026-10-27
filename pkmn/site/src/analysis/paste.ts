@@ -9,6 +9,7 @@ export interface PokemonSet {
   level: number;
   teraType: string;
   nature: string;
+  natureGiven: boolean;
   evs: StatsTable;
   ivs: StatsTable;
   moves: string[];
@@ -66,6 +67,7 @@ export function parsePaste(text: string, max = 6): PokemonSet[] {
       level: 100,
       teraType: "",
       nature: "Serious",
+      natureGiven: false,
       evs: spread("", 0),
       ivs: spread("", 31),
       moves: [],
@@ -80,7 +82,10 @@ export function parsePaste(text: string, max = 6): PokemonSet[] {
       else if ((m = line.match(/^Tera Type:\s*(\w+)/i))) set.teraType = m[1];
       else if ((m = line.match(/^EVs:\s*(.+)$/i))) set.evs = spread(m[1], 0);
       else if ((m = line.match(/^IVs:\s*(.+)$/i))) set.ivs = spread(m[1], 31);
-      else if ((m = line.match(/^(\w+)\s+Nature/i))) set.nature = m[1];
+      else if ((m = line.match(/^(\w+)\s+Nature/i))) {
+        set.nature = m[1];
+        set.natureGiven = true;
+      }
     }
     if (set.species) team.push(set);
   }

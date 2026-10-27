@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
+import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
 import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
 import type { TmRolls } from "./export/export.js";
@@ -89,6 +90,8 @@ export const game = pgTable("game", {
   fileName: text("file_name"),
   fileSize: bigint("file_size", { mode: "number" }),
   uploadedAt: timestamp("uploaded_at"),
+  abilitySetas: integer("ability_setas").notNull().default(DEFAULT_ABILITY_SETAS),
+  mintPrice: integer("mint_price").notNull().default(DEFAULT_MINT_PRICE),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

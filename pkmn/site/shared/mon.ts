@@ -100,6 +100,7 @@ const monFields = {
   stats: z.array(statLine).nullable(),
   sprite: z.string().nullable(),
   free: z.boolean(),
+  fainted: z.boolean(),
 };
 
 export const mon = z.object({ ...monFields, learnable: learnable.nullable() });
