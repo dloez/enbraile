@@ -42,6 +42,7 @@ Copy `.env.example` to `.env.local` (untracked). Its values fit the local stack;
 - `API_PORT`: the port the API listens on behind Vite, 8787.
 - `DEV_SIGN_IN`: `1` turns on the test sign-in ([How to Verify the Site](verify-the-site.md)). Set it only in a local `.env.local` and in Vercel's Preview environment, never in Production.
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`: the Discord application's OAuth2 client (step 6). Left empty, Discord sign-in is not registered and its button answers "Sign-in failed"; the local stack signs players in with the test sign-in instead.
+- `CRON_SECRET`: the secret the bucket's daily sweep answers to ([The pkmn Site → Data and Storage](../explanation/site.md#data-and-storage)). Left empty, `/api/cron/sweep-files` refuses every call; set it to try the sweep locally.
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`: the file store; the example's point at the local MinIO and its `pkmn-site` bucket. With a second stack's `MINIO_PORT`, match the port in `S3_ENDPOINT`.
 
 Then apply the migrations and seed the known state:
@@ -96,6 +97,7 @@ Set the project's environment variables:
 | `S3_BUCKET` | `pkmn-site-enbraile` | `pkmn-site-preview-enbraile` |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | the production bucket's key ID and key | the preview bucket's |
 | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` | the Discord application's client ID and secret | unset |
+| `CRON_SECRET` | a random secret of at least 16 characters, e.g. from `openssl rand -hex 32` | unset |
 
 Neon's connection strings carry `sslmode=require`, which `pg` already treats as `verify-full` and warns about on every connection; write `sslmode=verify-full` in every Neon string, in Vercel and in the shell, which keeps the same certificate checks and silences the warning.
 
@@ -154,6 +156,16 @@ npm run item-icons
 
 It prints each game's icon count, or that its zip holds no `Graphics/Items`.
 
+### Sweep the bucket by hand
+
+The daily sweep ([The pkmn Site → Data and Storage](../explanation/site.md#data-and-storage)) shows its runs under the project's Settings → Cron Jobs in the Vercel dashboard, where Run starts one at once. From a shell, with the production `CRON_SECRET`:
+
+```sh
+curl -s -H "Authorization: Bearer $CRON_SECRET" https://pkmn.enbraile.vip/api/cron/sweep-files
+```
+
+It prints the keys it deleted and how many objects it kept.
+
 ### Wipe the imported data
 
 When the snapshot format changes in a way old snapshots cannot follow, the imported data is wiped and players upload again. From `pkmn/site/`, with the environment's `DATABASE_URL`, `S3_*` variables set in the shell:
@@ -187,5 +199,6 @@ It prints its counts and whether it wrote `data.json`, which it rewrites only wh
 - `curl -s -o /dev/null -w '%{http_code}' 'https://pkmn.enbraile.vip/api/auth/dev/sign-in?username=x'` prints `404`.
 - At `/admin/games`, an admin creates a game, uploads its zip, sees its size and date after a reload, and downloads a file of the same size; `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/games` prints `401`.
 - Signed out, `https://pkmn.enbraile.vip` shows the sign-in page. Signing in with Discord as someone new shows the waiting page; an admin allows them at `/admin/players`, and their reload shows the series; removed, their reload shows the waiting page again. Let in and added to the running series at its form, they are asked to upload their save instead, and land on the series once it is in. Invited at `/admin/players` by their Discord user ID before they sign in, someone new lands straight on the series instead, under the name Discord gives them. `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/players` prints `401`.
+- `curl -s -o /dev/null -w '%{http_code}' https://pkmn.enbraile.vip/api/cron/sweep-files` prints `401`, and the project's Cron Jobs settings list `/api/cron/sweep-files` daily.
 - `curl -sI https://pkmn.enbraile.vip` shows `server: Vercel`.
 - After a push, the page loads a new `/assets/index-*.js` bundle carrying the change.

@@ -9,6 +9,7 @@ import { players } from "./players.js";
 import { profiles } from "./profiles.js";
 import { saveUploads } from "./save-uploads.js";
 import { seriesRoutes } from "./series.js";
+import { cron } from "./sweep.js";
 import { teams } from "./teams.js";
 
 export const app = new Hono().basePath("/api");
@@ -26,3 +27,4 @@ app.route("/series", saveUploads);
 app.route("/series", overrides);
 app.route("/admin/series", adminSeries);
 app.route("/teams", teams);
+app.route("/cron", cron);

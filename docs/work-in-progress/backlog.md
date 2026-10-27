@@ -14,23 +14,6 @@ A running series takes new players, and the [league](league/discovery.md) draws 
 
 ## Tasks
 
-### pkmn/site: clear files the bucket holds that nothing points to
-
-A game's upload is a multipart upload that `POST /api/games/<id>/file` completes and then records ([The pkmn Site → Games](../pkmn/site/explanation/site.md#games)), and the game's open multipart uploads are aborted when its next upload starts. When the upload completes but recording it fails, or deleting the replaced file fails, the zip stays in the bucket with no row pointing at it, about 600 MB each; none exist yet (2026-10-23). Save zips mostly clear themselves: starting a player's snapshot upload deletes their zips more than an hour old that no snapshot holds, as its zip or its rolled zip ([The pkmn Site → Snapshots](../pkmn/site/explanation/site.md#snapshots)); what a player's last upload leaves, or a delete that failed, stays.
-
-**Do:**
-- [ ] A way to find and delete the bucket's objects no `game` row and no `snapshot` row (its `file_key` or `rolled_key`) names.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; on the local stack, put an object under `games/<id>/` with no row, run it, and see it gone while a recorded file stays.
-- Human-run: none.
-- Reuse: `api/_lib/files.ts`.
-- Neighbors: `api/_lib/games.ts`; `api/_lib/ingest.ts`'s check that no snapshot still holds a key.
-- Forbidden: deleting an object a row names.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-**Needs the author:** how it runs: a script the owner runs by hand, or something scheduled?
-
 ### pkmn/site: several series run at once
 
 The owner wants more than one series running at a time (2026-10-27). A partial unique index, `series_one_running_idx` in `api/_lib/schema.ts`, lets one run, and the site leans on that: `/` sends a player to the running series (`src/pages/home.tsx`), the header's PC tab opens their PC in it (`src/components/site-header.tsx`), the team builder takes the sources a player may start from and a new team's pool from it (`api/_lib/teams.ts`), the admin overview shows one running banner (`src/pages/admin.tsx`), and starting a series needs the running one finished (`startChecklist` in `shared/series.ts`, `otherRunning` in `api/_lib/series-data.ts`). Joining mid-series already handles several: the waiting page offers an upload per owed series ([The pkmn Site → Series](../pkmn/site/explanation/site.md#series)).
