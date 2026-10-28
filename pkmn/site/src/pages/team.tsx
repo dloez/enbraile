@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ClipboardCheck, ClipboardCopy, Plus, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { toolPage } from "@/components/page";
@@ -230,12 +230,16 @@ function Builder({ page }: { page: TeamPage }) {
   const sourceCount = held.length + (anyPokemon ? 1 : 0);
 
   const cards = (
-    <ol aria-label="Members" className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:content-start lg:auto-rows-[minmax(246px,auto)] lg:overflow-y-auto">
+    <ol
+      aria-label="Members"
+      style={{ "--rows": Math.ceil(slots.length / 2) } as CSSProperties}
+      className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:grid-rows-[repeat(var(--rows),minmax(188px,246px))] lg:content-start lg:overflow-y-auto"
+    >
       {slots.map((member, slot) => {
         const mon = memberMon(member, stocks);
         const own = stocks.get(ownOf(member)?.source ?? "");
         return (
-          <li key={slot} className="flex min-h-0">
+          <li key={slot} className="flex min-h-0 lg:[container:card/size]">
             {member && mon && (own || isFree(member)) ? (
               <MemberCard
                 member={member}

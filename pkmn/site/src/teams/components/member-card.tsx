@@ -57,7 +57,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
     <article
       aria-label={name}
       className={cn(
-        "relative flex min-w-0 flex-1 flex-col gap-2 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5",
+        "relative flex min-w-0 flex-1 flex-col justify-between gap-2 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5 short:gap-1.5 short:pb-2",
         glow ? "border-yellow shadow-[0_0_0_3px_color-mix(in_srgb,var(--yellow)_35%,transparent)]" : lit ? "border-primary" : pick?.in ? "border-green" : "border-border",
         pick && !pick.in && "opacity-55",
       )}
@@ -84,19 +84,19 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           </span>
         </button>
       )}
-      <div className="flex min-h-15 items-center gap-2">
+      <div className="flex min-h-15 items-center gap-2 short:min-h-13">
         <button
           type="button"
           aria-pressed={looking}
           onClick={onLook}
           title={looking ? "Back to the analysis" : `Summary of ${name}`}
           className={cn(
-            "flex min-h-15 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-[10px] border-3 pr-3 text-left text-foreground outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50",
+            "flex min-h-15 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-[10px] border-3 pr-3 text-left text-foreground outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 short:min-h-13",
             looking ? "border-primary bg-cell" : "border-cell bg-box",
           )}
         >
-          <span className="flex h-21 w-18 flex-none items-center justify-center overflow-hidden">
-            <MonSprite mon={mon} className="-mx-1.5 size-21 flex-none" />
+          <span className="flex h-21 w-18 flex-none items-center justify-center overflow-hidden short:h-13 short:w-14">
+            <MonSprite mon={mon} className="-mx-1.5 size-21 flex-none short:size-16" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.75">
             <span className="min-w-0 truncate font-heading text-[1.75rem] leading-[0.9]">{name}</span>
@@ -149,7 +149,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           disabled={!editable}
           onClick={onItem}
           title={item?.desc}
-          className={cn(field(focus === "item"), "h-9.5 gap-1.5 pr-2 pl-1")}
+          className={cn(field(focus === "item"), "h-9.5 gap-1.5 pr-2 pl-1 short:h-8.5")}
         >
           {item ? <ItemIcon item={item} /> : <span className="flex-none pl-1 font-heading text-lg text-muted-foreground">Item</span>}
           <span className={cn("min-w-0 flex-1 truncate text-sm font-extrabold", !item && "text-muted-foreground")}>
@@ -163,7 +163,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           disabled={!editable}
           onClick={onAbility}
           title={ability?.desc}
-          className={cn(field(focus === "ability"), "h-9.5 gap-1.5 px-2")}
+          className={cn(field(focus === "ability"), "h-9.5 gap-1.5 px-2 short:h-8.5")}
         >
           <span className="sr-only">Ability: </span>
           <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{ability?.name ?? "—"}</span>
@@ -180,7 +180,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           disabled={!editable}
           onClick={onNature}
           title={mon.nature ? `${mon.nature.name} Nature${natureFrom ? `: ${mintTitle.toLowerCase()}` : ""}` : undefined}
-          className={cn(field(focus === "nature"), "h-9.5 gap-1 px-2")}
+          className={cn(field(focus === "nature"), "h-9.5 gap-1 px-2 short:h-8.5")}
         >
           <span className="sr-only">Nature: </span>
           <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{mon.nature?.name ?? "No nature"}</span>
@@ -193,7 +193,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           )}
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5 short:gap-1">
         {member.moves.map((id, at) => {
           const move = id ? describeMove(id) : null;
           const introduced = id !== null && mon.free ? moveGen(id) : null;
@@ -210,7 +210,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
               title={late ? `${move?.name} is from Gen ${introduced}, past the pool's moves up to Gen ${movesGen}` : wrong ? `${name} can't learn ${move?.name} in this save` : move?.desc}
               className={cn(
                 field(on),
-                "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px] gap-x-1.75 pr-2 pl-1.25",
+                "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px] gap-x-1.75 pr-2 pl-1.25 short:min-h-7.5",
                 wrong && !on && "border-destructive bg-destructive-soft",
               )}
             >
@@ -230,7 +230,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
 
 export function EmptyCard({ editable, on, onAdd }: { editable: boolean; on: boolean; onAdd: () => void }) {
   if (!editable) {
-    return <span className="grid min-h-61.5 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-2xl text-faint">Empty</span>;
+    return <span className="grid min-h-61.5 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-2xl text-faint lg:min-h-0">Empty</span>;
   }
   return (
     <button
@@ -238,7 +238,7 @@ export function EmptyCard({ editable, on, onAdd }: { editable: boolean; on: bool
       aria-pressed={on}
       onClick={onAdd}
       className={cn(
-        "flex min-h-61.5 flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border-3 border-dashed font-heading text-muted-foreground outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50",
+        "flex min-h-61.5 flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border-3 border-dashed font-heading text-muted-foreground outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50 lg:min-h-0",
         on ? "border-primary bg-primary/10" : "border-cell-hi bg-transparent",
       )}
     >

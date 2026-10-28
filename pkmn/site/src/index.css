@@ -9,6 +9,11 @@
 @import "@fontsource/nunito/800.css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant short {
+    @container card (max-height: 245px) {
+        @slot;
+    }
+}
 
 @theme inline {
     --font-heading: 'Jersey 10', sans-serif;
