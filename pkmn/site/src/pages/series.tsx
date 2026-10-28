@@ -1,4 +1,5 @@
 import { Link, useParams } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { buttonClass, Segmented } from "@/components/controls";
 import { readPage } from "@/components/page";
@@ -132,9 +133,19 @@ function Trainers({ series, onChanged }: { series: Series; onChanged: () => void
 
   return (
     <section aria-labelledby="trainers-title" className="flex flex-col gap-3 sm:gap-3.5">
-      <h2 id="trainers-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
-        Trainers
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-x-4">
+        <h2 id="trainers-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
+          Trainers
+        </h2>
+        <Link
+          to="/series/$number/abilities"
+          params={{ number: String(series.number) }}
+          className="-my-2.5 flex min-h-11 items-center gap-1.5 font-heading text-[1.375rem] text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          Abilities
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
+      </div>
       <div className="overflow-hidden rounded-2xl border-3 bg-card">
         <div className="sm:overflow-x-auto">
           <div className="sm:min-w-200">

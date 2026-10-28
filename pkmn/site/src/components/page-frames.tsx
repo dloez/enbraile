@@ -114,6 +114,18 @@ export function PcFrame() {
   );
 }
 
+export function AbilitiesFrame() {
+  return (
+    <main className={cn(toolPage, "gap-4.5 pt-5 pb-6 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
+      <Placeholder className="h-23 w-full max-w-74 rounded-xl" />
+      <div className="flex flex-1 gap-6 pb-3 lg:min-h-0">
+        <Placeholder className="min-h-120 w-full rounded-[18px] lg:w-95 lg:flex-none" />
+        <Placeholder className="hidden flex-1 rounded-[18px] lg:block" />
+      </div>
+    </main>
+  );
+}
+
 export function TeamsFrame() {
   return (
     <main className={cn(toolPage, "gap-5 pt-5.5 pb-8 sm:gap-6 sm:pt-6")}>

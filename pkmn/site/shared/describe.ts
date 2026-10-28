@@ -3,6 +3,7 @@ import { Icons, Sprites } from "@pkmn/img";
 import { damageTaken } from "./chart.js";
 import { packPc, STATS, tmLabel, TYPES, typeName, type Ability, type BagItem, type BagTm, type Learnable, type Mon, type MoveInfo, type Named, type Nature, type PcView, type StatID } from "./mon.js";
 import { BERRY_POCKET, fightItems, setasOf } from "./items.js";
+import type { AbilityEntry, AbilityHolder } from "./abilities.js";
 import type { FaintedPokemon, Sheet, SheetPokemon, SheetTm, Snapshot } from "./snapshot.js";
 
 const gen = Dex.forGen(9);
@@ -122,6 +123,24 @@ export function describePokemon(p: SheetPokemon, index: number, fainted = false)
     free: false,
     fainted,
   };
+}
+
+export function describeHolders(pokemon: readonly SheetPokemon[], into: Record<string, AbilityEntry>): AbilityHolder[] {
+  return pokemon.map((p, index) => {
+    const entry = gen.species.get(p.species);
+    const list = abilities(p);
+    for (const a of list) into[a.id] ??= { name: a.name, desc: a.desc, marked: a.marked };
+    const species = named(p.species, entry).name;
+    return {
+      index,
+      name: p.nickname ?? species,
+      species,
+      level: p.level,
+      sprite: entry.exists ? Sprites.getPokemon(entry.name, { gen: "gen5", shiny: p.shiny, gender: p.gender === "F" ? "F" : undefined }).url : null,
+      shiny: p.shiny,
+      abilities: list.map((a) => ({ id: a.id, hidden: a.hidden, current: a.current })),
+    };
+  });
 }
 
 export function describeItem(i: { item: string; quantity: number; game?: string | null; pocket?: number | null }): BagItem {

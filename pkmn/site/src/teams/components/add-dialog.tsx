@@ -19,6 +19,7 @@ import type { ExportGap } from "../../../shared/snapshot";
 export interface AddSource {
   id: string;
   label: string;
+  series: number;
   sheet: Sheet;
   mons: readonly Mon[];
   tms: readonly BagTm[];
@@ -142,11 +143,11 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
           ) : (
             <>
               <PcBox key={source?.id} mons={mons} selected={selected} onPick={setPicked} taken={taken} />
-              {wide && mon && sheet && <SummaryAside mon={mon} tms={source.tms} gaps={gaps} footer={put(mon)} />}
+              {wide && mon && sheet && <SummaryAside mon={mon} tms={source.tms} gaps={gaps} series={source.series} footer={put(mon)} />}
             </>
           )}
         </div>
-        {!wide && !free && sheet && <SummarySheet mon={mon} tms={source.tms} gaps={gaps} open={open && mon !== undefined} onClose={() => setPicked(null)} footer={mon && put(mon)} />}
+        {!wide && !free && sheet && <SummarySheet mon={mon} tms={source.tms} gaps={gaps} series={source.series} open={open && mon !== undefined} onClose={() => setPicked(null)} footer={mon && put(mon)} />}
       </DialogContent>
     </Dialog>
   );

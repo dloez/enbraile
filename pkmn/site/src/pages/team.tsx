@@ -115,6 +115,7 @@ function holding(sources: readonly TeamSource[]): Held[] {
     id: source.id,
     source,
     label: sourceLabel(source),
+    series: source.series.number,
     owner: source.player.name,
     colour: playerColour(source.player.name),
     ...stockOf(source),
@@ -314,7 +315,7 @@ function Builder({ page }: { page: TeamPage }) {
             </button>
           </div>
           <SummaryHead mon={shown} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
-          <SummaryBody key={`${panel.slot}:${ownOf(member)?.source ?? "free"}:${mon.index}`} mon={shown} tms={own?.tms ?? []} gaps={own?.gaps ?? []} />
+          <SummaryBody key={`${panel.slot}:${ownOf(member)?.source ?? "free"}:${mon.index}`} mon={shown} tms={own?.tms ?? []} gaps={own?.gaps ?? []} series={own?.series} />
         </>
       );
     }

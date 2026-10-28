@@ -28,6 +28,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 .ph-menu:hover{background:#222a3b!important;color:#ffffff!important}
 .ph-item:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
+.crumb:hover{text-decoration:underline!important}
 </style>
 </helmet>
 <div style="position: relative; width: 390px; min-height: 1700px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
@@ -76,7 +77,10 @@ Download
 </div>
 </section>
 
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px">
 <h2 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 34px">Trainers</h2>
+<a href="AbilitiesPhone.dc.html" class="crumb" style="display: flex; align-items: center; gap: 6px; min-height: 44px; margin: -10px 0; font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none; text-decoration-thickness: 2px; text-underline-offset: 4px">Abilities<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</div>
 <div style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
 <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); padding: 0 12px; background: #1b2232; border-bottom: 3px solid #343f58">
 <sc-for list="{{cols}}" as="c" hint-placeholder-count="10">

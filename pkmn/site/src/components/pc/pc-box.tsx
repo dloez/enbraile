@@ -138,6 +138,9 @@ export function PcBox({ mons, selected, onPick, actions, taken }: {
     observer.observe(el);
     return () => observer.disconnect();
   }, [measure, shown.length]);
+  useEffect(() => {
+    list.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: "nearest" });
+  }, []);
   const page = (dir: number) => {
     const el = list.current;
     if (el) el.scrollBy({ top: dir * Math.max(112, el.clientHeight - 112), behavior: "smooth" });
@@ -183,23 +186,24 @@ export function PcBox({ mons, selected, onPick, actions, taken }: {
   );
 }
 
-export function SummaryAside({ mon, tms, footer, gaps }: { mon: Mon; tms: readonly BagTm[]; footer?: ReactNode; gaps?: readonly ExportGap[] }) {
+export function SummaryAside({ mon, tms, footer, gaps, series }: { mon: Mon; tms: readonly BagTm[]; footer?: ReactNode; gaps?: readonly ExportGap[]; series?: number }) {
   return (
     <aside
       aria-label="Summary"
       className="sticky top-4 flex max-h-[calc(100svh-2rem)] w-95 flex-none flex-col self-start overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0 lg:self-stretch"
     >
       <SummaryHead mon={mon} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
-      <SummaryBody key={mon.index} mon={mon} tms={tms} gaps={gaps} />
+      <SummaryBody key={mon.index} mon={mon} tms={tms} gaps={gaps} series={series} />
       {footer}
     </aside>
   );
 }
 
-export function SummarySheet({ mon, tms, open, onClose, footer, gaps }: {
+export function SummarySheet({ mon, tms, open, onClose, footer, gaps, series }: {
   mon: Mon | undefined;
   tms: readonly BagTm[];
   gaps?: readonly ExportGap[];
+  series?: number;
   open: boolean;
   onClose: () => void;
   footer?: ReactNode;
@@ -214,7 +218,7 @@ export function SummarySheet({ mon, tms, open, onClose, footer, gaps }: {
               closeRoom
               title={(text) => <SheetTitle className="truncate font-heading text-[2.25rem] leading-[0.85] font-normal">{text}</SheetTitle>}
             />
-            <SummaryBody key={mon.index} mon={mon} tms={tms} gaps={gaps} />
+            <SummaryBody key={mon.index} mon={mon} tms={tms} gaps={gaps} series={series} />
             {footer}
           </>
         )}
@@ -223,8 +227,10 @@ export function SummarySheet({ mon, tms, open, onClose, footer, gaps }: {
   );
 }
 
-export function SnapshotPc({ mons, items, tms, setas, money, gaps = [], footer }: {
+export function SnapshotPc({ mons, items, tms, setas, money, gaps = [], footer, series, initial }: {
   mons: readonly Mon[];
+  series?: number;
+  initial?: number;
   items: readonly BagItem[];
   tms: readonly BagTm[];
   setas: number | null;
@@ -233,7 +239,7 @@ export function SnapshotPc({ mons, items, tms, setas, money, gaps = [], footer }
   footer?: (mon: Mon, done: () => void) => ReactNode;
 }) {
   const wide = useMediaQuery("(min-width: 64rem)");
-  const [picked, setPicked] = useState<number | null>(null);
+  const [picked, setPicked] = useState<number | null>(() => (initial !== undefined && mons.some((mon) => mon.index === initial) ? initial : null));
   const [bagOpen, setBagOpen] = useState(false);
   const [showFainted, setShowFainted] = useState(false);
   const faintedCount = mons.filter((mon) => mon.fainted).length;
@@ -255,13 +261,14 @@ export function SnapshotPc({ mons, items, tms, setas, money, gaps = [], footer }
             </>
           }
         />
-        {wide && selectedMon && <SummaryAside mon={selectedMon} tms={tms} gaps={gaps} footer={footer?.(selectedMon, () => undefined)} />}
+        {wide && selectedMon && <SummaryAside mon={selectedMon} tms={tms} gaps={gaps} series={series} footer={footer?.(selectedMon, () => undefined)} />}
       </div>
       {!wide && (
         <SummarySheet
           mon={selectedMon}
           tms={tms}
           gaps={gaps}
+          series={series}
           open={selectedMon !== undefined}
           onClose={() => setPicked(null)}
           footer={selectedMon && footer?.(selectedMon, () => setPicked(null))}

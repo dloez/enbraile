@@ -1,7 +1,7 @@
 import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { prefetch } from "@/lib/api";
-import { adminGamesPage, adminHomePage, adminPlayersPage, adminSeriesListPage, adminSeriesPage, pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
+import { abilitiesPage, adminGamesPage, adminHomePage, adminPlayersPage, adminSeriesListPage, adminSeriesPage, pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
 import { HomePage } from "@/pages/home";
 
 const rootRoute = createRootRoute({ component: SiteShell });
@@ -52,19 +52,35 @@ const playerSeriesRoute = createRoute({
   component: playerSeriesPage.Page,
 });
 
-export type PcSearch = { snapshot?: string };
+export type PcSearch = { snapshot?: string; mon?: number };
 
 const pcRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/players/$player/series/$number/pc",
-  validateSearch: (search: Record<string, unknown>): PcSearch =>
-    typeof search.snapshot === "string" && search.snapshot !== "" ? { snapshot: search.snapshot } : {},
-  loaderDeps: ({ search }) => search,
+  validateSearch: (search: Record<string, unknown>): PcSearch => ({
+    ...(typeof search.snapshot === "string" && search.snapshot !== "" ? { snapshot: search.snapshot } : {}),
+    ...(typeof search.mon === "number" && Number.isInteger(search.mon) && search.mon >= 0 ? { mon: search.mon } : {}),
+  }),
+  loaderDeps: ({ search }) => ({ snapshot: search.snapshot }),
   loader: ({ params, deps }) => {
     pcPage.load();
     prefetch(`/series/${encodeURIComponent(params.number)}/trainers/${encodeURIComponent(params.player)}/pc${deps.snapshot === undefined ? "" : `?snapshot=${encodeURIComponent(deps.snapshot)}`}`);
   },
   component: pcPage.Page,
+});
+
+export type AbilitiesSearch = { ability?: string };
+
+const abilitiesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/series/$number/abilities",
+  validateSearch: (search: Record<string, unknown>): AbilitiesSearch =>
+    typeof search.ability === "string" && search.ability !== "" ? { ability: search.ability } : {},
+  loader: ({ params }) => {
+    abilitiesPage.load();
+    prefetch(`/series/${encodeURIComponent(params.number)}/abilities`);
+  },
+  component: abilitiesPage.Page,
 });
 
 export type TeamsSearch = { player?: string };
@@ -149,6 +165,7 @@ const routeTree = rootRoute.addChildren([
   playerProfileRoute,
   playerSeriesRoute,
   pcRoute,
+  abilitiesRoute,
   teamsRoute,
   teamRoute,
   adminRoute,

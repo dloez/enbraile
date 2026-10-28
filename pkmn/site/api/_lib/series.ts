@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import type { AbilitiesPage } from "../../shared/abilities.js";
 import { fallenAcross, type JourneyPage } from "../../shared/journey.js";
 import type { PcPage } from "../../shared/pc.js";
 import type { Snapshot } from "../../shared/snapshot.js";
@@ -93,6 +94,35 @@ seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
     snapshotId: held ? (chosen?.snapshotId ?? null) : null,
     pc: held ? (await import("../../shared/describe.js")).describePc(held.data) : null,
     missing: held?.missing ?? null,
+  };
+  return c.json(page);
+});
+
+seriesRoutes.get("/:number/abilities", async (c) => {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  const row = await findShown(c.req.param("number"), !!reader.admin);
+  if (!row) return c.json({ error: "No such series" }, 404);
+  const taken = await db
+    .select({
+      player: { id: user.id, name: user.name },
+      milestone: milestone.name,
+      pokemon: sql<Snapshot["pokemon"]>`${snapshot.data}->'pokemon'`,
+    })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .innerJoin(seriesPlayer, and(eq(seriesPlayer.seriesId, save.seriesId), eq(seriesPlayer.userId, save.userId)))
+    .innerJoin(user, eq(user.id, save.userId))
+    .where(eq(save.seriesId, row.id))
+    .orderBy(asc(user.name), asc(milestone.position));
+  const latest = new Map(taken.map((t) => [t.player.id, t]));
+  const { describeHolders } = await import("../../shared/describe.js");
+  const abilities: AbilitiesPage["abilities"] = {};
+  const page: AbilitiesPage = {
+    series: { number: row.number, name: row.name },
+    abilities,
+    trainers: [...latest.values()].map((t) => ({ player: t.player, milestone: t.milestone, mons: describeHolders(t.pokemon, abilities) })),
   };
   return c.json(page);
 });

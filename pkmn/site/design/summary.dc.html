@@ -16,6 +16,7 @@ body{margin:0}
 .go:not(:disabled):hover{background:#ef5148!important}
 .mvscroll{scrollbar-width:thin;scrollbar-color:#44506d transparent}
 .mvrow:not([aria-pressed="true"]):hover{background:rgba(255,255,255,0.06)!important}
+.crumb:hover{text-decoration:underline!important}
 </style>
 </helmet>
 <div style="flex: 1; width: {{rootW}}; height: {{rootH}}; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background: {{rootBg}}">
@@ -87,7 +88,10 @@ body{margin:0}
 </button>
 </sc-for>
 </div>
-<p role="tabpanel" style="flex: 1; margin: 6px -8px 0; min-height: 84px; box-sizing: border-box; padding: 10px 16px; border-top: 3px solid #2c3549; font-size: 15px; line-height: 1.4; color: #c3cad8; overflow: hidden">{{s.abDesc}}</p>
+<div role="tabpanel" style="flex: 1; display: flex; flex-direction: column; gap: 4px; margin: 6px -8px 0; min-height: 84px; box-sizing: border-box; padding: 10px 16px 8px; border-top: 3px solid #2c3549; overflow: hidden">
+<p style="margin: 0; font-size: 15px; line-height: 1.4; color: #c3cad8">{{s.abDesc}}</p>
+<a href="Abilities.dc.html" class="crumb" style="align-self: flex-start; display: flex; align-items: center; gap: 6px; min-height: 44px; font-family: 'Jersey 10', sans-serif; font-size: 20px; text-decoration: none; text-decoration-thickness: 2px; text-underline-offset: 4px">Who shares {{s.abName}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</div>
 </section>
 
 <section aria-labelledby="sum-def" style="display: flex; flex-direction: column; gap: 8px">
@@ -307,7 +311,7 @@ class Component extends DCLogic {
       name: p.nickname || p.name, species: p.name, hasSpecies: !!p.nickname, level, shiny: !!p.shiny,
       gender: p.gender === 'M' ? '♂' : p.gender === 'F' ? '♀' : '', genderInk: p.gender === 'F' ? '#ff9ec4' : '#8fc8ff',
       sprite: SPRITES[p.key], nature: natName || '?', hasNat: !!nat, natUpName: nat ? SHORT[nat[0]] : '', natDownName: nat ? SHORT[nat[1]] : '', ground: (TYPE[t0] || '#7d7f7d') + '80',
-      abilityList, abDesc: abPicked.desc, defRows,
+      abilityList, abDesc: abPicked.desc, abName: abPicked.name, defRows,
       types: defTypes.map((t) => ({name: t, c: TYPE[t] || '#7d7f7d'})), stats,
       total: STATS.reduce((n, [key]) => n + p.base[key], 0),
       levelTotal: full ? stats.reduce((n, x) => n + x.lvNum, 0) : '—',

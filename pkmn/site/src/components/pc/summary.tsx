@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { TriangleAlert } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { displayName, fightStat, learnCount, STAT_LABELS, type BagTm, type Mon, type MoveInfo, type StatID } from "../../../shared/mon";
 import { UnknownMark } from "@/components/marks";
@@ -75,7 +76,7 @@ export function tint(ratio: number): string {
   return ratio < 1 / 3 ? "bg-coral" : ratio < 0.5 ? "bg-yellow" : ratio < 2 / 3 ? "bg-green" : "bg-cyan";
 }
 
-function Info({ mon }: { mon: Mon }) {
+function Info({ mon, series }: { mon: Mon; series?: number }) {
   const n = mon.nature;
   const current = mon.abilities.find((a) => a.current) ?? mon.abilities[0];
   const [picked, setPicked] = useState(current?.id ?? null);
@@ -152,9 +153,20 @@ function Info({ mon }: { mon: Mon }) {
               </button>
             ))}
           </div>
-          <p role="tabpanel" className="-mx-2 mt-2 mb-0 min-h-20 border-t-3 border-cell px-4 py-3 text-sm leading-relaxed text-subtle">
-            {shown?.desc || "—"}
-          </p>
+          <div role="tabpanel" className="-mx-2 mt-2 flex min-h-20 flex-col gap-1 border-t-3 border-cell px-4 pt-3 pb-2">
+            <p className="m-0 text-sm leading-relaxed text-subtle">{shown?.desc || "—"}</p>
+            {series !== undefined && shown && (
+              <Link
+                to="/series/$number/abilities"
+                params={{ number: String(series) }}
+                search={{ ability: shown.id }}
+                className="-mx-1 flex min-h-11 w-fit items-center gap-1.5 rounded-lg px-1 font-heading text-xl text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                Who shares {shown.name}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            )}
+          </div>
         </section>
       )}
 
@@ -455,7 +467,7 @@ export function SummaryHead({ mon, title, closeRoom = false }: { mon: Mon; title
   );
 }
 
-export function SummaryBody({ mon, tms, gaps = [] }: { mon: Mon; tms: readonly BagTm[]; gaps?: readonly ExportGap[] }) {
+export function SummaryBody({ mon, tms, gaps = [], series }: { mon: Mon; tms: readonly BagTm[]; gaps?: readonly ExportGap[]; series?: number }) {
   const [page, setPage] = useState<Page>("info");
   const pages: [Page, string][] = [
     ["info", "Info"],
@@ -477,7 +489,7 @@ export function SummaryBody({ mon, tms, gaps = [] }: { mon: Mon; tms: readonly B
           page === "moves" ? "overflow-hidden" : "overflow-y-auto",
         )}
       >
-        {page === "info" ? <Info mon={mon} /> : page === "stats" ? <Stats mon={mon} /> : <Moves mon={mon} tms={tms} gaps={gaps} />}
+        {page === "info" ? <Info mon={mon} series={series} /> : page === "stats" ? <Stats mon={mon} /> : <Moves mon={mon} tms={tms} gaps={gaps} />}
       </div>
     </>
   );

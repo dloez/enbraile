@@ -21,7 +21,7 @@ function message(error: unknown): string {
 
 export function PcPage() {
   const { player, number } = useParams({ from: FROM });
-  const { snapshot } = useSearch({ from: FROM });
+  const { snapshot, mon } = useSearch({ from: FROM });
   const navigate = useNavigate();
   const { data } = authClient.useSession();
   const [page, setPage] = useState<Pc | null>(null);
@@ -71,6 +71,8 @@ export function PcPage() {
           <SnapshotPc
             key={page.milestone}
             mons={mons}
+            series={page.series.number}
+            initial={mon}
             items={page.pc.items}
             setas={page.pc.setas}
             money={page.pc.money}
