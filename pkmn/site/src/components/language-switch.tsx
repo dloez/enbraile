@@ -14,7 +14,7 @@ const t = messages({
 });
 
 function Flag({ of, className }: { of: Lang; className?: string }) {
-  return <img src={FLAGS[of]} alt="" width={28} height={20} className={cn("h-5 w-7 flex-none rounded-[3px] ring-2 ring-ink", className)} />;
+  return <img src={FLAGS[of]} alt="" width={32} height={24} className={cn("h-6 w-8 flex-none [image-rendering:pixelated]", className)} />;
 }
 
 const focus = "outline-none focus-visible:ring-3 focus-visible:ring-ring/50";

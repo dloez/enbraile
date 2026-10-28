@@ -128,6 +128,7 @@ adminSeries.put("/:id", async (c) => {
           scene: input.scene,
           ingestion: input.ingestion,
           rules: input.rules,
+          rulesEs: input.rulesEs,
           pool: input.pool,
         })
         .where(and(eq(series.id, row.id), eq(series.state, "draft")))
@@ -154,7 +155,7 @@ adminSeries.put("/:id", async (c) => {
 adminSeries.put("/:id/rules", async (c) => {
   const input = await body(c.req.raw, rulesInput);
   if (!input) return c.json({ error: t(c).rulesMarkdown }, 400);
-  const [updated] = await db.update(series).set({ rules: input.rules }).where(eq(series.id, c.req.param("id"))).returning();
+  const [updated] = await db.update(series).set({ rules: input.rules, rulesEs: input.rulesEs }).where(eq(series.id, c.req.param("id"))).returning();
   if (!updated) return c.json({ error: t(c).noSeries }, 404);
   return c.json(await adminView(updated));
 });

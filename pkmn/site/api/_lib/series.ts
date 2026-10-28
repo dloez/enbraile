@@ -69,6 +69,7 @@ seriesRoutes.get("/:number", async (c) => {
     game: chosen?.name ?? null,
     ingestion: row.ingestion,
     rules: row.rules,
+    rulesEs: row.rulesEs,
     milestones: await milestonesOf(row.id),
     trainers: (await trainersOf(row.id, user)).map((trainer) => ({ ...trainer, canUpload: mayUpload(user, row, trainer.id) })),
     canDownload: chosen?.fileKey != null && (!!user.admin || (await plays(row.id, user.id))),

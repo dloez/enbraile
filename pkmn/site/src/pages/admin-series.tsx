@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { STATE_CHIP, STATE_NAMES } from "@/pages/admin-series-list";
 import { type Game, gameList } from "../../shared/games";
-import { messages } from "../../shared/i18n";
+import { messages, type Lang } from "../../shared/i18n";
 import { MOVE_RULE_LABELS, MOVE_RULES } from "../../shared/pool";
 import { type Player, playerList } from "../../shared/players";
 import {
@@ -86,7 +86,8 @@ const t = messages({
     copyFrom: "Copy rules from",
     copy: "Copy",
     rulesLabel: "Rules in Markdown",
-    rulesNote: "Markdown, with tables. Headings become the rules' contents.",
+    rulesNote: "Markdown, with tables. Headings become the rules' contents. Readers see their language's rules, or the other language's while theirs are empty.",
+    rulesLanguage: "Rules language",
   },
   es: {
     marks: { none: "Control", round: "Ronda", tournament: "Torneo" },
@@ -141,7 +142,8 @@ const t = messages({
     copyFrom: "Copiar reglas de",
     copy: "Copiar",
     rulesLabel: "Reglas en Markdown",
-    rulesNote: "Markdown, con tablas. Los encabezados forman el índice de las reglas.",
+    rulesNote: "Markdown, con tablas. Los encabezados forman el índice de las reglas. Cada lector ve las reglas de su idioma, o las del otro mientras las suyas estén vacías.",
+    rulesLanguage: "Idioma de las reglas",
   },
 });
 
@@ -172,6 +174,7 @@ function draftOf(series: AdminSeries): Draft {
     scene: series.scene,
     ingestion: series.ingestion,
     rules: series.rules,
+    rulesEs: series.rulesEs,
     pool: series.pool,
     playerIds: series.playerIds,
     milestones: series.milestones,
@@ -239,7 +242,7 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
     setDraft({ ...draft, ...patch });
   };
   const chosen = games.find((g) => g.id === draft.gameId);
-  const checklist = startChecklist({ rules: draft.rules, gameHasFile: !!chosen?.fileName, milestones: draft.milestones.length, otherRunning: series.otherRunning });
+  const checklist = startChecklist({ rules: draft.rules, rulesEs: draft.rulesEs, gameHasFile: !!chosen?.fileName, milestones: draft.milestones.length, otherRunning: series.otherRunning });
   const ready = checklist.every((item) => item.done);
 
   async function run(action: () => Promise<AdminSeries | undefined>) {
@@ -263,10 +266,10 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
     editable
       ? api(`/admin/series/${series.id}`, adminSeries, { method: "PUT", body: { ...draft, number: series.number } satisfies SeriesInput })
       : running
-        ? api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules } })
+        ? api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules, rulesEs: draft.rulesEs } })
             .then(() => api(`/admin/series/${series.id}/players`, adminSeries, { method: "PUT", body: { playerIds: draft.playerIds } }))
             .then(() => api(`/admin/series/${series.id}/milestones`, adminSeries, { method: "PUT", body: { milestones: draft.milestones } }))
-        : api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules } });
+        : api(`/admin/series/${series.id}/rules`, adminSeries, { method: "PUT", body: { rules: draft.rules, rulesEs: draft.rulesEs } });
 
   const start = async () => {
     await save();
@@ -440,7 +443,7 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
             </div>
           </section>
 
-          <RulesEditor rules={draft.rules} others={others} onChange={(rules) => change({ rules })} />
+          <RulesEditor rules={draft.rules} rulesEs={draft.rulesEs} others={others} onChange={change} />
         </div>
 
         <aside aria-label={t.saveAndStart} className="flex flex-col gap-4 max-lg:order-first lg:sticky lg:top-6 lg:w-90 lg:flex-none">
@@ -695,9 +698,20 @@ function MoveButton({ label, icon, disabled, onClick }: { label: string; icon: "
   );
 }
 
-function RulesEditor({ rules, others, onChange }: { rules: string; others: AdminSeries[]; onChange: (rules: string) => void }) {
-  const sources = others.filter((s) => s.rules.trim() !== "");
+function RulesEditor({
+  rules,
+  rulesEs,
+  others,
+  onChange,
+}: {
+  rules: string;
+  rulesEs: string;
+  others: AdminSeries[];
+  onChange: (next: { rules?: string; rulesEs?: string }) => void;
+}) {
+  const sources = others.filter((s) => s.rules.trim() !== "" || s.rulesEs.trim() !== "");
   const [source, setSource] = useState("");
+  const [language, setLanguage] = useState<Lang>("es");
   const picked = sources.find((s) => s.id === source) ?? sources[0];
 
   return (
@@ -709,16 +723,27 @@ function RulesEditor({ rules, others, onChange }: { rules: string; others: Admin
         {sources.length > 0 && (
           <div className="flex w-full gap-2 sm:w-auto sm:gap-2.5">
             <SelectField label={t.copyFrom} size="sm" value={picked?.id ?? ""} onChange={setSource} options={sources.map((s) => ({ value: s.id, label: s.name }))} className="max-sm:flex-1" />
-            <button type="button" disabled={!picked} onClick={() => picked && onChange(picked.rules)} className={buttonVariants({ className: "min-h-10.5 px-4 text-[1.375rem]" })}>
+            <button type="button" disabled={!picked} onClick={() => picked && onChange({ rules: picked.rules, rulesEs: picked.rulesEs })} className={buttonVariants({ className: "min-h-10.5 px-4 text-[1.375rem]" })}>
               {t.copy}
             </button>
           </div>
         )}
       </div>
+      <Segmented
+        label={t.rulesLanguage}
+        options={[
+          { value: "es", label: "Español" },
+          { value: "en", label: "English" },
+        ]}
+        value={language}
+        onChange={setLanguage}
+        className="self-start"
+      />
       <textarea
         aria-label={t.rulesLabel}
-        value={rules}
-        onChange={(event) => onChange(event.target.value)}
+        lang={language}
+        value={language === "es" ? rulesEs : rules}
+        onChange={(event) => onChange(language === "es" ? { rulesEs: event.target.value } : { rules: event.target.value })}
         rows={14}
         className="min-h-60 resize-y rounded-xl border-3 bg-ink px-3 py-3 font-mono text-[0.8125rem] leading-relaxed text-foreground outline-none focus:border-primary focus:ring-3 focus:ring-ring/30 sm:min-h-75 sm:px-4 sm:py-3.5 sm:text-sm"
       />

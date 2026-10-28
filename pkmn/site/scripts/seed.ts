@@ -303,6 +303,7 @@ async function seedTheFinishedSeries(): Promise<string | null> {
       scene: "night",
       ingestion: "manual",
       rules: first.rules,
+      rulesEs: first.rulesEs,
       pool: first.pool,
       state: "finished",
       startedAt: now,

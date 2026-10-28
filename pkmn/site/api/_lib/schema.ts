@@ -115,6 +115,7 @@ export const series = pgTable(
     scene: sceneEnum("scene").notNull().default("night"),
     ingestion: ingestionEnum("ingestion").notNull().default("manual"),
     rules: text("rules").notNull().default(""),
+    rulesEs: text("rules_es").notNull().default(""),
     pool: jsonb("pool").$type<TeamPool>().notNull().default(DEFAULT_POOL),
     state: seriesStateEnum("state").notNull().default("draft"),
     startedAt: timestamp("started_at"),

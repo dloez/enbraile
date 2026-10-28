@@ -44,12 +44,13 @@ export const seriesInput = z.object({
   scene,
   ingestion,
   rules: z.string().max(100_000),
+  rulesEs: z.string().max(100_000),
   pool: teamPool,
   playerIds: z.array(z.string().min(1)).max(100),
   milestones: z.array(milestoneInput).max(30),
 });
 
-export const rulesInput = z.object({ rules: z.string().max(100_000) });
+export const rulesInput = z.object({ rules: z.string().max(100_000), rulesEs: z.string().max(100_000) });
 
 export const playersInput = z.object({ playerIds: z.array(z.string().min(1)).max(100) });
 
@@ -69,6 +70,7 @@ export const adminSeries = z.object({
   scene,
   ingestion,
   rules: z.string(),
+  rulesEs: z.string(),
   pool: teamPool,
   state: seriesState,
   playerIds: z.array(z.string()),
@@ -133,6 +135,7 @@ export const overrideDone = z.object({});
 export const seriesPage = seriesBanner.extend({
   ingestion,
   rules: z.string(),
+  rulesEs: z.string(),
   milestones: z.array(milestone),
   trainers: z.array(trainer),
   canDownload: z.boolean(),
@@ -143,6 +146,7 @@ export const seriesDeleted = z.object({});
 export function startChecklist(
   draft: {
     rules: string;
+    rulesEs: string;
     gameHasFile: boolean;
     milestones: number;
     otherRunning: string | null;
@@ -150,7 +154,7 @@ export function startChecklist(
   text: ChecklistText = checklistText,
 ): z.infer<typeof checklistItem>[] {
   const items = [
-    { label: text.rules, done: draft.rules.trim() !== "" },
+    { label: text.rules, done: draft.rules.trim() !== "" || draft.rulesEs.trim() !== "" },
     { label: text.game, done: draft.gameHasFile },
     { label: text.milestone, done: draft.milestones >= 1 },
   ];

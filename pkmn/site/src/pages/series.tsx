@@ -17,7 +17,7 @@ import { playTime } from "@/lib/records";
 import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { cn } from "@/lib/utils";
 import { downloadLink } from "../../shared/games";
-import { messages } from "../../shared/i18n";
+import { lang, messages } from "../../shared/i18n";
 import { type SeriesPage as Series, seriesPage, type Trainer } from "../../shared/series";
 
 const t = messages({
@@ -114,7 +114,7 @@ export function SeriesPage() {
         <League />
         <Trainers series={series} onChanged={reload} />
       </main>
-      <Rules rules={series.rules} />
+      <Rules rules={lang === "es" ? series.rulesEs || series.rules : series.rules || series.rulesEs} />
     </>
   );
 }

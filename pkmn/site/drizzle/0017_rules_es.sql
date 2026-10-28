@@ -1,0 +1,1 @@
+ALTER TABLE "series" ADD COLUMN "rules_es" text DEFAULT '' NOT NULL;

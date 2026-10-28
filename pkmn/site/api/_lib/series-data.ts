@@ -147,6 +147,7 @@ export async function adminView(row: SeriesRow, text: (typeof CHECKLIST_TEXT)["e
     scene: row.scene,
     ingestion: row.ingestion,
     rules: row.rules,
+    rulesEs: row.rulesEs,
     pool: row.pool,
     state: row.state,
     playerIds: players.map((p) => p.id),
@@ -154,7 +155,7 @@ export async function adminView(row: SeriesRow, text: (typeof CHECKLIST_TEXT)["e
     snapshots: taken?.snapshots ?? 0,
     checklist:
       row.state === "draft"
-        ? startChecklist({ rules: row.rules, gameHasFile: chosen?.fileKey != null, milestones: milestones.length, otherRunning: running }, text)
+        ? startChecklist({ rules: row.rules, rulesEs: row.rulesEs, gameHasFile: chosen?.fileKey != null, milestones: milestones.length, otherRunning: running }, text)
         : [],
     otherRunning: running,
     startedAt: row.startedAt?.toISOString() ?? null,
