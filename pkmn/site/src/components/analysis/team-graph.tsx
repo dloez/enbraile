@@ -380,8 +380,10 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
   const layoutRef = useRef<LayoutName>("concentric");
   const [minSynergy, setMinSynergy] = useState(0);
   const [labels, setLabels] = useState(false);
-  const [selection, setSelection] = useState<Selection>(null);
   const teamKey = team.map((m) => m.id).join("|");
+  const [picked, setPicked] = useState<{ key: string; selection: Selection }>({ key: teamKey, selection: null });
+  const selection = picked.key === teamKey ? picked.selection : null;
+  const setSelection = (next: Selection) => setPicked({ key: teamKey, selection: next });
   const els = useMemo(() => elements(team, analysis, layers, minSynergy), [team, analysis, layers, minSynergy]);
 
   useEffect(() => {
