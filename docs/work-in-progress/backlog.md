@@ -6,7 +6,7 @@ Laid out as the `/scope` skill's work-in-progress layout says. An entry's headin
 
 ### pkmn/site: where do a trainer's lives come from?
 
-The series page's trainer panel wants a trainer's lives, for a series that plays with a lives clause (series 1 plays without one), and nothing gives them yet. The rest of what the panel wants now comes from the snapshot, fainted Pokémon included, through a per-series ingestion mode ([Site v2 → Model](site-v2/discovery.md#model), [Snapshots In](site-v2/discovery.md#snapshots-in), 2026-10-23). Raised in the site v2 design pass. _(owner, 2026-10-22)_
+The series page's trainer panel wants a trainer's lives, for a series that plays with a lives clause (series 1 plays without one), and nothing gives them yet. The rest of what the panel wants now comes from the snapshot, fainted Pokémon included, through a per-series ingestion mode ([The pkmn Site → Snapshots](../pkmn/site/explanation/site.md#snapshots), 2026-10-23). Raised in the site v2 design pass. _(owner, 2026-10-22)_
 
 ### pkmn/site: what does the league do with a player who joins mid-league?
 
@@ -56,7 +56,7 @@ The [league](league/discovery.md#team-locking) is fully open for series 1: every
 
 ### pkmn/site: track what a locked league team spends in a manual series
 
-A locked round or cup team spends Mini Setas, mints and held items that the player must spend in the game too, and the site only sees that at the next snapshot. Series 1 does nothing about it ([league → Team Locking](league/discovery.md#team-locking)). A later series may deduct a locked team's spending from the bag the player's other teams see, or flag a next snapshot that does not show it spent, within manual series' trust stance ([Site v2 → Snapshots In](site-v2/discovery.md#snapshots-in)). _(owner, 2026-10-27)_
+A locked round or cup team spends Mini Setas, mints and held items that the player must spend in the game too, and the site only sees that at the next snapshot. Series 1 does nothing about it ([league → Team Locking](league/discovery.md#team-locking)). A later series may deduct a locked team's spending from the bag the player's other teams see, or flag a next snapshot that does not show it spent, within manual series' trust stance ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). _(owner, 2026-10-27)_
 
 **Do:**
 - [ ] Per the author's answers.
@@ -80,4 +80,12 @@ A Pokémon Showdown server and client of the group's own, so a league or cup mat
 
 ### pkmn/site: enforce a series' rules in team building
 
-A series' rules are Markdown the site only shows ([Site v2 → Accounts and Access](site-v2/discovery.md#accounts-and-access)). Later, team building could hold teams to them (e.g. one legendary per team).
+A series' rules are Markdown the site only shows ([The pkmn Site → Series](../pkmn/site/explanation/site.md#series)). Later, team building could hold teams to them (e.g. one legendary per team).
+
+### pkmn/site: show only what a series' rules allow of others' PCs
+
+Every PC at every snapshot is open to every player, for now ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). A series' rules may limit what a player sees of others' boxes (the league's box sheet), and the site could show only that. Left out of site v2. _(owner, 2026-10-22)_
+
+### pkmn/site: read saves of games other than Añil
+
+Any game can be created and downloaded, but the save upload reads Añil saves only ([Save Export](../pkmn/site/explanation/save-export.md)). A series played on another game needs an export for that game's saves. Left out of site v2 until such a series is planned. _(owner, 2026-10-22)_

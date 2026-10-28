@@ -261,6 +261,23 @@ On desktop the new page already came within 46 ms, and still does. The time unti
 
 ## Decisions
 
+- **Site v2's scoping decisions, with the owner's reasons,** kept when its work in progress closed; what each became is in the sections above. _(owner, 2026-10-22 to 2026-10-25)_
+  - Players sign in with Discord: one click, no passwords, and the Discord name is how the group knows each other.
+  - Anyone signed in sees nothing until an admin lets them in: the PCs are the group's own, with no invite links to manage.
+  - An admin is a separate local account, not a player, and the owner plays under their own Discord account like everyone else: a player building a team should not carry admin powers. Admins work in an admin UI rather than in code.
+  - A game is made once and reused by many series.
+  - The pieces are game → series → save → snapshot, and "Box" keeps the game's meaning, a page of the PC: the owner's pick.
+  - Every PC at every snapshot and every team is open to every player, for now ("I would not worry about this now"); showing only what a series' rules allow is a later idea.
+  - Saves arrive by each series' ingestion mode, manual first: the end goal is games that report by themselves, but Añil will not be modded again for it, so the model assumes neither.
+  - Manual ingestion trusts the players: no snapshot's TMs are checked against another's, and rolled TMs belong in the snapshot.
+  - Old exports are read as far as they go and never refused: series 1's MIRAMEEE and Vicky exports cannot be made again, and the site never stops working for a gap.
+  - Uploaded save zips are kept, so snapshots can be exported again when the export improves.
+  - No "tools" anywhere: the owner dislikes them as a concept, since they read as standalone.
+  - A player's profile gathers all their data across series, and their page in a series shows how they stood at each milestone, with no party ("it does not make much sense") and no PC tab, which would read badly.
+  - The series page ranks no one: the league owns rankings.
+  - One backend language, TypeScript, for Better Auth and types shared with the browser, all free at the group's size; Supabase was turned down because a free project pauses after a week idle.
+  - Files live in Backblaze B2: Vercel Blob's free allowance covers about one round of game downloads a month, and Cloudflare R2's URLs sit on the IPs Spanish ISPs block during LaLiga matches.
+  - Players' real saves for local checks stay in the gitignored `pkmn/site/saves/` and never enter the public repo.
 - **A page whose chunk a deploy removed reloads onto the new deploy, and `/assets/` paths are never rewritten to the page.** A tab opened before a deploy asked for its old chunk, the rewrite answered `index.html`, and the browser refused it ("disallowed MIME type (text/html)"), leaving the page on its frame until a manual reload; reported by the owner on 2026-10-28 and reproduced on a local production build. Vercel's Skew Protection, which keeps old deploys' assets, is not on the Hobby plan. The reload is guarded for ten seconds in `sessionStorage`. **Why:** forced by the deploy model; a 404 is the true answer for a missing asset. _(settled 2026-10-28)_
 - **Files the bucket holds that no row names are swept by a scheduled job.** **Why:** the owner, asked whether the clean-up is a script run by hand or scheduled. _(owner, 2026-10-28)_
 - **The sweep's build choices:** a Vercel Cron Job calling a route of the one API function, once a day since the Hobby account runs cron jobs at most daily; the route behind `CRON_SECRET`, as Vercel sends it, rather than an admin session, since the job signs in as no one; objects named by no row and at least a day old, longer than the save upload's hour since a daily sweep loses nothing by waiting, so an object written just before its row (a rolled zip, an icon sheet, a game zip being recorded, even one whose upload started long before) is not caught; the bucket listed before the rows are read, and the rows read again just before each delete, so a row recorded during the sweep keeps its object, except in the moment between that last read and the delete, which a save zip only reaches when its player has left the upload dialog on its pick step for over a day and saves just then; abandoned multipart uploads left to the next upload under their prefix, as before, since they are parts, not objects. **Why:** delegated build choices. _(settled 2026-10-28)_

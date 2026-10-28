@@ -1,6 +1,6 @@
 # The League: Discovery
 
-Scoped with the owner on 2026-10-27, while [site v2](../site-v2/discovery.md) closes its last entries; the owner lifted the earlier wait for it (2026-10-27).
+Scoped with the owner on 2026-10-27, while site v2 closed its last entries; the owner lifted the earlier wait for it (2026-10-27).
 
 ## Goal
 
@@ -57,7 +57,7 @@ Done when, on `pkmn.enbraile.vip`: series 1's league reads as it does in the app
 
 - **Q: Where do the league's rules live?** A: Hard-coded, as named values in one module (`shared/league.ts`): points, tie-break order, egg sources, round and cup team sizes, the bracket pattern. Every computation reads them from there. Looked at again once a series' rules become a data structure. **Why:** the owner. _(owner, 2026-10-27)_
 - **Q: The import's build?** A: A script under `pkmn/site/scripts/` reading the dump from the gitignored `pkmn/site/saves/`, with an explicit map from the app's users and players to site users; rerunnable, replacing series 1's league rows each time. Matchday teams come in as site teams sourced "Any Pokémon", locked to their round; tries as their teams; hatched counts as admin overrides until a snapshot says otherwise. _(proposed, 2026-10-27)_
-- **Q: Schema and rollback?** A: New tables through `drizzle-kit` migrations, forward only, each extending `npm run seed` ([`pkmn/site/CLAUDE.md`](../../../pkmn/site/CLAUDE.md)); rollback is site v2's: Vercel's Instant Rollback, a forward migration, Neon's point-in-time restore.
+- **Q: Schema and rollback?** A: New tables through `drizzle-kit` migrations, forward only, each extending `npm run seed` ([`pkmn/site/CLAUDE.md`](../../../pkmn/site/CLAUDE.md)); rollback is the site's ([The pkmn Site → Hosting and Deploys](../../pkmn/site/explanation/site.md#hosting-and-deploys)): Vercel's Instant Rollback, a forward migration, Neon's point-in-time restore.
 - **Q: Observability?** A: Nothing new: Vercel's function logs, as the rest of the site.
 - **Q: Verification?** A: `npm run gate` and every slice driven through the `verify-site` skill on the local stack; the import also checked against the dump's own standings.
 
@@ -77,7 +77,6 @@ Read 2026-10-27 from its public `/api/state` and its `logic.js` and `app.js`: 6 
 
 ## References
 
-- [Site v2 discovery](../site-v2/discovery.md): Pages, Team Building, Snapshots In.
 - [The pkmn Site](../../pkmn/site/explanation/site.md), [Team Builder](../../pkmn/site/explanation/team-builder.md), [Snapshot Format](../../pkmn/site/reference/snapshot.md).
 - [Series 1 Rules](../../pkmn/series/1/reference/rules.md), [Competition Format](../../pkmn/series/1/explanation/competition-format.md).
 - Code: `pkmn/site/shared/series.ts` (`MILESTONE_MARKS`), `api/_lib/schema.ts` (`series`, `seriesPlayer`, `milestone`, `snapshot`, `team`, `teamSource`), `src/pages/series.tsx`, `src/pages/player-profile.tsx`.
