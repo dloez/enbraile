@@ -18,6 +18,7 @@ import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { cn } from "@/lib/utils";
 import { downloadLink } from "../../shared/games";
 import { lang, messages } from "../../shared/i18n";
+import { type LeaguePage, leaguePage, type LeagueRound, played, winnerOf } from "../../shared/league";
 import { type SeriesPage as Series, seriesPage, type Trainer } from "../../shared/series";
 
 const t = messages({
@@ -47,6 +48,14 @@ const t = messages({
     trackSnapshots: (list: string) => `snapshots ${list}`,
     noSnapshots: "no snapshots",
     trackNone: (name: string) => `${name}, no snapshots`,
+    league: "League",
+    fullLeague: "Full league",
+    standings: "Standings",
+    roundsOf: (open: number, all: number) => `${open} of ${all} rounds`,
+    toPlay: (n: number) => `${n} to play`,
+    allPlayed: "All played",
+    vs: "vs",
+    matchLabel: (a: string, b: string, score: string | null) => `${a} vs ${b}, ${score ?? "to play"}`,
   },
   es: {
     failed: "Algo ha fallado",
@@ -74,6 +83,14 @@ const t = messages({
     trackSnapshots: (list: string) => `capturas ${list}`,
     noSnapshots: "sin capturas",
     trackNone: (name: string) => `${name}, sin capturas`,
+    league: "Liga",
+    fullLeague: "Liga completa",
+    standings: "Clasificación",
+    roundsOf: (open: number, all: number) => `${open} de ${all} rondas`,
+    toPlay: (n: number) => `${n} por jugar`,
+    allPlayed: "Todo jugado",
+    vs: "vs",
+    matchLabel: (a: string, b: string, score: string | null) => `${a} contra ${b}, ${score ?? "por jugar"}`,
   },
 });
 
@@ -111,11 +128,129 @@ export function SeriesPage() {
     <>
       <SeriesHeader series={series} />
       <main className={cn(readPage, "flex-none gap-3 pt-5 pb-6 sm:gap-3.5 sm:pt-6 sm:pb-8")}>
-        <League />
+        <LeagueSummary number={series.number} />
         <Trainers series={series} onChanged={reload} />
       </main>
       <Rules rules={lang === "es" ? series.rulesEs || series.rules : series.rules || series.rulesEs} />
     </>
+  );
+}
+
+const SUMMARY_PLACES = 3;
+
+function LeagueSummary({ number }: { number: number }) {
+  const { data: session } = authClient.useSession();
+  const [league, setLeague] = useState<LeaguePage | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setLeague(null);
+    setFailed(false);
+    api(`/series/${number}/league`, leaguePage).then(setLeague, () => setFailed(true));
+  }, [number]);
+
+  if (failed) return null;
+  if (!league) return <League />;
+  if (league.roundMilestones.length === 0) return null;
+  const names = new Map(league.players.map((p) => [p.id, p.name]));
+  const nameOf = (id: string) => names.get(id) ?? "?";
+  const current = league.rounds.at(-1);
+
+  return (
+    <section aria-labelledby="league-title" className="mb-4 flex flex-col gap-3 sm:mb-5.5 sm:gap-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4">
+        <h2 id="league-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
+          {t.league}
+        </h2>
+        <Link
+          to="/series/$number/league"
+          params={{ number: String(number) }}
+          className="-my-2.5 flex min-h-11 items-center gap-1.5 font-heading text-[1.375rem] text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {t.fullLeague}
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+        <div className="flex flex-col gap-2.5 rounded-[18px] border-3 bg-card px-4 pt-3.5 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
+          <div className="flex items-baseline gap-2.5">
+            <h3 className="m-0 font-heading text-[1.625rem] font-normal">{t.standings}</h3>
+            <span className="font-heading text-xl text-muted-foreground">{t.roundsOf(league.rounds.length, league.roundMilestones.length)}</span>
+          </div>
+          <div className="overflow-hidden rounded-xl border-3 bg-box">
+            {league.standings.slice(0, SUMMARY_PLACES).map((row, index, shown) => {
+              const name = nameOf(row.player);
+              const first = row.place === 1;
+              return (
+                <div
+                  key={row.player}
+                  className={cn(
+                    "grid min-h-13 grid-cols-[32px_minmax(0,1fr)_56px_56px] items-center gap-2.5 px-3",
+                    row.player === session?.user.id && "bg-yellow/6",
+                    index < shown.length - 1 && "border-b-3",
+                  )}
+                >
+                  <span className={cn("text-center font-heading text-[1.75rem]", first ? "text-yellow" : "text-faint")}>{row.place}</span>
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <PlayerBadge name={name} colour={playerColour(name)} size="cell" />
+                    <span className="truncate font-heading text-2xl">{name}</span>
+                  </span>
+                  <span className="text-right font-heading text-[1.75rem] text-yellow">{row.points}</span>
+                  <span className="text-right font-heading text-[1.375rem] text-muted-foreground">
+                    {row.wins}–{row.losses}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {current && <CurrentRound round={current} me={session?.user.id ?? null} nameOf={nameOf} />}
+      </div>
+    </section>
+  );
+}
+
+function CurrentRound({ round, me, nameOf }: { round: LeagueRound; me: string | null; nameOf: (id: string) => string }) {
+  const left = round.matches.filter((m) => !played(m)).length;
+  return (
+    <div className="flex flex-col gap-2.5 rounded-[18px] border-3 border-primary bg-card px-4 pt-3.5 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
+      <div className="flex flex-wrap items-baseline gap-x-2.5">
+        <h3 className="m-0 font-heading text-[1.625rem] font-normal">{t.round(round.number)}</h3>
+        <span className="font-heading text-xl text-muted-foreground">{round.milestone}</span>
+        <span className={cn("font-heading text-xl", left ? "text-warning" : "text-green")}>{left ? t.toPlay(left) : t.allPlayed}</span>
+      </div>
+      {round.matches.map((match) => {
+        const done = played(match);
+        const winner = winnerOf(match);
+        const a = nameOf(match.a);
+        const b = nameOf(match.b);
+        const score = done ? `${match.gamesA}–${match.gamesB}` : null;
+        return (
+          <div
+            key={match.id}
+            role="group"
+            aria-label={t.matchLabel(a, b, score)}
+            className={cn(
+              "grid min-h-13 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-xl border-3 bg-box px-3",
+              done ? "border-solid" : "border-dashed",
+              match.a === me || match.b === me ? "border-trophy-rim" : "border-border",
+            )}
+          >
+            <span aria-hidden="true" className={cn("flex min-w-0 items-center gap-2.5", winner && winner !== match.a && "opacity-55")}>
+              <PlayerBadge name={a} colour={playerColour(a)} size="cell" />
+              <span className={cn("truncate font-heading text-[1.4375rem]", winner === match.a && "text-yellow")}>{a}</span>
+            </span>
+            <span aria-hidden="true" className={cn("text-center font-heading", done ? "text-[1.4375rem]" : "text-[1.1875rem] text-faint")}>
+              {score ?? t.vs}
+            </span>
+            <span aria-hidden="true" className={cn("flex min-w-0 items-center justify-end gap-2.5", winner && winner !== match.b && "opacity-55")}>
+              <span className={cn("truncate font-heading text-[1.4375rem]", winner === match.b && "text-yellow")}>{b}</span>
+              <PlayerBadge name={b} colour={playerColour(b)} size="cell" />
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

@@ -1,8 +1,9 @@
 import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { prefetch } from "@/lib/api";
-import { abilitiesPage, adminGamesPage, adminHomePage, adminPlayersPage, adminSeriesListPage, adminSeriesPage, pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
+import { abilitiesPage, adminGamesPage, adminHomePage, adminPlayersPage, adminSeriesListPage, adminSeriesPage, leaguePage, pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
 import { HomePage } from "@/pages/home";
+import type { LeagueView } from "@/pages/league";
 
 const rootRoute = createRootRoute({ component: SiteShell });
 
@@ -28,8 +29,22 @@ const seriesRoute = createRoute({
   loader: ({ params }) => {
     seriesPage.load();
     prefetch(`/series/${encodeURIComponent(params.number)}`);
+    prefetch(`/series/${encodeURIComponent(params.number)}/league`);
   },
   component: seriesPage.Page,
+});
+
+export type LeagueSearch = { view?: Exclude<LeagueView, "overview"> };
+
+const leagueRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/series/$number/league",
+  validateSearch: (search: Record<string, unknown>): LeagueSearch => (search.view === "rounds" ? { view: "rounds" } : {}),
+  loader: ({ params }) => {
+    leaguePage.load();
+    prefetch(`/series/${encodeURIComponent(params.number)}/league`);
+  },
+  component: leaguePage.Page,
 });
 
 const playerProfileRoute = createRoute({
@@ -162,6 +177,7 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   seriesListRoute,
   seriesRoute,
+  leagueRoute,
   playerProfileRoute,
   playerSeriesRoute,
   pcRoute,

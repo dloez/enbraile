@@ -127,6 +127,13 @@
       "when": 1793217510577,
       "tag": "0017_rules_es",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793228391710,
+      "tag": "0018_league",
+      "breakpoints": true
     }
   ]
 }

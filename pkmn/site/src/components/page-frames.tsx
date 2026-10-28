@@ -2,14 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { AdminNav } from "@/components/admin-nav";
 import { listPage, toolPage, readPage } from "@/components/page";
-import { PixelIcon } from "@/components/pixel-icon";
 import { Placeholder } from "@/components/placeholder";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
 
 const t = messages({
-  en: { league: "League", wip: "Work in progress", teams: "Teams", series: "Series", trainers: "Trainers", career: "Career", journey: "Journey" },
-  es: { league: "Liga", wip: "En construcción", teams: "Equipos", series: "Series", trainers: "Entrenadores", career: "Trayectoria", journey: "Recorrido" },
+  en: { league: "League", teams: "Teams", series: "Series", trainers: "Trainers", career: "Career", journey: "Journey" },
+  es: { league: "Liga", teams: "Equipos", series: "Series", trainers: "Entrenadores", career: "Trayectoria", journey: "Recorrido" },
 });
 
 export function League() {
@@ -18,11 +17,26 @@ export function League() {
       <h2 id="league-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
         {t.league}
       </h2>
-      <div className="flex min-h-24 items-center justify-center gap-3.5 rounded-2xl border-3 border-dashed border-cell-hi bg-box sm:min-h-35 sm:gap-4.5">
-        <PixelIcon name="barrier" className="size-10 sm:size-14" />
-        <span className="font-heading text-[1.75rem] text-yellow sm:text-4xl">{t.wip}</span>
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+        <Placeholder className="h-60 rounded-[18px]" />
+        <Placeholder className="h-60 rounded-[18px]" />
       </div>
     </section>
+  );
+}
+
+export function LeagueFrame() {
+  return (
+    <main className={cn(listPage, "gap-4 pt-4 pb-8 sm:gap-5.5 sm:pt-5.5 sm:pb-10")}>
+      <div className="flex flex-col gap-2.5 sm:gap-3.5">
+        <Placeholder className="h-6 w-24 rounded-md" />
+        <h1 className="m-0 font-heading text-[3.25rem] leading-[0.85] font-normal sm:text-6xl">{t.league}</h1>
+      </div>
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-5">
+        <Placeholder className="h-110 rounded-[18px]" />
+        <Placeholder className="h-80 rounded-[18px]" />
+      </div>
+    </main>
   );
 }
 

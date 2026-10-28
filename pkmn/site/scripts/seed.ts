@@ -11,7 +11,7 @@ import { readEntry, zipEntries } from "../api/_lib/export/zip.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
 import { ingest, savePrefix } from "../api/_lib/ingest.js";
 import { refreshItemIcons } from "../api/_lib/item-icons.js";
-import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
+import { game, leagueMatch, leagueRound, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
 import { DEFAULT_POOL } from "../shared/pool.js";
 import { suggestMilestone } from "../shared/save-upload.js";
 import type { MilestoneMark } from "../shared/series.js";
@@ -19,9 +19,9 @@ import type { Snapshot } from "../shared/snapshot.js";
 import { emptySlots, MOVE_SLOTS } from "../shared/team.js";
 import { partSizeFor, uploadParts } from "../shared/upload.js";
 import { createAdmin, createTestPlayer, usernameTaken } from "./accounts.js";
+import { localOrPreview } from "./target.js";
 
 const admin = { name: "admin", password: "admin-password" };
-const previewBucket = "pkmn-site-preview-enbraile";
 const testPlayers = [
   { name: "Red", allowed: true },
   { name: "Blue", allowed: true },
@@ -51,6 +51,11 @@ const finishedSeries = { number: 2, name: "Series 2", players: ["Red", "Blue"], 
 const seedSnapshot = { player: "Red", saves: new URL("../saves/", import.meta.url), fallback: "Post-League" };
 
 const seedTeam = { name: "Seed team", members: 3 };
+
+const seedLeague = [
+  { milestone: "Gym 1", a: "Red", b: "Blue", gamesA: 2, gamesB: 1, faintedA: 4, faintedB: 6 },
+  { milestone: "Gym 2", a: "Blue", b: "Red", gamesA: null, gamesB: null, faintedA: null, faintedB: null },
+];
 
 const gameItems = new URL("../../games/anil/game/base/es-v4.14/Graphics/Items/", import.meta.url);
 
@@ -275,6 +280,29 @@ async function seedTheTeam(): Promise<string | null> {
   return `${seedSnapshot.player}'s ${seedTeam.name} of ${Math.min(seedTeam.members, latest.data.pokemon.length)} on their ${latest.milestone} snapshot`;
 }
 
+async function seedTheLeague(): Promise<string | null> {
+  const [row] = await db.select({ id: series.id }).from(series).where(eq(series.number, seedSeries.number));
+  if (!row) throw new Error(`${seedSeries.name} is missing`);
+  const [opened] = await db.select({ id: leagueRound.id }).from(leagueRound).where(eq(leagueRound.seriesId, row.id));
+  if (opened) return null;
+  const milestones = await db.select({ id: milestone.id, name: milestone.name }).from(milestone).where(eq(milestone.seriesId, row.id));
+  const players = await db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.username, seedSeries.players.map((name) => name.toLowerCase())));
+  const idOf = (name: string) => players.find((p) => p.name === name)?.id;
+  await db.transaction(async (tx) => {
+    for (const round of seedLeague) {
+      const at = milestones.find((m) => m.name === round.milestone);
+      const a = idOf(round.a);
+      const b = idOf(round.b);
+      if (!at || !a || !b) throw new Error(`${seedSeries.name} has no ${round.milestone}, ${round.a} or ${round.b}`);
+      const roundId = crypto.randomUUID();
+      await tx.insert(leagueRound).values({ id: roundId, seriesId: row.id, milestoneId: at.id });
+      const { gamesA, gamesB, faintedA, faintedB } = round;
+      await tx.insert(leagueMatch).values({ id: crypto.randomUUID(), roundId, position: 0, playerA: a, playerB: b, gamesA, gamesB, faintedA, faintedB });
+    }
+  });
+  return `its league's rounds at ${seedLeague.map((r) => `${r.milestone} (${r.a} v ${r.b}, ${r.gamesA === null ? "to play" : `${r.gamesA}–${r.gamesB}`})`).join(" and ")}`;
+}
+
 async function seedTheFinishedSeries(): Promise<string | null> {
   const [existing] = await db.select({ id: series.id }).from(series).where(eq(series.number, finishedSeries.number));
   if (existing) return null;
@@ -323,13 +351,7 @@ async function seedTheFinishedSeries(): Promise<string | null> {
 }
 
 async function main() {
-  const remote = ["DATABASE_URL", "S3_ENDPOINT"]
-    .map((variable) => new URL(requireEnv(variable)).hostname)
-    .filter((host) => host !== "localhost" && host !== "127.0.0.1");
-  const preview = remote.length > 0;
-  if (preview && (process.env.SEED_TARGET !== "preview" || requireEnv("S3_BUCKET") !== previewBucket)) {
-    throw new Error(`Refusing to seed ${remote.join(" and ")}: the seed is for the local stack, or for the preview environment with SEED_TARGET=preview and the ${previewBucket} bucket`);
-  }
+  const preview = localOrPreview("SEED_TARGET", "seed");
   const adminPassword = preview ? requireEnv("SEED_ADMIN_PASSWORD") : admin.password;
 
   if (!(await usernameTaken(admin.name))) await createAdmin(admin.name, adminPassword);
@@ -340,9 +362,10 @@ async function main() {
   await seedTheSeries();
   const seededSnapshot = await seedTheSnapshot();
   const seededTeam = await seedTheTeam();
+  const seededLeague = await seedTheLeague();
   const seededFinished = await seedTheFinishedSeries();
   console.log(
-    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
+    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
   );
 }
 

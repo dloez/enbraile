@@ -4,7 +4,7 @@ import { CHECKLIST_TEXT, milestonesInput, newSeries, playersInput, rulesInput, s
 import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
-import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
+import { game, leagueRound, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
 import { adminView, type SeriesRow } from "./series-data.js";
 import { says } from "./i18n.js";
 
@@ -12,6 +12,7 @@ const t = says({
   en: {
     seriesExists: (n: number) => `Series ${n} exists`,
     moveSnapshots: (names: string[]) => `Move or delete the snapshots at ${names.join(", ")} first`,
+    roundsAt: (names: string[]) => `League rounds are played at ${names.join(", ")}`,
     missing: (labels: string[]) => `Missing: ${labels.join(", ")}`,
     seriesNeeds: "A series needs a number and a name",
     noSeries: "No such series",
@@ -35,6 +36,7 @@ const t = says({
   es: {
     seriesExists: (n: number) => `La serie ${n} ya existe`,
     moveSnapshots: (names: string[]) => `Mueve o borra antes las capturas de ${names.join(", ")}`,
+    roundsAt: (names: string[]) => `Se juegan rondas de la liga en ${names.join(", ")}`,
     missing: (labels: string[]) => `Falta: ${labels.join(", ")}`,
     seriesNeeds: "Una serie necesita un número y un nombre",
     noSeries: "Esa serie no existe",
@@ -210,6 +212,12 @@ adminSeries.put("/:id/milestones", async (c) => {
     const blocked = dropped.filter((m) => held.some((h) => h.milestoneId === m.id)).map((m) => m.name);
     if (blocked.length > 0) return c.json({ error: t(c).moveSnapshots(blocked) }, 409);
   }
+  const rounds = await db.select({ milestoneId: leagueRound.milestoneId }).from(leagueRound).where(eq(leagueRound.seriesId, row.id));
+  const unrounded = current
+    .filter((m) => rounds.some((r) => r.milestoneId === m.id))
+    .filter((m) => input.milestones.find((kept) => kept.id === m.id)?.mark !== "round")
+    .map((m) => m.name);
+  if (unrounded.length > 0) return c.json({ error: t(c).roundsAt(unrounded) }, 409);
   await db.transaction(async (tx) => {
     if (dropped.length > 0) await tx.delete(milestone).where(inArray(milestone.id, dropped.map((m) => m.id)));
     for (const [index, id] of kept.entries()) {

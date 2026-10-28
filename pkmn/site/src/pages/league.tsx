@@ -1,0 +1,559 @@
+import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { listPage } from "@/components/page";
+import { PlayerBadge, playerColour } from "@/components/player-badge";
+import { LeagueFrame } from "@/components/page-frames";
+import { api } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
+import { messages } from "../../shared/i18n";
+import { type LeagueMatch, type LeaguePage as League, type LeagueRound, leaguePage, played, type Standing, winnerOf } from "../../shared/league";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    breadcrumb: "Breadcrumb",
+    series: (n: number) => `Series ${n}`,
+    title: "League",
+    view: "View",
+    overview: "Overview",
+    rounds: "Rounds",
+    status: (open: number, all: number, done: number, total: number) => `${open} of ${all} rounds · ${done} of ${total} played`,
+    standings: "Standings",
+    place: "#",
+    trainer: "Trainer",
+    points: "Points",
+    pts: (n: number) => (n === 1 ? "pt" : "pts"),
+    wl: "W–L",
+    games: "Games",
+    fainted: "Fainted",
+    you: "You",
+    beat: (names: string) => `Beat ${names}`,
+    lostTo: (names: string) => `Lost to ${names}`,
+    drawn: "Random draw",
+    youInLeague: "You in the league",
+    next: "Your next match",
+    yourRounds: "Your rounds",
+    now: "Now in the league",
+    latest: "Latest results",
+    noResults: "No results yet",
+    round: (n: number) => `Round ${n}`,
+    short: (n: number) => `R${n}`,
+    stage: (n: number, milestone: string) => `Round ${n} · ${milestone}`,
+    vs: (name: string) => `vs ${name}`,
+    allPlayed: "All played",
+    toPlay: (n: number) => `${n} to play`,
+    bye: (name: string) => `${name} rests`,
+    won: "W",
+    lost: "L",
+    matchLabel: (a: string, b: string, score: string | null) => `${a} vs ${b}, ${score ?? "to play"}`,
+    roundLabel: (a: string, b: string, n: number, score: string | null) => `${a} vs ${b}, round ${n}, ${score ?? "to play"}`,
+    headToHead: "Head to head",
+    noRounds: "No round has been opened yet",
+  },
+  es: {
+    failed: "Algo ha fallado",
+    breadcrumb: "Ruta de navegación",
+    series: (n: number) => `Serie ${n}`,
+    title: "Liga",
+    view: "Vista",
+    overview: "Resumen",
+    rounds: "Rondas",
+    status: (open: number, all: number, done: number, total: number) => `${open} de ${all} rondas · ${done} de ${total} jugados`,
+    standings: "Clasificación",
+    place: "#",
+    trainer: "Entrenador",
+    points: "Puntos",
+    pts: (n: number) => (n === 1 ? "pt" : "pts"),
+    wl: "V–D",
+    games: "Partidas",
+    fainted: "Debilitados",
+    you: "Tú",
+    beat: (names: string) => `Ganó a ${names}`,
+    lostTo: (names: string) => `Perdió con ${names}`,
+    drawn: "Sorteo",
+    youInLeague: "Tú en la liga",
+    next: "Tu próximo combate",
+    yourRounds: "Tus rondas",
+    now: "Ahora en la liga",
+    latest: "Últimos resultados",
+    noResults: "Aún no hay resultados",
+    round: (n: number) => `Ronda ${n}`,
+    short: (n: number) => `R${n}`,
+    stage: (n: number, milestone: string) => `Ronda ${n} · ${milestone}`,
+    vs: (name: string) => `contra ${name}`,
+    allPlayed: "Todo jugado",
+    toPlay: (n: number) => `${n} por jugar`,
+    bye: (name: string) => `${name} descansa`,
+    won: "V",
+    lost: "D",
+    matchLabel: (a: string, b: string, score: string | null) => `${a} contra ${b}, ${score ?? "por jugar"}`,
+    roundLabel: (a: string, b: string, n: number, score: string | null) => `${a} contra ${b}, ronda ${n}, ${score ?? "por jugar"}`,
+    headToHead: "Cara a cara",
+    noRounds: "Aún no se ha abierto ninguna ronda",
+  },
+});
+
+const FROM = "/series/$number/league";
+
+export type LeagueView = "overview" | "rounds";
+
+function message(error: unknown): string {
+  return error instanceof Error ? error.message : t.failed;
+}
+
+function score(match: LeagueMatch, side: "a" | "b" = "a"): string | null {
+  if (!played(match)) return null;
+  return side === "a" ? `${match.gamesA}–${match.gamesB}` : `${match.gamesB}–${match.gamesA}`;
+}
+
+export function LeaguePage() {
+  const { number } = useParams({ from: FROM });
+  const { view = "overview" } = useSearch({ from: FROM });
+  const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const [league, setLeague] = useState<League | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLeague(null);
+    setError(null);
+    api(`/series/${encodeURIComponent(number)}/league`, leaguePage).then(setLeague, (caught: unknown) => setError(message(caught)));
+  }, [number]);
+
+  if (error) {
+    return (
+      <main className={cn(listPage, "py-7 sm:py-9")}>
+        <p role="alert" className="m-0 text-destructive">
+          {error}
+        </p>
+      </main>
+    );
+  }
+  if (!league) return <LeagueFrame />;
+
+  const names = new Map(league.players.map((p) => [p.id, p.name]));
+  const nameOf = (id: string) => names.get(id) ?? "?";
+  const me = session?.user.id && names.has(session.user.id) ? session.user.id : null;
+  const matches = league.rounds.flatMap((r) => r.matches);
+  const views: { value: LeagueView; label: string }[] = [
+    { value: "overview", label: t.overview },
+    { value: "rounds", label: t.rounds },
+  ];
+
+  return (
+    <main className={cn(listPage, "gap-4 pt-4 pb-8 sm:gap-5.5 sm:pt-5.5 sm:pb-10")}>
+      <div className="flex flex-col gap-2.5 sm:gap-3.5">
+        <nav aria-label={t.breadcrumb} className="flex font-heading text-xl sm:text-[1.375rem]">
+          <Link
+            to="/series/$number"
+            params={{ number: String(league.number) }}
+            className="-my-2.5 flex min-h-11 items-center gap-2 text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
+              <path d="M12 2L2 9l10 7z" />
+            </svg>
+            {t.series(league.number)}
+          </Link>
+        </nav>
+        <div className="flex flex-wrap items-end gap-3 sm:gap-6">
+          <h1 className="m-0 font-heading text-[3.25rem] leading-[0.85] font-normal sm:text-6xl">{t.title}</h1>
+          <span className="ml-auto flex min-h-9 items-center rounded-lg border-3 bg-ink px-2.5 font-heading text-lg whitespace-nowrap text-subtle sm:order-last sm:min-h-11 sm:rounded-[10px] sm:px-3.5 sm:text-[1.375rem]">
+            {t.status(league.rounds.length, league.roundMilestones.length, matches.filter(played).length, matches.length)}
+          </span>
+          <div role="radiogroup" aria-label={t.view} className="grid w-full grid-cols-2 gap-1 rounded-xl border-3 bg-ink p-1 sm:flex sm:w-auto">
+            {views.map((v) => (
+              <button
+                key={v.value}
+                type="button"
+                role="radio"
+                aria-checked={v.value === view}
+                onClick={() => void navigate({ to: FROM, params: { number }, search: v.value === "overview" ? {} : { view: v.value }, replace: true })}
+                className={cn(
+                  "min-h-11 cursor-pointer rounded-lg px-2 pb-0.5 font-heading text-[1.375rem] outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-4.5 sm:text-2xl",
+                  v.value === view ? "bg-border text-white" : "text-muted-foreground hover:bg-cell hover:text-white",
+                )}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {view === "rounds" ? <Rounds league={league} me={me} nameOf={nameOf} /> : <Overview league={league} me={me} nameOf={nameOf} />}
+    </main>
+  );
+}
+
+type Named = { league: League; me: string | null; nameOf: (id: string) => string };
+
+function Overview({ league, me, nameOf }: Named) {
+  return (
+    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-5">
+      <StandingsTable league={league} me={me} nameOf={nameOf} />
+      {me ? <Mine league={league} me={me} nameOf={nameOf} /> : <Latest league={league} nameOf={nameOf} />}
+    </div>
+  );
+}
+
+function tieNote(row: Standing, nameOf: (id: string) => string): string | null {
+  if (!row.tie) return null;
+  if (row.tie.beat.length) return t.beat(row.tie.beat.map(nameOf).join(", "));
+  if (row.tie.lostTo.length) return t.lostTo(row.tie.lostTo.map(nameOf).join(", "));
+  return t.drawn;
+}
+
+const STANDING_COLUMNS = "sm:grid-cols-[56px_minmax(0,1fr)_84px_72px_84px_84px]";
+
+function StandingsTable({ league, me, nameOf }: Named) {
+  return (
+    <div role="table" aria-label={t.standings} className="overflow-hidden rounded-[18px] border-3 bg-card">
+      <div role="rowgroup" className="hidden sm:block">
+        <div role="row" className={cn("grid min-h-12 items-center border-b-3 bg-box font-heading text-xl text-muted-foreground", STANDING_COLUMNS)}>
+          <span role="columnheader" className="text-center">
+            {t.place}
+          </span>
+          <span role="columnheader">{t.trainer}</span>
+          <span role="columnheader" className="text-center text-yellow">
+            {t.points}
+          </span>
+          <span role="columnheader" className="text-center">
+            {t.wl}
+          </span>
+          <span role="columnheader" className="text-center">
+            {t.games}
+          </span>
+          <span role="columnheader" className="text-center">
+            {t.fainted}
+          </span>
+        </div>
+      </div>
+      <div role="rowgroup">
+        {league.standings.map((row, index) => {
+          const name = nameOf(row.player);
+          const note = tieNote(row, nameOf);
+          const first = row.place === 1;
+          return (
+            <Link
+              key={row.player}
+              to="/players/$player"
+              params={{ player: row.player }}
+              role="row"
+              className={cn(
+                "grid min-h-17 grid-cols-[30px_minmax(0,1fr)_56px] items-center gap-2.5 py-1.5 pr-3 pl-2 text-foreground outline-none hover:bg-row-hi focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset sm:min-h-19 sm:gap-0 sm:p-0",
+                STANDING_COLUMNS,
+                row.player === me && "bg-yellow/6",
+                index < league.standings.length - 1 && "border-b-3",
+              )}
+            >
+              <span role="cell" className={cn("text-center font-heading text-[1.875rem] sm:text-4xl", first ? "text-yellow" : "text-faint")}>
+                {row.place}
+              </span>
+              <span role="cell" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                <PlayerBadge name={name} colour={playerColour(name)} size="sm" />
+                <span className="flex min-w-0 flex-col gap-0.5 leading-[1.05]">
+                  <span className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="truncate font-heading text-[1.5625rem] sm:text-[1.75rem]">{name}</span>
+                    {row.player === me && <span className="rounded-sm bg-yellow px-1.5 font-heading text-sm text-ink sm:text-[0.9375rem]">{t.you}</span>}
+                  </span>
+                  <span className="font-heading text-[1.0625rem] whitespace-nowrap text-muted-foreground sm:hidden">
+                    {row.wins}–{row.losses} · {row.gamesWon}–{row.gamesLost}
+                  </span>
+                  {note && <span className="text-xs font-bold text-muted-foreground sm:text-[0.8125rem]">{note}</span>}
+                </span>
+              </span>
+              <span role="cell" className="flex flex-col items-end leading-[0.95] sm:items-center">
+                <span className={cn("font-heading text-4xl sm:text-[2.5rem]", first ? "text-yellow" : "text-foreground")}>{row.points}</span>
+                <span className="font-heading text-sm text-muted-foreground sm:hidden">{t.pts(row.points)}</span>
+              </span>
+              <span role="cell" className="hidden text-center font-heading text-[1.625rem] sm:block">
+                {row.wins}–{row.losses}
+              </span>
+              <span role="cell" className="hidden text-center font-heading text-2xl text-muted-foreground sm:block">
+                {row.gamesWon}–{row.gamesLost}
+              </span>
+              <span role="cell" className="hidden text-center font-heading text-2xl text-muted-foreground sm:block">
+                {row.fainted}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Mine({ league, me, nameOf }: Named & { me: string }) {
+  const mine = league.rounds.flatMap((round) => round.matches.filter((m) => m.a === me || m.b === me).map((match) => ({ round, match })));
+  const next = mine.find(({ match }) => !played(match));
+  return (
+    <aside aria-label={t.youInLeague} className="flex flex-col gap-3.5">
+      {next && <NextMatch round={next.round} match={next.match} me={me} nameOf={nameOf} />}
+      <section aria-labelledby="yours" className="flex flex-col gap-2 rounded-[18px] border-3 bg-card px-3.5 pt-3.5 pb-4 sm:px-4.5 sm:pt-4 sm:pb-4.5">
+        <h2 id="yours" className="m-0 mb-1 font-heading text-[1.625rem] font-normal">
+          {t.yourRounds}
+        </h2>
+        {mine.map(({ round, match }) => {
+          const home = match.a === me;
+          const done = played(match);
+          const won = winnerOf(match) === me;
+          return (
+            <div
+              key={match.id}
+              className="grid min-h-11.5 grid-cols-[34px_26px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] border-3 bg-box px-3 sm:grid-cols-[44px_30px_minmax(0,1fr)_auto]"
+            >
+              <span className="font-heading text-lg text-muted-foreground">{t.short(round.number)}</span>
+              <span
+                className={cn(
+                  "grid size-6.5 place-items-center rounded-md font-heading text-lg text-ink",
+                  !done ? "bg-cell-hi" : won ? "bg-green" : "bg-coral",
+                )}
+              >
+                {!done ? "·" : won ? t.won : t.lost}
+              </span>
+              <span className="truncate font-heading text-[1.375rem] sm:text-[1.4375rem]">{t.vs(nameOf(home ? match.b : match.a))}</span>
+              <span className={cn("font-heading text-[1.4375rem] sm:text-2xl", won ? "text-yellow" : "text-foreground")}>
+                {score(match, home ? "a" : "b") ?? ""}
+              </span>
+            </div>
+          );
+        })}
+      </section>
+    </aside>
+  );
+}
+
+function NextMatch({ round, match, me, nameOf }: { round: LeagueRound; match: LeagueMatch; me: string; nameOf: (id: string) => string }) {
+  const other = nameOf(match.a === me ? match.b : match.a);
+  return (
+    <section aria-labelledby="next" className="flex flex-col gap-3 rounded-[18px] border-3 border-primary bg-card px-3.5 pt-3.5 pb-4 sm:px-4.5 sm:pt-4 sm:pb-4.5">
+      <h2 id="next" className="m-0 font-heading text-xl font-normal text-primary">
+        {t.next}
+      </h2>
+      <span className="flex items-center gap-3">
+        <PlayerBadge name={other} colour={playerColour(other)} size="sm" />
+        <span className="flex min-w-0 flex-1 flex-col leading-[1.1]">
+          <span className="truncate font-heading text-[1.75rem] sm:text-3xl">{t.vs(other)}</span>
+          <span className="text-[0.8125rem] font-bold text-muted-foreground sm:text-sm">{t.stage(round.number, round.milestone)}</span>
+        </span>
+      </span>
+    </section>
+  );
+}
+
+function Latest({ league, nameOf }: { league: League; nameOf: (id: string) => string }) {
+  const results = league.rounds
+    .flatMap((round) => round.matches.filter(played).map((match) => ({ round, match })))
+    .reverse()
+    .slice(0, 5);
+  return (
+    <aside aria-label={t.now} className="flex flex-col gap-3.5">
+      <section aria-labelledby="latest" className="flex flex-col gap-2 rounded-[18px] border-3 bg-card px-3.5 pt-3.5 pb-4 sm:px-4.5 sm:pt-4 sm:pb-4.5">
+        <h2 id="latest" className="m-0 mb-1 font-heading text-[1.625rem] font-normal">
+          {t.latest}
+        </h2>
+        {results.length === 0 && <p className="m-0 font-heading text-xl text-faint">{t.noResults}</p>}
+        {results.map(({ round, match }) => {
+          const winner = winnerOf(match);
+          return (
+            <div
+              key={match.id}
+              className="grid min-h-11.5 grid-cols-[44px_minmax(0,1fr)_56px_minmax(0,1fr)] items-center gap-2 rounded-[10px] border-3 bg-box px-3 font-heading sm:grid-cols-[64px_minmax(0,1fr)_56px_minmax(0,1fr)]"
+            >
+              <span className="text-[1.0625rem] text-muted-foreground">{t.short(round.number)}</span>
+              <span className={cn("truncate text-[1.375rem]", winner === match.a ? "text-yellow" : "text-muted-foreground")}>{nameOf(match.a)}</span>
+              <span className="text-center text-[1.375rem]">{score(match)}</span>
+              <span className={cn("truncate text-right text-[1.375rem]", winner === match.b ? "text-yellow" : "text-muted-foreground")}>{nameOf(match.b)}</span>
+            </div>
+          );
+        })}
+      </section>
+    </aside>
+  );
+}
+
+function Rounds({ league, me, nameOf }: Named) {
+  if (league.rounds.length === 0) {
+    return <p className="m-0 rounded-[18px] border-3 border-dashed bg-box px-5 py-8 text-center font-heading text-2xl text-faint">{t.noRounds}</p>;
+  }
+  const last = league.rounds.at(-1)!.number;
+  return (
+    <>
+      <div className="flex flex-col-reverse gap-3.5 sm:grid sm:grid-cols-2 lg:grid-cols-5">
+        {league.rounds.map((round) => (
+          <RoundCard key={round.number} round={round} current={round.number === last} me={me} nameOf={nameOf} />
+        ))}
+      </div>
+      <HeadToHead league={league} me={me} nameOf={nameOf} />
+    </>
+  );
+}
+
+function RoundCard({ round, current, me, nameOf }: { round: LeagueRound; current: boolean; me: string | null; nameOf: (id: string) => string }) {
+  const left = round.matches.filter((m) => !played(m)).length;
+  return (
+    <section
+      aria-label={t.round(round.number)}
+      className={cn("flex flex-col gap-2 rounded-[18px] border-3 bg-card px-3 pt-3 pb-3.5 sm:gap-2.5 sm:px-3.5 sm:pt-3.5 sm:pb-4", current && "border-primary")}
+    >
+      <div className="flex flex-wrap items-baseline gap-x-2.5 px-0.5 sm:flex-col sm:gap-0.5">
+        <span className="flex items-baseline gap-2.5">
+          <h2 className="m-0 font-heading text-[1.75rem] font-normal sm:text-3xl">{t.round(round.number)}</h2>
+          <span className="font-heading text-[1.1875rem] text-muted-foreground sm:text-xl">{round.milestone}</span>
+        </span>
+        <span className="flex-1 sm:hidden" />
+        <span className={cn("font-heading text-[1.1875rem] sm:text-xl", left ? "text-warning" : "text-green")}>{left ? t.toPlay(left) : t.allPlayed}</span>
+      </div>
+      {round.matches.map((match) => (
+        <MatchBox key={match.id} match={match} mine={match.a === me || match.b === me} nameOf={nameOf} />
+      ))}
+      {round.bye && <span className="px-0.5 font-heading text-lg text-muted-foreground">{t.bye(nameOf(round.bye))}</span>}
+    </section>
+  );
+}
+
+function MatchBox({ match, mine, nameOf }: { match: LeagueMatch; mine: boolean; nameOf: (id: string) => string }) {
+  const done = played(match);
+  const winner = winnerOf(match);
+  const sides = [
+    { id: match.a, games: match.gamesA },
+    { id: match.b, games: match.gamesB },
+  ];
+  const border = cn("rounded-xl border-3 bg-box", done ? "border-solid" : "border-dashed", mine ? "border-trophy-rim" : "border-border");
+  return (
+    <div role="group" aria-label={t.matchLabel(nameOf(match.a), nameOf(match.b), score(match))}>
+      <div aria-hidden="true" className={cn(border, "grid min-h-12 grid-cols-[minmax(0,1fr)_54px_minmax(0,1fr)] items-center gap-1.5 px-2.5 sm:hidden")}>
+        {sides.map((side, index) => {
+          const name = nameOf(side.id);
+          return (
+            <span
+              key={side.id}
+              className={cn("flex min-w-0 items-center gap-2", index === 1 && "order-last flex-row-reverse", winner && winner !== side.id && "opacity-55")}
+            >
+              <PlayerBadge name={name} colour={playerColour(name)} size="cell" />
+              <span className={cn("truncate font-heading text-[1.375rem]", winner === side.id ? "text-yellow" : "text-foreground")}>{name}</span>
+            </span>
+          );
+        })}
+        <span className={cn("text-center font-heading text-2xl", done ? "text-foreground" : "text-faint")}>{score(match) ?? "–"}</span>
+      </div>
+      <div aria-hidden="true" className={cn(border, "hidden flex-col overflow-hidden sm:flex")}>
+        {sides.map((side, index) => {
+          const name = nameOf(side.id);
+          return (
+            <span
+              key={side.id}
+              className={cn("flex min-h-10 items-center gap-2.5 px-3", index === 1 && "border-t-2 border-cell", winner && winner !== side.id && "opacity-55")}
+            >
+              <PlayerBadge name={name} colour={playerColour(name)} size="cell" />
+              <span className={cn("min-w-0 flex-1 truncate font-heading text-[1.4375rem]", winner === side.id ? "text-yellow" : "text-foreground")}>{name}</span>
+              <span className={cn("font-heading text-[1.625rem]", winner === side.id ? "text-yellow" : "text-foreground")}>{side.games ?? ""}</span>
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function HeadToHead({ league, me, nameOf }: Named) {
+  const order = league.standings.map((row) => row.player);
+  const meet = (x: string, y: string) => {
+    for (const round of league.rounds) {
+      for (const match of round.matches) {
+        if (match.a === x && match.b === y) return { round: round.number, match, side: "a" as const };
+        if (match.a === y && match.b === x) return { round: round.number, match, side: "b" as const };
+      }
+    }
+    return null;
+  };
+  const columns = { gridTemplateColumns: `var(--h2h-head) repeat(${order.length}, minmax(0, 1fr)) var(--h2h-tail)` };
+  return (
+    <section aria-labelledby="h2h" className="flex flex-col gap-2.5">
+      <h2 id="h2h" className="m-0 px-1 font-heading text-3xl font-normal">
+        {t.headToHead}
+      </h2>
+      <div
+        role="table"
+        aria-label={t.headToHead}
+        className="overflow-hidden rounded-[18px] border-3 bg-card [--h2h-head:44px] [--h2h-tail:0px] sm:[--h2h-head:220px] sm:[--h2h-tail:110px]"
+      >
+        <div role="row" className="grid min-h-10 items-center border-b-3 bg-box sm:min-h-13" style={columns}>
+          <span role="columnheader" className="font-heading text-[1.3125rem] text-muted-foreground sm:px-5">
+            <span className="sr-only sm:not-sr-only">{t.trainer}</span>
+          </span>
+          {order.map((id) => {
+            const name = nameOf(id);
+            return (
+              <span key={id} role="columnheader" aria-label={name} className="flex items-center justify-center gap-2 font-heading text-[1.3125rem] text-subtle">
+                <PlayerBadge name={name} colour={playerColour(name)} size="cell" />
+                <span aria-hidden="true" className="hidden truncate lg:inline">
+                  {name}
+                </span>
+              </span>
+            );
+          })}
+          <span role="columnheader" className="hidden text-center font-heading text-[1.3125rem] text-muted-foreground sm:block">
+            {t.wl}
+          </span>
+        </div>
+        {league.standings.map((row, index) => {
+          const name = nameOf(row.player);
+          return (
+            <div
+              key={row.player}
+              role="row"
+              className={cn("grid min-h-12.5 items-stretch sm:min-h-17", row.player === me && "bg-yellow/6", index < order.length - 1 && "border-b-3")}
+              style={columns}
+            >
+              <span role="rowheader" aria-label={name} className="flex items-center justify-center gap-3 sm:justify-start sm:px-5">
+                <PlayerBadge name={name} colour={playerColour(name)} size="cell" />
+                <span aria-hidden="true" className="hidden truncate font-heading text-[1.625rem] sm:inline">
+                  {name}
+                </span>
+                {row.player === me && <span className="hidden rounded-sm bg-yellow px-1.75 font-heading text-base text-ink sm:inline">{t.you}</span>}
+              </span>
+              {order.map((other) => {
+                if (other === row.player) {
+                  return (
+                    <span key={other} role="cell" className="flex p-0.75 sm:p-1.5">
+                      <span aria-hidden="true" className="flex-1 rounded-[7px] bg-[repeating-linear-gradient(135deg,var(--ink)_0_6px,var(--box)_6px_12px)] sm:rounded-[10px]" />
+                    </span>
+                  );
+                }
+                const met = meet(row.player, other);
+                if (!met) {
+                  return (
+                    <span key={other} role="cell" className="grid place-items-center font-heading text-lg text-cell-hi sm:text-[1.375rem]">
+                      —
+                    </span>
+                  );
+                }
+                const done = played(met.match);
+                const won = winnerOf(met.match) === row.player;
+                const result = score(met.match, met.side);
+                return (
+                  <span key={other} role="cell" className="flex p-0.75 sm:p-1.5">
+                    <span
+                      aria-label={t.roundLabel(name, nameOf(other), met.round, result)}
+                      className={cn(
+                        "flex flex-1 flex-col items-center justify-center rounded-[7px] border-2 leading-none sm:flex-row sm:gap-2.5 sm:rounded-[10px] sm:border-3",
+                        !done ? "border-dashed border-warning/40" : won ? "border-mult-2 bg-green/10" : "border-coral/35 bg-coral/8",
+                      )}
+                    >
+                      <span className={cn("font-heading text-[1.1875rem] sm:text-[1.75rem]", !done ? "text-warning" : won ? "text-green" : "text-coral")}>{result ?? ""}</span>
+                      <span className="font-heading text-[0.8125rem] text-muted-foreground sm:text-[1.0625rem]">{t.short(met.round)}</span>
+                    </span>
+                  </span>
+                );
+              })}
+              <span role="cell" className="hidden place-items-center font-heading text-[1.625rem] text-subtle sm:grid">
+                {row.wins}–{row.losses}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

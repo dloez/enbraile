@@ -12,6 +12,7 @@
     "admin:create": "tsx --env-file-if-exists=.env.local scripts/admin-create.ts",
     "seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
     "item-icons": "tsx --env-file-if-exists=.env.local scripts/item-icons.ts",
+    "league-import": "tsx --env-file-if-exists=.env.local scripts/league-import.ts",
     "wipe-imports": "tsx --env-file-if-exists=.env.local scripts/wipe-imports.ts",
     "dex-es": "tsx scripts/dex-es.ts"
   },

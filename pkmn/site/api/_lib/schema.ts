@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
+import { GAMES_TO_WIN } from "../../shared/league.js";
 import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
 import type { ItemIcons } from "../../shared/items.js";
@@ -249,4 +250,53 @@ export const teamSource = pgTable(
     position: integer("position").notNull(),
   },
   (table) => [primaryKey({ columns: [table.teamId, table.snapshotId] }), index("team_source_snapshot_id_idx").on(table.snapshotId)],
+);
+
+export const leagueRound = pgTable(
+  "league_round",
+  {
+    id: text("id").primaryKey(),
+    seriesId: text("series_id")
+      .notNull()
+      .references(() => series.id, { onDelete: "cascade" }),
+    milestoneId: text("milestone_id")
+      .notNull()
+      .references(() => milestone.id, { onDelete: "restrict" }),
+    byeId: text("bye_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [unique("league_round_milestone_unique").on(table.milestoneId), index("league_round_series_id_idx").on(table.seriesId)],
+);
+
+export const leagueMatch = pgTable(
+  "league_match",
+  {
+    id: text("id").primaryKey(),
+    roundId: text("round_id")
+      .notNull()
+      .references(() => leagueRound.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    playerA: text("player_a")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    playerB: text("player_b")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    gamesA: integer("games_a"),
+    gamesB: integer("games_b"),
+    faintedA: integer("fainted_a"),
+    faintedB: integer("fainted_b"),
+    replays: jsonb("replays").$type<string[]>().notNull().default([]),
+  },
+  (table) => [
+    unique("league_match_round_position_unique").on(table.roundId, table.position),
+    index("league_match_player_a_idx").on(table.playerA),
+    index("league_match_player_b_idx").on(table.playerB),
+    check("league_match_two_players", sql`${table.playerA} <> ${table.playerB}`),
+    check(
+      "league_match_score",
+      sql`(${table.gamesA} IS NULL) = (${table.gamesB} IS NULL) AND (${table.gamesA} IS NULL OR (${table.gamesA} BETWEEN 0 AND ${sql.raw(String(GAMES_TO_WIN))} AND ${table.gamesB} BETWEEN 0 AND ${sql.raw(String(GAMES_TO_WIN))} AND ${table.gamesA} <> ${table.gamesB} AND GREATEST(${table.gamesA}, ${table.gamesB}) = ${sql.raw(String(GAMES_TO_WIN))}))`,
+    ),
+    check("league_match_fainted", sql`(${table.faintedA} IS NULL OR ${table.faintedA} >= 0) AND (${table.faintedB} IS NULL OR ${table.faintedB} >= 0)`),
+  ],
 );

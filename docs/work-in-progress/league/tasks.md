@@ -2,25 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Series 1's rounds and standings come across from the app
-
-The thinnest league end to end: the tables for a series' rounds and matches (pairs, the Bo3 score, each side's fainted, replay links), the one-off import of the app's rounds, matches and replays from the dump ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)), `/series/<n>/league`'s Standings and Rounds, and the series page's League summary in place of its placeholder. Standings follow the rulebook's tie-breaks ([discovery → Standings](discovery.md#standings-the-pokémon-league-and-eggs)), from the league rules in `shared/league.ts`; Pokémon League points join them in [their entry](#players-log-their-pokémon-league-tries).
-
-**Do:**
-- [ ] Schema and migration for rounds and matches, round N tied to the Nth `round` milestone; seed rows for series 1.
-- [ ] `shared/league.ts`: the league's rules as named values, and the standings worked out from them.
-- [ ] The import script, reading `pkmn/site/saves/league-export/` with its user map, rerunnable, refusing production; the six invented preview players in series 1.
-- [ ] The read route and the page's Overview and Rounds; the series page's summary.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; on the local stack, then on the preview, import the owner's dump with series 1's six invented players, and read through `verify-site` the 14 results, their replay links and a table whose order matches the rulebook's tie-breaks; run the import twice and see the same rows.
-- Human-run: the owner reads series 1's standings on the preview against the app.
-- Reuse: `seriesPlayer` and `milestone` in `api/_lib/schema.ts`; `MILESTONE_MARKS` in `shared/series.ts`; the series page's frame (`src/pages/series.tsx`).
-- Neighbors: `api/_lib/teams.ts` for a read route; `scripts/seed.ts`.
-- Forbidden: the app's tie-breaks (game and Pokémon difference); league constants anywhere but `shared/league.ts`; a pipeline beyond one script.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## An admin records a match game by game on its page
 
 Each match in the Rounds view links to its match page, both players left and right and the Bo3 below ([discovery → The Match Page](discovery.md#the-match-page)); an admin records each game's winner, each side's fainted and its replay link, and fixes any; the Bo3 score and the standings follow at once. An imported match gets a game for each of its Showdown replays, its winner and each side's fainted read from the replay's log, and keeps the app's score; games with no replay are left out ([discovery → Results](discovery.md#results)). Series 1's last league match gets its result this way. Every step is one server-side move on the match, in one module, so a private Showdown can later make the same moves.
@@ -38,7 +19,6 @@ Each match in the Rounds view links to its match page, both players left and rig
 - Forbidden: a player report or confirm flow; a result written anywhere but the match module's moves.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Series 1's rounds and standings come across from the app
 
 ## Players log their Pokémon League tries
 
@@ -56,7 +36,6 @@ The Pokémon League view lists each player's tries and their best; a player adds
 - Forbidden: a second Showdown parser.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Series 1's rounds and standings come across from the app
 
 ## Sign off the Teams list's league marks and filters
 
@@ -254,7 +233,6 @@ For a later series: an admin opens the next round in the mode they pick, prefill
 - Forbidden: rounds opening by themselves.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** Series 1's rounds and standings come across from the app
 
 ## Each open round gives a player their team once their snapshot exists
 
@@ -290,7 +268,6 @@ A player sees another's snapshots only from their own round or older; someone ou
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** Series 1's rounds and standings come across from the app
 
 ## A closed round hides its snapshots until the match has a result
 
