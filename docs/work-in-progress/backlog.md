@@ -76,7 +76,7 @@ A locked round or cup team spends Mini Setas, mints and held items that the play
 
 ### pkmn/site: a private Showdown tied to the site
 
-A Pokémon Showdown server and client of the group's own, so a league or cup match needs no challenge sent: the site gives a link, both players sign in with their site account, see their site teams there with edits synced both ways in real time, and play a battle the site set up with their locked teams; the finished log is kept by the site, permanently, and the result recorded with it. Only worth it if replays stay as permanent as Showdown's saved replays. Showdown is open source; a server needs an always-on host (Vercel cannot hold its websockets). The [league](league/discovery.md#results) builds no stand-in for it: admins enter results until this lands. _(owner, 2026-10-27)_
+A Pokémon Showdown server and client of the group's own, so a league or cup match needs no challenge sent: the site gives a link, both players sign in with their site account, see their site teams there with edits synced both ways in real time, and play a battle the site set up with their locked teams; the finished log is kept by the site, permanently, and the result recorded with it. Only worth it if replays stay as permanent as Showdown's saved replays. Showdown is open source; a server needs an always-on host (Vercel cannot hold its websockets). The [league](league/discovery.md#results) builds no stand-in for it: admins enter each game's result until this lands, and its [match page](league/discovery.md#the-match-page) is built so this can set up each game from the players' picks of six and report its finish. _(owner, 2026-10-27; the match page 2026-10-28)_
 
 ### pkmn/site: enforce a series' rules in team building
 

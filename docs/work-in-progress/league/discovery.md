@@ -33,7 +33,8 @@ Done when, on `pkmn.enbraile.vip`: series 1's league reads as it does in the app
 
 ### Results
 
-- **Q: How does a match result get in?** A: An admin enters and fixes it: the Bo3 score, each side's fainted Pokémon and the Showdown replay links. Players do not report or confirm; the site builds nothing that stands in for Showdown. A private Showdown that records results by itself is its own [backlog idea](../backlog.md#pkmnsite-a-private-showdown-tied-to-the-site). **Why:** the owner: admin tools are needed anyway. _(owner, 2026-10-27; replaces the app's report, confirm and dispute)_
+- **Q: How does a match result get in?** A: Game by game, on the [match page](#the-match-page): an admin records each game's winner, each side's fainted Pokémon and its Showdown replay link, and the Bo3 score follows from the games; the admin fixes any of it. Players do not report or confirm for now; the battles stay on Showdown, and the site builds nothing that stands in for it. A private Showdown that records each game by itself is its own [backlog idea](../backlog.md#pkmnsite-a-private-showdown-tied-to-the-site), and the match page is built to take it ([The Match Page](#the-match-page)). **Why:** the owner: admin tools are needed anyway, and the site orchestrates the games. _(owner, 2026-10-27; game by game 2026-10-28; replaces the app's report, confirm and dispute)_
+- **Q: Series 1's imported matches?** A: They keep the app's match-level result (the games score, each side's fainted, the replay links) with no games of their own, since the app holds no per-game winner; a match played on the site has its games. _(proposed, 2026-10-28)_
 - **Q: Replays?** A: Links, as all 28 of series 1's are (none was an uploaded file). The app's turn-by-turn replay log is left to the private Showdown idea. _(proposed, 2026-10-27)_
 
 ### Standings, the Pokémon League and Eggs
@@ -47,11 +48,18 @@ Done when, on `pkmn.enbraile.vip`: series 1's league reads as it does in the app
 
 - **Q: The bracket?** A: Any size, in the rulebook's pattern: seeded by the standings; a plain knockout for 2, 4 or 8, otherwise an opening round whose losers play a round-robin group to fill the bracket. Six players give series 1's cup: 1–6, 2–5, 3–4, the losers' triangular with its own tie-breaks, and the rulebook's semifinals. The admin starts it and picks who enters (finished the story, did not lose the challenge). **Why:** the owner. _(owner, 2026-10-27)_
 - **Q: The sheet a cup team is built from?** A: The player's snapshot at the series' Tournament milestone, the one players will upload. Each cup match gives each of its players a team locked to that snapshot, built and locked as a round team is. **Why:** the owner. _(owner, 2026-10-27; settles the backlog question of 2026-10-23)_
-- **Q: Cup teams' size?** A: Eight Pokémon, with a ban: the group's latest decision, replacing "no bans". What can be banned, and in what order, is open ([tasks.md](tasks.md#decide-and-build-the-cups-ban)). **Why:** the owner. _(owner, 2026-10-27)_
+- **Q: Cup teams' size?** A: Eight Pokémon, with a ban: the group's latest decision, replacing "no bans". **Why:** the owner. _(owner, 2026-10-27)_
+- **Q: The ban?** A: In every game of a cup match, each player bans one of the opponent's eight, blind: both bans are made at the same time on the match page, and neither player sees the other's until both are in. Each then brings six of their seven left. The winner of a game may not ban, in the next game, the Pokémon they banned in it; the loser may repeat theirs, and in game 3 the winner of game 2 may go back to their game 1 ban. League round matches have no ban. **Why:** the owner. _(owner, 2026-10-28)_
 
 ### Surfaces
 
-- **Q: Where does the league live?** A: Its own page, `/series/<n>/league`, with Standings, Rounds, Pokémon League and Cup, and admin tools in place for admins; the series page's League placeholder becomes a short summary (the standings' top, the current round, the cup once it starts) linking to it; the Teams tab flags a round or cup team still to build; the player profile's placeholder becomes each series' league record. The canvas design settles the layout. **Why:** four views and their admin tools would make the series page very long, a phone most of all, and a page of its own lets a round or a cup match be linked. _(proposed, 2026-10-27; the owner asked for a suggestion)_
+- **Q: Where does the league live?** A: Its own page, `/series/<n>/league`, with Overview (the standings, the cup's seeds and a few highlights), Rounds, Pokémon League and Cup, and admin tools in place for admins; the series page's League placeholder becomes a short summary (the standings' top, the current round, the cup once it starts) linking to it; the Teams tab flags a round or cup team still to build; the player profile's placeholder becomes each series' league record. The canvas design settles the layout. **Why:** four views and their admin tools would make the series page very long, a phone most of all, and a page of its own lets a round or a cup match be linked. _(proposed, 2026-10-27; the owner asked for a suggestion; Standings renamed Overview by the owner, 2026-10-28)_
+
+### The Match Page
+
+- **Q: Does the site run the games?** A: Yes: the site orchestrates every match, league round or cup, on a page of its own (`/series/<n>/league/matches/<id>`), one player's team in the left column and the other's in the right, the Bo3 game by game below them. A cup game opens with both players' blind bans; a league game has none. Only the battle itself is played on Showdown. **Why:** the owner. _(owner, 2026-10-28)_
+- **Q: How does a game move on?** A: A cup game opens its bans once the game before it has its result (the first on the match's start); each player bans on the page, sees only that their opponent has or has not banned, and both bans show once both are in; each player then picks their six of the seven left, copied for Showdown; the admin records the game's result, which opens the next game until the Bo3 is won. The page refreshes itself while it waits for the other side, since Vercel holds no websockets. _(owner, 2026-10-28, the ban and the admin; the pick of six kept with the game and the polling proposed)_
+- **Q: Ready for a private Showdown?** A: Yes, without building it: a match is a sequence of games, each with its bans, its picks of six and its result, and every step (a ban, a pick, a result) is one server-side move on the match, checked by the same rules whoever makes it. The admin's result is one caller today; a private Showdown that sets up the battle from the picks and reports its finish would be another, with no change to the match. **Why:** the owner: the group means to play on a private Showdown the site orchestrates ([backlog idea](../backlog.md#pkmnsite-a-private-showdown-tied-to-the-site)). _(owner, 2026-10-28)_
 
 ### Rules, Data and Build
 
@@ -63,7 +71,7 @@ Done when, on `pkmn.enbraile.vip`: series 1's league reads as it does in the app
 
 ## Out of Scope
 
-- Players reporting or confirming results, and anything that stands in for Showdown ([backlog idea](../backlog.md#pkmnsite-a-private-showdown-tied-to-the-site)).
+- Players reporting or confirming results, for now, and the private Showdown itself; the match page is ready for it ([backlog idea](../backlog.md#pkmnsite-a-private-showdown-tied-to-the-site)).
 - Wonder battles.
 - Hiding teams or pairings, and tracking what a locked team spends (backlog tasks).
 - Players joining mid-league (backlog question).

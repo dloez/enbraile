@@ -4,7 +4,7 @@ Decisions are in [discovery.md](discovery.md). Every code entry runs `npm run ga
 
 ## Design the league on the canvas
 
-Owner-run. Every screen of the league is designed anew on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas, desktop and phone, on League pages of its own placed by the canvas's page rules ([The pkmn Site → Look](../../pkmn/site/explanation/site.md#look)), not after the old app ([discovery → Goal and Scope](discovery.md#goal-and-scope), [Surfaces](discovery.md#surfaces)): the league page's Standings, Rounds, Pokémon League and Cup, each with its admin tools in place; the series page's League summary; the Teams tab's flag and the locked badge on a round or cup team; logging a Pokémon League try (pick a team or paste one); the player profile's league record.
+Owner-run. Every screen of the league is designed anew on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas, desktop and phone, on League pages of its own placed by the canvas's page rules ([The pkmn Site → Look](../../pkmn/site/explanation/site.md#look)), not after the old app ([discovery → Goal and Scope](discovery.md#goal-and-scope), [Surfaces](discovery.md#surfaces)): the league page's Overview, Rounds, Pokémon League and Cup, each with its admin tools in place; the match page ([discovery → The Match Page](discovery.md#the-match-page)): both teams left and right, the Bo3 game by game, a cup game's blind ban (yours to make, waiting on the opponent, both shown), the pick of six with Copy for Showdown, and the admin recording a game's result; the series page's League summary; the Teams tab's flag and the locked badge on a round or cup team; logging a Pokémon League try (pick a team or paste one); the player profile's league record.
 
 **Do:**
 - [ ] Owner-run: design the boards and sign them off.
@@ -22,10 +22,10 @@ Owner-run. Every screen of the league is designed anew on the [Site v2 Screens](
 
 ## Write the cup's new rules into Series 1 Rules
 
-Docs only. The cup is now eight Pokémon with a ban, replacing "No bans", and each player's sheet is their snapshot at the Tournament milestone, replacing the Open Sheet export made when they are done ([discovery → The Cup](discovery.md#the-cup)). The ban's details stay open, said so in the rule, until [Decide and build the cup's ban](#decide-and-build-the-cups-ban).
+Docs only. The cup is now eight Pokémon with a blind ban in every game, replacing "No bans", and each player's sheet is their snapshot at the Tournament milestone, replacing the Open Sheet export made when they are done ([discovery → The Cup](discovery.md#the-cup)).
 
 **Do:**
-- [ ] Rewrite [Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament)'s open-sheet rule and add the eight-with-a-ban rule, dated.
+- [ ] Rewrite [Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament)'s open-sheet rule and add the ban rule, dated: eight Pokémon, one ban each per game made blind, six brought of the seven left, a game's winner not repeating their ban in the next game.
 - [ ] Record both in [Competition Format → Decisions](../../pkmn/series/1/explanation/competition-format.md#decisions) and fix its Final Tournament section.
 
 **Acceptance:**
@@ -33,7 +33,7 @@ Docs only. The cup is now eight Pokémon with a ban, replacing "No bans", and ea
 - Human-run: none.
 - Reuse: none.
 - Neighbors: the 2026-10-22 rule changes entry in Competition Format.
-- Forbidden: settling what the ban is.
+- Forbidden: a ban rule the owner did not give.
 
 **Touches:** `docs/pkmn/series/1/`
 
@@ -45,7 +45,7 @@ The thinnest league end to end: the tables for a series' rounds and matches (pai
 - [ ] Schema and migration for rounds and matches, round N tied to the Nth `round` milestone; seed rows for series 1.
 - [ ] `shared/league.ts`: the league's rules as named values, and the standings worked out from them.
 - [ ] The import script, reading the dump from `pkmn/site/saves/` with its user map, rerunnable.
-- [ ] The read route and the page's Standings and Rounds; the series page's summary.
+- [ ] The read route and the page's Overview and Rounds; the series page's summary.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; on the local stack, import the dump (or, before it arrives, the public `/api/state` saved to `saves/`), and read through `verify-site` the 14 results, their replay links and a table whose order matches the rulebook's tie-breaks; run the import twice and see the same rows.
@@ -57,19 +57,20 @@ The thinnest league end to end: the tables for a series' rounds and matches (pai
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** Design the league on the canvas
 
-## An admin enters and fixes a match's result
+## An admin records a match game by game on its page
 
-On the Rounds view, an admin sets or corrects any match's Bo3 score, each side's fainted Pokémon and its replay links, in place; standings follow at once. Series 1's last league match gets its result this way ([discovery → Results](discovery.md#results)).
+Each match in the Rounds view links to its match page, both players left and right and the Bo3 below ([discovery → The Match Page](discovery.md#the-match-page)); an admin records each game's winner, each side's fainted and its replay link, and fixes any; the Bo3 score and the standings follow at once. An imported match shows its match-level result with no games ([discovery → Results](discovery.md#results)). Series 1's last league match gets its result this way. Every step is one server-side move on the match, in one module, so a private Showdown can later make the same moves.
 
 **Do:**
-- [ ] The admin route and the in-place editor on a match.
+- [ ] Schema for a match's games; the match's moves in one server module.
+- [ ] The match page, its admin route and the game editor.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, as admin, enter round 5's missing result with a replay link and see the standings move; as a player, see no editor and get 403 from the route.
+- Claude-run: `npm run gate`; through `verify-site`, as admin, play round 5's missing match game by game with a replay link and see the score close the Bo3 at two wins and the standings move; as a player, see no editor and get 403 from the route; an imported match reads its app result.
 - Human-run: the owner enters a real result on production.
 - Reuse: the site's admin checks (`api/_lib/access.ts`).
 - Neighbors: the series page's admin overrides (`src/pages/series.tsx`).
-- Forbidden: a player report or confirm flow.
+- Forbidden: a player report or confirm flow; a result written anywhere but the match module's moves.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `docs/pkmn/site/`
 **After:** Series 1's rounds and standings come across from the app
@@ -121,7 +122,7 @@ An admin starts the cup and picks who enters; the bracket is drawn from the stan
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, start series 1's cup with six and see 1–6, 2–5, 3–4, the triangular and the rulebook's semifinals; a 1–1–1 triangular broken by its tie-breaks; also a four-player cup as a plain knockout.
 - Human-run: the owner starts series 1's real cup.
-- Reuse: the result editor of [An admin enters and fixes a match's result](#an-admin-enters-and-fixes-a-matchs-result); the app's `buildBracket`, `losersTable` and `settleBracket` as reference only.
+- Reuse: the match page of [An admin records a match game by game on its page](#an-admin-records-a-match-game-by-game-on-its-page); the app's `buildBracket`, `losersTable` and `settleBracket` as reference only.
 - Neighbors: the series page's tournament milestone.
 - Forbidden: the app's semifinal pairing (1–6 with the triangular).
 
@@ -130,7 +131,7 @@ An admin starts the cup and picks who enters; the bracket is drawn from the stan
 
 ## Each cup match gives its players a locked team to build
 
-A cup match gives each of its players a team of eight sourced from their Tournament snapshot, flagged in their Teams tab until it is locked; Lock in freezes the whole build, an admin unlocks it, and the team list and page mark it locked; the match shows both teams, open to all ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). A player with no Tournament snapshot is told to upload it.
+A cup match gives each of its players a team of eight sourced from their Tournament snapshot, flagged in their Teams tab until it is locked; Lock in freezes the whole build, an admin unlocks it, and the team list and page mark it locked; the match page shows both teams, open to all ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). A player with no Tournament snapshot is told to upload it.
 
 **Do:**
 - [ ] The lock on a team, its admin unlock, and the frozen editor.
@@ -146,26 +147,23 @@ A cup match gives each of its players a team of eight sourced from their Tournam
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** An admin runs the cup from its bracket to its champion
 
-## Decide and build the cup's ban
+## Players ban blind and pick their six on a cup match's page
 
-Cup teams are eight with a ban; what can be banned, by whom and in what order is open ([discovery → The Cup](discovery.md#the-cup)). Once settled: the rule into Series 1 Rules, and the ban built on the cup match.
+Each cup game opens with both players' bans once the game before it has its result: each bans one of the other's eight, sees only whether the opponent has banned, and both bans show once both are in; the winner of the last game cannot repeat their ban; each then picks six of their seven left, kept with the game and copied for Showdown; the admin's result opens the next game ([discovery → The Cup](discovery.md#the-cup), [The Match Page](discovery.md#the-match-page)). The page refreshes itself while it waits on the other side.
 
 **Do:**
-- [ ] Settle the ban with the owner; record it in the rules and in `discovery.md`.
-- [ ] Build it on the cup match.
+- [ ] Bans and picks on a match's games, as moves of the match module, the ban rule in `shared/league.ts`.
+- [ ] The ban and pick steps on the match page, and its refresh while waiting.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, play a cup match's ban as the rule says.
-- Human-run: the owner reads the rule.
-- Reuse: the cup teams of the entry above.
-- Neighbors: the team page's pick of six.
-- Forbidden: a ban rule the owner did not give.
+- Claude-run: `npm run gate`; through `verify-site`, two test players in two browsers: the first to ban sees "waiting" and not the other's ban until both are in; the game 1 winner is refused their game 1 ban in game 2 and the loser is not; a pick of other than six of the seven is refused; Copy for Showdown gives the six; a ban sent for the other player, or after the bans close, gets 403 or 409.
+- Human-run: two players ban and pick for a real cup match on production.
+- Reuse: the cup teams of the entry above; the team page's pick of six (`src/teams/pick.ts`) and Copy for Showdown.
+- Neighbors: the admin game editor on the match page.
+- Forbidden: showing a ban before both are in, to anyone; a ban or pick written outside the match module.
 
-**Touches:** `docs/pkmn/series/1/`, `pkmn/site/`, `docs/pkmn/site/`
-**After:** Each cup match gives its players a locked team to build
-**Needs the author:**
-- What can be banned (a Pokémon, a move, an item), how many, and whether each side bans or one.
-- In what order: before or after team preview, and whether bans are blind.
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
+**After:** Each cup match gives its players a locked team to build; Write the cup's new rules into Series 1 Rules
 
 ## An admin opens a round and draws its pairs
 
