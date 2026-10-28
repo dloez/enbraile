@@ -25,6 +25,7 @@
     "@tanstack/react-router": "1.170.44",
     "better-auth": "1.7.12",
     "class-variance-authority": "0.7.1",
+    "cmdk": "1.1.1",
     "cn": "0.4.0",
     "cytoscape": "3.34.4",
     "drizzle-orm": "0.45.4",

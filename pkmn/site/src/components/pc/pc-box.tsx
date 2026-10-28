@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 import { buttonClass, Toggle } from "@/components/controls";
+import { ComboField, type ComboOption } from "@/components/combo-field";
 import { SelectField } from "@/components/select-field";
 import { Bag } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
@@ -8,16 +9,33 @@ import { SummaryBody, SummaryHead } from "@/components/pc/summary";
 import { Sheet as BottomSheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
-import { displayName, TYPES, type BagItem, type BagTm, type Mon } from "../../../shared/mon";
+import { displayName, TYPES, type Ability, type BagItem, type BagTm, type Mon } from "../../../shared/mon";
 import type { ExportGap } from "../../../shared/snapshot";
 
-function matches(mon: Mon, query: string, type: string): boolean {
+export type BoxMon = Pick<Mon, "index" | "species" | "nickname" | "level" | "shiny" | "fainted" | "filterTypes" | "sprite"> & {
+  abilities: readonly Pick<Ability, "id" | "name" | "current">[];
+};
+
+function matches(mon: BoxMon, query: string, type: string, ability: string, inUse: boolean): boolean {
   const q = query.trim().toLowerCase();
   const named = !q || mon.species.name.toLowerCase().includes(q) || (mon.nickname ?? "").toLowerCase().includes(q);
-  return named && (!type || mon.filterTypes.includes(type));
+  const held = mon.abilities.find((a) => a.id === ability);
+  return named && (!type || mon.filterTypes.includes(type)) && (!ability || (held !== undefined && (!inUse || held.current)));
 }
 
-function Cell({ mon, selected, taken, onPick }: { mon: Mon; selected: boolean; taken: boolean; onPick: () => void }) {
+function abilityOptions(mons: readonly BoxMon[]): ComboOption[] {
+  const found = new Map<string, ComboOption & { count: number }>();
+  for (const mon of mons) {
+    for (const a of mon.abilities) {
+      const entry = found.get(a.id) ?? { value: a.id, label: a.name, count: 0 };
+      entry.count += 1;
+      found.set(a.id, entry);
+    }
+  }
+  return [...found.values()].sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function Cell({ mon, selected, taken, mark, onPick }: { mon: BoxMon; selected: boolean; taken: boolean; mark?: ReactNode; onPick: () => void }) {
   return (
     <button
       type="button"
@@ -39,6 +57,7 @@ function Cell({ mon, selected, taken, onPick }: { mon: Mon; selected: boolean; t
       )}
       {mon.species.marked && <span className="absolute right-1.5 bottom-0.5 font-heading text-lg text-destructive">?</span>}
       {mon.fainted && <FaintedMark className="absolute bottom-1 left-1.5" />}
+      {mark && <span className="absolute bottom-1.5 left-1.5 flex">{mark}</span>}
     </button>
   );
 }
@@ -111,19 +130,29 @@ export function BagButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function PcBox({ mons, selected, onPick, actions, taken }: {
-  mons: readonly Mon[];
+export function PcBox<M extends BoxMon>({ mons, selected, onPick, actions, filters, filter, mark, taken, ability: shownAbility, onAbility }: {
+  mons: readonly M[];
   selected: number | null;
   onPick: (index: number) => void;
   actions?: ReactNode;
+  filters?: ReactNode;
+  filter?: (mon: M) => boolean;
+  mark?: (mon: M) => ReactNode;
   taken?: ReadonlySet<number>;
+  ability?: string;
+  onAbility?: (ability: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("");
+  const [ownAbility, setOwnAbility] = useState("");
+  const [inUse, setInUse] = useState(false);
+  const ability = shownAbility ?? ownAbility;
+  const chooseAbility = onAbility ?? setOwnAbility;
+  const abilities = useMemo(() => abilityOptions(mons), [mons]);
+  const shown = mons.filter((mon) => matches(mon, query, type, ability, inUse) && (!filter || filter(mon)));
+  const filtering = shown.length !== mons.length;
   const [edges, setEdges] = useState({ up: false, down: false });
   const list = useRef<HTMLDivElement>(null);
-  const shown = mons.filter((mon) => matches(mon, query, type));
-  const filtering = query.trim() !== "" || type !== "";
   const measure = useCallback(() => {
     const el = list.current;
     if (!el) return;
@@ -164,6 +193,13 @@ export function PcBox({ mons, selected, onPick, actions, taken }: {
           />
         </label>
         <SelectField label="Type" value={type} onChange={setType} all="All types" options={TYPES.map((t) => ({ value: t, label: t }))} />
+        <ComboField label="Ability" value={ability} onChange={chooseAbility} all="All abilities" options={abilities} className="max-w-55" />
+        {ability !== "" && (
+          <Toggle pressed={inUse} onChange={setInUse} title={inUse ? "Show every Pokémon that can have it" : "Show only the Pokémon using it"}>
+            In use
+          </Toggle>
+        )}
+        {filters}
         {actions}
       </div>
       <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-xl bg-pc" style={CHECKER}>
@@ -174,7 +210,7 @@ export function PcBox({ mons, selected, onPick, actions, taken }: {
         >
           <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(106px,1fr))]">
             {shown.map((mon) => (
-              <Cell key={mon.index} mon={mon} selected={mon.index === selected} taken={taken?.has(mon.index) ?? false} onPick={() => onPick(mon.index)} />
+              <Cell key={mon.index} mon={mon} selected={mon.index === selected} taken={taken?.has(mon.index) ?? false} mark={mark?.(mon)} onPick={() => onPick(mon.index)} />
             ))}
           </div>
           {shown.length === 0 && <p className="my-10 text-center font-heading text-[1.625rem] text-prose">Nothing matches</p>}

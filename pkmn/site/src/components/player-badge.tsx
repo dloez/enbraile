@@ -31,6 +31,7 @@ export const PLAYER_RING = [
 ] as const;
 
 const SIZES = {
+  cell: "size-5.5 rounded-[5px] border-2 ring-2 text-base",
   xs: "size-8 rounded-[7px] ring-2 text-[1.375rem]",
   sm: "size-9 rounded-md ring-2 text-2xl",
   lg: "size-12.5 rounded-lg ring-3 text-3xl",

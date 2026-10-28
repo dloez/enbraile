@@ -16,8 +16,10 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 .tab:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}.out:hover{color:#ffffff!important;background:#222a3b!important}
 .me:hover{background:#222a3b!important}
 .seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
-.abrow:not([aria-current]):hover{background:#2c3549!important;color:#ffffff!important}
-.holder:hover{border-color:#5ad1f0!important}
+.cell:hover{box-shadow:inset 0 0 0 3px #5ad1f0!important}
+.btn:hover{background:rgba(255,255,255,0.18)!important}
+.pcscroll{scrollbar-width:none}
+.pcscroll::-webkit-scrollbar{display:none}
 .field:focus-within{border-color:#5ad1f0!important}
 .crumb:hover{text-decoration:underline}
 .listscroll{scrollbar-width:thin;scrollbar-color:#44506d transparent}
@@ -56,7 +58,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 </header>
 </sc-if>
 
-<main style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; padding: {{mainPad}}">
+<main style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: {{mainPad}}">
 <div style="flex: none; display: flex; flex-direction: column; gap: 8px">
 <nav aria-label="Breadcrumb" style="display: flex; font-family: 'Jersey 10', sans-serif; font-size: 22px">
 <a href="{{seriesHref}}" class="crumb" style="display: flex; align-items: center; gap: 8px; min-height: 44px; margin: -10px 0; text-decoration: none; text-decoration-thickness: 2px; text-underline-offset: 4px"><svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M12 2L2 9l10 7z" fill="currentColor"></path></svg>Series 2</a>
@@ -65,91 +67,82 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 </div>
 
 <div style="flex: 1; min-height: 0; display: flex; gap: 24px">
-
-<sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
-<section aria-label="Abilities" style="flex: {{listFlex}}; width: {{listW}}; min-height: 0; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 14px; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 30px; line-height: 1; padding-left: 4px">{{listCount}}</span>
-<label class="field" style="flex: none; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 12px; box-sizing: border-box; background: #10141d; border: 3px solid #343f58; border-radius: 10px">
+<section aria-label="Pokémon" style="flex: 1; min-width: 0; min-height: {{boxMinH}}; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; background: #222a3b; border: 3px solid #343f58; border-radius: 18px; padding: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-height: 48px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 30px; line-height: 1; padding-left: 4px">{{count}}</span>
+<div style="flex: 1"></div>
+<label class="field" style="flex: {{searchFlex}}; width: {{searchW}}; display: flex; align-items: center; gap: 8px; background: #10141d; border: 3px solid #343f58; border-radius: 10px; padding: 0 12px; height: 48px; box-sizing: border-box">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3acbf" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
-<span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Search abilities</span>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Search Pokémon</span>
 <input type="search" placeholder="Search" value="{{query}}" onChange="{{onQuery}}" style="flex: 1; min-width: 0; border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-size: 16px; outline: none">
 </label>
-<ul class="listscroll" style="flex: 1; min-height: 0; margin: 0; padding: 4px; list-style: none; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; background: #1b2232; border: 3px solid #2c3549; border-radius: 12px">
-<sc-for list="{{listed}}" as="a" hint-placeholder-count="14">
-<li style="flex: none">
-<button type="button" class="abrow" aria-current="{{a.current}}" onClick="{{a.pick}}" style="width: 100%; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: none; border-radius: 8px; background: {{a.bg}}; color: {{a.ink}}; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; text-align: left; cursor: pointer">
-<span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.name}}</span>
-<span style="flex: none; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 20px; color: #a3acbf">{{a.count}}</span>
+<label class="field" style="flex: none; display: flex; align-items: center; background: #10141d; border: 3px solid #343f58; border-radius: 10px; padding: 0 8px 0 12px; height: 48px; box-sizing: border-box">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Type</span>
+<select value="{{type}}" onChange="{{onType}}" style="border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; outline: none; cursor: pointer; padding-right: 4px">
+<option value="">All types</option>
+<sc-for list="{{typeOptions}}" as="t" hint-placeholder-count="18"><option value="{{t}}">{{t}}</option></sc-for>
+</select>
+</label>
+<label class="field" style="flex: none; display: flex; align-items: center; background: #10141d; border: 3px solid #343f58; border-radius: 10px; padding: 0 8px 0 12px; height: 48px; box-sizing: border-box">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Ability</span>
+<select value="{{ability}}" onChange="{{onAbility}}" style="max-width: 180px; border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; outline: none; cursor: pointer; padding-right: 4px">
+<option value="">All abilities</option>
+<sc-for list="{{abilityOptions}}" as="a" hint-placeholder-count="20"><option value="{{a.id}}">{{a.label}}</option></sc-for>
+</select>
+</label>
+<sc-if value="{{hasAbility}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="btn" aria-pressed="{{inUse}}" onClick="{{toggleInUse}}" style="min-height: 48px; padding: 0 16px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: {{inUseBg}}; color: {{inUseFg}}; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">In use</button>
+</sc-if>
+<label class="field" style="flex: none; display: flex; align-items: center; background: #10141d; border: 3px solid #343f58; border-radius: 10px; padding: 0 8px 0 12px; height: 48px; box-sizing: border-box">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Trainer</span>
+<select value="{{trainer}}" onChange="{{onTrainer}}" style="border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; outline: none; cursor: pointer; padding-right: 4px">
+<option value="">All trainers</option>
+<sc-for list="{{trainerOptions}}" as="t" hint-placeholder-count="3"><option value="{{t.name}}">{{t.name}}</option></sc-for>
+</select>
+</label>
+</div>
+<div style="position: relative; flex: 1; min-height: 0; display: flex; border-radius: 12px; overflow: hidden; background-color: #1d4650; background-image: linear-gradient(45deg, #21505b 25%, transparent 25%, transparent 75%, #21505b 75%), linear-gradient(45deg, #21505b 25%, transparent 25%, transparent 75%, #21505b 75%); background-size: 56px 56px; background-position: 0 0, 28px 28px">
+<div class="pcscroll" tabindex="0" aria-label="Pokémon list" style="flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 14px 12px 44px; outline: none">
+<div style="display: grid; grid-template-columns: {{cols}}; gap: 6px">
+<sc-for list="{{cells}}" as="m" hint-placeholder-count="12">
+<button type="button" class="cell" onClick="{{m.pick}}" aria-label="{{m.aria}}" aria-pressed="{{m.on}}" style="position: relative; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 12px; border: none; background: {{m.bg}}; box-shadow: {{m.ring}}; cursor: pointer; padding: 0; display: grid; place-items: center">
+<img src="{{m.sprite}}" alt="" style="width: {{spriteW}}; display: block; image-rendering: pixelated">
+<span style="position: absolute; left: 8px; top: 2px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #eef1f7; text-shadow: 0 2px 0 #10141d">{{m.lvl}}</span>
+<sc-if value="{{m.shiny}}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 7 7" shape-rendering="crispEdges" aria-hidden="true" style="position: absolute; right: 6px; top: 5px"><path d="M3 0h1v2H3zM0 3h2v1H0zM5 3h2v1H5zM3 5h1v2H3zM2 2h3v3H2z" fill="#ffd34d"></path></svg></sc-if>
+<span aria-hidden="true" style="position: absolute; left: 6px; bottom: 6px; width: 22px; height: 22px; box-sizing: border-box; border-radius: 5px; border: 2px solid #10141d; box-shadow: 0 0 0 2px {{m.colour}}; background: {{m.colour}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1; color: #10141d">{{m.initial}}</span>
 </button>
-</li>
 </sc-for>
-</ul>
+</div>
+<sc-if value="{{none}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 40px 0; text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #d5dae5">Nothing matches</p>
+</sc-if>
+</div>
+</div>
 </section>
-</sc-if>
 
-<sc-if value="{{showHolders}}" hint-placeholder-val="{{ true }}">
-<section aria-labelledby="holders-title" style="flex: 1; min-width: 0; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; padding: {{holdersPad}}; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
-<sc-if value="{{phone}}" hint-placeholder-val="{{ false }}">
-<button type="button" onClick="{{toList}}" style="align-self: flex-start; display: flex; align-items: center; gap: 6px; min-height: 44px; margin: -4px 0; padding: 0; border: none; background: transparent; color: #5ad1f0; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>All abilities</button>
-</sc-if>
-<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 24px">
-<div style="flex: 1 1 288px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
-<h2 id="holders-title" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 42px; line-height: 0.85">{{ab.name}}</h2>
-<p style="margin: 0; max-width: 640px; font-size: 14px; line-height: 1.6; color: #c3cad8">{{ab.desc}}</p>
-</div>
-<div role="radiogroup" aria-label="Show" style="flex: none; display: inline-flex; gap: 2px; padding: 3px; background: #2c3549; border: 1px solid #343f58; border-radius: 8px">
-<sc-for list="{{shows}}" as="s" hint-placeholder-count="2">
-<button type="button" class="seg" role="radio" aria-checked="{{s.on}}" onClick="{{s.pick}}" style="min-height: 36px; padding: 0 12px; border: none; border-radius: 6px; background: {{s.bg}}; color: {{s.fg}}; font-family: 'Jersey 10', sans-serif; font-size: 21px; cursor: pointer">{{s.label}}</button>
-</sc-for>
-</div>
-</div>
-<div class="listscroll" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 20px; overflow-y: auto">
-<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
-<section aria-label="{{g.name}}" style="flex: none; display: flex; flex-direction: column; gap: 10px">
-<div style="display: flex; align-items: center; gap: 10px; min-width: 0">
-<span aria-hidden="true" style="width: 36px; height: 36px; flex: none; box-sizing: border-box; border-radius: 6px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{g.colour}}; background: {{g.colour}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">{{g.initial}}</span>
-<h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1">{{g.name}}</h3>
-<sc-if value="{{g.you}}" hint-placeholder-val="{{ false }}"><span style="flex: none; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d; background: #ffd34d; padding: 0 8px; border-radius: 4px">You</span></sc-if>
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf; white-space: nowrap">{{g.milestone}}</span>
-<span style="flex: 1"></span>
-<span style="flex: none; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{g.count}}</span>
-</div>
-<ul style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: {{gridCols}}; gap: 8px">
-<sc-for list="{{g.mons}}" as="m" hint-placeholder-count="3">
-<li>
-<a href="Pc.dc.html" class="holder" aria-label="{{m.aria}}" style="display: flex; align-items: center; gap: 12px; min-height: 76px; box-sizing: border-box; padding: 4px 12px 4px 4px; background: #1b2232; border: 3px solid #2c3549; border-radius: 12px; color: #eef1f7; text-decoration: none">
-<span style="width: 64px; height: 64px; flex: none; display: grid; place-items: center; overflow: hidden; border-radius: 8px; background: rgba(16, 20, 29, 0.35)"><img src="{{m.sprite}}" alt="" style="width: 64px; height: 64px; image-rendering: pixelated"></span>
-<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{m.name}}</span>
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; line-height: 1; color: #a3acbf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{m.sub}}</span>
-</span>
-<span style="flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
-<sc-if value="{{m.current}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 20px; color: #10141d; background: #5ad1f0; padding: 2px 8px; border-radius: 6px">In use</span></sc-if>
-<sc-if value="{{m.hidden}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 20px; color: #c3cad8; border: 2px solid #44506d; padding: 0 6px; border-radius: 6px">Hidden</span></sc-if>
-</span>
+<sc-if value="{{wide}}" hint-placeholder-val="{{ true }}">
+<aside aria-label="Summary" style="flex: none; width: 380px; display: flex; flex-direction: column; background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
+<dc-import name="Summary" mon="{{sumMon}}" complete="{{ true }}" style="flex: 1; min-height: 0; display: flex; flex-direction: column" hint-size="100%,100%"></dc-import>
+<div style="flex: none; padding: 14px 18px; border-top: 3px solid #343f58">
+<a href="Pc.dc.html" class="btn" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px 4px; box-sizing: border-box; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 24px; text-decoration: none">
+<span aria-hidden="true" style="width: 32px; height: 32px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{owner.colour}}; background: {{owner.colour}}; display: grid; place-items: center; font-size: 22px; color: #10141d">{{owner.initial}}</span>
+<span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{owner.label}}</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5ad1f0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
 </a>
-</li>
-</sc-for>
-</ul>
-</section>
-</sc-for>
-<sc-if value="{{nobody}}" hint-placeholder-val="{{ false }}">
-<p style="margin: 0; padding: 40px 20px; text-align: center; background: #1b2232; border: 3px dashed #44506d; border-radius: 16px; font-family: 'Jersey 10', sans-serif; font-size: 30px; color: #c3cad8">Nobody has it in use</p>
-</sc-if>
 </div>
-</section>
+</aside>
 </sc-if>
-
 </div>
 </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"phone":{"editor":"boolean","default":false},"start":{"editor":"enum","options":["holders","list"],"default":"holders"},"$preview":{"width":1440,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"phone":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
 const SHEET = '/_blob/df227043f0b439b7c33cd72640e52ca1';
 const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
   '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
+const TYPE = ['Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'];
 const TRAINERS = [
-  {name: 'Dloez', initial: 'D', colour: '#ffd34d', you: true, milestone: 'Post-League'},
+  {name: 'Dloez', initial: 'D', colour: '#ffd34d', milestone: 'Post-League'},
   {name: 'Vicky', initial: 'V', colour: '#5ad1f0', milestone: 'Gym 7'},
   {name: 'Javi', initial: 'J', colour: '#7be08a', milestone: 'Post-League'},
 ];
@@ -163,63 +156,43 @@ class Component extends DCLogic {
   renderVals() {
     const phone = !!this.props.phone;
     const d = this.st('d', null);
-    const mons = d ? d.pokemon : [];
-    const owned = TRAINERS.map((t, at) => ({...t, mons: mons.filter((m, i) => i % TRAINERS.length === at)}));
-    const entries = {};
-    for (const m of mons) for (const a of (m.abilities || [])) {
-      entries[a.id] = entries[a.id] || {id: a.id, name: a.name, desc: a.desc, count: 0};
-      entries[a.id].count += 1;
-    }
-    const all = Object.values(entries).sort((a, b) => a.name.localeCompare(b.name));
-    const picked = this.st('ab', entries.gluttony ? 'gluttony' : (all[0] && all[0].id));
-    const view = this.st('view', this.props.start || 'holders');
-    const query = this.st('query', '');
-    const q = query.trim().toLowerCase();
-    const shown = q ? all.filter((a) => a.name.toLowerCase().includes(q)) : all;
-    const listed = shown.map((a) => ({
-      name: a.name, count: a.count, current: a.id === picked ? 'true' : undefined,
-      bg: a.id === picked ? '#2c3549' : 'transparent', ink: a.id === picked ? '#ffffff' : '#c3cad8',
-      pick: () => this.setState({ab: a.id, view: 'holders'}),
+    const all = (d ? d.pokemon : []).map((p, i) => ({...p, owner: TRAINERS[i % TRAINERS.length]}));
+    const counts = {};
+    for (const p of all) for (const a of (p.abilities || [])) counts[a.id] = counts[a.id] || {id: a.id, name: a.name, n: 0}, counts[a.id].n += 1;
+    const options = Object.values(counts).sort((a, b) => a.name.localeCompare(b.name));
+    const ab = this.st('ab', counts.gluttony ? 'gluttony' : '');
+    const inUse = this.st('inUse', false);
+    const ql = this.st('q', '').trim().toLowerCase();
+    const type = this.st('type', '');
+    const trainer = this.st('trainer', '');
+    const holds = (p) => !ab || (p.abilities || []).some((a) => a.id === ab) && (!inUse || (p.ability && p.ability.id === ab));
+    const shown = all.filter((p) => (!ql || (p.nickname || '').toLowerCase().includes(ql) || p.name.toLowerCase().includes(ql)) && (!type || (p.sdTypes || p.types).includes(type)) && holds(p) && (!trainer || p.owner.name === trainer));
+    const sel = this.st('sel', shown[0] ? shown[0].key : null);
+    const picked = all.find((p) => p.key === sel) || shown[0] || all[0];
+    const cells = shown.map((p) => ({
+      sprite: SPRITES[p.key], lvl: String(p.level), shiny: !!p.shiny, on: p.key === sel,
+      bg: p.key === sel ? 'rgba(90, 209, 240, 0.22)' : 'rgba(16, 20, 29, 0.35)', ring: p.key === sel ? 'inset 0 0 0 3px #5ad1f0' : 'none',
+      colour: p.owner.colour, initial: p.owner.initial,
+      aria: (p.nickname || p.name) + ', ' + p.name + ', level ' + p.level + ', ' + p.owner.name + '\'s',
+      pick: () => this.setState({sel: p.key}),
     }));
-    const only = this.st('show', 'all');
-    const held = (m) => (m.abilities || []).find((a) => a.id === picked);
-    const inUse = (m) => !!m.ability && m.ability.id === picked;
-    const card = (m) => {
-      const h = held(m);
-      const name = m.nickname || m.name;
-      return {
-        name, sub: (m.nickname ? m.name + ' · ' : '') + 'Lv ' + m.level, sprite: SPRITES[m.key],
-        current: inUse(m), hidden: !!(h && h.hidden),
-        aria: name + ', level ' + m.level + (inUse(m) ? ', in use' : ''),
-      };
-    };
-    const rank = (m) => (inUse(m) ? 0 : 1);
-    const groupsAll = owned.map((t) => ({t, list: t.mons.filter(held).sort((a, b) => rank(a) - rank(b) || b.level - a.level)})).filter((g) => g.list.length > 0);
-    const total = groupsAll.reduce((n, g) => n + g.list.length, 0);
-    const used = groupsAll.reduce((n, g) => n + g.list.filter(inUse).length, 0);
-    const groups = groupsAll
-      .map((g) => ({...g, list: only === 'all' ? g.list : g.list.filter(inUse)}))
-      .filter((g) => g.list.length > 0)
-      .map((g) => ({name: g.t.name, initial: g.t.initial, colour: g.t.colour, you: !!g.t.you, milestone: g.t.milestone, count: g.list.length, mons: g.list.map(card)}));
-    const seg = (value, label) => ({
-      label, on: only === value, bg: only === value ? '#d93a30' : 'transparent', fg: only === value ? '#ffffff' : '#c3cad8',
-      pick: () => this.setState({show: value}),
-    });
-    const entry = entries[picked] || {name: '', desc: ''};
     return {
       phone, wide: !phone,
-      rootW: phone ? '390px' : '1440px', rootH: phone ? '844px' : '1000px', fixedH: phone ? (view === 'list' ? '844px' : 'auto') : '1000px',
-      mainPad: phone ? '20px 16px 24px' : '20px 32px 24px', h1Size: phone ? '48px' : '60px',
+      rootW: phone ? '390px' : '1440px', rootH: phone ? '844px' : '1000px', fixedH: phone ? 'auto' : '1000px',
+      mainPad: phone ? '20px 16px 24px' : '20px 40px 32px', h1Size: phone ? '48px' : '60px',
       seriesHref: phone ? 'MainPhone.dc.html' : 'Main.dc.html',
-      showList: !phone || view === 'list', showHolders: !phone || view === 'holders',
-      listFlex: phone ? '1' : 'none', listW: phone ? 'auto' : '380px', holdersPad: phone ? '14px' : '20px',
-      gridCols: phone ? 'minmax(0, 1fr)' : 'repeat(auto-fill, minmax(240px, 1fr))',
-      listCount: q ? shown.length + ' of ' + all.length + ' abilities' : all.length + ' abilities',
-      query, onQuery: (e) => this.setState({query: e.target.value}), listed,
-      toList: () => this.setState({view: 'list'}),
-      ab: {name: entry.name, desc: entry.desc || '—'},
-      shows: [seg('all', 'Can have · ' + total), seg('current', 'In use · ' + used)],
-      groups, nobody: groups.length === 0 && !!d,
+      boxMinH: phone ? '640px' : '0', searchFlex: phone ? '1 1 100%' : 'none', searchW: phone ? 'auto' : '220px',
+      cols: phone ? 'repeat(4, minmax(0, 1fr))' : 'repeat(auto-fill, minmax(106px, 1fr))', spriteW: phone ? '92%' : '96px',
+      count: (shown.length === all.length ? '' : shown.length + ' of ') + all.length + ' Pokémon',
+      query: this.st('q', ''), onQuery: (e) => this.setState({q: e.target.value}),
+      typeOptions: TYPE, type, onType: (e) => this.setState({type: e.target.value}),
+      abilityOptions: options.map((a) => ({id: a.id, label: a.name + ' · ' + a.n})), ability: ab, onAbility: (e) => this.setState({ab: e.target.value}),
+      hasAbility: ab !== '', inUse, toggleInUse: () => this.setState({inUse: !inUse}),
+      inUseBg: inUse ? '#5ad1f0' : 'rgba(255,255,255,0.1)', inUseFg: inUse ? '#10141d' : '#ffffff',
+      trainerOptions: TRAINERS, trainer, onTrainer: (e) => this.setState({trainer: e.target.value}),
+      cells, none: !!d && shown.length === 0,
+      sumMon: picked ? {key: picked.key} : null,
+      owner: picked ? {colour: picked.owner.colour, initial: picked.owner.initial, label: picked.owner.name + '\'s PC · ' + picked.owner.milestone} : {colour: '#44506d', initial: '', label: ''},
     };
   }
 }

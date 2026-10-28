@@ -1,22 +1,18 @@
 import * as z from "zod";
-
-export const heldAbility = z.object({ id: z.string(), hidden: z.boolean(), current: z.boolean() });
+import { named } from "./mon.js";
 
 export const abilityHolder = z.object({
   index: z.int(),
-  name: z.string(),
-  species: z.string(),
+  species: named,
+  nickname: z.string().nullable(),
   level: z.number().nullable(),
-  sprite: z.string().nullable(),
   shiny: z.boolean(),
-  abilities: z.array(heldAbility),
+  filterTypes: z.array(z.string()),
+  sprite: z.string().nullable(),
+  abilities: z.array(z.object({ id: z.string(), name: z.string(), hidden: z.boolean(), current: z.boolean() })),
 });
 
 export type AbilityHolder = z.infer<typeof abilityHolder>;
-
-export const abilityEntry = z.object({ name: z.string(), desc: z.string(), marked: z.boolean() });
-
-export type AbilityEntry = z.infer<typeof abilityEntry>;
 
 export const abilityTrainer = z.object({
   player: z.object({ id: z.string(), name: z.string() }),
@@ -27,8 +23,7 @@ export const abilityTrainer = z.object({
 export type AbilityTrainer = z.infer<typeof abilityTrainer>;
 
 export const abilitiesPage = z.object({
-  series: z.object({ number: z.int(), name: z.string() }),
-  abilities: z.record(z.string(), abilityEntry),
+  series: z.object({ number: z.int(), name: z.string(), gameId: z.string().nullable() }),
   trainers: z.array(abilityTrainer),
 });
 

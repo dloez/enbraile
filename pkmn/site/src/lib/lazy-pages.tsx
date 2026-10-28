@@ -1,5 +1,5 @@
 import { useEffect, useState, type ComponentType } from "react";
-import { AbilitiesFrame, AdminGamesFrame, AdminHomeFrame, AdminPlayersFrame, AdminSeriesFrame, AdminSeriesListFrame, PcFrame, PlayerSeriesFrame, ProfileFrame, SeriesFrame, SeriesListFrame, TeamFrame, TeamsFrame } from "@/components/page-frames";
+import { AdminGamesFrame, AdminHomeFrame, AdminPlayersFrame, AdminSeriesFrame, AdminSeriesListFrame, PcFrame, PlayerSeriesFrame, ProfileFrame, SeriesFrame, SeriesListFrame, TeamFrame, TeamsFrame } from "@/components/page-frames";
 
 function lazyPage(load: () => Promise<ComponentType>, Frame: ComponentType) {
   let loaded: ComponentType | null = null;
@@ -20,7 +20,7 @@ export const seriesPage = lazyPage(() => import("@/pages/series").then((m) => m.
 export const profilePage = lazyPage(() => import("@/pages/player-profile").then((m) => m.PlayerProfilePage), ProfileFrame);
 export const playerSeriesPage = lazyPage(() => import("@/pages/player-series").then((m) => m.PlayerSeriesPage), PlayerSeriesFrame);
 export const pcPage = lazyPage(() => import("@/pages/pc").then((m) => m.PcPage), PcFrame);
-export const abilitiesPage = lazyPage(() => import("@/pages/abilities").then((m) => m.AbilitiesPage), AbilitiesFrame);
+export const abilitiesPage = lazyPage(() => import("@/pages/abilities").then((m) => m.AbilitiesPage), PcFrame);
 export const teamsPage = lazyPage(() => import("@/pages/teams").then((m) => m.TeamsPage), TeamsFrame);
 export const teamPage = lazyPage(() => import("@/pages/team").then((m) => m.TeamBuilderPage), TeamFrame);
 export const adminHomePage = lazyPage(() => import("@/pages/admin").then((m) => m.AdminPage), AdminHomeFrame);

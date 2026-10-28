@@ -118,11 +118,9 @@ seriesRoutes.get("/:number/abilities", async (c) => {
     .orderBy(asc(user.name), asc(milestone.position));
   const latest = new Map(taken.map((t) => [t.player.id, t]));
   const { describeHolders } = await import("../../shared/describe.js");
-  const abilities: AbilitiesPage["abilities"] = {};
   const page: AbilitiesPage = {
-    series: { number: row.number, name: row.name },
-    abilities,
-    trainers: [...latest.values()].map((t) => ({ player: t.player, milestone: t.milestone, mons: describeHolders(t.pokemon, abilities) })),
+    series: { number: row.number, name: row.name, gameId: row.gameId },
+    trainers: [...latest.values()].map((t) => ({ player: t.player, milestone: t.milestone, mons: describeHolders(t.pokemon) })),
   };
   return c.json(page);
 });

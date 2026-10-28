@@ -14,14 +14,14 @@
 body{margin:0}
 </style>
 </helmet>
-<div style="width: 390px; min-height: 1180px">
-<dc-import name="Abilities" phone="{{phone}}" start="{{start}}" hint-size="390px,1180px"></dc-import>
+<div style="width: 390px; min-height: 1000px">
+<dc-import name="Abilities" phone="{{phone}}" hint-size="390px,1000px"></dc-import>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1180}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
 class Component extends DCLogic {
   renderVals() {
-    return {phone: true, start: 'holders'};
+    return {phone: true};
   }
 }
 </script>

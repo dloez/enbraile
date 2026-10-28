@@ -107,6 +107,16 @@ select option{background:#10141d;color:#eef1f7}
 <sc-for list="{{typeOptions}}" as="t" hint-placeholder-count="18"><option value="{{t}}">{{t}}</option></sc-for>
 </select>
 </label>
+<label class="field" style="flex: none; display: flex; align-items: center; background: #10141d; border: 3px solid #343f58; border-radius: 10px; padding: 0 8px 0 12px; height: 48px; box-sizing: border-box">
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Ability</span>
+<select value="{{ability}}" onChange="{{onAbility}}" style="max-width: 180px; border: none; background: transparent; color: #eef1f7; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; outline: none; cursor: pointer; padding-right: 4px">
+<option value="">All abilities</option>
+<sc-for list="{{abilityOptions}}" as="a" hint-placeholder-count="20"><option value="{{a.id}}">{{a.label}}</option></sc-for>
+</select>
+</label>
+<sc-if value="{{hasAbility}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" aria-pressed="{{inUse}}" onClick="{{toggleInUse}}" style="min-height: 48px; padding: 0 16px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: {{inUseBg}}; color: {{inUseFg}}; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">In use</button>
+</sc-if>
 <sc-if value="{{chrome}}" hint-placeholder-val="{{ true }}">
 <button type="button" class="btn" aria-haspopup="dialog" onClick="{{openBag}}" style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 18px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">
 <svg width="16" height="16" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H3zM2 1h1v2H2zM7 1h1v2H7zM1 3h8v1H1zM0 4h10v5H0zM1 9h8v1H1z" fill="#5ad1f0"></path></svg>
@@ -312,6 +322,7 @@ class Component extends DCLogic {
     const base = {rootW: picker ? picker.w : '1440px', rootH: picker ? picker.h : '1000px', chrome: !picker, isPicker: !!picker, bodyPad: picker ? '0' : '20px 40px 32px', put: {}, px, plate, snaps, missing: !full, bagOpen, inPc: !go, goTeam: !!go, go: go || {}, menuOpen, toggleMenu: () => this.setState({menu: !menuOpen}), teamMenu: [], addName: '', newTeam: () => {}, openBag: () => this.setState({bagOpen: true}), closeBag: () => this.setState({bagOpen: false}),
       typeOptions: Object.keys(TYPE), type: this.st('type', ''), onType: (e) => this.setState({type: e.target.value, lst: null}),
       query: this.st('q', ''), onQuery: (e) => this.setState({q: e.target.value, lst: null}),
+      abilityOptions: [], ability: this.st('ab', ''), onAbility: (e) => this.setState({ab: e.target.value, lst: null}), hasAbility: this.st('ab', '') !== '', inUse: this.st('inUse', false), toggleInUse: () => this.setState({inUse: !this.st('inUse', false), lst: null}), inUseBg: this.st('inUse', false) ? '#5ad1f0' : 'rgba(255,255,255,0.1)', inUseFg: this.st('inUse', false) ? '#10141d' : '#ffffff',
       canUp: false, canDown: false, onList: () => {}, moreUp: () => {}, moreDown: () => {},
       bagQuery: this.st('bq', ''), onBagQuery: (e) => this.setState({bq: e.target.value}),
       count: '', cells: [], none: false, loading: true, ready: false, i: {}, sumMon: null, sumAction: null, full,
@@ -322,9 +333,15 @@ class Component extends DCLogic {
     const all = Array.from({length: n}, (_, j) => ({...d.pokemon[j % d.pokemon.length], key: j, src: d.pokemon[j % d.pokemon.length].key}));
     const ql = this.st('q', '').trim().toLowerCase();
     const type = this.st('type', '');
-    const filtering = ql !== '' || type !== '';
+    const ab = this.st('ab', '');
+    const inUse = this.st('inUse', false);
+    const filtering = ql !== '' || type !== '' || ab !== '';
+    const abCount = {};
+    for (const p of all) for (const a of (p.abilities || [])) abCount[a.id] = abCount[a.id] || {id: a.id, name: a.name, n: 0}, abCount[a.id].n += 1;
+    base.abilityOptions = Object.values(abCount).sort((a, b) => a.name.localeCompare(b.name)).map((a) => ({id: a.id, label: a.name + ' · ' + a.n}));
+    const hasAb = (p) => !ab || (p.abilities || []).some((a) => a.id === ab) && (!inUse || (p.ability && p.ability.id === ab));
     const sel = this.st('sel', 0);
-    const shown = all.filter((p) => (!ql || (p.nickname || '').toLowerCase().includes(ql) || p.name.toLowerCase().includes(ql)) && (!type || (p.sdTypes || p.types).includes(type)));
+    const shown = all.filter((p) => (!ql || (p.nickname || '').toLowerCase().includes(ql) || p.name.toLowerCase().includes(ql)) && (!type || (p.sdTypes || p.types).includes(type)) && hasAb(p));
     const cells = shown.map((p) => ({
       sprite: SPRITES[p.src], lvl: picker && picker.free ? '' : String(p.level), shiny: !!p.shiny, on: p.key === sel,
       inTeam: taken.includes(p.src), fade: taken.includes(p.src) ? '0.45' : '1',

@@ -200,7 +200,7 @@ export function fightStat(s: StatLine): string {
   return s.fight !== null ? String(s.fight) : `${s.low}–${s.high}`;
 }
 
-export function displayName(mon: Mon): string {
+export function displayName(mon: Pick<Mon, "nickname" | "species">): string {
   return mon.nickname ?? mon.species.name;
 }
 
