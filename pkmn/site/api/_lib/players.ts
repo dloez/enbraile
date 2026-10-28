@@ -6,6 +6,24 @@ import { db } from "./db.js";
 import { abortUploadsUnder, deleteObject, objectsUnder } from "./files.js";
 import { savePrefix } from "./ingest.js";
 import { account, save, seriesPlayer, user } from "./schema.js";
+import { says } from "./i18n.js";
+
+const t = says({
+  en: {
+    discordId: "Give a Discord user ID (17 to 20 digits) and a name",
+    alreadyPlayer: "That Discord user is already a player",
+    sayAllowed: "Say whether they are allowed",
+    noPlayer: "No such player",
+    changedByHand: "They changed other players' snapshots by hand; those changes name them",
+  },
+  es: {
+    discordId: "Indica un ID de usuario de Discord (de 17 a 20 dígitos) y un nombre",
+    alreadyPlayer: "Ese usuario de Discord ya es jugador",
+    sayAllowed: "Indica si está admitido",
+    noPlayer: "Ese jugador no existe",
+    changedByHand: "Cambió a mano capturas de otros jugadores; esos cambios los nombran a ellos",
+  },
+});
 
 const columns = { id: user.id, name: user.name, allowed: user.allowed, createdAt: user.createdAt, accessToken: account.accessToken, accountId: account.id };
 
@@ -38,13 +56,13 @@ players.get("/", async (c) => {
 
 players.post("/", async (c) => {
   const parsed = invite.safeParse(await c.req.json().catch(() => undefined));
-  if (!parsed.success) return c.json({ error: "Give a Discord user ID (17 to 20 digits) and a name" }, 400);
+  if (!parsed.success) return c.json({ error: t(c).discordId }, 400);
   const { discordId, name } = parsed.data;
   const [taken] = await db
     .select({ id: account.id })
     .from(account)
     .where(and(eq(account.providerId, "discord"), eq(account.accountId, discordId)));
-  if (taken) return c.json({ error: "That Discord user is already a player" }, 409);
+  if (taken) return c.json({ error: t(c).alreadyPlayer }, 409);
   const id = crypto.randomUUID();
   await db.transaction(async (tx) => {
     await tx.insert(user).values({ id, name, email: `${discordId}@discord.invalid`, allowed: true });
@@ -56,19 +74,19 @@ players.post("/", async (c) => {
 
 players.post("/:id/allowed", async (c) => {
   const parsed = allowedChange.safeParse(await c.req.json().catch(() => undefined));
-  if (!parsed.success) return c.json({ error: "Say whether they are allowed" }, 400);
+  if (!parsed.success) return c.json({ error: t(c).sayAllowed }, 400);
   const [updated] = await db
     .update(user)
     .set({ allowed: parsed.data.allowed })
     .where(and(eq(user.id, c.req.param("id")), eq(user.admin, false)))
     .returning({ id: user.id });
-  if (!updated) return c.json({ error: "No such player" }, 404);
+  if (!updated) return c.json({ error: t(c).noPlayer }, 404);
   return c.json(view((await one(updated.id))!));
 });
 
 players.delete("/:id", async (c) => {
   const row = await one(c.req.param("id"));
-  if (!row) return c.json({ error: "No such player" }, 404);
+  if (!row) return c.json({ error: t(c).noPlayer }, 404);
   const played = await db.selectDistinct({ seriesId: save.seriesId }).from(save).where(eq(save.userId, row.id));
   const placed = await db.select({ seriesId: seriesPlayer.seriesId }).from(seriesPlayer).where(eq(seriesPlayer.userId, row.id));
   const prefixes = [...new Set([...played, ...placed].map((p) => savePrefix(p.seriesId, row.id)))];
@@ -77,7 +95,7 @@ players.delete("/:id", async (c) => {
   } catch (error) {
     const cause = error instanceof Error && "cause" in error ? error.cause : error;
     if (typeof cause === "object" && cause !== null && "code" in cause && cause.code === "23503") {
-      return c.json({ error: "They changed other players' snapshots by hand; those changes name them" }, 409);
+      return c.json({ error: t(c).changedByHand }, 409);
     }
     throw error;
   }

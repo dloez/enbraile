@@ -11,12 +11,39 @@ import { PcFrame } from "@/components/page-frames";
 import { SnapshotPc } from "@/components/pc/pc-box";
 import { AddToTeam, useOwnTeams } from "@/teams/components/add-to-team";
 import { unpackPc } from "../../shared/mon";
+import { localizePc } from "../../shared/describe";
+import { messages } from "../../shared/i18n";
 import { type PcPage as Pc, pcPage } from "../../shared/pc";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    noSnapshot: "No snapshot yet",
+    breadcrumb: "Breadcrumb",
+    inSeries: (name: string, n: number) => `${name} in Series ${n}`,
+    series: (n: number) => `Series ${n}`,
+    profile: (name: string) => `${name}'s profile`,
+    pc: (name: string) => `${name}'s PC`,
+    you: "You",
+    snapshot: "Snapshot",
+  },
+  es: {
+    failed: "Algo ha salido mal",
+    noSnapshot: "Aún no hay capturas",
+    breadcrumb: "Ruta de navegación",
+    inSeries: (name: string, n: number) => `${name} en la serie ${n}`,
+    series: (n: number) => `Serie ${n}`,
+    profile: (name: string) => `Perfil de ${name}`,
+    pc: (name: string) => `PC de ${name}`,
+    you: "Tú",
+    snapshot: "Captura",
+  },
+});
 
 const FROM = "/players/$player/series/$number/pc";
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 export function PcPage() {
@@ -35,7 +62,7 @@ export function PcPage() {
     setError(null);
     const query = snapshot === undefined ? "" : `?snapshot=${encodeURIComponent(snapshot)}`;
     api(`/series/${encodeURIComponent(number)}/trainers/${encodeURIComponent(player)}/pc${query}`, pcPage).then(
-      (next) => live && setPage(next),
+      (next) => live && setPage({ ...next, pc: next.pc && localizePc(next.pc) }),
       (caught: unknown) => {
         if (!live) return;
         setPage(null);
@@ -83,7 +110,7 @@ export function PcPage() {
         </GameIconsProvider>
       ) : (
         <p className="my-6 rounded-2xl border-3 border-dashed border-cell-hi bg-box px-5 py-10 text-center font-heading text-3xl text-subtle">
-          No snapshot yet
+          {t.noSnapshot}
         </p>
       )}
     </main>
@@ -96,11 +123,11 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
       <div className="flex min-w-0 flex-col gap-2">
-        <nav aria-label="Breadcrumb" className="flex font-heading text-[1.375rem]">
+        <nav aria-label={t.breadcrumb} className="flex font-heading text-[1.375rem]">
           <Link
             to="/players/$player/series/$number"
             params={{ player: page.player.id, number: String(page.series.number) }}
-            aria-label={`${page.player.name} in Series ${page.series.number}`}
+            aria-label={t.inSeries(page.player.name, page.series.number)}
             className="-my-2.5 flex min-h-11 items-center gap-2 text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
@@ -112,21 +139,21 @@ function PcHead({ page, onPick }: { page: Pc; onPick: (milestone: string) => voi
             ·
           </span>
           <Link to="/series/$number" params={{ number: String(page.series.number) }} className="-my-2.5 flex min-h-11 items-center gap-2 text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50">
-            Series {page.series.number}
+            {t.series(page.series.number)}
           </Link>
         </nav>
         <div className="flex min-w-0 items-center gap-3.5">
-          <Link to="/players/$player" params={{ player: page.player.id }} aria-label={`${page.player.name}'s profile`} className="flex-none rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+          <Link to="/players/$player" params={{ player: page.player.id }} aria-label={t.profile(page.player.name)} className="flex-none rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
             <PlayerBadge name={page.player.name} colour={playerColour(page.player.name)} size="lg" />
           </Link>
-          <h1 className="m-0 truncate font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">{page.player.name}'s PC</h1>
-          {you && <span className="rounded-sm bg-yellow px-2 font-heading text-lg text-ink">You</span>}
+          <h1 className="m-0 truncate font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">{t.pc(page.player.name)}</h1>
+          {you && <span className="rounded-sm bg-yellow px-2 font-heading text-lg text-ink">{t.you}</span>}
         </div>
       </div>
       <div className="flex-1" />
       <div className="flex max-w-full flex-col items-end gap-2 max-sm:items-start">
         <Segmented
-          label="Snapshot"
+          label={t.snapshot}
           size="lg"
           className="max-w-full flex-wrap"
           options={page.milestones.map((m) => ({ value: m.name, label: m.name, disabled: !m.taken }))}

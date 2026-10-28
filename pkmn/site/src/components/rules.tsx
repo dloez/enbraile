@@ -3,6 +3,12 @@ import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { readPage } from "@/components/page";
 import { cn } from "@/lib/utils";
+import { messages } from "../../shared/i18n";
+
+const t = messages({
+  en: { rules: "Rules", contents: "Contents", rulesContents: "Rules contents" },
+  es: { rules: "Reglas", contents: "Índice", rulesContents: "Índice de las reglas" },
+});
 
 interface MdNode {
   type: string;
@@ -151,12 +157,12 @@ export function Rules({ rules }: { rules: string }) {
   return (
     <section aria-labelledby="rules-title" className={cn(readPage, "flex-none gap-3 pt-2 pb-10 sm:gap-3.5 sm:pb-14")}>
       <h2 id="rules-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
-        Rules
+        {t.rules}
       </h2>
       <div className="flex items-start gap-6 xl:gap-8">
         {entries.length > 0 && (
           <nav
-            aria-label="Rules contents"
+            aria-label={t.rulesContents}
             className="sticky top-4 hidden max-h-[calc(100svh-2rem)] w-72 flex-none overflow-y-auto rounded-2xl border-3 bg-card p-2.5 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin] lg:block"
           >
             <Index entries={entries} active={active} />
@@ -165,7 +171,7 @@ export function Rules({ rules }: { rules: string }) {
         <div className="min-w-0 flex-1 rounded-2xl border-3 bg-card px-4.5 pt-4.5 pb-1 text-base leading-relaxed sm:px-8 sm:py-6.5 sm:text-lg">
           {entries.length > 0 && (
             <details className="mb-4 rounded-xl border-3 bg-box lg:hidden">
-              <summary className="min-h-11 cursor-pointer list-inside px-3.5 py-2 font-heading text-[1.375rem] text-subtle">Contents</summary>
+              <summary className="min-h-11 cursor-pointer list-inside px-3.5 py-2 font-heading text-[1.375rem] text-subtle">{t.contents}</summary>
               <Index entries={entries} active={null} className="px-1.5 pb-2" />
             </details>
           )}

@@ -1,7 +1,13 @@
 import type * as z from "zod";
 import { api, putPart } from "@/lib/api";
 import { partTicket, uploadAborted, type UploadTicket, uploadTicket } from "../../shared/games";
+import { messages } from "../../shared/i18n";
 import { uploadParts } from "../../shared/upload";
+
+const t = messages({
+  en: { wrong: "Something went wrong", orphaned: (reason: string) => `${reason}; its parts stay in the file store until the next upload` },
+  es: { wrong: "Algo salió mal", orphaned: (reason: string) => `${reason}; sus partes se quedan en el almacén de archivos hasta la próxima subida` },
+});
 
 const abortAttempts = 3;
 
@@ -44,8 +50,8 @@ export async function sendFile<T extends z.ZodType>(base: string, file: File, an
     sent = true;
     return await api(`${base}/file`, answer, { body: { key, uploadId, fileName: file.name, parts } });
   } catch (caught) {
-    const reason = caught instanceof Error ? caught.message : "Something went wrong";
+    const reason = caught instanceof Error ? caught.message : t.wrong;
     const cleared = ticket ? await abort(base, ticket) : true;
-    throw new UploadError(cleared ? reason : `${reason}; its parts stay in the file store until the next upload`, sent);
+    throw new UploadError(cleared ? reason : t.orphaned(reason), sent);
   }
 }

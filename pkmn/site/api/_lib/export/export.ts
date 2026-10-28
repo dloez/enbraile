@@ -1,4 +1,5 @@
 import { randomInt } from "node:crypto";
+import type { Messages } from "../../../shared/i18n.js";
 import type { FaintedPokemon, Json, PokemonDetails, SaveDetails, SheetItem, SheetPokemon, SheetTm, Snapshot, SnapshotMember } from "../../../shared/snapshot.js";
 import DATA from "./data.json" with { type: "json" };
 import { hashGet, isHash, isInt, MarshalError, MarshalReader, MarshalWriter, type RubyHash, RubyObject, RubySymbol, text, truthy } from "./marshal.js";
@@ -19,7 +20,11 @@ const data: ExportData = DATA as unknown as ExportData;
 
 const showdown = data.showdown;
 
-export class ExportError extends Error {}
+export class ExportError extends Error {
+  constructor(readonly texts: Messages<string>) {
+    super(texts.en);
+  }
+}
 
 const GENDERS: Record<number, "M" | "F" | "N"> = { 0: "M", 1: "F", 2: "N" };
 const SHINY_CHANCE = 65;
@@ -73,9 +78,12 @@ export function readSave(bytes: Uint8Array, label: string): Save {
     save = new MarshalReader(bytes).load();
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    throw new ExportError(`Could not read ${label} (${reason}). If the game was saving, let it finish and upload again.`);
+    throw new ExportError({
+      en: `Could not read ${label} (${reason}). If the game was saving, let it finish and upload again.`,
+      es: `No se pudo leer ${label} (${reason}). Si el juego estaba guardando, espera a que termine y vuelve a subirla.`,
+    });
   }
-  if (!isHash(save) || !(save.get("player") instanceof RubyObject)) throw new ExportError(`${label} is not a Pokémon Añil save.`);
+  if (!isHash(save) || !(save.get("player") instanceof RubyObject)) throw new ExportError({ en: `${label} is not a Pokémon Añil save.`, es: `${label} no es una partida de Pokémon Añil.` });
   return save;
 }
 

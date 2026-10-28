@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { BallSplit, ballTitleClass } from "@/components/ball-split";
 import { authClient } from "@/lib/auth-client";
+import { messages } from "../../shared/i18n";
+
+const t = messages({
+  en: { signIn: "Sign in with Discord", failed: "Sign-in failed" },
+  es: { signIn: "Iniciar sesión con Discord", failed: "No se pudo iniciar sesión" },
+});
 
 function DiscordIcon() {
   return (
@@ -48,11 +54,11 @@ export function SignInPage() {
           className="flex min-h-14 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border-3 border-discord-edge bg-discord font-heading text-2xl text-white outline-none hover:bg-discord-hi focus-visible:bg-discord-hi focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50 sm:min-h-16 sm:w-110 sm:gap-3.5 sm:text-3xl"
         >
           <DiscordIcon />
-          Sign in with Discord
+          {t.signIn}
         </button>
         {failed && (
           <p role="alert" className="m-0 text-sm text-destructive">
-            Sign-in failed
+            {t.failed}
           </p>
         )}
       </div>

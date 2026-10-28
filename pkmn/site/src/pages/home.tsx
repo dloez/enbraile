@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { listPage } from "@/components/page";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { messages } from "../../shared/i18n";
 import { seriesBannerList } from "../../shared/series";
+
+const t = messages({
+  en: { failed: "Something went wrong" },
+  es: { failed: "Algo ha fallado" },
+});
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -16,7 +22,7 @@ export function HomePage() {
         if (running) void navigate({ to: "/series/$number", params: { number: String(running.number) }, replace: true });
         else void navigate({ to: "/series", replace: true });
       },
-      (caught: unknown) => setError(caught instanceof Error ? caught.message : "Something went wrong"),
+      (caught: unknown) => setError(caught instanceof Error ? caught.message : t.failed),
     );
   }, [navigate]);
 

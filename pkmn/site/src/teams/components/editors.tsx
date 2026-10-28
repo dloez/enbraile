@@ -11,6 +11,78 @@ import { fightItems } from "../../../shared/items";
 import { ANY_ITEMS, memberMon, NATURES } from "@/teams/dex";
 import { formatMoney, heldCount, mintsLeft, moneyLeft, naturePrice, ownMon, ownOf, setasLeft, type Member, type Slots, type Stocks } from "@/teams/team";
 import type { Sheet } from "@/teams/schema";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    item: "item",
+    ability: "ability",
+    nature: "nature",
+    anyItem: "Any item",
+    bag: (owner: string) => `${owner}'s bag`,
+    pockets: "Pockets",
+    items: "Items",
+    berries: "Berries",
+    searchBag: "Search the bag",
+    search: "Search",
+    heldBy: (name: string) => `Held by ${name}`,
+    nothingMatches: "Nothing matches",
+    empty: "Empty",
+    selected: "Selected item",
+    anyItemFree: "Any item: free member",
+    leftOf: (left: number, of: number) => `${left} left of ${of}`,
+    holdsIt: (name: string) => `${name} holds it`,
+    noneLeft: "None left",
+    giveTo: (name: string) => `Give to ${name}`,
+    takeItem: "Take its item",
+    setasLeft: (n: number) => `${setasLabel(n)} left`,
+    noAbilities: "No abilities in this export",
+    hidden: "Hidden",
+    inGame: "In game",
+    free: "Free",
+    neutral: "Neutral",
+    moneyForMints: "Money left for mints",
+    noMoney: "No money in this snapshot",
+    moneyLeft: (money: string) => `${money} left`,
+    mintInBag: (n: number) => `Mint in bag ×${n}`,
+    mintFor: (money: string) => `Mint ${money}`,
+    mintRule: "A new nature takes a mint of it: one from the bag first, else one bought at the game's mart. The in-game nature costs nothing.",
+  },
+  es: {
+    item: "objeto",
+    ability: "habilidad",
+    nature: "naturaleza",
+    anyItem: "Cualquier objeto",
+    bag: (owner: string) => `Mochila de ${owner}`,
+    pockets: "Bolsillos",
+    items: "Objetos",
+    berries: "Bayas",
+    searchBag: "Buscar en la mochila",
+    search: "Buscar",
+    heldBy: (name: string) => `Lo lleva ${name}`,
+    nothingMatches: "No hay coincidencias",
+    empty: "Vacío",
+    selected: "Objeto elegido",
+    anyItemFree: "Cualquier objeto: miembro libre",
+    leftOf: (left: number, of: number) => `${left === 1 ? "Queda" : "Quedan"} ${left} de ${of}`,
+    holdsIt: (name: string) => `${name} ya lo lleva`,
+    noneLeft: "No quedan",
+    giveTo: (name: string) => `Dárselo a ${name}`,
+    takeItem: "Quitarle el objeto",
+    setasLeft: (n: number) => `${n === 1 ? "Queda" : "Quedan"} ${setasLabel(n)}`,
+    noAbilities: "No hay habilidades en esta exportación",
+    hidden: "Oculta",
+    inGame: "En el juego",
+    free: "Gratis",
+    neutral: "Neutra",
+    moneyForMints: "Dinero que queda para mentas",
+    noMoney: "No hay dinero en esta captura",
+    moneyLeft: (money: string) => `Quedan ${money}`,
+    mintInBag: (n: number) => `Menta en mochila ×${n}`,
+    mintFor: (money: string) => `Menta ${money}`,
+    mintRule: "Una naturaleza nueva pide su menta: primero una de la mochila y, si no hay, una comprada en la tienda del juego. La naturaleza del juego no cuesta nada.",
+  },
+});
 
 export const editorScroll = "-mr-2.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]";
 
@@ -80,13 +152,13 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
 
   return (
     <>
-      <EditorHead who={name} what="item" back={back} onBack={onBack} aside={<span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{free ? "Any item" : `${owner}'s bag`}</span>} />
+      <EditorHead who={name} what={t.item} back={back} onBack={onBack} aside={<span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{free ? t.anyItem : t.bag(owner)}</span>} />
       <div className="flex flex-none gap-2">
-        <div role="tablist" aria-label="Pockets" className={segTrack}>
+        <div role="tablist" aria-label={t.pockets} className={segTrack}>
           {(
             [
-              ["items", "Items"],
-              ["berries", "Berries"],
+              ["items", t.items],
+              ["berries", t.berries],
             ] as const
           ).map(([id, label]) => (
             <button key={id} type="button" role="tab" aria-selected={pocket === id} onClick={() => setPocket(id)} className={segButton(pocket === id)}>
@@ -96,8 +168,8 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
         </div>
         <label className="flex min-w-0 flex-1 items-center gap-2 rounded-[10px] border-3 bg-ink px-2.5 focus-within:border-primary">
           <Search className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
-          <span className="sr-only">Search the bag</span>
-          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent text-[0.9375rem] outline-none" />
+          <span className="sr-only">{t.searchBag}</span>
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} className="min-w-0 flex-1 bg-transparent text-[0.9375rem] outline-none" />
         </label>
       </div>
       <div className={cn(editorScroll, "gap-0.75")}>
@@ -119,9 +191,9 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
               <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-bold">{item.name}</span>
               <span className="flex flex-none">
                 {holders.map((h) => (
-                  <span key={h.at} title={`Held by ${displayName(h.mon)}`} className="flex size-7 items-center justify-center overflow-hidden">
+                  <span key={h.at} title={t.heldBy(displayName(h.mon))} className="flex size-7 items-center justify-center overflow-hidden">
                     <MonSprite mon={h.mon} className="-m-1.5 size-10 flex-none" />
-                    <span className="sr-only">Held by {displayName(h.mon)}</span>
+                    <span className="sr-only">{t.heldBy(displayName(h.mon))}</span>
                   </span>
                 ))}
               </span>
@@ -129,16 +201,16 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
             </button>
           );
         })}
-        {shown.length === 0 && <p className="my-6 text-center font-heading text-2xl text-muted-foreground">{q ? "Nothing matches" : "Empty"}</p>}
+        {shown.length === 0 && <p className="my-6 text-center font-heading text-2xl text-muted-foreground">{q ? t.nothingMatches : t.empty}</p>}
       </div>
       {selected && (
-        <section aria-label="Selected item" aria-live="polite" className="flex flex-none flex-col gap-2 rounded-xl border-3 border-cell bg-box px-3 pt-2.5 pb-3">
+        <section aria-label={t.selected} aria-live="polite" className="flex flex-none flex-col gap-2 rounded-xl border-3 border-cell bg-box px-3 pt-2.5 pb-3">
           <div className="flex items-center gap-2.5">
             <ItemIcon item={selected} scale={2} />
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate font-heading text-[1.75rem] leading-none">{selected.name}</span>
               <span className="font-heading text-[1.1875rem] text-muted-foreground">
-                {free ? "Any item: free member" : `${left} left of ${selected.quantity}`}
+                {free ? t.anyItemFree : t.leftOf(left, selected.quantity)}
               </span>
             </span>
           </div>
@@ -150,7 +222,7 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
               onClick={() => onGive(selected.id)}
               className={buttonVariants({ variant: "go", className: "min-h-12 flex-1 rounded-[10px] text-2xl" })}
             >
-              {holds ? `${name} holds it` : left <= 0 ? "None left" : `Give to ${name}`}
+              {holds ? t.holdsIt(name) : left <= 0 ? t.noneLeft : t.giveTo(name)}
             </button>
             <button
               type="button"
@@ -158,7 +230,7 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
               onClick={onTake}
               className={buttonVariants({ className: cn("min-h-12 flex-none rounded-[10px] text-[1.375rem]", member.item ? "text-stat-up" : "text-faint") })}
             >
-              Take its item
+              {t.takeItem}
             </button>
           </div>
         </section>
@@ -191,13 +263,13 @@ export function AbilityEditor({ slots, stocks, slot, back, onBack, onPick }: {
     <>
       <EditorHead
         who={displayName(mon)}
-        what="ability"
+        what={t.ability}
         back={back}
         onBack={onBack}
-        aside={!free && <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{setasLabel(left)} left</span>}
+        aside={!free && <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{t.setasLeft(left)}</span>}
       />
       <div className={cn(editorScroll, "gap-2")}>
-        {mon.abilities.length === 0 && <p className="my-6 text-center font-heading text-2xl text-muted-foreground">No abilities in this export</p>}
+        {mon.abilities.length === 0 && <p className="my-6 text-center font-heading text-2xl text-muted-foreground">{t.noAbilities}</p>}
         {mon.abilities.map((a) => {
           const on = a.id === using;
           const off = !free && !a.current && !on && left < cost;
@@ -218,11 +290,11 @@ export function AbilityEditor({ slots, stocks, slot, back, onBack, onPick }: {
                   {a.name}
                   {a.marked && <UnknownMark />}
                 </span>
-                {a.hidden && <span className="rounded-sm border-2 border-cell-hi px-1.5 font-heading text-[1.0625rem] text-subtle">Hidden</span>}
+                {a.hidden && <span className="rounded-sm border-2 border-cell-hi px-1.5 font-heading text-[1.0625rem] text-subtle">{t.hidden}</span>}
                 {free ? null : a.current ? (
-                  <span className="rounded-sm bg-cyan px-1.75 font-heading text-[1.0625rem] text-ink">In game</span>
+                  <span className="rounded-sm bg-cyan px-1.75 font-heading text-[1.0625rem] text-ink">{t.inGame}</span>
                 ) : (
-                  <span className="rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">{cost === 0 ? "Free" : setasLabel(cost)}</span>
+                  <span className="rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">{cost === 0 ? t.free : setasLabel(cost)}</span>
                 )}
               </span>
               <span className="text-sm leading-[1.45] text-prose">{a.desc || "—"}</span>
@@ -235,7 +307,7 @@ export function AbilityEditor({ slots, stocks, slot, back, onBack, onPick }: {
 }
 
 function natureEffect(plus: string | null, minus: string | null): string {
-  if (!plus || !minus) return "Neutral";
+  if (!plus || !minus) return t.neutral;
   return `+${STAT_LABELS[plus as keyof typeof STAT_LABELS]} −${STAT_LABELS[minus as keyof typeof STAT_LABELS]}`;
 }
 
@@ -257,13 +329,13 @@ export function NatureEditor({ slots, stocks, slot, back, onBack, onPick }: {
     <>
       <EditorHead
         who={displayName(mon)}
-        what="nature"
+        what={t.nature}
         back={back}
         onBack={onBack}
         aside={
           own && (
-            <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground" title="Money left for mints">
-              {money === null ? "No money in this snapshot" : `${formatMoney(money)} left`}
+            <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground" title={t.moneyForMints}>
+              {money === null ? t.noMoney : t.moneyLeft(formatMoney(money))}
             </span>
           )
         }
@@ -287,11 +359,11 @@ export function NatureEditor({ slots, stocks, slot, back, onBack, onPick }: {
               <span className="flex-none font-heading text-[1.1875rem] text-subtle">{natureEffect(n.plus, n.minus)}</span>
               {own &&
                 (n.id === inGame ? (
-                  <span className="flex-none rounded-sm bg-cyan px-1.75 font-heading text-[1.0625rem] text-ink">In game</span>
+                  <span className="flex-none rounded-sm bg-cyan px-1.75 font-heading text-[1.0625rem] text-ink">{t.inGame}</span>
                 ) : price?.by === "mint" ? (
-                  <span className="flex-none rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">Mint in bag ×{mints}</span>
+                  <span className="flex-none rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">{t.mintInBag(mints)}</span>
                 ) : (
-                  <span className="flex-none rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">{price && price.price === 0 ? "Free" : `Mint ${formatMoney(price?.price ?? 0)}`}</span>
+                  <span className="flex-none rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">{price && price.price === 0 ? t.free : t.mintFor(formatMoney(price?.price ?? 0))}</span>
                 ))}
             </button>
           );
@@ -299,7 +371,7 @@ export function NatureEditor({ slots, stocks, slot, back, onBack, onPick }: {
       </div>
       {own && (
         <p className="m-0 flex-none text-sm leading-[1.4] text-prose">
-          A new nature takes a mint of it: one from the bag first, else one bought at the game's mart. The in-game nature costs nothing.
+          {t.mintRule}
         </p>
       )}
     </>

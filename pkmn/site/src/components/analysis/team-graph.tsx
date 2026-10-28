@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toID } from "@pkmn/dex";
 import cytoscape, { type Core, type ElementDefinition, type LayoutOptions, type StylesheetJson } from "cytoscape";
 import { typesIn } from "../../../shared/dex";
 import type { Member } from "@/analysis/member";
@@ -9,23 +10,92 @@ import { buttonClass, Toggle } from "@/components/controls";
 import { SelectField } from "@/components/select-field";
 import { spriteOf } from "@/analysis/sprite";
 import { cn } from "@/lib/utils";
+import { dexName, typeLabel } from "../../../shared/dex-text";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    layers: { synergy: "Synergy", weak: "Weaknesses", resist: "Resistances", offense: "Coverage" },
+    layouts: { concentric: "Concentric", cose: "Force", circle: "Circle", breadthfirst: "Hierarchy" },
+    immune: "immune",
+    hint: "Hover or tap a Pokémon, a type or a link.",
+    covers: (cover: string, covered: string) => `${cover} covers ${covered}`,
+    mutual: "Mutual core",
+    oneWay: "One-way cover",
+    weighted: "weighted synergy",
+    dNote: "D 1.00 = an average Pokémon of the pool taking a neutral hit.",
+    weak: "Weak: ",
+    resistImmune: "Resist or immune: ",
+    switchIn: "Best switch-in: ",
+    hitBy: "Hit super-effectively by: ",
+    bestHit: "Best hit: ",
+    moveOf: (species: string, move: string) => `${species}'s ${move}`,
+    weakTo: "Weak to: ",
+    coveredBy: "Covered by: ",
+    coversLabel: "Covers: ",
+    nobody: "nobody",
+    teamwork: "Teamwork",
+    layout: "Layout",
+    minSynergy: "Min synergy",
+    labels: "Labels",
+    relayout: "Re-layout",
+    fit: "Fit",
+    noSprites: "Sprites are left out of the image",
+    graph: "Team graph",
+    unresisted: "Weakness nobody resists",
+    selection: "Selection",
+  },
+  es: {
+    layers: { synergy: "Sinergia", weak: "Debilidades", resist: "Resistencias", offense: "Cobertura" },
+    layouts: { concentric: "Concéntrico", cose: "Fuerzas", circle: "Círculo", breadthfirst: "Jerarquía" },
+    immune: "inmune",
+    hint: "Pasa por encima o toca un Pokémon, un tipo o un enlace.",
+    covers: (cover: string, covered: string) => `${cover} cubre a ${covered}`,
+    mutual: "Núcleo mutuo",
+    oneWay: "Cubre en un sentido",
+    weighted: "sinergia ponderada",
+    dNote: "D 1.00 = un Pokémon medio de la reserva recibiendo un golpe neutro.",
+    weak: "Débiles: ",
+    resistImmune: "Resisten o inmunes: ",
+    switchIn: "Mejor cambio: ",
+    hitBy: "Le golpean de forma supereficaz: ",
+    bestHit: "Mejor golpe: ",
+    moveOf: (species: string, move: string) => `${move} de ${species}`,
+    weakTo: "Débil a: ",
+    coveredBy: "Cubierto por: ",
+    coversLabel: "Cubre a: ",
+    nobody: "nadie",
+    teamwork: "Sinergias",
+    layout: "Disposición",
+    minSynergy: "Sinergia mín.",
+    labels: "Etiquetas",
+    relayout: "Reordenar",
+    fit: "Ajustar",
+    noSprites: "La imagen no incluye los sprites",
+    graph: "Gráfico del equipo",
+    unresisted: "Debilidad que nadie resiste",
+    selection: "Selección",
+  },
+});
+
+const moveName = (name: string) => dexName("moves", toID(name), name);
 
 export type Layer = "synergy" | "weak" | "resist" | "offense";
 
 const LAYERS: readonly { key: Layer; label: string; swatch: string }[] = [
-  { key: "synergy", label: "Synergy", swatch: "h-0.75 w-3.5 rounded-sm bg-primary" },
-  { key: "weak", label: "Weaknesses", swatch: "h-0.75 w-3.5 rounded-sm bg-destructive" },
-  { key: "resist", label: "Resistances", swatch: "w-3.5 border-t-2 border-dashed border-chart-2" },
-  { key: "offense", label: "Coverage", swatch: "w-3.5 border-t-2 border-dotted border-chart-3" },
+  { key: "synergy", label: t.layers.synergy, swatch: "h-0.75 w-3.5 rounded-sm bg-primary" },
+  { key: "weak", label: t.layers.weak, swatch: "h-0.75 w-3.5 rounded-sm bg-destructive" },
+  { key: "resist", label: t.layers.resist, swatch: "w-3.5 border-t-2 border-dashed border-chart-2" },
+  { key: "offense", label: t.layers.offense, swatch: "w-3.5 border-t-2 border-dotted border-chart-3" },
 ];
 
 type LayoutName = "concentric" | "cose" | "circle" | "breadthfirst";
 
 const LAYOUTS: readonly { value: LayoutName; label: string }[] = [
-  { value: "concentric", label: "Concentric" },
-  { value: "cose", label: "Force" },
-  { value: "circle", label: "Circle" },
-  { value: "breadthfirst", label: "Hierarchy" },
+  { value: "concentric", label: t.layouts.concentric },
+  { value: "cose", label: t.layouts.cose },
+  { value: "circle", label: t.layouts.circle },
+  { value: "breadthfirst", label: t.layouts.breadthfirst },
 ];
 
 type Selection =
@@ -80,13 +150,17 @@ function elements(team: readonly Member[], a: Analysis, layers: Record<Layer, bo
     classes: "mon",
   }));
   if (layers.weak || layers.resist || layers.offense) {
-    for (const t of typesIn(a.gen)) {
-      const d = a.tDef.find((x) => x.type === t);
-      const o = a.tOff.find((x) => x.type === t);
+    for (const type of typesIn(a.gen)) {
+      const d = a.tDef.find((x) => x.type === type);
+      const o = a.tOff.find((x) => x.type === type);
       const cls = ["type"];
       if (layers.weak && d && d.unresisted && d.weak > 0) cls.push("danger");
       if (layers.offense && o?.uncovered) cls.push("gap");
-      els.push({ group: "nodes", data: { id: `t-${t}`, kind: "type", type: t, label: t, color: typeColour(t), icon: typeIconUrl(t) }, classes: cls.join(" ") });
+      els.push({
+        group: "nodes",
+        data: { id: `t-${type}`, kind: "type", type, label: typeLabel(type), color: typeColour(type), icon: typeIconUrl(type) },
+        classes: cls.join(" "),
+      });
     }
   }
   if (layers.synergy) {
@@ -100,7 +174,7 @@ function elements(team: readonly Member[], a: Analysis, layers: Record<Layer, bo
           kind: "synergy",
           from: e.from,
           to: e.to,
-          label: `${e.types.join(" · ")} (${e.score.toFixed(1)})`,
+          label: `${e.types.map(typeLabel).join(" · ")} (${e.score.toFixed(1)})`,
           w: e.score,
         },
         classes: e.mutual ? "synergy mutual" : "synergy",
@@ -108,31 +182,31 @@ function elements(team: readonly Member[], a: Analysis, layers: Record<Layer, bo
     }
   }
   team.forEach((_, i) => {
-    for (const t of typesIn(a.gen)) {
-      const mult = a.members[i].def[t];
+    for (const type of typesIn(a.gen)) {
+      const mult = a.members[i].def[type];
       if (layers.weak && mult > 1)
         els.push({
           group: "edges",
-          data: { id: `w${t}-${i}`, source: `t-${t}`, target: `m${i}`, kind: "weak", label: `${mult}×` },
+          data: { id: `w${type}-${i}`, source: `t-${type}`, target: `m${i}`, kind: "weak", label: `${mult}×` },
           classes: mult >= 4 ? "weak quad" : "weak",
         });
       if (layers.resist && mult < 1)
         els.push({
           group: "edges",
-          data: { id: `r${t}-${i}`, source: `t-${t}`, target: `m${i}`, kind: "resist", label: mult === 0 ? "immune" : `${mult}×` },
+          data: { id: `r${type}-${i}`, source: `t-${type}`, target: `m${i}`, kind: "resist", label: mult === 0 ? t.immune : `${mult}×` },
           classes: mult === 0 ? "resist immune" : "resist",
         });
-      const o = a.offs[i][t];
+      const o = a.offs[i][type];
       if (layers.offense && o.mult !== null && o.mult > 1 && o.move) {
-        const O = a.tOff.find((x) => x.type === t)?.os[i].O ?? 0;
+        const O = a.tOff.find((x) => x.type === type)?.os[i].O ?? 0;
         els.push({
           group: "edges",
           data: {
-            id: `o${i}-${t}`,
+            id: `o${i}-${type}`,
             source: `m${i}`,
-            target: `t-${t}`,
+            target: `t-${type}`,
             kind: "offense",
-            label: `${o.move.name} (${O.toFixed(2)})`,
+            label: `${moveName(o.move.name)} (${O.toFixed(2)})`,
             color: typeColour(o.move.type),
             O,
           },
@@ -251,7 +325,7 @@ function style(): StylesheetJson {
 
 function Detail({ team, analysis, selection }: { team: readonly Member[]; analysis: Analysis; selection: Selection }) {
   if (!selection) {
-    return <p className="m-0 text-sm text-muted-foreground">Hover or tap a Pokémon, a type or a link.</p>;
+    return <p className="m-0 text-sm text-muted-foreground">{t.hint}</p>;
   }
   if (selection.kind === "synergy") {
     const there = analysis.edges.find((e) => e.from === selection.from && e.to === selection.to);
@@ -261,16 +335,16 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
     const side = (e: SynergyEdge, cover: Member, covered: Member) => (
       <div className="flex flex-col gap-1.5">
         <span className="text-xs font-semibold text-muted-foreground">
-          {cover.set.species} covers {covered.set.species}
+          {t.covers(cover.set.species, covered.set.species)}
         </span>
-        {e.types.map((t) => (
-          <div key={t} className="flex items-center justify-between rounded-lg border bg-muted px-2.5 py-2 text-sm">
+        {e.types.map((type) => (
+          <div key={type} className="flex items-center justify-between rounded-lg border bg-muted px-2.5 py-2 text-sm">
             <span className="inline-flex items-center gap-1.5">
-              <TypeDot type={t} />
-              {t}
+              <TypeDot type={type} />
+              {typeLabel(type)}
             </span>
             <span className="tabular-nums text-xs">
-              ×{analysis.members[e.to].def[t]} · D {e.perType[t].toFixed(2)}
+              ×{analysis.members[e.to].def[type]} · D {e.perType[type].toFixed(2)}
             </span>
           </div>
         ))}
@@ -288,50 +362,50 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
             {a.set.species} {back ? "⇄" : "→"} {b.set.species}
           </div>
           <div className="text-xs text-muted-foreground">
-            {back ? "Mutual core" : "One-way cover"} · weighted synergy{" "}
+            {back ? t.mutual : t.oneWay} · {t.weighted}{" "}
             <span className="tabular-nums text-foreground">{((there?.score ?? 0) + (back?.score ?? 0)).toFixed(2)}</span>
           </div>
         </div>
         {there && side(there, b, a)}
         {back && side(back, a, b)}
-        <p className="m-0 text-xs leading-normal text-muted-foreground">D 1.00 = an average Pokémon of the pool taking a neutral hit.</p>
+        <p className="m-0 text-xs leading-normal text-muted-foreground">{t.dNote}</p>
       </div>
     );
   }
   if (selection.kind === "type") {
-    const t = selection.type;
-    const d = analysis.tDef.find((x) => x.type === t);
-    const o = analysis.tOff.find((x) => x.type === t);
+    const type = selection.type;
+    const d = analysis.tDef.find((x) => x.type === type);
+    const o = analysis.tOff.find((x) => x.type === type);
     const list = (pred: (i: number) => boolean) =>
       team.filter((_, i) => pred(i)).map((m) => m.set.species).join(", ") || "—";
     return (
       <div className="flex flex-col gap-2.5 text-sm">
         <div className="inline-flex items-center gap-2 font-heading text-2xl">
-          <TypeDot type={t} className="size-5" />
-          {t}
+          <TypeDot type={type} className="size-5" />
+          {typeLabel(type)}
         </div>
         <div>
-          <span className="text-muted-foreground">Weak: </span>
-          {list((i) => analysis.members[i].def[t] > 1)}
+          <span className="text-muted-foreground">{t.weak}</span>
+          {list((i) => analysis.members[i].def[type] > 1)}
         </div>
         <div>
-          <span className="text-muted-foreground">Resist or immune: </span>
-          {list((i) => analysis.members[i].def[t] < 1)}
+          <span className="text-muted-foreground">{t.resistImmune}</span>
+          {list((i) => analysis.members[i].def[type] < 1)}
         </div>
         {d && (
           <div>
-            <span className="text-muted-foreground">Best switch-in: </span>
+            <span className="text-muted-foreground">{t.switchIn}</span>
             {team[d.best.idx].set.species} <span className="tabular-nums">D {d.best.D.toFixed(2)}</span>
           </div>
         )}
         <div>
-          <span className="text-muted-foreground">Hit super-effectively by: </span>
-          {list((i) => (analysis.offs[i][t].mult ?? 0) > 1)}
+          <span className="text-muted-foreground">{t.hitBy}</span>
+          {list((i) => (analysis.offs[i][type].mult ?? 0) > 1)}
         </div>
         {o?.bestO.move && (
           <div>
-            <span className="text-muted-foreground">Best hit: </span>
-            {team[o.bestO.idx].set.species}'s {o.bestO.move.name} <span className="tabular-nums">O {o.bestO.O.toFixed(2)}</span>
+            <span className="text-muted-foreground">{t.bestHit}</span>
+            {t.moveOf(team[o.bestO.idx].set.species, moveName(o.bestO.move.name))} <span className="tabular-nums">O {o.bestO.O.toFixed(2)}</span>
           </div>
         )}
       </div>
@@ -350,22 +424,22 @@ function Detail({ team, analysis, selection }: { team: readonly Member[]; analys
         </div>
       </div>
       <div>
-        <span className="text-muted-foreground">Weak to: </span>
-        {types.filter((t) => ma.def[t] > 1).map((t) => `${t} ×${ma.def[t]}`).join(", ") || "—"}
+        <span className="text-muted-foreground">{t.weakTo}</span>
+        {types.filter((type) => ma.def[type] > 1).map((type) => `${typeLabel(type)} ×${ma.def[type]}`).join(", ") || "—"}
       </div>
       <div>
-        <span className="text-muted-foreground">Covered by: </span>
+        <span className="text-muted-foreground">{t.coveredBy}</span>
         {analysis.edges
           .filter((e) => e.from === selection.index)
           .map((e) => team[e.to].set.species)
-          .join(", ") || "nobody"}
+          .join(", ") || t.nobody}
       </div>
       <div>
-        <span className="text-muted-foreground">Covers: </span>
+        <span className="text-muted-foreground">{t.coversLabel}</span>
         {analysis.edges
           .filter((e) => e.to === selection.index)
           .map((e) => team[e.from].set.species)
-          .join(", ") || "nobody"}
+          .join(", ") || t.nobody}
       </div>
     </div>
   );
@@ -471,9 +545,9 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
   };
 
   return (
-    <section aria-label="Teamwork" className={cn("flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card", fill && "flex-1")}>
+    <section aria-label={t.teamwork} className={cn("flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card", fill && "flex-1")}>
       <div className="flex flex-wrap items-center gap-2.5 border-b px-3.5 py-3">
-        <h3 className="m-0 mr-1.5 font-heading text-2xl">Teamwork</h3>
+        <h3 className="m-0 mr-1.5 font-heading text-2xl">{t.teamwork}</h3>
         {LAYERS.map((l) => (
           <Toggle key={l.key} pressed={layers[l.key]} onChange={(on) => setLayers({ ...layers, [l.key]: on })}>
             <span className={l.swatch} aria-hidden="true" />
@@ -482,7 +556,7 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
         ))}
         <div className="flex-1" />
         <SelectField
-          label="Layout"
+          label={t.layout}
           size="sm"
           value={layout}
           options={LAYOUTS}
@@ -494,7 +568,7 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
           }}
         />
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          Min synergy
+          {t.minSynergy}
           <input
             type="range"
             min={0}
@@ -507,39 +581,39 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
           <span className="w-7 tabular-nums text-foreground">{minSynergy.toFixed(1)}</span>
         </label>
         <Toggle pressed={labels} onChange={setLabels}>
-          Labels
+          {t.labels}
         </Toggle>
         <button type="button" onClick={() => relayout(layout)} className={buttonClass}>
-          Re-layout
+          {t.relayout}
         </button>
         <button type="button" onClick={() => cyRef.current?.fit(undefined, 30)} className={buttonClass}>
-          Fit
+          {t.fit}
         </button>
-        <button type="button" onClick={exportPng} className={buttonClass} title="Sprites are left out of the image">
+        <button type="button" onClick={exportPng} className={buttonClass} title={t.noSprites}>
           PNG
         </button>
       </div>
       <div className={cn("flex flex-wrap", fill && "flex-1")}>
         <div className="relative min-w-0 flex-[999_1_560px] bg-muted" style={fill ? { minHeight: height } : { height }}>
-          <div ref={container} className="h-full w-full" aria-label="Team graph" role="img" />
+          <div ref={container} className="h-full w-full" aria-label={t.graph} role="img" />
           <div className="pointer-events-none absolute bottom-3 left-3.5 flex flex-wrap gap-3.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-1 w-4.5 rounded-sm bg-primary" />
-              Mutual core
+              {t.mutual}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-0.75 w-4.5 rounded-sm bg-chart-2" />
-              One-way cover
+              {t.oneWay}
             </span>
             {layers.weak && (
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-3 rounded-full border-3 border-double border-destructive" />
-                Weakness nobody resists
+                {t.unresisted}
               </span>
             )}
           </div>
         </div>
-        <aside aria-label="Selection" className="flex min-w-0 flex-[1_1_300px] flex-col gap-3.5 border-l p-4">
+        <aside aria-label={t.selection} className="flex min-w-0 flex-[1_1_300px] flex-col gap-3.5 border-l p-4">
           <Detail team={team} analysis={analysis} selection={selection} />
         </aside>
       </div>

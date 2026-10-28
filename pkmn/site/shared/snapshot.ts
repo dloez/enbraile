@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { messages, type Messages } from "./i18n.js";
 
 const id = z.string().min(1);
 
@@ -220,15 +221,20 @@ function entries<T extends z.ZodType>(list: unknown, schema: T): { read: z.infer
   return { read, raw, skipped: list.length - read.length, absent: false };
 }
 
+export const EXPORT_REFUSALS: Messages<{ notExport: string; unreadable: string }> = {
+  en: { notExport: "This file is not an export", unreadable: "Nothing in this export can be read" },
+  es: { notExport: "Este archivo no es una exportación", unreadable: "No se puede leer nada de esta exportación" },
+};
+
 export function readExport(
   data: unknown,
   item: (showdown: string, quantity: number) => SheetItem,
-): { sheet: Sheet; report: ExportReport } | { refused: string } {
-  if (!record(data)) return { refused: "This file is not an export" };
+): { sheet: Sheet; report: ExportReport } | { refused: keyof (typeof EXPORT_REFUSALS)["en"] } {
+  if (!record(data)) return { refused: "notExport" };
   const pokemon = entries(data.pokemon, pokemonSchema);
   const items = entries(data.items, legacyItemSchema);
   const tms = entries(data.tms, tmSchema);
-  if (pokemon.read.length + items.read.length + tms.read.length === 0) return { refused: "Nothing in this export can be read" };
+  if (pokemon.read.length + items.read.length + tms.read.length === 0) return { refused: "unreadable" };
   const gaps = new Set<ExportGap>();
   for (const entry of pokemon.raw) {
     if (!record(entry)) continue;
@@ -243,23 +249,42 @@ export function readExport(
   };
 }
 
-const GAP_LABEL: Record<ExportGap, string> = {
-  ivs: "IVs",
-  evs: "EVs",
-  stats: "stats",
-  moves: "moves",
-  tmRolls: "TM rolls",
-  level: "levels",
-  nature: "natures",
-  ability: "abilities",
-  abilities: "possible abilities",
-  types: "types",
-  gender: "genders",
-  nickname: "nicknames",
-  shiny: "shiny marks",
-  items: "items",
-  tms: "TMs",
-};
+const GAP_LABEL: Record<ExportGap, string> = messages<Record<ExportGap, string>>({
+  en: {
+    ivs: "IVs",
+    evs: "EVs",
+    stats: "stats",
+    moves: "moves",
+    tmRolls: "TM rolls",
+    level: "levels",
+    nature: "natures",
+    ability: "abilities",
+    abilities: "possible abilities",
+    types: "types",
+    gender: "genders",
+    nickname: "nicknames",
+    shiny: "shiny marks",
+    items: "items",
+    tms: "TMs",
+  },
+  es: {
+    ivs: "IVs",
+    evs: "EVs",
+    stats: "estadísticas",
+    moves: "movimientos",
+    tmRolls: "tiradas de MT",
+    level: "niveles",
+    nature: "naturalezas",
+    ability: "habilidades",
+    abilities: "habilidades posibles",
+    types: "tipos",
+    gender: "géneros",
+    nickname: "motes",
+    shiny: "marcas de variocolor",
+    items: "objetos",
+    tms: "MT",
+  },
+});
 
 function gapGroups(report: ExportReport): string[][] {
   const spread = (["ivs", "evs", "stats"] as const).filter((gap) => report.missing.includes(gap));

@@ -4,13 +4,33 @@ import { PLAYER_FILL, playerColour } from "@/components/player-badge";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { snapshotList, type TeamSourceRow } from "../../../shared/team";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    source: (player: string, milestone: string) => `${player}'s PC · ${milestone}`,
+    failed: "Something went wrong",
+    loading: "Loading the snapshots",
+    none: "No other snapshots",
+    series: (n: number) => `Series ${n}`,
+    any: "Any Pokémon",
+  },
+  es: {
+    source: (player: string, milestone: string) => `PC de ${player} · ${milestone}`,
+    failed: "Algo ha fallado",
+    loading: "Cargando las capturas",
+    none: "No hay más capturas",
+    series: (n: number) => `Serie ${n}`,
+    any: "Cualquier Pokémon",
+  },
+});
 
 export function sourceLabel(source: TeamSourceRow): string {
-  return `${source.player.name}'s PC · ${source.milestone}`;
+  return t.source(source.player.name, source.milestone);
 }
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 export function AnyMark({ className }: { className?: string }) {
@@ -64,11 +84,11 @@ export function SnapshotMenu({ label, taken = [], note, className, onClose, onPi
             {error}
           </p>
         )}
-        {!error && rows === null && <LoadingBar label="Loading the snapshots" className="relative my-4 block rounded-sm" />}
-        {rows !== null && left.length === 0 && !onAny && <p className="m-0 px-2.5 py-2 font-heading text-xl text-muted-foreground">No other snapshots</p>}
+        {!error && rows === null && <LoadingBar label={t.loading} className="relative my-4 block rounded-sm" />}
+        {rows !== null && left.length === 0 && !onAny && <p className="m-0 px-2.5 py-2 font-heading text-xl text-muted-foreground">{t.none}</p>}
         {series.map((number) => (
-          <div key={number} role="group" aria-label={`Series ${number}`} className="flex flex-col gap-0.5">
-            {series.length > 1 && <p className="m-0 px-2.5 pt-1.5 font-heading text-lg text-muted-foreground">Series {number}</p>}
+          <div key={number} role="group" aria-label={t.series(number)} className="flex flex-col gap-0.5">
+            {series.length > 1 && <p className="m-0 px-2.5 pt-1.5 font-heading text-lg text-muted-foreground">{t.series(number)}</p>}
             {left
               .filter((row) => row.series.number === number)
               .map((row) => (
@@ -103,7 +123,7 @@ export function SnapshotMenu({ label, taken = [], note, className, onClose, onPi
             <span className="grid size-5 flex-none place-items-center rounded-[5px] border-2 border-dashed border-faint">
               <AnyMark className="size-2.5" />
             </span>
-            Any Pokémon
+            {t.any}
           </button>
         )}
       </div>

@@ -2,6 +2,28 @@ import { Check, CircleAlert, Info, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ARCHETYPES, FEATURES, type Analysis, type CheckLevel, type Features } from "@/analysis/team";
 import { Panel } from "@/components/controls";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    archetype: "Archetype",
+    closest: "closest prototype",
+    fingerprint: (name: string) => `Archetype fingerprint against the ${name} prototype`,
+    team: "Team",
+    prototype: (name: string) => `${name} prototype`,
+    checklist: "Checklist",
+    levels: { bad: "Problem", warn: "Warning", good: "Good", info: "Note" } as Record<CheckLevel, string>,
+  },
+  es: {
+    archetype: "Arquetipo",
+    closest: "prototipo más cercano",
+    fingerprint: (name: string) => `Huella del arquetipo frente al prototipo ${name}`,
+    team: "Equipo",
+    prototype: (name: string) => `Prototipo ${name}`,
+    checklist: "Comprobaciones",
+    levels: { bad: "Problema", warn: "Aviso", good: "Bien", info: "Nota" },
+  },
+});
 
 function pct(v: number): string {
   return `${Math.round(v * 100)}%`;
@@ -63,16 +85,16 @@ export function ArchetypeCard({ analysis }: { analysis: Analysis }) {
   const [top] = analysis.archetype;
   const proto = ARCHETYPES[top.name];
   return (
-    <Panel title="Archetype" aside={<span className="text-xs text-muted-foreground">closest prototype</span>}>
+    <Panel title={t.archetype} aside={<span className="text-xs text-muted-foreground">{t.closest}</span>}>
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex min-w-0 flex-1 basis-56 flex-col gap-2.5">
           <div className="flex items-baseline gap-2.5">
-            <span className="font-heading text-5xl leading-none text-primary">{top.name}</span>
+            <span className="font-heading text-5xl leading-none text-primary">{proto.label}</span>
             <span className="tabular-nums text-lg">{pct(top.pct)}</span>
           </div>
           {analysis.archetype.map((a, i) => (
             <div key={a.name} className="grid grid-cols-[112px_minmax(0,1fr)_40px] items-center gap-2 text-sm">
-              <span>{a.name}</span>
+              <span>{ARCHETYPES[a.name].label}</span>
               <span className="h-2 overflow-hidden rounded-sm bg-secondary">
                 <span className={cn("block h-2 rounded-sm", i === 0 ? "bg-primary" : "bg-chart-3")} style={{ width: pct(a.pct) }} />
               </span>
@@ -81,7 +103,7 @@ export function ArchetypeCard({ analysis }: { analysis: Analysis }) {
           ))}
         </div>
         <Radar
-          label={`Archetype fingerprint against the ${top.name} prototype`}
+          label={t.fingerprint(proto.label)}
           series={[
             { name: "proto", features: proto.proto, stroke: "stroke-muted-foreground", fill: "fill-none", dashed: true },
             { name: "team", features: analysis.features, stroke: "stroke-primary", fill: "fill-primary/15" },
@@ -99,11 +121,11 @@ export function ArchetypeCard({ analysis }: { analysis: Analysis }) {
       <div className="flex gap-4 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <span className="h-0.5 w-3.5 bg-primary" />
-          Team
+          {t.team}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="w-3.5 border-t-2 border-dashed border-muted-foreground" />
-          {top.name} prototype
+          {t.prototype(proto.label)}
         </span>
       </div>
     </Panel>
@@ -111,10 +133,10 @@ export function ArchetypeCard({ analysis }: { analysis: Analysis }) {
 }
 
 const LEVEL: Record<CheckLevel, { icon: typeof Check; box: string; mark: string; label: string }> = {
-  bad: { icon: X, box: "bg-destructive-soft", mark: "bg-destructive", label: "Problem" },
-  warn: { icon: CircleAlert, box: "bg-accent", mark: "bg-primary", label: "Warning" },
-  good: { icon: Check, box: "bg-muted", mark: "bg-chart-2", label: "Good" },
-  info: { icon: Info, box: "bg-muted", mark: "bg-muted-foreground", label: "Note" },
+  bad: { icon: X, box: "bg-destructive-soft", mark: "bg-destructive", label: t.levels.bad },
+  warn: { icon: CircleAlert, box: "bg-accent", mark: "bg-primary", label: t.levels.warn },
+  good: { icon: Check, box: "bg-muted", mark: "bg-chart-2", label: t.levels.good },
+  info: { icon: Info, box: "bg-muted", mark: "bg-muted-foreground", label: t.levels.info },
 };
 
 const ORDER: CheckLevel[] = ["bad", "warn", "good", "info"];
@@ -123,7 +145,7 @@ export function Checklist({ analysis, limit }: { analysis: Analysis; limit?: num
   const checks = [...analysis.checks].sort((a, b) => ORDER.indexOf(a.level) - ORDER.indexOf(b.level));
   const shown = limit ? checks.slice(0, limit) : checks;
   return (
-    <Panel title="Checklist">
+    <Panel title={t.checklist}>
       <ul className="m-0 grid list-none grid-cols-1 gap-1.5 p-0 md:grid-cols-2">
         {shown.map((c) => {
           const l = LEVEL[c.level];

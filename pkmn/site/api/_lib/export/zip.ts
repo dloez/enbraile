@@ -1,6 +1,11 @@
+import type { Messages } from "../../../shared/i18n.js";
 import { crc32, deflateRawSync, inflateRawSync } from "node:zlib";
 
-export class ZipError extends Error {}
+export class ZipError extends Error {
+  constructor(readonly texts: Messages<string>) {
+    super(texts.en);
+  }
+}
 
 export type ZipEntry = {
   name: string;
@@ -58,7 +63,7 @@ function endRecord(view: DataView): number {
   for (let at = view.byteLength - 22; at >= lowest; at -= 1) {
     if (view.getUint32(at, true) === 0x06054b50) return at;
   }
-  throw new ZipError("not a zip");
+  throw new ZipError({ en: "not a zip", es: "no es un zip" });
 }
 
 export type ZipDirectory = { start: number; size: number; count: number };
@@ -67,7 +72,7 @@ export type Zip64Locator = { record: number };
 
 export function zipDirectory(tail: Uint8Array, tailStart: number, zip64Record?: Uint8Array): ZipDirectory | Zip64Locator {
   const view = new DataView(tail.buffer, tail.byteOffset, tail.byteLength);
-  if (tail.byteLength < 22) throw new ZipError("not a zip");
+  if (tail.byteLength < 22) throw new ZipError({ en: "not a zip", es: "no es un zip" });
   const end = endRecord(view);
   const directory = { count: view.getUint16(end + 10, true), size: view.getUint32(end + 12, true), start: view.getUint32(end + 16, true) };
   if ((directory.count === 0xffff || directory.start === 0xffffffff || directory.size === 0xffffffff) && end >= 20 && view.getUint32(end - 20, true) === 0x07064b50) {
@@ -87,7 +92,7 @@ export function zipDirectory(tail: Uint8Array, tailStart: number, zip64Record?: 
 
 export function zipEntries(data: Uint8Array): ZipEntry[] {
   const directory = zipDirectory(data, 0);
-  if ("record" in directory) throw new ZipError("a broken zip");
+  if ("record" in directory) throw new ZipError({ en: "a broken zip", es: "un zip roto" });
   return directoryEntries(data.subarray(directory.start), directory.count);
 }
 
@@ -96,7 +101,7 @@ export function directoryEntries(data: Uint8Array, count: number): ZipEntry[] {
   const entries: ZipEntry[] = [];
   let at = 0;
   for (let i = 0; i < count; i += 1) {
-    if (at + 46 > data.byteLength || view.getUint32(at, true) !== 0x02014b50) throw new ZipError("a broken zip");
+    if (at + 46 > data.byteLength || view.getUint32(at, true) !== 0x02014b50) throw new ZipError({ en: "a broken zip", es: "un zip roto" });
     const flags = view.getUint16(at + 8, true);
     const nameLength = view.getUint16(at + 28, true);
     const extraLength = view.getUint16(at + 30, true);
@@ -131,21 +136,21 @@ export function directoryEntries(data: Uint8Array, count: number): ZipEntry[] {
 function storedBytes(data: Uint8Array, entry: ZipEntry, dataStart = 0): Uint8Array {
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
   const offset = entry.offset - dataStart;
-  if (offset < 0 || offset + 30 > data.byteLength || view.getUint32(offset, true) !== 0x04034b50) throw new ZipError(`a broken entry ${entry.name}`);
+  if (offset < 0 || offset + 30 > data.byteLength || view.getUint32(offset, true) !== 0x04034b50) throw new ZipError({ en: `a broken entry ${entry.name}`, es: `una entrada rota ${entry.name}` });
   const begin = offset + 30 + view.getUint16(offset + 26, true) + view.getUint16(offset + 28, true);
   const stored = data.subarray(begin, begin + entry.compressedSize);
-  if (stored.length !== entry.compressedSize) throw new ZipError(`a broken entry ${entry.name}`);
+  if (stored.length !== entry.compressedSize) throw new ZipError({ en: `a broken entry ${entry.name}`, es: `una entrada rota ${entry.name}` });
   return stored;
 }
 
 export function readEntry(data: Uint8Array, entry: ZipEntry, dataStart = 0): Uint8Array {
   const stored = storedBytes(data, entry, dataStart);
   if (entry.method === 0) return stored;
-  if (entry.method !== 8) throw new ZipError(`${entry.name} is compressed in a way the site cannot read`);
+  if (entry.method !== 8) throw new ZipError({ en: `${entry.name} is compressed in a way the site cannot read`, es: `${entry.name} está comprimido de una forma que la web no puede leer` });
   try {
     return inflateRawSync(stored, { maxOutputLength: largestEntry });
   } catch {
-    throw new ZipError(`a broken entry ${entry.name}`);
+    throw new ZipError({ en: `a broken entry ${entry.name}`, es: `una entrada rota ${entry.name}` });
   }
 }
 
@@ -205,9 +210,9 @@ export function replaceEntry(data: Uint8Array, entries: ZipEntry[], replacement:
     kept.push({ ...entry, flags: entry.flags & 0x806, stored: storedBytes(data, entry) });
   }
   if (!replaced) kept.push(written(replacement, undefined));
-  if (kept.length > 0xffff) throw new ZipError("too many files to write back");
+  if (kept.length > 0xffff) throw new ZipError({ en: "too many files to write back", es: "demasiados archivos para volver a escribirlos" });
   const total = kept.reduce((sum, entry) => sum + 76 + 2 * entry.nameBytes.length + entry.stored.length, 22);
-  if (total > 0xffffffff) throw new ZipError("too large to write back");
+  if (total > 0xffffffff) throw new ZipError({ en: "too large to write back", es: "demasiado grande para volver a escribirlo" });
   const out = new Uint8Array(total);
   const view = new DataView(out.buffer);
   let at = 0;

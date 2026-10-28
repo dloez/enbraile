@@ -17,6 +17,36 @@ import { body } from "./body.js";
 import { db } from "./db.js";
 import { game, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
 import { viewer } from "./series-data.js";
+import { says } from "./i18n.js";
+
+const t = says({
+  en: {
+    signIn: "Sign in first",
+    noTeam: "No such team",
+    adminNoTeams: "Admins have no teams",
+    notTeam: "Not a team",
+    noSnapshot: "No such snapshot",
+    outsideSources: "A member comes from outside the team's sources",
+    ownerChanges: "Only the team's owner changes it",
+    needSource: "A team needs a source",
+    ownerDeletes: "Only the team's owner deletes it",
+    uploadFirst: "Upload a snapshot to the running series first",
+    team: "Team",
+  },
+  es: {
+    signIn: "Inicia sesión primero",
+    noTeam: "Ese equipo no existe",
+    adminNoTeams: "Los administradores no tienen equipos",
+    notTeam: "No es un equipo",
+    noSnapshot: "Esa captura no existe",
+    outsideSources: "Un miembro viene de fuera de las fuentes del equipo",
+    ownerChanges: "Solo el dueño del equipo puede cambiarlo",
+    needSource: "Un equipo necesita una fuente",
+    ownerDeletes: "Solo el dueño del equipo puede borrarlo",
+    uploadFirst: "Sube antes una captura a la serie en curso",
+    team: "Equipo",
+  },
+});
 
 export const teams = new Hono();
 
@@ -142,13 +172,13 @@ teams.get("/", async (c) => {
 
 teams.get("/:id", async (c) => {
   const reader = await viewer(c.req.raw);
-  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const [row] = await db
     .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, slots: team.slots, pool: team.pool, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
     .from(team)
     .innerJoin(user, eq(user.id, team.ownerId))
     .where(eq(team.id, c.req.param("id")));
-  if (!row) return c.json({ error: "No such team" }, 404);
+  if (!row) return c.json({ error: t(c).noTeam }, 404);
   const sources = await db
     .select({ ...sourceColumns, gameId: series.gameId, data: snapshot.data, missing: snapshot.missing, abilitySetas: game.abilitySetas, mintPrice: game.mintPrice })
     .from(teamSource)
@@ -182,22 +212,22 @@ teams.get("/:id", async (c) => {
 
 teams.post("/", async (c) => {
   const reader = await viewer(c.req.raw);
-  if (!reader) return c.json({ error: "Sign in first" }, 401);
-  if (reader.admin) return c.json({ error: "Admins have no teams" }, 403);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
+  if (reader.admin) return c.json({ error: t(c).adminNoTeams }, 403);
   const input = await body(c.req.raw, newTeamInput);
-  if (!input) return c.json({ error: "Not a team" }, 400);
+  if (!input) return c.json({ error: t(c).notTeam }, 400);
   const anyPokemon = input.anyPokemon ?? false;
   const latest = input.sources || anyPokemon ? undefined : await latestSnapshot(reader.id);
   const sources = input.sources ?? (latest ? [latest] : []);
-  if (sources.length === 0 && !anyPokemon) return c.json({ error: input.sources ? "A team needs a source" : "Upload a snapshot to the running series first" }, 400);
-  if (!(await shownSnapshots(sources))) return c.json({ error: "No such snapshot" }, 400);
+  if (sources.length === 0 && !anyPokemon) return c.json({ error: input.sources ? t(c).needSource : t(c).uploadFirst }, 400);
+  if (!(await shownSnapshots(sources))) return c.json({ error: t(c).noSnapshot }, 400);
   const slots = input.slots ?? emptySlots();
-  if (!backedBy(slots, sources, anyPokemon)) return c.json({ error: "A member comes from outside the team's sources" }, 400);
+  if (!backedBy(slots, sources, anyPokemon)) return c.json({ error: t(c).outsideSources }, 400);
   const names = await db.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
   const pool = input.pool ?? (await seriesPool(sources));
   const id = crypto.randomUUID();
   await db.transaction(async (tx) => {
-    await tx.insert(team).values({ id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name)), size: slots.length, anyPokemon, slots, pool });
+    await tx.insert(team).values({ id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name), t(c).team), size: slots.length, anyPokemon, slots, pool });
     if (sources.length > 0) await tx.insert(teamSource).values(sources.map((snapshotId, position) => ({ teamId: id, snapshotId, position })));
   });
   return c.json({ id });
@@ -205,19 +235,19 @@ teams.post("/", async (c) => {
 
 teams.put("/:id", async (c) => {
   const reader = await viewer(c.req.raw);
-  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const id = c.req.param("id");
-  if (!(await owned(id, reader.id))) return c.json({ error: "Only the team's owner changes it" }, 403);
+  if (!(await owned(id, reader.id))) return c.json({ error: t(c).ownerChanges }, 403);
   const input = await body(c.req.raw, teamInput);
-  if (!input) return c.json({ error: "Not a team" }, 400);
+  if (!input) return c.json({ error: t(c).notTeam }, 400);
   const resourcing = input.sources !== undefined || input.anyPokemon !== undefined;
   const now = resourcing || input.slots ? await stored(id) : undefined;
   const sources = input.sources ?? (await sourceIds(id));
   const anyPokemon = input.anyPokemon ?? now?.anyPokemon ?? false;
-  if (resourcing && sources.length === 0 && !anyPokemon) return c.json({ error: "A team needs a source" }, 400);
-  if (input.sources && !(await shownSnapshots(input.sources))) return c.json({ error: "No such snapshot" }, 400);
+  if (resourcing && sources.length === 0 && !anyPokemon) return c.json({ error: t(c).needSource }, 400);
+  if (input.sources && !(await shownSnapshots(input.sources))) return c.json({ error: t(c).noSnapshot }, 400);
   const slots = input.slots ?? (resourcing ? now?.slots : undefined);
-  if (slots && !backedBy(slots, sources, anyPokemon)) return c.json({ error: "A member comes from outside the team's sources" }, 400);
+  if (slots && !backedBy(slots, sources, anyPokemon)) return c.json({ error: t(c).outsideSources }, 400);
   await db.transaction(async (tx) => {
     await tx
       .update(team)
@@ -239,9 +269,9 @@ teams.put("/:id", async (c) => {
 
 teams.delete("/:id", async (c) => {
   const reader = await viewer(c.req.raw);
-  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const id = c.req.param("id");
-  if (!(await owned(id, reader.id))) return c.json({ error: "Only the team's owner deletes it" }, 403);
+  if (!(await owned(id, reader.id))) return c.json({ error: t(c).ownerDeletes }, 403);
   await db.delete(team).where(eq(team.id, id));
   return c.json({});
 });

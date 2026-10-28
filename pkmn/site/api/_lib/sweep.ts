@@ -3,6 +3,16 @@ import { db } from "./db.js";
 import { deleteObject, objectsUnder } from "./files.js";
 import { iconKey } from "./item-icons.js";
 import { game, snapshot } from "./schema.js";
+import { says } from "./i18n.js";
+
+const t = says({
+  en: {
+    notAllowed: "Not allowed",
+  },
+  es: {
+    notAllowed: "No permitido",
+  },
+});
 
 const staleMs = 24 * 60 * 60 * 1000;
 
@@ -34,7 +44,7 @@ export const cron = new Hono();
 
 cron.use(async (c, next) => {
   const secret = process.env.CRON_SECRET;
-  if (!secret || c.req.header("authorization") !== `Bearer ${secret}`) return c.json({ error: "Not allowed" }, 401);
+  if (!secret || c.req.header("authorization") !== `Bearer ${secret}`) return c.json({ error: t(c).notAllowed }, 401);
   await next();
 });
 

@@ -1,5 +1,5 @@
 import { and, asc, count, eq, inArray, ne, sql } from "drizzle-orm";
-import { type AdminSeries, startChecklist } from "../../shared/series.js";
+import { type AdminSeries, CHECKLIST_TEXT, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, team, user } from "./schema.js";
@@ -133,7 +133,7 @@ async function otherRunning(row: SeriesRow): Promise<string | null> {
   return running?.name ?? null;
 }
 
-export async function adminView(row: SeriesRow): Promise<AdminSeries> {
+export async function adminView(row: SeriesRow, text: (typeof CHECKLIST_TEXT)["en"] = CHECKLIST_TEXT.en): Promise<AdminSeries> {
   const players = await db.select({ id: seriesPlayer.userId }).from(seriesPlayer).where(eq(seriesPlayer.seriesId, row.id));
   const milestones = await milestonesOf(row.id);
   const chosen = await gameOf(row);
@@ -154,7 +154,7 @@ export async function adminView(row: SeriesRow): Promise<AdminSeries> {
     snapshots: taken?.snapshots ?? 0,
     checklist:
       row.state === "draft"
-        ? startChecklist({ rules: row.rules, gameHasFile: chosen?.fileKey != null, milestones: milestones.length, otherRunning: running })
+        ? startChecklist({ rules: row.rules, gameHasFile: chosen?.fileKey != null, milestones: milestones.length, otherRunning: running }, text)
         : [],
     otherRunning: running,
     startedAt: row.startedAt?.toISOString() ?? null,

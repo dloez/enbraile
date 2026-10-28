@@ -9,6 +9,26 @@ import { db } from "./db.js";
 import { downloadUrl } from "./files.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
 import { findShown, gameOf, mayUpload, milestonesOf, plays, trainersOf, viewer } from "./series-data.js";
+import { says } from "./i18n.js";
+
+const t = says({
+  en: {
+    noSnapshotAt: (name: string) => `No snapshot at ${name}`,
+    signIn: "Sign in first",
+    noSeries: "No such series",
+    gameDownload: "Only this series' players download its game",
+    noFile: "No file uploaded",
+    notPlayer: "Not a player of this series",
+  },
+  es: {
+    noSnapshotAt: (name: string) => `No hay captura en ${name}`,
+    signIn: "Inicia sesión primero",
+    noSeries: "Esa serie no existe",
+    gameDownload: "Solo los jugadores de esta serie descargan su juego",
+    noFile: "No hay ningún archivo subido",
+    notPlayer: "No es jugador de esta serie",
+  },
+});
 
 export const seriesRoutes = new Hono();
 
@@ -24,7 +44,7 @@ seriesRoutes.get("/", async (c) => {
 
 seriesRoutes.get("/owed", async (c) => {
   const reader = await viewer(c.req.raw);
-  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const rows = await db
     .select({ id: series.id, number: series.number, name: series.name })
     .from(seriesPlayer)
@@ -37,9 +57,9 @@ seriesRoutes.get("/owed", async (c) => {
 
 seriesRoutes.get("/:number", async (c) => {
   const user = await viewer(c.req.raw);
-  if (!user) return c.json({ error: "Sign in first" }, 401);
+  if (!user) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!user.admin);
-  if (!row) return c.json({ error: "No such series" }, 404);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
   const chosen = await gameOf(row);
   const page: SeriesPage = {
     number: row.number,
@@ -58,22 +78,22 @@ seriesRoutes.get("/:number", async (c) => {
 
 seriesRoutes.get("/:number/download", async (c) => {
   const user = await viewer(c.req.raw);
-  if (!user) return c.json({ error: "Sign in first" }, 401);
+  if (!user) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!user.admin);
-  if (!row) return c.json({ error: "No such series" }, 404);
-  if (!user.admin && !(await plays(row.id, user.id))) return c.json({ error: "Only this series' players download its game" }, 403);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  if (!user.admin && !(await plays(row.id, user.id))) return c.json({ error: t(c).gameDownload }, 403);
   const chosen = await gameOf(row);
-  if (!chosen?.fileKey || !chosen.fileName) return c.json({ error: "No file uploaded" }, 404);
+  if (!chosen?.fileKey || !chosen.fileName) return c.json({ error: t(c).noFile }, 404);
   return c.json({ url: await downloadUrl(chosen.fileKey, chosen.fileName) });
 });
 
 seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
   const reader = await viewer(c.req.raw);
-  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!reader.admin);
-  if (!row) return c.json({ error: "No such series" }, 404);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
   const player = await playerOf(row.id, c.req.param("player"));
-  if (!player) return c.json({ error: "Not a player of this series" }, 404);
+  if (!player) return c.json({ error: t(c).notPlayer }, 404);
   const playerId = player.id;
   const taken = await db
     .select({ milestone: milestone.name, snapshotId: snapshot.id })
@@ -84,7 +104,7 @@ seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
     .orderBy(asc(milestone.position));
   const asked = c.req.query("snapshot");
   const chosen = asked === undefined ? taken.findLast((m) => m.snapshotId !== null) : taken.find((m) => m.milestone === asked);
-  if (asked !== undefined && !chosen?.snapshotId) return c.json({ error: `No snapshot at ${asked}` }, 404);
+  if (asked !== undefined && !chosen?.snapshotId) return c.json({ error: t(c).noSnapshotAt(asked) }, 404);
   const [held] = chosen?.snapshotId ? await db.select({ data: snapshot.data, missing: snapshot.missing }).from(snapshot).where(eq(snapshot.id, chosen.snapshotId)) : [];
   const page: PcPage = {
     player,
@@ -100,9 +120,9 @@ seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
 
 seriesRoutes.get("/:number/abilities", async (c) => {
   const reader = await viewer(c.req.raw);
-  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!reader.admin);
-  if (!row) return c.json({ error: "No such series" }, 404);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
   const taken = await db
     .select({
       player: { id: user.id, name: user.name },
@@ -133,11 +153,11 @@ async function playerOf(seriesId: string, playerId: string) {
 
 seriesRoutes.get("/:number/trainers/:player/journey", async (c) => {
   const reader = await viewer(c.req.raw);
-  if (!reader) return c.json({ error: "Sign in first" }, 401);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!reader.admin);
-  if (!row) return c.json({ error: "No such series" }, 404);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
   const player = await playerOf(row.id, c.req.param("player"));
-  if (!player) return c.json({ error: "Not a player of this series" }, 404);
+  if (!player) return c.json({ error: t(c).notPlayer }, 404);
   const taken = await db
     .select({
       milestone: milestone.name,

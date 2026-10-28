@@ -17,10 +17,68 @@ import { playTime } from "@/lib/records";
 import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { cn } from "@/lib/utils";
 import { downloadLink } from "../../shared/games";
+import { messages } from "../../shared/i18n";
 import { type SeriesPage as Series, seriesPage, type Trainer } from "../../shared/series";
 
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    download: "Download",
+    trainers: "Trainers",
+    abilities: "Abilities",
+    round: (n: number) => `Round ${n}`,
+    you: "You",
+    toggle: (open: boolean, name: string) => `${open ? "Close" : "Open"} ${name}`,
+    at: (milestone: string) => `At ${milestone}`,
+    snapshotOf: (name: string) => `${name}'s snapshot`,
+    pc: "PC",
+    teams: "Teams",
+    fainted: "Fainted",
+    journey: "Journey",
+    openPc: (name: string, milestone: string) => `Open ${name}'s PC at ${milestone}`,
+    openTeams: (name: string) => `Open ${name}'s teams`,
+    fallenOf: (name: string) => `${name}'s fallen`,
+    journeyOf: (name: string) => `${name}'s journey`,
+    snapshots: "Snapshots",
+    downloadZipOf: (milestone: string) => `Download the ${milestone} zip`,
+    downloadZip: "Download zip",
+    upload: "Upload",
+    trackAt: (name: string, milestone: string) => `${name} at ${milestone}`,
+    trackSnapshots: (list: string) => `snapshots ${list}`,
+    noSnapshots: "no snapshots",
+    trackNone: (name: string) => `${name}, no snapshots`,
+  },
+  es: {
+    failed: "Algo ha fallado",
+    download: "Descargar",
+    trainers: "Entrenadores",
+    abilities: "Habilidades",
+    round: (n: number) => `Ronda ${n}`,
+    you: "Tú",
+    toggle: (open: boolean, name: string) => `${open ? "Cerrar" : "Abrir"} ${name}`,
+    at: (milestone: string) => `En ${milestone}`,
+    snapshotOf: (name: string) => `Captura de ${name}`,
+    pc: "PC",
+    teams: "Equipos",
+    fainted: "Debilitados",
+    journey: "Viaje",
+    openPc: (name: string, milestone: string) => `Abrir el PC de ${name} en ${milestone}`,
+    openTeams: (name: string) => `Abrir los equipos de ${name}`,
+    fallenOf: (name: string) => `Caídos de ${name}`,
+    journeyOf: (name: string) => `Viaje de ${name}`,
+    snapshots: "Capturas",
+    downloadZipOf: (milestone: string) => `Descargar el zip de ${milestone}`,
+    downloadZip: "Descargar zip",
+    upload: "Subir",
+    trackAt: (name: string, milestone: string) => `${name} en ${milestone}`,
+    trackSnapshots: (list: string) => `capturas ${list}`,
+    noSnapshots: "sin capturas",
+    trackNone: (name: string) => `${name}, sin capturas`,
+  },
+});
+
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 export function SeriesPage() {
@@ -107,7 +165,7 @@ function SeriesHeader({ series }: { series: Series }) {
             {series.canDownload && (
               <button type="button" disabled={busy} onClick={() => void fetchGame()} className={cn(buttonClass, look.button)}>
                 <PixelIcon name="download" className="size-4" />
-                Download
+                {t.download}
               </button>
             )}
           </div>
@@ -126,7 +184,7 @@ function Trainers({ series, onChanged }: { series: Series; onChanged: () => void
   const { data } = authClient.useSession();
   const [open, setOpen] = useState<string | null>(null);
   const [uploadFor, setUploadFor] = useState<string | null>(null);
-  const uploading = series.trainers.find((t) => t.id === uploadFor);
+  const uploading = series.trainers.find((trainer) => trainer.id === uploadFor);
   const columns = `repeat(${Math.max(series.milestones.length, 1)}, minmax(0, 1fr))`;
   let round = 0;
   const heads = series.milestones.map((m) => ({ ...m, round: m.mark === "round" ? ++round : 0 }));
@@ -135,14 +193,14 @@ function Trainers({ series, onChanged }: { series: Series; onChanged: () => void
     <section aria-labelledby="trainers-title" className="flex flex-col gap-3 sm:gap-3.5">
       <div className="flex flex-wrap items-center justify-between gap-x-4">
         <h2 id="trainers-title" className="m-0 font-heading text-[2.125rem] font-normal sm:text-4xl">
-          Trainers
+          {t.trainers}
         </h2>
         <Link
           to="/series/$number/abilities"
           params={{ number: String(series.number) }}
           className="-my-2.5 flex min-h-11 items-center gap-1.5 font-heading text-[1.375rem] text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          Abilities
+          {t.abilities}
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
       </div>
@@ -178,7 +236,7 @@ function Trainers({ series, onChanged }: { series: Series; onChanged: () => void
                     <span className="flex h-5.5 items-center">
                       {m.round > 0 && (
                         <span className="rounded-sm bg-round px-2 font-heading text-lg leading-5.5 whitespace-nowrap text-white">
-                          Round {m.round}
+                          {t.round(m.round)}
                         </span>
                       )}
                       {m.mark === "tournament" && <Trophy className="size-5" />}
@@ -294,11 +352,11 @@ function TrainerRow({
             <PlayerBadge name={trainer.name} colour={playerColour(trainer.name)} size="row" />
             <span className="truncate font-heading text-[1.625rem] leading-none sm:text-3xl sm:leading-tight">{trainer.name}</span>
           </Link>
-          {you && <span className="flex-none rounded-sm bg-yellow px-1.5 font-heading text-base text-ink sm:px-1.75 sm:text-lg">You</span>}
+          {you && <span className="flex-none rounded-sm bg-yellow px-1.5 font-heading text-base text-ink sm:px-1.75 sm:text-lg">{t.you}</span>}
           {!desktop && (
             <button
               type="button"
-              aria-label={`${open ? "Close" : "Open"} ${trainer.name}`}
+              aria-label={t.toggle(open, trainer.name)}
               aria-expanded={open}
               onClick={onToggle}
               className="flex min-h-11 flex-1 cursor-pointer items-center justify-end gap-2.5 self-stretch pr-3 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -329,7 +387,7 @@ function TrainerRow({
         <span className="hidden items-center justify-end pr-6 sm:flex">
           <button
             type="button"
-            aria-label={`${open ? "Close" : "Open"} ${trainer.name}`}
+            aria-label={t.toggle(open, trainer.name)}
             aria-expanded={open}
             onClick={onToggle}
             className="grid size-11 cursor-pointer place-items-center rounded-lg border-3 border-cell-hi bg-cell outline-none group-hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -342,10 +400,10 @@ function TrainerRow({
       </div>
       {open && (
         <div className="grid grid-cols-2 gap-2 border-t-3 border-dashed bg-box px-3 pt-3 pb-4 sm:flex sm:flex-wrap sm:items-stretch sm:gap-3.5 sm:px-6 sm:pt-4 sm:pb-6">
-          {shown && desktop && <span className="flex-[1_0_100%] font-heading text-2xl text-primary">At {shown.milestone}</span>}
+          {shown && desktop && <span className="flex-[1_0_100%] font-heading text-2xl text-primary">{t.at(shown.milestone)}</span>}
           {shown && !desktop && (
             <Segmented
-              label={`${trainer.name}'s snapshot`}
+              label={t.snapshotOf(trainer.name)}
               size="lg"
               options={trainer.snapshots.map((s) => ({ value: s.milestone, label: s.milestone }))}
               value={shown.milestone}
@@ -354,26 +412,26 @@ function TrainerRow({
             />
           )}
           <Tile
-            label="PC"
+            label={t.pc}
             value={shown?.pokemon}
-            link={shown && { player: trainer.id, number: String(seriesNumber), label: `Open ${trainer.name}'s PC at ${shown.milestone}`, snapshot: shown.milestone }}
+            link={shown && { player: trainer.id, number: String(seriesNumber), label: t.openPc(trainer.name, shown.milestone), snapshot: shown.milestone }}
           />
-          <Tile label="Teams" value={trainer.teams} link={{ player: trainer.id, label: `Open ${trainer.name}'s teams`, teams: true }} />
+          <Tile label={t.teams} value={trainer.teams} link={{ player: trainer.id, label: t.openTeams(trainer.name), teams: true }} />
           <Tile
-            label="Fainted"
+            label={t.fainted}
             value={shown?.fainted}
             alarm
-            link={{ player: trainer.id, number: String(seriesNumber), label: `${trainer.name}'s fallen`, hash: "fallen" }}
+            link={{ player: trainer.id, number: String(seriesNumber), label: t.fallenOf(trainer.name), hash: "fallen" }}
           />
           <Tile
-            label="Journey"
+            label={t.journey}
             value={shown && playTime(shown.playTime)}
             wide
-            link={{ player: trainer.id, number: String(seriesNumber), label: `${trainer.name}'s journey`, hash: "journey" }}
+            link={{ player: trainer.id, number: String(seriesNumber), label: t.journeyOf(trainer.name), hash: "journey" }}
           />
           {desktop && (
             <div className="flex min-w-65 flex-1 flex-col gap-1.5 rounded-xl border-3 bg-card px-4 py-3">
-              <span className="font-heading text-xl text-muted-foreground">Snapshots</span>
+              <span className="font-heading text-xl text-muted-foreground">{t.snapshots}</span>
               <span className="flex min-h-12 flex-wrap items-center gap-2">
                 {trainer.snapshots.map((s) => (
                   <span
@@ -388,7 +446,7 @@ function TrainerRow({
                       to="/players/$player/series/$number/pc"
                       params={{ player: trainer.id, number: String(seriesNumber) }}
                       search={{ snapshot: s.milestone }}
-                      aria-label={`Open ${trainer.name}'s PC at ${s.milestone}`}
+                      aria-label={t.openPc(trainer.name, s.milestone)}
                       className={cn(
                         "flex items-center self-stretch pl-3 text-foreground outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
                         s.zip ? "pr-1.5" : "pr-3",
@@ -399,8 +457,8 @@ function TrainerRow({
                     {s.zip && (
                       <button
                         type="button"
-                        aria-label={`Download the ${s.milestone} zip`}
-                        title="Download zip"
+                        aria-label={t.downloadZipOf(s.milestone)}
+                        title={t.downloadZip}
                         onClick={() => void fetchZip(s.milestone)}
                         className="grid size-8.5 cursor-pointer place-items-center rounded-sm outline-none hover:bg-border focus-visible:ring-3 focus-visible:ring-ring/50"
                       >
@@ -413,7 +471,7 @@ function TrainerRow({
                 {trainer.canUpload && (
                   <button type="button" aria-haspopup="dialog" onClick={onUpload} className={cn(buttonClass, "min-h-10 px-3.5 text-2xl")}>
                     <PixelIcon name="upload" className="size-3.5 text-primary" />
-                    Upload
+                    {t.upload}
                   </button>
                 )}
               </span>
@@ -432,7 +490,7 @@ function TrainerRow({
               className={cn(buttonClass, "col-span-2 mt-0.5 min-h-12 px-3.5 text-[1.375rem]")}
             >
               <PixelIcon name="upload" className="size-3.5 text-primary" />
-              Upload
+              {t.upload}
             </button>
           )}
           {trainer.sources && (
@@ -480,8 +538,8 @@ function Track({
   const at = trainer.progress ? milestones.findIndex((m) => m.name === trainer.progress) : -1;
   const count = Math.max(milestones.length, 1);
   const label = trainer.progress
-    ? `${trainer.name} at ${trainer.progress} · ${trainer.snapshots.length > 0 ? `snapshots ${trainer.snapshots.map((s) => s.milestone).join(", ")}` : "no snapshots"}`
-    : `${trainer.name}, no snapshots`;
+    ? `${t.trackAt(trainer.name, trainer.progress)} · ${trainer.snapshots.length > 0 ? t.trackSnapshots(trainer.snapshots.map((s) => s.milestone).join(", ")) : t.noSnapshots}`
+    : t.trackNone(trainer.name);
 
   return (
     <span
@@ -538,7 +596,7 @@ function Track({
             {snap && interactive && (
               <button
                 type="button"
-                aria-label={`${trainer.name} at ${m.name}`}
+                aria-label={t.trackAt(trainer.name, m.name)}
                 aria-pressed={m.name === shown}
                 onClick={() => onPick(m.name)}
                 className="group/ring absolute top-1/2 left-1/2 -mt-7 -ml-7 grid size-14 cursor-pointer place-items-center rounded-[14px] outline-none focus-visible:ring-3 focus-visible:ring-ring/50"

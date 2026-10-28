@@ -7,17 +7,45 @@ import { db } from "./db.js";
 import { dropIfUnused, saveFor } from "./ingest.js";
 import { milestone, save, snapshot } from "./schema.js";
 import { findShown, plays, viewer } from "./series-data.js";
+import { says } from "./i18n.js";
+
+const t = says({
+  en: {
+    occupied: (name: string) => `${name} has a snapshot; delete it first`,
+    adminsOnly: "Admins only",
+    noSeries: "No such series",
+    draftNoSnaps: "A draft has no snapshots",
+    notPlayer: "Not a player of this series",
+    pickMilestone: "Pick a milestone",
+    noMilestone: "No such milestone",
+    count: "A count from 0 to 999",
+    noSnapAtMilestone: "No snapshot at this milestone",
+    alreadyThere: "The snapshot is already there",
+  },
+  es: {
+    occupied: (name: string) => `${name} ya tiene una captura; bórrala antes`,
+    adminsOnly: "Solo para administradores",
+    noSeries: "Esa serie no existe",
+    draftNoSnaps: "Un borrador no tiene capturas",
+    notPlayer: "No es jugador de esta serie",
+    pickMilestone: "Elige un hito",
+    noMilestone: "Ese hito no existe",
+    count: "Un número de 0 a 999",
+    noSnapAtMilestone: "No hay captura en este hito",
+    alreadyThere: "La captura ya está ahí",
+  },
+});
 
 type Target = { seriesId: string; playerId: string; adminId: string };
 
 async function target(c: Context): Promise<Target | Response> {
   const reader = await viewer(c.req.raw);
-  if (!reader?.admin) return c.json({ error: "Admins only" }, 403);
+  if (!reader?.admin) return c.json({ error: t(c).adminsOnly }, 403);
   const row = await findShown(c.req.param("number") ?? "", true);
-  if (!row) return c.json({ error: "No such series" }, 404);
-  if (row.state === "draft") return c.json({ error: "A draft has no snapshots" }, 400);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  if (row.state === "draft") return c.json({ error: t(c).draftNoSnaps }, 400);
   const playerId = c.req.param("player") ?? "";
-  if (!(await plays(row.id, playerId))) return c.json({ error: "Not a player of this series" }, 404);
+  if (!(await plays(row.id, playerId))) return c.json({ error: t(c).notPlayer }, 404);
   return { seriesId: row.id, playerId, adminId: reader.id };
 }
 
@@ -50,9 +78,9 @@ overrides.put("/:number/trainers/:player/progress", requireAdmin, async (c) => {
   const found = await target(c);
   if (found instanceof Response) return found;
   const input = await body(c.req.raw, progressInput);
-  if (!input) return c.json({ error: "Pick a milestone" }, 400);
+  if (!input) return c.json({ error: t(c).pickMilestone }, 400);
   const chosen = await milestoneNamed(found.seriesId, input.milestone);
-  if (!chosen) return c.json({ error: "No such milestone" }, 400);
+  if (!chosen) return c.json({ error: t(c).noMilestone }, 400);
   const saveId = await saveFor(found.seriesId, found.playerId);
   await db.update(save).set({ progressId: chosen.id, progressSetBy: found.adminId, progressSetAt: new Date() }).where(eq(save.id, saveId));
   return c.json({});
@@ -72,9 +100,9 @@ overrides.put("/:number/trainers/:player/snapshots/:milestone/fainted", requireA
   const found = await target(c);
   if (found instanceof Response) return found;
   const input = await body(c.req.raw, faintedInput);
-  if (!input) return c.json({ error: "A count from 0 to 999" }, 400);
+  if (!input) return c.json({ error: t(c).count }, 400);
   const held = await snapshotAt(found, c.req.param("milestone"));
-  if (!held) return c.json({ error: "No snapshot at this milestone" }, 404);
+  if (!held) return c.json({ error: t(c).noSnapAtMilestone }, 404);
   await db.update(snapshot).set({ faintedSet: input.count, faintedSetBy: found.adminId, faintedSetAt: new Date() }).where(eq(snapshot.id, held.id));
   return c.json({});
 });
@@ -83,7 +111,7 @@ overrides.delete("/:number/trainers/:player/snapshots/:milestone/fainted", requi
   const found = await target(c);
   if (found instanceof Response) return found;
   const held = await snapshotAt(found, c.req.param("milestone"));
-  if (!held) return c.json({ error: "No snapshot at this milestone" }, 404);
+  if (!held) return c.json({ error: t(c).noSnapAtMilestone }, 404);
   await db.update(snapshot).set({ faintedSet: null, faintedSetBy: null, faintedSetAt: null }).where(eq(snapshot.id, held.id));
   return c.json({});
 });
@@ -92,13 +120,13 @@ overrides.post("/:number/trainers/:player/snapshots/:milestone/move", requireAdm
   const found = await target(c);
   if (found instanceof Response) return found;
   const input = await body(c.req.raw, moveInput);
-  if (!input) return c.json({ error: "Pick a milestone" }, 400);
+  if (!input) return c.json({ error: t(c).pickMilestone }, 400);
   const held = await snapshotAt(found, c.req.param("milestone"));
-  if (!held) return c.json({ error: "No snapshot at this milestone" }, 404);
+  if (!held) return c.json({ error: t(c).noSnapAtMilestone }, 404);
   const chosen = await milestoneNamed(found.seriesId, input.milestone);
-  if (!chosen) return c.json({ error: "No such milestone" }, 400);
-  if (chosen.id === held.milestoneId) return c.json({ error: "The snapshot is already there" }, 400);
-  const occupied = `${input.milestone} has a snapshot; delete it first`;
+  if (!chosen) return c.json({ error: t(c).noMilestone }, 400);
+  if (chosen.id === held.milestoneId) return c.json({ error: t(c).alreadyThere }, 400);
+  const occupied = t(c).occupied(input.milestone);
   const [other] = await db
     .select({ id: snapshot.id })
     .from(snapshot)
@@ -117,7 +145,7 @@ overrides.delete("/:number/trainers/:player/snapshots/:milestone", requireAdmin,
   const found = await target(c);
   if (found instanceof Response) return found;
   const held = await snapshotAt(found, c.req.param("milestone"));
-  if (!held) return c.json({ error: "No snapshot at this milestone" }, 404);
+  if (!held) return c.json({ error: t(c).noSnapAtMilestone }, 404);
   await db.delete(snapshot).where(eq(snapshot.id, held.id));
   await dropIfUnused(held.fileKey);
   await dropIfUnused(held.rolledKey);

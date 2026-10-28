@@ -11,6 +11,7 @@ import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { sendFile, UploadError } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import { isExportName, type SavedSnapshot, savedSnapshot, type UploadedSave, uploadedSave } from "../../shared/save-upload";
+import { locale, messages } from "../../shared/i18n";
 import { missingList } from "../../shared/snapshot";
 import type { Trainer } from "../../shared/series";
 
@@ -23,26 +24,99 @@ type Step =
   | { name: "exporting"; upload: UploadedSave }
   | { name: "done"; saved: SavedSnapshot };
 
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const t = messages({
+  en: {
+    months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    saved: (day: number, month: string, time: string) => `Saved ${day} ${month}, ${time}`,
+    hallOfFame: "From the save · Hall of Fame",
+    badges: (n: number) => `From the save · ${n} ${n === 1 ? "badge" : "badges"}`,
+    wrong: "Something went wrong",
+    uploadFor: (name: string) => `Upload for ${name}`,
+    upload: "Upload snapshot",
+    close: "Close",
+    slot: "Slot",
+    milestone: "Milestone",
+    hasSnapshot: "Has a snapshot",
+    named: (name: string) => `${name}, has a snapshot`,
+    replaces: (milestone: string, pokemon: number) => `Replaces ${milestone} · ${pokemon} Pokémon`,
+    replaced: (milestone: string) => `${milestone} replaced`,
+    savedMilestone: (milestone: string) => `${milestone} saved`,
+    cancel: "Cancel",
+    save: "Save",
+    replace: (milestone: string) => `Replace ${milestone}`,
+    saveAs: (milestone: string) => `Save as ${milestone}`,
+    exporting: "Exporting…",
+    another: "Choose another file",
+    retry: "Retry",
+    openPc: "Open PC",
+    drop: "Drop a save zip or an export",
+    choose: "Choose file",
+    zipOrExport: "Save zip or export",
+    failed: "Failed",
+    uploaded: "Uploaded",
+    uploadLabel: "Upload",
+    missing: (list: string) => `Missing: ${list}`,
+    skipped: (n: number) => `${n} skipped`,
+    rolls: (n: number) => `${n} TM ${n === 1 ? "roll" : "rolls"}`,
+    download: "Download zip",
+  },
+  es: {
+    months: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"],
+    saved: (day: number, month: string, time: string) => `Guardada ${day} ${month}, ${time}`,
+    hallOfFame: "De la partida · Salón de la Fama",
+    badges: (n: number) => `De la partida · ${n} ${n === 1 ? "medalla" : "medallas"}`,
+    wrong: "Algo salió mal",
+    uploadFor: (name: string) => `Subir para ${name}`,
+    upload: "Subir captura",
+    close: "Cerrar",
+    slot: "Ranura",
+    milestone: "Hito",
+    hasSnapshot: "Tiene captura",
+    named: (name: string) => `${name}, tiene captura`,
+    replaces: (milestone: string, pokemon: number) => `Reemplaza ${milestone} · ${pokemon} Pokémon`,
+    replaced: (milestone: string) => `${milestone} reemplazado`,
+    savedMilestone: (milestone: string) => `${milestone} guardado`,
+    cancel: "Cancelar",
+    save: "Guardar",
+    replace: (milestone: string) => `Reemplazar ${milestone}`,
+    saveAs: (milestone: string) => `Guardar como ${milestone}`,
+    exporting: "Exportando…",
+    another: "Elegir otro archivo",
+    retry: "Reintentar",
+    openPc: "Abrir PC",
+    drop: "Suelta un zip de partida o una exportación",
+    choose: "Elegir archivo",
+    zipOrExport: "Zip de partida o exportación",
+    failed: "Fallido",
+    uploaded: "Subido",
+    uploadLabel: "Subida",
+    missing: (list: string) => `Faltan: ${list}`,
+    skipped: (n: number) => `${n} omitidos`,
+    rolls: (n: number) => `${n} ${n === 1 ? "tirada" : "tiradas"} de MT`,
+    download: "Descargar zip",
+  },
+});
 
 function savedWhen(stamp: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(stamp);
   if (!match) return "";
   const [, , month, day, hour, minute] = match;
-  return `Saved ${Number(day)} ${months[Number(month) - 1] ?? ""}, ${hour}:${minute}`;
+  return t.saved(Number(day), t.months[Number(month) - 1] ?? "", `${hour}:${minute}`);
 }
 
 function size(bytes: number): string {
-  return bytes < 1048576 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
+  return bytes < 1048576
+    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : `${(bytes / 1048576).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`;
 }
 
 function suggestion(slot: UploadedSave["slots"][number]): string {
-  if (slot.hallOfFame && slot.hallOfFame > 0) return "From the save · Hall of Fame";
-  return `From the save · ${slot.badges ?? 0} ${slot.badges === 1 ? "badge" : "badges"}`;
+  if (slot.hallOfFame && slot.hallOfFame > 0) return t.hallOfFame;
+  return t.badges(slot.badges ?? 0);
 }
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.wrong;
 }
 
 const goClass = "min-h-13 px-5.5";
@@ -146,12 +220,12 @@ export function UploadDialog({
         <div className="flex items-center gap-3.5">
           {forOther && <PlayerBadge name={trainer.name} colour={playerColour(trainer.name)} size="sm" />}
           <DialogTitle className="m-0 min-w-0 flex-1 font-heading text-4xl leading-[0.9] font-normal">
-            {forOther ? `Upload for ${trainer.name}` : "Upload snapshot"}
+            {forOther ? t.uploadFor(trainer.name) : t.upload}
           </DialogTitle>
           <button
             type="button"
-            aria-label="Close"
-            title="Close"
+            aria-label={t.close}
+            title={t.close}
             disabled={locked || step.name === "uploading"}
             onClick={() => close(false)}
             className="grid size-11 flex-none cursor-pointer place-items-center rounded-md text-muted-foreground outline-none hover:bg-face hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-50"
@@ -171,7 +245,7 @@ export function UploadDialog({
         {current && current.slots.length > 1 && (
           <div className="flex flex-col gap-2.5">
             <span id="upload-slot" className="font-heading text-2xl leading-none text-muted-foreground">
-              Slot
+              {t.slot}
             </span>
             <div role="radiogroup" aria-labelledby="upload-slot" className="flex flex-col gap-2">
               {current.slots.map((s) => {
@@ -205,7 +279,7 @@ export function UploadDialog({
           <div className="flex flex-col gap-2.5">
             <span className="flex items-center gap-2.5">
               <span id="upload-milestone" className="font-heading text-2xl leading-none text-muted-foreground">
-                Milestone
+                {t.milestone}
               </span>
               {chosenSlot && milestone !== null && milestone === chosenSlot.suggested && (
                 <span className="rounded-full bg-cell px-2.5 py-0.5 text-xs font-bold text-subtle">{suggestion(chosenSlot)}</span>
@@ -225,7 +299,7 @@ export function UploadDialog({
                     type="button"
                     role="radio"
                     aria-checked={on}
-                    aria-label={has ? `${name}, has a snapshot` : name}
+                    aria-label={has ? t.named(name) : name}
                     disabled={locked}
                     onClick={() => {
                       setMilestone(name);
@@ -244,13 +318,13 @@ export function UploadDialog({
             </div>
             <span className="flex items-center gap-2 text-sm text-muted-foreground">
               <span aria-hidden="true" className="size-1.75 bg-muted-foreground" />
-              Has a snapshot
+              {t.hasSnapshot}
             </span>
             {milestone && taken.has(milestone) && (
               <div className="flex items-center gap-3 rounded-xl border border-warning bg-warning-soft px-4 py-3">
                 <TriangleAlert aria-hidden="true" className="size-5 flex-none text-warning" />
                 <span className="font-bold text-warning-ink">
-                  Replaces {milestone} · {taken.get(milestone)} Pokémon
+                  {t.replaces(milestone, taken.get(milestone) ?? 0)}
                 </span>
               </div>
             )}
@@ -263,7 +337,7 @@ export function UploadDialog({
               <PixelIcon name="check" className="size-10 text-chart-2" />
             </span>
             <span className="text-center font-heading text-5xl leading-[0.9]">
-              {step.saved.milestone} {step.saved.replaced ? "replaced" : "saved"}
+              {step.saved.replaced ? t.replaced(step.saved.milestone) : t.savedMilestone(step.saved.milestone)}
             </span>
             <span className="font-heading text-3xl leading-none text-subtle tabular-nums">{step.saved.pokemon} Pokémon</span>
             {step.saved.sideFile !== null && (
@@ -280,38 +354,38 @@ export function UploadDialog({
         <div className="flex flex-wrap items-center justify-end gap-3">
           {step.name !== "done" && (
             <Button variant="ghost" className={cn(goClass, "px-4 hover:text-white")} disabled={locked || step.name === "uploading"} onClick={() => close(false)}>
-              Cancel
+              {t.cancel}
             </Button>
           )}
           {(step.name === "uploading" || step.name === "pick") && (
             <Button variant="go" className={goClass} disabled={!ready} onClick={() => current && void save(current)}>
-              {!milestone ? "Save" : taken.has(milestone) ? `Replace ${milestone}` : `Save as ${milestone}`}
+              {!milestone ? t.save : taken.has(milestone) ? t.replace(milestone) : t.saveAs(milestone)}
             </Button>
           )}
           {step.name === "exporting" && (
             <Button className={goClass} disabled>
-              Exporting…
+              {t.exporting}
             </Button>
           )}
           {step.name === "uploadFailed" && (
             <>
               <FileButton className={goClass} onFile={(chosen) => void send(chosen)}>
-                Choose another file
+                {t.another}
               </FileButton>
               <Button variant="go" className={goClass} onClick={() => file && void send(file)}>
-                Retry
+                {t.retry}
               </Button>
             </>
           )}
           {step.name === "refused" && (
             <FileButton go className={goClass} onFile={(chosen) => void send(chosen)}>
-              Choose another file
+              {t.another}
             </FileButton>
           )}
           {step.name === "done" && (
             <>
               <Button className={goClass} onClick={() => close(false)}>
-                Close
+                {t.close}
               </Button>
               <Link
                 to="/players/$player/series/$number/pc"
@@ -320,7 +394,7 @@ export function UploadDialog({
                 onClick={() => close(false)}
                 className={cn(buttonVariants({ variant: "go" }), goClass)}
               >
-                Open PC
+                {t.openPc}
                 <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
                   <path d="M2 2l10 7-10 7z" />
                 </svg>
@@ -384,12 +458,12 @@ function DropZone({ onFile }: { onFile: (file: File) => void }) {
       <span aria-hidden="true" className="grid size-18 place-items-center rounded-xl bg-ink">
         <PixelIcon name="upload" className="size-10 text-primary" />
       </span>
-      <span className="text-center font-heading text-3xl leading-none">Drop a save zip or an export</span>
-      <span className={cn(buttonClass, "pointer-events-none")}>Choose file</span>
+      <span className="text-center font-heading text-3xl leading-none">{t.drop}</span>
+      <span className={cn(buttonClass, "pointer-events-none")}>{t.choose}</span>
       <input
         type="file"
         accept={ACCEPT}
-        aria-label="Save zip or export"
+        aria-label={t.zipOrExport}
         className="absolute size-px opacity-0"
         onChange={(event) => {
           const chosen = event.target.files?.[0];
@@ -423,13 +497,13 @@ function FileRow({ file, step }: { file: File; step: Step }) {
           )}
         >
           {!uploading && !failed && <PixelIcon name="check" className="size-4.5" />}
-          {uploading ? `${percent}%` : failed ? "Failed" : "Uploaded"}
+          {uploading ? `${percent}%` : failed ? t.failed : t.uploaded}
         </span>
       </div>
       {(uploading || failed) && (
         <span
           role="progressbar"
-          aria-label="Upload"
+          aria-label={t.uploadLabel}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={percent}
@@ -453,10 +527,10 @@ function ExportGaps({ report }: { report: NonNullable<SavedSnapshot["missing"]> 
       {report.missing.length > 0 && (
         <span className="flex items-center gap-1.5 rounded-full border border-warning px-3 py-1 text-sm font-bold text-warning">
           <TriangleAlert aria-hidden="true" className="size-3.5" />
-          Missing: {missingList(report)}
+          {t.missing(missingList(report))}
         </span>
       )}
-      {report.skipped > 0 && <span className="rounded-full bg-cell px-3 py-1 text-sm font-bold text-subtle">{report.skipped} skipped</span>}
+      {report.skipped > 0 && <span className="rounded-full bg-cell px-3 py-1 text-sm font-bold text-subtle">{t.skipped(report.skipped)}</span>}
     </span>
   );
 }
@@ -481,13 +555,13 @@ function RolledZip({ rolled, sideFile, onDownload }: { rolled: number; sideFile:
       <div className="flex items-center gap-3.5 rounded-2xl bg-box py-3 pr-3 pl-4">
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="font-heading text-2xl leading-none tabular-nums">
-            {rolled} TM {rolled === 1 ? "roll" : "rolls"}
+            {t.rolls(rolled)}
           </span>
           <span className="truncate text-sm text-muted-foreground">{sideFile}</span>
         </span>
         <button type="button" disabled={busy} onClick={() => void download()} className={cn(buttonClass, "min-h-12 px-4 text-2xl")}>
           <PixelIcon name="download" className="size-4 text-primary" />
-          Download zip
+          {t.download}
         </button>
       </div>
       {error && <Alert>{error}</Alert>}

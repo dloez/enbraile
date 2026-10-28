@@ -14,8 +14,33 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { abilitiesPage, type AbilitiesPage as Page, type AbilityHolder, type AbilityTrainer } from "../../shared/abilities";
 import { unpackPc, type BagTm, type Mon } from "../../shared/mon";
+import { localizeHolders, localizePc } from "../../shared/describe";
+import { messages } from "../../shared/i18n";
 import { pcPage } from "../../shared/pc";
 import type { ExportGap } from "../../shared/snapshot";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    pcAt: (name: string, milestone: string) => `${name}'s PC · ${milestone}`,
+    breadcrumb: "Breadcrumb",
+    series: (n: number) => `Series ${n}`,
+    title: "Abilities",
+    trainer: "Trainer",
+    allTrainers: "All trainers",
+    noPick: "No Pokémon picked",
+  },
+  es: {
+    failed: "Algo ha salido mal",
+    pcAt: (name: string, milestone: string) => `PC de ${name} · ${milestone}`,
+    breadcrumb: "Ruta de navegación",
+    series: (n: number) => `Serie ${n}`,
+    title: "Habilidades",
+    trainer: "Entrenador",
+    allTrainers: "Todos los entrenadores",
+    noPick: "Ningún Pokémon elegido",
+  },
+});
 
 const FROM = "/series/$number/abilities";
 
@@ -24,7 +49,7 @@ type SeriesMon = AbilityHolder & { fainted: boolean; own: number; trainer: Abili
 type Held = { mons: Mon[]; tms: BagTm[]; gaps: ExportGap[] };
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 export function AbilitiesPage() {
@@ -44,7 +69,7 @@ export function AbilitiesPage() {
     let live = true;
     setError(null);
     api(`/series/${encodeURIComponent(number)}/abilities`, abilitiesPage).then(
-      (next) => live && setPage(next),
+      (next) => live && setPage({ ...next, trainers: next.trainers.map((t) => ({ ...t, mons: localizeHolders(t.mons) })) }),
       (caught: unknown) => {
         if (!live) return;
         setPage(null);
@@ -75,7 +100,7 @@ export function AbilitiesPage() {
     api(`/series/${encodeURIComponent(number)}/trainers/${encodeURIComponent(id)}/pc?snapshot=${encodeURIComponent(owner.milestone)}`, pcPage).then(
       (next) => {
         if (!live || !next.pc) return;
-        const pc = next.pc;
+        const pc = localizePc(next.pc);
         setHeld((now) => ({ ...now, [id]: { mons: unpackPc(pc), tms: pc.tms, gaps: next.missing?.missing ?? [] } }));
       },
       () => undefined,
@@ -108,7 +133,7 @@ export function AbilitiesPage() {
       >
         <PlayerBadge name={selected.trainer.player.name} colour={playerColour(selected.trainer.player.name)} size="xs" />
         <span className="min-w-0 flex-1 truncate text-left">
-          {selected.trainer.player.name}'s PC · {selected.trainer.milestone}
+          {t.pcAt(selected.trainer.player.name, selected.trainer.milestone)}
         </span>
         <ArrowRight className="size-4 flex-none text-primary" aria-hidden="true" />
       </Link>
@@ -118,7 +143,7 @@ export function AbilitiesPage() {
   return (
     <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
       <div className="flex min-w-0 flex-col gap-2">
-        <nav aria-label="Breadcrumb" className="flex font-heading text-[1.375rem]">
+        <nav aria-label={t.breadcrumb} className="flex font-heading text-[1.375rem]">
           <Link
             to="/series/$number"
             params={{ number: String(series) }}
@@ -127,10 +152,10 @@ export function AbilitiesPage() {
             <svg viewBox="0 0 14 18" aria-hidden="true" className="h-3 w-2 fill-current">
               <path d="M12 2L2 9l10 7z" />
             </svg>
-            Series {series}
+            {t.series(series)}
           </Link>
         </nav>
-        <h1 className="m-0 font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">Abilities</h1>
+        <h1 className="m-0 font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">{t.title}</h1>
       </div>
       <div className="flex flex-1 gap-6 pt-3.5 pb-3 sm:pb-6 lg:min-h-0">
         <PcBox
@@ -143,10 +168,10 @@ export function AbilitiesPage() {
           mark={(mon) => <PlayerBadge name={mon.trainer.player.name} colour={playerColour(mon.trainer.player.name)} size="cell" />}
           filters={
             <SelectField
-              label="Trainer"
+              label={t.trainer}
               value={trainer}
               onChange={setTrainer}
-              all="All trainers"
+              all={t.allTrainers}
               options={page.trainers.map((t) => ({ value: t.player.id, label: t.player.name }))}
             />
           }
@@ -158,7 +183,7 @@ export function AbilitiesPage() {
             <Placeholder className="w-95 flex-none rounded-[18px]" />
           ) : (
             <p className="m-0 grid w-95 flex-none place-items-center rounded-[18px] border-3 border-dashed border-cell-hi bg-box px-5 text-center font-heading text-3xl text-subtle">
-              No Pokémon picked
+              {t.noPick}
             </p>
           ))}
       </div>

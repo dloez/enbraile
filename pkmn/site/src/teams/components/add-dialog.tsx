@@ -15,6 +15,30 @@ import { memberMon } from "@/teams/dex";
 import { ownOf, type FreeMember, type Slots, type Stocks } from "@/teams/team";
 import type { Sheet } from "@/teams/schema";
 import type { ExportGap } from "../../../shared/snapshot";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    any: "Any Pokémon",
+    inTeam: "In the team",
+    putIn: (slot: number) => `Put in slot ${slot}`,
+    title: (slot: number) => `Add to slot ${slot}`,
+    from: "From",
+    team: "Team",
+    empty: "Empty",
+    close: "Close",
+  },
+  es: {
+    any: "Cualquier Pokémon",
+    inTeam: "En el equipo",
+    putIn: (slot: number) => `Poner en el hueco ${slot}`,
+    title: (slot: number) => `Añadir al hueco ${slot}`,
+    from: "De",
+    team: "Equipo",
+    empty: "Vacío",
+    close: "Cerrar",
+  },
+});
 
 export interface AddSource {
   id: string;
@@ -42,8 +66,8 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
   const wide = useMediaQuery("(min-width: 64rem)");
   const [picked, setPicked] = useState<number | null>(null);
   const [from, setFrom] = useState<string | null>(null);
-  const tabs = [...sources.map((s) => ({ id: s.id, label: s.label })), ...(anyPokemon ? [{ id: ANY, label: "Any Pokémon" }] : [])];
-  const tab = tabs.find((t) => t.id === from) ?? tabs[0];
+  const tabs = [...sources.map((s) => ({ id: s.id, label: s.label })), ...(anyPokemon ? [{ id: ANY, label: t.any }] : [])];
+  const tab = tabs.find((option) => option.id === from) ?? tabs[0];
   const free = tab?.id === ANY;
   const source = free ? undefined : sources.find((s) => s.id === tab?.id);
   const mons = source?.mons ?? [];
@@ -79,7 +103,7 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
           }}
           className={buttonVariants({ variant: "go", className: "min-h-13 w-full rounded-[10px] text-[1.625rem]" })}
         >
-          {blocked ? "In the team" : `Put in slot ${(slot ?? 0) + 1}`}
+          {blocked ? t.inTeam : t.putIn((slot ?? 0) + 1)}
         </button>
       </div>
     );
@@ -93,26 +117,26 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
         className="inset-0 top-0 left-0 flex h-svh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 bg-background p-0 ring-0 sm:max-w-none"
       >
         <div className="flex min-h-19 flex-none flex-wrap items-center gap-x-4 gap-y-2 border-b-4 border-red bg-ink py-3 pr-4 pl-4 sm:pr-8 sm:pl-10">
-          <DialogTitle className="m-0 font-heading text-[2.5rem] leading-none font-normal">Add to slot {(slot ?? 0) + 1}</DialogTitle>
-          <div role="tablist" aria-label="From" className={cn(segTrack, "max-w-full overflow-x-auto bg-background")}>
-            {tabs.map((t) => (
+          <DialogTitle className="m-0 font-heading text-[2.5rem] leading-none font-normal">{t.title((slot ?? 0) + 1)}</DialogTitle>
+          <div role="tablist" aria-label={t.from} className={cn(segTrack, "max-w-full overflow-x-auto bg-background")}>
+            {tabs.map((option) => (
               <button
-                key={t.id}
+                key={option.id}
                 type="button"
                 role="tab"
-                aria-selected={t.id === tab?.id}
+                aria-selected={option.id === tab?.id}
                 onClick={() => {
-                  setFrom(t.id);
+                  setFrom(option.id);
                   setPicked(null);
                 }}
-                className={cn(segButton(t.id === tab?.id), "min-h-9.5 px-3.5 text-[1.375rem] whitespace-nowrap")}
+                className={cn(segButton(option.id === tab?.id), "min-h-9.5 px-3.5 text-[1.375rem] whitespace-nowrap")}
               >
-                {t.label}
+                {option.label}
               </button>
             ))}
           </div>
           <div className="flex-1" />
-          <span className="font-heading text-xl text-muted-foreground max-sm:hidden">Team</span>
+          <span className="font-heading text-xl text-muted-foreground max-sm:hidden">{t.team}</span>
           <div className="flex gap-1 max-sm:hidden">
             {slots.map((m, at) => {
               const held = memberMon(m, stocks);
@@ -120,7 +144,7 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
               return (
                 <span
                   key={at}
-                  title={held ? displayName(held) : "Empty"}
+                  title={held ? displayName(held) : t.empty}
                   className={cn(
                     "flex h-11 w-12 items-center justify-center overflow-hidden rounded-lg border-2 font-heading text-xl text-yellow",
                     target ? "border-yellow bg-yellow/14" : m ? "border-solid bg-card" : "border-dashed",
@@ -132,7 +156,7 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
             })}
           </div>
           <DialogPrimitive.Close
-            aria-label="Close"
+            aria-label={t.close}
             className="ml-2 grid size-12 flex-none cursor-pointer place-items-center rounded-[10px] border-3 border-cell-hi bg-cell text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <X className="size-5" aria-hidden="true" />

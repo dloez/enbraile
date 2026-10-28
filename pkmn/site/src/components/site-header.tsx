@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { LanguageSwitch } from "@/components/language-switch";
 import { LoadingBar } from "@/components/loading-bar";
 import { PixelIcon, type PixelIconName } from "@/components/pixel-icon";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
@@ -7,7 +8,13 @@ import { SignOutIcon, useSignOut } from "@/components/sign-out";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { messages } from "../../shared/i18n";
 import { seriesBannerList } from "../../shared/series";
+
+const t = messages({
+  en: { series: "Series", teams: "Teams", admin: "Admin", pc: "PC", home: "Home", sections: "Sections", signOut: "Sign out", menu: "Menu", loading: "Loading the page" },
+  es: { series: "Series", teams: "Equipos", admin: "Admin", pc: "PC", home: "Inicio", sections: "Secciones", signOut: "Cerrar sesión", menu: "Menú", loading: "Cargando la página" },
+});
 
 type Target = { to: "/series" | "/teams" | "/admin" } | { to: "/players/$player/series/$number/pc"; player: string; number: string };
 
@@ -17,16 +24,16 @@ const under = (path: string) => (pathname: string) => pathname === path || pathn
 
 const onPc = (pathname: string) => /^\/players\/[^/]+\/series\/[^/]+\/pc\/?$/.test(pathname);
 
-const SERIES_TAB: Tab = { label: "Series", icon: "flag", target: { to: "/series" }, open: under("/series") };
+const SERIES_TAB: Tab = { label: t.series, icon: "flag", target: { to: "/series" }, open: under("/series") };
 
-const TEAMS_TAB: Tab = { label: "Teams", icon: "people", target: { to: "/teams" }, open: under("/teams") };
+const TEAMS_TAB: Tab = { label: t.teams, icon: "people", target: { to: "/teams" }, open: under("/teams") };
 
-const ADMIN_TAB: Tab = { label: "Admin", icon: "key", target: { to: "/admin" }, open: under("/admin") };
+const ADMIN_TAB: Tab = { label: t.admin, icon: "key", target: { to: "/admin" }, open: under("/admin") };
 
 function pcTab(user: User, running: number | null): Tab {
   const target: Target =
     running === null ? { to: "/series" } : { to: "/players/$player/series/$number/pc", player: user.id, number: String(running) };
-  return { label: "PC", icon: "monitor", target, open: onPc };
+  return { label: t.pc, icon: "monitor", target, open: onPc };
 }
 
 function TabLink({ tab, className, onClick, children }: { tab: Tab; className: string; onClick?: () => void; children: ReactNode }) {
@@ -84,10 +91,10 @@ export function SiteHeader() {
   return (
     <>
       <header className="relative z-20 flex h-15 flex-none items-center gap-2 border-b-4 border-red bg-ink pr-2 pl-3 sm:h-16 sm:gap-7 sm:px-8">
-        <Link to="/" aria-label="Home" className={`grid size-11 flex-none place-items-center rounded-md sm:size-12 ${focus}`}>
+        <Link to="/" aria-label={t.home} className={`grid size-11 flex-none place-items-center rounded-md sm:size-12 ${focus}`}>
           <PixelIcon name="ball" className="size-8 sm:size-9" />
         </Link>
-        <nav aria-label="Sections" className="hidden items-end gap-1 self-stretch sm:flex">
+        <nav aria-label={t.sections} className="hidden items-end gap-1 self-stretch sm:flex">
           {tabs.map((tab) => (
             <TabLink
               key={tab.label}
@@ -102,7 +109,10 @@ export function SiteHeader() {
             </TabLink>
           ))}
         </nav>
-        {user && <Account user={user} />}
+        <div className="ml-auto hidden min-w-0 items-center gap-3 sm:flex">
+          <LanguageSwitch />
+          {user && <Account user={user} />}
+        </div>
         <PhoneMenu tabs={tabs} current={current} pathname={pathname} user={user} open={open} setOpen={setOpen} />
         <NavProgress />
       </header>
@@ -116,13 +126,13 @@ export function SiteHeader() {
 function NavProgress() {
   const loading = useRouterState({ select: (state) => state.status === "pending" || state.isLoading });
   if (!loading) return null;
-  return <LoadingBar label="Loading the page" className="absolute -bottom-1" />;
+  return <LoadingBar label={t.loading} className="absolute -bottom-1" />;
 }
 
 function Account({ user }: { user: User }) {
   const { signingOut, signOut } = useSignOut();
   return (
-    <div className="ml-auto hidden min-w-0 items-center gap-3 sm:flex">
+    <div className="flex min-w-0 items-center gap-3">
       {user.admin ? (
         <span className="flex min-w-0 items-center gap-2.5 font-heading text-2xl text-yellow">
           <PixelIcon name="key" className="size-4.5" />
@@ -141,8 +151,8 @@ function Account({ user }: { user: User }) {
       )}
       <button
         type="button"
-        aria-label="Sign out"
-        title="Sign out"
+        aria-label={t.signOut}
+        title={t.signOut}
         disabled={signingOut}
         onClick={signOut}
         className={`grid size-11 flex-none cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-card hover:text-white disabled:opacity-50 ${focus}`}
@@ -191,9 +201,10 @@ function PhoneMenu({
           </>
         )}
       </span>
+      <LanguageSwitch className="sm:hidden" />
       <button
         type="button"
-        aria-label="Menu"
+        aria-label={t.menu}
         aria-expanded={open}
         aria-controls="phone-menu"
         onClick={() => setOpen(!open)}
@@ -208,7 +219,7 @@ function PhoneMenu({
       {open && (
         <nav
           id="phone-menu"
-          aria-label="Sections"
+          aria-label={t.sections}
           className="absolute inset-x-0 top-full mt-1 flex flex-col gap-1 border-b-4 border-border bg-ink px-3 pt-2.5 pb-3.5 sm:hidden"
         >
           {tabs.map((tab) => (
@@ -254,7 +265,7 @@ function PhoneMenu({
                 )}
               >
                 <SignOutIcon className="size-4.5 flex-none" />
-                Sign out
+                {t.signOut}
               </button>
             </>
           )}

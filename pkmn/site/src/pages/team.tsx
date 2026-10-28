@@ -30,11 +30,95 @@ import { showdownTeam } from "@/teams/showdown";
 import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
 import { MOVE_RULE_LABELS, MOVE_RULES, type MoveRule, type TeamPool } from "../../shared/pool";
 import { SelectField } from "@/components/select-field";
+import { messages } from "../../shared/i18n";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    deleted: "This team's snapshot was deleted",
+    backSummary: "Back to the summary",
+    backAnalysis: "Back to the analysis",
+    members: "Members",
+    analysis: "Analysis",
+    summary: "Summary",
+    editor: "Editor",
+    ownerTeam: (owner: string) => `${owner}'s team`,
+    onlyOwner: (owner: string) => `Only ${owner} can change this team`,
+    viewOnly: "View only",
+    paste: "Paste",
+    notSaved: (reason: string) => `Not saved: ${reason}`,
+    teamView: "Team view",
+    close: "Close",
+    setasLeft: "Mini Setas left",
+    noMoney: "No money in this snapshot",
+    moneyLeft: "Money left for mints",
+    remove: (label: string) => `Remove ${label}`,
+    removeSource: "Remove this source",
+    any: "Any Pokémon",
+    removeAny: "Remove Any Pokémon",
+    source: "Source",
+    addSource: "Add a source",
+    memberCount: (n: number) => `${n} members`,
+    moves: "Moves",
+    analyse: "Analyse",
+    all: (n: number) => `All ${n}`,
+    pickN: (n: number) => `Pick ${n}`,
+    pickedOf: (picked: number, of: number) => `${picked} of ${of} in`,
+    rename: "Rename the team",
+    teamName: "Team name",
+    copied: "Copied",
+    copyFailed: "Copy failed",
+    copy: "Copy for Showdown",
+    delete: "Delete",
+    deleteName: (name: string) => `Delete ${name}?`,
+    cancel: "Cancel",
+  },
+  es: {
+    failed: "Algo ha fallado",
+    deleted: "La captura de este equipo se borró",
+    backSummary: "Volver al resumen",
+    backAnalysis: "Volver al análisis",
+    members: "Miembros",
+    analysis: "Análisis",
+    summary: "Resumen",
+    editor: "Editor",
+    ownerTeam: (owner: string) => `Equipo de ${owner}`,
+    onlyOwner: (owner: string) => `Solo ${owner} puede cambiar este equipo`,
+    viewOnly: "Solo lectura",
+    paste: "Pegar",
+    notSaved: (reason: string) => `No se ha guardado: ${reason}`,
+    teamView: "Vista del equipo",
+    close: "Cerrar",
+    setasLeft: "Mini Setas restantes",
+    noMoney: "No hay dinero en esta captura",
+    moneyLeft: "Dinero restante para mentas",
+    remove: (label: string) => `Quitar ${label}`,
+    removeSource: "Quitar esta fuente",
+    any: "Cualquier Pokémon",
+    removeAny: "Quitar Cualquier Pokémon",
+    source: "Fuente",
+    addSource: "Añadir una fuente",
+    memberCount: (n: number) => `${n} miembros`,
+    moves: "Movimientos",
+    analyse: "Analizar",
+    all: (n: number) => `Los ${n}`,
+    pickN: (n: number) => `Elegir ${n}`,
+    pickedOf: (picked: number, of: number) => `${picked} de ${of} dentro`,
+    rename: "Renombrar el equipo",
+    teamName: "Nombre del equipo",
+    copied: "Copiado",
+    copyFailed: "No se pudo copiar",
+    copy: "Copiar para Showdown",
+    delete: "Borrar",
+    deleteName: (name: string) => `¿Borrar ${name}?`,
+    cancel: "Cancelar",
+  },
+});
 
 const FROM = "/teams/$id";
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 type Back = "ana" | "sum";
@@ -82,7 +166,7 @@ export function TeamBuilderPage() {
         <TeamsBackLink />
         <h1 className="m-0 font-heading text-5xl leading-[0.85] font-normal">{page.name}</h1>
         <p className="m-0 rounded-2xl border-3 border-dashed border-cell-hi bg-box px-5 py-10 text-center font-heading text-3xl text-subtle">
-          This team's snapshot was deleted
+          {t.deleted}
         </p>
       </main>
     );
@@ -214,7 +298,7 @@ function Builder({ page }: { page: TeamPage }) {
   }
 
   const done = (from: Panel): Panel => ("back" in from && from.back === "sum" ? { t: "sum", slot: from.slot } : { t: "ana" });
-  const backLabel = (from: Panel) => ("back" in from && from.back === "sum" ? "Back to the summary" : "Back to the analysis");
+  const backLabel = (from: Panel) => ("back" in from && from.back === "sum" ? t.backSummary : t.backAnalysis);
   const backOf = (slot: number): Back => (panel.t === "sum" && panel.slot === slot) || ("back" in panel && panel.back === "sum" && panel.slot === slot) ? "sum" : "ana";
 
   const focusOf = (slot: number): Focus => {
@@ -233,7 +317,7 @@ function Builder({ page }: { page: TeamPage }) {
 
   const cards = (
     <ol
-      aria-label="Members"
+      aria-label={t.members}
       style={{ "--rows": Math.ceil(slots.length / 2) } as CSSProperties}
       className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:grid-rows-[repeat(var(--rows),minmax(188px,246px))] lg:content-start lg:overflow-y-auto"
     >
@@ -313,7 +397,7 @@ function Builder({ page }: { page: TeamPage }) {
               className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border-none bg-transparent px-2 font-heading text-[1.375rem] text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
-              Analysis
+              {t.analysis}
             </button>
           </div>
           <SummaryHead mon={shown} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
@@ -413,10 +497,10 @@ function Builder({ page }: { page: TeamPage }) {
             }} />
             {!editable && (
               <>
-                <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.name) % PLAYER_FILL.length])}>{page.owner.name}'s team</span>
-                <span title={`Only ${page.owner.name} can change this team`} className="flex items-center gap-1.5 rounded-sm border-2 border-warning bg-warning-soft px-2 py-px font-heading text-xl text-warning-ink">
+                <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.name) % PLAYER_FILL.length])}>{t.ownerTeam(page.owner.name)}</span>
+                <span title={t.onlyOwner(page.owner.name)} className="flex items-center gap-1.5 rounded-sm border-2 border-warning bg-warning-soft px-2 py-px font-heading text-xl text-warning-ink">
                   <Lock className="size-4 text-warning" aria-hidden="true" />
-                  View only
+                  {t.viewOnly}
                 </span>
               </>
             )}
@@ -439,7 +523,7 @@ function Builder({ page }: { page: TeamPage }) {
           {editable && <MovesSwitch rule={pool.moves} onRule={(moves) => choosePool({ ...pool, moves })} />}
           {editable && (
             <button type="button" onClick={() => setPasting(true)} className={buttonVariants({ className: "min-h-12" })}>
-              Paste
+              {t.paste}
             </button>
           )}
           <CopyButton slots={slots} stocks={stocks} />
@@ -448,14 +532,14 @@ function Builder({ page }: { page: TeamPage }) {
       </div>
       {failed && (
         <p role="alert" className="m-0 text-destructive">
-          Not saved: {failed}
+          {t.notSaved(failed)}
         </p>
       )}
       {wide ? (
         <div className="flex min-h-0 flex-1 gap-6">
           <div className="flex min-h-0 w-[min(896px,62%)] flex-none flex-col">{cards}</div>
           <section
-            aria-label={panel.t === "ana" ? "Analysis" : summary ? "Summary" : "Editor"}
+            aria-label={panel.t === "ana" ? t.analysis : summary ? t.summary : t.editor}
             className={cn(
               "flex min-w-0 flex-1 flex-col gap-2.5 overflow-hidden rounded-[18px] border-3 bg-card",
               panel.t === "ana" ? "border-border" : "border-primary",
@@ -467,11 +551,11 @@ function Builder({ page }: { page: TeamPage }) {
         </div>
       ) : (
         <>
-          <div role="tablist" aria-label="Team view" className={cn(segTrack, "w-full")}>
+          <div role="tablist" aria-label={t.teamView} className={cn(segTrack, "w-full")}>
             {(
               [
-                ["members", "Members"],
-                ["analysis", "Analysis"],
+                ["members", t.members],
+                ["analysis", t.analysis],
               ] as const
             ).map(([value, label]) => (
               <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => setTab(value)} className={cn(segButton(tab === value), "flex-1 text-[1.4375rem]")}>
@@ -482,7 +566,7 @@ function Builder({ page }: { page: TeamPage }) {
           {tab === "members" ? (
             cards
           ) : (
-            <section aria-label="Analysis" className="flex min-h-[80svh] flex-col gap-2.5 rounded-[18px] border-3 bg-card px-3.5 pt-3 pb-3.5">
+            <section aria-label={t.analysis} className="flex min-h-[80svh] flex-col gap-2.5 rounded-[18px] border-3 bg-card px-3.5 pt-3 pb-3.5">
               {analysis}
             </section>
           )}
@@ -492,11 +576,11 @@ function Builder({ page }: { page: TeamPage }) {
               aria-describedby={undefined}
               className="inset-0 top-0 left-0 flex h-svh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-2.5 rounded-none border-0 bg-card p-0 ring-0 sm:max-w-none"
             >
-              <DialogTitle className="sr-only">{summary ? "Summary" : "Editor"}</DialogTitle>
+              <DialogTitle className="sr-only">{summary ? t.summary : t.editor}</DialogTitle>
               <div className={cn("flex min-h-0 flex-1 flex-col gap-2.5", !summary && "px-4 pt-4 pb-5")}>{editor}</div>
               {summary && (
                 <DialogPrimitive.Close
-                  aria-label="Close"
+                  aria-label={t.close}
                   className="absolute top-3 right-3 grid size-10 cursor-pointer place-items-center rounded-[10px] border-3 border-cell-hi bg-cell text-subtle outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   <X className="size-5" aria-hidden="true" />
@@ -550,20 +634,20 @@ function SourceChip({ held, setas, money, onRemove }: { held: Held; setas: numbe
         {held.owner.charAt(0).toUpperCase()}
       </span>
       {held.label}
-      <span title="Mini Setas left" className={cn("ml-0.5 flex items-center gap-0.75", setas < 0 ? "text-coral" : "text-subtle")}>
+      <span title={t.setasLeft} className={cn("ml-0.5 flex items-center gap-0.75", setas < 0 ? "text-coral" : "text-subtle")}>
         <MiniSeta className="size-4" />
         {setas}
-        <span className="sr-only">Mini Setas left</span>
+        <span className="sr-only">{t.setasLeft}</span>
       </span>
-      <span title={money === null ? "No money in this snapshot" : "Money left for mints"} className={cn("tabular-nums", money !== null && money < 0 ? "text-coral" : "text-subtle")}>
+      <span title={money === null ? t.noMoney : t.moneyLeft} className={cn("tabular-nums", money !== null && money < 0 ? "text-coral" : "text-subtle")}>
         {money === null ? "$?" : formatMoney(money)}
-        <span className="sr-only">{money === null ? " No money in this snapshot" : " money left for mints"}</span>
+        <span className="sr-only">{` ${money === null ? t.noMoney : t.moneyLeft}`}</span>
       </span>
       {onRemove && (
         <button
           type="button"
-          aria-label={`Remove ${held.label}`}
-          title="Remove this source"
+          aria-label={t.remove(held.label)}
+          title={t.removeSource}
           onClick={onRemove}
           className="grid size-6 cursor-pointer place-items-center rounded-md border-2 border-cell-hi bg-cell p-0 text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
         >
@@ -578,12 +662,12 @@ function AnyChip({ onRemove }: { onRemove?: () => void }) {
   return (
     <span className={cn("flex min-h-8.5 items-center gap-2 rounded-lg border-3 border-dashed border-faint bg-ink pl-2 font-heading text-xl", onRemove ? "pr-1" : "pr-3")}>
       <AnyMark />
-      Any Pokémon
+      {t.any}
       {onRemove && (
         <button
           type="button"
-          aria-label="Remove Any Pokémon"
-          title="Remove this source"
+          aria-label={t.removeAny}
+          title={t.removeSource}
           onClick={onRemove}
           className="grid size-6 cursor-pointer place-items-center rounded-md border-2 border-cell-hi bg-cell p-0 text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
         >
@@ -607,18 +691,18 @@ function SourceMenu({ taken, busy, onPick, onAny }: { taken: readonly string[]; 
         className="flex min-h-8.5 cursor-pointer items-center gap-2 rounded-lg border-none bg-white/10 px-3 font-heading text-xl text-subtle outline-none enabled:hover:bg-white/18 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-45"
       >
         <Plus className="size-3.5 text-primary" aria-hidden="true" />
-        Source
+        {t.source}
       </button>
-      {open && <SnapshotMenu label="Add a source" taken={taken} onClose={() => setOpen(false)} onPick={onPick} onAny={onAny} className="top-10 left-0" />}
+      {open && <SnapshotMenu label={t.addSource} taken={taken} onClose={() => setOpen(false)} onPick={onPick} onAny={onAny} className="top-10 left-0" />}
     </span>
   );
 }
 
 function SizeSwitch({ size, least, onSize }: { size: number; least: number; onSize: (size: number) => void }) {
   return (
-    <div role="radiogroup" aria-label="Members" className="flex items-center gap-1 rounded-xl border-3 bg-ink p-1">
+    <div role="radiogroup" aria-label={t.members} className="flex items-center gap-1 rounded-xl border-3 bg-ink p-1">
       <span aria-hidden="true" className="pr-1.5 pl-2 font-heading text-xl text-muted-foreground">
-        Members
+        {t.members}
       </span>
       {TEAM_SIZES.map((n) => {
         const off = n !== size && n < least;
@@ -628,7 +712,7 @@ function SizeSwitch({ size, least, onSize }: { size: number; least: number; onSi
             type="button"
             role="radio"
             aria-checked={n === size}
-            aria-label={`${n} members`}
+            aria-label={t.memberCount(n)}
             disabled={off}
             onClick={() => n !== size && onSize(n)}
             className={cn(
@@ -650,16 +734,16 @@ function MovesSwitch({ rule, onRule }: { rule: MoveRule; onRule: (rule: MoveRule
     return (
       <div className="flex items-center gap-2">
         <span aria-hidden="true" className="pl-1 font-heading text-xl text-muted-foreground">
-          Moves
+          {t.moves}
         </span>
-        <SelectField label="Moves" value={rule} options={MOVE_RULES.map((r) => ({ value: r, label: MOVE_RULE_LABELS[r] }))} onChange={(next) => onRule(next as MoveRule)} />
+        <SelectField label={t.moves} value={rule} options={MOVE_RULES.map((r) => ({ value: r, label: MOVE_RULE_LABELS[r] }))} onChange={(next) => onRule(next as MoveRule)} />
       </div>
     );
   }
   return (
-    <div role="radiogroup" aria-label="Moves" className="flex items-center gap-1 rounded-xl border-3 bg-ink p-1">
+    <div role="radiogroup" aria-label={t.moves} className="flex items-center gap-1 rounded-xl border-3 bg-ink p-1">
       <span aria-hidden="true" className="pr-1.5 pl-2 font-heading text-xl text-muted-foreground">
-        Moves
+        {t.moves}
       </span>
       {MOVE_RULES.map((r) => (
         <button
@@ -684,13 +768,13 @@ function ScopeSwitch({ scope, filled, picked, onScope }: { scope: Scope; filled:
   return (
     <div className="flex flex-none flex-wrap items-center gap-2.5">
       <span id="scope-label" className="pl-1 font-heading text-xl text-muted-foreground">
-        Analyse
+        {t.analyse}
       </span>
       <div role="radiogroup" aria-labelledby="scope-label" className="flex gap-1 rounded-xl border-3 bg-ink p-1">
         {(
           [
-            ["all", `All ${filled}`],
-            ["six", `Pick ${PICK_SIZE}`],
+            ["all", t.all(filled)],
+            ["six", t.pickN(PICK_SIZE)],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -710,7 +794,7 @@ function ScopeSwitch({ scope, filled, picked, onScope }: { scope: Scope; filled:
       </div>
       {scope === "six" && (
         <span role="status" className={cn("font-heading text-xl", picked < PICK_SIZE ? "text-warning" : "text-muted-foreground")}>
-          {picked} of {PICK_SIZE} in
+          {t.pickedOf(picked, PICK_SIZE)}
         </span>
       )}
     </div>
@@ -726,7 +810,7 @@ function Title({ name, editable, onRename }: { name: string; editable: boolean; 
       <h1 className={heading}>
         <button
           type="button"
-          title="Rename the team"
+          title={t.rename}
           onClick={() => setDraft(name)}
           className="cursor-text rounded-md border-none bg-transparent p-0 text-left font-[inherit] text-[length:inherit] leading-[inherit] text-foreground outline-none hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
         >
@@ -743,7 +827,7 @@ function Title({ name, editable, onRename }: { name: string; editable: boolean; 
   return (
     <input
       autoFocus
-      aria-label="Team name"
+      aria-label={t.teamName}
       value={draft}
       maxLength={60}
       onChange={(event) => setDraft(event.target.value)}
@@ -781,7 +865,7 @@ function CopyButton({ slots, stocks }: { slots: Slots; stocks: Stocks }) {
       className={buttonVariants({ className: "min-h-12" })}
     >
       {copied === "copied" ? <ClipboardCheck className="size-4 text-primary" aria-hidden="true" /> : <ClipboardCopy className="size-4" aria-hidden="true" />}
-      {copied === "copied" ? "Copied" : copied === "failed" ? "Copy failed" : "Copy for Showdown"}
+      {copied === "copied" ? t.copied : copied === "failed" ? t.copyFailed : t.copy}
     </button>
   );
 }
@@ -793,18 +877,18 @@ function DeleteButton({ id, name }: { id: string; name: string }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={buttonVariants({ variant: "destructive", className: "min-h-12" })}>
-        Delete
+        {t.delete}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent aria-describedby={undefined} className="bg-card sm:max-w-sm">
-          <DialogTitle className="font-heading text-2xl">Delete {name}?</DialogTitle>
+          <DialogTitle className="font-heading text-2xl">{t.deleteName(name)}</DialogTitle>
           {error && (
             <p role="alert" className="m-0 text-destructive">
               {error}
             </p>
           )}
           <DialogFooter>
-            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={() => setOpen(false)}>{t.cancel}</Button>
             <Button
               variant="destructive"
               onClick={() =>
@@ -814,7 +898,7 @@ function DeleteButton({ id, name }: { id: string; name: string }) {
                 )
               }
             >
-              Delete
+              {t.delete}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,18 +1,18 @@
 import * as z from "zod";
+import { categoryLabel } from "./dex-text.js";
+import { messages } from "./i18n.js";
 import type { MoveRule } from "./pool.js";
 
 export const STATS = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
 
 export type StatID = (typeof STATS)[number];
 
-export const STAT_LABELS: Record<StatID, string> = {
-  hp: "HP",
-  atk: "Atk",
-  def: "Def",
-  spa: "SpA",
-  spd: "SpD",
-  spe: "Spe",
-};
+export const STAT_LABELS = messages<Record<StatID, string>>({
+  en: { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" },
+  es: { hp: "PS", atk: "Atq", def: "Def", spa: "AtE", spd: "DfE", spe: "Vel" },
+});
+
+const TM = messages({ en: "TM", es: "MT" });
 
 export const TYPES = [
   "Normal",
@@ -180,7 +180,7 @@ export function typeName(id: string): string {
 }
 
 export function tmLabel(item: string): string {
-  return /^tm\d+$/i.test(item) ? item.toUpperCase() : item;
+  return /^tm\d+$/i.test(item) ? `${TM}${item.slice(2)}` : item;
 }
 
 export function tmLabels(tms: readonly { item: string; move: string }[]): Map<string, string> {
@@ -216,7 +216,7 @@ export function displayName(mon: Pick<Mon, "nickname" | "species">): string {
 }
 
 export function moveStats(move: Pick<MoveInfo, "category" | "power" | "accuracy">): string {
-  return [move.category, move.power, move.accuracy !== null ? `${move.accuracy}%` : null]
+  return [move.category && categoryLabel(move.category), move.power, move.accuracy !== null ? `${move.accuracy}%` : null]
     .filter((part) => part !== null)
     .join(" · ");
 }

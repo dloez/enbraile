@@ -10,6 +10,46 @@ import { CategoryTag, TypeTag } from "@/components/pc/summary";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useGameIcons, type GameIcons } from "@/lib/item-icons";
 import { money as formatMoney } from "@/lib/records";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    items: "Items",
+    berries: "Berries",
+    tms: "TMs",
+    bag: "Bag",
+    money: "Money",
+    moneySr: " money",
+    pockets: "Pockets",
+    searchLabel: "Search the bag",
+    search: "Search",
+    close: "Close the bag",
+    noTms: "No TMs in this export",
+    noItems: "No items in this export",
+    nothing: "Nothing matches",
+    empty: "Empty",
+    power: "Pow.",
+    accuracy: "Acc.",
+  },
+  es: {
+    items: "Objetos",
+    berries: "Bayas",
+    tms: "MT",
+    bag: "Mochila",
+    money: "Dinero",
+    moneySr: " de dinero",
+    pockets: "Bolsillos",
+    searchLabel: "Buscar en la mochila",
+    search: "Buscar",
+    close: "Cerrar la mochila",
+    noTms: "No hay MT en esta exportación",
+    noItems: "No hay objetos en esta exportación",
+    nothing: "No hay coincidencias",
+    empty: "Vacío",
+    power: "Pot.",
+    accuracy: "Prec.",
+  },
+});
 
 type PocketId = "items" | "berries" | "tms";
 
@@ -119,9 +159,9 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
   const q = query.trim().toLowerCase();
 
   const pockets: [PocketId, string, number][] = [
-    ["items", "Items", items.filter((i) => i.pocket === "items").length],
-    ["berries", "Berries", items.filter((i) => i.pocket === "berries").length],
-    ["tms", "TMs", tms.length],
+    ["items", t.items, items.filter((i) => i.pocket === "items").length],
+    ["berries", t.berries, items.filter((i) => i.pocket === "berries").length],
+    ["tms", t.tms, tms.length],
   ];
   const shownTms = pocket === "tms" ? tms.filter((tm) => !q || tm.move.name.toLowerCase().includes(q) || tm.label.toLowerCase().includes(q)) : [];
   const shownItems = pocket === "tms" ? [] : items.filter((item) => item.pocket === pocket && (!q || item.name.toLowerCase().includes(q)));
@@ -150,7 +190,7 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
             <path d="M4 5h2v2H4z" className="fill-yellow" />
           </svg>
           <DialogTitle className="m-0 min-w-0 truncate font-heading text-[2.75rem] leading-none font-normal">
-            Bag
+            {t.bag}
           </DialogTitle>
           <div className="flex items-center gap-3 font-heading text-[1.625rem] leading-none text-subtle">
             <span title="Mini Setas" className="flex items-center gap-1.5">
@@ -158,12 +198,12 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
               {setas ?? "?"}
               <span className="sr-only"> Mini Setas</span>
             </span>
-            <span title="Money" className="tabular-nums">
+            <span title={t.money} className="tabular-nums">
               {formatMoney(money)}
-              <span className="sr-only"> money</span>
+              <span className="sr-only">{t.moneySr}</span>
             </span>
           </div>
-          <div role="tablist" aria-label="Pockets" className="order-last flex w-full gap-1 rounded-xl border-3 bg-ink p-1 sm:order-none sm:ml-3 sm:w-auto">
+          <div role="tablist" aria-label={t.pockets} className="order-last flex w-full gap-1 rounded-xl border-3 bg-ink p-1 sm:order-none sm:ml-3 sm:w-auto">
             {pockets.map(([id, name, count]) => (
               <button
                 key={id}
@@ -187,17 +227,17 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
           <div className="flex-1" />
           <label className="order-last flex h-12 w-full items-center gap-2 rounded-[10px] border-3 bg-ink px-3 focus-within:border-primary sm:order-none sm:w-55">
             <Search className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
-            <span className="sr-only">Search the bag</span>
+            <span className="sr-only">{t.searchLabel}</span>
             <input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search"
+              placeholder={t.search}
               className="min-w-0 flex-1 bg-transparent outline-none"
             />
           </label>
           <DialogPrimitive.Close
-            aria-label="Close the bag"
+            aria-label={t.close}
             className="grid size-12 flex-none cursor-pointer place-items-center rounded-[10px] border-3 border-cell-hi bg-cell text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <X className="size-5" aria-hidden="true" />
@@ -206,7 +246,7 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
         <div className="min-h-0 flex-1 overflow-auto bg-box px-4 py-3.5">
           {(pocket === "tms" ? gaps.includes("tms") : gaps.includes("items")) && (
             <div className="mb-3">
-              <GapWarning>No {pocket === "tms" ? "TMs" : "items"} in this export</GapWarning>
+              <GapWarning>{pocket === "tms" ? t.noTms : t.noItems}</GapWarning>
             </div>
           )}
           {pocket === "tms" ? (
@@ -259,7 +299,7 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
             </ul>
           )}
           {(pocket === "tms" ? shownTms : shownItems).length === 0 && (
-            <p className="my-10 text-center font-heading text-[1.625rem] text-prose">{q ? "Nothing matches" : "Empty"}</p>
+            <p className="my-10 text-center font-heading text-[1.625rem] text-prose">{q ? t.nothing : t.empty}</p>
           )}
         </div>
         {(selectedTm || selectedItem) && (
@@ -277,10 +317,10 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
                     <TypeTag type={selectedTm.type} />
                     <CategoryTag category={selectedTm.category} className="text-xl leading-normal" />
                     <span className="font-heading text-[1.375rem] text-muted-foreground">
-                      Pow. <span className="text-foreground">{selectedTm.power ?? "—"}</span>
+                      {t.power} <span className="text-foreground">{selectedTm.power ?? "—"}</span>
                     </span>
                     <span className="font-heading text-[1.375rem] text-muted-foreground">
-                      Acc. <span className="text-foreground">{selectedTm.accuracy ?? "—"}</span>
+                      {t.accuracy} <span className="text-foreground">{selectedTm.accuracy ?? "—"}</span>
                     </span>
                   </span>
                 )}

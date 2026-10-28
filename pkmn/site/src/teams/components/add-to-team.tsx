@@ -7,9 +7,29 @@ import { cn } from "@/lib/utils";
 import { displayName, type Mon } from "../../../shared/mon";
 import { addMember, isFree, newMember } from "@/teams/team";
 import { emptySlots, teamDone, teamList, teamMade, teamPage, type TeamRow } from "../../../shared/team";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    full: (team: string) => `${team} is full`,
+    addTo: "Add to team",
+    addMon: (name: string) => `Add ${name} to…`,
+    fullMark: "Full",
+    newTeam: "New team",
+  },
+  es: {
+    failed: "Algo ha fallado",
+    full: (team: string) => `${team} está lleno`,
+    addTo: "Añadir a un equipo",
+    addMon: (name: string) => `Añadir ${name} a…`,
+    fullMark: "Lleno",
+    newTeam: "Equipo nuevo",
+  },
+});
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 export function useOwnTeams(owner: string | null, snapshot: string | null): TeamRow[] {
@@ -18,7 +38,7 @@ export function useOwnTeams(owner: string | null, snapshot: string | null): Team
     if (owner === null || snapshot === null) return;
     let live = true;
     api(`/teams?owner=${encodeURIComponent(owner)}`, teamList).then(
-      (list) => live && setTeams(list.filter((t) => t.sources.some((s) => s.id === snapshot))),
+      (list) => live && setTeams(list.filter((team) => team.sources.some((s) => s.id === snapshot))),
       () => undefined,
     );
     return () => {
@@ -58,7 +78,7 @@ export function AddToTeam({ mon, snapshot, teams, className }: { mon: Mon; snaps
       const team = await api(`/teams/${encodeURIComponent(id)}`, teamPage);
       if (team.slots.some((m) => m !== null && !isFree(m) && m.source === snapshot && m.index === mon.index)) return id;
       const slots = addMember(team.slots, mon, snapshot);
-      if (!slots) throw new Error(`${team.name} is full`);
+      if (!slots) throw new Error(t.full(team.name));
       await api(`/teams/${encodeURIComponent(id)}`, teamDone, { method: "PUT", body: { slots } });
       return id;
     });
@@ -68,8 +88,8 @@ export function AddToTeam({ mon, snapshot, teams, className }: { mon: Mon; snaps
       {open && (
         <>
           <div aria-hidden="true" onClick={() => setOpen(false)} className="fixed inset-0 z-10" />
-          <div role="menu" aria-label="Add to team" className="absolute right-4 bottom-full left-4 z-20 mb-2 flex flex-col gap-0.5 rounded-[14px] border-3 border-cell-hi bg-ink p-2 shadow-[0_8px_0_var(--edge)]">
-            <p className="m-0 px-2.5 pt-1 pb-1.5 font-heading text-[1.3125rem] text-muted-foreground">Add {displayName(mon)} to…</p>
+          <div role="menu" aria-label={t.addTo} className="absolute right-4 bottom-full left-4 z-20 mb-2 flex flex-col gap-0.5 rounded-[14px] border-3 border-cell-hi bg-ink p-2 shadow-[0_8px_0_var(--edge)]">
+            <p className="m-0 px-2.5 pt-1 pb-1.5 font-heading text-[1.3125rem] text-muted-foreground">{t.addMon(displayName(mon))}</p>
             {teams.map((team) => {
               const filled = team.members.filter((m) => m !== null).length;
               const full = filled >= team.members.length;
@@ -90,7 +110,7 @@ export function AddToTeam({ mon, snapshot, teams, className }: { mon: Mon; snaps
                     })}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-heading text-2xl leading-none">{team.name}</span>
-                  <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{full ? "Full" : `${filled}/${team.members.length}`}</span>
+                  <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{full ? t.fullMark : `${filled}/${team.members.length}`}</span>
                 </button>
               );
             })}
@@ -102,7 +122,7 @@ export function AddToTeam({ mon, snapshot, teams, className }: { mon: Mon; snaps
               onClick={() => void intoNew()}
               className="flex min-h-13 cursor-pointer items-center gap-2.5 rounded-[9px] border-none bg-transparent px-2.5 text-left font-heading text-2xl text-primary outline-none enabled:hover:bg-card focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              New team
+              {t.newTeam}
             </button>
           </div>
         </>
@@ -119,7 +139,7 @@ export function AddToTeam({ mon, snapshot, teams, className }: { mon: Mon; snaps
         onClick={() => setOpen(!open)}
         className={buttonVariants({ variant: "go", className: "min-h-13 w-full rounded-[10px] text-[1.625rem]" })}
       >
-        Add to team
+        {t.addTo}
       </button>
     </div>
   );

@@ -1,0 +1,20 @@
+{
+  "moves": {
+    "visegrip": "Agarre"
+  },
+  "abilities": {
+    "noability": "Sin habilidad"
+  },
+  "items": {
+    "berry": "Baya",
+    "burntberry": "Baya Tostada",
+    "goldberry": "Baya Oro",
+    "iceberry": "Baya Hielo",
+    "mintberry": "Baya Menta",
+    "miracleberry": "Baya Milagro",
+    "mysteryberry": "Baya Misterio",
+    "normaliumz": "Normastal Z",
+    "pinkbow": "Lazo Rosa",
+    "prettyfeather": "Pluma Bella"
+  }
+}

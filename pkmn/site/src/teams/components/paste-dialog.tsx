@@ -3,6 +3,36 @@ import { readShowdownTeam, type AnyPokemon } from "@/teams/showdown";
 import type { Slots, Stocks } from "@/teams/team";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    title: "Paste from Showdown",
+    team: "Showdown team",
+    imported: (n: number) => `Imported ${n} Pokémon into a new team.`,
+    nothingColon: "Nothing to import:",
+    nothing: "Nothing to import.",
+    asFree: "As free members:",
+    leftOut: "Left out:",
+    open: "Open the team",
+    cancel: "Cancel",
+    import: "Import",
+  },
+  es: {
+    failed: "Algo ha fallado",
+    title: "Pegar desde Showdown",
+    team: "Equipo de Showdown",
+    imported: (n: number) => (n === 1 ? "Se ha importado 1 Pokémon a un equipo nuevo." : `Se han importado ${n} Pokémon a un equipo nuevo.`),
+    nothingColon: "Nada que importar:",
+    nothing: "Nada que importar.",
+    asFree: "Como miembros libres:",
+    leftOut: "Se han quedado fuera:",
+    open: "Abrir el equipo",
+    cancel: "Cancelar",
+    import: "Importar",
+  },
+});
 
 interface PasteDialogProps {
   stocks: Stocks;
@@ -53,7 +83,7 @@ export function PasteDialog({ stocks, any, open, onOpenChange, onImport, onOpen 
         onOpen(made);
       } else setOutcome({ ...read, made });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Something went wrong");
+      setError(caught instanceof Error ? caught.message : t.failed);
     } finally {
       setBusy(false);
     }
@@ -64,11 +94,11 @@ export function PasteDialog({ stocks, any, open, onOpenChange, onImport, onOpen 
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogContent aria-describedby={undefined} className="bg-card sm:max-w-lg">
-        <DialogTitle className="font-heading text-2xl">Paste from Showdown</DialogTitle>
+        <DialogTitle className="font-heading text-2xl">{t.title}</DialogTitle>
         {!done && (
           <textarea
             autoFocus
-            aria-label="Showdown team"
+            aria-label={t.team}
             value={text}
             onChange={(event) => {
               setText(event.target.value);
@@ -87,11 +117,11 @@ export function PasteDialog({ stocks, any, open, onOpenChange, onImport, onOpen 
         {outcome && (
           <div role="status" className="flex flex-col gap-1.5 text-sm">
             <p className="m-0 font-semibold">
-              {outcome.added > 0 ? `Imported ${outcome.added} Pokémon into a new team.` : outcome.left.length > 0 ? "Nothing to import:" : "Nothing to import."}
+              {outcome.added > 0 ? t.imported(outcome.added) : outcome.left.length > 0 ? t.nothingColon : t.nothing}
             </p>
             {outcome.free.length > 0 && (
               <>
-                <p className="m-0 font-semibold">As free members:</p>
+                <p className="m-0 font-semibold">{t.asFree}</p>
                 <ul className="m-0 flex list-none flex-col gap-1 p-0 text-subtle">
                   {outcome.free.map((line, index) => (
                     <li key={index}>{line}</li>
@@ -99,7 +129,7 @@ export function PasteDialog({ stocks, any, open, onOpenChange, onImport, onOpen 
                 </ul>
               </>
             )}
-            {outcome.added > 0 && outcome.left.length > 0 && <p className="m-0 font-semibold">Left out:</p>}
+            {outcome.added > 0 && outcome.left.length > 0 && <p className="m-0 font-semibold">{t.leftOut}</p>}
             {outcome.left.length > 0 && (
               <ul className="m-0 flex list-none flex-col gap-1 p-0 text-destructive">
                 {outcome.left.map((line, index) => (
@@ -111,14 +141,14 @@ export function PasteDialog({ stocks, any, open, onOpenChange, onImport, onOpen 
         )}
         <DialogFooter>
           {done ? (
-            <Button onClick={() => close(false)}>Open the team</Button>
+            <Button onClick={() => close(false)}>{t.open}</Button>
           ) : (
             <>
               <Button onClick={() => close(false)}>
-                Cancel
+                {t.cancel}
               </Button>
               <Button disabled={text.trim() === "" || busy} onClick={() => void submit()}>
-                Import
+                {t.import}
               </Button>
             </>
           )}

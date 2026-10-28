@@ -2,6 +2,51 @@ import { moveVsMon } from "../../shared/chart";
 import { typesIn, type Gen } from "../../shared/dex";
 import { hasTag, type Member, type MoveData } from "@/analysis/member";
 import type { Analysis } from "@/analysis/team";
+import { typeLabel } from "../../shared/dex-text";
+import { messages } from "../../shared/i18n";
+
+const t = messages({
+  en: {
+    noEffect: "No effect",
+    noDamage: "No damage",
+    guaranteed: (ko: string) => `Guaranteed ${ko}`,
+    possible: (ko: string) => `Possible ${ko}`,
+    members: "Members",
+    empty: (n: number, of: number) => `${n} empty of ${of}`,
+    averageSpeed: "Average Speed",
+    fastest: "Fastest",
+    averageBulk: "Average bulk",
+    weakTypes: "Types hitting 3+ ×2",
+    unresisted: "Types none resists",
+    hitTypes: "Types hit ×2",
+    of: (n: number) => `of ${n}`,
+    holes: "Coverage holes",
+    hazards: "Hazards · removal",
+    hazardNote: (setters: number, removal: number) => `${setters} ${setters === 1 ? "setter" : "setters"} · ${removal} removal`,
+    speedControl: "Speed control",
+    recovery: "Recovery",
+  },
+  es: {
+    noEffect: "Sin efecto",
+    noDamage: "Sin daño",
+    guaranteed: (ko: string) => `${ko} seguro`,
+    possible: (ko: string) => `${ko} posible`,
+    members: "Miembros",
+    empty: (n: number, of: number) => `${n} ${n === 1 ? "vacío" : "vacíos"} de ${of}`,
+    averageSpeed: "Velocidad media",
+    fastest: "Más rápido",
+    averageBulk: "Aguante medio",
+    weakTypes: "Tipos que dan ×2 a 3+",
+    unresisted: "Tipos que nadie resiste",
+    hitTypes: "Tipos a los que das ×2",
+    of: (n: number) => `de ${n}`,
+    holes: "Huecos de cobertura",
+    hazards: "Trampas · quitarlas",
+    hazardNote: (setters: number, removal: number) => `${setters} ${setters === 1 ? "pone" : "ponen"} · ${removal} ${removal === 1 ? "quita" : "quitan"}`,
+    speedControl: "Control de velocidad",
+    recovery: "Recuperación",
+  },
+});
 
 const FIXED_DAMAGE = new Set(["seismictoss", "nightshade"]);
 const USES_DEF = new Set(["psyshock", "psystrike", "secretsword"]);
@@ -74,13 +119,13 @@ export function bestHit(gen: Gen, a: Member, b: Member): BestHit | null {
 const hitsToKo = (pct: number) => (pct <= 0 ? Infinity : Math.ceil(100 / pct));
 
 export function koLine(d: Damage | null): string {
-  if (!d) return "No effect";
-  if (d.max <= 0) return "No damage";
+  if (!d) return t.noEffect;
+  if (d.max <= 0) return t.noDamage;
   const sure = hitsToKo(d.min);
   const best = hitsToKo(d.max);
   const name = (n: number) => (n === 1 ? "OHKO" : `${n}HKO`);
-  if (sure === best) return `Guaranteed ${name(best)}`;
-  return `Possible ${name(best)}`;
+  if (sure === best) return t.guaranteed(name(best));
+  return t.possible(name(best));
 }
 
 export interface Side {
@@ -107,20 +152,20 @@ const mean = (xs: readonly number[]) => xs.reduce((s, x) => s + x, 0) / (xs.leng
 const names = (team: readonly Member[]) => team.map(memberName).join(", ");
 
 function typeList(types: readonly string[], cap = Infinity): string {
-  return types.slice(0, cap).join(", ") + (types.length > cap ? "…" : "");
+  return types.slice(0, cap).map(typeLabel).join(", ") + (types.length > cap ? "…" : "");
 }
 
 function measures(gen: Gen): Measure[] {
   const all = typesIn(gen).length;
   return [
     {
-      label: "Members",
+      label: t.members,
       better: 1,
-      of: ({ team, size }) => ({ value: team.length, note: team.length < size ? `${size - team.length} empty of ${size}` : "" }),
+      of: ({ team, size }) => ({ value: team.length, note: team.length < size ? t.empty(size - team.length, size) : "" }),
     },
-    { label: "Average Speed", better: 1, of: ({ team }) => ({ value: Math.round(mean(team.map((m) => m.stats.spe))) }) },
+    { label: t.averageSpeed, better: 1, of: ({ team }) => ({ value: Math.round(mean(team.map((m) => m.stats.spe))) }) },
     {
-      label: "Fastest",
+      label: t.fastest,
       better: 1,
       of: ({ team }) => {
         const fast = [...team].sort((a, b) => b.stats.spe - a.stats.spe)[0];
@@ -128,12 +173,12 @@ function measures(gen: Gen): Measure[] {
       },
     },
     {
-      label: "Average bulk",
+      label: t.averageBulk,
       better: 1,
       of: ({ team }) => ({ value: Math.round(mean(team.map((m) => (m.stats.hp * (m.stats.def + m.stats.spd)) / 2)) / 100) }),
     },
     {
-      label: "Types hitting 3+ ×2",
+      label: t.weakTypes,
       better: -1,
       of: ({ analysis }) => {
         const types = analysis.tDef.filter((t) => t.weak >= 3).map((t) => t.type);
@@ -141,16 +186,16 @@ function measures(gen: Gen): Measure[] {
       },
     },
     {
-      label: "Types none resists",
+      label: t.unresisted,
       better: -1,
       of: ({ analysis }) => {
         const types = analysis.tDef.filter((t) => t.resist === 0).map((t) => t.type);
         return { value: types.length, note: typeList(types, 4) };
       },
     },
-    { label: "Types hit ×2", better: 1, of: ({ analysis }) => ({ value: analysis.tOff.filter((t) => t.se > 0).length, note: `of ${all}` }) },
+    { label: t.hitTypes, better: 1, of: ({ analysis }) => ({ value: analysis.tOff.filter((row) => row.se > 0).length, note: t.of(all) }) },
     {
-      label: "Coverage holes",
+      label: t.holes,
       better: -1,
       of: ({ analysis }) => {
         const types = analysis.tOff.filter((t) => t.uncovered).map((t) => t.type);
@@ -158,16 +203,16 @@ function measures(gen: Gen): Measure[] {
       },
     },
     {
-      label: "Hazards · removal",
+      label: t.hazards,
       better: 1,
       of: ({ team }) => {
         const hazards = team.filter((m) => hasTag(m, "hazard")).length;
         const removal = team.filter((m) => hasTag(m, "removal")).length;
-        return { value: hazards + removal, note: `${hazards} ${hazards === 1 ? "setter" : "setters"} · ${removal} removal` };
+        return { value: hazards + removal, note: t.hazardNote(hazards, removal) };
       },
     },
     {
-      label: "Speed control",
+      label: t.speedControl,
       better: 1,
       of: ({ team }) => {
         const users = team.filter((m) => m.moves.some((mv) => SPEED_CONTROL.has(mv.id)));
@@ -175,7 +220,7 @@ function measures(gen: Gen): Measure[] {
       },
     },
     {
-      label: "Recovery",
+      label: t.recovery,
       better: 1,
       of: ({ team }) => {
         const users = team.filter((m) => hasTag(m, "recovery"));

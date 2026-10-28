@@ -2,13 +2,19 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { messages } from "../../shared/i18n";
 import { playerList } from "../../shared/players";
 
+const t = messages({
+  en: { overview: "Overview", series: "Series", players: "Players", games: "Games", pages: "Admin pages", waiting: ", waiting: " },
+  es: { overview: "Resumen", series: "Series", players: "Jugadores", games: "Juegos", pages: "Páginas de admin", waiting: ", en espera: " },
+});
+
 const PAGES = [
-  { name: "Overview", to: "/admin", exact: true },
-  { name: "Series", to: "/admin/series", exact: false },
-  { name: "Players", to: "/admin/players", exact: false },
-  { name: "Games", to: "/admin/games", exact: false },
+  { name: t.overview, to: "/admin", exact: true },
+  { name: t.series, to: "/admin/series", exact: false },
+  { name: t.players, to: "/admin/players", exact: false },
+  { name: t.games, to: "/admin/games", exact: false },
 ] as const;
 
 function useWaiting(known: number | undefined): number | null {
@@ -31,7 +37,7 @@ export function AdminNav({ waiting, className }: { waiting?: number; className?:
   const count = useWaiting(waiting);
   return (
     <nav
-      aria-label="Admin pages"
+      aria-label={t.pages}
       className={cn("grid grid-cols-4 gap-0.75 rounded-xl border-3 bg-ink p-0.75 sm:flex sm:gap-1 sm:self-start sm:p-1", className)}
     >
       {PAGES.map((page) => (
@@ -44,7 +50,7 @@ export function AdminNav({ waiting, className }: { waiting?: number; className?:
           {page.name}
           {page.to === "/admin/players" && count !== null && count > 0 && (
             <span className="min-w-4.5 rounded-full bg-yellow px-1.25 text-center text-base leading-4.5 text-ink sm:min-w-5.5 sm:px-1.5 sm:text-[1.1875rem] sm:leading-5.5">
-              <span className="sr-only">, waiting: </span>
+              <span className="sr-only">{t.waiting}</span>
               {count}
             </span>
           )}

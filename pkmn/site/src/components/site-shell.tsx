@@ -7,7 +7,13 @@ import { authClient } from "@/lib/auth-client";
 import { AdminSignInPage } from "@/pages/admin-sign-in";
 import { SignInPage } from "@/pages/sign-in";
 import { WaitingPage } from "@/pages/waiting";
+import { messages } from "../../shared/i18n";
 import { type OwedSeries, owedSeriesList } from "../../shared/series";
+
+const t = messages({
+  en: { loading: "Loading the site" },
+  es: { loading: "Cargando la web" },
+});
 
 function askOwed() {
   return api("/series/owed", owedSeriesList).catch((error: unknown) => {
@@ -35,7 +41,7 @@ export function SiteShell() {
   const player = data && !data.user.admin && data.user.allowed ? data.user.id : null;
   const { owed, refresh } = useOwed(player);
 
-  if (isPending || (!onAdmin && player !== null && owed === undefined)) return <LoadingBar label="Loading the site" className="fixed top-0" />;
+  if (isPending || (!onAdmin && player !== null && owed === undefined)) return <LoadingBar label={t.loading} className="fixed top-0" />;
   if (onAdmin) {
     if (!data?.user.admin) return <AdminSignInPage />;
   } else {

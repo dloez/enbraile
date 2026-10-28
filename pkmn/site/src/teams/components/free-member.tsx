@@ -13,6 +13,53 @@ import { displayName, type Mon, STAT_LABELS, STATS, TYPES } from "../../../share
 import { freeMon, NATURES, speciesAbilities } from "@/teams/dex";
 import { freeSet, newFreeMember, type FreeMember, type FreeSet } from "@/teams/team";
 import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL } from "../../../shared/team";
+import { typeLabel } from "../../../shared/dex-text";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    level: "Level",
+    nature: "Nature",
+    neutral: (name: string) => `${name} (neutral)`,
+    base: "Base",
+    lv: (level: number) => `Lv ${level}`,
+    evs: (stat: string) => `${stat} EVs`,
+    ivs: (stat: string) => `${stat} IVs`,
+    setWhat: "level, nature, EVs, IVs",
+    freeMember: "Free member",
+    putIn: (slot: number) => `Put in slot ${slot}`,
+    species: "Species",
+    count: (n: number) => `${n} species`,
+    scope: "Gen 9 data · species up to Gen 5 · fully evolved",
+    searchSpecies: "Search species",
+    search: "Search",
+    type: "Type",
+    allTypes: "All types",
+    nothingMatches: "Nothing matches",
+    newFree: "New free member",
+  },
+  es: {
+    level: "Nivel",
+    nature: "Naturaleza",
+    neutral: (name: string) => `${name} (neutra)`,
+    base: "Base",
+    lv: (level: number) => `Nv ${level}`,
+    evs: (stat: string) => `EVs de ${stat}`,
+    ivs: (stat: string) => `IVs de ${stat}`,
+    setWhat: "nivel, naturaleza, EVs, IVs",
+    freeMember: "Miembro libre",
+    putIn: (slot: number) => `Poner en el hueco ${slot}`,
+    species: "Especies",
+    count: (n: number) => (n === 1 ? "1 especie" : `${n} especies`),
+    scope: "Datos de Gen 9 · especies hasta Gen 5 · evolución final",
+    searchSpecies: "Buscar especies",
+    search: "Buscar",
+    type: "Tipo",
+    allTypes: "Todos los tipos",
+    nothingMatches: "No hay coincidencias",
+    newFree: "Nuevo miembro libre",
+  },
+});
 
 export function poolSpecies(filters: PoolFilters): { id: string; name: string; types: string[] }[] {
   return buildPool(filters)
@@ -45,7 +92,7 @@ export function SetForm({ member, onChange }: { member: FreeMember; onChange: (s
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-[1fr_1.4fr] gap-2">
         <label className={field}>
-          <span className="font-heading text-[1.1875rem] text-muted-foreground">Level</span>
+          <span className="font-heading text-[1.1875rem] text-muted-foreground">{t.level}</span>
           <input
             type="number"
             min={1}
@@ -56,23 +103,23 @@ export function SetForm({ member, onChange }: { member: FreeMember; onChange: (s
           />
         </label>
         <SelectField
-          label="Nature"
+          label={t.nature}
           size="sm"
           value={member.nature}
           onChange={(nature) => onChange({ nature })}
           options={NATURES.map((n) => ({
             value: n.id,
-            label: n.plus && n.minus ? `${n.name} (+${STAT_LABELS[n.plus]} −${STAT_LABELS[n.minus]})` : `${n.name} (neutral)`,
+            label: n.plus && n.minus ? `${n.name} (+${STAT_LABELS[n.plus]} −${STAT_LABELS[n.minus]})` : t.neutral(n.name),
           }))}
           className="h-11! w-full"
         />
       </div>
       <div className={cn("grid items-center gap-x-2 px-1 font-heading text-[1.0625rem] text-muted-foreground", grid)}>
         <span />
-        <span>Base</span>
+        <span>{t.base}</span>
         <span className="text-right">EVs</span>
         <span className="text-right">IVs</span>
-        <span className="text-right">Lv {member.level}</span>
+        <span className="text-right">{t.lv(member.level)}</span>
       </div>
       {(mon.stats ?? []).map((s) => {
         const { ink, sign } = SIGNS(mon, s.stat);
@@ -90,7 +137,7 @@ export function SetForm({ member, onChange }: { member: FreeMember; onChange: (s
             </span>
             <input
               type="number"
-              aria-label={`${STAT_LABELS[s.stat]} EVs`}
+              aria-label={t.evs(STAT_LABELS[s.stat])}
               min={0}
               max={MAX_EV}
               step={4}
@@ -100,7 +147,7 @@ export function SetForm({ member, onChange }: { member: FreeMember; onChange: (s
             />
             <input
               type="number"
-              aria-label={`${STAT_LABELS[s.stat]} IVs`}
+              aria-label={t.ivs(STAT_LABELS[s.stat])}
               min={0}
               max={MAX_IV}
               value={member.ivs[s.stat]}
@@ -121,7 +168,7 @@ export function SetForm({ member, onChange }: { member: FreeMember; onChange: (s
 export function SetEditor({ member, back, onBack, onChange }: { member: FreeMember; back: string; onBack: () => void; onChange: (set: Partial<FreeSet>) => void }) {
   return (
     <>
-      <EditorHead who={displayName(freeMon(member))} what="level, nature, EVs, IVs" back={back} onBack={onBack} />
+      <EditorHead who={displayName(freeMon(member))} what={t.setWhat} back={back} onBack={onBack} />
       <div className={editorScroll}>
         <SetForm member={member} onChange={onChange} />
       </div>
@@ -139,7 +186,7 @@ function Aside({ member, onChange, footer }: { member: FreeMember; onChange: (se
   return (
     <>
       <SummaryHead mon={mon} title={(text) => <h2 className="m-0 truncate font-heading text-[2.25rem] leading-[0.85] font-normal">{text}</h2>} />
-      <p className="m-0 flex-none px-4 pt-2 font-heading text-[1.1875rem] text-subtle">Free member</p>
+      <p className="m-0 flex-none px-4 pt-2 font-heading text-[1.1875rem] text-subtle">{t.freeMember}</p>
       <div className={cn(editorScroll, "mr-0 px-4 py-2.5")}>
         <SetForm member={member} onChange={onChange} />
       </div>
@@ -172,24 +219,24 @@ export function FreePicker({ slot, wide, pool, onPut }: { slot: number; wide: bo
         }}
         className={buttonVariants({ variant: "go", className: "min-h-13 w-full rounded-[10px] text-[1.625rem]" })}
       >
-        Put in slot {slot + 1}
+        {t.putIn(slot + 1)}
       </button>
     </div>
   );
 
   return (
     <>
-      <section aria-label="Species" className="flex min-w-0 flex-1 flex-col gap-3 rounded-[18px] border-3 bg-card p-3.5 text-foreground lg:min-h-0">
+      <section aria-label={t.species} className="flex min-w-0 flex-1 flex-col gap-3 rounded-[18px] border-3 bg-card p-3.5 text-foreground lg:min-h-0">
         <div className="flex min-h-12 flex-none flex-wrap items-center gap-3">
-          <span className="pl-1 font-heading text-[1.875rem] leading-none">{shown.length} species</span>
-          <span className="font-heading text-xl text-muted-foreground max-sm:hidden">Gen 9 data · species up to Gen 5 · fully evolved</span>
+          <span className="pl-1 font-heading text-[1.875rem] leading-none">{t.count(shown.length)}</span>
+          <span className="font-heading text-xl text-muted-foreground max-sm:hidden">{t.scope}</span>
           <div className="flex-1" />
           <label className="flex h-12 flex-[1_1_100%] items-center gap-2 rounded-[10px] border-3 bg-ink px-3 focus-within:border-primary sm:max-w-55 sm:flex-[1_1_160px]">
             <Search className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
-            <span className="sr-only">Search species</span>
-            <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent outline-none" />
+            <span className="sr-only">{t.searchSpecies}</span>
+            <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} className="min-w-0 flex-1 bg-transparent outline-none" />
           </label>
-          <SelectField label="Type" value={type} onChange={setType} all="All types" options={TYPES.map((t) => ({ value: t, label: t }))} />
+          <SelectField label={t.type} value={type} onChange={setType} all={t.allTypes} options={TYPES.map((value) => ({ value, label: typeLabel(value) }))} />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl bg-box px-3 py-3.5 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]">
           <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(106px,1fr))]">
@@ -214,18 +261,18 @@ export function FreePicker({ slot, wide, pool, onPut }: { slot: number; wide: bo
               );
             })}
           </div>
-          {shown.length === 0 && <p className="my-10 text-center font-heading text-[1.625rem] text-prose">Nothing matches</p>}
+          {shown.length === 0 && <p className="my-10 text-center font-heading text-[1.625rem] text-prose">{t.nothingMatches}</p>}
         </div>
       </section>
       {wide && draft && (
-        <aside aria-label="New free member" className="flex w-95 flex-none flex-col overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0">
+        <aside aria-label={t.newFree} className="flex w-95 flex-none flex-col overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0">
           <Aside member={draft} onChange={change} footer={footer} />
         </aside>
       )}
       {!wide && (
         <BottomSheet open={draft !== null} onOpenChange={(next) => !next && setPicked(null)}>
           <SheetContent side="bottom" aria-describedby={undefined} className="max-h-[90svh] gap-0 overflow-hidden rounded-t-2xl bg-card">
-            <SheetTitle className="sr-only">New free member</SheetTitle>
+            <SheetTitle className="sr-only">{t.newFree}</SheetTitle>
             {draft && <Aside member={draft} onChange={change} footer={footer} />}
           </SheetContent>
         </BottomSheet>

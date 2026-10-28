@@ -11,12 +11,68 @@ import { authClient } from "@/lib/auth-client";
 import { money, playTime } from "@/lib/records";
 import { cn } from "@/lib/utils";
 import { PlayerSeriesFrame } from "@/components/page-frames";
+import { messages } from "../../shared/i18n";
 import { type FallenMon, type JourneyPage, type JourneyRecord, journeyPage } from "../../shared/journey";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    breadcrumb: "Breadcrumb",
+    series: (n: number) => `Series ${n}`,
+    profileOf: (name: string) => `${name}'s profile`,
+    title: (name: string, n: number) => `${name} in Series ${n}`,
+    you: "You",
+    pcOf: (name: string) => `${name}'s PC`,
+    latest: (milestone: string) => `${milestone} · latest`,
+    playTime: "Play time",
+    badges: "Badges",
+    money: "Money",
+    pokedex: "Pokédex",
+    owned: (n: number) => `${n} owned`,
+    seen: (n: string) => `${n} seen`,
+    battles: "Trainer battles",
+    wonLost: "won – lost",
+    blackouts: "Blackouts",
+    journey: "Journey",
+    records: "Records at each milestone",
+    pcAt: (name: string, milestone: string) => `${name}'s PC at ${milestone}`,
+    fainted: "Fainted",
+    fallen: "Fallen",
+    level: (level: number | null) => `Lv. ${level ?? "?"}`,
+    by: (milestone: string) => `by ${milestone}`,
+  },
+  es: {
+    failed: "Algo ha fallado",
+    breadcrumb: "Ruta de navegación",
+    series: (n: number) => `Serie ${n}`,
+    profileOf: (name: string) => `Perfil de ${name}`,
+    title: (name: string, n: number) => `${name} en la Serie ${n}`,
+    you: "Tú",
+    pcOf: (name: string) => `PC de ${name}`,
+    latest: (milestone: string) => `${milestone} · última`,
+    playTime: "Tiempo de juego",
+    badges: "Medallas",
+    money: "Dinero",
+    pokedex: "Pokédex",
+    owned: (n: number) => `${n} capturados`,
+    seen: (n: string) => `${n} vistos`,
+    battles: "Combates de entrenador",
+    wonLost: "ganados – perdidos",
+    blackouts: "Desmayos",
+    journey: "Viaje",
+    records: "Registros en cada hito",
+    pcAt: (name: string, milestone: string) => `PC de ${name} en ${milestone}`,
+    fainted: "Debilitados",
+    fallen: "Caídos",
+    level: (level: number | null) => `Nv. ${level ?? "?"}`,
+    by: (milestone: string) => `hasta ${milestone}`,
+  },
+});
 
 const FROM = "/players/$player/series/$number";
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 export function PlayerSeriesPage() {
@@ -68,7 +124,7 @@ function Head({ page }: { page: JourneyPage }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-6">
       <div className="flex min-w-0 flex-col gap-2">
-        <nav aria-label="Breadcrumb" className="-my-2.5 flex items-center gap-2.5 font-heading text-[1.375rem] sm:my-0">
+        <nav aria-label={t.breadcrumb} className="-my-2.5 flex items-center gap-2.5 font-heading text-[1.375rem] sm:my-0">
           <Link
             to="/players/$player"
             params={{ player: page.player.id }}
@@ -87,17 +143,17 @@ function Head({ page }: { page: JourneyPage }) {
             params={{ number: String(page.series.number) }}
             className="flex min-h-11 items-center text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 sm:min-h-0"
           >
-            Series {page.series.number}
+            {t.series(page.series.number)}
           </Link>
         </nav>
         <div className="flex min-w-0 items-center gap-3 sm:gap-3.5">
-          <Link to="/players/$player" params={{ player: page.player.id }} aria-label={`${page.player.name}'s profile`} className="flex-none rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+          <Link to="/players/$player" params={{ player: page.player.id }} aria-label={t.profileOf(page.player.name)} className="flex-none rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
             <PlayerBadge name={page.player.name} colour={playerColour(page.player.name)} size="lg" />
           </Link>
           <h1 className="m-0 min-w-0 font-heading text-[2.75rem] leading-[0.85] font-normal sm:text-6xl">
-            {page.player.name} in Series {page.series.number}
+            {t.title(page.player.name, page.series.number)}
           </h1>
-          {you && <span className="flex-none rounded-sm bg-yellow px-2 font-heading text-lg text-ink">You</span>}
+          {you && <span className="flex-none rounded-sm bg-yellow px-2 font-heading text-lg text-ink">{t.you}</span>}
         </div>
       </div>
       <div className="hidden flex-1 sm:block" />
@@ -108,9 +164,9 @@ function Head({ page }: { page: JourneyPage }) {
         className={cn(buttonClass, "min-h-13 justify-start px-4 sm:px-4.5")}
       >
         <PixelIcon name="monitor" className="size-4.5 text-primary" />
-        {page.player.name}'s PC
+        {t.pcOf(page.player.name)}
         {page.latest && (
-          <span className="ml-auto rounded-[5px] bg-ink px-2 text-xl leading-6.5 text-subtle sm:ml-1">{page.latest} · latest</span>
+          <span className="ml-auto rounded-[5px] bg-ink px-2 text-xl leading-6.5 text-subtle sm:ml-1">{t.latest(page.latest)}</span>
         )}
       </Link>
     </div>
@@ -129,24 +185,24 @@ function Journey({ page }: { page: JourneyPage }) {
   const template = desktop ? `200px repeat(${n}, minmax(96px, 1fr))` : `120px repeat(${n}, 92px)`;
   const previous = (index: number) => page.columns.slice(0, index).findLast((c) => c.record !== null)?.record ?? null;
   const rows: Row[] = [
-    { label: "Play time", cell: (r) => ({ main: playTime(r.playTime) }) },
-    { label: "Badges", cell: (r) => ({ main: r.badgeSlots === 0 ? "—" : `${r.badges} / ${r.badgeSlots}` }) },
-    { label: "Money", cell: (r) => ({ main: money(r.money) }) },
-    { label: "Pokédex", cell: (r) => (r.owned === null ? { main: "—" } : { main: `${r.owned} owned`, sub: `${count(r.seen)} seen` }) },
-    { label: "Trainer battles", cell: (r) => ({ main: `${count(r.trainerBattlesWon)} – ${count(r.trainerBattlesLost)}`, sub: "won – lost" }) },
-    { label: "Blackouts", cell: (r) => ({ main: count(r.blackouts) }) },
+    { label: t.playTime, cell: (r) => ({ main: playTime(r.playTime) }) },
+    { label: t.badges, cell: (r) => ({ main: r.badgeSlots === 0 ? "—" : `${r.badges} / ${r.badgeSlots}` }) },
+    { label: t.money, cell: (r) => ({ main: money(r.money) }) },
+    { label: t.pokedex, cell: (r) => (r.owned === null ? { main: "—" } : { main: t.owned(r.owned), sub: t.seen(count(r.seen)) }) },
+    { label: t.battles, cell: (r) => ({ main: `${count(r.trainerBattlesWon)} – ${count(r.trainerBattlesLost)}`, sub: t.wonLost }) },
+    { label: t.blackouts, cell: (r) => ({ main: count(r.blackouts) }) },
   ];
   const sticky = "sticky left-0 z-1 border-r-3 sm:static sm:border-r-0";
 
   return (
     <>
       <h2 id="journey" className="-mb-3 scroll-mt-4 font-heading text-[2.125rem] font-normal sm:-mb-3.5 sm:text-[2.375rem]">
-        Journey
+        {t.journey}
       </h2>
       <section aria-labelledby="journey" className="overflow-hidden rounded-[18px] border-3 bg-card">
         <div
           role="table"
-          aria-label="Records at each milestone"
+          aria-label={t.records}
           tabIndex={desktop ? undefined : 0}
           className="overflow-x-auto tabular-nums outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
@@ -159,8 +215,8 @@ function Journey({ page }: { page: JourneyPage }) {
                     to="/players/$player/series/$number/pc"
                     params={{ player: page.player.id, number: String(page.series.number) }}
                     search={{ snapshot: column.milestone }}
-                    aria-label={`${page.player.name}'s PC at ${column.milestone}`}
-                    title={`${page.player.name}'s PC at ${column.milestone}`}
+                    aria-label={t.pcAt(page.player.name, column.milestone)}
+                    title={t.pcAt(page.player.name, column.milestone)}
                     className="flex min-h-13 flex-1 items-center justify-center gap-1.5 font-heading text-xl whitespace-nowrap text-foreground outline-none hover:bg-row-hi focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset sm:min-h-13.5 sm:gap-2 sm:text-[1.375rem]"
                   >
                     {column.milestone}
@@ -183,7 +239,7 @@ function Journey({ page }: { page: JourneyPage }) {
               ))}
             </JourneyRow>
           ))}
-          <JourneyRow label="Fainted" template={template} sticky={sticky}>
+          <JourneyRow label={t.fainted} template={template} sticky={sticky}>
             {page.columns.map((column, index) => {
               const r = column.record;
               const before = previous(index);
@@ -244,7 +300,7 @@ function Fallen({ fallen }: { fallen: FallenMon[] }) {
     <section aria-labelledby="fallen" className="flex flex-col gap-3 sm:gap-3.5">
       <div className="flex items-baseline gap-3 sm:gap-3.5">
         <h2 id="fallen" className="m-0 scroll-mt-4 font-heading text-[2.125rem] font-normal sm:text-[2.375rem]">
-          Fallen
+          {t.fallen}
         </h2>
         <span className="font-heading text-[1.75rem] text-muted-foreground sm:text-3xl">{fallen.length}</span>
       </div>
@@ -268,10 +324,10 @@ function FallenCard({ mon }: { mon: FallenMon }) {
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="truncate font-heading text-[1.75rem] leading-[0.9] sm:text-3xl">{mon.nickname ?? mon.name}</span>
         <span className="text-sm font-bold text-muted-foreground">
-          {mon.name} · Lv. {mon.level ?? "?"}
+          {mon.name} · {t.level(mon.level)}
         </span>
         <span className="flex items-center self-start rounded-full bg-destructive-soft px-2.5 py-0.5 font-heading text-xl leading-none text-destructive">
-          {mon.from ? `${mon.from} → ${mon.to}` : `by ${mon.to}`}
+          {mon.from ? `${mon.from} → ${mon.to}` : t.by(mon.to)}
         </span>
       </span>
     </div>

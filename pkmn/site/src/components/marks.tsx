@@ -1,12 +1,19 @@
 import { TYPE_ICONS } from "@/lib/type-icons";
 import { cn } from "@/lib/utils";
+import { typeLabel } from "../../shared/dex-text";
+import { messages } from "../../shared/i18n";
+
+const t = messages({
+  en: { unknown: "Not in Showdown's data" },
+  es: { unknown: "No está en los datos de Showdown" },
+});
 
 export function UnknownMark({ className }: { className?: string }) {
   return (
     <span
       role="img"
-      aria-label="Not in Showdown's data"
-      title="Not in Showdown's data"
+      aria-label={t.unknown}
+      title={t.unknown}
       className={cn("ml-2 text-xs font-bold text-destructive", className)}
     >
       ?
@@ -46,7 +53,7 @@ export function TypeChip({ type }: { type: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border py-0.5 pr-2.25 pl-1.5 text-xs font-semibold">
       <TypeDot type={type} />
-      {type}
+      {typeLabel(type)}
     </span>
   );
 }

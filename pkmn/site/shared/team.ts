@@ -161,8 +161,8 @@ export function resized(slots: TeamSlots, size: number): TeamSlots | null {
   return slots.length >= size ? slots.slice(0, size) : [...slots, ...emptySlots(size - slots.length)];
 }
 
-export function nextTeamName(names: readonly string[]): string {
+export function nextTeamName(names: readonly string[], base = "Team"): string {
   let n = 1;
-  while (names.includes(`Team ${n}`)) n += 1;
-  return `Team ${n}`;
+  while (names.includes(`${base} ${n}`)) n += 1;
+  return `${base} ${n}`;
 }

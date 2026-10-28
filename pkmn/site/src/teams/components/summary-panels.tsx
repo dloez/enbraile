@@ -5,6 +5,41 @@ import type { Slots, Stocks } from "@/teams/team";
 import { analysed, defensiveChart, offensiveCoverage, speedOrder } from "@/teams/analysis";
 import { TypeDot } from "@/components/marks";
 import { MonSprite } from "@/components/pc/mon-sprite";
+import { typeLabel } from "../../../shared/dex-text";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    speed: "Speed order",
+    defence: "Defence",
+    type: "Type",
+    weak: "Weak",
+    resist: "Resist",
+    immune: "Immune",
+    hole: "Hole",
+    noHoles: "No holes.",
+    holes: (types: string) => `Holes: ${types}.`,
+    coverage: "Coverage",
+    stab: "STAB",
+    covered: "Every type is hit super-effectively.",
+    uncovered: (types: string) => `Uncovered: ${types}.`,
+  },
+  es: {
+    speed: "Orden de velocidad",
+    defence: "Defensa",
+    type: "Tipo",
+    weak: "Débil",
+    resist: "Resiste",
+    immune: "Inmune",
+    hole: "Hueco",
+    noHoles: "Sin huecos.",
+    holes: (types: string) => `Huecos: ${types}.`,
+    coverage: "Cobertura",
+    stab: "STAB",
+    covered: "Todos los tipos reciben algún golpe supereficaz.",
+    uncovered: (types: string) => `Sin cubrir: ${types}.`,
+  },
+});
 
 function Count({ value, className }: { value: number; className: string }) {
   return <span className={cn("tabular-nums text-xs", value === 0 ? "text-muted-foreground/40" : className)}>{value}</span>;
@@ -19,13 +54,13 @@ export function TeamAnalysis({ slots, stocks, stacked = false }: { slots: Slots;
   const uncovered = rows.filter((row) => row.hitters.length === 0);
   const holes = chart.filter((row) => row.hole);
   const nameOf = (slot: number) => {
-    const entry = team.find((t) => t.slot === slot);
+    const entry = team.find((e) => e.slot === slot);
     return entry ? displayName(entry.mon) : "";
   };
 
   return (
     <div className={cn("grid grid-cols-1 gap-3.5", !stacked && "lg:grid-cols-2 xl:grid-cols-3")}>
-      <Panel title="Speed order">
+      <Panel title={t.speed}>
         <ol className="m-0 flex list-none flex-col gap-1.5 p-0">
           {speed.map((entry, rank) => (
             <li key={entry.slot} className="flex items-center gap-2.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm">
@@ -37,14 +72,14 @@ export function TeamAnalysis({ slots, stocks, stacked = false }: { slots: Slots;
           ))}
         </ol>
       </Panel>
-      <Panel title="Defence">
+      <Panel title={t.defence}>
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="text-xs text-muted-foreground">
-              <th className="py-1 text-left font-semibold">Type</th>
-              <th className="py-1 font-semibold">Weak</th>
-              <th className="py-1 font-semibold">Resist</th>
-              <th className="py-1 font-semibold">Immune</th>
+              <th className="py-1 text-left font-semibold">{t.type}</th>
+              <th className="py-1 font-semibold">{t.weak}</th>
+              <th className="py-1 font-semibold">{t.resist}</th>
+              <th className="py-1 font-semibold">{t.immune}</th>
             </tr>
           </thead>
           <tbody>
@@ -53,8 +88,8 @@ export function TeamAnalysis({ slots, stocks, stacked = false }: { slots: Slots;
                 <td className="py-1 pl-1">
                   <span className="inline-flex items-center gap-1.5 font-semibold">
                     <TypeDot type={row.type} />
-                    {row.type}
-                    {row.hole && <span className="text-xs font-bold text-destructive">Hole</span>}
+                    {typeLabel(row.type)}
+                    {row.hole && <span className="text-xs font-bold text-destructive">{t.hole}</span>}
                   </span>
                 </td>
                 <td className="py-1 text-center">
@@ -71,21 +106,21 @@ export function TeamAnalysis({ slots, stocks, stacked = false }: { slots: Slots;
           </tbody>
         </table>
         <p className="m-0 text-xs text-muted-foreground">
-          {holes.length === 0 ? "No holes." : `Holes: ${holes.map((h) => h.type).join(", ")}.`}
+          {holes.length === 0 ? t.noHoles : t.holes(holes.map((h) => typeLabel(h.type)).join(", "))}
         </p>
       </Panel>
-      <Panel title="Coverage" className={cn(!stacked && "lg:col-span-2 xl:col-span-1")}>
+      <Panel title={t.coverage} className={cn(!stacked && "lg:col-span-2 xl:col-span-1")}>
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {sources.map((source) => (
             <li key={source.slot} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="min-w-0 truncate font-semibold">{displayName(source.mon)}</span>
-              {source.types.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 text-xs">
-                  <TypeDot type={t} />
-                  {t}
+              {source.types.map((type) => (
+                <span key={type} className="inline-flex items-center gap-1 text-xs">
+                  <TypeDot type={type} />
+                  {typeLabel(type)}
                 </span>
               ))}
-              {source.stab && <span className="text-xs text-muted-foreground">STAB</span>}
+              {source.stab && <span className="text-xs text-muted-foreground">{t.stab}</span>}
             </li>
           ))}
         </ul>
@@ -100,15 +135,15 @@ export function TeamAnalysis({ slots, stocks, stacked = false }: { slots: Slots;
               )}
             >
               <TypeDot type={row.type} />
-              <span className="min-w-0 flex-1 truncate font-semibold">{row.type}</span>
+              <span className="min-w-0 flex-1 truncate font-semibold">{typeLabel(row.type)}</span>
               <span className="tabular-nums">{row.hitters.length}</span>
             </div>
           ))}
         </div>
         <p className="m-0 text-xs text-muted-foreground">
           {uncovered.length === 0
-            ? "Every type is hit super-effectively."
-            : `Uncovered: ${uncovered.map((r) => r.type).join(", ")}.`}
+            ? t.covered
+            : t.uncovered(uncovered.map((r) => typeLabel(r.type)).join(", "))}
         </p>
       </Panel>
     </div>

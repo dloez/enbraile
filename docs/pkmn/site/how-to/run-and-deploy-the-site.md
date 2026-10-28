@@ -156,6 +156,23 @@ npm run item-icons
 
 It prints each game's icon count, or that its zip holds no `Graphics/Items`.
 
+### Refresh the Spanish game text
+
+After an `@pkmn/dex` upgrade, or to pick up PokeAPI's newer names, refresh the Spanish game data in `src/i18n/es/` ([The pkmn Site → Languages](../explanation/site.md#languages)). From `pkmn/site/`, with a network connection:
+
+```sh
+npm run dex-es -- names                   # rebuilds names.json from PokeAPI's CSVs and names.extra.json
+npm run dex-es -- pending pending.json    # writes every description that is new or whose English changed
+```
+
+`names` prints, per kind, how many names stay English; add a missing official name to `names.extra.json` and run it again. Translate `pending.json`'s values into Spanish, keeping its shape, IDs and every mechanic, and with the official names from `names.json`, then fold them in, which also records the hash of each English source:
+
+```sh
+npm run dex-es -- apply translated.json
+```
+
+`apply` drops descriptions the dex no longer has. Run `pending` again to see zero left, then the gate, and commit `src/i18n/es/`.
+
 ### Sweep the bucket by hand
 
 The daily sweep ([The pkmn Site → Data and Storage](../explanation/site.md#data-and-storage)) shows its runs under the project's Settings → Cron Jobs in the Vercel dashboard, where Run starts one at once. From a shell, with the production `CRON_SECRET`:

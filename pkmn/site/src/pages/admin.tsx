@@ -12,11 +12,69 @@ import { api } from "@/lib/api";
 import { formatSize, joinedOn } from "@/lib/admin-format";
 import { cn } from "@/lib/utils";
 import { gameList, type Game } from "../../shared/games";
+import { messages } from "../../shared/i18n";
 import { player, playerList, type Player } from "../../shared/players";
 import { type AdminSeries, adminSeriesList } from "../../shared/series";
 
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    title: "Admin overview",
+    runningSeries: "Running series",
+    playingNow: "Playing now",
+    players: "Players",
+    milestones: "Milestones",
+    snapshots: "Snapshots",
+    editSeries: "Edit series",
+    noneRunning: "No series is running",
+    startOne: "Start one from a draft on the Series page",
+    finished: "Finished",
+    draft: (done: number, all: number) => `Draft · ${done}/${all}`,
+    series: "Series",
+    inAll: (n: number) => `${n} in all`,
+    noSeries: "No series yet",
+    waitingTitle: "Waiting to be let in",
+    allPlayers: "All players",
+    nobodyWaiting: "Nobody is waiting",
+    signedIn: (date: string) => `Signed in ${date}`,
+    letIn: "Let in",
+    games: "Games",
+    usedBy: (n: number) => (n === 1 ? "1 series" : `${n} series`),
+    noZip: "No zip yet",
+    noGames: "No games yet",
+    withoutZip: (n: number) => `${n} without a zip`,
+  },
+  es: {
+    failed: "Algo ha fallado",
+    title: "Resumen de admin",
+    runningSeries: "Serie en curso",
+    playingNow: "En juego",
+    players: "Jugadores",
+    milestones: "Hitos",
+    snapshots: "Capturas",
+    editSeries: "Editar serie",
+    noneRunning: "No hay ninguna serie en curso",
+    startOne: "Empieza una desde un borrador en la página Series",
+    finished: "Terminada",
+    draft: (done: number, all: number) => `Borrador · ${done}/${all}`,
+    series: "Series",
+    inAll: (n: number) => `${n} en total`,
+    noSeries: "Aún no hay series",
+    waitingTitle: "Esperando para entrar",
+    allPlayers: "Todos los jugadores",
+    nobodyWaiting: "No espera nadie",
+    signedIn: (date: string) => `Entró el ${date}`,
+    letIn: "Dejar entrar",
+    games: "Juegos",
+    usedBy: (n: number) => (n === 1 ? "1 serie" : `${n} series`),
+    noZip: "Aún sin zip",
+    noGames: "Aún no hay juegos",
+    withoutZip: (n: number) => (n === 1 ? "1 sin zip" : `${n} sin zip`),
+  },
+});
+
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 type Overview = { series: AdminSeries[]; players: Player[]; games: Game[] };
@@ -50,7 +108,7 @@ export function AdminPage() {
 
   return (
     <main className={adminPage}>
-      <h1 className="sr-only">Admin overview</h1>
+      <h1 className="sr-only">{t.title}</h1>
       <AdminNav waiting={waiting.length} />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-5">
         {running ? <RunningBanner series={running} game={gameName(running.gameId)} /> : <NoneRunning />}
@@ -86,18 +144,18 @@ function RunningBanner({ series, game }: { series: AdminSeries; game: string | n
       <SceneArt scene={series.scene} width={desktop ? 230 : 90} height={desktop ? 59 : 55} />
       <span className="relative flex items-start justify-between gap-3">
         <span className="flex min-w-0 flex-col items-start gap-2 sm:gap-2.5">
-          <span className={cn("font-heading text-lg sm:text-[1.375rem]", series.scene === "night" ? "text-scene-night-sparkle" : "text-ink")}>Running series</span>
+          <span className={cn("font-heading text-lg sm:text-[1.375rem]", series.scene === "night" ? "text-scene-night-sparkle" : "text-ink")}>{t.runningSeries}</span>
           <span className={cn("font-heading text-[3.25rem] leading-[0.8] sm:text-7xl", look.title)}>{series.name}</span>
           {game && <span className={cn("rounded-md px-2.5 py-0.5 text-sm font-extrabold max-sm:hidden sm:px-3 sm:text-[1.0625rem]", look.chip)}>{game}</span>}
         </span>
-        <span className="flex-none rounded-md border-3 border-ink bg-primary px-2.5 font-heading text-xl text-primary-foreground sm:px-3.5 sm:text-2xl">Playing now</span>
+        <span className="flex-none rounded-md border-3 border-ink bg-primary px-2.5 font-heading text-xl text-primary-foreground sm:px-3.5 sm:text-2xl">{t.playingNow}</span>
       </span>
       <span className="relative grid grid-cols-3 gap-1.5 sm:flex sm:items-end sm:gap-2.5">
-        <Stat label="Players" value={series.playerIds.length} />
-        <Stat label="Milestones" value={series.milestones.length} />
-        <Stat label="Snapshots" value={series.snapshots} />
+        <Stat label={t.players} value={series.playerIds.length} />
+        <Stat label={t.milestones} value={series.milestones.length} />
+        <Stat label={t.snapshots} value={series.snapshots} />
         <span className="ml-auto items-center gap-2 rounded-[10px] bg-scene-night-panel/85 px-3.5 py-1.5 font-heading text-[1.375rem] max-sm:hidden sm:flex">
-          Edit series
+          {t.editSeries}
           <PixelIcon name="arrow" className="size-3.5" />
         </span>
       </span>
@@ -111,8 +169,8 @@ function NoneRunning() {
       to="/admin/series"
       className={cn(liftCardClass, "flex min-h-47 flex-col items-center justify-center gap-2 border-dashed border-cell-hi bg-transparent p-5 text-center sm:min-h-68")}
     >
-      <span className="font-heading text-3xl sm:text-4xl">No series is running</span>
-      <span className="text-sm text-muted-foreground">Start one from a draft on the Series page</span>
+      <span className="font-heading text-3xl sm:text-4xl">{t.noneRunning}</span>
+      <span className="text-sm text-muted-foreground">{t.startOne}</span>
     </Link>
   );
 }
@@ -120,17 +178,17 @@ function NoneRunning() {
 const STATE_INK = { draft: "text-warning", running: "text-primary", finished: "text-muted-foreground" } as const;
 
 function stateLine(series: AdminSeries): string {
-  if (series.state === "running") return "Playing now";
-  if (series.state === "finished") return "Finished";
-  return `Draft · ${series.checklist.filter((item) => item.done).length}/${series.checklist.length}`;
+  if (series.state === "running") return t.playingNow;
+  if (series.state === "finished") return t.finished;
+  return t.draft(series.checklist.filter((item) => item.done).length, series.checklist.length);
 }
 
 function SeriesCard({ series }: { series: AdminSeries[] }) {
   return (
     <Link to="/admin/series" className={cn(liftCardClass, "flex flex-col gap-2 p-4 sm:gap-3 sm:px-6 sm:py-5.5")}>
       <span className="flex items-center justify-between">
-        <span className="font-heading text-[1.75rem] leading-none sm:text-[2.125rem]">Series</span>
-        <span className="font-heading text-lg text-muted-foreground sm:text-xl">{series.length} in all</span>
+        <span className="font-heading text-[1.75rem] leading-none sm:text-[2.125rem]">{t.series}</span>
+        <span className="font-heading text-lg text-muted-foreground sm:text-xl">{t.inAll(series.length)}</span>
       </span>
       {series.slice(0, 3).map((s) => (
         <span
@@ -144,7 +202,7 @@ function SeriesCard({ series }: { series: AdminSeries[] }) {
           <span className={cn("text-lg sm:text-[1.1875rem]", STATE_INK[s.state])}>{stateLine(s)}</span>
         </span>
       ))}
-      {series.length === 0 && <span className="text-sm text-muted-foreground">No series yet</span>}
+      {series.length === 0 && <span className="text-sm text-muted-foreground">{t.noSeries}</span>}
     </Link>
   );
 }
@@ -168,10 +226,10 @@ function Waiting({ players, onAllowed }: { players: Player[]; onAllowed: (update
     <section aria-labelledby="waiting-title" className="flex flex-col gap-2.5 rounded-2xl border-3 bg-card p-4 sm:gap-3 sm:px-5.5 sm:py-5">
       <div className="flex items-center gap-3">
         <h2 id="waiting-title" className="m-0 flex-1 font-heading text-[1.75rem] leading-none font-normal sm:text-[2.125rem]">
-          Waiting to be let in
+          {t.waitingTitle}
         </h2>
         <Link to="/admin/players" className="font-heading text-xl text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 sm:text-[1.375rem]">
-          All players
+          {t.allPlayers}
         </Link>
       </div>
       {error && (
@@ -182,7 +240,7 @@ function Waiting({ players, onAllowed }: { players: Player[]; onAllowed: (update
       {players.length === 0 ? (
         <div className="flex min-h-16 flex-1 items-center justify-center gap-3 rounded-xl border-3 border-dashed font-heading text-2xl text-muted-foreground sm:text-[1.75rem]">
           <PixelIcon name="check" className="size-5 text-green" />
-          Nobody is waiting
+          {t.nobodyWaiting}
         </div>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -191,10 +249,10 @@ function Waiting({ players, onAllowed }: { players: Player[]; onAllowed: (update
               <PlayerBadge name={p.name} colour={playerColour(p.name)} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate font-heading text-[1.5625rem] leading-none sm:text-[1.75rem]">{p.name}</span>
-                <span className="text-xs font-bold text-muted-foreground sm:text-[0.8125rem]">Signed in {joinedOn(p.joinedAt)}</span>
+                <span className="text-xs font-bold text-muted-foreground sm:text-[0.8125rem]">{t.signedIn(joinedOn(p.joinedAt))}</span>
               </span>
               <button type="button" disabled={busy !== null} onClick={() => void letIn(p)} className={buttonVariants({ variant: "go", className: "px-3.5 text-[1.375rem] sm:px-4.5 sm:text-2xl" })}>
-                Let in
+                {t.letIn}
               </button>
             </li>
           ))}
@@ -209,7 +267,7 @@ function GamesCard({ games, series }: { games: Game[]; series: AdminSeries[] }) 
   return (
     <Link to="/admin/games" className={cn(liftCardClass, "flex flex-col gap-3 p-4 sm:gap-3.5 sm:px-6 sm:py-5.5")}>
       <span className="flex items-center justify-between">
-        <span className="font-heading text-[1.75rem] leading-none sm:text-[2.125rem]">Games</span>
+        <span className="font-heading text-[1.75rem] leading-none sm:text-[2.125rem]">{t.games}</span>
         <span className="font-heading text-lg text-muted-foreground sm:text-xl">{games.length}</span>
       </span>
       {games.slice(0, 3).map((g) => {
@@ -220,14 +278,14 @@ function GamesCard({ games, series }: { games: Game[]; series: AdminSeries[] }) 
             <span className="flex min-w-0 flex-col">
               <span className="truncate text-base font-extrabold sm:text-lg">{g.name}</span>
               <span className={cn("text-[0.8125rem] font-bold sm:text-sm", g.fileName ? "text-muted-foreground" : "text-warning")}>
-                {g.fileSize !== null && g.fileName ? `${formatSize(g.fileSize)} · ${used === 1 ? "1 series" : `${used} series`}` : "No zip yet"}
+                {g.fileSize !== null && g.fileName ? `${formatSize(g.fileSize)} · ${t.usedBy(used)}` : t.noZip}
               </span>
             </span>
           </span>
         );
       })}
-      {games.length === 0 && <span className="text-sm text-muted-foreground">No games yet</span>}
-      {bare > 0 && games.length > 3 && <span className="mt-auto text-sm text-warning">{bare} without a zip</span>}
+      {games.length === 0 && <span className="text-sm text-muted-foreground">{t.noGames}</span>}
+      {bare > 0 && games.length > 3 && <span className="mt-auto text-sm text-warning">{t.withoutZip(bare)}</span>}
     </Link>
   );
 }

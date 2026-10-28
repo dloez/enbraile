@@ -8,7 +8,13 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
 import { seriesPage } from "@/lib/lazy-pages";
 import { cn } from "@/lib/utils";
+import { messages } from "../../shared/i18n";
 import { type Scene, type SeriesBanner, seriesBannerList } from "../../shared/series";
+
+const t = messages({
+  en: { failed: "Something went wrong", title: "Series", playing: "Playing now", finished: "Finished" },
+  es: { failed: "Algo ha fallado", title: "Series", playing: "En juego", finished: "Terminada" },
+});
 
 export const BANNER_SIZE: Record<Scene, [number, number]> = { night: [338, 33], route: [338, 55] };
 
@@ -29,13 +35,13 @@ export function SeriesListPage() {
 
   useEffect(() => {
     api("/series", seriesBannerList).then(setList, (caught: unknown) =>
-      setError(caught instanceof Error ? caught.message : "Something went wrong"),
+      setError(caught instanceof Error ? caught.message : t.failed),
     );
   }, []);
 
   return (
     <main className={cn(toolPage, "gap-4.5 pt-5.5 pb-8 sm:gap-5.5 sm:py-9")}>
-      <h1 className="m-0 font-heading text-5xl leading-none font-normal sm:text-6xl">Series</h1>
+      <h1 className="m-0 font-heading text-5xl leading-none font-normal sm:text-6xl">{t.title}</h1>
       {error && (
         <p role="alert" className="m-0 text-destructive">
           {error}
@@ -81,7 +87,7 @@ function SeriesBannerLink({ series }: { series: SeriesBanner }) {
           playing ? "bg-primary text-primary-foreground" : "bg-ink text-foreground",
         )}
       >
-        {playing ? "Playing now" : "Finished"}
+        {playing ? t.playing : t.finished}
       </span>
     </Link>
   );

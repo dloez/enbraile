@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { STATE_CHIP, STATE_NAMES } from "@/pages/admin-series-list";
 import { type Game, gameList } from "../../shared/games";
+import { messages } from "../../shared/i18n";
 import { MOVE_RULE_LABELS, MOVE_RULES } from "../../shared/pool";
 import { type Player, playerList } from "../../shared/players";
 import {
@@ -31,16 +32,126 @@ import {
   startChecklist,
 } from "../../shared/series";
 
-const MARK_NAMES: Record<MilestoneMark, string> = { none: "Checkpoint", round: "Round", tournament: "Tournament" };
+const t = messages({
+  en: {
+    marks: { none: "Checkpoint", round: "Round", tournament: "Tournament" },
+    ingestion: { manual: "Manual", automatic: "Automatic" },
+    ingestionNotes: { manual: "Players upload their own saves from the series page.", automatic: "Saves are read in without an upload." },
+    failed: "Something went wrong",
+    edit: (name: string) => `Edit ${name}`,
+    series: "Series",
+    number: "Number",
+    name: "Name",
+    game: "Game",
+    noGame: "No game",
+    noZip: (name: string) => `${name} (no zip)`,
+    arrive: "Snapshots arrive",
+    scene: "Scene",
+    players: "Players",
+    of: (picked: number, all: number) => `${picked} of ${all}`,
+    nobodyAllowed: "Nobody is allowed yet",
+    pool: "Default pool",
+    poolNote: "A new team from this series' snapshots starts with this pool; its owner can change it.",
+    moves: "Moves",
+    movesNote: "Which of a snapshot Pokémon's moves its team may pick: known only, or with its learnset up to its level, up to Lv 50 or at any level, and its bag TMs.",
+    saveAndStart: "Save and start",
+    beforeStart: "Before it starts",
+    running: "Running",
+    finished: "Finished",
+    checklist: "Checklist",
+    done: "Done",
+    missing: "Missing",
+    runningNote: "Players, milestones and rules can still change. The game, scene and pool stay as they started.",
+    finishedNote: "Only the rules can still change.",
+    finishForGood: (name: string) => `Finish ${name} for good`,
+    finishSeries: "Finish series",
+    startNote: "Starting saves first, then opens the series to its players. Only one series runs at a time.",
+    save: "Save",
+    saved: "Saved",
+    saveRules: "Save rules",
+    start: "Start",
+    deleteForGood: (name: string) => `Delete ${name} for good`,
+    deleteDraft: "Delete draft",
+    previewLabel: "How the series page header will look",
+    preview: "Preview of the series page header",
+    milestones: "Milestones",
+    track: "The track as it shows on the series page",
+    milestone: (n: number) => `Milestone ${n}`,
+    milestoneKind: (n: number) => `Milestone ${n} kind`,
+    moveUp: "Move up",
+    moveDown: "Move down",
+    remove: "Remove",
+    addMilestone: "Add milestone",
+    rules: "Rules",
+    copyFrom: "Copy rules from",
+    copy: "Copy",
+    rulesLabel: "Rules in Markdown",
+    rulesNote: "Markdown, with tables. Headings become the rules' contents.",
+  },
+  es: {
+    marks: { none: "Control", round: "Ronda", tournament: "Torneo" },
+    ingestion: { manual: "Manual", automatic: "Automática" },
+    ingestionNotes: { manual: "Los jugadores suben sus partidas desde la página de la serie.", automatic: "Las partidas se leen sin subirlas." },
+    failed: "Algo ha fallado",
+    edit: (name: string) => `Editar ${name}`,
+    series: "Serie",
+    number: "Número",
+    name: "Nombre",
+    game: "Juego",
+    noGame: "Sin juego",
+    noZip: (name: string) => `${name} (sin zip)`,
+    arrive: "Las capturas llegan",
+    scene: "Escena",
+    players: "Jugadores",
+    of: (picked: number, all: number) => `${picked} de ${all}`,
+    nobodyAllowed: "Aún no hay nadie admitido",
+    pool: "Reserva por defecto",
+    poolNote: "Un equipo nuevo con capturas de esta serie empieza con esta reserva; su dueño puede cambiarla.",
+    moves: "Movimientos",
+    movesNote: "Qué movimientos de un Pokémon de una captura puede elegir su equipo: solo los que conoce, o también su lista de aprendizaje hasta su nivel, hasta el Nv. 50 o a cualquier nivel, y las MT de su mochila.",
+    saveAndStart: "Guardar y empezar",
+    beforeStart: "Antes de empezar",
+    running: "En curso",
+    finished: "Terminada",
+    checklist: "Lista de comprobación",
+    done: "Hecho",
+    missing: "Falta",
+    runningNote: "Los jugadores, los hitos y las reglas aún pueden cambiar. El juego, la escena y la reserva se quedan como empezaron.",
+    finishedNote: "Solo las reglas pueden cambiar aún.",
+    finishForGood: (name: string) => `Terminar ${name} para siempre`,
+    finishSeries: "Terminar serie",
+    startNote: "Empezar primero guarda y luego abre la serie a sus jugadores. Solo puede haber una serie en curso a la vez.",
+    save: "Guardar",
+    saved: "Guardado",
+    saveRules: "Guardar reglas",
+    start: "Empezar",
+    deleteForGood: (name: string) => `Borrar ${name} para siempre`,
+    deleteDraft: "Borrar borrador",
+    previewLabel: "Cómo se verá la cabecera de la página de la serie",
+    preview: "Vista previa de la cabecera de la serie",
+    milestones: "Hitos",
+    track: "El recorrido tal como se ve en la página de la serie",
+    milestone: (n: number) => `Hito ${n}`,
+    milestoneKind: (n: number) => `Tipo del hito ${n}`,
+    moveUp: "Subir",
+    moveDown: "Bajar",
+    remove: "Quitar",
+    addMilestone: "Añadir hito",
+    rules: "Reglas",
+    copyFrom: "Copiar reglas de",
+    copy: "Copiar",
+    rulesLabel: "Reglas en Markdown",
+    rulesNote: "Markdown, con tablas. Los encabezados forman el índice de las reglas.",
+  },
+});
+
+const MARK_NAMES: Record<MilestoneMark, string> = t.marks;
 
 const MARK_ON: Record<MilestoneMark, string> = { none: "bg-cell text-white", round: "bg-round text-white", tournament: "bg-yellow text-ink" };
 
-const INGESTION_NAMES: Record<SeriesInput["ingestion"], string> = { manual: "Manual", automatic: "Automatic" };
+const INGESTION_NAMES: Record<SeriesInput["ingestion"], string> = t.ingestion;
 
-const INGESTION_NOTES: Record<SeriesInput["ingestion"], string> = {
-  manual: "Players upload their own saves from the series page.",
-  automatic: "Saves are read in without an upload.",
-};
+const INGESTION_NOTES: Record<SeriesInput["ingestion"], string> = t.ingestionNotes;
 
 const THUMB_SIZE: Record<Scene, [number, number]> = { night: [160, 40], route: [160, 55] };
 
@@ -51,7 +162,7 @@ const headingClass = "m-0 font-heading text-[1.75rem] leading-none font-normal s
 type Draft = Omit<SeriesInput, "number">;
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 function draftOf(series: AdminSeries): Draft {
@@ -174,7 +285,7 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
 
   return (
     <main className={cn(adminPage, "max-lg:pb-32")}>
-      <h1 className="sr-only">Edit {series.name}</h1>
+      <h1 className="sr-only">{t.edit(series.name)}</h1>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4.5">
         <AdminNav />
         <span className="min-w-0 truncate font-heading text-2xl text-white max-sm:hidden sm:text-[1.625rem]">
@@ -191,26 +302,26 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
         <div className="flex min-w-0 flex-1 flex-col gap-4 sm:gap-5">
           <section aria-labelledby="series-details" className={sectionClass}>
             <h2 id="series-details" className={headingClass}>
-              Series
+              {t.series}
             </h2>
             <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] gap-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_minmax(0,1fr)] sm:gap-3.5">
               <div className={formLabelClass}>
-                Number
+                {t.number}
                 <span className={cn(formFieldClass, "flex items-center bg-box text-muted-foreground")}>{series.number}</span>
               </div>
               <label className={formLabelClass}>
-                Name
+                {t.name}
                 <input required maxLength={100} disabled={!editable} value={draft.name} onChange={(event) => change({ name: event.target.value })} className={formFieldClass} />
               </label>
               <label className={cn(formLabelClass, "col-span-2 sm:col-span-1")}>
-                Game
+                {t.game}
                 <SelectField
-                  label="Game"
+                  label={t.game}
                   disabled={!editable}
                   value={draft.gameId ?? ""}
                   onChange={(value) => change({ gameId: value || null })}
-                  all="No game"
-                  options={games.map((g) => ({ value: g.id, label: g.fileName ? g.name : `${g.name} (no zip)` }))}
+                  all={t.noGame}
+                  options={games.map((g) => ({ value: g.id, label: g.fileName ? g.name : t.noZip(g.name) }))}
                   className="min-h-11.5 w-full justify-between"
                 />
               </label>
@@ -218,7 +329,7 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
             <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
               <div className="flex flex-col gap-1.5">
                 <span id="ingestion-label" className="font-heading text-xl text-muted-foreground">
-                  Snapshots arrive
+                  {t.arrive}
                 </span>
                 <Segmented
                   labelledBy="ingestion-label"
@@ -232,7 +343,7 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
               </div>
               <div className="flex flex-col gap-1.5">
                 <span id="scene-label" className="font-heading text-xl text-muted-foreground">
-                  Scene
+                  {t.scene}
                 </span>
                 <div role="radiogroup" aria-labelledby="scene-label" className="grid grid-cols-2 gap-2 sm:gap-2.5">
                   {SCENES.map((scene) => (
@@ -263,14 +374,14 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
           <section aria-labelledby="series-players" className={sectionClass}>
             <div className="flex items-baseline gap-3">
               <h2 id="series-players" className={headingClass}>
-                Players
+                {t.players}
               </h2>
               <span className="font-heading text-xl text-muted-foreground sm:text-[1.375rem]">
-                {draft.playerIds.length} of {pickable.length}
+                {t.of(draft.playerIds.length, pickable.length)}
               </span>
             </div>
             {pickable.length === 0 ? (
-              <p className="m-0 text-sm text-muted-foreground">Nobody is allowed yet</p>
+              <p className="m-0 text-sm text-muted-foreground">{t.nobodyAllowed}</p>
             ) : (
               <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:gap-2.5 lg:grid-cols-4">
                 {pickable.map((p) => {
@@ -308,14 +419,14 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
           <section aria-labelledby="series-pool" className={sectionClass}>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h2 id="series-pool" className={headingClass}>
-                Default pool
+                {t.pool}
               </h2>
-              <span className="text-[0.8125rem] text-muted-foreground">A new team from this series' snapshots starts with this pool; its owner can change it.</span>
+              <span className="text-[0.8125rem] text-muted-foreground">{t.poolNote}</span>
             </div>
             <PoolBar filters={draft.pool} onChange={editable ? (pool) => change({ pool }) : undefined} />
             <div className="flex flex-col gap-1.5">
               <span id="moves-label" className="font-heading text-xl text-muted-foreground">
-                Moves
+                {t.moves}
               </span>
               <Segmented
                 labelledBy="moves-label"
@@ -325,32 +436,32 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
                 onChange={(moves) => editable && change({ pool: { ...draft.pool, moves } })}
                 className="self-stretch sm:self-start"
               />
-              <span className="text-[0.8125rem] text-muted-foreground">Which of a snapshot Pokémon's moves its team may pick: known only, or with its learnset up to its level, up to Lv 50 or at any level, and its bag TMs.</span>
+              <span className="text-[0.8125rem] text-muted-foreground">{t.movesNote}</span>
             </div>
           </section>
 
           <RulesEditor rules={draft.rules} others={others} onChange={(rules) => change({ rules })} />
         </div>
 
-        <aside aria-label="Save and start" className="flex flex-col gap-4 max-lg:order-first lg:sticky lg:top-6 lg:w-90 lg:flex-none">
+        <aside aria-label={t.saveAndStart} className="flex flex-col gap-4 max-lg:order-first lg:sticky lg:top-6 lg:w-90 lg:flex-none">
           <section aria-labelledby="series-state" className={cn(sectionClass, "gap-3 sm:px-5.5 sm:pt-5 sm:pb-5.5", running && "border-primary")}>
             <div className="flex items-baseline gap-3">
               <h2 id="series-state" className={cn(headingClass, "flex-1 sm:text-[2rem]")}>
-                {editable ? "Before it starts" : running ? "Running" : "Finished"}
+                {editable ? t.beforeStart : running ? t.running : t.finished}
               </h2>
               {editable && (
                 <span className="font-heading text-xl text-warning">
-                  {checklist.filter((item) => item.done).length} of {checklist.length}
+                  {t.of(checklist.filter((item) => item.done).length, checklist.length)}
                 </span>
               )}
             </div>
             {editable && (
-              <ul aria-label="Checklist" className="m-0 flex list-none flex-col gap-1.5 p-0 sm:gap-2">
+              <ul aria-label={t.checklist} className="m-0 flex list-none flex-col gap-1.5 p-0 sm:gap-2">
                 {checklist.map((item) => (
                   <li key={item.label} className={cn("flex min-h-9.5 items-center gap-3 rounded-[10px] px-3", item.done ? "bg-box" : "bg-destructive/10")}>
                     <span
                       role="img"
-                      aria-label={item.done ? "Done" : "Missing"}
+                      aria-label={item.done ? t.done : t.missing}
                       className={cn("grid size-6 flex-none place-items-center rounded-md text-ink", item.done ? "bg-green" : "bg-destructive")}
                     >
                       <PixelIcon name={item.done ? "check" : "cross"} className={item.done ? "size-3" : "size-2.5"} />
@@ -360,23 +471,23 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
                 ))}
               </ul>
             )}
-            {running && <p className="m-0 text-[0.9375rem] text-subtle">Players, milestones and rules can still change. The game, scene and pool stay as they started.</p>}
-            {finished && <p className="m-0 text-[0.9375rem] text-subtle">Only the rules can still change.</p>}
+            {running && <p className="m-0 text-[0.9375rem] text-subtle">{t.runningNote}</p>}
+            {finished && <p className="m-0 text-[0.9375rem] text-subtle">{t.finishedNote}</p>}
             {running &&
               (confirming === "finish" ? (
                 <button type="button" disabled={busy} onClick={() => void run(finish)} className={buttonVariants({ variant: "go", className: "min-h-13 text-[1.625rem]" })}>
-                  Finish {series.name} for good
+                  {t.finishForGood(series.name)}
                 </button>
               ) : (
                 <button type="button" disabled={busy} onClick={() => setConfirming("finish")} className={buttonVariants({ className: "min-h-13 text-[1.625rem]" })}>
-                  Finish series
+                  {t.finishSeries}
                 </button>
               ))}
-            {editable && <span className="text-[0.8125rem] text-muted-foreground max-lg:hidden">Starting saves first, then opens the series to its players. Only one series runs at a time.</span>}
+            {editable && <span className="text-[0.8125rem] text-muted-foreground max-lg:hidden">{t.startNote}</span>}
           </section>
 
           <section
-            aria-label="Save"
+            aria-label={t.save}
             className="flex flex-col gap-3 rounded-2xl border-3 bg-card p-4 sm:px-5.5 sm:py-4.5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-10 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:bg-ink max-lg:px-4 max-lg:pt-3 max-lg:pb-4"
           >
             {error && (
@@ -389,17 +500,17 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
                 {saved && !busy ? (
                   <span role="status" className="flex items-center gap-2 text-green">
                     <PixelIcon name="check" className="size-3.5" />
-                    Saved
+                    {t.saved}
                   </span>
                 ) : finished ? (
-                  "Save rules"
+                  t.saveRules
                 ) : (
-                  "Save"
+                  t.save
                 )}
               </button>
               {editable && (
                 <button type="button" disabled={busy || !ready} onClick={() => void run(start)} className={buttonVariants({ variant: "go", className: "min-h-12.5 flex-[1.4] text-[1.625rem]" })}>
-                  Start
+                  {t.start}
                 </button>
               )}
             </div>
@@ -413,7 +524,7 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
                   confirming === "delete" ? "border-destructive bg-destructive text-ink" : "border-destructive/50 bg-transparent text-destructive hover:bg-destructive/15",
                 )}
               >
-                {confirming === "delete" ? `Delete ${series.name} for good` : "Delete draft"}
+                {confirming === "delete" ? t.deleteForGood(series.name) : t.deleteDraft}
               </button>
             )}
           </section>
@@ -430,7 +541,7 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
             confirming === "delete" ? "border-destructive bg-destructive text-ink" : "border-destructive/50 bg-transparent text-destructive hover:bg-destructive/15",
           )}
         >
-          {confirming === "delete" ? `Delete ${series.name} for good` : "Delete draft"}
+          {confirming === "delete" ? t.deleteForGood(series.name) : t.deleteDraft}
         </button>
       )}
     </main>
@@ -441,7 +552,7 @@ function Preview({ name, scene, game, state }: { name: string; scene: Scene; gam
   const look = SCENE_LOOK[scene];
   const desktop = useMediaQuery("(min-width: 40rem)");
   return (
-    <section aria-label="How the series page header will look" className={cn("relative flex h-37.5 gap-3 overflow-hidden rounded-2xl border-4 border-cell p-3.5 sm:h-42.5 sm:px-8 sm:py-6", look.ground)}>
+    <section aria-label={t.previewLabel} className={cn("relative flex h-37.5 gap-3 overflow-hidden rounded-2xl border-4 border-cell p-3.5 sm:h-42.5 sm:px-8 sm:py-6", look.ground)}>
       <SceneArt scene={scene} width={desktop ? 338 : 110} height={desktop ? (scene === "night" ? 40 : 55) : 55} />
       <span className="relative flex min-w-0 flex-1 flex-col items-start justify-between gap-2">
         <span className={cn("max-w-full truncate font-heading text-[3.5rem] leading-[0.85] text-white sm:text-[5rem]", look.title)}>{name}</span>
@@ -449,7 +560,7 @@ function Preview({ name, scene, game, state }: { name: string; scene: Scene; gam
       </span>
       <span className="relative flex flex-none flex-col items-end justify-between">
         <span className={cn("rounded-md border-3 border-ink px-2.5 font-heading text-xl sm:px-3.5 sm:text-2xl", STATE_CHIP[state])}>{STATE_NAMES[state]}</span>
-        <span className="rounded-lg bg-ink/85 px-3 py-0.5 font-heading text-lg text-subtle max-sm:hidden">Preview of the series page header</span>
+        <span className="rounded-lg bg-ink/85 px-3 py-0.5 font-heading text-lg text-subtle max-sm:hidden">{t.preview}</span>
       </span>
     </section>
   );
@@ -471,10 +582,10 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
     <section aria-labelledby="series-milestones" className={sectionClass}>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 id="series-milestones" className={headingClass}>
-          Milestones
+          {t.milestones}
         </h2>
         <span className="font-heading text-xl text-muted-foreground sm:text-[1.375rem]">{milestones.length}</span>
-        <span className="ml-auto text-[0.8125rem] text-muted-foreground max-sm:hidden">The track as it shows on the series page</span>
+        <span className="ml-auto text-[0.8125rem] text-muted-foreground max-sm:hidden">{t.track}</span>
       </div>
       {milestones.length > 0 && (
         <div aria-hidden="true" className="grid overflow-hidden rounded-xl bg-box" style={{ gridTemplateColumns: columns }}>
@@ -506,7 +617,7 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
             <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2.5">
               <span className="w-5 flex-none text-center font-heading text-xl text-faint sm:w-6 sm:text-[1.375rem]">{index + 1}</span>
               <input
-                aria-label={`Milestone ${index + 1}`}
+                aria-label={t.milestone(index + 1)}
                 required
                 maxLength={40}
                 disabled={locked}
@@ -516,12 +627,12 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
               />
               {!locked && (
                 <span className="flex flex-none sm:order-last">
-                  <MoveButton label="Move up" icon="up" disabled={index === 0} onClick={() => move(index, -1)} />
-                  <MoveButton label="Move down" icon="down" disabled={index === milestones.length - 1} onClick={() => move(index, 1)} />
+                  <MoveButton label={t.moveUp} icon="up" disabled={index === 0} onClick={() => move(index, -1)} />
+                  <MoveButton label={t.moveDown} icon="down" disabled={index === milestones.length - 1} onClick={() => move(index, 1)} />
                   <button
                     type="button"
-                    aria-label="Remove"
-                    title="Remove"
+                    aria-label={t.remove}
+                    title={t.remove}
                     onClick={() => onChange(milestones.filter((_, i) => i !== index))}
                     className="grid h-10 w-8.5 cursor-pointer place-items-center rounded-lg text-destructive outline-none hover:bg-cell focus-visible:ring-3 focus-visible:ring-ring/50 sm:size-9"
                   >
@@ -532,7 +643,7 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
             </div>
             <div
               role="radiogroup"
-              aria-label={`Milestone ${index + 1} kind`}
+              aria-label={t.milestoneKind(index + 1)}
               className="grid flex-none grid-cols-3 gap-0.75 rounded-[10px] border-2 bg-ink p-0.75 sm:flex"
             >
               {MILESTONE_MARKS.map((mark) => (
@@ -562,7 +673,7 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
           className="flex min-h-12 cursor-pointer items-center justify-center gap-2.5 rounded-xl border-3 border-dashed border-cell-hi font-heading text-[1.375rem] text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50 sm:text-2xl"
         >
           <PixelIcon name="plus" className="size-3.5" />
-          Add milestone
+          {t.addMilestone}
         </button>
       )}
     </section>
@@ -593,25 +704,25 @@ function RulesEditor({ rules, others, onChange }: { rules: string; others: Admin
     <section aria-labelledby="series-rules" className={sectionClass}>
       <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
         <h2 id="series-rules" className={cn(headingClass, "flex-1")}>
-          Rules
+          {t.rules}
         </h2>
         {sources.length > 0 && (
           <div className="flex w-full gap-2 sm:w-auto sm:gap-2.5">
-            <SelectField label="Copy rules from" size="sm" value={picked?.id ?? ""} onChange={setSource} options={sources.map((s) => ({ value: s.id, label: s.name }))} className="max-sm:flex-1" />
+            <SelectField label={t.copyFrom} size="sm" value={picked?.id ?? ""} onChange={setSource} options={sources.map((s) => ({ value: s.id, label: s.name }))} className="max-sm:flex-1" />
             <button type="button" disabled={!picked} onClick={() => picked && onChange(picked.rules)} className={buttonVariants({ className: "min-h-10.5 px-4 text-[1.375rem]" })}>
-              Copy
+              {t.copy}
             </button>
           </div>
         )}
       </div>
       <textarea
-        aria-label="Rules in Markdown"
+        aria-label={t.rulesLabel}
         value={rules}
         onChange={(event) => onChange(event.target.value)}
         rows={14}
         className="min-h-60 resize-y rounded-xl border-3 bg-ink px-3 py-3 font-mono text-[0.8125rem] leading-relaxed text-foreground outline-none focus:border-primary focus:ring-3 focus:ring-ring/30 sm:min-h-75 sm:px-4 sm:py-3.5 sm:text-sm"
       />
-      <span className="text-[0.8125rem] text-muted-foreground">Markdown, with tables. Headings become the rules' contents.</span>
+      <span className="text-[0.8125rem] text-muted-foreground">{t.rulesNote}</span>
     </section>
   );
 }

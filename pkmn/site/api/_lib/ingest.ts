@@ -1,5 +1,5 @@
 import { and, eq, isNotNull, or } from "drizzle-orm";
-import { type ExportReport, readExport, type Sheet, type Snapshot } from "../../shared/snapshot.js";
+import { EXPORT_REFUSALS, type ExportReport, readExport, type Sheet, type Snapshot } from "../../shared/snapshot.js";
 import { db } from "./db.js";
 import { ExportError, itemFromShowdown, type TmRolls, type World } from "./export/export.js";
 import { exportZipSlot } from "./export/save-zip.js";
@@ -34,10 +34,10 @@ export function parseExport(file: Uint8Array): { sheet: Sheet; report: ExportRep
   try {
     data = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(file));
   } catch {
-    throw new ExportError("This file is not JSON");
+    throw new ExportError({ en: "This file is not JSON", es: "Este archivo no es JSON" });
   }
   const read = readExport(data, itemFromShowdown);
-  if ("refused" in read) throw new ExportError(read.refused);
+  if ("refused" in read) throw new ExportError({ en: EXPORT_REFUSALS.en[read.refused], es: EXPORT_REFUSALS.es[read.refused] });
   return read;
 }
 
@@ -65,7 +65,7 @@ async function read(raw: RawSave, file: Uint8Array): Promise<Read> {
     const { sheet, report } = parseExport(file);
     return { data: fromExport(sheet), world: null, tmRolls: null, rolledKey: null, rolled: null, sideFile: null, missing: report };
   }
-  if (!raw.slot) throw new ExportError("Pick a slot of the zip");
+  if (!raw.slot) throw new ExportError({ en: "Pick a slot of the zip", es: "Elige una partida del zip" });
   const exported = exportZipSlot(file, raw.slot, await keptRolls(raw.fileKey, raw.slot));
   const rolledKey = `${savePrefix(raw.seriesId, raw.userId)}${crypto.randomUUID()}-rolled.zip`;
   await putObject(rolledKey, exported.rolledZip);

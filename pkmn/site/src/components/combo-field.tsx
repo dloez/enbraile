@@ -3,6 +3,12 @@ import { ChevronDownIcon } from "lucide-react";
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { messages } from "../../shared/i18n";
+
+const t = messages({
+  en: { search: "Search", searchIn: (label: string) => `Search ${label.toLowerCase()}`, empty: "Nothing matches" },
+  es: { search: "Buscar", searchIn: (label: string) => `Buscar ${label.toLowerCase()}`, empty: "No hay coincidencias" },
+});
 
 export type ComboOption = { value: string; label: string; count?: number };
 
@@ -41,9 +47,9 @@ export function ComboField({
       </PopoverTrigger>
       <PopoverContent align="start" sideOffset={6} className="w-72 max-w-[calc(100vw-2rem)] gap-1.5">
         <Command filter={(item, search) => (item.toLowerCase().includes(search.trim().toLowerCase()) ? 1 : 0)}>
-          <CommandInput placeholder="Search" aria-label={`Search ${label.toLowerCase()}`} />
+          <CommandInput placeholder={t.search} aria-label={t.searchIn(label)} />
           <CommandList className="mt-1.5">
-            <CommandEmpty>Nothing matches</CommandEmpty>
+            <CommandEmpty>{t.empty}</CommandEmpty>
             <CommandItem value={all} onSelect={() => pick("")} className={cn(value === "" && "text-primary")}>
               {all}
             </CommandItem>

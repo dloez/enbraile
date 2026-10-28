@@ -18,7 +18,11 @@ function entriesOf(zip: Uint8Array): ZipEntry[] {
   try {
     return zipEntries(zip);
   } catch (error) {
-    throw new ExportError(error instanceof ZipError ? `The file is ${error.message}.` : "The file is not a zip.");
+    throw new ExportError(
+      error instanceof ZipError
+        ? { en: `The file is ${error.texts.en}.`, es: `El archivo es ${error.texts.es}.` }
+        : { en: "The file is not a zip.", es: "El archivo no es un zip." },
+    );
   }
 }
 
@@ -36,13 +40,17 @@ function read(zip: Uint8Array, entry: ZipEntry): Uint8Array {
   try {
     return readEntry(zip, entry);
   } catch (error) {
-    throw new ExportError(error instanceof ZipError ? `The zip holds ${error.message}.` : `Could not unpack ${entry.name}.`);
+    throw new ExportError(
+      error instanceof ZipError
+        ? { en: `The zip holds ${error.texts.en}.`, es: `El zip contiene ${error.texts.es}.` }
+        : { en: `Could not unpack ${entry.name}.`, es: `No se pudo descomprimir ${entry.name}.` },
+    );
   }
 }
 
 export function saveSlots(zip: Uint8Array): SaveSlot[] {
   const slots = slotEntries(entriesOf(zip));
-  if (slots.length === 0) throw new ExportError("No Partida save in this zip");
+  if (slots.length === 0) throw new ExportError({ en: "No Partida save in this zip", es: "No hay ninguna partida en este zip" });
   return slots.map((entry) => {
     let progress: { badges: number; hallOfFame: number } | null = null;
     try {
@@ -67,7 +75,7 @@ const encoder = new TextEncoder();
 export function exportZipSlot(zip: Uint8Array, slot: string, kept: TmRolls | null): ZipExport {
   const entries = entriesOf(zip);
   const entry = slotEntries(entries).find((candidate) => candidate.name === slot);
-  if (!entry) throw new ExportError(`${slot} is not a Partida save in this zip.`);
+  if (!entry) throw new ExportError({ en: `${slot} is not a Partida save in this zip.`, es: `${slot} no es una partida de este zip.` });
   const save = readSave(read(zip, entry), entry.name);
   const sideFileOf = sideFileName(save);
   const sideName = folderOf(entry.name) + sideFileOf;
@@ -79,7 +87,11 @@ export function exportZipSlot(zip: Uint8Array, slot: string, kept: TmRolls | nul
   try {
     rolledZip = replaceEntry(zip, entries, { nameBytes, utf8: (entry.flags & 0x800) !== 0, data: sideFile(exported.compatibility) });
   } catch (error) {
-    throw new ExportError(error instanceof ZipError ? `The zip is ${error.message}.` : "The zip could not be written back.");
+    throw new ExportError(
+      error instanceof ZipError
+        ? { en: `The zip is ${error.texts.en}.`, es: `El zip es ${error.texts.es}.` }
+        : { en: "The zip could not be written back.", es: "No se pudo volver a escribir el zip." },
+    );
   }
   return { ...exported, tmRolls: storedRolls(exported.compatibility), sideFile: sideFileOf, rolledZip };
 }

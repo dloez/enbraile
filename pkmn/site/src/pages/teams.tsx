@@ -13,11 +13,63 @@ import { spriteOfName } from "@/analysis/sprite";
 import { SnapshotMenu } from "@/teams/components/snapshot-menu";
 import { profilePage } from "../../shared/profile";
 import { MAX_COMPARED, MIN_COMPARED, teamList, teamMade, type TeamRow } from "../../shared/team";
+import { locale, messages } from "../../shared/i18n";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    today: "Changed today",
+    yesterday: "Changed yesterday",
+    daysAgo: (days: number) => `Changed ${days} days ago`,
+    inMonth: (month: string) => `Changed in ${month}`,
+    any: "Any Pokémon",
+    noSource: "No source",
+    series: (n: number) => `Series ${n}`,
+    theirs: (player: string, milestone: string) => `${player}'s ${milestone}`,
+    title: "Teams",
+    picked: (n: number) => `${n} picked`,
+    cancel: "Cancel",
+    compareTeams: "Compare teams",
+    compare: "Compare",
+    newTeam: "New team",
+    startFrom: "Start from",
+    orStart: (reason: string) => `${reason}. Or start from:`,
+    yours: "Yours",
+    others: "Other trainers",
+    every: "Every team",
+    showEvery: (player: string) => `Show every team, not only ${player}'s`,
+    empty: "No teams yet",
+  },
+  es: {
+    failed: "Algo ha fallado",
+    today: "Cambiado hoy",
+    yesterday: "Cambiado ayer",
+    daysAgo: (days: number) => `Cambiado hace ${days} días`,
+    inMonth: (month: string) => `Cambiado en ${month}`,
+    any: "Cualquier Pokémon",
+    noSource: "Sin fuente",
+    series: (n: number) => `Serie ${n}`,
+    theirs: (player: string, milestone: string) => `${milestone} de ${player}`,
+    title: "Equipos",
+    picked: (n: number) => (n === 1 ? "1 elegido" : `${n} elegidos`),
+    cancel: "Cancelar",
+    compareTeams: "Comparar equipos",
+    compare: "Comparar",
+    newTeam: "Equipo nuevo",
+    startFrom: "Empezar desde",
+    orStart: (reason: string) => `${reason}. O empieza desde:`,
+    yours: "Tuyos",
+    others: "Otros entrenadores",
+    every: "Todos los equipos",
+    showEvery: (player: string) => `Ver todos los equipos, no solo los de ${player}`,
+    empty: "Aún no hay equipos",
+  },
+});
 
 const CompareDialog = lazy(() => import("@/teams/components/compare-view").then((m) => ({ default: m.CompareDialog })));
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 const DAY = 86_400_000;
@@ -25,17 +77,17 @@ const DAY = 86_400_000;
 export function changed(iso: string, now = Date.now()): string {
   const at = new Date(iso);
   const days = Math.floor((new Date(now).setHours(0, 0, 0, 0) - new Date(at).setHours(0, 0, 0, 0)) / DAY);
-  if (days <= 0) return "Changed today";
-  if (days === 1) return "Changed yesterday";
-  if (days < 7) return `Changed ${days} days ago`;
-  return `Changed in ${at.toLocaleString("en", { month: "long" })}`;
+  if (days <= 0) return t.today;
+  if (days === 1) return t.yesterday;
+  if (days < 7) return t.daysAgo(days);
+  return t.inMonth(at.toLocaleString(locale, { month: "long" }));
 }
 
 export function sourceLine(team: Pick<TeamRow, "owner" | "sources" | "anyPokemon">): string {
-  const any = team.anyPokemon ? ["Any Pokémon"] : [];
-  if (team.sources.length === 0) return any[0] ?? "No source";
-  const series = [...new Set(team.sources.map((s) => s.series.number))].map((n) => `Series ${n}`).join(", ");
-  const from = team.sources.map((s) => (s.player.id === team.owner.id ? s.milestone : `${s.player.name}'s ${s.milestone}`));
+  const any = team.anyPokemon ? [t.any] : [];
+  if (team.sources.length === 0) return any[0] ?? t.noSource;
+  const series = [...new Set(team.sources.map((s) => s.series.number))].map((n) => t.series(n)).join(", ");
+  const from = team.sources.map((s) => (s.player.id === team.owner.id ? s.milestone : t.theirs(s.player.name, s.milestone)));
   return `${series} · ${[...from, ...any].join(" · ")}`;
 }
 
@@ -93,8 +145,8 @@ export function TeamsPage() {
   }
 
   const player = me && !me.admin ? me : null;
-  const yours = player ? (list ?? []).filter((t) => t.owner.id === player.id) : [];
-  const others = (list ?? []).filter((t) => t.owner.id !== player?.id);
+  const yours = player ? (list ?? []).filter((team) => team.owner.id === player.id) : [];
+  const others = (list ?? []).filter((team) => team.owner.id !== player?.id);
   const pick: Picking | null = picking
     ? {
         picked,
@@ -111,15 +163,15 @@ export function TeamsPage() {
   return (
     <main className={cn(toolPage, "gap-5 pt-5.5 pb-8 sm:gap-6 sm:pt-6")}>
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        <h1 className="m-0 font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">Teams</h1>
+        <h1 className="m-0 font-heading text-5xl leading-[0.85] font-normal sm:text-6xl">{t.title}</h1>
         <div className="flex-1" />
         {picking ? (
           <div className="flex items-center gap-3 max-sm:order-last max-sm:w-full">
             <span role="status" className="font-heading text-2xl text-primary max-sm:flex-1">
-              {picked.length} picked
+              {t.picked(picked.length)}
             </span>
             <button type="button" onClick={stopPicking} className={buttonVariants({ className: "min-h-12 px-4.5 text-2xl sm:min-h-13" })}>
-              Cancel
+              {t.cancel}
             </button>
             <button
               type="button"
@@ -127,7 +179,7 @@ export function TeamsPage() {
               onClick={() => setComparing(picked)}
               className={buttonVariants({ variant: "go", className: "min-h-12 px-4 text-2xl sm:min-h-13 sm:px-5 sm:text-[1.625rem]" })}
             >
-              Compare teams
+              {t.compareTeams}
             </button>
           </div>
         ) : (
@@ -140,19 +192,19 @@ export function TeamsPage() {
             }}
             className={buttonVariants({ className: "min-h-12 px-4.5 text-2xl max-sm:order-last max-sm:w-full sm:min-h-13" })}
           >
-            Compare
+            {t.compare}
           </button>
         )}
         {player && !picking && (
           <span className="relative flex">
             <button type="button" disabled={making} onClick={() => void newTeam()} className={buttonVariants({ variant: "go", className: "min-h-13 text-[1.625rem]" })}>
               <Plus className="size-5" aria-hidden="true" />
-              New team
+              {t.newTeam}
             </button>
             {starting !== null && (
               <SnapshotMenu
-                label="Start from"
-                note={<p role="alert" className="m-0 px-2.5 pt-1 pb-1.5 text-sm text-muted-foreground">{starting}. Or start from:</p>}
+                label={t.startFrom}
+                note={<p role="alert" className="m-0 px-2.5 pt-1 pb-1.5 text-sm text-muted-foreground">{t.orStart(starting)}</p>}
                 className="top-full right-0 mt-2"
                 onClose={() => setStarting(null)}
                 onPick={(row) => void newTeam([row.id])}
@@ -171,8 +223,8 @@ export function TeamsPage() {
       {!list && !error && <TwoBlocks className="h-32 rounded-2xl" />}
       {list && (
         <div className="flex flex-col gap-3.5">
-          {player && (!filter || filter === player.id) && <Group id="teams-yours" title="Yours" rows={yours} pick={pick} />}
-          {(!filter || filter !== player?.id) && <Group id="teams-others" title={player ? "Other trainers" : "Every team"} rows={others} pick={pick} showOwner />}
+          {player && (!filter || filter === player.id) && <Group id="teams-yours" title={t.yours} rows={yours} pick={pick} />}
+          {(!filter || filter !== player?.id) && <Group id="teams-others" title={player ? t.others : t.every} rows={others} pick={pick} showOwner />}
         </div>
       )}
       {compareOpened && (
@@ -198,7 +250,7 @@ function OwnerChip({ owner }: { owner: { id: string; name: string } }) {
         <span className="font-heading text-2xl leading-none">{owner.name}</span>
         <Link
           to="/teams"
-          aria-label={`Show every team, not only ${owner.name}'s`}
+          aria-label={t.showEvery(owner.name)}
           className="grid size-9 place-items-center rounded-full text-muted-foreground outline-none hover:bg-cell hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <X className="size-5" aria-hidden="true" />
@@ -221,7 +273,7 @@ function Group({ id, title, rows, pick, showOwner = false }: { id: string; title
         {title}
       </h2>
       {rows.length === 0 ? (
-        <p className="m-0 flex min-h-23 items-center rounded-[14px] border-3 border-dashed px-6 font-heading text-[1.75rem] text-muted-foreground">No teams yet</p>
+        <p className="m-0 flex min-h-23 items-center rounded-[14px] border-3 border-dashed px-6 font-heading text-[1.75rem] text-muted-foreground">{t.empty}</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {rows.map((team) => (

@@ -6,6 +6,93 @@ import { displayName, fightStat, learnCount, STAT_LABELS, type BagTm, type Mon, 
 import { UnknownMark } from "@/components/marks";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import type { ExportGap } from "../../../shared/snapshot";
+import { categoryLabel, typeLabel } from "../../../shared/dex-text";
+import { messages } from "../../../shared/i18n";
+
+type Lack = "ivs" | "evs" | "stats";
+
+const t = messages({
+  en: {
+    nature: "Nature",
+    raises: "Raises ",
+    lowers: "Lowers ",
+    mismatch: (save: string, showdown: string) => `Save: ${save} · Showdown: ${showdown}`,
+    ability: "Ability",
+    abilities: "Abilities",
+    hidden: "Hidden",
+    inUse: "In use",
+    whoShares: (name: string) => `Who shares ${name}`,
+    defenses: "Type defenses",
+    base: "Base",
+    lv: (level: number | string) => `Lv ${level}`,
+    lacking: (lacks: Lack[], range: boolean) => {
+      const names = lacks.map((l) => (l === "ivs" ? "IVs" : l === "evs" ? "EVs" : "stats"));
+      return `No ${names.join(", ").replace(/, ([^,]*)$/, " or $1")} in this export${range ? ": Lv 50 shows the range over IVs 0–31" : ""}`;
+    },
+    statsShown: "Stats shown",
+    stat: "Stat",
+    total: "Total",
+    freeFifty: "At Level 50 with its IVs, EVs and nature.",
+    leagueFifty: "As in the league's Showdown fights: its IVs and nature, 1 EV in every stat.",
+    noMoves: "No moves in this export",
+    moves: "Moves",
+    canLearn: "Can learn",
+    pow: "Pow",
+    noLevels: "No move levels in this snapshot: upload its save again to see them",
+    noTmRolls: "No TM rolls in this export: TMs the game has not rolled for it yet are missing",
+    selectedMove: "Selected move",
+    power: "Power",
+    accuracy: "Accuracy",
+    level: (level: number | string) => `Lv. ${level}`,
+    male: " male",
+    female: " female",
+    fainted: "Fainted",
+    shiny: "Shiny",
+    info: "Info",
+    stats: "Stats",
+    summary: "Summary",
+  },
+  es: {
+    nature: "Naturaleza",
+    raises: "Sube ",
+    lowers: "Baja ",
+    mismatch: (save: string, showdown: string) => `Partida: ${save} · Showdown: ${showdown}`,
+    ability: "Habilidad",
+    abilities: "Habilidades",
+    hidden: "Oculta",
+    inUse: "En uso",
+    whoShares: (name: string) => `Quién más tiene ${name}`,
+    defenses: "Defensas por tipo",
+    base: "Base",
+    lv: (level: number | string) => `Nv ${level}`,
+    lacking: (lacks: Lack[], range: boolean) => {
+      const names = lacks.map((l) => (l === "ivs" ? "IVs" : l === "evs" ? "EVs" : "estadísticas"));
+      return `No hay ${names.join(", ").replace(/, ([^,]*)$/, " ni $1")} en esta exportación${range ? ": Nv 50 muestra el rango con IVs de 0 a 31" : ""}`;
+    },
+    statsShown: "Estadísticas mostradas",
+    stat: "Est.",
+    total: "Total",
+    freeFifty: "A nivel 50 con sus IVs, EVs y naturaleza.",
+    leagueFifty: "Como en los combates de Showdown de la liga: sus IVs y naturaleza, 1 EV en cada estadística.",
+    noMoves: "No hay movimientos en esta exportación",
+    moves: "Movimientos",
+    canLearn: "Puede aprender",
+    pow: "Pot",
+    noLevels: "No hay niveles de movimientos en esta captura: vuelve a subir su partida para verlos",
+    noTmRolls: "No hay tiradas de MT en esta exportación: faltan las MT que el juego aún no le ha tirado",
+    selectedMove: "Movimiento elegido",
+    power: "Potencia",
+    accuracy: "Precisión",
+    level: (level: number | string) => `Nv. ${level}`,
+    male: " macho",
+    female: " hembra",
+    fainted: "Debilitado",
+    shiny: "Variocolor",
+    info: "Info",
+    stats: "Estadísticas",
+    summary: "Resumen",
+  },
+});
 
 type Page = "info" | "stats" | "moves";
 
@@ -43,7 +130,7 @@ export function TypeTag({ type, className }: { type: string | null; className?: 
       className={cn("rounded-[5px] px-2.5 text-center font-heading text-xl text-white [text-shadow:0_1px_0_rgb(0_0_0/0.45)]", className)}
       style={typeStyle(type)}
     >
-      {type ?? "?"}
+      {type ? typeLabel(type) : "?"}
     </span>
   );
 }
@@ -58,7 +145,7 @@ export function CategoryTag({ category, className }: { category: string | null; 
         className,
       )}
     >
-      {category}
+      {categoryLabel(category)}
     </span>
   );
 }
@@ -91,7 +178,7 @@ function Info({ mon, series }: { mon: Mon; series?: number }) {
       <section aria-labelledby="sum-nature" className="flex items-center gap-3 rounded-xl border-3 border-cell bg-box px-3.5 py-2.5">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h3 id="sum-nature" className="m-0 font-heading text-xl leading-none font-normal text-muted-foreground">
-            Nature
+            {t.nature}
           </h3>
           <span className="font-heading text-[1.625rem] leading-none">
             {n?.name ?? "—"}
@@ -104,14 +191,14 @@ function Info({ mon, series }: { mon: Mon; series?: number }) {
               <svg viewBox="0 0 5 4" shapeRendering="crispEdges" aria-hidden="true" className="h-2 w-2.5 fill-current">
                 <path d="M2 0h1v1H2zM1 1h3v1H1zM0 2h5v2H0z" />
               </svg>
-              <span className="sr-only">Raises </span>
+              <span className="sr-only">{t.raises}</span>
               {STAT_LABELS[n.plus]}
             </span>
             <span className="flex h-8 items-center gap-1 rounded-[7px] bg-stat-down/14 px-2.5 font-heading text-[1.3125rem] text-stat-down">
               <svg viewBox="0 0 5 4" shapeRendering="crispEdges" aria-hidden="true" className="h-2 w-2.5 fill-current">
                 <path d="M0 0h5v2H0zM1 2h3v1H1zM2 3h1v1H2z" />
               </svg>
-              <span className="sr-only">Lowers </span>
+              <span className="sr-only">{t.lowers}</span>
               {STAT_LABELS[n.minus]}
             </span>
           </>
@@ -120,16 +207,16 @@ function Info({ mon, series }: { mon: Mon; series?: number }) {
 
       {mon.mismatch && mon.showdownTypes && (
         <p className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm">
-          Save: {mon.types.join(" / ")} · Showdown: {mon.showdownTypes.join(" / ")}
+          {t.mismatch(mon.types.map(typeLabel).join(" / "), mon.showdownTypes.map(typeLabel).join(" / "))}
         </p>
       )}
 
       {mon.abilities.length > 0 && (
         <section aria-labelledby="sum-ability" className="flex flex-col rounded-xl border-3 border-cell bg-box px-2 pt-2.5">
           <h3 id="sum-ability" className="m-0 px-1.5 pb-2 font-heading text-xl leading-none font-normal text-muted-foreground">
-            Ability
+            {t.ability}
           </h3>
-          <div role="tablist" aria-label="Abilities" aria-orientation="vertical" className="flex flex-col gap-0.5">
+          <div role="tablist" aria-label={t.abilities} aria-orientation="vertical" className="flex flex-col gap-0.5">
             {mon.abilities.map((a) => (
               <button
                 key={a.id}
@@ -147,9 +234,9 @@ function Info({ mon, series }: { mon: Mon; series?: number }) {
                   {a.marked && <UnknownMark />}
                 </span>
                 {a.hidden && (
-                  <span className="flex-none rounded-md border-2 border-cell-hi px-1.5 font-heading text-base leading-5 font-normal text-subtle">Hidden</span>
+                  <span className="flex-none rounded-md border-2 border-cell-hi px-1.5 font-heading text-base leading-5 font-normal text-subtle">{t.hidden}</span>
                 )}
-                {a.current && <span className="flex-none rounded-md bg-cyan px-2 py-0.5 font-heading text-base leading-5 font-normal text-ink">In use</span>}
+                {a.current && <span className="flex-none rounded-md bg-cyan px-2 py-0.5 font-heading text-base leading-5 font-normal text-ink">{t.inUse}</span>}
               </button>
             ))}
           </div>
@@ -162,7 +249,7 @@ function Info({ mon, series }: { mon: Mon; series?: number }) {
                 search={{ ability: shown.id }}
                 className="-mx-1 flex min-h-11 w-fit items-center gap-1.5 rounded-lg px-1 font-heading text-xl text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                Who shares {shown.name}
+                {t.whoShares(shown.name)}
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             )}
@@ -172,17 +259,17 @@ function Info({ mon, series }: { mon: Mon; series?: number }) {
 
       <section aria-labelledby="sum-def" className="flex flex-col gap-2">
         <h3 id="sum-def" className="m-0 font-heading text-xl leading-none font-normal text-muted-foreground">
-          Type defenses
+          {t.defenses}
         </h3>
         {[defenses.slice(0, 9), defenses.slice(9)].map((row, i) => (
           <div key={i} className="grid grid-cols-9 gap-1">
             {row.map((d) => (
-              <span key={d.attack} title={`${d.attack} ×${d.m}`} className="flex min-w-0 flex-col gap-0.75">
+              <span key={d.attack} title={`${typeLabel(d.attack)} ×${d.m}`} className="flex min-w-0 flex-col gap-0.75">
                 <span
                   className="block rounded-[5px] text-center font-heading text-lg leading-6 text-white [text-shadow:0_1px_0_rgb(0_0_0/0.5)]"
                   style={typeStyle(d.attack)}
                 >
-                  {d.attack.slice(0, 3).toUpperCase()}
+                  {typeLabel(d.attack).slice(0, 3).toUpperCase()}
                 </span>
                 <span className={cn("grid h-9 place-items-center rounded-[5px] font-heading text-[1.5625rem]", d.cls)}>
                   {d.label}
@@ -203,9 +290,9 @@ function Stats({ mon }: { mon: Mon }) {
   const [mode, setMode] = useState<StatMode>("base");
   const stats = mon.stats ?? [];
   const modes: [StatMode, string][] = [
-    ["base", "Base"],
-    ["level", `Lv ${mon.level ?? "?"}`],
-    ["fifty", "Lv 50"],
+    ["base", t.base],
+    ["level", t.lv(mon.level ?? "?")],
+    ["fifty", t.lv(50)],
   ];
   const mark = (stat: StatID) => {
     const up = n?.plus === stat && n.minus !== stat;
@@ -236,18 +323,18 @@ function Stats({ mon }: { mon: Mon }) {
           : "—";
   const grid = mode === "base" ? "grid-cols-[46px_minmax(0,1fr)_54px]" : "grid-cols-[46px_minmax(0,1fr)_30px_36px_64px]";
   const lacks = [
-    stats.some((s) => s.iv === null) && "IVs",
-    stats.some((s) => s.ev === null) && "EVs",
+    stats.some((s) => s.iv === null) && "ivs",
+    stats.some((s) => s.ev === null) && "evs",
     !known && "stats",
-  ].filter((x): x is string => typeof x === "string");
+  ].filter((x): x is Lack => typeof x === "string");
   return (
     <>
       {lacks.length > 0 && (
         <GapWarning>
-          No {lacks.join(", ").replace(/, ([^,]*)$/, " or $1")} in this export{mode === "fifty" && stats.some((s) => s.iv === null) ? ": Lv 50 shows the range over IVs 0–31" : ""}
+          {t.lacking(lacks, mode === "fifty" && stats.some((s) => s.iv === null))}
         </GapWarning>
       )}
-      <div role="radiogroup" aria-label="Stats shown" className={trackClass}>
+      <div role="radiogroup" aria-label={t.statsShown} className={trackClass}>
         {modes.map(([id, name]) => (
           <button key={id} type="button" role="radio" aria-checked={mode === id} onClick={() => setMode(id)} className={segClass(mode === id)}>
             {name}
@@ -262,7 +349,7 @@ function Stats({ mon }: { mon: Mon }) {
               <span />
               <span className="text-right">IV</span>
               <span className="text-right">EV</span>
-              <span className="text-right">Stat</span>
+              <span className="text-right">{t.stat}</span>
             </>
           )}
         </div>
@@ -301,13 +388,13 @@ function Stats({ mon }: { mon: Mon }) {
           );
         })}
         <div className={cn("grid min-h-10 items-center gap-x-2.5 px-3.5 font-heading text-[1.375rem] text-muted-foreground", grid)}>
-          <span className={mode === "base" ? "col-span-2" : "col-span-4"}>Total</span>
+          <span className={mode === "base" ? "col-span-2" : "col-span-4"}>{t.total}</span>
           <span className="text-right text-[1.625rem] text-foreground">{total}</span>
         </div>
       </div>
       {mode === "fifty" && (
         <p className="m-0 text-sm text-muted-foreground">
-          {mon.free ? "At Level 50 with its IVs, EVs and nature." : "As in the league's Showdown fights: its IVs and nature, 1 EV in every stat."}
+          {mon.free ? t.freeFifty : t.leagueFifty}
         </p>
       )}
     </>
@@ -328,12 +415,12 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
     if (!learn) return [];
     return [
       ...learn.current.map((move) => ({ key: `c${move.id}`, move, known: true, label: labels.get(move.id) ?? "" })),
-      ...learn.relearner.map((move) => ({ key: `r${move.id}`, move, known: false, label: learn.levels?.[move.id] !== undefined ? `Lv ${learn.levels[move.id]}` : "" })),
+      ...learn.relearner.map((move) => ({ key: `r${move.id}`, move, known: false, label: learn.levels?.[move.id] !== undefined ? t.lv(learn.levels[move.id]) : "" })),
       ...learn.tms.map((move) => ({ key: `t${move.id}`, move, known: false, label: labels.get(move.id) ?? "" })),
     ];
   }, [learn, labels]);
   const [picked, setPicked] = useState<string | null>(null);
-  if (!learn) return <GapWarning>No moves in this export</GapWarning>;
+  if (!learn) return <GapWarning>{t.noMoves}</GapWarning>;
   const selected = rows.find((r) => r.key === picked) ?? rows[0];
   const row = (r: MoveRow, withLabel: boolean) => {
     const on = r.key === selected?.key;
@@ -370,7 +457,7 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
       <div className="-mr-3.5 flex min-h-0 flex-1 flex-col gap-4.5 overflow-y-auto overscroll-contain pr-2 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]">
         <section aria-labelledby="sum-moves" className="flex flex-col gap-1">
           <h3 id="sum-moves" className="m-0 px-1 pb-0.5 font-heading text-xl leading-none font-normal text-muted-foreground">
-            Moves
+            {t.moves}
           </h3>
           {rows.filter((r) => r.known).map((r) => row(r, false))}
         </section>
@@ -379,18 +466,18 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
             <div className="grid grid-cols-[40px_56px_minmax(0,1fr)_auto_26px] items-end gap-x-2 pr-2.75 pb-1 pl-2.25 font-heading text-[1.1875rem] leading-none text-muted-foreground">
               <span />
               <h3 id="sum-learn" className="col-span-3 m-0 text-xl font-normal">
-                Can learn <span className="text-faint">{learnCount(learn) - learn.current.length}</span>
+                {t.canLearn} <span className="text-faint">{learnCount(learn) - learn.current.length}</span>
               </h3>
-              <span className="text-right">Pow</span>
+              <span className="text-right">{t.pow}</span>
             </div>
             {learn.relearner.length > 0 && learn.levels === null && (
               <div className="mb-1">
-                <GapWarning>No move levels in this snapshot: upload its save again to see them</GapWarning>
+                <GapWarning>{t.noLevels}</GapWarning>
               </div>
             )}
             {gaps.includes("tmRolls") && (
               <div className="mb-1">
-                <GapWarning>No TM rolls in this export: TMs the game has not rolled for it yet are missing</GapWarning>
+                <GapWarning>{t.noTmRolls}</GapWarning>
               </div>
             )}
             {learnRows.map((r) => row(r, true))}
@@ -398,7 +485,7 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
         )}
       </div>
       {selected && (
-        <section aria-label="Selected move" aria-live="polite" className="flex min-h-37 flex-none flex-col gap-1.5 rounded-xl border-3 border-cell bg-box px-3.5 py-2.5">
+        <section aria-label={t.selectedMove} aria-live="polite" className="flex min-h-37 flex-none flex-col gap-1.5 rounded-xl border-3 border-cell bg-box px-3.5 py-2.5">
           <div className="flex min-w-0 items-center gap-2">
             <TypeTag type={selected.move.type} className="flex-none px-2 text-lg leading-5.5" />
             <span className="min-w-0 flex-1 truncate font-heading text-[1.75rem] leading-none">{selected.move.name}</span>
@@ -406,10 +493,10 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
           </div>
           <span className="flex gap-4 font-heading text-[1.1875rem] leading-[1.1] text-muted-foreground">
             <span>
-              Power <span className="text-foreground">{selected.move.power ?? "—"}</span>
+              {t.power} <span className="text-foreground">{selected.move.power ?? "—"}</span>
             </span>
             <span>
-              Accuracy <span className="text-foreground">{selected.move.accuracy ?? "—"}</span>
+              {t.accuracy} <span className="text-foreground">{selected.move.accuracy ?? "—"}</span>
             </span>
             {selected.label && <span className="text-foreground">{selected.label}</span>}
           </span>
@@ -436,15 +523,15 @@ export function SummaryHead({ mon, title, closeRoom = false }: { mon: Mon; title
         <span className="flex items-baseline gap-2 font-heading text-[1.375rem] whitespace-nowrap text-subtle">
           {mon.nickname && <span className="truncate">{mon.species.name} ·</span>}
           {!mon.nickname && mon.species.marked && <UnknownMark className="ml-0" />}
-          <span>Lv. {mon.level ?? "?"}</span>
+          <span>{t.level(mon.level ?? "?")}</span>
           {mon.gender === "M" && (
             <span className="text-stat-down">
-              ♂<span className="sr-only"> male</span>
+              ♂<span className="sr-only">{t.male}</span>
             </span>
           )}
           {mon.gender === "F" && (
             <span className="text-female">
-              ♀<span className="sr-only"> female</span>
+              ♀<span className="sr-only">{t.female}</span>
             </span>
           )}
         </span>
@@ -452,7 +539,7 @@ export function SummaryHead({ mon, title, closeRoom = false }: { mon: Mon; title
           {mon.types.map((t) => (
             <TypeTag key={t} type={t} />
           ))}
-          {mon.fainted && <span className="rounded-sm border-2 border-destructive bg-destructive-soft px-1.5 font-heading text-lg leading-6 text-destructive">Fainted</span>}
+          {mon.fainted && <span className="rounded-sm border-2 border-destructive bg-destructive-soft px-1.5 font-heading text-lg leading-6 text-destructive">{t.fainted}</span>}
         </span>
       </div>
       {mon.shiny && (
@@ -460,7 +547,7 @@ export function SummaryHead({ mon, title, closeRoom = false }: { mon: Mon; title
           <svg viewBox="0 0 7 7" shapeRendering="crispEdges" aria-hidden="true" className="size-2.5 fill-ink">
             <path d="M3 0h1v2H3zM0 3h2v1H0zM5 3h2v1H5zM3 5h1v2H3zM2 2h3v3H2z" />
           </svg>
-          Shiny
+          {t.shiny}
         </span>
       )}
     </div>
@@ -470,13 +557,13 @@ export function SummaryHead({ mon, title, closeRoom = false }: { mon: Mon; title
 export function SummaryBody({ mon, tms, gaps = [], series }: { mon: Mon; tms: readonly BagTm[]; gaps?: readonly ExportGap[]; series?: number }) {
   const [page, setPage] = useState<Page>("info");
   const pages: [Page, string][] = [
-    ["info", "Info"],
-    ["stats", "Stats"],
-    ["moves", "Moves"],
+    ["info", t.info],
+    ["stats", t.stats],
+    ["moves", t.moves],
   ];
   return (
     <>
-      <div role="tablist" aria-label="Summary" className={cn(trackClass, "mx-5 mt-3.5 flex-none max-sm:mx-4")}>
+      <div role="tablist" aria-label={t.summary} className={cn(trackClass, "mx-5 mt-3.5 flex-none max-sm:mx-4")}>
         {pages.map(([id, name]) => (
           <button key={id} type="button" role="tab" aria-selected={page === id} onClick={() => setPage(id)} className={segClass(page === id)}>
             {name}

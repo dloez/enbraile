@@ -4,6 +4,16 @@ import { careerOf, type LatestRecord, type ProfilePage } from "../../shared/prof
 import type { Snapshot } from "../../shared/snapshot.js";
 import { db } from "./db.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
+import { says } from "./i18n.js";
+
+const t = says({
+  en: {
+    noPlayer: "No such player",
+  },
+  es: {
+    noPlayer: "Ese jugador no existe",
+  },
+});
 
 export const profiles = new Hono();
 
@@ -12,7 +22,7 @@ profiles.get("/:player", async (c) => {
     .select({ id: user.id, name: user.name })
     .from(user)
     .where(and(eq(user.id, c.req.param("player")), eq(user.admin, false)));
-  if (!player) return c.json({ error: "No such player" }, 404);
+  if (!player) return c.json({ error: t(c).noPlayer }, 404);
   const played = await db
     .select({ id: series.id, number: series.number, name: series.name, scene: series.scene, state: series.state, game: game.name })
     .from(seriesPlayer)

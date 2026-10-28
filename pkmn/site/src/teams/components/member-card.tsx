@@ -11,6 +11,68 @@ import { MOVE_RULE_LABELS, type MoveRule } from "../../../shared/pool";
 import { setasLabel } from "@/teams/components/editors";
 import { moveGen } from "@/teams/dex";
 import type { Member } from "@/teams/team";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    mintBag: "A mint from the bag",
+    mintMoney: "A mint bought with money",
+    leaveOut: (name: string) => `Leave ${name} out of the six`,
+    putIn: (name: string) => `Put ${name} in the six`,
+    leaveOutTitle: "Leave out of the six",
+    putInTitle: "Put in the six",
+    back: "Back to the analysis",
+    summary: (name: string) => `Summary of ${name}`,
+    lv: "Lv.",
+    pc: (owner: string) => `${owner}'s PC`,
+    free: "Free",
+    setTitle: "Level, nature, EVs and IVs",
+    set: "Set",
+    takeOut: (name: string) => `Take ${name} out`,
+    takeOutTitle: "Take out of the team",
+    item: "Item",
+    noItem: "No item",
+    ability: "Ability: ",
+    costs: (setas: string) => `Costs ${setas}`,
+    natureTitle: (nature: string) => `${nature} Nature`,
+    nature: "Nature: ",
+    noNature: "No nature",
+    late: (move: string, gen: number, movesGen: number) => `${move} is from Gen ${gen}, past the pool's moves up to Gen ${movesGen}`,
+    unlearnable: (name: string, move: string) => `${name} can't learn ${move} in this save`,
+    ruled: (move: string, rule: string) => `${move} is outside the team's moves (${rule})`,
+    empty: "Empty",
+    add: "Add a Pokémon",
+  },
+  es: {
+    mintBag: "Una menta de la mochila",
+    mintMoney: "Una menta comprada con dinero",
+    leaveOut: (name: string) => `Dejar a ${name} fuera de los seis`,
+    putIn: (name: string) => `Meter a ${name} en los seis`,
+    leaveOutTitle: "Dejar fuera de los seis",
+    putInTitle: "Meter en los seis",
+    back: "Volver al análisis",
+    summary: (name: string) => `Resumen de ${name}`,
+    lv: "Nv.",
+    pc: (owner: string) => `PC de ${owner}`,
+    free: "Libre",
+    setTitle: "Nivel, naturaleza, EVs e IVs",
+    set: "Set",
+    takeOut: (name: string) => `Sacar a ${name}`,
+    takeOutTitle: "Sacar del equipo",
+    item: "Objeto",
+    noItem: "Sin objeto",
+    ability: "Habilidad: ",
+    costs: (setas: string) => `Cuesta ${setas}`,
+    natureTitle: (nature: string) => `Naturaleza ${nature}`,
+    nature: "Naturaleza: ",
+    noNature: "Sin naturaleza",
+    late: (move: string, gen: number, movesGen: number) => `${move} es de la Gen ${gen}, posterior a los movimientos de la reserva (hasta la Gen ${movesGen})`,
+    unlearnable: (name: string, move: string) => `${name} no puede aprender ${move} en esta partida`,
+    ruled: (move: string, rule: string) => `${move} queda fuera de los movimientos del equipo (${rule})`,
+    empty: "Vacío",
+    add: "Añadir un Pokémon",
+  },
+});
 
 export type Focus = "look" | "item" | "ability" | "nature" | "set" | { move: number } | null;
 
@@ -52,7 +114,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
   const abilityId = member.ability ?? current;
   const ability = mon.abilities.find((a) => a.id === abilityId);
   const costs = from !== null && member.ability !== null;
-  const mintTitle = natureFrom === "mint" ? "A mint from the bag" : "A mint bought with money";
+  const mintTitle = natureFrom === "mint" ? t.mintBag : t.mintMoney;
   const looking = focus === "look";
   const lit = focus !== null && !looking;
   return (
@@ -69,8 +131,8 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           type="button"
           role="checkbox"
           aria-checked={pick.in}
-          aria-label={pick.in ? `Leave ${name} out of the six` : `Put ${name} in the six`}
-          title={pick.in ? "Leave out of the six" : "Put in the six"}
+          aria-label={pick.in ? t.leaveOut(name) : t.putIn(name)}
+          title={pick.in ? t.leaveOutTitle : t.putInTitle}
           disabled={pick.off}
           onClick={pick.onToggle}
           className="group absolute top-0 left-0 z-1 grid size-11 place-items-center rounded-[14px] border-none bg-transparent p-0 outline-none enabled:cursor-pointer disabled:cursor-default"
@@ -91,7 +153,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           type="button"
           aria-pressed={looking}
           onClick={onLook}
-          title={looking ? "Back to the analysis" : `Summary of ${name}`}
+          title={looking ? t.back : t.summary(name)}
           className={cn(
             "flex min-h-15 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-[10px] border-3 pr-3 text-left text-foreground outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 short:min-h-13",
             looking ? "border-primary bg-cell" : "border-cell bg-box",
@@ -103,18 +165,18 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           <span className="flex min-w-0 flex-1 flex-col gap-0.75">
             <span className="min-w-0 truncate font-heading text-[1.75rem] leading-[0.9]">{name}</span>
             <span className="flex min-w-0 items-center gap-1.25 overflow-hidden">
-              {(mon.showdownTypes ?? mon.types).map((t) => (
-                <TypeTag key={t} type={t} className="flex-none px-2 text-[1.0625rem] leading-5.25" />
+              {(mon.showdownTypes ?? mon.types).map((type) => (
+                <TypeTag key={type} type={type} className="flex-none px-2 text-[1.0625rem] leading-5.25" />
               ))}
               <span className="ml-1 min-w-0 truncate font-heading text-[1.1875rem] text-muted-foreground">
-                Lv. {mon.level ?? "?"}
+                {t.lv} {mon.level ?? "?"}
               </span>
             </span>
           </span>
           {from ? (
-            <span className={cn("flex-none rounded-sm px-1.75 font-heading text-[1.0625rem] text-ink", PLAYER_FILL[from.colour % PLAYER_FILL.length])}>{from.owner}'s PC</span>
+            <span className={cn("flex-none rounded-sm px-1.75 font-heading text-[1.0625rem] text-ink", PLAYER_FILL[from.colour % PLAYER_FILL.length])}>{t.pc(from.owner)}</span>
           ) : (
-            <span className="flex-none rounded-sm border-2 border-dashed border-faint px-1.5 font-heading text-[1.0625rem] text-subtle">Free</span>
+            <span className="flex-none rounded-sm border-2 border-dashed border-faint px-1.5 font-heading text-[1.0625rem] text-subtle">{t.free}</span>
           )}
           <ChevronRight className={cn("size-5 flex-none", looking ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
         </button>
@@ -123,20 +185,20 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
             type="button"
             aria-pressed={focus === "set"}
             onClick={onSet}
-            title="Level, nature, EVs and IVs"
+            title={t.setTitle}
             className={cn(
               "h-8.5 flex-none cursor-pointer rounded-lg border-3 bg-cell px-2.25 font-heading text-lg text-subtle outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50",
               focus === "set" ? "border-primary" : "border-cell-hi",
             )}
           >
-            Set
+            {t.set}
           </button>
         )}
         {editable && (
           <button
             type="button"
-            aria-label={`Take ${name} out`}
-            title="Take out of the team"
+            aria-label={t.takeOut(name)}
+            title={t.takeOutTitle}
             onClick={onRemove}
             className="grid size-8.5 flex-none cursor-pointer place-items-center rounded-lg border-3 border-cell-hi bg-cell text-subtle outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
           >
@@ -153,9 +215,9 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           title={item?.desc}
           className={cn(field(focus === "item"), "h-9.5 gap-1.5 pr-2 pl-1 short:h-8.5")}
         >
-          {item ? <ItemIcon item={item} /> : <span className="flex-none pl-1 font-heading text-lg text-muted-foreground">Item</span>}
+          {item ? <ItemIcon item={item} /> : <span className="flex-none pl-1 font-heading text-lg text-muted-foreground">{t.item}</span>}
           <span className={cn("min-w-0 flex-1 truncate text-sm font-extrabold", !item && "text-muted-foreground")}>
-            {item ? item.name : "No item"}
+            {item ? item.name : t.noItem}
             {item?.marked && <UnknownMark />}
           </span>
         </button>
@@ -167,12 +229,12 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           title={ability?.desc}
           className={cn(field(focus === "ability"), "h-9.5 gap-1.5 px-2 short:h-8.5")}
         >
-          <span className="sr-only">Ability: </span>
+          <span className="sr-only">{t.ability}</span>
           <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{ability?.name ?? "—"}</span>
           {costs && (
-            <span title={`Costs ${setasLabel(setaCost)}`} className="grid size-5 flex-none place-items-center">
+            <span title={t.costs(setasLabel(setaCost))} className="grid size-5 flex-none place-items-center">
               <MiniSeta className="size-4" />
-              <span className="sr-only">Costs {setasLabel(setaCost)}</span>
+              <span className="sr-only">{t.costs(setasLabel(setaCost))}</span>
             </span>
           )}
         </button>
@@ -181,11 +243,11 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           aria-pressed={focus === "nature"}
           disabled={!editable}
           onClick={onNature}
-          title={mon.nature ? `${mon.nature.name} Nature${natureFrom ? `: ${mintTitle.toLowerCase()}` : ""}` : undefined}
+          title={mon.nature ? `${t.natureTitle(mon.nature.name)}${natureFrom ? `: ${mintTitle.toLowerCase()}` : ""}` : undefined}
           className={cn(field(focus === "nature"), "h-9.5 gap-1 px-2 short:h-8.5")}
         >
-          <span className="sr-only">Nature: </span>
-          <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{mon.nature?.name ?? "No nature"}</span>
+          <span className="sr-only">{t.nature}</span>
+          <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{mon.nature?.name ?? t.noNature}</span>
           {natureFrom && (
             <span title={mintTitle} className="flex flex-none items-center gap-0.5">
               <Mint className="size-4" />
@@ -211,7 +273,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
               aria-pressed={on}
               disabled={!editable}
               onClick={() => onMove(at)}
-              title={late ? `${move?.name} is from Gen ${introduced}, past the pool's moves up to Gen ${movesGen}` : unlearnable ? `${name} can't learn ${move?.name} in this save` : ruled ? `${move?.name} is outside the team's moves (${MOVE_RULE_LABELS[moveRule]})` : move?.desc}
+              title={late ? t.late(move?.name ?? "", introduced, movesGen) : unlearnable ? t.unlearnable(name, move?.name ?? "") : ruled ? t.ruled(move?.name ?? "", MOVE_RULE_LABELS[moveRule]) : move?.desc}
               className={cn(
                 field(on),
                 "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px] gap-x-1.75 pr-2 pl-1.25 short:min-h-7.5",
@@ -234,7 +296,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
 
 export function EmptyCard({ editable, on, onAdd }: { editable: boolean; on: boolean; onAdd: () => void }) {
   if (!editable) {
-    return <span className="grid min-h-61.5 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-2xl text-faint lg:min-h-0">Empty</span>;
+    return <span className="grid min-h-61.5 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-2xl text-faint lg:min-h-0">{t.empty}</span>;
   }
   return (
     <button
@@ -247,7 +309,7 @@ export function EmptyCard({ editable, on, onAdd }: { editable: boolean; on: bool
       )}
     >
       <Plus className="size-7" aria-hidden="true" />
-      <span className="text-[1.625rem] leading-none">Add a Pokémon</span>
+      <span className="text-[1.625rem] leading-none">{t.add}</span>
     </button>
   );
 }

@@ -1,4 +1,5 @@
 import type { Mon } from "../../shared/mon";
+import { locale } from "../../shared/i18n";
 import { describePokemon } from "../../shared/describe";
 import { DEFAULT_COSTS, type GameCosts } from "../../shared/games";
 import { fightItems, setasOf } from "../../shared/items";
@@ -187,7 +188,7 @@ export function setNature(slots: Slots, slot: number, nature: string, current: s
 }
 
 export function formatMoney(amount: number): string {
-  return `${amount < 0 ? "−" : ""}$${Math.abs(amount).toLocaleString("en")}`;
+  return `${amount < 0 ? "−" : ""}$${Math.abs(amount).toLocaleString(locale)}`;
 }
 
 export function natureFrom(slots: Slots, stocks: Stocks, slot: number): "mint" | "money" | null {

@@ -9,10 +9,74 @@ import { formatSize, joinedOn } from "@/lib/admin-format";
 import { sendFile } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import { downloadLink, game, gameCosts, gameList, MAX_COST, type Game } from "../../shared/games";
+import { locale, messages } from "../../shared/i18n";
 import { type AdminSeries, adminSeriesList } from "../../shared/series";
 
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    title: "Admin games",
+    newGame: "New game",
+    name: "Name",
+    namePlaceholder: "As players will see it, e.g. Pokémon Añil · Randomlocke",
+    create: "Create",
+    noFile: "No file",
+    size: "Size",
+    uploaded: "Uploaded",
+    usedBy: "Used by",
+    series: (numbers: number[]) => `Series ${numbers.join(", ")}`,
+    noSeries: "No series",
+    itemIcons: "Item icons",
+    noneFound: "None found",
+    noZip: "No zip yet. A series can't start on this game until it has one.",
+    uploading: (file: string) => `Uploading ${file}`,
+    inParts: "Sent in parts; a dropped part is retried on its own. Leaving the page stops it.",
+    replaceZip: "Replace zip",
+    uploadZip: "Upload zip",
+    uploadZipOf: (name: string) => `Upload the zip of ${name}`,
+    download: "Download",
+    costsOf: (name: string) => `Team builder costs of ${name}`,
+    costs: "Team builder costs",
+    setasPerAbility: "Mini Setas per ability",
+    moneyPerMint: "Money per mint",
+    save: "Save",
+    costsNote: (max: string) =>
+      `What the team builder charges a snapshot's Pokémon for a new ability and for a new nature, a mint of that nature from the bag first. 0 to 99 Mini Setas, 0 to ${max} money.`,
+  },
+  es: {
+    failed: "Algo ha fallado",
+    title: "Juegos de admin",
+    newGame: "Nuevo juego",
+    name: "Nombre",
+    namePlaceholder: "Como lo verán los jugadores, p. ej. Pokémon Añil · Randomlocke",
+    create: "Crear",
+    noFile: "Sin archivo",
+    size: "Tamaño",
+    uploaded: "Subido",
+    usedBy: "Lo usa",
+    series: (numbers: number[]) => `${numbers.length === 1 ? "Serie" : "Series"} ${numbers.join(", ")}`,
+    noSeries: "Ninguna serie",
+    itemIcons: "Iconos de objetos",
+    noneFound: "No se encontró ninguno",
+    noZip: "Aún sin zip. Ninguna serie puede empezar con este juego hasta que tenga uno.",
+    uploading: (file: string) => `Subiendo ${file}`,
+    inParts: "Se envía por partes; una parte que falla se reintenta sola. Si sales de la página, se detiene.",
+    replaceZip: "Cambiar zip",
+    uploadZip: "Subir zip",
+    uploadZipOf: (name: string) => `Subir el zip de ${name}`,
+    download: "Descargar",
+    costsOf: (name: string) => `Costes del constructor de equipos de ${name}`,
+    costs: "Costes del constructor de equipos",
+    setasPerAbility: "Mini Setas por habilidad",
+    moneyPerMint: "Dinero por menta",
+    save: "Guardar",
+    costsNote: (max: string) =>
+      `Lo que cobra el constructor de equipos a un Pokémon de una captura por una habilidad nueva y por una naturaleza nueva, antes una menta de esa naturaleza de la mochila. De 0 a 99 Mini Setas, de 0 a ${max} de dinero.`,
+  },
+});
+
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 export function AdminGamesPage() {
@@ -35,7 +99,7 @@ export function AdminGamesPage() {
 
   return (
     <main className={adminPage}>
-      <h1 className="sr-only">Admin games</h1>
+      <h1 className="sr-only">{t.title}</h1>
       <AdminNav />
       {error && (
         <p role="alert" className="m-0 text-destructive">
@@ -84,14 +148,14 @@ function NewGame({ onCreated }: { onCreated: (created: Game) => void }) {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-3 rounded-2xl border-3 bg-card px-4 pt-3.5 pb-4 sm:flex-row sm:items-end sm:gap-3.5 sm:px-5 sm:pt-4 sm:pb-4.5">
-      <h2 className="m-0 font-heading text-[1.75rem] leading-none font-normal sm:mr-1.5 sm:self-center sm:text-3xl">New game</h2>
+      <h2 className="m-0 font-heading text-[1.75rem] leading-none font-normal sm:mr-1.5 sm:self-center sm:text-3xl">{t.newGame}</h2>
       <label className={cn(formLabelClass, "flex-1")}>
-        Name
+        {t.name}
         <input
           name="name"
           required
           maxLength={100}
-          placeholder="As players will see it, e.g. Pokémon Añil · Randomlocke"
+          placeholder={t.namePlaceholder}
           value={name}
           onChange={(event) => setName(event.target.value)}
           className={formFieldClass}
@@ -99,7 +163,7 @@ function NewGame({ onCreated }: { onCreated: (created: Game) => void }) {
       </label>
       <button type="submit" disabled={busy} className={buttonVariants({ variant: "go", className: "min-h-11.5 px-5 text-[1.625rem]" })}>
         <PixelIcon name="plus" className="size-3.5" />
-        Create
+        {t.create}
       </button>
       {error && (
         <p role="alert" className="m-0 text-sm text-destructive sm:self-center">
@@ -155,34 +219,34 @@ function GameCard({ game: current, usedBy, onChange }: { game: Game; usedBy: num
         <PixelIcon name="cartridge" className={cn("size-13 sm:size-16", !hasFile && "opacity-45")} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h2 className="m-0 font-heading text-3xl leading-[0.95] font-normal sm:text-4xl">{current.name}</h2>
-          <span className={cn("text-[0.8125rem] font-bold break-all sm:text-sm", hasFile ? "text-subtle" : "text-warning")}>{current.fileName ?? "No file"}</span>
+          <span className={cn("text-[0.8125rem] font-bold break-all sm:text-sm", hasFile ? "text-subtle" : "text-warning")}>{current.fileName ?? t.noFile}</span>
         </div>
       </div>
       {hasFile && current.fileSize !== null && current.uploadedAt ? (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Fact label="Size" value={formatSize(current.fileSize)} />
-          <Fact label="Uploaded" value={joinedOn(current.uploadedAt)} />
-          <Fact label="Used by" value={usedBy.length ? `Series ${usedBy.join(", ")}` : "No series"} />
-          <Fact label="Item icons" value={current.itemIcons === null ? "None found" : String(current.itemIcons)} />
+          <Fact label={t.size} value={formatSize(current.fileSize)} />
+          <Fact label={t.uploaded} value={joinedOn(current.uploadedAt)} />
+          <Fact label={t.usedBy} value={usedBy.length ? t.series(usedBy) : t.noSeries} />
+          <Fact label={t.itemIcons} value={current.itemIcons === null ? t.noneFound : String(current.itemIcons)} />
         </div>
       ) : (
         !uploading && (
           <div className="flex min-h-16.5 items-center gap-3 rounded-xl border-3 border-dashed border-cell-hi px-4 text-[0.8125rem] text-subtle sm:text-sm">
             <PixelIcon name="alert" className="size-5 text-warning" />
-            No zip yet. A series can't start on this game until it has one.
+            {t.noZip}
           </div>
         )
       )}
       {uploading && (
         <div role="status" className="flex flex-col gap-1.5">
           <div className="flex justify-between gap-3 font-heading text-xl">
-            <span className="truncate text-subtle">Uploading {sending}</span>
+            <span className="truncate text-subtle">{t.uploading(sending)}</span>
             <span className="tabular-nums">{Math.round(progress * 100)}%</span>
           </div>
           <span className="block h-3 overflow-hidden rounded-md bg-ink">
             <span className="block h-full bg-primary" style={{ width: `${Math.round(progress * 100)}%` }} />
           </span>
-          <span className="text-[0.8125rem] text-muted-foreground">Sent in parts; a dropped part is retried on its own. Leaving the page stops it.</span>
+          <span className="text-[0.8125rem] text-muted-foreground">{t.inParts}</span>
         </div>
       )}
       {error && (
@@ -199,12 +263,12 @@ function GameCard({ game: current, usedBy, onChange }: { game: Game; usedBy: num
           )}
         >
           <PixelIcon name="upload" className="size-4" />
-          {hasFile ? "Replace zip" : "Upload zip"}
+          {hasFile ? t.replaceZip : t.uploadZip}
           <input
             type="file"
             accept=".zip,application/zip"
             disabled={uploading}
-            aria-label={`Upload the zip of ${current.name}`}
+            aria-label={t.uploadZipOf(current.name)}
             className="absolute size-px opacity-0"
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -216,7 +280,7 @@ function GameCard({ game: current, usedBy, onChange }: { game: Game; usedBy: num
         {hasFile && (
           <button type="button" disabled={uploading} onClick={() => void download()} className={cn(buttonClass, "px-4.5")}>
             <PixelIcon name="download" className="size-4" />
-            Download
+            {t.download}
           </button>
         )}
       </div>
@@ -247,11 +311,11 @@ function CostsForm({ game: current, onChange }: { game: Game; onChange: (updated
   }
 
   return (
-    <form onSubmit={submit} aria-label={`Team builder costs of ${current.name}`} className="flex flex-col gap-2.5 rounded-xl bg-box px-3.5 pt-2.5 pb-3.5">
-      <h3 className="m-0 font-heading text-[1.375rem] leading-none font-normal text-subtle">Team builder costs</h3>
+    <form onSubmit={submit} aria-label={t.costsOf(current.name)} className="flex flex-col gap-2.5 rounded-xl bg-box px-3.5 pt-2.5 pb-3.5">
+      <h3 className="m-0 font-heading text-[1.375rem] leading-none font-normal text-subtle">{t.costs}</h3>
       <div className="flex flex-wrap items-end gap-2.5">
         <label className={cn(formLabelClass, "flex-[1_1_9rem]")}>
-          Mini Setas per ability
+          {t.setasPerAbility}
           <input
             inputMode="numeric"
             value={setas}
@@ -261,7 +325,7 @@ function CostsForm({ game: current, onChange }: { game: Game; onChange: (updated
           />
         </label>
         <label className={cn(formLabelClass, "flex-[1_1_9rem]")}>
-          Money per mint
+          {t.moneyPerMint}
           <input
             inputMode="numeric"
             value={price}
@@ -271,11 +335,11 @@ function CostsForm({ game: current, onChange }: { game: Game; onChange: (updated
           />
         </label>
         <button type="submit" disabled={busy || !changed} className={cn(buttonClass, "min-h-11.5 px-4.5")}>
-          Save
+          {t.save}
         </button>
       </div>
       <p className="m-0 text-[0.8125rem] text-muted-foreground">
-        What the team builder charges a snapshot's Pokémon for a new ability and for a new nature, a mint of that nature from the bag first. 0 to 99 Mini Setas, 0 to {MAX_COST.toLocaleString("en")} money.
+        {t.costsNote(MAX_COST.toLocaleString(locale))}
       </p>
       {error && (
         <p role="alert" className="m-0 text-sm text-destructive">

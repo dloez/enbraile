@@ -3,6 +3,40 @@ import type { Pool } from "@/analysis/pool";
 import { ARCHETYPES, type Analysis, type ArchetypeName } from "@/analysis/team";
 import { Panel } from "@/components/controls";
 import { spriteOf } from "@/analysis/sprite";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    map: "Archetype map",
+    mapAside: "bulk × offense percentile in the pool",
+    mapLabel: "Team members, team average and archetype prototypes on bulk and offense percentiles",
+    point: (who: string, bulk: number, offense: number, speed: number) => `${who}: bulk ${bulk}, offense ${offense}, speed ${speed}`,
+    average: "Team average",
+    bulk: "Bulk →",
+    offense: "Offense →",
+    median: "Median",
+    p75: "75th percentile",
+    fastest: "Fastest in pool",
+    speed: "Speed",
+    speedAside: "final Speed",
+    benchmarks: (level: number) => `Pool benchmarks at level ${level}, 252 Spe, neutral nature`,
+  },
+  es: {
+    map: "Mapa de arquetipos",
+    mapAside: "percentil de aguante × ofensiva en la reserva",
+    mapLabel: "Miembros del equipo, media del equipo y prototipos de arquetipo según sus percentiles de aguante y ofensiva",
+    point: (who: string, bulk: number, offense: number, speed: number) => `${who}: aguante ${bulk}, ofensiva ${offense}, velocidad ${speed}`,
+    average: "Media del equipo",
+    bulk: "Aguante →",
+    offense: "Ofensiva →",
+    median: "Mediana",
+    p75: "Percentil 75",
+    fastest: "Más rápido de la reserva",
+    speed: "Velocidad",
+    speedAside: "Velocidad final",
+    benchmarks: (level: number) => `Referencias de la reserva a nivel ${level}, 252 Vel, naturaleza neutra`,
+  },
+});
 
 const at = (v: number) => `${(Math.max(0, Math.min(1, v)) * 100).toFixed(1)}%`;
 
@@ -10,8 +44,8 @@ export function ArchetypeMap({ team, analysis, pool }: { team: readonly Member[]
   const cloud = pool.cloud();
   const fastest = Math.max(...analysis.members.map((m) => m.indices.speed), 0.01);
   return (
-    <Panel title="Archetype map" aside={<span className="text-xs text-muted-foreground">bulk × offense percentile in the pool</span>}>
-      <div className="relative mb-5 ml-6.5 h-95 border-b border-l" role="img" aria-label="Team members, team average and archetype prototypes on bulk and offense percentiles">
+    <Panel title={t.map} aside={<span className="text-xs text-muted-foreground">{t.mapAside}</span>}>
+      <div className="relative mb-5 ml-6.5 h-95 border-b border-l" role="img" aria-label={t.mapLabel}>
         {cloud.map((p) => (
           <span
             key={p.name}
@@ -29,7 +63,7 @@ export function ArchetypeMap({ team, analysis, pool }: { team: readonly Member[]
               style={{ left: at(p.bulk), bottom: at(p.offense) }}
             >
               <span className="size-3 rotate-45 border-2 border-muted-foreground" />
-              <span className="text-xs whitespace-nowrap text-muted-foreground">{name}</span>
+              <span className="text-xs whitespace-nowrap text-muted-foreground">{ARCHETYPES[name].label}</span>
             </span>
           );
         })}
@@ -40,7 +74,7 @@ export function ArchetypeMap({ team, analysis, pool }: { team: readonly Member[]
               key={i}
               src={spriteOf(team[i])}
               alt={team[i].set.species}
-              title={`${team[i].set.species}: bulk ${Math.round(m.indices.bulk * 100)}, offense ${Math.round(m.indices.offense * 100)}, speed ${Math.round(m.indices.speed * 100)}`}
+              title={t.point(team[i].set.species, Math.round(m.indices.bulk * 100), Math.round(m.indices.offense * 100), Math.round(m.indices.speed * 100))}
               className="absolute -translate-x-1/2 translate-y-1/2 [image-rendering:pixelated]"
               style={{ left: at(m.indices.bulk), bottom: at(m.indices.offense), width: size, height: size }}
             />
@@ -54,10 +88,10 @@ export function ArchetypeMap({ team, analysis, pool }: { team: readonly Member[]
           className="absolute translate-x-3 translate-y-1/2 text-xs font-semibold text-primary"
           style={{ left: at(analysis.features.bulk), bottom: at(analysis.features.offense) }}
         >
-          Team average
+          {t.average}
         </span>
-        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">Bulk →</span>
-        <span className="absolute top-1/2 -left-6 -rotate-90 text-xs text-muted-foreground">Offense →</span>
+        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-xs text-muted-foreground">{t.bulk}</span>
+        <span className="absolute top-1/2 -left-6 -rotate-90 text-xs text-muted-foreground">{t.offense}</span>
       </div>
     </Panel>
   );
@@ -71,13 +105,13 @@ export function SpeedTiers({ team, pool }: { team: readonly Member[]; pool: Pool
   const level = team[0]?.set.level ?? 100;
   const order = team.map((m, i) => ({ m, i })).sort((a, b) => b.m.stats.spe - a.m.stats.spe);
   const benchmarks = [
-    { label: "Median", v: investedAt(pool.quantile("spe", 0.5), level) },
-    { label: "75th percentile", v: investedAt(pool.quantile("spe", 0.75), level) },
-    { label: "Fastest in pool", v: investedAt(pool.dist.spe.max, level) },
+    { label: t.median, v: investedAt(pool.quantile("spe", 0.5), level) },
+    { label: t.p75, v: investedAt(pool.quantile("spe", 0.75), level) },
+    { label: t.fastest, v: investedAt(pool.dist.spe.max, level) },
   ];
   const top = Math.max(...order.map((o) => o.m.stats.spe), benchmarks[2].v, 1);
   return (
-    <Panel title="Speed" aside={<span className="text-xs text-muted-foreground">final Speed</span>}>
+    <Panel title={t.speed} aside={<span className="text-xs text-muted-foreground">{t.speedAside}</span>}>
       <ol className="m-0 flex list-none flex-col gap-2 p-0">
         {order.map(({ m, i }) => (
           <li key={i} className="grid grid-cols-[40px_minmax(0,104px)_minmax(0,1fr)_44px] items-center gap-2 text-sm">
@@ -91,7 +125,7 @@ export function SpeedTiers({ team, pool }: { team: readonly Member[]; pool: Pool
         ))}
       </ol>
       <div className="flex flex-col gap-1.5 border-t pt-2">
-        <span className="text-xs font-semibold text-muted-foreground">Pool benchmarks at level {level}, 252 Spe, neutral nature</span>
+        <span className="text-xs font-semibold text-muted-foreground">{t.benchmarks(level)}</span>
         {benchmarks.map((b) => (
           <div key={b.label} className="flex justify-between text-xs">
             <span className="text-muted-foreground">{b.label}</span>

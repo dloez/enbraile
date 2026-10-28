@@ -5,17 +5,45 @@ import { packPc, STATS, tmLabel, TYPES, typeName, type Ability, type BagItem, ty
 import { BERRY_POCKET, fightItems, setasOf } from "./items.js";
 import type { AbilityHolder } from "./abilities.js";
 import type { FaintedPokemon, Sheet, SheetPokemon, SheetTm, Snapshot } from "./snapshot.js";
+import { dexDesc, dexName, type DexKind } from "./dex-text.js";
+import { messages } from "./i18n.js";
 
 const gen = Dex.forGen(9);
 
-const HAND_LABELS: Record<string, string> = {
-  tinymushroom: "Mini Seta (Tiny Mushroom)",
-};
+const HAND_LABELS = messages<Record<string, string>>({
+  en: { tinymushroom: "Mini Seta (Tiny Mushroom)" },
+  es: { tinymushroom: "Mini Seta" },
+});
 
-function named(id: string, entry: { exists: boolean; name: string }): Named {
-  if (entry.exists) return { id, name: entry.name, known: true, marked: false };
+function named(kind: DexKind | null, id: string, entry: { exists: boolean; id: string; name: string }): Named {
+  if (entry.exists) return { id, name: kind ? dexName(kind, entry.id, entry.name) : entry.name, known: true, marked: false };
   const label = HAND_LABELS[id];
   return { id, name: label ?? id, known: false, marked: label === undefined };
+}
+
+const dexId = (id: string) => id.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+function relabel<T extends Named>(kind: DexKind, n: T): T {
+  if (!n.known) return HAND_LABELS[n.id] ? { ...n, name: HAND_LABELS[n.id] } : n;
+  return { ...n, name: dexName(kind, dexId(n.id), n.name) };
+}
+
+function relabelDesc<T extends Named & { desc: string }>(kind: Exclude<DexKind, "natures">, n: T): T {
+  return n.known ? { ...relabel(kind, n), desc: dexDesc(kind, dexId(n.id), n.desc) } : relabel(kind, n);
+}
+
+export function localizePc(view: PcView): PcView {
+  return {
+    ...view,
+    mons: view.mons.map((m) => ({ ...m, nature: m.nature && relabel("natures", m.nature), abilities: m.abilities.map((a) => relabelDesc("abilities", a)) })),
+    moves: Object.fromEntries(Object.entries(view.moves).map(([id, move]) => [id, relabelDesc("moves", move)])),
+    items: view.items.map((item) => relabelDesc("items", item)),
+    tms: view.tms.map((tm) => ({ ...tm, label: tmLabel(tm.label), move: relabel("moves", tm.move), desc: tm.move.known ? dexDesc("moves", dexId(tm.move.id), tm.desc) : tm.desc })),
+  };
+}
+
+export function localizeHolders(holders: readonly AbilityHolder[]): AbilityHolder[] {
+  return holders.map((h) => ({ ...h, abilities: h.abilities.map((a) => ({ ...a, name: dexName("abilities", dexId(a.id), a.name) })) }));
 }
 
 export function statAt(
@@ -39,7 +67,7 @@ export function describeNature(id: string | null): Nature | null {
   if (id === null) return null;
   const entry = gen.natures.get(id);
   return {
-    ...named(id, entry),
+    ...named("natures", id, entry),
     plus: entry.exists && entry.plus ? entry.plus : null,
     minus: entry.exists && entry.minus ? entry.minus : null,
   };
@@ -48,8 +76,8 @@ export function describeNature(id: string | null): Nature | null {
 function ability(id: string, hidden: boolean, current: string | null): Ability {
   const entry = gen.abilities.get(id);
   return {
-    ...named(id, entry),
-    desc: entry.exists ? entry.shortDesc || entry.desc : "",
+    ...named("abilities", id, entry),
+    desc: entry.exists ? dexDesc("abilities", entry.id, entry.shortDesc || entry.desc) : "",
     hidden,
     current: id === current,
   };
@@ -87,7 +115,7 @@ export function describePokemon(p: SheetPokemon, index: number, fainted = false)
   const list = abilities(p);
   return {
     index,
-    species: named(p.species, entry),
+    species: named(null, p.species, entry),
     nickname: p.nickname,
     level: p.level,
     gender: p.gender,
@@ -130,7 +158,7 @@ export function describeHolders(pokemon: readonly SheetPokemon[]): AbilityHolder
     const entry = gen.species.get(p.species);
     return {
       index,
-      species: named(p.species, entry),
+      species: named(null, p.species, entry),
       nickname: p.nickname,
       level: p.level,
       shiny: p.shiny,
@@ -146,10 +174,10 @@ export function describeItem(i: { item: string; quantity: number; game?: string 
   const icon = entry.exists ? Icons.getItem(entry.name) : null;
   const berry = i.pocket === undefined || i.pocket === null ? entry.exists && entry.isBerry : i.pocket === BERRY_POCKET;
   return {
-    ...named(i.item, entry),
+    ...named("items", i.item, entry),
     game: i.game ?? null,
     quantity: i.quantity,
-    desc: entry.exists ? entry.shortDesc || entry.desc : "",
+    desc: entry.exists ? dexDesc("items", entry.id, entry.shortDesc || entry.desc) : "",
     pocket: berry ? "berries" : "items",
     icon: icon && { left: icon.left, top: icon.top, url: icon.url },
   };
@@ -159,29 +187,29 @@ export function describeTm(t: SheetTm): BagTm {
   const entry = gen.moves.get(t.move);
   const label = tmLabel(t.item);
   if (!entry.exists) {
-    return { label, move: named(t.move, entry), type: null, category: null, power: null, accuracy: null, desc: "" };
+    return { label, move: named("moves", t.move, entry), type: null, category: null, power: null, accuracy: null, desc: "" };
   }
   return {
     label,
-    move: named(t.move, entry),
+    move: named("moves", t.move, entry),
     type: entry.type,
     category: entry.category,
     power: entry.basePower || null,
     accuracy: entry.accuracy === true ? null : entry.accuracy,
-    desc: entry.shortDesc || entry.desc,
+    desc: dexDesc("moves", entry.id, entry.shortDesc || entry.desc),
   };
 }
 
 export function describeMove(id: string): MoveInfo {
   const entry = gen.moves.get(id);
-  if (!entry.exists) return { ...named(id, entry), type: null, category: null, power: null, accuracy: null, desc: "" };
+  if (!entry.exists) return { ...named("moves", id, entry), type: null, category: null, power: null, accuracy: null, desc: "" };
   return {
-    ...named(id, entry),
+    ...named("moves", id, entry),
     type: entry.type,
     category: entry.category,
     power: entry.basePower || null,
     accuracy: entry.accuracy === true ? null : entry.accuracy,
-    desc: entry.shortDesc || entry.desc,
+    desc: dexDesc("moves", entry.id, entry.shortDesc || entry.desc),
   };
 }
 

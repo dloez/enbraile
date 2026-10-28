@@ -2,6 +2,28 @@ import type { Species, StatsTable } from "@pkmn/dex";
 import { available, dexFor, typesIn, type Gen } from "../../shared/dex";
 import { STATS, type Member } from "@/analysis/member";
 import type { TeamPool } from "../../shared/pool";
+import { messages } from "../../shared/i18n";
+
+const t = messages({
+  en: {
+    legendaries: "legendary",
+    mythicals: "mythical",
+    unevolved: "not fully evolved",
+    bstAbove: (max: number) => `BST above ${max}`,
+    introduced: (gen: number) => `introduced in Gen ${gen}`,
+    legendary: "legendary",
+    mythical: "mythical",
+  },
+  es: {
+    legendaries: "legendarios",
+    mythicals: "míticos",
+    unevolved: "sin evolucionar del todo",
+    bstAbove: (max: number) => `con BST de más de ${max}`,
+    introduced: (gen: number) => `aparece en la gen. ${gen}`,
+    legendary: "legendario",
+    mythical: "mítico",
+  },
+});
 
 export type PoolFilters = TeamPool;
 
@@ -80,17 +102,17 @@ const isLegendary = (s: Species) => s.tags.includes("Restricted Legendary") || s
 const isMythical = (s: Species) => s.tags.includes("Mythical");
 
 function exclusion(s: Species, f: PoolFilters): string | null {
-  if (f.noLegendary && isLegendary(s)) return "legendary";
-  if (f.noMythical && isMythical(s)) return "mythical";
-  if (f.fullyEvolved && s.nfe) return "not fully evolved";
-  if (bstOf(s.baseStats) > f.maxBst) return `BST above ${f.maxBst}`;
+  if (f.noLegendary && isLegendary(s)) return t.legendaries;
+  if (f.noMythical && isMythical(s)) return t.mythicals;
+  if (f.fullyEvolved && s.nfe) return t.unevolved;
+  if (bstOf(s.baseStats) > f.maxBst) return t.bstAbove(f.maxBst);
   return null;
 }
 
 export function legality(member: Member, f: PoolFilters): string | null {
-  if (member.introduced > Math.min(f.gen, f.speciesGen)) return `introduced in Gen ${member.introduced}`;
-  if (f.noLegendary && member.legendary) return "legendary";
-  if (f.noMythical && member.mythical) return "mythical";
+  if (member.introduced > Math.min(f.gen, f.speciesGen)) return t.introduced(member.introduced);
+  if (f.noLegendary && member.legendary) return t.legendary;
+  if (f.noMythical && member.mythical) return t.mythical;
   if (member.bst > f.maxBst) return `BST ${member.bst} > ${f.maxBst}`;
   return null;
 }

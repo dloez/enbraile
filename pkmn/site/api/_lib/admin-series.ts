@@ -1,11 +1,61 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
-import { milestonesInput, newSeries, playersInput, rulesInput, seriesInput } from "../../shared/series.js";
+import { CHECKLIST_TEXT, milestonesInput, newSeries, playersInput, rulesInput, seriesInput } from "../../shared/series.js";
 import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
 import { adminView, type SeriesRow } from "./series-data.js";
+import { says } from "./i18n.js";
+
+const t = says({
+  en: {
+    seriesExists: (n: number) => `Series ${n} exists`,
+    moveSnapshots: (names: string[]) => `Move or delete the snapshots at ${names.join(", ")} first`,
+    missing: (labels: string[]) => `Missing: ${labels.join(", ")}`,
+    seriesNeeds: "A series needs a number and a name",
+    noSeries: "No such series",
+    draftEdited: "Only a draft is edited in full",
+    fillAll: "Fill in every field",
+    sameMilestone: "Two milestones share a name",
+    noGame: "No such game",
+    allowlist: "Every player must be on the allowlist",
+    rulesMarkdown: "Rules are Markdown text",
+    runningPlayers: "Only a running series changes its players here",
+    playersList: "Players are a list of ids",
+    playerStays: "A player with a snapshot in this series stays in it",
+    runningMilestones: "Only a running series changes its milestones here",
+    oneMilestone: "A series keeps at least one named milestone",
+    milestoneNotSeries: "A milestone is not this series'",
+    draftStarts: "Only a draft starts",
+    anotherRunning: "Another series is running",
+    runningFinishes: "Only a running series finishes",
+    draftDeleted: "Only a draft is deleted",
+  },
+  es: {
+    seriesExists: (n: number) => `La serie ${n} ya existe`,
+    moveSnapshots: (names: string[]) => `Mueve o borra antes las capturas de ${names.join(", ")}`,
+    missing: (labels: string[]) => `Falta: ${labels.join(", ")}`,
+    seriesNeeds: "Una serie necesita un número y un nombre",
+    noSeries: "Esa serie no existe",
+    draftEdited: "Solo un borrador se edita por completo",
+    fillAll: "Rellena todos los campos",
+    sameMilestone: "Dos hitos comparten nombre",
+    noGame: "Ese juego no existe",
+    allowlist: "Todos los jugadores deben estar en la lista de acceso",
+    rulesMarkdown: "Las reglas son texto en Markdown",
+    runningPlayers: "Solo una serie en curso cambia aquí sus jugadores",
+    playersList: "Los jugadores son una lista de ids",
+    playerStays: "Un jugador con una captura en esta serie se queda en ella",
+    runningMilestones: "Solo una serie en curso cambia aquí sus hitos",
+    oneMilestone: "Una serie conserva al menos un hito con nombre",
+    milestoneNotSeries: "Un hito no es de esta serie",
+    draftStarts: "Solo un borrador puede empezar",
+    anotherRunning: "Ya hay otra serie en curso",
+    runningFinishes: "Solo una serie en curso puede terminar",
+    draftDeleted: "Solo se borra un borrador",
+  },
+});
 
 async function findSeries(id: string): Promise<SeriesRow | undefined> {
   const [row] = await db.select().from(series).where(eq(series.id, id));
@@ -32,41 +82,41 @@ adminSeries.use(requireAdmin);
 
 adminSeries.get("/", async (c) => {
   const rows = await db.select().from(series).orderBy(desc(series.number));
-  return c.json(await Promise.all(rows.map(adminView)));
+  return c.json(await Promise.all(rows.map((row) => adminView(row))));
 });
 
 adminSeries.post("/", async (c) => {
   const input = await body(c.req.raw, newSeries);
-  if (!input) return c.json({ error: "A series needs a number and a name" }, 400);
+  if (!input) return c.json({ error: t(c).seriesNeeds }, 400);
   const [row] = await db
     .insert(series)
     .values({ id: crypto.randomUUID(), number: input.number, name: input.name })
     .onConflictDoNothing({ target: series.number })
     .returning();
-  if (!row) return c.json({ error: `Series ${input.number} exists` }, 409);
+  if (!row) return c.json({ error: t(c).seriesExists(input.number) }, 409);
   return c.json(await adminView(row), 201);
 });
 
 adminSeries.get("/:id", async (c) => {
   const row = await findSeries(c.req.param("id"));
-  if (!row) return c.json({ error: "No such series" }, 404);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
   return c.json(await adminView(row));
 });
 
 adminSeries.put("/:id", async (c) => {
   const row = await findSeries(c.req.param("id"));
-  if (!row) return c.json({ error: "No such series" }, 404);
-  if (row.state !== "draft") return c.json({ error: "Only a draft is edited in full" }, 409);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  if (row.state !== "draft") return c.json({ error: t(c).draftEdited }, 409);
   const input = await body(c.req.raw, seriesInput);
-  if (!input) return c.json({ error: "Fill in every field" }, 400);
+  if (!input) return c.json({ error: t(c).fillAll }, 400);
   const names = input.milestones.map((m) => m.name.toLowerCase());
-  if (new Set(names).size !== names.length) return c.json({ error: "Two milestones share a name" }, 400);
+  if (new Set(names).size !== names.length) return c.json({ error: t(c).sameMilestone }, 400);
   if (input.gameId) {
     const [found] = await db.select({ id: game.id }).from(game).where(eq(game.id, input.gameId));
-    if (!found) return c.json({ error: "No such game" }, 400);
+    if (!found) return c.json({ error: t(c).noGame }, 400);
   }
   const playerIds = [...new Set(input.playerIds)];
-  if (!(await allAllowed(playerIds))) return c.json({ error: "Every player must be on the allowlist" }, 400);
+  if (!(await allAllowed(playerIds))) return c.json({ error: t(c).allowlist }, 400);
   try {
     const updated = await db.transaction(async (tx) => {
       const [saved] = await tx
@@ -93,40 +143,40 @@ adminSeries.put("/:id", async (c) => {
       }
       return saved;
     });
-    if (!updated) return c.json({ error: "Only a draft is edited in full" }, 409);
+    if (!updated) return c.json({ error: t(c).draftEdited }, 409);
     return c.json(await adminView(updated));
   } catch (error) {
-    if (uniqueViolation(error, "series_number_unique")) return c.json({ error: `Series ${input.number} exists` }, 409);
+    if (uniqueViolation(error, "series_number_unique")) return c.json({ error: t(c).seriesExists(input.number) }, 409);
     throw error;
   }
 });
 
 adminSeries.put("/:id/rules", async (c) => {
   const input = await body(c.req.raw, rulesInput);
-  if (!input) return c.json({ error: "Rules are Markdown text" }, 400);
+  if (!input) return c.json({ error: t(c).rulesMarkdown }, 400);
   const [updated] = await db.update(series).set({ rules: input.rules }).where(eq(series.id, c.req.param("id"))).returning();
-  if (!updated) return c.json({ error: "No such series" }, 404);
+  if (!updated) return c.json({ error: t(c).noSeries }, 404);
   return c.json(await adminView(updated));
 });
 
 adminSeries.put("/:id/players", async (c) => {
   const row = await findSeries(c.req.param("id"));
-  if (!row) return c.json({ error: "No such series" }, 404);
-  if (row.state !== "running") return c.json({ error: "Only a running series changes its players here" }, 409);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  if (row.state !== "running") return c.json({ error: t(c).runningPlayers }, 409);
   const input = await body(c.req.raw, playersInput);
-  if (!input) return c.json({ error: "Players are a list of ids" }, 400);
+  if (!input) return c.json({ error: t(c).playersList }, 400);
   const playerIds = [...new Set(input.playerIds)];
   const current = await db.select({ userId: seriesPlayer.userId }).from(seriesPlayer).where(eq(seriesPlayer.seriesId, row.id));
   const dropped = current.map((p) => p.userId).filter((userId) => !playerIds.includes(userId));
   const added = playerIds.filter((userId) => !current.some((p) => p.userId === userId));
-  if (!(await allAllowed(added))) return c.json({ error: "Every player must be on the allowlist" }, 400);
+  if (!(await allAllowed(added))) return c.json({ error: t(c).allowlist }, 400);
   if (dropped.length > 0) {
     const [played] = await db
       .select({ userId: save.userId })
       .from(save)
       .where(and(eq(save.seriesId, row.id), inArray(save.userId, dropped)))
       .limit(1);
-    if (played) return c.json({ error: "A player with a snapshot in this series stays in it" }, 409);
+    if (played) return c.json({ error: t(c).playerStays }, 409);
     await db.delete(seriesPlayer).where(and(eq(seriesPlayer.seriesId, row.id), inArray(seriesPlayer.userId, dropped)));
   }
   if (added.length > 0)
@@ -139,16 +189,16 @@ adminSeries.put("/:id/players", async (c) => {
 
 adminSeries.put("/:id/milestones", async (c) => {
   const row = await findSeries(c.req.param("id"));
-  if (!row) return c.json({ error: "No such series" }, 404);
-  if (row.state !== "running") return c.json({ error: "Only a running series changes its milestones here" }, 409);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  if (row.state !== "running") return c.json({ error: t(c).runningMilestones }, 409);
   const input = await body(c.req.raw, milestonesInput);
-  if (!input) return c.json({ error: "A series keeps at least one named milestone" }, 400);
+  if (!input) return c.json({ error: t(c).oneMilestone }, 400);
   const names = input.milestones.map((m) => m.name.toLowerCase());
-  if (new Set(names).size !== names.length) return c.json({ error: "Two milestones share a name" }, 400);
+  if (new Set(names).size !== names.length) return c.json({ error: t(c).sameMilestone }, 400);
   const current = await db.select({ id: milestone.id, name: milestone.name }).from(milestone).where(eq(milestone.seriesId, row.id));
   const kept = input.milestones.flatMap((m) => (m.id ? [m.id] : []));
   if (new Set(kept).size !== kept.length || kept.some((id) => !current.some((m) => m.id === id))) {
-    return c.json({ error: "A milestone is not this series'" }, 400);
+    return c.json({ error: t(c).milestoneNotSeries }, 400);
   }
   const dropped = current.filter((m) => !kept.includes(m.id));
   if (dropped.length > 0) {
@@ -157,7 +207,7 @@ adminSeries.put("/:id/milestones", async (c) => {
       .from(snapshot)
       .where(inArray(snapshot.milestoneId, dropped.map((m) => m.id)));
     const blocked = dropped.filter((m) => held.some((h) => h.milestoneId === m.id)).map((m) => m.name);
-    if (blocked.length > 0) return c.json({ error: `Move or delete the snapshots at ${blocked.join(", ")} first` }, 409);
+    if (blocked.length > 0) return c.json({ error: t(c).moveSnapshots(blocked) }, 409);
   }
   await db.transaction(async (tx) => {
     if (dropped.length > 0) await tx.delete(milestone).where(inArray(milestone.id, dropped.map((m) => m.id)));
@@ -174,11 +224,11 @@ adminSeries.put("/:id/milestones", async (c) => {
 
 adminSeries.post("/:id/start", async (c) => {
   const row = await findSeries(c.req.param("id"));
-  if (!row) return c.json({ error: "No such series" }, 404);
-  if (row.state !== "draft") return c.json({ error: "Only a draft starts" }, 409);
-  const view = await adminView(row);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  if (row.state !== "draft") return c.json({ error: t(c).draftStarts }, 409);
+  const view = await adminView(row, says(CHECKLIST_TEXT)(c));
   const missing = view.checklist.filter((item) => !item.done);
-  if (missing.length > 0) return c.json({ error: `Missing: ${missing.map((item) => item.label.toLowerCase()).join(", ")}` }, 409);
+  if (missing.length > 0) return c.json({ error: t(c).missing(missing.map((item) => item.label.toLowerCase())) }, 409);
   try {
     const started = await db.transaction(async (tx) => {
       const [done] = await tx
@@ -189,10 +239,10 @@ adminSeries.post("/:id/start", async (c) => {
       if (done?.ingestion === "manual") await tx.update(seriesPlayer).set({ needsSave: true }).where(eq(seriesPlayer.seriesId, row.id));
       return done;
     });
-    if (!started) return c.json({ error: "Only a draft starts" }, 409);
+    if (!started) return c.json({ error: t(c).draftStarts }, 409);
     return c.json(await adminView(started));
   } catch (error) {
-    if (uniqueViolation(error, "series_one_running_idx")) return c.json({ error: "Another series is running" }, 409);
+    if (uniqueViolation(error, "series_one_running_idx")) return c.json({ error: t(c).anotherRunning }, 409);
     throw error;
   }
 });
@@ -203,7 +253,7 @@ adminSeries.post("/:id/finish", async (c) => {
     .set({ state: "finished", finishedAt: new Date() })
     .where(and(eq(series.id, c.req.param("id")), eq(series.state, "running")))
     .returning();
-  if (!finished) return c.json({ error: "Only a running series finishes" }, 409);
+  if (!finished) return c.json({ error: t(c).runningFinishes }, 409);
   return c.json(await adminView(finished));
 });
 
@@ -212,6 +262,6 @@ adminSeries.delete("/:id", async (c) => {
     .delete(series)
     .where(and(eq(series.id, c.req.param("id")), eq(series.state, "draft")))
     .returning({ id: series.id });
-  if (!deleted) return c.json({ error: "Only a draft is deleted" }, 409);
+  if (!deleted) return c.json({ error: t(c).draftDeleted }, 409);
   return c.json({});
 });

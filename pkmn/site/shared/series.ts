@@ -1,10 +1,23 @@
 import * as z from "zod";
+import { messages, type Messages } from "./i18n.js";
+
+type ChecklistText = { rules: string; game: string; milestone: string; finished: (series: string) => string };
 import { teamPool } from "./pool.js";
 import { exportReport } from "./snapshot.js";
 
 export const SCENES = ["night", "route"] as const;
 
-export const SCENE_NAMES: Record<Scene, string> = { night: "Night sky", route: "Daytime route" };
+export const SCENE_NAMES: Record<Scene, string> = messages({
+  en: { night: "Night sky", route: "Daytime route" },
+  es: { night: "Cielo nocturno", route: "Ruta de día" },
+});
+
+export const CHECKLIST_TEXT: Messages<ChecklistText> = {
+  en: { rules: "Rules written", game: "A game with its file", milestone: "At least one milestone", finished: (series: string) => `${series} finished` },
+  es: { rules: "Reglas escritas", game: "Un juego con su archivo", milestone: "Al menos un hito", finished: (series: string) => `${series} terminada` },
+};
+
+const checklistText = messages(CHECKLIST_TEXT);
 
 export const INGESTION_MODES = ["manual", "automatic"] as const;
 
@@ -127,18 +140,21 @@ export const seriesPage = seriesBanner.extend({
 
 export const seriesDeleted = z.object({});
 
-export function startChecklist(draft: {
-  rules: string;
-  gameHasFile: boolean;
-  milestones: number;
-  otherRunning: string | null;
-}): z.infer<typeof checklistItem>[] {
+export function startChecklist(
+  draft: {
+    rules: string;
+    gameHasFile: boolean;
+    milestones: number;
+    otherRunning: string | null;
+  },
+  text: ChecklistText = checklistText,
+): z.infer<typeof checklistItem>[] {
   const items = [
-    { label: "Rules written", done: draft.rules.trim() !== "" },
-    { label: "A game with its file", done: draft.gameHasFile },
-    { label: "At least one milestone", done: draft.milestones >= 1 },
+    { label: text.rules, done: draft.rules.trim() !== "" },
+    { label: text.game, done: draft.gameHasFile },
+    { label: text.milestone, done: draft.milestones >= 1 },
   ];
-  if (draft.otherRunning) items.push({ label: `${draft.otherRunning} finished`, done: false });
+  if (draft.otherRunning) items.push({ label: text.finished(draft.otherRunning), done: false });
   return items;
 }
 

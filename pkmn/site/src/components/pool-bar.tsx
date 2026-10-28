@@ -3,7 +3,39 @@ import type { Pool, PoolFilters } from "@/analysis/pool";
 import { fieldClass, Segmented, Toggle } from "@/components/controls";
 import { SelectField } from "@/components/select-field";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { messages } from "../../shared/i18n";
 import { MAX_BST, MIN_BST, POOL_GENS } from "../../shared/pool";
+
+const t = messages({
+  en: {
+    gen: (g: number) => `Gen ${g}`,
+    pool: "Pool",
+    data: "Data",
+    generation: "Generation",
+    speciesUpTo: "Species up to",
+    movesUpTo: "Moves up to",
+    noLegendary: "No legendaries",
+    noMythical: "No mythicals",
+    fullyEvolved: "Fully evolved",
+    maxBst: "Max BST",
+    maxBstLabel: "Max base stat total",
+    inPool: "Pokémon in the pool",
+  },
+  es: {
+    gen: (g: number) => `Gen. ${g}`,
+    pool: "Reserva",
+    data: "Datos",
+    generation: "Generación",
+    speciesUpTo: "Especies hasta",
+    movesUpTo: "Movimientos hasta",
+    noLegendary: "Sin legendarios",
+    noMythical: "Sin singulares",
+    fullyEvolved: "Totalmente evolucionados",
+    maxBst: "BST máx.",
+    maxBstLabel: "Total máximo de estadísticas base",
+    inPool: "Pokémon en la reserva",
+  },
+});
 
 function GenPick({ label, value, disabled, onChange }: { label: string; value: Gen; disabled: (gen: Gen) => boolean; onChange: (gen: Gen) => void }) {
   const desktop = useMediaQuery("(min-width: 40rem)");
@@ -14,7 +46,7 @@ function GenPick({ label, value, disabled, onChange }: { label: string; value: G
       label={label}
       size="sm"
       disabled={POOL_GENS.every(disabled)}
-      options={POOL_GENS.map((g) => ({ value: String(g), label: `Gen ${g}`, disabled: disabled(g) }))}
+      options={POOL_GENS.map((g) => ({ value: String(g), label: t.gen(g), disabled: disabled(g) }))}
       value={String(value)}
       onChange={(v) => onChange(Number(v) as Gen)}
     />
@@ -39,46 +71,46 @@ export function PoolBar({
     : "";
 
   return (
-    <section aria-label="Pool" className="flex flex-wrap items-center gap-3.5 rounded-2xl border-3 bg-card px-3.5 py-2.5">
-      <span className="font-heading text-lg">Pool</span>
+    <section aria-label={t.pool} className="flex flex-wrap items-center gap-3.5 rounded-2xl border-3 bg-card px-3.5 py-2.5">
+      <span className="font-heading text-lg">{t.pool}</span>
       <span className="flex items-center gap-2 text-sm text-muted-foreground">
-        Data
+        {t.data}
         <GenPick
-          label="Generation"
+          label={t.generation}
           disabled={() => fixed}
           value={filters.gen}
           onChange={(gen) => set({ gen, speciesGen: Math.min(filters.speciesGen, gen) as Gen, movesGen: Math.min(filters.movesGen, gen) as Gen })}
         />
       </span>
       <span className="flex items-center gap-2 text-sm text-muted-foreground">
-        Species up to
+        {t.speciesUpTo}
         <GenPick
-          label="Species up to"
+          label={t.speciesUpTo}
           disabled={(g) => fixed || g > filters.gen}
           value={Math.min(filters.speciesGen, filters.gen) as Gen}
           onChange={(speciesGen) => set({ speciesGen })}
         />
       </span>
       <span className="flex items-center gap-2 text-sm text-muted-foreground">
-        Moves up to
+        {t.movesUpTo}
         <GenPick
-          label="Moves up to"
+          label={t.movesUpTo}
           disabled={(g) => fixed || g > filters.gen}
           value={Math.min(filters.movesGen, filters.gen) as Gen}
           onChange={(movesGen) => set({ movesGen })}
         />
       </span>
       <Toggle pressed={filters.noLegendary} disabled={fixed} onChange={(noLegendary) => set({ noLegendary })}>
-        No legendaries
+        {t.noLegendary}
       </Toggle>
       <Toggle pressed={filters.noMythical} disabled={fixed} onChange={(noMythical) => set({ noMythical })}>
-        No mythicals
+        {t.noMythical}
       </Toggle>
       <Toggle pressed={filters.fullyEvolved} disabled={fixed} onChange={(fullyEvolved) => set({ fullyEvolved })}>
-        Fully evolved
+        {t.fullyEvolved}
       </Toggle>
       <label className="flex items-center gap-2.5 text-sm text-muted-foreground">
-        Max BST
+        {t.maxBst}
         <input
           type="range"
           min={MIN_BST}
@@ -96,7 +128,7 @@ export function PoolBar({
           step={5}
           disabled={fixed}
           value={filters.maxBst}
-          aria-label="Max base stat total"
+          aria-label={t.maxBstLabel}
           onChange={(e) => {
             const v = Number(e.target.value);
             if (Number.isFinite(v)) set({ maxBst: Math.min(MAX_BST, Math.max(MIN_BST, Math.round(v))) });
@@ -106,7 +138,7 @@ export function PoolBar({
       </label>
       {pool && (
         <span className="text-sm text-muted-foreground" title={excluded || undefined}>
-          <span className="tabular-nums text-foreground">{pool.size}</span> Pokémon in the pool
+          <span className="tabular-nums text-foreground">{pool.size}</span> {t.inPool}
         </span>
       )}
     </section>

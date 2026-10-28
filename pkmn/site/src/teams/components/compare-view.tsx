@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { toID } from "@pkmn/dex";
 import { ChevronLeft, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { attacks, bestHit, calcHit, koLine, memberName, scoreboard, type BestHit, type ScoreRow } from "@/analysis/compare";
@@ -20,6 +21,87 @@ import { liveSlots } from "@/teams/dex";
 import { MAX_TEAM_SIZE, stockOf, type Stocks } from "@/teams/team";
 import { showdownTeam } from "@/teams/showdown";
 import { MIN_COMPARED, teamPage, type TeamPage } from "../../../shared/team";
+import { dexName, typeLabel } from "../../../shared/dex-text";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    title: (n: number) => `Compare ${n} teams`,
+    close: "Close",
+    back: "Back to Teams",
+    loading: "Loading…",
+    empty: (names: string) => `No Pokémon to compare in ${names}`,
+    pickTwo: "Pick at least two teams with Pokémon",
+    scoreboard: "Scoreboard",
+    teams: "Teams",
+    stats: (hp: number, atk: number, def: number, spa: number, spd: number, spe: number) =>
+      `HP ${hp} · Atk ${atk} · Def ${def} · SpA ${spa} · SpD ${spd} · Spe ${spe}`,
+    headToHead: "Head to head",
+    attacker: "Attacker",
+    defender: "Defender",
+    attackerTeam: "Attacker's team",
+    defenderTeam: "Defender's team",
+    move: "Move",
+    noDamaging: "No damaging move",
+    hasNoDamaging: (name: string) => `${name} has no damaging move`,
+    power: (n: number) => ` ${n} power`,
+    level: (n: number) => `Level ${n}`,
+    swapSides: "⇄ Swap sides",
+    noAttack: "No attack",
+    rows: "Rows",
+    columns: "Columns",
+    swapAxes: "Swap rows and columns",
+    matchups: "Matchups",
+    rowHits: "→ row hits column",
+    colHits: "← column hits row",
+    speed: (n: number) => `Spe ${n}`,
+    first: "1st",
+    tie: "tie",
+    speedTie: "Speed tie",
+    movesFirst: (name: string) => `${name} moves first`,
+    cell: (row: string, col: string, out: string, back: string, faster: string) => `${row} hits ${col} for ${out}, ${col} hits ${row} for ${back}, ${faster}`,
+  },
+  es: {
+    failed: "Algo ha fallado",
+    title: (n: number) => `Comparar ${n} equipos`,
+    close: "Cerrar",
+    back: "Volver a Equipos",
+    loading: "Cargando…",
+    empty: (names: string) => `No hay Pokémon que comparar en ${names}`,
+    pickTwo: "Elige al menos dos equipos con Pokémon",
+    scoreboard: "Marcador",
+    teams: "Equipos",
+    stats: (hp: number, atk: number, def: number, spa: number, spd: number, spe: number) =>
+      `PS ${hp} · Atq ${atk} · Def ${def} · AtE ${spa} · DfE ${spd} · Vel ${spe}`,
+    headToHead: "Cara a cara",
+    attacker: "Atacante",
+    defender: "Defensor",
+    attackerTeam: "Equipo del atacante",
+    defenderTeam: "Equipo del defensor",
+    move: "Movimiento",
+    noDamaging: "Sin movimientos de daño",
+    hasNoDamaging: (name: string) => `${name} no tiene movimientos de daño`,
+    power: (n: number) => ` potencia ${n}`,
+    level: (n: number) => `Nivel ${n}`,
+    swapSides: "⇄ Cambiar de lado",
+    noAttack: "Sin ataque",
+    rows: "Filas",
+    columns: "Columnas",
+    swapAxes: "Intercambiar filas y columnas",
+    matchups: "Enfrentamientos",
+    rowHits: "→ la fila golpea a la columna",
+    colHits: "← la columna golpea a la fila",
+    speed: (n: number) => `Vel ${n}`,
+    first: "1.º",
+    tie: "emp.",
+    speedTie: "Empate de velocidad",
+    movesFirst: (name: string) => `${name} mueve primero`,
+    cell: (row: string, col: string, out: string, back: string, faster: string) => `${row} quita ${out} a ${col}, ${col} quita ${back} a ${row}, ${faster}`,
+  },
+});
+
+const moveName = (name: string) => dexName("moves", toID(name), name);
 
 interface Compared {
   id: string;
@@ -35,7 +117,7 @@ function stocksOf(page: TeamPage): Stocks {
 }
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 function usePages(ids: readonly string[]) {
@@ -94,20 +176,20 @@ function Comparison({ ids, wide }: { ids: readonly string[]; wide: boolean }) {
   const { pages, error } = usePages(ids);
   const result = useMemo(() => (pages ? compare(pages) : null), [pages]);
   const [calc, setCalc] = useState<Calc>({ attacker: { team: 0, mon: null }, defender: { team: 1, mon: 0 }, move: 0 });
-  const title = `Compare ${ids.length} teams`;
+  const title = t.title(ids.length);
   return (
     <>
       {wide ? (
         <div className="flex min-h-19 flex-none items-center gap-4 border-b-4 border-red bg-ink pr-8 pl-10">
           <DialogTitle className="m-0 flex-1 truncate font-heading text-[2.5rem] leading-none font-normal">{title}</DialogTitle>
           {result && <PoolChip filters={result.filters} />}
-          <DialogPrimitive.Close aria-label="Close" className={cn(closeClass, "size-12")}>
+          <DialogPrimitive.Close aria-label={t.close} className={cn(closeClass, "size-12")}>
             <X className="size-5" aria-hidden="true" />
           </DialogPrimitive.Close>
         </div>
       ) : (
         <div className="flex h-15 flex-none items-center gap-2.5 border-b-4 border-red bg-ink px-3">
-          <DialogPrimitive.Close aria-label="Back to Teams" className={cn(closeClass, "size-11")}>
+          <DialogPrimitive.Close aria-label={t.back} className={cn(closeClass, "size-11")}>
             <ChevronLeft className="size-5" aria-hidden="true" />
           </DialogPrimitive.Close>
           <DialogTitle className="m-0 flex-1 truncate font-heading text-[1.875rem] leading-none font-normal">{title}</DialogTitle>
@@ -118,17 +200,17 @@ function Comparison({ ids, wide }: { ids: readonly string[]; wide: boolean }) {
           {error}
         </p>
       )}
-      {!error && !result && <p className="m-auto font-heading text-2xl text-muted-foreground">Loading…</p>}
+      {!error && !result && <p className="m-auto font-heading text-2xl text-muted-foreground">{t.loading}</p>}
       {result && (
         <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto *:flex-none", wide ? "px-10 pt-5 pb-8" : "px-4 pt-4 pb-8")}>
           {!wide && <PoolChip filters={result.filters} className="max-w-full self-start rounded-xl whitespace-normal" />}
           {result.empty.length > 0 && (
             <p className="m-0 text-sm font-bold text-warning">
-              No Pokémon to compare in {result.empty.join(", ")}
+              {t.empty(result.empty.join(", "))}
             </p>
           )}
           {result.teams.length < MIN_COMPARED ? (
-            <p className="m-auto font-heading text-2xl text-muted-foreground">Pick at least two teams with Pokémon</p>
+            <p className="m-auto font-heading text-2xl text-muted-foreground">{t.pickTwo}</p>
           ) : wide ? (
             <>
               <div className="flex min-h-full items-start gap-6">
@@ -170,16 +252,16 @@ const cellBest = (best: boolean) => (best ? "bg-green/12 text-green" : "text-for
 function WideScoreboard({ teams, rows }: { teams: readonly Compared[]; rows: readonly ScoreRow[] }) {
   const grid = { gridTemplateColumns: `210px repeat(${teams.length}, minmax(0, 1fr))` };
   return (
-    <section aria-label="Scoreboard" className="flex min-w-0 flex-1 flex-col self-stretch overflow-hidden rounded-[18px] border-3 bg-card">
-      <div role="table" aria-label="Scoreboard" className="flex flex-1 flex-col">
+    <section aria-label={t.scoreboard} className="flex min-w-0 flex-1 flex-col self-stretch overflow-hidden rounded-[18px] border-3 bg-card">
+      <div role="table" aria-label={t.scoreboard} className="flex flex-1 flex-col">
         <div role="row" className="grid bg-box" style={grid}>
           <span role="columnheader" className="self-end px-4 py-3 font-heading text-[1.625rem] leading-none">
-            Scoreboard
+            {t.scoreboard}
           </span>
-          {teams.map((t) => (
-            <span key={t.id} role="columnheader" className="flex min-w-0 flex-col justify-end border-l-3 border-cell px-3 pt-2.5 pb-2">
-              <OwnerMark owner={t.owner} className="mb-0.5" />
-              <span className="truncate font-heading text-[1.875rem] leading-none">{t.name}</span>
+          {teams.map((team) => (
+            <span key={team.id} role="columnheader" className="flex min-w-0 flex-col justify-end border-l-3 border-cell px-3 pt-2.5 pb-2">
+              <OwnerMark owner={team.owner} className="mb-0.5" />
+              <span className="truncate font-heading text-[1.875rem] leading-none">{team.name}</span>
             </span>
           ))}
         </div>
@@ -203,13 +285,13 @@ function WideScoreboard({ teams, rows }: { teams: readonly Compared[]; rows: rea
 
 function TeamHeads({ teams }: { teams: readonly Compared[] }) {
   return (
-    <ol aria-label="Teams" className="m-0 flex list-none flex-col gap-2 p-0">
-      {teams.map((t, at) => (
-        <li key={t.id} className="flex items-center gap-2.5 rounded-[14px] border-3 bg-card px-3 py-2">
+    <ol aria-label={t.teams} className="m-0 flex list-none flex-col gap-2 p-0">
+      {teams.map((team, at) => (
+        <li key={team.id} className="flex items-center gap-2.5 rounded-[14px] border-3 bg-card px-3 py-2">
           <span className="w-7 flex-none text-center font-heading text-[1.75rem] leading-none text-primary">{at + 1}</span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <OwnerMark owner={t.owner} />
-            <span className="truncate font-heading text-[1.625rem] leading-none">{t.name}</span>
+            <OwnerMark owner={team.owner} />
+            <span className="truncate font-heading text-[1.625rem] leading-none">{team.name}</span>
           </span>
         </li>
       ))}
@@ -222,14 +304,14 @@ function PhoneScoreboard({ teams, rows }: { teams: readonly Compared[]; rows: re
   return (
     <section aria-labelledby="compare-scoreboard" className="flex flex-col overflow-hidden rounded-[18px] border-3 bg-card">
       <h2 id="compare-scoreboard" className="m-0 bg-box px-3.5 py-2.5 font-heading text-[1.625rem] leading-none font-normal">
-        Scoreboard
+        {t.scoreboard}
       </h2>
       <div role="table" aria-labelledby="compare-scoreboard" className="flex flex-col">
         <div role="row" className="grid border-t-2 border-cell bg-box" style={grid}>
-          {teams.map((t, at) => (
-            <span key={t.id} role="columnheader" className="px-2.5 py-1 font-heading text-xl text-primary">
+          {teams.map((team, at) => (
+            <span key={team.id} role="columnheader" className="px-2.5 py-1 font-heading text-xl text-primary">
               {at + 1}
-              <span className="sr-only"> {t.name}</span>
+              <span className="sr-only"> {team.name}</span>
             </span>
           ))}
         </div>
@@ -256,7 +338,7 @@ interface Pick {
   mon: number | null;
 }
 
-const statLine = (m: Member) => `HP ${m.stats.hp} · Atk ${m.stats.atk} · Def ${m.stats.def} · SpA ${m.stats.spa} · SpD ${m.stats.spd} · Spe ${m.stats.spe}`;
+const statLine = (m: Member) => t.stats(m.stats.hp, m.stats.atk, m.stats.def, m.stats.spa, m.stats.spd, m.stats.spe);
 
 interface Calc {
   attacker: Pick;
@@ -278,7 +360,7 @@ function resolve(teams: readonly Compared[], calc: Calc) {
 
 const hitTone = (max: number) => (max >= 100 ? "text-coral" : max >= 50 ? "text-warning" : "text-green");
 
-const teamOptionsOf = (teams: readonly Compared[]) => teams.map((t, at) => ({ value: String(at), label: `${t.name} · ${t.owner.name}` }));
+const teamOptionsOf = (teams: readonly Compared[]) => teams.map((team, at) => ({ value: String(at), label: `${team.name} · ${team.owner.name}` }));
 
 function HeadToHead({ teams, gen, wide, calc, onCalc }: { teams: readonly Compared[]; gen: Gen; wide: boolean; calc: Calc; onCalc: (calc: Calc) => void }) {
   const { attacker, defender } = calc;
@@ -295,7 +377,8 @@ function HeadToHead({ teams, gen, wide, calc, onCalc }: { teams: readonly Compar
   const lo = hit ? Math.min(100, hit.min) : 0;
   const hi = hit ? Math.min(100, hit.max) : 0;
 
-  function side(label: string, pick: Pick, team: Compared, at: number, onPick: (pick: Pick) => void) {
+  function side(attacking: boolean, pick: Pick, team: Compared, at: number, onPick: (pick: Pick) => void) {
+    const label = attacking ? t.attacker : t.defender;
     const m = team.team[at];
     return (
       <div className="flex flex-col gap-2 rounded-xl border-3 border-cell bg-box px-3 py-2.5">
@@ -306,12 +389,12 @@ function HeadToHead({ teams, gen, wide, calc, onCalc }: { teams: readonly Compar
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <SelectField
-              label={`${label}'s team`}
+              label={attacking ? t.attackerTeam : t.defenderTeam}
               size="sm"
               className="w-full"
               value={String(teams.indexOf(team))}
               options={teamOptions}
-              onChange={(v) => onPick({ team: Number(v), mon: label === "Attacker" ? null : 0 })}
+              onChange={(v) => onPick({ team: Number(v), mon: attacking ? null : 0 })}
             />
             <SelectField
               label={label}
@@ -334,17 +417,21 @@ function HeadToHead({ teams, gen, wide, calc, onCalc }: { teams: readonly Compar
       className={cn("flex flex-col gap-3 rounded-[18px] border-3 bg-card", wide ? "w-115 flex-none self-start px-4.5 py-4" : "p-3.5")}
     >
       <h2 id="compare-calc" className={cn("m-0 font-heading leading-none font-normal", wide ? "text-[1.875rem]" : "text-[1.625rem]")}>
-        Head to head
+        {t.headToHead}
       </h2>
-      {side("Attacker", attacker, ta, ai, (pick) => onCalc({ ...calc, attacker: pick, move: 0 }))}
-      {side("Defender", defender, tb, bi, (pick) => onCalc({ ...calc, defender: pick }))}
+      {side(true, attacker, ta, ai, (pick) => onCalc({ ...calc, attacker: pick, move: 0 }))}
+      {side(false, defender, tb, bi, (pick) => onCalc({ ...calc, defender: pick }))}
       <div className="flex items-center gap-2">
-        <span className="font-heading text-[1.1875rem] text-muted-foreground">Move</span>
+        <span className="font-heading text-[1.1875rem] text-muted-foreground">{t.move}</span>
         <SelectField
-          label="Move"
+          label={t.move}
           className="min-w-0 flex-1"
           value={String(mi)}
-          options={moves.length ? moves.map((mv, i) => ({ value: String(i), label: mv.power ? `${mv.name} · ${mv.type} · ${mv.power}` : `${mv.name} · ${mv.type}` })) : [{ value: "0", label: "No damaging move" }]}
+          options={
+            moves.length
+              ? moves.map((mv, i) => ({ value: String(i), label: [moveName(mv.name), typeLabel(mv.type), mv.power || null].filter(Boolean).join(" · ") }))
+              : [{ value: "0", label: t.noDamaging }]
+          }
           disabled={moves.length === 0}
           onChange={(v) => onCalc({ ...calc, move: Number(v) })}
         />
@@ -355,12 +442,12 @@ function HeadToHead({ teams, gen, wide, calc, onCalc }: { teams: readonly Compar
           <span className={cn("block", fill)} style={{ width: `${lo}%` }} />
           <span className={cn("block opacity-45", fill)} style={{ width: `${hi - lo}%` }} />
         </span>
-        <span className="text-[0.9375rem] font-extrabold">{M ? koLine(hit) : `${memberName(A)} has no damaging move`}</span>
+        <span className="text-[0.9375rem] font-extrabold">{M ? koLine(hit) : t.hasNoDamaging(memberName(A))}</span>
         {M && hit && (
           <span className="text-[0.8125rem] leading-snug text-subtle">
-            {M.name}
-            {M.power ? ` ${M.power} power` : ""} · ×{hit.mult}
-            {A.types.includes(M.type) ? " · STAB" : ""} · Level {A.set.level}
+            {moveName(M.name)}
+            {M.power ? t.power(M.power) : ""} · ×{hit.mult}
+            {A.types.includes(M.type) ? " · STAB" : ""} · {t.level(A.set.level)}
           </span>
         )}
       </div>
@@ -369,7 +456,7 @@ function HeadToHead({ teams, gen, wide, calc, onCalc }: { teams: readonly Compar
         onClick={() => onCalc({ attacker: { team: teams.indexOf(tb), mon: bi }, defender: { team: teams.indexOf(ta), mon: ai }, move: 0 })}
         className={cn(buttonClass, "self-start px-3.5 text-[1.375rem]")}
       >
-        ⇄ Swap sides
+        {t.swapSides}
       </button>
     </section>
   );
@@ -382,9 +469,9 @@ interface Shown {
 }
 
 function shown(hit: BestHit | null): Shown {
-  if (!hit) return { value: "—", tone: "text-muted-foreground", move: "No attack" };
-  if (!hit.damage) return { value: "0%", tone: "text-muted-foreground", move: hit.name };
-  return { value: `${Math.round(hit.damage.max)}%`, tone: hitTone(hit.damage.max), move: hit.name };
+  if (!hit) return { value: "—", tone: "text-muted-foreground", move: t.noAttack };
+  if (!hit.damage) return { value: "0%", tone: "text-muted-foreground", move: moveName(hit.name) };
+  return { value: `${Math.round(hit.damage.max)}%`, tone: hitTone(hit.damage.max), move: moveName(hit.name) };
 }
 
 function HitLine({ arrow, hit, first, wide }: { arrow: string; hit: Shown; first: string; wide: boolean }) {
@@ -420,10 +507,10 @@ function Matchups({ teams, gen, wide, calc, onCalc }: { teams: readonly Compared
     );
   }
 
-  const rowsField = field("Rows", rows, (at) => setAxes(at === cols ? { rows: at, cols: rows } : { rows: at, cols }));
-  const colsField = field("Columns", cols, (at) => setAxes(at === rows ? { rows: cols, cols: at } : { rows, cols: at }));
+  const rowsField = field(t.rows, rows, (at) => setAxes(at === cols ? { rows: at, cols: rows } : { rows: at, cols }));
+  const colsField = field(t.columns, cols, (at) => setAxes(at === rows ? { rows: cols, cols: at } : { rows, cols: at }));
   const swap = (
-    <button type="button" aria-label="Swap rows and columns" onClick={() => setAxes({ rows: cols, cols: rows })} className={cn(buttonClass, "flex-none px-3.5 text-[1.375rem]")}>
+    <button type="button" aria-label={t.swapAxes} onClick={() => setAxes({ rows: cols, cols: rows })} className={cn(buttonClass, "flex-none px-3.5 text-[1.375rem]")}>
       ⇄
     </button>
   );
@@ -438,7 +525,7 @@ function Matchups({ teams, gen, wide, calc, onCalc }: { teams: readonly Compared
       {wide ? (
         <div className="flex items-center gap-3 bg-box px-4 py-3.5">
           <h2 id="compare-matchups" className="m-0 flex-1 font-heading text-[1.875rem] leading-none font-normal">
-            Matchups
+            {t.matchups}
           </h2>
           {rowsField}
           {swap}
@@ -447,7 +534,7 @@ function Matchups({ teams, gen, wide, calc, onCalc }: { teams: readonly Compared
       ) : (
         <div className="flex flex-col gap-2 bg-box px-3.5 pt-2.5 pb-3">
           <h2 id="compare-matchups" className="m-0 font-heading text-[1.625rem] leading-none font-normal">
-            Matchups
+            {t.matchups}
           </h2>
           <div className="flex items-center gap-2">
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -456,7 +543,9 @@ function Matchups({ teams, gen, wide, calc, onCalc }: { teams: readonly Compared
             </div>
             {swap}
           </div>
-          <span className="text-xs font-bold text-muted-foreground">→ row hits column · ← column hits row</span>
+          <span className="text-xs font-bold text-muted-foreground">
+            {t.rowHits} · {t.colHits}
+          </span>
         </div>
       )}
       <div className="overflow-x-auto">
@@ -464,8 +553,8 @@ function Matchups({ teams, gen, wide, calc, onCalc }: { teams: readonly Compared
           <div role="row" className="grid border-t-2 border-cell bg-box" style={grid}>
             {wide ? (
               <span role="columnheader" className="flex flex-col justify-center px-4 py-2 text-xs font-bold text-muted-foreground">
-                <span>→ row hits column</span>
-                <span>← column hits row</span>
+                <span>{t.rowHits}</span>
+                <span>{t.colHits}</span>
               </span>
             ) : (
               <span role="columnheader" className="sticky left-0 z-1 border-r-3 border-cell bg-box" />
@@ -473,7 +562,7 @@ function Matchups({ teams, gen, wide, calc, onCalc }: { teams: readonly Compared
             {tc.team.map((m, j) => (
               <span key={j} role="columnheader" className={cn("flex min-w-0 flex-col justify-end", wide ? "border-l-3 border-cell px-3 py-2" : "px-2 py-1.5")}>
                 <span className={cn("truncate font-heading leading-none", wide ? "text-2xl" : "text-[1.1875rem]")}>{memberName(m)}</span>
-                <span className={cn("font-bold text-muted-foreground", wide ? "text-xs" : "text-[0.6875rem]")}>Spe {m.stats.spe}</span>
+                <span className={cn("font-bold text-muted-foreground", wide ? "text-xs" : "text-[0.6875rem]")}>{t.speed(m.stats.spe)}</span>
               </span>
             ))}
           </div>
@@ -484,23 +573,23 @@ function Matchups({ teams, gen, wide, calc, onCalc }: { teams: readonly Compared
                 className={cn("flex min-w-0 flex-col justify-center", wide ? "px-4" : "sticky left-0 z-1 border-r-3 border-cell bg-card px-2")}
               >
                 <span className={cn("truncate font-heading leading-none", wide ? "text-2xl" : "text-[1.1875rem]")}>{memberName(R)}</span>
-                <span className={cn("font-bold text-muted-foreground", wide ? "text-xs" : "text-[0.6875rem]")}>Spe {R.stats.spe}</span>
+                <span className={cn("font-bold text-muted-foreground", wide ? "text-xs" : "text-[0.6875rem]")}>{t.speed(R.stats.spe)}</span>
               </span>
               {tc.team.map((C, j) => {
                 const out = bestHit(gen, R, C);
                 const back = bestHit(gen, C, R);
                 const first = R.stats.spe > C.stats.spe ? "out" : R.stats.spe < C.stats.spe ? "back" : "tie";
-                const mark = (side: string) => (first === side ? "1st" : first === "tie" ? "tie" : "");
+                const mark = (side: string) => (first === side ? t.first : first === "tie" ? t.tie : "");
                 const on = (ta === tr && ai === i && tb === tc && bi === j) || (ta === tc && ai === j && tb === tr && bi === i);
                 const outShown = shown(out);
                 const backShown = shown(back);
-                const faster = first === "tie" ? "Speed tie" : `${memberName(first === "out" ? R : C)} moves first`;
+                const faster = first === "tie" ? t.speedTie : t.movesFirst(memberName(first === "out" ? R : C));
                 return (
                   <span key={j} role="cell" className={cn("flex min-w-0", wide ? "border-l-3 border-cell p-1.5" : "p-1")}>
                     <button
                       type="button"
                       aria-pressed={on}
-                      aria-label={`${memberName(R)} hits ${memberName(C)} for ${outShown.value}, ${memberName(C)} hits ${memberName(R)} for ${backShown.value}, ${faster}`}
+                      aria-label={t.cell(memberName(R), memberName(C), outShown.value, backShown.value, faster)}
                       onClick={() => pick(i, j, out)}
                       className={cn(
                         "flex min-w-0 flex-1 cursor-pointer flex-col justify-center border-3 text-left outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50",

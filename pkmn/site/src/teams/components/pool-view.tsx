@@ -9,15 +9,94 @@ import { fieldClass, Panel, Segmented, Toggle } from "@/components/controls";
 import { SelectField } from "@/components/select-field";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { spriteOf, spriteOfName } from "@/analysis/sprite";
+import { typeLabel } from "../../../shared/dex-text";
+import { locale, messages } from "../../../shared/i18n";
 
-const LABEL: Record<string, string> = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe", bst: "BST", phys: "Phys bulk", spec: "Spec bulk" };
+const t = messages({
+  en: {
+    labels: { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe", bst: "BST", phys: "Phys bulk", spec: "Spec bulk" } as Record<string, string>,
+    distribution: "Distribution",
+    stat: "Stat",
+    median: (n: number) => `median ${n}`,
+    pokemon: "Pokémon",
+    search: "Search",
+    type: "Type",
+    allTypes: "All types",
+    cellValues: "Cell values",
+    baseStats: "Base stats",
+    baseStatsTitle: "Base stats",
+    percentiles: "Percentiles",
+    teamOnly: "Team only",
+    types: "Types",
+    legendaryMark: "L",
+    mythicalMark: "M",
+    shadedNote: "shaded: percentile · L legendary · M mythical",
+    more: (name: string, n: number) => `${name} and ${n} more`,
+    noMatch: "No Pokémon match this pool.",
+    pool: "Pool",
+    nothingExcluded: "nothing excluded",
+    medianBst: "Median BST",
+    mean: (n: number) => `mean ${n}`,
+    medianSpeed: "Median Speed",
+    p75: (n: number) => `P75 base ${n}`,
+    fastest: "Fastest",
+    highestBst: "Highest BST",
+    monoType: "Mono-type",
+    count: (n: number) => `${n} Pokémon`,
+    columns: ["", "Mean", "SD", "Min", "P10", "P25", "Median", "P75", "P90", "Max"],
+    bulkNote: "Physical and special bulk are HP × Def and HP × SpD, the quantities the weighted defence uses.",
+    mono: (n: number) => `${n} mono-type`,
+    typesNote: "Count and mean BST of the Pokémon carrying each type.",
+    correlations: "Correlations",
+    correlationsNote: "Pearson r across the pool: green rise together, cyan trade off.",
+  },
+  es: {
+    labels: { hp: "PS", atk: "Atq", def: "Def", spa: "AtE", spd: "DfE", spe: "Vel", bst: "BST", phys: "Aguante fís.", spec: "Aguante esp." },
+    distribution: "Distribución",
+    stat: "Estadística",
+    median: (n: number) => `mediana ${n}`,
+    pokemon: "Pokémon",
+    search: "Buscar",
+    type: "Tipo",
+    allTypes: "Todos los tipos",
+    cellValues: "Valores de celda",
+    baseStats: "Valores base",
+    baseStatsTitle: "Estadísticas base",
+    percentiles: "Percentiles",
+    teamOnly: "Solo el equipo",
+    types: "Tipos",
+    legendaryMark: "L",
+    mythicalMark: "S",
+    shadedNote: "sombreado: percentil · L legendario · S singular",
+    more: (name: string, n: number) => `${name} y ${n} más`,
+    noMatch: "Ningún Pokémon encaja en esta reserva.",
+    pool: "Reserva",
+    nothingExcluded: "nada excluido",
+    medianBst: "BST mediano",
+    mean: (n: number) => `media ${n}`,
+    medianSpeed: "Velocidad mediana",
+    p75: (n: number) => `P75 base ${n}`,
+    fastest: "Más rápido",
+    highestBst: "Mayor BST",
+    monoType: "Monotipo",
+    count: (n: number) => `${n} Pokémon`,
+    columns: ["", "Media", "DE", "Mín", "P10", "P25", "Mediana", "P75", "P90", "Máx"],
+    bulkNote: "El aguante físico y el especial son PS × Def y PS × DfE, las magnitudes que usa la defensa ponderada.",
+    mono: (n: number) => `${n} monotipo`,
+    typesNote: "Número y BST medio de los Pokémon de cada tipo.",
+    correlations: "Correlaciones",
+    correlationsNote: "r de Pearson en la reserva: en verde suben juntas, en cian se compensan.",
+  },
+});
+
+const LABEL = t.labels;
 
 const DESCRIBED: Metric[] = ["hp", "atk", "def", "spa", "spd", "spe", "bst", "phys", "spec"];
 const HIST: Metric[] = ["hp", "atk", "def", "spa", "spd", "spe", "bst"];
 
 type SortKey = "name" | (typeof BASE_STATS)[number] | "bst";
 
-const n0 = (v: number) => (v >= 1000 ? Math.round(v).toLocaleString("en") : v >= 100 ? v.toFixed(0) : v.toFixed(1));
+const n0 = (v: number) => (v >= 1000 ? Math.round(v).toLocaleString(locale) : v >= 100 ? v.toFixed(0) : v.toFixed(1));
 
 function Tile({ label, value, sub, sprite }: { label: string; value: string; sub: string; sprite?: string }) {
   return (
@@ -43,12 +122,12 @@ function Histogram({ pool, team }: { pool: Pool; team: readonly Member[] }) {
   const stats = HIST.map((m) => ({ value: m, label: LABEL[m] }));
   return (
     <Panel
-      title="Distribution"
+      title={t.distribution}
       aside={
         desktop ? (
-          <Segmented className="ml-auto" label="Stat" value={k} onChange={setK} options={stats} />
+          <Segmented className="ml-auto" label={t.stat} value={k} onChange={setK} options={stats} />
         ) : (
-          <SelectField className="ml-auto" label="Stat" size="sm" value={k} onChange={(v) => setK(v as Metric)} options={stats} />
+          <SelectField className="ml-auto" label={t.stat} size="sm" value={k} onChange={(v) => setK(v as Metric)} options={stats} />
         )
       }
     >
@@ -63,7 +142,7 @@ function Histogram({ pool, team }: { pool: Pool; team: readonly Member[] }) {
         ))}
         <span className="absolute top-0 bottom-5.5 border-l-2 border-dashed border-chart-3" style={{ left: x(median) }} />
         <span className="absolute -top-0.5 translate-x-1.5 text-xs text-muted-foreground" style={{ left: x(median) }}>
-          median {Math.round(median)}
+          {t.median(Math.round(median))}
         </span>
         {team.map((m, i) => {
           const v = k === "bst" ? m.bst : m.base[k as (typeof BASE_STATS)[number]];
@@ -116,34 +195,41 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
   );
   const shade = (k: Metric, v: number) => ({ background: `color-mix(in oklch, var(--chart-2) ${Math.round(pool.pct(k, v) * 45)}%, transparent)` });
   return (
-    <Panel title="Pokémon" aside={<span className="ml-auto tabular-nums text-xs text-muted-foreground">{rows.length}</span>}>
+    <Panel title={t.pokemon} aside={<span className="ml-auto tabular-nums text-xs text-muted-foreground">{rows.length}</span>}>
       <div className="flex flex-wrap items-center gap-2.5">
         <label className={cn(fieldClass, "w-56")}>
-          <span className="text-muted-foreground">Search</span>
+          <span className="text-muted-foreground">{t.search}</span>
           <input value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-0 flex-1 bg-transparent outline-none" />
         </label>
-        <SelectField label="Type" size="sm" all="All types" value={type} options={typesIn(pool.filters.gen).map((t) => ({ value: t, label: t }))} onChange={setType} />
+        <SelectField
+          label={t.type}
+          size="sm"
+          all={t.allTypes}
+          value={type}
+          options={typesIn(pool.filters.gen).map((value) => ({ value, label: typeLabel(value) }))}
+          onChange={setType}
+        />
         <Segmented
-          label="Cell values"
+          label={t.cellValues}
           value={mode}
           onChange={setMode}
           options={[
-            { value: "value", label: "Base stats" },
-            { value: "pct", label: "Percentiles" },
+            { value: "value", label: t.baseStats },
+            { value: "pct", label: t.percentiles },
           ]}
         />
         <Toggle pressed={teamOnly} onChange={setTeamOnly} disabled={team.length === 0}>
-          Team only
+          {t.teamOnly}
         </Toggle>
       </div>
       <div className="max-h-120 overflow-auto">
         <table className="w-full border-collapse text-xs">
           <thead className="sticky top-0 bg-card">
             <tr>
-              {column("name", "Pokémon")}
-              <th className="border-b px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground">Types</th>
+              {column("name", t.pokemon)}
+              <th className="border-b px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground">{t.types}</th>
               {BASE_STATS.map((k) => column(k, LABEL[k]))}
-              {column("bst", "BST")}
+              {column("bst", LABEL.bst)}
             </tr>
           </thead>
           <tbody>
@@ -153,16 +239,16 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
                   <span className="inline-flex items-center gap-2">
                     <img src={spriteOfName(m.name)} alt="" loading="lazy" className="-my-1.5 size-8 [image-rendering:pixelated]" />
                     <span className="font-semibold">{m.name}</span>
-                    {m.legendary && <span className="text-xs text-muted-foreground">L</span>}
-                    {m.mythical && <span className="text-xs text-muted-foreground">M</span>}
+                    {m.legendary && <span className="text-xs text-muted-foreground">{t.legendaryMark}</span>}
+                    {m.mythical && <span className="text-xs text-muted-foreground">{t.mythicalMark}</span>}
                   </span>
                 </td>
                 <td className="px-2 py-1">
                   <span className="inline-flex gap-2.5">
-                    {m.types.map((t) => (
-                      <span key={t} className="inline-flex items-center gap-1.25">
-                        <TypeDot type={t} />
-                        {t}
+                    {m.types.map((type) => (
+                      <span key={type} className="inline-flex items-center gap-1.25">
+                        <TypeDot type={type} />
+                        {typeLabel(type)}
                       </span>
                     ))}
                   </span>
@@ -180,7 +266,7 @@ function PoolTable({ pool, team }: { pool: Pool; team: readonly Member[] }) {
           </tbody>
         </table>
       </div>
-      <span className="text-xs text-muted-foreground">shaded: percentile · L legendary · M mythical</span>
+      <span className="text-xs text-muted-foreground">{t.shadedNote}</span>
     </Panel>
   );
 }
@@ -190,31 +276,31 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
   const strongest = pool.members.filter((m) => m.bst === pool.dist.bst.max);
   const mono = pool.members.filter((m) => m.types.length === 1).length;
   const types = typeBreakdown(pool);
-  const topCount = Math.max(...types.map((t) => t.count), 1);
+  const topCount = Math.max(...types.map((row) => row.count), 1);
   const r = correlations(pool);
-  const names = (ms: PoolMember[]) => (ms.length > 2 ? `${ms[0].name} and ${ms.length - 1} more` : ms.map((m) => m.name).join(", "));
+  const names = (ms: PoolMember[]) => (ms.length > 2 ? t.more(ms[0].name, ms.length - 1) : ms.map((m) => m.name).join(", "));
 
   if (pool.size === 0) {
-    return <p className="m-0 rounded-2xl border-3 bg-card p-6 text-sm text-muted-foreground">No Pokémon match this pool.</p>;
+    return <p className="m-0 rounded-2xl border-3 bg-card p-6 text-sm text-muted-foreground">{t.noMatch}</p>;
   }
 
   return (
     <div className="flex flex-col gap-3.5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Tile label="Pool" value={String(pool.size)} sub={Object.entries(pool.excluded).map(([w, n]) => `${n} ${w}`).join(" · ") || "nothing excluded"} />
-        <Tile label="Median BST" value={String(Math.round(pool.quantile("bst", 0.5)))} sub={`mean ${Math.round(describe(pool, "bst").mean)}`} />
-        <Tile label="Median Speed" value={String(Math.round(pool.quantile("spe", 0.5)))} sub={`P75 base ${Math.round(pool.quantile("spe", 0.75))}`} />
-        <Tile label="Fastest" value={String(pool.dist.spe.max)} sub={names(fastest)} sprite={fastest[0] && spriteOfName(fastest[0].name)} />
-        <Tile label="Highest BST" value={String(pool.dist.bst.max)} sub={names(strongest)} sprite={strongest[0] && spriteOfName(strongest[0].name)} />
-        <Tile label="Mono-type" value={`${Math.round((mono / pool.size) * 100)}%`} sub={`${mono} Pokémon`} />
+        <Tile label={t.pool} value={String(pool.size)} sub={Object.entries(pool.excluded).map(([w, n]) => `${n} ${w}`).join(" · ") || t.nothingExcluded} />
+        <Tile label={t.medianBst} value={String(Math.round(pool.quantile("bst", 0.5)))} sub={t.mean(Math.round(describe(pool, "bst").mean))} />
+        <Tile label={t.medianSpeed} value={String(Math.round(pool.quantile("spe", 0.5)))} sub={t.p75(Math.round(pool.quantile("spe", 0.75)))} />
+        <Tile label={t.fastest} value={String(pool.dist.spe.max)} sub={names(fastest)} sprite={fastest[0] && spriteOfName(fastest[0].name)} />
+        <Tile label={t.highestBst} value={String(pool.dist.bst.max)} sub={names(strongest)} sprite={strongest[0] && spriteOfName(strongest[0].name)} />
+        <Tile label={t.monoType} value={`${Math.round((mono / pool.size) * 100)}%`} sub={t.count(mono)} />
       </div>
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <Panel title="Base stats">
+        <Panel title={t.baseStatsTitle}>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr>
-                  {["", "Mean", "SD", "Min", "P10", "P25", "Median", "P75", "P90", "Max"].map((h) => (
+                  {t.columns.map((h) => (
                     <th key={h} className="border-b px-2 py-1.5 text-right text-xs font-semibold text-muted-foreground first:text-left">
                       {h}
                     </th>
@@ -238,33 +324,33 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
               </tbody>
             </table>
           </div>
-          <span className="text-xs text-muted-foreground">Physical and special bulk are HP × Def and HP × SpD, the quantities the weighted defence uses.</span>
+          <span className="text-xs text-muted-foreground">{t.bulkNote}</span>
         </Panel>
         <Histogram pool={pool} team={team} />
       </div>
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <Panel title="Types">
+        <Panel title={t.types}>
           <div className="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
-            {types.map((t) => (
-              <div key={t.type} title={`${t.mono} mono-type`} className="grid min-h-6.5 grid-cols-[80px_minmax(0,1fr)_28px_40px] items-center gap-2 text-xs">
+            {types.map((row) => (
+              <div key={row.type} title={t.mono(row.mono)} className="grid min-h-6.5 grid-cols-[80px_minmax(0,1fr)_28px_40px] items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 font-semibold">
-                  <TypeDot type={t.type} />
-                  {t.type}
+                  <TypeDot type={row.type} />
+                  {typeLabel(row.type)}
                 </span>
                 <span className="h-1.5 rounded-sm bg-secondary">
                   <span
                     className="block h-1.5 rounded-sm"
-                    style={{ width: `${(t.count / topCount) * 100}%`, background: `var(--type-${t.type.toLowerCase()})` }}
+                    style={{ width: `${(row.count / topCount) * 100}%`, background: `var(--type-${row.type.toLowerCase()})` }}
                   />
                 </span>
-                <span className="text-right tabular-nums">{t.count}</span>
-                <span className="text-right tabular-nums text-muted-foreground">{Math.round(t.meanBst)}</span>
+                <span className="text-right tabular-nums">{row.count}</span>
+                <span className="text-right tabular-nums text-muted-foreground">{Math.round(row.meanBst)}</span>
               </div>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">Count and mean BST of the Pokémon carrying each type.</span>
+          <span className="text-xs text-muted-foreground">{t.typesNote}</span>
         </Panel>
-        <Panel title="Correlations">
+        <Panel title={t.correlations}>
           <div className="overflow-x-auto">
             <table className="border-separate border-spacing-0.75 text-xs">
               <thead>
@@ -297,7 +383,7 @@ export function PoolView({ pool, team }: { pool: Pool; team: readonly Member[] }
               </tbody>
             </table>
           </div>
-          <span className="text-xs text-muted-foreground">Pearson r across the pool: green rise together, cyan trade off.</span>
+          <span className="text-xs text-muted-foreground">{t.correlationsNote}</span>
         </Panel>
       </div>
       <PoolTable pool={pool} team={team} />

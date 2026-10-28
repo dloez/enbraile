@@ -12,12 +12,60 @@ import { playTime } from "@/lib/records";
 import { cn } from "@/lib/utils";
 import { ProfileFrame } from "@/components/page-frames";
 import { BANNER_SIZE, gameLine, PHONE_BANNER_SIZE } from "@/pages/series-list";
+import { messages } from "../../shared/i18n";
 import { type CareerTotals, type ProfilePage, type ProfileSeries, profilePage } from "../../shared/profile";
+
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    series: "Series",
+    you: "You",
+    since: (series: string) => `Trainer since ${series}`,
+    finished: (n: number) => `${n} finished`,
+    playTime: "Play time",
+    badges: "Badges",
+    of: (n: number) => `of ${n}`,
+    bestPokedex: "Best Pokédex",
+    ownedIn: (series: string) => `owned · ${series}`,
+    battles: "Trainer battles",
+    wonLost: "won – lost",
+    blackouts: "Blackouts",
+    fallen: "Fallen",
+    career: "Career",
+    league: "League results · Work in progress",
+    reached: "Reached",
+    teams: "Teams",
+    playing: "Playing now",
+    done: "Finished",
+  },
+  es: {
+    failed: "Algo ha fallado",
+    series: "Series",
+    you: "Tú",
+    since: (series: string) => `Entrenador desde ${series}`,
+    finished: (n: number) => (n === 1 ? "1 terminada" : `${n} terminadas`),
+    playTime: "Tiempo de juego",
+    badges: "Medallas",
+    of: (n: number) => `de ${n}`,
+    bestPokedex: "Mejor Pokédex",
+    ownedIn: (series: string) => `capturados · ${series}`,
+    battles: "Combates de entrenador",
+    wonLost: "ganados – perdidos",
+    blackouts: "Desmayos",
+    fallen: "Caídos",
+    career: "Trayectoria",
+    league: "Resultados de la liga · En obras",
+    reached: "Llegó a",
+    teams: "Equipos",
+    playing: "En juego",
+    done: "Terminada",
+  },
+});
 
 const FROM = "/players/$player";
 
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 function count(n: number | null): string {
@@ -59,7 +107,7 @@ export function PlayerProfilePage() {
       <Career career={page.career} />
       <section aria-labelledby="series" className="flex flex-col gap-3 sm:gap-3.5">
         <h2 id="series" className="m-0 font-heading text-[2.125rem] font-normal sm:text-[2.375rem]">
-          Series
+          {t.series}
         </h2>
         {page.series.map((s) => (
           <SeriesBanner key={s.number} player={page.player.id} series={s} />
@@ -78,9 +126,9 @@ function Head({ page }: { page: ProfilePage }) {
       <div className="flex min-w-0 flex-col gap-1 sm:gap-1.5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3.5">
           <h1 className="m-0 min-w-0 truncate font-heading text-6xl leading-[0.8] font-normal sm:text-[5.25rem]">{page.player.name}</h1>
-          {you && <span className="flex-none rounded-sm bg-yellow px-1.75 font-heading text-lg text-ink sm:px-2 sm:text-xl">You</span>}
+          {you && <span className="flex-none rounded-sm bg-yellow px-1.75 font-heading text-lg text-ink sm:px-2 sm:text-xl">{t.you}</span>}
         </div>
-        {page.since && <span className="font-heading text-[1.375rem] text-muted-foreground sm:text-2xl">Trainer since {page.since}</span>}
+        {page.since && <span className="font-heading text-[1.375rem] text-muted-foreground sm:text-2xl">{t.since(page.since)}</span>}
       </div>
     </div>
   );
@@ -90,61 +138,61 @@ type Total = { label: string; value: string; sub?: string; alarm?: boolean; wide
 
 function Career({ career }: { career: CareerTotals }) {
   const desktop = useMediaQuery("(min-width: 40rem)");
-  const series: Total = { label: "Series", value: String(career.series), sub: `${career.finished} finished`, wide: false };
-  const time: Total = { label: "Play time", value: playTime(career.playTime), wide: true };
+  const series: Total = { label: t.series, value: String(career.series), sub: t.finished(career.finished), wide: false };
+  const time: Total = { label: t.playTime, value: playTime(career.playTime), wide: true };
   const badges: Total = {
-    label: "Badges",
+    label: t.badges,
     value: career.badgeSlots === 0 ? "—" : String(career.badges),
-    sub: career.badgeSlots === 0 ? undefined : `of ${career.badgeSlots}`,
+    sub: career.badgeSlots === 0 ? undefined : t.of(career.badgeSlots),
     wide: false,
   };
   const pokedex: Total = {
-    label: "Best Pokédex",
+    label: t.bestPokedex,
     value: career.bestPokedex ? String(career.bestPokedex.owned) : "—",
-    sub: career.bestPokedex ? `owned · ${career.bestPokedex.series}` : undefined,
+    sub: career.bestPokedex ? t.ownedIn(career.bestPokedex.series) : undefined,
     wide: true,
   };
   const battles: Total = {
-    label: "Trainer battles",
+    label: t.battles,
     value: `${count(career.trainerBattlesWon)} – ${count(career.trainerBattlesLost)}`,
-    sub: "won – lost",
+    sub: t.wonLost,
     wide: true,
   };
-  const blackouts: Total = { label: "Blackouts", value: count(career.blackouts), wide: false };
-  const fallen: Total = { label: "Fallen", value: String(career.fallen), alarm: career.fallen > 0, wide: true };
+  const blackouts: Total = { label: t.blackouts, value: count(career.blackouts), wide: false };
+  const fallen: Total = { label: t.fallen, value: String(career.fallen), alarm: career.fallen > 0, wide: true };
   const totals = desktop
     ? [series, time, badges, pokedex, battles, blackouts, fallen]
     : [series, badges, blackouts, time, battles, pokedex, fallen];
   return (
     <section aria-labelledby="career" className="flex flex-col gap-3 sm:gap-3.5">
       <h2 id="career" className="m-0 font-heading text-[2.125rem] font-normal sm:text-[2.375rem]">
-        Career
+        {t.career}
       </h2>
       <div className="grid grid-cols-6 gap-2 sm:grid-cols-7 sm:gap-3">
-        {totals.map((t) => (
+        {totals.map((total) => (
           <div
-            key={t.label}
+            key={total.label}
             className={cn(
               "flex min-w-0 flex-col gap-1 rounded-[14px] border-3 bg-card px-3 py-2.5 sm:col-span-1 sm:gap-1.5 sm:px-4 sm:py-3.5",
-              t.wide ? "col-span-3" : "col-span-2",
+              total.wide ? "col-span-3" : "col-span-2",
             )}
           >
-            <span className="truncate font-heading text-lg text-muted-foreground sm:text-xl">{t.label}</span>
+            <span className="truncate font-heading text-lg text-muted-foreground sm:text-xl">{total.label}</span>
             <span
               className={cn(
                 "truncate font-heading text-[2rem] leading-[0.9] tabular-nums sm:text-[2.375rem]",
-                t.alarm ? "text-destructive" : "text-foreground",
+                total.alarm ? "text-destructive" : "text-foreground",
               )}
             >
-              {t.value}
+              {total.value}
             </span>
-            <span className="min-h-4.5 truncate text-[0.8125rem] font-bold text-muted-foreground sm:min-h-5 sm:text-sm">{t.sub}</span>
+            <span className="min-h-4.5 truncate text-[0.8125rem] font-bold text-muted-foreground sm:min-h-5 sm:text-sm">{total.sub}</span>
           </div>
         ))}
       </div>
       <div className="flex min-h-21 items-center justify-center gap-3 rounded-[18px] border-3 border-dashed border-cell-hi bg-box px-4 py-3 sm:min-h-27.5 sm:gap-4.5">
         <PixelIcon name="barrier" className="size-9 flex-none sm:size-11" />
-        <span className="font-heading text-2xl leading-[1.05] text-yellow sm:text-3xl">League results · Work in progress</span>
+        <span className="font-heading text-2xl leading-[1.05] text-yellow sm:text-3xl">{t.league}</span>
       </div>
     </section>
   );
@@ -156,10 +204,10 @@ function SeriesBanner({ player, series }: { player: string; series: ProfileSerie
   const [width, height] = (desktop ? BANNER_SIZE : PHONE_BANNER_SIZE)[series.scene];
   const playing = series.state === "running";
   const stats = [
-    { label: "Reached", value: series.reached ?? "—", ink: series.reachedEnd ? "text-yellow" : "text-white" },
-    { label: "Play time", value: playTime(series.playTime), ink: "text-white" },
-    { label: "Fallen", value: count(series.fallen), ink: series.fallen ? "text-coral" : "text-white" },
-    { label: "Teams", value: String(series.teams), ink: "text-white" },
+    { label: t.reached, value: series.reached ?? "—", ink: series.reachedEnd ? "text-yellow" : "text-white" },
+    { label: t.playTime, value: playTime(series.playTime), ink: "text-white" },
+    { label: t.fallen, value: count(series.fallen), ink: series.fallen ? "text-coral" : "text-white" },
+    { label: t.teams, value: String(series.teams), ink: "text-white" },
   ];
   return (
     <Link
@@ -179,7 +227,7 @@ function SeriesBanner({ player, series }: { player: string; series: ProfileSerie
                   playing ? "bg-red text-white" : "bg-ink text-subtle",
                 )}
               >
-                {playing ? "Playing now" : "Finished"}
+                {playing ? t.playing : t.done}
               </span>
             </span>
             {series.game && (

@@ -5,7 +5,7 @@ Add a tool or page to `pkmn/site/` that looks and behaves like the rest of the s
 ## Prerequisites
 
 - The site runs locally ([How to Run and Deploy the Site](run-and-deploy-the-site.md)).
-- You know what the page shows and its title, in English.
+- You know what the page shows and its title, in English and Spanish.
 
 ## Steps
 
@@ -53,6 +53,15 @@ export function MyToolPage() {
 
 The column carries the width and the gutter; nothing inside the page adds its own. A component another tool also needs goes in `src/components/`, never imported from the other tool's folder.
 
+Every string the reader sees or hears, `aria-label`s included, goes in the file's own table, in both languages ([The pkmn Site → Languages](../explanation/site.md#languages)); Pokémon data shows through `shared/describe.ts` or `dexName`, `typeLabel` and `categoryLabel` from `shared/dex-text.ts`:
+
+```tsx
+const t = messages({
+  en: { title: "My tool", count: (n: number) => (n === 1 ? "1 team" : `${n} teams`) },
+  es: { title: "Mi herramienta", count: (n: number) => (n === 1 ? "1 equipo" : `${n} equipos`) },
+});
+```
+
 ### 3. Build the UI from what exists
 
 In this order:
@@ -75,5 +84,5 @@ Add the page to [The pkmn Site](../explanation/site.md)'s opening list and the S
 ## Verification
 
 1. `npm run gate` passes in `pkmn/site/`.
-2. `npm run dev`: the page opens at its route, its tab is open in the header if it has one, and the page works at desktop width and at a phone width (about 375px) with no horizontal page scroll.
+2. `npm run dev`: the page opens at its route, in English and, picked from the header's flag, in Spanish, its tab is open in the header if it has one, and the page works at desktop width and at a phone width (about 375px) with no horizontal page scroll.
 3. `grep -nE '#[0-9a-fA-F]{3,8}\b|rgba?\(' src/pages/my-tool.tsx src/my-tool -r` finds no raw colours.

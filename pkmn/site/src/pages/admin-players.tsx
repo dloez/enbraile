@@ -8,10 +8,64 @@ import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { joinedOn } from "@/lib/admin-format";
 import { cn } from "@/lib/utils";
+import { messages } from "../../shared/i18n";
 import { player, playerList, removed, type Player } from "../../shared/players";
 
+const t = messages({
+  en: {
+    failed: "Something went wrong",
+    title: "Admin players",
+    waiting: "Waiting",
+    waitingNote: "Signed in, not let in yet",
+    allowed: "Allowed",
+    allowedNote: "Removing one keeps their saves; they wait again",
+    nobody: "Nobody",
+    invited: "Invited",
+    notSignedIn: "Not signed in yet",
+    signedIn: (date: string) => `Signed in ${date}`,
+    joined: (date: string) => `Joined ${date}`,
+    deletes: "Deletes their saves and snapshots",
+    pressAgain: "· press again",
+    confirmDelete: "Confirm delete",
+    delete: "Delete",
+    letIn: "Let in",
+    remove: "Remove",
+    invite: "Invite",
+    inviteNote: "Let a friend in before they sign in. Their first Discord sign-in lands them straight in, already allowed.",
+    discordId: "Discord user ID",
+    discordIdPlaceholder: "17 to 20 digits",
+    name: "Name",
+    namePlaceholder: "Until Discord gives theirs",
+  },
+  es: {
+    failed: "Algo ha fallado",
+    title: "Jugadores de admin",
+    waiting: "En espera",
+    waitingNote: "Han iniciado sesión, aún sin entrar",
+    allowed: "Admitidos",
+    allowedNote: "Quitar a uno conserva sus partidas; vuelve a esperar",
+    nobody: "Nadie",
+    invited: "Invitado",
+    notSignedIn: "Aún no ha iniciado sesión",
+    signedIn: (date: string) => `Entró el ${date}`,
+    joined: (date: string) => `Se unió el ${date}`,
+    deletes: "Borra sus partidas y capturas",
+    pressAgain: "· pulsa otra vez",
+    confirmDelete: "Confirmar borrado",
+    delete: "Borrar",
+    letIn: "Dejar entrar",
+    remove: "Quitar",
+    invite: "Invitar",
+    inviteNote: "Deja entrar a un amigo antes de que inicie sesión. Al iniciar sesión con Discord por primera vez entra directamente, ya admitido.",
+    discordId: "ID de usuario de Discord",
+    discordIdPlaceholder: "De 17 a 20 dígitos",
+    name: "Nombre",
+    namePlaceholder: "Hasta que Discord dé el suyo",
+  },
+});
+
 function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Something went wrong";
+  return error instanceof Error ? error.message : t.failed;
 }
 
 export function AdminPlayersPage() {
@@ -53,7 +107,7 @@ export function AdminPlayersPage() {
 
   return (
     <main className={adminPage}>
-      <h1 className="sr-only">Admin players</h1>
+      <h1 className="sr-only">{t.title}</h1>
       <AdminNav waiting={waiting.length} />
       {error && (
         <p role="alert" className="m-0 text-destructive">
@@ -63,8 +117,8 @@ export function AdminPlayersPage() {
       {players && (
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_23.75rem] lg:gap-6">
           <div className="flex flex-col gap-4 sm:gap-5">
-            <PlayerList id="players-waiting" title="Waiting" note="Signed in, not let in yet" players={waiting} busy={busy} onAct={(p) => setAllowed(p, true)} onDelete={remove} />
-            <PlayerList id="players-allowed" title="Allowed" note="Removing one keeps their saves; they wait again" players={allowed} busy={busy} onAct={(p) => setAllowed(p, false)} onDelete={remove} />
+            <PlayerList id="players-waiting" waiting title={t.waiting} note={t.waitingNote} players={waiting} busy={busy} onAct={(p) => setAllowed(p, true)} onDelete={remove} />
+            <PlayerList id="players-allowed" waiting={false} title={t.allowed} note={t.allowedNote} players={allowed} busy={busy} onAct={(p) => setAllowed(p, false)} onDelete={remove} />
           </div>
           <InviteForm onInvited={(invited) => setPlayers((current) => [...(current ?? []), invited])} />
         </div>
@@ -75,6 +129,7 @@ export function AdminPlayersPage() {
 
 function PlayerList({
   id,
+  waiting,
   title,
   note,
   players,
@@ -83,7 +138,8 @@ function PlayerList({
   onDelete,
 }: {
   id: string;
-  title: "Waiting" | "Allowed";
+  waiting: boolean;
+  title: string;
   note: string;
   players: Player[];
   busy: string | null;
@@ -91,7 +147,6 @@ function PlayerList({
   onDelete: (target: Player) => void;
 }) {
   const [confirming, setConfirming] = useState<string | null>(null);
-  const waiting = title === "Waiting";
   const lit = waiting && players.length > 0;
   return (
     <section aria-labelledby={id} className={cn("flex flex-col gap-2.5 rounded-2xl border-3 bg-card p-4 sm:px-5.5 sm:py-5", lit && "border-yellow/55")}>
@@ -103,7 +158,7 @@ function PlayerList({
         <span className="ml-auto text-[0.8125rem] text-muted-foreground max-sm:hidden">{note}</span>
       </div>
       {players.length === 0 ? (
-        <div className="flex min-h-15 items-center justify-center rounded-xl border-3 border-dashed font-heading text-2xl text-muted-foreground sm:min-h-18 sm:text-[1.625rem]">Nobody</div>
+        <div className="flex min-h-15 items-center justify-center rounded-xl border-3 border-dashed font-heading text-2xl text-muted-foreground sm:min-h-18 sm:text-[1.625rem]">{t.nobody}</div>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {players.map((p) => {
@@ -119,14 +174,14 @@ function PlayerList({
                   <span className="flex min-w-0 flex-col">
                     <span className="flex min-w-0 items-center gap-2.5">
                       <span className="truncate font-heading text-[1.5625rem] leading-none decoration-2 underline-offset-4 group-hover:underline sm:text-[1.75rem]">{p.name}</span>
-                      {p.invited && <span className="flex-none rounded-md bg-primary/15 px-2 font-heading text-base text-primary sm:text-lg">Invited</span>}
+                      {p.invited && <span className="flex-none rounded-md bg-primary/15 px-2 font-heading text-base text-primary sm:text-lg">{t.invited}</span>}
                     </span>
                     <span className="text-xs font-bold text-muted-foreground sm:text-[0.8125rem]">
-                      {p.invited ? "Not signed in yet" : waiting ? `Signed in ${joinedOn(p.joinedAt)}` : `Joined ${joinedOn(p.joinedAt)}`}
+                      {p.invited ? t.notSignedIn : waiting ? t.signedIn(joinedOn(p.joinedAt)) : t.joined(joinedOn(p.joinedAt))}
                     </span>
                   </span>
                 </Link>
-                {asking && <span className="text-xs font-bold text-stat-up sm:text-[0.8125rem]">Deletes their saves and snapshots{" "}<span className="sm:hidden">· press again</span></span>}
+                {asking && <span className="text-xs font-bold text-stat-up sm:text-[0.8125rem]">{t.deletes}{" "}<span className="sm:hidden">{t.pressAgain}</span></span>}
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2.5">
                   <button
                     type="button"
@@ -142,7 +197,7 @@ function PlayerList({
                       asking ? "border-destructive bg-destructive text-ink" : "border-destructive/45 bg-transparent text-destructive hover:bg-destructive/15",
                     )}
                   >
-                    {asking ? "Confirm delete" : "Delete"}
+                    {asking ? t.confirmDelete : t.delete}
                   </button>
                   <button
                     type="button"
@@ -153,7 +208,7 @@ function PlayerList({
                     }}
                     className={buttonVariants({ variant: waiting ? "go" : "default", className: "min-w-26 px-4 text-[1.4375rem]" })}
                   >
-                    {waiting ? "Let in" : "Remove"}
+                    {waiting ? t.letIn : t.remove}
                   </button>
                 </div>
               </li>
@@ -188,25 +243,25 @@ function InviteForm({ onInvited }: { onInvited: (invited: Player) => void }) {
   return (
     <form onSubmit={submit} aria-labelledby="invite-title" className="flex flex-col gap-3.5 rounded-2xl border-3 bg-card p-4 sm:px-5.5 sm:py-5">
       <h2 id="invite-title" className="m-0 font-heading text-3xl leading-none font-normal sm:text-[2.125rem]">
-        Invite
+        {t.invite}
       </h2>
-      <p className="m-0 text-[0.8125rem] text-subtle sm:text-sm">Let a friend in before they sign in. Their first Discord sign-in lands them straight in, already allowed.</p>
+      <p className="m-0 text-[0.8125rem] text-subtle sm:text-sm">{t.inviteNote}</p>
       <label className={formLabelClass}>
-        Discord user ID
+        {t.discordId}
         <input
           name="discordId"
           required
           inputMode="numeric"
           pattern="\d{17,20}"
-          placeholder="17 to 20 digits"
+          placeholder={t.discordIdPlaceholder}
           value={discordId}
           onChange={(event) => setDiscordId(event.target.value)}
           className={cn(formFieldClass, "tabular-nums")}
         />
       </label>
       <label className={formLabelClass}>
-        Name
-        <input name="name" required maxLength={32} placeholder="Until Discord gives theirs" value={name} onChange={(event) => setName(event.target.value)} className={formFieldClass} />
+        {t.name}
+        <input name="name" required maxLength={32} placeholder={t.namePlaceholder} value={name} onChange={(event) => setName(event.target.value)} className={formFieldClass} />
       </label>
       {error && (
         <p role="alert" className="m-0 text-sm text-destructive">
@@ -214,7 +269,7 @@ function InviteForm({ onInvited }: { onInvited: (invited: Player) => void }) {
         </p>
       )}
       <button type="submit" disabled={busy} className={buttonVariants({ variant: "go", className: "mt-0.5 min-h-12.5 text-[1.625rem]" })}>
-        Invite
+        {t.invite}
       </button>
     </form>
   );

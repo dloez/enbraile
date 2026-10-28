@@ -9,8 +9,61 @@ import { SummaryBody, SummaryHead } from "@/components/pc/summary";
 import { Sheet as BottomSheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { typeLabel } from "../../../shared/dex-text";
+import { messages } from "../../../shared/i18n";
 import { displayName, TYPES, type Ability, type BagItem, type BagTm, type Mon } from "../../../shared/mon";
 import type { ExportGap } from "../../../shared/snapshot";
+
+const t = messages({
+  en: {
+    cell: (name: string, species: string, level: number | null, fainted: boolean, taken: boolean) =>
+      `${name}, ${species}, level ${level ?? "unknown"}${fainted ? ", fainted" : ""}${taken ? ", in the team" : ""}`,
+    hideFainted: "Hide the fainted Pokémon",
+    showFainted: "Show the fainted Pokémon",
+    fainted: (n: number) => `Fainted · ${n}`,
+    scrollUp: "Scroll up",
+    scrollDown: "Scroll down",
+    bag: "Bag",
+    box: "Pokémon",
+    count: (n: number) => `${n} Pokémon`,
+    countOf: (shown: number, all: number) => `${shown} of ${all} Pokémon`,
+    searchLabel: "Search Pokémon",
+    search: "Search",
+    type: "Type",
+    allTypes: "All types",
+    ability: "Ability",
+    allAbilities: "All abilities",
+    showAll: "Show every Pokémon that can have it",
+    showUsing: "Show only the Pokémon using it",
+    inUse: "In use",
+    nothing: "Nothing matches",
+    summary: "Summary",
+  },
+  es: {
+    cell: (name: string, species: string, level: number | null, fainted: boolean, taken: boolean) =>
+      `${name}, ${species}, nivel ${level ?? "desconocido"}${fainted ? ", debilitado" : ""}${taken ? ", en el equipo" : ""}`,
+    hideFainted: "Ocultar los Pokémon debilitados",
+    showFainted: "Mostrar los Pokémon debilitados",
+    fainted: (n: number) => `Debilitados · ${n}`,
+    scrollUp: "Subir",
+    scrollDown: "Bajar",
+    bag: "Mochila",
+    box: "Pokémon",
+    count: (n: number) => `${n} Pokémon`,
+    countOf: (shown: number, all: number) => `${shown} de ${all} Pokémon`,
+    searchLabel: "Buscar Pokémon",
+    search: "Buscar",
+    type: "Tipo",
+    allTypes: "Todos los tipos",
+    ability: "Habilidad",
+    allAbilities: "Todas las habilidades",
+    showAll: "Mostrar todos los Pokémon que pueden tenerla",
+    showUsing: "Mostrar solo los Pokémon que la usan",
+    inUse: "En uso",
+    nothing: "No hay coincidencias",
+    summary: "Resumen",
+  },
+});
 
 export type BoxMon = Pick<Mon, "index" | "species" | "nickname" | "level" | "shiny" | "fainted" | "filterTypes" | "sprite"> & {
   abilities: readonly Pick<Ability, "id" | "name" | "current">[];
@@ -40,7 +93,7 @@ function Cell({ mon, selected, taken, mark, onPick }: { mon: BoxMon; selected: b
     <button
       type="button"
       onClick={onPick}
-      aria-label={`${displayName(mon)}, ${mon.species.name}, level ${mon.level ?? "unknown"}${mon.fainted ? ", fainted" : ""}${taken ? ", in the team" : ""}`}
+      aria-label={t.cell(displayName(mon), mon.species.name, mon.level, mon.fainted, taken)}
       aria-pressed={selected}
       className={cn(
         "relative grid aspect-square cursor-pointer snap-start place-items-center overflow-hidden rounded-xl border-none p-0 outline-none hover:shadow-[inset_0_0_0_3px_var(--cyan)] focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -72,9 +125,9 @@ export function FaintedMark({ className }: { className?: string }) {
 
 export function FaintedToggle({ count, shown, onChange }: { count: number; shown: boolean; onChange: (shown: boolean) => void }) {
   return (
-    <Toggle pressed={shown} onChange={onChange} title={shown ? "Hide the fainted Pokémon" : "Show the fainted Pokémon"}>
+    <Toggle pressed={shown} onChange={onChange} title={shown ? t.hideFainted : t.showFainted}>
       <FaintedMark className={shown ? "fill-current" : undefined} />
-      Fainted · {count}
+      {t.fainted(count)}
     </Toggle>
   );
 }
@@ -99,7 +152,7 @@ function ScrollMore({ dir, onClick }: { dir: "up" | "down"; onClick: () => void 
       />
       <button
         type="button"
-        aria-label={up ? "Scroll up" : "Scroll down"}
+        aria-label={up ? t.scrollUp : t.scrollDown}
         onClick={onClick}
         className={cn(
           "absolute left-1/2 grid h-9 w-14 -translate-x-1/2 cursor-pointer place-items-center rounded-[10px] border-3 bg-ink/85 outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -125,7 +178,7 @@ export function BagButton({ onClick }: { onClick: () => void }) {
       <svg viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true" className="size-4 fill-primary">
         <path d="M3 0h4v1H3zM2 1h1v2H2zM7 1h1v2H7zM1 3h8v1H1zM0 4h10v5H0zM1 9h8v1H1z" />
       </svg>
-      Bag
+      {t.bag}
     </button>
   );
 }
@@ -175,28 +228,28 @@ export function PcBox<M extends BoxMon>({ mons, selected, onPick, actions, filte
     if (el) el.scrollBy({ top: dir * Math.max(112, el.clientHeight - 112), behavior: "smooth" });
   };
   return (
-    <section aria-label="Pokémon" className="flex min-w-0 flex-1 flex-col gap-3 rounded-[18px] border-3 bg-card p-3.5 text-foreground lg:min-h-0">
+    <section aria-label={t.box} className="flex min-w-0 flex-1 flex-col gap-3 rounded-[18px] border-3 bg-card p-3.5 text-foreground lg:min-h-0">
       <div className="flex min-h-12 flex-none flex-wrap items-center gap-3">
         <span className="pl-1 font-heading text-[1.875rem] leading-none">
-          {filtering ? `${shown.length} of ${mons.length} Pokémon` : `${mons.length} Pokémon`}
+          {filtering ? t.countOf(shown.length, mons.length) : t.count(mons.length)}
         </span>
         <div className="flex-1" />
         <label className="flex h-12 flex-[1_1_100%] items-center sm:max-w-55 sm:flex-[1_1_160px] gap-2 rounded-[10px] border-3 bg-ink px-3 focus-within:border-primary">
           <Search className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
-          <span className="sr-only">Search Pokémon</span>
+          <span className="sr-only">{t.searchLabel}</span>
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search"
+            placeholder={t.search}
             className="min-w-0 flex-1 bg-transparent outline-none"
           />
         </label>
-        <SelectField label="Type" value={type} onChange={setType} all="All types" options={TYPES.map((t) => ({ value: t, label: t }))} />
-        <ComboField label="Ability" value={ability} onChange={chooseAbility} all="All abilities" options={abilities} className="max-w-55" />
+        <SelectField label={t.type} value={type} onChange={setType} all={t.allTypes} options={TYPES.map((name) => ({ value: name, label: typeLabel(name) }))} />
+        <ComboField label={t.ability} value={ability} onChange={chooseAbility} all={t.allAbilities} options={abilities} className="max-w-55" />
         {ability !== "" && (
-          <Toggle pressed={inUse} onChange={setInUse} title={inUse ? "Show every Pokémon that can have it" : "Show only the Pokémon using it"}>
-            In use
+          <Toggle pressed={inUse} onChange={setInUse} title={inUse ? t.showAll : t.showUsing}>
+            {t.inUse}
           </Toggle>
         )}
         {filters}
@@ -213,7 +266,7 @@ export function PcBox<M extends BoxMon>({ mons, selected, onPick, actions, filte
               <Cell key={mon.index} mon={mon} selected={mon.index === selected} taken={taken?.has(mon.index) ?? false} mark={mark?.(mon)} onPick={() => onPick(mon.index)} />
             ))}
           </div>
-          {shown.length === 0 && <p className="my-10 text-center font-heading text-[1.625rem] text-prose">Nothing matches</p>}
+          {shown.length === 0 && <p className="my-10 text-center font-heading text-[1.625rem] text-prose">{t.nothing}</p>}
         </div>
         {edges.up && <ScrollMore dir="up" onClick={() => page(-1)} />}
         {edges.down && <ScrollMore dir="down" onClick={() => page(1)} />}
@@ -225,7 +278,7 @@ export function PcBox<M extends BoxMon>({ mons, selected, onPick, actions, filte
 export function SummaryAside({ mon, tms, footer, gaps, series }: { mon: Mon; tms: readonly BagTm[]; footer?: ReactNode; gaps?: readonly ExportGap[]; series?: number }) {
   return (
     <aside
-      aria-label="Summary"
+      aria-label={t.summary}
       className="sticky top-4 flex max-h-[calc(100svh-2rem)] w-95 flex-none flex-col self-start overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0 lg:self-stretch"
     >
       <SummaryHead mon={mon} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />

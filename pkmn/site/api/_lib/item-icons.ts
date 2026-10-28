@@ -7,6 +7,18 @@ import DATA from "./export/data.json" with { type: "json" };
 import { directoryEntries, readEntry, type ZipEntry, zipDirectory } from "./export/zip.js";
 import { deleteObject, objectSize, putObject, readObject, readRange } from "./files.js";
 import { game } from "./schema.js";
+import { says } from "./i18n.js";
+
+const t = says({
+  en: {
+    noGame: "No such game",
+    noIcons: "No such icons",
+  },
+  es: {
+    noGame: "Ese juego no existe",
+    noIcons: "Esos iconos no existen",
+  },
+});
 
 const ITEM_ICON = /(?:^|\/)Graphics\/Items\/([^/]+)\.png$/i;
 const TAIL = 0xffff + 22 + 20;
@@ -104,7 +116,7 @@ export const itemIconRoutes = new Hono();
 
 itemIconRoutes.get("/:game", async (c) => {
   const [row] = await db.select({ itemIcons: game.itemIcons }).from(game).where(eq(game.id, c.req.param("game")));
-  if (!row) return c.json({ error: "No such game" }, 404);
+  if (!row) return c.json({ error: t(c).noGame }, 404);
   c.header("Cache-Control", "private, max-age=300");
   return c.json(row.itemIcons);
 });
@@ -112,7 +124,7 @@ itemIconRoutes.get("/:game", async (c) => {
 itemIconRoutes.get("/:game/:version", async (c) => {
   const version = c.req.param("version").replace(/\.png$/, "");
   const [row] = await db.select({ itemIcons: game.itemIcons }).from(game).where(eq(game.id, c.req.param("game")));
-  if (!row?.itemIcons || row.itemIcons.version !== version) return c.json({ error: "No such icons" }, 404);
+  if (!row?.itemIcons || row.itemIcons.version !== version) return c.json({ error: t(c).noIcons }, 404);
   const sheet = await readObject(iconKey(c.req.param("game"), version));
   return c.body(new Uint8Array(sheet), 200, { "Content-Type": "image/png", "Cache-Control": "private, max-age=31536000, immutable" });
 });

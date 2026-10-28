@@ -9,6 +9,40 @@ import type { MoveRule } from "../../../shared/pool";
 import { learnset, movesUpTo } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
 import { EditorHead, editorScroll } from "@/teams/components/editors";
+import { messages } from "../../../shared/i18n";
+
+const t = messages({
+  en: {
+    current: "Current moves",
+    relearner: "Move Relearner",
+    tms: "TMs",
+    all: "All moves",
+    canLearn: "Can learn",
+    other: "Other moves",
+    replace: (move: string) => `replace ${move}`,
+    move: (n: number) => `move ${n}`,
+    searchMoves: "Search moves",
+    search: "Search",
+    leaveEmpty: "Leave the slot empty",
+    lv: "Lv",
+    pow: "Pow",
+  },
+  es: {
+    current: "Movimientos actuales",
+    relearner: "Recordador de movimientos",
+    tms: "MT",
+    all: "Todos los movimientos",
+    canLearn: "Puede aprender",
+    other: "Otros movimientos",
+    replace: (move: string) => `sustituir ${move}`,
+    move: (n: number) => `movimiento ${n}`,
+    searchMoves: "Buscar movimientos",
+    search: "Buscar",
+    leaveEmpty: "Dejar el hueco vacío",
+    lv: "Nv",
+    pow: "Pot",
+  },
+});
 
 interface Option {
   move: MoveInfo;
@@ -20,23 +54,23 @@ function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: 
   if (learn) {
     const level = (id: string) => (learn.levels?.[id] !== undefined ? String(learn.levels[id]) : "");
     return [
-      { name: "Current moves", moves: learn.current.map((move) => ({ move, label: labels.get(move.id) ?? "" })) },
-      { name: "Move Relearner", moves: learn.relearner.map((move) => ({ move, label: level(move.id) })) },
-      { name: "TMs", moves: learn.tms.map((move) => ({ move, label: labels.get(move.id) ?? "" })) },
+      { name: t.current, moves: learn.current.map((move) => ({ move, label: labels.get(move.id) ?? "" })) },
+      { name: t.relearner, moves: learn.relearner.map((move) => ({ move, label: level(move.id) })) },
+      { name: t.tms, moves: learn.tms.map((move) => ({ move, label: labels.get(move.id) ?? "" })) },
     ];
   }
   const all = movesUpTo(movesGen).map((move) => ({ move, label: "" }));
   if (mon.free) {
-    if (!learned) return [{ name: "All moves", moves: all }];
+    if (!learned) return [{ name: t.all, moves: all }];
     return [
-      { name: "Can learn", moves: all.filter((o) => learned.has(o.move.id)) },
-      { name: "Other moves", moves: all.filter((o) => !learned.has(o.move.id)) },
+      { name: t.canLearn, moves: all.filter((o) => learned.has(o.move.id)) },
+      { name: t.other, moves: all.filter((o) => !learned.has(o.move.id)) },
     ];
   }
   const tms = sheet.tms.map(describeTm);
   return [
-    { name: "TMs", moves: tms.map((tm) => ({ move: describeMove(tm.move.id), label: tm.label })) },
-    { name: "All moves", moves: all },
+    { name: t.tms, moves: tms.map((tm) => ({ move: describeMove(tm.move.id), label: tm.label })) },
+    { name: t.all, moves: all },
   ];
 }
 
@@ -72,11 +106,11 @@ export function MoveEditor({ sheet, mon, movesGen, rule, moves, at, back, onBack
   const seen = new Set<string>();
   return (
     <>
-      <EditorHead who={displayName(mon)} what={replacing ? `replace ${describeMove(replacing).name}` : `move ${at + 1}`} back={back} onBack={onBack} />
+      <EditorHead who={displayName(mon)} what={replacing ? t.replace(describeMove(replacing).name) : t.move(at + 1)} back={back} onBack={onBack} />
       <label className="flex min-h-11 flex-none items-center gap-2 rounded-[10px] border-3 bg-ink px-2.5 focus-within:border-primary">
         <Search className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
-        <span className="sr-only">Search moves</span>
-        <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent text-[0.9375rem] outline-none" />
+        <span className="sr-only">{t.searchMoves}</span>
+        <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} className="min-w-0 flex-1 bg-transparent text-[0.9375rem] outline-none" />
       </label>
       <div className={cn(editorScroll, "gap-0.5")}>
         {replacing && !q && (
@@ -85,7 +119,7 @@ export function MoveEditor({ sheet, mon, movesGen, rule, moves, at, back, onBack
             onClick={() => onPick(null)}
             className="flex min-h-10 flex-none cursor-pointer items-center rounded-[10px] border-none bg-transparent px-2 text-left font-heading text-xl text-muted-foreground outline-none hover:bg-cell focus-visible:ring-3 focus-visible:ring-ring/50"
           >
-            Leave the slot empty
+            {t.leaveEmpty}
           </button>
         )}
         {groups.map((group) => {
@@ -98,9 +132,9 @@ export function MoveEditor({ sheet, mon, movesGen, rule, moves, at, back, onBack
           return (
             <section key={group.name} aria-label={group.name} className="flex flex-col gap-0.5">
               <h3 className="m-0 grid grid-cols-[28px_minmax(0,1fr)_auto] gap-x-2 px-2 pt-2 pb-1 font-heading text-[1.125rem] leading-none font-normal text-muted-foreground">
-                <span className="text-right">{group.name === "Move Relearner" ? "Lv" : ""}</span>
+                <span className="text-right">{group.name === t.relearner ? t.lv : ""}</span>
                 <span>{group.name}</span>
-                <span>Pow</span>
+                <span>{t.pow}</span>
               </h3>
               {shown.map(({ move, label }) => {
                 const taken = moves.includes(move.id);

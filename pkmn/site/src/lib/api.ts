@@ -1,4 +1,22 @@
 import type * as z from "zod";
+import { messages } from "../../shared/i18n";
+
+const t = messages({
+  en: {
+    failed: (status: number) => `Request failed (${status})`,
+    refused: (status: number) => `The file store refused the upload (${status})`,
+    noEtag: "The file store hid the part's ETag",
+    unreachable: "The upload could not reach the file store",
+    stalled: "The upload stalled",
+  },
+  es: {
+    failed: (status: number) => `La petición falló (${status})`,
+    refused: (status: number) => `El almacén de archivos rechazó la subida (${status})`,
+    noEtag: "El almacén de archivos ocultó el ETag de la parte",
+    unreachable: "La subida no pudo llegar al almacén de archivos",
+    stalled: "La subida se detuvo",
+  },
+});
 
 export class ApiError extends Error {
   status: number | undefined;
@@ -42,7 +60,7 @@ export async function api<T extends z.ZodType>(path: string, schema: T, init?: {
   const json: unknown = await response.json().catch(() => undefined);
   if (!response.ok) {
     const message = typeof json === "object" && json !== null && "error" in json ? String(json.error) : response.statusText;
-    throw new ApiError(message || `Request failed (${response.status})`, response.status);
+    throw new ApiError(message || t.failed(response.status), response.status);
   }
   return schema.parse(json);
 }
@@ -75,18 +93,18 @@ export function putPart(url: string, body: Blob, onProgress: (loaded: number) =>
     };
     request.onload = () => {
       settle();
-      if (request.status < 200 || request.status >= 300) return reject(new ApiError(`The file store refused the upload (${request.status})`));
+      if (request.status < 200 || request.status >= 300) return reject(new ApiError(t.refused(request.status)));
       const etag = request.getResponseHeader("ETag");
       if (etag) resolve(etag);
-      else reject(new ApiError("The file store hid the part's ETag"));
+      else reject(new ApiError(t.noEtag));
     };
     request.onerror = () => {
       settle();
-      reject(new ApiError("The upload could not reach the file store"));
+      reject(new ApiError(t.unreachable));
     };
     request.onabort = () => {
       settle();
-      reject(stalled ? new ApiError("The upload stalled") : signal.reason);
+      reject(stalled ? new ApiError(t.stalled) : signal.reason);
     };
     watch();
     request.send(body);
