@@ -25,7 +25,9 @@ const t = messages({
     search: "Search",
     leaveEmpty: "Leave the slot empty",
     lv: "Lv",
+    category: "Category",
     pow: "Pow",
+    acc: "Acc",
   },
   es: {
     current: "Movimientos actuales",
@@ -40,7 +42,9 @@ const t = messages({
     search: "Buscar",
     leaveEmpty: "Dejar el hueco vacío",
     lv: "Nv",
+    category: "Categoría",
     pow: "Pot",
+    acc: "Prec",
   },
 });
 
@@ -131,10 +135,12 @@ export function MoveEditor({ sheet, mon, movesGen, rule, moves, at, back, onBack
           if (shown.length === 0) return null;
           return (
             <section key={group.name} aria-label={group.name} className="flex flex-col gap-0.5">
-              <h3 className="m-0 grid grid-cols-[28px_minmax(0,1fr)_auto] gap-x-2 px-2 pt-2 pb-1 font-heading text-[1.125rem] leading-none font-normal text-muted-foreground">
+              <h3 className="m-0 grid grid-cols-[28px_minmax(0,1fr)_60px_26px_28px] items-end gap-x-2 px-2 pt-2 pb-1 font-heading text-[1.125rem] leading-none font-normal text-muted-foreground">
                 <span className="text-right">{group.name === t.relearner ? t.lv : ""}</span>
                 <span>{group.name}</span>
-                <span>{t.pow}</span>
+                <span className="text-center whitespace-nowrap">{t.category}</span>
+                <span className="text-right">{t.pow}</span>
+                <span className="text-right">{t.acc}</span>
               </h3>
               {shown.map(({ move, label }) => {
                 const taken = moves.includes(move.id);
@@ -146,15 +152,16 @@ export function MoveEditor({ sheet, mon, movesGen, rule, moves, at, back, onBack
                     onClick={() => onPick(move.id)}
                     className="flex flex-none cursor-pointer flex-col gap-px rounded-[10px] border-none bg-transparent pt-1.25 pr-2 pb-1.5 pl-1.5 text-left text-foreground outline-none enabled:hover:bg-cell focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-40"
                   >
-                    <span className="grid w-full grid-cols-[28px_52px_minmax(0,1fr)_auto_26px] items-center gap-x-2">
+                    <span className="grid w-full grid-cols-[28px_52px_minmax(0,1fr)_60px_26px_28px] items-center gap-x-2">
                       <span className="text-right font-heading text-[1.3125rem] text-subtle">{label}</span>
                       <TypeTag type={move.type} className="px-0 text-base leading-5.25" />
                       <span className="min-w-0 truncate text-sm font-extrabold">
                         {move.name}
                         {move.marked && <UnknownMark />}
                       </span>
-                      <CategoryTag category={move.category} className="text-base leading-5.25" />
+                      <CategoryTag category={move.category} className="justify-self-center text-base leading-5.25" />
                       <span className="text-right font-heading text-[1.3125rem] text-white">{move.power ?? "—"}</span>
+                      <span className="text-right font-heading text-[1.3125rem] text-white">{move.accuracy ?? "—"}</span>
                     </span>
                     {move.desc && <span className="pl-9 text-[0.8125rem] leading-[1.35] text-subtle">{move.desc}</span>}
                   </button>

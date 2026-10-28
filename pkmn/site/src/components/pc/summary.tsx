@@ -37,12 +37,13 @@ const t = messages({
     noMoves: "No moves in this export",
     moves: "Moves",
     canLearn: "Can learn",
+    category: "Category",
     pow: "Pow",
+    acc: "Acc",
     noLevels: "No move levels in this snapshot: upload its save again to see them",
     noTmRolls: "No TM rolls in this export: TMs the game has not rolled for it yet are missing",
     selectedMove: "Selected move",
     power: "Power",
-    accuracy: "Accuracy",
     level: (level: number | string) => `Lv. ${level}`,
     male: " male",
     female: " female",
@@ -77,12 +78,13 @@ const t = messages({
     noMoves: "No hay movimientos en esta exportación",
     moves: "Movimientos",
     canLearn: "Puede aprender",
+    category: "Categoría",
     pow: "Pot",
+    acc: "Prec",
     noLevels: "No hay niveles de movimientos en esta captura: vuelve a subir su partida para verlos",
     noTmRolls: "No hay tiradas de MT en esta exportación: faltan las MT que el juego aún no le ha tirado",
     selectedMove: "Movimiento elegido",
     power: "Potencia",
-    accuracy: "Precisión",
     level: (level: number | string) => `Nv. ${level}`,
     male: " macho",
     female: " hembra",
@@ -136,7 +138,7 @@ export function TypeTag({ type, className }: { type: string | null; className?: 
 }
 
 export function CategoryTag({ category, className }: { category: string | null; className?: string }) {
-  if (!category) return null;
+  if (!category) return <span className={className} />;
   return (
     <span
       className={cn(
@@ -401,6 +403,20 @@ function Stats({ mon }: { mon: Mon }) {
   );
 }
 
+const knownGrid = "grid-cols-[56px_minmax(0,1fr)_62px_26px_28px] gap-x-1.5";
+const learnGrid = "grid-cols-[40px_56px_minmax(0,1fr)_62px_26px_28px] gap-x-1.5";
+const headClass = "grid items-end pr-2.75 pb-1 pl-2.25 font-heading text-[1.1875rem] leading-none text-muted-foreground";
+
+function ColumnNames() {
+  return (
+    <>
+      <span className="text-center whitespace-nowrap">{t.category}</span>
+      <span className="text-right">{t.pow}</span>
+      <span className="text-right">{t.acc}</span>
+    </>
+  );
+}
+
 interface MoveRow {
   key: string;
   move: MoveInfo;
@@ -434,8 +450,9 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
           aria-pressed={on}
           onClick={() => setPicked(r.key)}
           className={cn(
-            "grid w-full cursor-pointer items-center gap-x-2 rounded-[7px] border-none bg-transparent pr-2 pl-1.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-            withLabel ? "min-h-9 grid-cols-[40px_56px_minmax(0,1fr)_auto_26px]" : "min-h-10 grid-cols-[56px_minmax(0,1fr)_auto_26px]",
+            "grid w-full cursor-pointer items-center rounded-[7px] border-none bg-transparent pr-2 pl-1.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+            withLabel ? "min-h-9" : "min-h-10",
+            withLabel ? learnGrid : knownGrid,
             !on && "hover:bg-face",
           )}
         >
@@ -445,8 +462,9 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
             {r.move.name}
             {r.move.marked && <UnknownMark />}
           </span>
-          <CategoryTag category={r.move.category} />
+          <CategoryTag category={r.move.category} className="justify-self-center" />
           <span className="text-right font-heading text-[1.3125rem] text-white">{r.move.power ?? "—"}</span>
+          <span className="text-right font-heading text-[1.3125rem] text-white">{r.move.accuracy ?? "—"}</span>
         </button>
       </div>
     );
@@ -456,19 +474,22 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
     <>
       <div className="-mr-3.5 flex min-h-0 flex-1 flex-col gap-4.5 overflow-y-auto overscroll-contain pr-2 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]">
         <section aria-labelledby="sum-moves" className="flex flex-col gap-1">
-          <h3 id="sum-moves" className="m-0 px-1 pb-0.5 font-heading text-xl leading-none font-normal text-muted-foreground">
-            {t.moves}
-          </h3>
+          <div className={cn(headClass, knownGrid)}>
+            <h3 id="sum-moves" className="col-span-2 m-0 text-xl font-normal">
+              {t.moves}
+            </h3>
+            <ColumnNames />
+          </div>
           {rows.filter((r) => r.known).map((r) => row(r, false))}
         </section>
         {learnRows.length > 0 && (
           <section aria-labelledby="sum-learn" className="flex flex-col gap-0.5">
-            <div className="grid grid-cols-[40px_56px_minmax(0,1fr)_auto_26px] items-end gap-x-2 pr-2.75 pb-1 pl-2.25 font-heading text-[1.1875rem] leading-none text-muted-foreground">
+            <div className={cn(headClass, learnGrid)}>
               <span />
-              <h3 id="sum-learn" className="col-span-3 m-0 text-xl font-normal">
+              <h3 id="sum-learn" className="col-span-2 m-0 text-xl font-normal">
                 {t.canLearn} <span className="text-faint">{learnCount(learn) - learn.current.length}</span>
               </h3>
-              <span className="text-right">{t.pow}</span>
+              <ColumnNames />
             </div>
             {learn.relearner.length > 0 && learn.levels === null && (
               <div className="mb-1">
@@ -494,9 +515,6 @@ function Moves({ mon, tms, gaps }: { mon: Mon; tms: readonly BagTm[]; gaps: read
           <span className="flex gap-4 font-heading text-[1.1875rem] leading-[1.1] text-muted-foreground">
             <span>
               {t.power} <span className="text-foreground">{selected.move.power ?? "—"}</span>
-            </span>
-            <span>
-              {t.accuracy} <span className="text-foreground">{selected.move.accuracy ?? "—"}</span>
             </span>
             {selected.label && <span className="text-foreground">{selected.label}</span>}
           </span>

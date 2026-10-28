@@ -28,6 +28,8 @@ const t = messages({
       protect: "protect",
     } as Partial<Record<MoveTag, string>>,
     category: { Physical: "P", Special: "S", Status: "—" },
+    categoryTitle: "Category",
+    accuracy: "Accuracy",
     natureLevel: (nature: string, level: number) => `${nature} · Lv ${level}`,
     tera: (name: string) => `${name}'s Tera type`,
     bst: (p: number) => `BST · P${p}`,
@@ -78,6 +80,8 @@ const t = messages({
       protect: "protección",
     },
     category: { Physical: "F", Special: "E", Status: "—" },
+    categoryTitle: "Categoría",
+    accuracy: "Precisión",
     natureLevel: (nature: string, level: number) => `${nature} · Nv. ${level}`,
     tera: (name: string) => `Teratipo de ${name}`,
     bst: (p: number) => `BST · P${p}`,
@@ -131,7 +135,7 @@ function MemberCard({ member, analysis, index, illegal, tera }: { member: Member
   const a = analysis.members[index];
   const nature = dexFor(analysis.gen).natures.get(member.set.nature);
   return (
-    <article className={cn("flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card", illegal && "border-destructive")}>
+    <article className={cn("@container flex min-w-0 flex-col overflow-hidden rounded-2xl border-3 bg-card", illegal && "border-destructive")}>
       <div className="flex items-center gap-3 bg-box p-3">
         <span className="grid size-16 flex-none place-items-center rounded-xl bg-cell">
           <img src={spriteOf(member)} alt="" className="size-16 [image-rendering:pixelated]" />
@@ -206,7 +210,7 @@ function MemberCard({ member, analysis, index, illegal, tera }: { member: Member
           );
         })}
       </div>
-      <ul className="m-0 grid list-none grid-cols-2 gap-1.5 px-3 pt-0 pb-3">
+      <ul className="m-0 grid list-none grid-cols-1 gap-1.5 @sm:grid-cols-2 px-3 pt-0 pb-3">
         {member.moves.map((mv, i) => {
           const tag = tagOf(mv.id);
           return (
@@ -221,7 +225,8 @@ function MemberCard({ member, analysis, index, illegal, tera }: { member: Member
               <TypeDot type={mv.type} />
               <span className="min-w-0 flex-1 truncate">{moveName(mv)}</span>
               {tag && <span className="rounded-sm bg-accent px-1.5 text-xs font-semibold text-primary">{tag}</span>}
-              <span className="tabular-nums text-xs text-muted-foreground">{t.category[mv.category]}</span>
+              <span title={t.categoryTitle} className="tabular-nums text-xs text-muted-foreground">{t.category[mv.category]}</span>
+              <span title={t.accuracy} className="w-8 text-right tabular-nums text-xs text-muted-foreground">{mv.accuracy === true ? "—" : `${mv.accuracy}%`}</span>
             </li>
           );
         })}

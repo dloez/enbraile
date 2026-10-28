@@ -429,7 +429,7 @@ function HeadToHead({ teams, gen, wide, calc, onCalc }: { teams: readonly Compar
           value={String(mi)}
           options={
             moves.length
-              ? moves.map((mv, i) => ({ value: String(i), label: [moveName(mv.name), typeLabel(mv.type), mv.power || null].filter(Boolean).join(" · ") }))
+              ? moves.map((mv, i) => ({ value: String(i), label: [moveName(mv.name), typeLabel(mv.type), mv.power || null, mv.accuracy === true ? "—" : `${mv.accuracy}%`].filter(Boolean).join(" · ") }))
               : [{ value: "0", label: t.noDamaging }]
           }
           disabled={moves.length === 0}

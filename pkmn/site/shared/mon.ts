@@ -1,5 +1,4 @@
 import * as z from "zod";
-import { categoryLabel } from "./dex-text.js";
 import { messages } from "./i18n.js";
 import type { MoveRule } from "./pool.js";
 
@@ -213,12 +212,6 @@ export function fightStat(s: StatLine): string {
 
 export function displayName(mon: Pick<Mon, "nickname" | "species">): string {
   return mon.nickname ?? mon.species.name;
-}
-
-export function moveStats(move: Pick<MoveInfo, "category" | "power" | "accuracy">): string {
-  return [move.category && categoryLabel(move.category), move.power, move.accuracy !== null ? `${move.accuracy}%` : null]
-    .filter((part) => part !== null)
-    .join(" · ");
 }
 
 export function currentAbility(mon: Mon): string | null {

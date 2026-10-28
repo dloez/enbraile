@@ -257,7 +257,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           )}
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-1.5 short:gap-1">
+      <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-2 short:gap-1">
         {member.moves.map((id, at) => {
           const move = id ? describeMove(id) : null;
           const introduced = id !== null && mon.free ? moveGen(id) : null;
@@ -276,7 +276,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
               title={late ? t.late(move?.name ?? "", introduced, movesGen) : unlearnable ? t.unlearnable(name, move?.name ?? "") : ruled ? t.ruled(move?.name ?? "", MOVE_RULE_LABELS[moveRule]) : move?.desc}
               className={cn(
                 field(on),
-                "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px] gap-x-1.75 pr-2 pl-1.25 short:min-h-7.5",
+                "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px_23px] gap-x-1.5 @max-[380px]/card:grid-cols-[52px_minmax(0,1fr)_24px] pr-2 pl-1.25 short:min-h-7.5",
                 wrong && !on && "border-destructive bg-destructive-soft",
               )}
             >
@@ -286,6 +286,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
                 {move?.marked && <UnknownMark />}
               </span>
               <span className="text-right font-heading text-xl text-subtle">{move ? (move.power ?? "—") : ""}</span>
+              <span className="text-right font-heading text-sm text-muted-foreground @max-[380px]/card:hidden">{move ? (move.accuracy === null ? "—" : `${move.accuracy}%`) : ""}</span>
             </button>
           );
         })}
@@ -296,7 +297,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
 
 export function EmptyCard({ editable, on, onAdd }: { editable: boolean; on: boolean; onAdd: () => void }) {
   if (!editable) {
-    return <span className="grid min-h-61.5 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-2xl text-faint lg:min-h-0">{t.empty}</span>;
+    return <span className="grid min-h-82.5 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-2xl text-faint lg:min-h-0">{t.empty}</span>;
   }
   return (
     <button
@@ -304,7 +305,7 @@ export function EmptyCard({ editable, on, onAdd }: { editable: boolean; on: bool
       aria-pressed={on}
       onClick={onAdd}
       className={cn(
-        "flex min-h-61.5 flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border-3 border-dashed font-heading text-muted-foreground outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50 lg:min-h-0",
+        "flex min-h-82.5 flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border-3 border-dashed font-heading text-muted-foreground outline-none hover:border-primary hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50 lg:min-h-0",
         on ? "border-primary bg-primary/10" : "border-cell-hi bg-transparent",
       )}
     >

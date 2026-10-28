@@ -259,7 +259,7 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
                       type="button"
                       aria-pressed={key === selectedKey}
                       onClick={() => setPicked(key)}
-                      className={cn(rowClass(key === selectedKey), "grid min-h-13 grid-cols-[52px_56px_minmax(0,1fr)_auto_30px] items-center gap-x-2.5 px-3 disabled:opacity-50")}
+                      className={cn(rowClass(key === selectedKey), "grid min-h-13 grid-cols-[52px_56px_minmax(0,1fr)_auto_30px_36px] items-center gap-x-2.5 px-3 max-sm:grid-cols-[44px_56px_minmax(0,1fr)_auto_30px_36px] max-sm:gap-x-1.5 disabled:opacity-50")}
                     >
                       <span className="font-heading text-[1.375rem] text-muted-foreground">{tm.label}</span>
                       <TypeTag type={tm.type} className="px-0 text-[1.0625rem] leading-5.5" />
@@ -269,6 +269,7 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
                       </span>
                       <CategoryTag category={tm.category} />
                       <span className="text-right font-heading text-[1.3125rem] text-white">{tm.power ?? "—"}</span>
+                      <span className="text-right font-heading text-[1.3125rem] text-muted-foreground">{tm.accuracy === null ? "—" : `${tm.accuracy}%`}</span>
                     </button>
                   </li>
                 );
