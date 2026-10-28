@@ -36,24 +36,6 @@ The owner wants more than one series running at a time (2026-10-27). A partial u
 - How the admin overview shows several running series.
 - Whether starting a series still asks for anything about the ones running.
 
-### pkmn/site: let a series hide league teams and pairings until the match
-
-The [league](league/discovery.md#team-locking) is fully open for series 1: every round team, locked or not, and every round's pairs are seen by all. A later series may want the old app's behaviour, or the series 1 rule that a player knows the opponent's box sheet, not their team: a round's team hidden from all but its owner and admins until its match has a result, and a player's pairing shown only once they lock in. Whether it is hidden is a series' choice, read from the league's rules (`shared/league.ts`) until a series' rules are data. _(owner, 2026-10-27)_
-
-**Do:**
-- [ ] Per the author's answers: a series setting for hidden teams and pairings, enforced by the API, not only the page.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, on a hidden series, a second test player cannot read the first's round team or pairing before the result, by page or by route.
-- Human-run: none until a series uses it.
-- Reuse: the league's round teams and lock.
-- Neighbors: `api/_lib/access.ts`.
-- Forbidden: hiding in the browser only.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/league.ts`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** the league's round teams ([league](league/tasks.md)).
-**Needs the author:** what is hidden (teams, pairings, both), from whom, and until when (the result, the opponent's lock-in).
-
 ### pkmn/site: track what a locked league team spends in a manual series
 
 A locked round or cup team spends Mini Setas, mints and held items that the player must spend in the game too, and the site only sees that at the next snapshot. Series 1 does nothing about it ([league → Team Locking](league/discovery.md#team-locking)). A later series may deduct a locked team's spending from the bag the player's other teams see, or flag a next snapshot that does not show it spent, within manual series' trust stance ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). _(owner, 2026-10-27)_
@@ -84,7 +66,7 @@ A series' rules are Markdown the site only shows ([The pkmn Site → Series](../
 
 ### pkmn/site: show only what a series' rules allow of others' PCs
 
-Every PC at every snapshot is open to every player, for now ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). A series' rules may limit what a player sees of others' boxes (the league's box sheet), and the site could show only that. Left out of site v2. _(owner, 2026-10-22)_
+Every PC at every snapshot is open to every player, for now ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). A series' rules may limit what a player sees of others' boxes (the league's box sheet), and the site could show only that. Left out of site v2. _(owner, 2026-10-22)_ The league already limits it: a player sees others' saves only up to their own round, and a closed round hides its snapshots until the match has a result ([league](league/discovery.md#team-locking)); this idea is what a series' rules allow beyond that.
 
 ### pkmn/site: read saves of games other than Añil
 
