@@ -47,6 +47,9 @@ select option{background:#10141d;color:#eef1f7}
 <a href="SeriesList.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z" fill="currentColor"></path></svg>Series</a>
 <a href="Pc.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z" fill="currentColor"></path></svg>PC</a>
 <a href="TeamsList.dc.html" class="tab" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: #d93a30; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z" fill="currentColor"></path></svg>Teams</a>
+<sc-if value="{{admin}}" hint-placeholder-val="{{ false }}">
+<a href="AdminHome.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none">Admin</a>
+</sc-if>
 </nav>
 <div style="flex: 1"></div>
 <div style="display: flex; align-items: center; gap: 12px">
@@ -63,8 +66,11 @@ select option{background:#10141d;color:#eef1f7}
 <a href="TeamsList.dc.html" style="display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none"><svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M12 2L2 9l10 7z" fill="currentColor"></path></svg>Teams</a>
 <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
 <h1 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 54px; line-height: 0.85">{{title}}</h1>
-<sc-if value="{{ro}}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{othersTeam}}" hint-placeholder-val="{{ false }}">
 <span style="display: flex; align-items: center; gap: 6px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #10141d; background: {{ownerC}}; padding: 1px 8px; border-radius: 4px">{{owner}}'s team</span>
+</sc-if>
+<sc-if value="{{locked}}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 12px 0 10px; box-sizing: border-box; border-radius: 8px; border: 3px solid #8a7330; background: #2a2416; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #ffd34d"><svg width="14" height="16" viewBox="0 0 7 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h3v1H2zM1 1h1v3H1zM5 1h1v3H5zM0 3h7v5H0z" fill="currentColor"></path><path d="M3 5h1v2H3z" fill="#2a2416"></path></svg>Locked · {{lockBy}}</span>
 </sc-if>
 <sc-for list="{{srcChips}}" as="sc" hint-placeholder-count="1">
 <span style="display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 {{sc.padR}} 0 6px; box-sizing: border-box; border-radius: 8px; border: 3px {{sc.line}} {{sc.border}}; background: #10141d; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 20px">
@@ -101,6 +107,9 @@ select option{background:#10141d;color:#eef1f7}
 </sc-if>
 <sc-if value="{{rw}}" hint-placeholder-val="{{ true }}">
 <button type="button" class="btn" style="min-height: 48px; padding: 0 18px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">Paste</button>
+</sc-if>
+<sc-if value="{{canUnlock}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" onClick="{{unlock}}" style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 18px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer"><svg width="14" height="16" viewBox="0 0 7 8" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 0h3v1H2zM1 1h1v2H1zM5 1h1v1H5zM0 3h7v5H0z" fill="#ffd34d"></path><path d="M3 5h1v2H3z" fill="#10141d"></path></svg>Unlock</button>
 </sc-if>
 <button type="button" class="btn" style="min-height: 48px; padding: 0 18px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">Copy for Showdown</button>
 </div>
@@ -152,7 +161,7 @@ select option{background:#10141d;color:#eef1f7}
 
 <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
 <sc-for list="{{cd.moves}}" as="mv" hint-placeholder-count="4">
-<button type="button" class="mvb" aria-pressed="{{mv.on}}" disabled="{{ro}}" onClick="{{mv.pick}}" title="{{mv.desc}}" style="display: grid; grid-template-columns: 52px minmax(0, 1fr) 24px; align-items: center; column-gap: 7px; min-height: 36px; padding: 0 8px 0 5px; border-radius: 9px; background: {{mv.bg}}; border: 3px solid {{mv.border}}; color: #eef1f7; font: inherit; text-align: left; cursor: {{cursor}}">
+<button type="button" class="mvb" aria-pressed="{{mv.on}}" disabled="{{ro}}" onClick="{{mv.pick}}" title="{{mv.title}}" style="display: grid; grid-template-columns: 52px minmax(0, 1fr) 24px; align-items: center; column-gap: 7px; min-height: 36px; padding: 0 8px 0 5px; border-radius: 9px; background: {{mv.bg}}; border: 3px solid {{mv.border}}; color: #eef1f7; font: inherit; text-align: left; cursor: {{cursor}}">
 <span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 21px; color: #ffffff; background: {{mv.c}}; border-radius: 5px; text-shadow: 0 1px 0 rgba(0,0,0,0.5)">{{mv.type}}</span>
 <span style="font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{mv.name}}</span>
 <span style="text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #c3cad8">{{mv.power}}</span>
@@ -300,8 +309,11 @@ select option{background:#10141d;color:#eef1f7}
 <div style="display: grid; grid-template-columns: 28px 52px minmax(0, 1fr) auto 26px; column-gap: 8px; padding: 0 11px 0 9px; font-family: 'Jersey 10', sans-serif; font-size: 18px; line-height: 1; color: #a3acbf">
 <span style="text-align: right">Lv</span><span style="grid-column: 2 / 5"></span><span style="text-align: right">Pow</span>
 </div>
+<sc-if value="{{moveNote}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 0 9px; font-size: 13px; font-weight: 700; color: #a3acbf">{{moveNote}}</p></sc-if>
 <div class="mvscroll" style="flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-right: -10px; padding-right: 4px; display: flex; flex-direction: column; gap: 2px">
 <sc-for list="{{options}}" as="op" hint-placeholder-count="12">
+<sc-if value="{{op.head}}" hint-placeholder-val="{{ false }}"><h3 style="margin: 0; padding: 10px 9px 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 20px; line-height: 1; color: #a3acbf">{{op.label}}</h3></sc-if>
+<sc-if value="{{op.row}}" hint-placeholder-val="{{ true }}">
 <button type="button" class="mvrow" onClick="{{op.pick}}" disabled="{{op.taken}}" style="display: flex; flex-direction: column; gap: 1px; padding: 5px 8px 6px 6px; border: none; border-radius: 10px; background: transparent; color: #eef1f7; font: inherit; text-align: left; cursor: {{op.cursor}}; opacity: {{op.fade}}">
 <span style="width: 100%; display: grid; grid-template-columns: 28px 52px minmax(0, 1fr) auto 26px; align-items: center; column-gap: 8px">
 <span style="text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 21px; color: #c3cad8">{{op.lv}}</span>
@@ -312,6 +324,7 @@ select option{background:#10141d;color:#eef1f7}
 </span>
 <span style="padding-left: 36px; font-size: 13px; line-height: 1.35; color: #c3cad8">{{op.desc}}</span>
 </button>
+</sc-if>
 </sc-for>
 </div>
 </sc-if>
@@ -423,7 +436,7 @@ select option{background:#10141d;color:#eef1f7}
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"preset":{"editor":"enum","options":["elesa","rain","ban","mira","vicky","new"],"default":"elesa"},"added":{"editor":"int","default":-1,"min":-1,"max":47},"look":{"editor":"int","default":-1,"min":-1,"max":5},"$preview":{"width":1440,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"preset":{"editor":"enum","options":["elesa","rain","ban","mira","vicky","locked","new"],"default":"elesa"},"admin":{"editor":"boolean","default":false},"added":{"editor":"int","default":-1,"min":-1,"max":47},"look":{"editor":"int","default":-1,"min":-1,"max":5},"freeMove":{"editor":"int","default":-1,"min":-1,"max":7},"$preview":{"width":1440,"height":1000}}'>
 const SHEET = '/_blob/df227043f0b439b7c33cd72640e52ca1';
 const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
   '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
@@ -436,14 +449,24 @@ const SRC = {
   own: {id: 'own', kind: 'pc', label: "Dloez's PC · Gym 5", c: '#ffd34d', i: 'D'},
   mira: {id: 'mira', kind: 'pc', label: "MIRAMEEE's PC · Post-League", c: '#ff9ec4', i: 'M'},
   vicky: {id: 'vicky', kind: 'pc', label: "Vicky's PC · Gym 5", c: '#7be08a', i: 'V'},
+  tole: {id: 'tole', kind: 'pc', label: "Tole's PC · Gym 7", c: '#c39bff', i: 'T'},
   any: {id: 'any', kind: 'any', label: 'Any Pokémon', c: 'transparent', i: ''}
 };
+const EXTRA_MOVES = [{id: 'moonblast', name: 'Moonblast', type: 'Fairy', cat: 'Special', power: 95, desc: "30% chance to lower the target's Sp. Atk by 1.", gen: 6}];
+const MOVES_GEN = 5;
+const moveGen = (id) => (EXTRA_MOVES.find((m) => m.id === id) || {gen: 1}).gen;
+function freeOptions(smp, all, m, row) {
+  const learn = smp.current.concat(smp.relearner, smp.tms).filter((mv, i, a) => a.findIndex((x) => x.id === mv.id) === i).sort((a, b) => a.name.localeCompare(b.name));
+  const other = all.filter((mv) => !learn.some((x) => x.id === mv.id)).sort((a, b) => a.name.localeCompare(b.name));
+  return [{head: true, row: false, label: 'Can learn'}].concat(learn.map(row), [{head: true, row: false, label: 'Other moves'}], other.map(row));
+}
 const PRESETS = {
   elesa: {name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', srcs: ['own'], members: [{key: 0, item: 'icyrock'}, {key: 5, item: 'lightclay'}, {key: 11, item: ''}, {key: 17, item: 'machobrace'}, null, null]},
-  rain: {name: 'Rain test', owner: 'Dloez', c: '#ffd34d', srcs: ['own', 'any'], members: [{key: 2, item: 'seaincense'}, {key: 8, item: 'waveincense'}, {key: 14, item: 'toxicorb'}, {key: 20, item: 'laggingtail'}, {key: 26, item: 'bindingband'}, {key: 32, item: 'sachet', free: true}]},
+  rain: {name: 'Rain test', owner: 'Dloez', c: '#ffd34d', srcs: ['own', 'any'], members: [{key: 2, item: 'seaincense'}, {key: 8, item: 'waveincense'}, {key: 14, item: 'toxicorb'}, {key: 20, item: 'laggingtail'}, {key: 26, item: 'bindingband'}, {key: 32, item: 'sachet', free: true, late: 'moonblast'}]},
   mira: {name: 'League run', owner: 'MIRAMEEE', c: '#ff9ec4', srcs: ['mira'], members: [{key: 3, item: 'lightball', from: 'mira'}, {key: 9, item: 'toxicorb', from: 'mira'}, {key: 21, item: 'heatrock', from: 'mira'}, {key: 27, item: 'icyrock', from: 'mira'}, {key: 33, item: 'blackbelt', from: 'mira'}, {key: 40, item: 'twistedspoon', from: 'mira'}]},
   vicky: {name: 'Gym 6 attempt', owner: 'Vicky', c: '#7be08a', srcs: ['vicky'], members: [{key: 6, item: 'machobrace', from: 'vicky'}, {key: 12, item: '', from: 'vicky'}, {key: 18, item: 'powerband', from: 'vicky'}, {key: 24, item: 'miracleseed', from: 'vicky'}, {key: 30, item: 'stickybarb', from: 'vicky'}, null]},
   ban: {name: 'Ban round', owner: 'Dloez', c: '#ffd34d', size: 8, srcs: ['own', 'any'], members: [{key: 1, item: 'icyrock'}, {key: 7, item: 'lightclay'}, {key: 13, item: 'toxicorb'}, {key: 19, item: ''}, {key: 25, item: 'machobrace'}, {key: 31, item: 'seaincense'}, {key: 37, item: 'sachet', free: true}, null]},
+  locked: {name: 'Gym 7 team', owner: 'Tole', c: '#c39bff', srcs: ['tole'], lockBy: 'Round 5', members: [{key: 12, item: 'lightclay', from: 'tole'}, {key: 30, item: '', from: 'tole'}, {key: 31, item: 'machobrace', from: 'tole'}, {key: 25, item: 'toxicorb', from: 'tole'}, {key: 26, item: 'icyrock', from: 'tole'}, {key: 3, item: 'seaincense', from: 'tole'}]},
   new: {name: 'New team', owner: 'Dloez', c: '#ffd34d', srcs: ['own'], members: [null, null, null, null, null, null]}
 };
 const NAT = {Lonely:['atk','def'],Brave:['atk','spe'],Adamant:['atk','spa'],Naughty:['atk','spd'],Bold:['def','atk'],Relaxed:['def','spe'],Impish:['def','spa'],Lax:['def','spd'],Timid:['spe','atk'],Hasty:['spe','def'],Jolly:['spe','spa'],Naive:['spe','spd'],Modest:['spa','atk'],Mild:['spa','def'],Quiet:['spa','spe'],Rash:['spa','spd'],Calm:['spd','atk'],Gentle:['spd','def'],Sassy:['spd','spe'],Careful:['spd','spa']};
@@ -488,9 +511,10 @@ class Component extends DCLogic {
   st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
   renderVals() {
     const pre = PRESETS[this.props.preset] || PRESETS.elesa;
-    const ro = pre.owner !== 'Dloez';
+    const admin = !!this.props.admin;
+    const locked = !!pre.lockBy && !this.st('unlocked', false);
+    const ro = pre.owner !== 'Dloez' || locked;
     const srcs = this.st('srcs', pre.srcs);
-    const locked = !!pre.lockBy;
     const addSrcOpen = this.st('addSrc', false);
     const size = this.st('size', pre.size || 6);
     const fit = (t) => (t.length >= size ? t.slice(0, size) : t.concat(Array(size - t.length).fill(null)));
@@ -501,7 +525,7 @@ class Component extends DCLogic {
       return {n: String(n), on, off, fade: off ? '0.45' : '1', cursor: off ? 'default' : 'pointer', bg: on ? '#343f58' : 'transparent', fg: on ? '#ffffff' : '#a3acbf',
         pick: () => { if (!off) this.setState({size: n, team: held ? (held.length >= n ? held.slice(0, n) : held.concat(Array(n - held.length).fill(null))) : null}); }};
     });
-    const base = {sizes, rows: Math.ceil(size / 2), scopeOn: false, scopes: [], scopeNote: '', scopeInk: '#a3acbf', title: pre.name, owner: pre.owner, ownerC: pre.c, ro, rw: !ro, cursor: ro ? 'default' : 'pointer', srcChips: [], locked, lockBy: pre.lockBy || '', canAddSrc: !ro && !locked, addSrcOpen, toggleAddSrc: () => this.setState({addSrc: !addSrcOpen}), addOpts: [],
+    const base = {moveNote: '', sizes, rows: Math.ceil(size / 2), scopeOn: false, scopes: [], scopeNote: '', scopeInk: '#a3acbf', title: pre.name, owner: pre.owner, ownerC: pre.c, ro, rw: !ro, othersTeam: pre.owner !== 'Dloez', admin, canUnlock: locked && admin, unlock: () => this.setState({unlocked: true}), cursor: ro ? 'default' : 'pointer', srcChips: [], locked, lockBy: pre.lockBy || '', canAddSrc: !ro && !locked, addSrcOpen, toggleAddSrc: () => this.setState({addSrc: !addSrcOpen}), addOpts: [],
       setaLeft: '—', setaInk: '#eef1f7', notice: false, noticeText: '', dismiss: () => {}, cards: [], panelLabel: 'Analysis', panelLine: '#343f58',
       onSum: false, sumMon: null, panelPad: '12px 14px 14px', backLabel: 'Back to the analysis', fullOpen: false, openFull: () => {}, closeFull: () => {}, anaMembers: [], notAny: true, isAny: false, cr: {}, form: {}, onSet: false, onAna: true, onMove: false, onAb: false, onItem: false, bagName: '', pockets: [], bagQuery: this.st('bq', ''), onBagQuery: (e) => this.setState({bq: e.target.value}), bagRows: [], bagEmpty: false, bi: {}, abOpts: [], abNote: '', onAdd: false, anaModes: [], anaHead: [], anaRows: [], anaCorner: '', anaColA: '', anaColB: '', back: () => {}, pkName: '', pkMove: '', options: [],
       addNo: '', srcTabs: [], strip: [], picker: null, query: this.st('q', ''), onQuery: (e) => this.setState({q: e.target.value}), anyNote: false, boxBg: '#1d4650', cells: []};
@@ -511,7 +535,7 @@ class Component extends DCLogic {
     const byKey = (k) => all.find((p) => p.key === k);
     const samples = {};
     const smpOf = (p) => samples[p.key] || (samples[p.key] = sample(p, d.tms));
-    const fresh = (s) => s && {key: s.key, item: s.item, free: !!s.free, from: s.free ? 'any' : (s.from || pre.srcs[0]), ab: byKey(s.key).ability.id, moves: smpOf(byKey(s.key)).current.map((m) => m.id),
+    const fresh = (s) => s && {key: s.key, item: s.item, free: !!s.free, from: s.free ? 'any' : (s.from || pre.srcs[0]), ab: byKey(s.key).ability.id, moves: smpOf(byKey(s.key)).current.map((m, j) => (s.late && j === 3 ? s.late : m.id)),
       ...(s.free ? {lv: (s.set && s.set.lv) || 50, nat: (s.set && s.set.nat) || byKey(s.key).nature || 'Hardy', evs: (s.set && s.set.evs) || {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0}, ivs: (s.set && s.set.ivs) || {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31}} : {})};
     const added = this.props.added ?? -1;
     let addedAt = -1;
@@ -530,9 +554,10 @@ class Component extends DCLogic {
     const picked = (this.st('pick', null) || filledAt.slice(0, 6)).filter((i) => team[i]);
     const glowAt = this.st('glow', added >= 0 ? team.findIndex((m) => m && m.key === added) : -1);
     const itemOf = (id) => d.items.find((x) => x.id === id);
-    const moveOf = (p, id) => { const s = smpOf(p); return s.current.concat(s.relearner, s.tms).find((m) => m.id === id) || d.tms.find((m) => m.id === id); };
+    const moveOf = (p, id) => { const s = smpOf(p); return s.current.concat(s.relearner, s.tms).find((m) => m.id === id) || d.tms.find((m) => m.id === id) || EXTRA_MOVES.find((m) => m.id === id); };
     const look = this.props.look ?? -1;
-    const panel = this.st('panel', look >= 0 && team[look] ? {t: 'sum', i: look} : {t: 'ana'});
+    const freeMove = this.props.freeMove ?? -1;
+    const panel = this.st('panel', freeMove >= 0 && team[freeMove] ? {t: 'move', i: freeMove, s: 1} : look >= 0 && team[look] ? {t: 'sum', i: look} : {t: 'ana'});
     const ret = (i) => panel.i === i && (panel.t === 'sum' || (panel.ret && panel.ret.t === 'sum')) ? {t: 'sum', i} : {t: 'ana'};
     const done = panel.ret || {t: 'ana'};
     const setTeam = (t, extra) => this.setState({team: t, ...(extra || {})});
@@ -584,7 +609,8 @@ class Component extends DCLogic {
         abOn: panel.t === 'ab' && panel.i === i, abBg: panel.t === 'ab' && panel.i === i ? '#2c3549' : '#1b2232', abBorder: panel.t === 'ab' && panel.i === i ? '#5ad1f0' : '#2c3549', abPick: () => { if (!ro) this.setState({team, panel: {t: 'ab', i, ret: ret(i)}}); },
         moves: m.moves.map((id, s) => {
           const on = isPanel && panel.s === s;
-          return {...move(moveOf(p, id)), on, bg: on ? '#2c3549' : '#1b2232', border: on ? '#5ad1f0' : '#2c3549', pick: () => { if (!ro) this.setState({team, panel: {t: 'move', i, s, ret: ret(i)}}); }};
+          const mv = move(moveOf(p, id)), late = m.free && moveGen(id) > MOVES_GEN;
+          return {...mv, on, bg: on ? '#2c3549' : late ? 'rgba(255,138,128,0.14)' : '#1b2232', border: on ? '#5ad1f0' : late ? '#ff8a80' : '#2c3549', title: late ? mv.name + " is from Gen " + moveGen(id) + ", past the pool's moves up to Gen " + MOVES_GEN : mv.desc, pick: () => { if (!ro) this.setState({team, panel: {t: 'move', i, s, ret: ret(i)}}); }};
         }),
         remove: () => { const t = team.slice(); t[i] = null; setTeam(t, {panel: {t: 'ana'}, glow: -1}); }};
     });
@@ -676,12 +702,14 @@ class Component extends DCLogic {
     }
     if (panel.t === 'move' && team[panel.i]) {
       const m = team[panel.i], p = byKey(m.key), smp = smpOf(p);
-      const options = smp.current.concat(smp.relearner, smp.tms).filter((mv, i, a) => a.findIndex((x) => x.id === mv.id) === i).map((mv) => {
+      const row = (mv) => {
         const taken = m.moves.includes(mv.id);
-        return {...move(mv), lv: mv.lv ? String(mv.lv) : '', taken, fade: taken ? '0.4' : '1', cursor: taken ? 'default' : 'pointer',
+        return {...move(mv), head: false, row: true, lv: !m.free && mv.lv ? String(mv.lv) : '', taken, fade: taken ? '0.4' : '1', cursor: taken ? 'default' : 'pointer',
           pick: () => { if (taken) return; const t = team.slice(), mvs = m.moves.slice(); mvs[panel.s] = mv.id; t[panel.i] = {...m, moves: mvs}; setTeam(t, {panel: done}); }};
-      });
-      return {...out, onAna: false, onMove: true, panelLabel: 'Choose a move', panelLine: '#5ad1f0', pkName: p.nickname || p.name, pkMove: moveOf(p, m.moves[panel.s]).name, options};
+      };
+      const options = m.free ? freeOptions(smp, d.tms, m, row) : smp.current.concat(smp.relearner, smp.tms).filter((mv, i, a) => a.findIndex((x) => x.id === mv.id) === i).map(row);
+      return {...out, onAna: false, onMove: true, panelLabel: 'Choose a move', panelLine: '#5ad1f0', pkName: p.nickname || p.name, pkMove: moveOf(p, m.moves[panel.s]).name, options,
+        moveNote: m.free ? "Every move up to Gen " + MOVES_GEN + ", the pool's Moves up to; its species' learnset first" : ''};
     }
     if (panel.t === 'add' && !team[panel.i]) {
       const src = srcs.includes(this.st('src', null)) ? this.st('src', null) : srcs[0];

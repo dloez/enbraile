@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>League</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+.tab:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}.out:hover{color:#ffffff!important;background:#222a3b!important}
+.me:hover{background:#222a3b!important}
+.btn:not(:disabled):hover{background:rgba(255,255,255,0.18)!important}
+.go:not(:disabled):hover{background:#ef5148!important}
+.seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
+.mrow:hover{border-color:#5ad1f0!important;background:#283146!important}
+.srow:hover{background:#283146!important}
+.chev:hover{border-color:#5ad1f0!important}
+.rep:hover{background:#5ad1f0!important;color:#10141d!important}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; min-height: {{h}}px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="flex: none; height: 64px; display: flex; align-items: center; gap: 28px; padding: 0 32px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="Main.dc.html" aria-label="Home" style="flex: none; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 8px">
+<svg width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<nav aria-label="Sections" style="align-self: stretch; display: flex; align-items: flex-end; gap: 4px">
+<a href="SeriesList.dc.html" class="tab" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: #d93a30; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z" fill="currentColor"></path></svg>Series</a>
+<a href="Pc.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z" fill="currentColor"></path></svg>PC</a>
+<a href="TeamsList.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z" fill="currentColor"></path></svg>Teams</a>
+<sc-if value="{{admin}}" hint-placeholder-val="{{ false }}">
+<a href="AdminHome.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none">Admin</a>
+</sc-if>
+</nav>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Profile.dc.html" class="me" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 8px; border-radius: 8px; text-decoration: none">
+<span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 8px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{meC}}; background: {{meC}}; box-sizing: border-box; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">{{meI}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #ffffff">{{meName}}</span>
+</a>
+<button type="button" class="out" aria-label="Sign out" title="Sign out" style="width: 44px; height: 44px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; display: grid; place-items: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg></button>
+</div>
+</header>
+
+<div style="flex: none; display: flex; flex-direction: column; gap: 14px; padding: 22px 40px 0">
+<nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 10px; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">
+<a href="Main.dc.html" style="color: #5ad1f0; text-decoration: none">Series 1</a>
+<svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#6b7489"></path></svg>
+<span>League</span>
+</nav>
+<div style="display: flex; align-items: flex-end; gap: 24px">
+<h1 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 64px; line-height: 0.85">League</h1>
+<div role="radiogroup" aria-label="View" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button type="button" role="radio" class="seg" aria-checked="{{t.on}}" onClick="{{t.pick}}" style="min-height: 44px; padding: 0 18px 2px; border: none; border-radius: 8px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">{{t.label}}</button>
+</sc-for>
+</div>
+<div style="flex: 1"></div>
+<span style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border-radius: 10px; background: #10141d; border: 3px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #c3cad8">{{status}}</span>
+</div>
+</div>
+
+<main style="flex: 1; padding: 22px 40px 40px; display: flex; flex-direction: column; gap: 16px">
+
+<sc-if value="{{onStandings}}" hint-placeholder-val="{{ true }}">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; align-items: start">
+<div role="table" aria-label="Standings" style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
+<div role="row" style="display: grid; grid-template-columns: {{scols}}; align-items: center; min-height: 48px; background: #1b2232; border-bottom: 3px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">
+<span role="columnheader" style="text-align: center">#</span>
+<span role="columnheader">Trainer</span>
+<span role="columnheader" style="text-align: center; color: #ffd34d">Points</span>
+<span role="columnheader" style="text-align: center">W–L</span>
+<span role="columnheader" style="text-align: center">Games</span>
+<span role="columnheader" style="text-align: center">Fainted</span>
+<span role="columnheader" style="text-align: center">Pokémon League</span>
+<span role="columnheader" style="text-align: center">Eggs</span>
+</div>
+<sc-for list="{{table}}" as="r" hint-placeholder-count="6">
+<a href="Profile.dc.html" role="row" class="srow" style="display: grid; grid-template-columns: {{scols}}; align-items: center; min-height: 76px; background: {{r.bg}}; border-bottom: {{r.line}}; color: #eef1f7; text-decoration: none">
+<span role="cell" style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 36px; color: {{r.placeInk}}">{{r.place}}</span>
+<span role="cell" style="display: flex; align-items: center; gap: 12px; min-width: 0">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; box-sizing: border-box; border-radius: 9px; border: 3px solid #10141d; box-shadow: 0 0 0 3px {{r.c}}; background: {{r.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">{{r.i}}</span>
+<span style="display: flex; flex-direction: column; min-width: 0; line-height: 1.1">
+<span style="display: flex; align-items: center; gap: 8px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px">{{r.name}}</span>
+<sc-if value="{{r.you}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 15px; color: #10141d; background: #ffd34d; padding: 0 6px; border-radius: 4px">You</span></sc-if>
+</span>
+<sc-if value="{{r.tied}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; font-weight: 700; color: #a3acbf">{{r.tieNote}}</span></sc-if>
+</span>
+</span>
+<span role="cell" style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 40px; color: {{r.ptsInk}}">{{r.pts}}</span>
+<span role="cell" style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 26px">{{r.wl}}</span>
+<span role="cell" style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #a3acbf">{{r.games}}</span>
+<span role="cell" style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #a3acbf">{{r.fainted}}</span>
+<span role="cell" style="display: flex; justify-content: center; gap: 4px">
+<sc-for list="{{r.pips}}" as="p" hint-placeholder-count="5"><span aria-hidden="true" style="width: 18px; height: 18px; box-sizing: border-box; border-radius: 5px; border: 3px solid {{p.line}}; background: {{p.bg}}"></span></sc-for>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{r.bestLabel}}</span>
+</span>
+<span role="cell" style="display: flex; flex-direction: column; align-items: center; line-height: 1">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 26px">{{r.eggsWon}}</span>
+<span style="font-size: 12px; font-weight: 700; color: #a3acbf">{{r.eggsHatched}}</span>
+</span>
+</a>
+</sc-for>
+</div>
+
+<sc-if value="{{isPlayer}}" hint-placeholder-val="{{ true }}">
+<aside aria-label="You in the league" style="display: flex; flex-direction: column; gap: 14px">
+<a href="Match.dc.html" class="mrow" style="display: flex; flex-direction: column; gap: 12px; padding: 16px 18px 18px; border-radius: 18px; background: #222a3b; border: 3px solid #5ad1f0; color: #eef1f7; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #5ad1f0">Your next match</span>
+<span style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; box-sizing: border-box; border-radius: 9px; border: 3px solid #10141d; box-shadow: 0 0 0 3px {{next.c}}; background: {{next.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">{{next.i}}</span>
+<span style="display: flex; flex-direction: column; line-height: 1.1">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 30px">vs {{next.name}}</span>
+<span style="font-size: 14px; font-weight: 700; color: #a3acbf">{{next.stage}}</span>
+</span>
+<span style="flex: 1"></span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 34px">{{next.score}}</span>
+</span>
+<span class="go" style="display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 10px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 24px">{{next.cta}}</span>
+</a>
+
+<section aria-labelledby="yours" style="display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px; border-radius: 18px; background: #222a3b; border: 3px solid #343f58">
+<h2 id="yours" style="margin: 0 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px">Your rounds</h2>
+<sc-for list="{{mine}}" as="y" hint-placeholder-count="5">
+<a href="Match.dc.html" class="mrow" style="display: grid; grid-template-columns: 44px 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; border-radius: 10px; background: #1b2232; border: 3px solid #343f58; color: #eef1f7; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #a3acbf">{{y.round}}</span>
+<span style="display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; background: {{y.tagBg}}; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d">{{y.tag}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 23px">vs {{y.name}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; color: {{y.ink}}">{{y.score}}</span>
+</a>
+</sc-for>
+</section>
+</aside>
+</sc-if>
+<sc-if value="{{isVisitor}}" hint-placeholder-val="{{ false }}">
+<aside aria-label="Now in the league" style="display: flex; flex-direction: column; gap: 14px">
+<a href="Match.dc.html" class="mrow" style="display: flex; flex-direction: column; gap: 12px; padding: 16px 18px 18px; border-radius: 18px; background: #222a3b; border: 3px solid #5ad1f0; color: #eef1f7; text-decoration: none">
+<span style="display: flex; align-items: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #5ad1f0"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 2px; background: #5ad1f0"></span>Live now</span>
+<sc-for list="{{live.sides}}" as="s" hint-placeholder-count="2">
+<span style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="width: 36px; height: 36px; flex: none; box-sizing: border-box; border-radius: 8px; border: 3px solid #10141d; box-shadow: 0 0 0 3px {{s.c}}; background: {{s.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #10141d">{{s.i}}</span>
+<span style="flex: 1; font-family: 'Jersey 10', sans-serif; font-size: 28px">{{s.name}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 32px">{{s.g}}</span>
+</span>
+</sc-for>
+<span style="font-size: 14px; font-weight: 700; color: #a3acbf">{{live.stage}}</span>
+<span class="btn" style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 10px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px">Follow the match</span>
+</a>
+<section aria-labelledby="latestres" style="display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px; border-radius: 18px; background: #222a3b; border: 3px solid #343f58">
+<h2 id="latestres" style="margin: 0 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px">Latest results</h2>
+<sc-for list="{{latest}}" as="y" hint-placeholder-count="4">
+<a href="Match.dc.html" class="mrow" style="display: grid; grid-template-columns: 64px minmax(0, 1fr) 56px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 46px; padding: 0 12px; border-radius: 10px; background: #1b2232; border: 3px solid #343f58; color: #eef1f7; text-decoration: none; font-family: 'Jersey 10', sans-serif">
+<span style="font-size: 17px; color: #a3acbf">{{y.when}}</span>
+<span style="font-size: 22px; color: {{y.aInk}}">{{y.a}}</span>
+<span style="text-align: center; font-size: 22px">{{y.score}}</span>
+<span style="text-align: right; font-size: 22px; color: {{y.bInk}}">{{y.b}}</span>
+</a>
+</sc-for>
+</section>
+</aside>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{onRounds}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{timeline}}" as="rd" hint-placeholder-count="5">
+<section aria-label="{{rd.title}}" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 16px; background: #222a3b; border: 3px solid {{rd.line}}; border-radius: 18px">
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 0 2px">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<h2 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 30px">{{rd.title}}</h2>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{rd.at}}</span>
+</div>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: {{rd.stateInk}}">{{rd.state}}</span>
+</div>
+<sc-for list="{{rd.matches}}" as="m" hint-placeholder-count="3">
+<a href="Match.dc.html" class="mrow" aria-label="{{m.label}}" style="display: flex; flex-direction: column; border-radius: 12px; background: #1b2232; border: 3px {{m.lineStyle}} {{m.line}}; overflow: hidden; color: #eef1f7; text-decoration: none">
+<sc-for list="{{m.sides}}" as="s" hint-placeholder-count="2">
+<span style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-top: {{s.top}}; opacity: {{s.dim}}">
+<span aria-hidden="true" style="width: 26px; height: 26px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{s.c}}; background: {{s.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #10141d">{{s.i}}</span>
+<span style="flex: 1; font-family: 'Jersey 10', sans-serif; font-size: 23px; color: {{s.ink}}">{{s.name}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 26px; color: {{s.ink}}">{{s.g}}</span>
+</span>
+</sc-for>
+</a>
+</sc-for>
+</section>
+</sc-for>
+</div>
+
+<section aria-labelledby="h2h" style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 14px; padding: 0 4px">
+<h2 id="h2h" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 30px">Head to head</h2>
+</div>
+<div role="table" aria-label="Head to head" style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
+<div role="row" style="display: grid; grid-template-columns: {{xcols}}; align-items: center; min-height: 52px; background: #1b2232; border-bottom: 3px solid #343f58">
+<span role="columnheader" style="padding: 0 20px; font-family: 'Jersey 10', sans-serif; font-size: 21px; color: #a3acbf">Trainer</span>
+<sc-for list="{{xhead}}" as="hd" hint-placeholder-count="6">
+<span role="columnheader" style="display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Jersey 10', sans-serif; font-size: 21px; color: #c3cad8">
+<span aria-hidden="true" style="width: 26px; height: 26px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{hd.c}}; background: {{hd.c}}; display: grid; place-items: center; font-size: 17px; color: #10141d">{{hd.i}}</span>{{hd.name}}</span>
+</sc-for>
+<span role="columnheader" style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 21px; color: #a3acbf">W–L</span>
+</div>
+<sc-for list="{{xrows}}" as="xr" hint-placeholder-count="6">
+<div role="row" style="display: grid; grid-template-columns: {{xcols}}; align-items: stretch; min-height: 68px; background: {{xr.bg}}; border-bottom: {{xr.line}}">
+<span role="rowheader" style="display: flex; align-items: center; gap: 12px; padding: 0 20px">
+<span aria-hidden="true" style="width: 36px; height: 36px; flex: none; box-sizing: border-box; border-radius: 9px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{xr.c}}; background: {{xr.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #10141d">{{xr.i}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 26px">{{xr.name}}</span>
+<sc-if value="{{xr.you}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #10141d; background: #ffd34d; padding: 1px 7px; border-radius: 4px">You</span></sc-if>
+</span>
+<sc-for list="{{xr.cells}}" as="x" hint-placeholder-count="6">
+<span role="cell" style="display: flex; padding: 6px">
+<sc-if value="{{x.self}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="flex: 1; border-radius: 10px; background: repeating-linear-gradient(135deg, #10141d 0 6px, #1b2232 6px 12px)"></span></sc-if>
+<sc-if value="{{x.none}}" hint-placeholder-val="{{ false }}"><span style="flex: 1; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #44506d">—</span></sc-if>
+<sc-if value="{{x.match}}" hint-placeholder-val="{{ true }}">
+<a href="Match.dc.html" class="mrow" aria-label="{{x.label}}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 10px; background: {{x.bg}}; border: 3px {{x.lineStyle}} {{x.line}}; text-decoration: none">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; color: {{x.ink}}">{{x.score}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #a3acbf">{{x.round}}</span>
+</a>
+</sc-if>
+</span>
+</sc-for>
+<span role="cell" style="display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #c3cad8">{{xr.wl}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{onTries}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 14px">
+<div style="flex: 1"></div>
+<button type="button" class="go" onClick="{{openLog}}" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 20px 4px; border: none; border-radius: 8px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 26px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h2v10H4zM0 4h10v2H0z" fill="currentColor"></path></svg>Log a try</button>
+</div>
+<div style="background: #222a3b; border: 3px solid #343f58; border-radius: 18px; overflow: hidden">
+<sc-for list="{{tries}}" as="p" hint-placeholder-count="6">
+<div style="border-bottom: {{p.line}}">
+<div style="display: flex; align-items: center; gap: 16px; min-height: 84px; padding: 0 20px; background: {{p.bg}}">
+<span aria-hidden="true" style="width: 46px; height: 46px; flex: none; box-sizing: border-box; border-radius: 10px; border: 3px solid #10141d; box-shadow: 0 0 0 3px {{p.c}}; background: {{p.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 28px; color: #10141d">{{p.i}}</span>
+<span style="width: 170px; font-family: 'Jersey 10', sans-serif; font-size: 30px">{{p.name}}</span>
+<span style="display: flex; gap: 6px">
+<sc-for list="{{p.pips}}" as="q" hint-placeholder-count="5"><span aria-hidden="true" style="width: 26px; height: 26px; box-sizing: border-box; border-radius: 7px; border: 3px solid {{q.line}}; background: {{q.bg}}"></span></sc-for>
+</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 26px; color: {{p.bestInk}}">{{p.best}}</span>
+<div style="flex: 1"></div>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">{{p.count}}</span>
+<sc-if value="{{p.has}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="chev" aria-label="{{p.chevLabel}}" aria-expanded="{{p.open}}" onClick="{{p.toggle}}" style="width: 44px; height: 44px; box-sizing: border-box; border-radius: 10px; background: #2c3549; border: 3px solid #44506d; display: grid; place-items: center; cursor: pointer"><svg width="16" height="12" viewBox="0 0 22 16" aria-hidden="true" style="transform: {{p.chev}}"><path d="M2 3h18l-9 11z" fill="#5ad1f0"></path></svg></button>
+</sc-if>
+</div>
+<sc-if value="{{p.open}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 20px 20px 82px; background: #1b2232; border-top: 3px dashed #343f58">
+<sc-for list="{{p.list}}" as="t" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 18px; padding: 10px 14px; border-radius: 12px; background: #222a3b; border: 3px solid {{t.line}}">
+<span style="width: 92px; display: flex; flex-direction: column; line-height: 1.1">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px">{{t.title}}</span>
+<span style="font-size: 13px; font-weight: 700; color: {{t.tagInk}}">{{t.tag}}</span>
+</span>
+<span style="display: flex; gap: 6px">
+<sc-for list="{{t.pips}}" as="q" hint-placeholder-count="5"><span aria-hidden="true" style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 6px; border: 3px solid {{q.line}}; background: {{q.bg}}"></span></sc-for>
+</span>
+<span style="display: flex; gap: 4px">
+<sc-for list="{{t.team}}" as="s" hint-placeholder-count="6">
+<span style="position: relative; width: 68px; height: 60px; flex: none; border-radius: 10px; background: #1b2232; border: 2px solid #343f58; display: flex; align-items: center; justify-content: center; overflow: hidden">
+<img src="{{s.sprite}}" alt="{{s.alt}}" width="68" height="68" style="flex: none; display: block; margin: -6px 0 -2px; image-rendering: pixelated; opacity: {{s.dim}}; filter: {{s.filter}}">
+<sc-if value="{{s.out}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; right: 3px; bottom: 3px; min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box; border-radius: 5px; background: #c12d24; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 20px; text-align: center; color: #ffffff">{{s.at}}</span></sc-if>
+</span>
+</sc-for>
+</span>
+<div style="flex: 1"></div>
+<a href="Team.dc.html" style="font-family: 'Jersey 10', sans-serif; font-size: 20px; text-decoration: none">Team</a>
+<sc-if value="{{t.canEdit}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" style="min-height: 40px; padding: 0 14px 4px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 20px; cursor: pointer">Edit</button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{onCup}}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="Cup bracket" style="position: relative; width: 1360px; height: 940px">
+<svg width="1360" height="940" viewBox="0 0 1360 940" aria-hidden="true" style="position: absolute; inset: 0">
+<path d="M890 216H910V385H930M1180 385H1210" fill="none" stroke="#44506d" stroke-width="3" stroke-dasharray="8 6"></path>
+<path d="M250 126H610V216H640M250 306H610V216M250 526H610V554H640M580 582H610V554M890 554H910V385H930" fill="none" stroke="#6b7489" stroke-width="3"></path>
+</svg>
+<sc-for list="{{cupHeads}}" as="ch" hint-placeholder-count="3">
+<h2 style="position: absolute; left: {{ch.x}}px; top: 0; margin: 0; padding: 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; color: #c3cad8">{{ch.title}}</h2>
+</sc-for>
+<sc-for list="{{cupBoxes}}" as="m" hint-placeholder-count="6">
+<a href="Match.dc.html" class="mrow" style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: 250px; height: 140px; box-sizing: border-box; display: flex; flex-direction: column; border-radius: 14px; background: #222a3b; border: 3px solid {{m.line}}; overflow: hidden; color: #eef1f7; text-decoration: none">
+<span style="display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 12px; background: #1b2232; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: {{m.tagInk}}">{{m.tag}}</span>
+<sc-for list="{{m.sides}}" as="s" hint-placeholder-count="2">
+<span style="display: flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 12px; border-top: 2px solid #2c3549; opacity: {{s.dim}}">
+<span style="width: 18px; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #6b7489">{{s.seed}}</span>
+<span aria-hidden="true" style="width: 30px; height: 30px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid {{s.badgeLine}}; box-shadow: 0 0 0 2px {{s.c}}; background: {{s.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #10141d">{{s.i}}</span>
+<span style="flex: 1; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: {{s.ink}}">{{s.name}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; color: {{s.ink}}">{{s.games}}</span>
+</span>
+</sc-for>
+</a>
+</sc-for>
+<section aria-labelledby="tri" style="position: absolute; left: 280px; top: 560px; width: 300px; box-sizing: border-box; display: flex; flex-direction: column; background: #222a3b; border: 3px solid #343f58; border-radius: 14px; overflow: hidden">
+<div style="display: flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 4px 14px; background: #1b2232">
+<h2 id="tri" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 24px; color: #eef1f7">Losers' triangular</h2>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 44px 56px 56px; min-height: 32px; align-items: center; padding: 0 12px; border-top: 2px solid #2c3549; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #a3acbf">
+<span>Trainer</span><span style="text-align: center">W</span><span style="text-align: center">Games</span><span style="text-align: center">Mons</span>
+</div>
+<sc-for list="{{triTable}}" as="g" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 44px 56px 56px; min-height: 46px; align-items: center; padding: 0 12px; background: {{g.bg}}; border-top: 2px solid #2c3549">
+<span style="display: flex; align-items: center; gap: 10px">
+<span aria-hidden="true" style="width: 28px; height: 28px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{g.c}}; background: {{g.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d">{{g.i}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 23px; color: {{g.ink}}">{{g.name}}</span>
+</span>
+<span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 23px">{{g.w}}</span>
+<span style="display: flex; justify-content: center"><span style="min-width: 36px; box-sizing: border-box; padding: 0 6px; border-radius: 6px; border: 2px solid {{g.gdLine}}; text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: {{g.gdInk}}">{{g.gd}}</span></span>
+<span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #c3cad8">{{g.pd}}</span>
+</div>
+</sc-for>
+<sc-for list="{{triMatches}}" as="t" hint-placeholder-count="3">
+<a href="Match.dc.html" class="mrow" style="display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); align-items: center; min-height: 36px; padding: 0 12px; border-top: 2px solid #2c3549; border-left: none; border-right: none; border-bottom: none; font-family: 'Jersey 10', sans-serif; font-size: 21px; color: #eef1f7; text-decoration: none">
+<span style="color: {{t.aInk}}">{{t.a}}</span>
+<span style="text-align: center; color: #ffffff">{{t.score}}</span>
+<span style="text-align: right; color: {{t.bInk}}">{{t.b}}</span>
+</a>
+</sc-for>
+</section>
+<div style="position: absolute; left: 1210px; top: 315px; width: 150px; height: 140px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 14px; background: #2a2416; border: 3px solid #8a7330">
+<svg width="56" height="56" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v5a5 5 0 0 1-10 0z" fill="#ffd34d"></path><path d="M10 13h4v4h3v4H7v-4h3z" fill="#ffd34d"></path><path d="M4 4h3v3H5v1H4zM17 4h3v4h-1V7h-2z" fill="#c9a43a"></path></svg>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #ffd34d">Champion</span>
+</div>
+</div>
+</sc-if>
+
+</main>
+<sc-if value="{{logOpen}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 5; background: rgba(8,10,16,0.72); display: flex; justify-content: center; align-items: flex-start; padding-top: 120px">
+<div role="dialog" aria-modal="true" aria-labelledby="logt" style="width: 780px; display: flex; flex-direction: column; gap: 18px; padding: 22px 26px 24px; box-sizing: border-box; border-radius: 20px; background: #1b2232; border: 3px solid #44506d; box-shadow: 0 24px 60px rgba(0,0,0,0.5)">
+<div style="display: flex; align-items: center; gap: 12px">
+<h2 id="logt" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 36px">Log a Pokémon League try</h2>
+<div style="flex: 1"></div>
+<button type="button" class="out" aria-label="Close" onClick="{{closeLog}}" style="width: 44px; height: 44px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; display: grid; place-items: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h2v2H1zM3 3h1v1H3zM4 4h2v2H4zM6 3h1v1H6zM7 1h2v2H7zM3 6h1v1H3zM1 7h2v2H1zM6 6h1v1H6zM7 7h2v2H7z" fill="currentColor"></path></svg></button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 14px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #c3cad8">The team</span>
+<div role="radiogroup" aria-label="Team from" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<sc-for list="{{logModes}}" as="md" hint-placeholder-count="2">
+<button type="button" role="radio" class="seg" aria-checked="{{md.on}}" onClick="{{md.pick}}" style="min-height: 40px; padding: 0 16px 2px; border: none; border-radius: 8px; background: {{md.bg}}; color: {{md.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 21px; cursor: pointer">{{md.label}}</button>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{logPick}}" hint-placeholder-val="{{ true }}">
+<div role="radiogroup" aria-label="Your teams" style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{logTeams}}" as="lt" hint-placeholder-count="3">
+<button type="button" role="radio" class="mrow" aria-checked="{{lt.on}}" onClick="{{lt.pick}}" style="display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 0 14px; border-radius: 12px; background: {{lt.bg}}; border: 3px solid {{lt.line}}; color: #eef1f7; cursor: pointer; text-align: left">
+<span aria-hidden="true" style="width: 22px; height: 22px; flex: none; box-sizing: border-box; border-radius: 50%; border: 3px solid {{lt.dotLine}}; background: {{lt.dot}}"></span>
+<span style="width: 170px; font-family: 'Jersey 10', sans-serif; font-size: 24px">{{lt.name}}</span>
+<span style="display: flex; gap: 2px"><sc-for list="{{lt.team}}" as="s" hint-placeholder-count="6"><img src="{{s.sprite}}" alt="{{s.alt}}" width="52" height="52" style="display: block; image-rendering: pixelated; margin: -4px 0"></sc-for></span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{logPaste}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 6px">
+<textarea rows="6" aria-label="Showdown paste" placeholder="Metagross @ Life Orb&#10;Ability: Clear Body&#10;- Meteor Mash&#10;..." style="resize: none; padding: 12px 14px; border-radius: 12px; border: 3px solid #343f58; background: #10141d; color: #eef1f7; font: 600 15px/1.4 'Nunito', system-ui, sans-serif; outline: none"></textarea>
+</label>
+</sc-if>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #c3cad8">Combats won</span>
+<div role="radiogroup" aria-label="Combats won" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{logWon}}" as="w" hint-placeholder-count="6">
+<button type="button" role="radio" class="seg" aria-checked="{{w.on}}" onClick="{{w.pick}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 58px; border: 3px solid {{w.line}}; border-radius: 10px; background: {{w.bg}}; color: {{w.ink}}; font-family: 'Jersey 10', sans-serif; cursor: pointer; line-height: 1.05">
+<span style="font-size: 28px">{{w.n}}</span>
+<span style="font-size: 15px; opacity: 0.8">{{w.cap}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #c3cad8">Where each one fell</span>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{logFell}}" as="f" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px 8px; border-radius: 12px; background: #222a3b; border: 3px solid {{f.line}}">
+<img src="{{f.sprite}}" alt="" width="64" height="64" style="display: block; image-rendering: pixelated; margin: -6px 0 -4px; opacity: {{f.dim}}; filter: {{f.filter}}">
+<select aria-label="{{f.label}}" onChange="{{f.set}}" style="width: 100%; min-height: 34px; border-radius: 8px; border: 2px solid #44506d; background: #10141d; color: {{f.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 18px; text-align: center">
+<sc-for list="{{f.opts}}" as="o" hint-placeholder-count="6"><option value="{{o.v}}" selected="{{o.sel}}">{{o.label}}</option></sc-for>
+</select>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px; padding-top: 4px">
+<span style="font-size: 14px; font-weight: 700; color: #a3acbf">{{logNote}}</span>
+<div style="flex: 1"></div>
+<button type="button" class="btn" onClick="{{closeLog}}" style="min-height: 52px; padding: 0 18px 4px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">Cancel</button>
+<button type="button" class="go" onClick="{{closeLog}}" style="min-height: 52px; padding: 0 22px 4px; border: none; border-radius: 8px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">Save the try</button>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["standings","rounds","tries","cup"],"default":"standings"},"admin":{"editor":"boolean","default":false},"viewer":{"editor":"enum","options":["player","visitor"],"default":"player"},"logTry":{"editor":"boolean","default":false},"h":{"editor":null,"default":1000},"$preview":{"width":1440,"height":1000}}'>
+const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
+  '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
+const NAMES = ['Walrein', 'Gardevoir', 'Snorlax', 'Donphan', 'Archeops', 'Magmortar', 'Poliwhirl', 'Lampent', 'Crustle', 'Budew', 'Luxio', 'Stunfisk', 'Hypno', 'Quilava', 'Archen', 'Steelix', 'Camerupt', 'Pelipper', 'Drifblim', 'Unfezant', 'Medicham', 'Claydol', 'Swalot', 'Dewgong', 'Slowking', 'Staraptor', 'Hariyama', 'Zebstrika', 'Zoroark', 'Eelektross', 'Chimecho', 'Primeape', 'Floatzel', 'Reuniclus', 'Gyarados', 'Cofagrigus', 'Braviary', 'Leavanny', 'Uxie', 'Electivire', 'Accelgor', 'Kingdra', 'Dragonite', 'Metagross', 'Dusclops', 'Venusaur', 'Purrloin', 'Uxie'];
+const P = {
+  D: {name: 'Dloez', c: '#ffd34d', you: true},
+  V: {name: 'Vicky', c: '#5ad1f0'},
+  J: {name: 'Javi', c: '#7be08a'},
+  I: {name: 'Inop', c: '#ff8a80'},
+  T: {name: 'Tole', c: '#c39bff'},
+  E: {name: 'Elfo', c: '#ffb347'}
+};
+const ROUNDS = [
+  {n: 1, at: 'Gym 1', m: [['D', 'V', 2, 1, 5, 8], ['E', 'T', 0, 2, 6, 2], ['I', 'J', 2, 0, 3, 6]]},
+  {n: 2, at: 'Gym 2', m: [['D', 'E', 2, 0, 1, 6], ['V', 'I', 2, 1, 6, 9], ['J', 'T', 2, 1, 7, 8]]},
+  {n: 3, at: 'Gym 3', m: [['D', 'I', 1, 2, 9, 7], ['E', 'J', 2, 1, 8, 10], ['T', 'V', 0, 2, 6, 3]]},
+  {n: 4, at: 'Gym 5', m: [['D', 'J', 2, 0, 2, 6], ['I', 'T', 1, 2, 9, 8], ['V', 'E', 2, 0, 1, 6]]},
+  {n: 5, at: 'Gym 7', m: [['D', 'T', 2, 1, 7, 9], ['J', 'V', 0, 2, 6, 4], ['E', 'I', null, null, 0, 0]]}
+];
+const TRIES = {
+  D: [{won: 3, keys: [43, 42, 0, 5, 29, 33], out: {0: 3, 5: 4, 29: 4}}, {won: 5, keys: [43, 42, 33, 15, 41, 39], out: {41: 2}}],
+  V: [{won: 4, keys: [34, 1, 24, 18, 31, 21], out: {18: 1, 31: 3, 21: 5, 24: 5}}, {won: 2, keys: [34, 1, 24, 31, 37, 25], out: {37: 2, 25: 3, 31: 3, 1: 3, 24: 3}}],
+  J: [{won: 3, keys: [2, 26, 35, 45, 3, 28], out: {3: 2, 28: 4, 45: 4, 2: 4}}],
+  I: [{won: 1, keys: [27, 20, 32, 16, 8, 44], out: {8: 1, 16: 2, 32: 2, 44: 2, 20: 2, 27: 2}}, {won: 2, keys: [27, 20, 22, 23, 17, 19], out: {17: 2, 22: 3, 19: 3}}],
+  T: [{won: 1, keys: [12, 30, 10, 13, 6, 9], out: {6: 1, 9: 1, 13: 2, 10: 2}}],
+  E: []
+};
+const HATCHED = {D: 6, V: 5, J: 3, I: 2, T: 3, E: 1};
+const pips = (n, size) => Array.from({length: 5}, (_, i) => ({bg: i < n ? (i === 4 ? '#ffd34d' : '#5ad1f0') : '#10141d', line: i < n ? '#10141d' : '#44506d'}));
+const best = (k) => TRIES[k].reduce((b, t) => Math.max(b, t.won), 0);
+class Component extends DCLogic {
+  st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
+  renderVals() {
+    const tab = this.st('tab', this.props.tab || 'standings');
+    const admin = !!this.props.admin;
+    const visitor = this.props.viewer === 'visitor';
+    P.D.you = !visitor;
+    const me = visitor ? {name: 'Leaf', c: '#8fd694'} : P.D;
+    const labels = {standings: 'Overview', rounds: 'Rounds', tries: 'Pokémon League', cup: 'Cup'};
+    const tabs = Object.keys(labels).map((k) => ({label: labels[k], on: k === tab ? 'true' : 'false', bg: k === tab ? '#343f58' : 'transparent', ink: k === tab ? '#ffffff' : '#a3acbf', pick: () => this.setState({tab: k})}));
+    const S = {};
+    Object.keys(P).forEach((k) => { S[k] = {k, w: 0, l: 0, gw: 0, gl: 0, f: 0, beat: []}; });
+    ROUNDS.forEach((r) => r.m.forEach(([a, b, ga, gb, fa, fb]) => {
+      if (ga === null) return;
+      const win = ga > gb ? a : b, lose = win === a ? b : a;
+      S[win].w++; S[lose].l++; S[win].beat.push(lose);
+      S[a].gw += ga; S[a].gl += gb; S[b].gw += gb; S[b].gl += ga; S[a].f += fa; S[b].f += fb;
+    }));
+    Object.values(S).forEach((s) => { s.best = best(s.k); s.pts = s.w + s.best; });
+    const order = Object.values(S).sort((x, y) => (y.pts - x.pts) || (x.beat.includes(y.k) ? -1 : y.beat.includes(x.k) ? 1 : 0));
+    const table = order.map((s, i) => {
+      const p = P[s.k];
+      const tiedWith = order.filter((o) => o.k !== s.k && o.pts === s.pts);
+      const beatTied = tiedWith.filter((o) => s.beat.includes(o.k));
+      return {place: i + 1, placeInk: i === 0 ? '#ffd34d' : '#6b7489', name: p.name, i: p.name[0], c: p.c, you: !!p.you, pts: s.pts, ptsInk: i === 0 ? '#ffd34d' : '#eef1f7',
+        wl: s.w + '–' + s.l, games: s.gw + '–' + s.gl, fainted: s.f, eggsWon: s.w + s.best, eggsHatched: HATCHED[s.k] + ' hatched', pips: pips(s.best), bestLabel: s.best + ' of 5 combats won',
+        tied: tiedWith.length > 0, tieNote: beatTied.length ? 'Beat ' + beatTied.map((o) => P[o.k].name).join(', ') : 'Lost to ' + tiedWith.map((o) => P[o.k].name).join(', '),
+        bg: p.you ? 'rgba(255,211,77,0.06)' : 'transparent', line: i < order.length - 1 ? '3px solid #343f58' : 'none'};
+    });
+    const played = ROUNDS.reduce((n, r) => n + r.m.filter((m) => m[2] !== null).length, 0);
+    const sideOf = (k, g, won, lost, top) => ({i: P[k].name[0], c: P[k].c, name: P[k].name, g: g === null ? '' : g, ink: won ? '#ffd34d' : '#eef1f7', dim: lost ? 0.55 : 1, top});
+    const timeline = ROUNDS.map((r, ri) => {
+      const left = r.m.filter((m) => m[2] === null).length;
+      return {title: 'Round ' + r.n, at: r.at, state: left ? left + ' to play' : 'All played', stateInk: left ? '#ffc878' : '#7be08a', line: ri === ROUNDS.length - 1 ? '#5ad1f0' : '#343f58',
+        matches: r.m.map(([a, b, ga, gb]) => {
+          const done = ga !== null, aw = done && ga > gb, bw = done && gb > ga, mine = !!(P[a].you || P[b].you);
+          return {label: P[a].name + ' vs ' + P[b].name + (done ? ', ' + ga + '–' + gb : ', to play'), pending: !done, line: mine ? '#8a7330' : '#343f58', lineStyle: done ? 'solid' : 'dashed',
+            sides: [sideOf(a, ga, aw, bw, 'none'), sideOf(b, gb, bw, aw, '2px solid #2c3549')]};
+        })};
+    });
+    const meet = (x, y) => {
+      for (const r of ROUNDS) for (const m of r.m) {
+        if (m[0] === x && m[1] === y) return {n: r.n, me: m[2], them: m[3]};
+        if (m[0] === y && m[1] === x) return {n: r.n, me: m[3], them: m[2]};
+      }
+      return null;
+    };
+    const xcols = '220px repeat(' + order.length + ', minmax(0, 1fr)) 110px';
+    const xhead = order.map((s) => ({name: P[s.k].name, i: P[s.k].name[0], c: P[s.k].c}));
+    const xrows = order.map((s, i) => ({name: P[s.k].name, i: P[s.k].name[0], c: P[s.k].c, you: !!P[s.k].you, wl: s.w + '–' + s.l,
+      bg: P[s.k].you ? 'rgba(255,211,77,0.06)' : 'transparent', line: i < order.length - 1 ? '3px solid #343f58' : 'none',
+      cells: order.map((o) => {
+        const blank = {self: false, none: false, match: false};
+        if (o.k === s.k) return Object.assign(blank, {self: true});
+        const g = meet(s.k, o.k);
+        if (!g) return Object.assign(blank, {none: true});
+        const done = g.me !== null, win = done && g.me > g.them;
+        return Object.assign(blank, {match: true, score: done ? g.me + '–' + g.them : '', round: 'R' + g.n,
+          label: P[s.k].name + ' vs ' + P[o.k].name + ', round ' + g.n + (done ? ', ' + g.me + '–' + g.them : ', to play'),
+          ink: !done ? '#ffc878' : win ? '#7be08a' : '#ff8a80', bg: !done ? 'transparent' : win ? 'rgba(123,224,138,0.10)' : 'rgba(255,138,128,0.08)',
+          line: !done ? '#8a6a3a' : win ? '#3d8550' : '#6b3a3a', lineStyle: done ? 'solid' : 'dashed'});
+      })}));
+    const openT = this.st('openT', 'D');
+    const tryKeys = order.map((s) => s.k);
+    const tries = tryKeys.map((k, i) => {
+      const p = P[k], list = TRIES[k], b = best(k), open = openT === k && list.length > 0;
+      const bestIdx = list.findIndex((t) => t.won === b);
+      return {name: p.name, i: p.name[0], c: p.c, pips: pips(b), best: list.length ? b + ' of 5' : 'No tries', bestInk: list.length ? '#ffffff' : '#6b7489', count: list.length === 1 ? '1 try' : list.length + ' tries', has: list.length > 0,
+        open, chev: open ? 'rotate(180deg)' : 'none', chevLabel: (open ? 'Close ' : 'Open ') + p.name + "'s tries", toggle: () => this.setState({openT: open ? '' : k}),
+        bg: p.you ? 'rgba(255,211,77,0.06)' : 'transparent', line: i < tryKeys.length - 1 ? '3px solid #343f58' : 'none',
+        list: list.map((t, j) => ({title: 'Try ' + (j + 1), tag: j === bestIdx ? 'Best' : '', tagInk: '#7be08a', line: j === bestIdx ? '#3d8550' : '#343f58', pips: pips(t.won), canEdit: admin || !!p.you,
+          team: t.keys.map((key) => { const at = t.out[key]; return {sprite: SPRITES[key], alt: NAMES[key] + (at ? ', fainted in combat ' + at : ''), out: !!at, at: at || '', dim: at ? 0.45 : 1, filter: at ? 'grayscale(1)' : 'none'}; })}))};
+    });
+    const side = (k, seed, games, state) => ({seed: seed || '', name: k ? P[k].name : 'To be decided', i: k ? P[k].name[0] : '?', c: k ? P[k].c : '#2c3549', badgeLine: k ? '#10141d' : '#44506d',
+      games: games === null || games === undefined ? '' : games, ink: state === 'win' ? '#ffd34d' : (k ? '#eef1f7' : '#6b7489'), dim: state === 'out' ? 0.5 : 1});
+    const cm = (tag, a, b, live) => ({tag, tagInk: live ? '#5ad1f0' : '#a3acbf', line: live ? '#5ad1f0' : '#343f58',
+      sides: [side(a[0], a[1], a[2], a[3]), side(b[0], b[1], b[2], b[3])]});
+    const seed = {}; order.forEach((s, i) => { seed[s.k] = i + 1; });
+    const box = (x, y, tag, a, b, live) => Object.assign(cm(tag, a, b, live), {x, y});
+    const cupBoxes = [
+      box(0, 56, '1 vs 6 · Bo3', ['D', seed.D, 2, 'win'], ['E', seed.E, 0, 'out']),
+      box(0, 236, '3 vs 4 · Bo3', ['I', seed.I, 1, 'out'], ['J', seed.J, 2, 'win']),
+      box(0, 456, '2 vs 5 · Bo3', ['V', seed.V, 2, 'win'], ['T', seed.T, 1, 'out']),
+      box(640, 146, 'Live · game 2 · bans', ['D', seed.D, 1], ['J', seed.J, 0], true),
+      box(640, 484, 'Bo3', ['V', seed.V, 2, 'win'], ['E', seed.E, 0, 'out']),
+      box(930, 315, 'Bo3', [null], ['V', seed.V])
+    ];
+    const cupHeads = [{x: 0, title: 'First round'}, {x: 640, title: 'Semifinals'}, {x: 930, title: 'Final'}];
+    const triTable = [
+      {name: 'Elfo', i: 'E', c: P.E.c, w: 1, gd: '+1', gdInk: '#7be08a', gdLine: '#3d8550', pd: '+3', ink: '#ffd34d', bg: 'rgba(123,224,138,0.08)'},
+      {name: 'Inop', i: 'I', c: P.I.c, w: 1, gd: '0', gdInk: '#c3cad8', gdLine: 'transparent', pd: '+1', ink: '#eef1f7', bg: 'transparent'},
+      {name: 'Tole', i: 'T', c: P.T.c, w: 1, gd: '−1', gdInk: '#ff8a80', gdLine: 'transparent', pd: '−4', ink: '#eef1f7', bg: 'transparent'}];
+    const tri = (a, ga, gb, b) => ({a: P[a].name, b: P[b].name, score: ga + '–' + gb, aInk: ga > gb ? '#ffd34d' : '#a3acbf', bInk: gb > ga ? '#ffd34d' : '#a3acbf'});
+    const triMatches = [tri('E', 2, 0, 'T'), tri('T', 2, 1, 'I'), tri('I', 2, 1, 'E')];
+    const scols = '56px minmax(0, 1fr) 84px 72px 72px 76px 124px 76px';
+    const meK = 'D';
+    const mine = ROUNDS.map((r) => {
+      const m = r.m.find((x) => x[0] === meK || x[1] === meK);
+      const home = m[0] === meK, o = home ? m[1] : m[0], g = home ? m[2] : m[3], t = home ? m[3] : m[2];
+      const done = g !== null, won = done && g > t;
+      return {round: 'R' + r.n, name: P[o].name, score: done ? g + '–' + t : '', tag: done ? (won ? 'W' : 'L') : '·', tagBg: done ? (won ? '#7be08a' : '#ff8a80') : '#44506d', ink: won ? '#ffd34d' : '#eef1f7'};
+    });
+    const next = {name: P.J.name, i: 'J', c: P.J.c, stage: 'Cup semifinal · game 2 · bans open', score: '1 – 0', cta: 'Make your ban'};
+    const live = {stage: 'Cup semifinal · game 2 · bans open', sides: [{name: P.D.name, i: 'D', c: P.D.c, g: 1}, {name: P.J.name, i: 'J', c: P.J.c, g: 0}]};
+    const res = (when, a, ga, gb, b) => ({when, a: P[a].name, b: P[b].name, score: ga + '–' + gb, aInk: ga > gb ? '#ffd34d' : '#a3acbf', bInk: gb > ga ? '#ffd34d' : '#a3acbf'});
+    const latest = [res('Semi', 'V', 2, 0, 'E'), res('Group', 'I', 2, 1, 'E'), res('Group', 'T', 2, 1, 'I'), res('Group', 'E', 2, 0, 'T'), res('Cup R1', 'V', 2, 1, 'T')];
+    const LOG_TEAMS = [{name: 'Gym 7 team', keys: [43, 42, 0, 5, 29, 33]}, {name: 'League run', keys: [43, 42, 33, 15, 41, 39]}, {name: 'Cup team', keys: [43, 0, 15, 29, 41, 5]}];
+    const logOpen = this.st('logOpen', !!this.props.logTry);
+    const logMode = this.st('logMode', 'pick');
+    const logTeam = this.st('logTeam', 1);
+    const logWonN = this.st('logWon', 4);
+    const fell = this.st('fell', {41: 2, 39: 5});
+    const caps = ['None', 'Elite 1', 'Elite 2', 'Elite 3', 'Elite 4', 'Rival'];
+    const logModes = [['pick', 'Your teams'], ['paste', 'Paste']].map(([k, label]) => ({label, on: k === logMode ? 'true' : 'false', bg: k === logMode ? '#343f58' : 'transparent', ink: k === logMode ? '#ffffff' : '#a3acbf', pick: () => this.setState({logMode: k})}));
+    const logTeams = LOG_TEAMS.map((t, j) => { const on = j === logTeam; return {name: t.name, on: on ? 'true' : 'false', bg: on ? '#283146' : '#222a3b', line: on ? '#5ad1f0' : '#343f58', dot: on ? '#5ad1f0' : 'transparent', dotLine: on ? '#10141d' : '#44506d',
+      pick: () => this.setState({logTeam: j, fell: {}}), team: t.keys.map((key) => ({sprite: SPRITES[key], alt: NAMES[key]}))}; });
+    const logWon = caps.map((cap, n) => { const on = n === logWonN; return {n, cap, on: on ? 'true' : 'false', bg: on ? (n === 5 ? '#ffd34d' : '#5ad1f0') : '#222a3b', ink: on ? '#10141d' : '#c3cad8', line: on ? '#10141d' : '#343f58', pick: () => this.setState({logWon: n})}; });
+    const logFell = LOG_TEAMS[logTeam].keys.map((key) => {
+      const at = fell[key] || 0;
+      return {sprite: SPRITES[key], label: 'Where ' + NAMES[key] + ' fell', ink: at ? '#ff8a80' : '#7be08a', line: at ? '#6b3a3a' : '#343f58', dim: at ? 0.5 : 1, filter: at ? 'grayscale(1)' : 'none',
+        set: (e) => { const v = Number(e && e.target ? e.target.value : 0); const nf = Object.assign({}, fell); if (v) nf[key] = v; else delete nf[key]; this.setState({fell: nf}); },
+        opts: [{v: 0, label: 'Stood', sel: !at}].concat([1, 2, 3, 4, 5].map((c) => ({v: c, label: 'Fell in ' + c, sel: at === c})))};
+    });
+    const outN = Object.keys(fell).length;
+    const logNote = logWonN === 5 ? 'Beat the League' : 'Stopped at ' + caps[logWonN + 1] + ' · ' + outN + ' fell';
+    const status = tab === 'cup' ? 'Semifinals' : '5 of 5 rounds · ' + played + ' of 15 played';
+    return {h: this.props.h || 1000, admin, meName: me.name, meI: me.name[0], meC: me.c, isPlayer: !visitor, isVisitor: visitor, live, latest,
+      logOpen, openLog: () => this.setState({logOpen: true}), closeLog: () => this.setState({logOpen: false}), logModes, logPick: logMode === 'pick', logPaste: logMode === 'paste', logTeams, logWon, logFell, logNote, tabs, status, onStandings: tab === 'standings', onRounds: tab === 'rounds', onTries: tab === 'tries', onCup: tab === 'cup',
+      table, timeline, xcols, xhead, xrows, tries, cupBoxes, cupHeads, triTable, triMatches, scols, mine, next};
+  }
+}
+</script>
+</body>
+</html>

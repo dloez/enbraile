@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>League: an admin draws a round</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+.tab:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}.out:hover{color:#ffffff!important;background:#222a3b!important}
+.me:hover{background:#222a3b!important}
+.btn:not(:disabled):hover{background:rgba(255,255,255,0.18)!important}
+.go:not(:disabled):hover{background:#ef5148!important}
+.seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
+.mrow:hover{border-color:#5ad1f0!important;background:#283146!important}
+.srow:hover{background:#283146!important}
+.chev:hover{border-color:#5ad1f0!important}
+.rep:hover{background:#5ad1f0!important;color:#10141d!important}
+.pick:hover{border-color:#5ad1f0!important}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; min-height: {{h}}px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="flex: none; height: 64px; display: flex; align-items: center; gap: 28px; padding: 0 32px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="Main.dc.html" aria-label="Home" style="flex: none; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 8px">
+<svg width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<nav aria-label="Sections" style="align-self: stretch; display: flex; align-items: flex-end; gap: 4px">
+<a href="SeriesList.dc.html" class="tab" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: #d93a30; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z" fill="currentColor"></path></svg>Series</a>
+<a href="Pc.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z" fill="currentColor"></path></svg>PC</a>
+<a href="TeamsList.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z" fill="currentColor"></path></svg>Teams</a>
+<sc-if value="{{admin}}" hint-placeholder-val="{{ false }}">
+<a href="AdminHome.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none">Admin</a>
+</sc-if>
+</nav>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Profile.dc.html" class="me" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 8px; border-radius: 8px; text-decoration: none">
+<span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 8px; border: 3px solid #10141d; box-shadow: 0 0 0 2px #ffd34d; background: #ffd34d; box-sizing: border-box; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">D</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #ffffff">Dloez</span>
+</a>
+<button type="button" class="out" aria-label="Sign out" title="Sign out" style="width: 44px; height: 44px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; display: grid; place-items: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg></button>
+</div>
+</header>
+
+<div style="flex: none; display: flex; flex-direction: column; gap: 14px; padding: 22px 40px 0">
+<nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 10px; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">
+<a href="Main.dc.html" style="color: #5ad1f0; text-decoration: none">{{series}}</a>
+<svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#6b7489"></path></svg>
+<span>League</span>
+</nav>
+<div style="display: flex; align-items: flex-end; gap: 24px">
+<h1 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 64px; line-height: 0.85">League</h1>
+<div role="radiogroup" aria-label="View" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button type="button" role="radio" class="seg" aria-checked="{{t.on}}" onClick="{{t.pick}}" style="min-height: 44px; padding: 0 18px 2px; border: none; border-radius: 8px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">{{t.label}}</button>
+</sc-for>
+</div>
+<div style="flex: 1"></div>
+<span style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border-radius: 10px; background: #10141d; border: 3px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #c3cad8">{{status}}</span>
+</div>
+</div>
+
+<main style="flex: 1; padding: 22px 40px 40px; display: flex; flex-direction: column; gap: 16px">
+<section aria-label="Admin" style="display: flex; align-items: center; gap: 28px; padding: 12px 18px; border-radius: 14px; border: 3px dashed rgba(255,200,120,0.6); background: #222a3b">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #ffc878">Admin</span>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Round 2</span>
+<sc-if value="{{browsePairs}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="btn" onClick="{{redraw}}" style="min-height: 44px; padding: 0 16px 4px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; cursor: pointer; font-size: 21px">Redraw</button>
+<button type="button" class="btn" onClick="{{editPairs}}" style="min-height: 44px; padding: 0 16px 4px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; cursor: pointer; font-size: 21px">Set pairs</button>
+</sc-if>
+<sc-if value="{{editingPairs}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" onClick="{{cancelPairs}}" style="min-height: 44px; padding: 0 16px 4px; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; cursor: pointer; font-size: 21px">Cancel</button>
+<button type="button" class="go" onClick="{{savePairs}}" disabled="{{saveOff}}" style="min-height: 44px; padding: 0 16px 4px; border: none; border-radius: 8px; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; cursor: pointer; background: {{saveBg}}; font-size: 21px">Save pairs</button>
+</sc-if>
+</div>
+<span aria-hidden="true" style="width: 3px; align-self: stretch; background: #343f58"></span>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Round 3</span>
+<sc-if value="{{canOpen}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="go" onClick="{{openRound}}" style="min-height: 44px; padding: 0 16px 4px; border: none; border-radius: 8px; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; cursor: pointer; background: #d93a30; font-size: 21px">Open round 3</button>
+</sc-if>
+<sc-if value="{{opened}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #7be08a">Open</span></sc-if>
+</div>
+</section>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-items: stretch">
+<sc-for list="{{cols}}" as="rd" hint-placeholder-count="5">
+<section aria-label="{{rd.title}}" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 16px; background: {{rd.bg}}; border: 3px {{rd.lineStyle}} {{rd.line}}; border-radius: 18px">
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 0 2px">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<h2 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 30px; color: {{rd.titleInk}}">{{rd.title}}</h2>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{rd.at}}</span>
+</div>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: {{rd.stateInk}}">{{rd.state}}</span>
+</div>
+<sc-for list="{{rd.matches}}" as="m" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; border-radius: 12px; background: {{m.bg}}; border: 3px {{m.lineStyle}} {{m.line}}; overflow: hidden">
+<sc-for list="{{m.sides}}" as="s" hint-placeholder-count="2">
+<span style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px 0 12px; border-top: {{s.top}}; opacity: {{s.dim}}">
+<span aria-hidden="true" style="width: 26px; height: 26px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{s.c}}; background: {{s.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #10141d">{{s.i}}</span>
+<sc-if value="{{s.edit}}" hint-placeholder-val="{{ false }}">
+<select aria-label="{{s.label}}" onChange="{{s.set}}" class="pick" style="flex: 1; min-width: 0; min-height: 32px; border-radius: 8px; border: 2px solid #44506d; background: #10141d; color: #eef1f7; font-family: 'Jersey 10', sans-serif; font-size: 20px">
+<sc-for list="{{s.opts}}" as="o" hint-placeholder-count="6"><option value="{{o.v}}" selected="{{o.sel}}">{{o.label}}</option></sc-for>
+</select>
+</sc-if>
+<sc-if value="{{s.show}}" hint-placeholder-val="{{ true }}"><span style="flex: 1; font-family: 'Jersey 10', sans-serif; font-size: 23px; color: {{s.ink}}">{{s.name}}</span></sc-if>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: {{s.gSize}}; color: {{s.gInk}}">{{s.g}}</span>
+</span>
+</sc-for>
+</div>
+</sc-for>
+</section>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 22px; padding: 14px 20px; border-radius: 14px; background: #1b2232; border: 3px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #c3cad8">
+<span style="color: #a3acbf">Round teams</span>
+<span style="color: #7be08a">Locked</span><span style="color: #ffc878">Building</span><span style="color: #6b7489">Needs the save</span>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"h":{"editor":null,"default":880},"$preview":{"width":1440,"height":880}}'>
+const P = {
+  D: {name: 'Dloez', c: '#ffd34d'},
+  V: {name: 'Vicky', c: '#5ad1f0'},
+  J: {name: 'Javi', c: '#7be08a'},
+  I: {name: 'Inop', c: '#ff8a80'},
+  T: {name: 'Tole', c: '#c39bff'},
+  E: {name: 'Elfo', c: '#ffb347'}
+};
+const TABS = (on) => [['standings', 'Overview'], ['rounds', 'Rounds'], ['tries', 'Pokémon League'], ['cup', 'Cup']].map(([k, label]) => ({label, on: k === on ? 'true' : 'false', bg: k === on ? '#343f58' : 'transparent', ink: k === on ? '#ffffff' : '#a3acbf', pick: () => {}}));
+const badge = (k) => ({i: P[k].name[0], c: P[k].c, name: P[k].name});
+const R1 = [['D', 'T', 2, 0], ['V', 'I', 2, 1], ['J', 'E', 1, 2]];
+const DRAWS = [[['D', 'V'], ['I', 'E'], ['J', 'T']], [['D', 'I'], ['V', 'J'], ['T', 'E']], [['D', 'J'], ['V', 'E'], ['I', 'T']]];
+const TEAM = {D: 'Locked', V: 'Building', I: 'Locked', E: 'Needs the save', J: 'Building', T: 'Locked'};
+const TEAM_INK = {Locked: '#7be08a', Building: '#ffc878', 'Needs the save': '#6b7489'};
+const met = (a, b) => R1.some((m) => (m[0] === a && m[1] === b) || (m[0] === b && m[1] === a));
+class Component extends DCLogic {
+  st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
+  renderVals() {
+    const di = this.st('draw', 0), editing = this.st('editing', false), opened = this.st('opened', false);
+    const pairs = this.st('pairs', DRAWS[di]);
+    const draft = this.st('draft', pairs);
+    const shown = editing ? draft : pairs;
+    const keys = Object.keys(P);
+    const used = shown.flat();
+    const dupes = keys.filter((k) => used.filter((u) => u === k).length > 1);
+    const r1 = {title: 'Round 1', at: 'Gym 1', state: 'All played', stateInk: '#7be08a', bg: '#222a3b', line: '#343f58', lineStyle: 'solid', titleInk: '#eef1f7',
+      matches: R1.map(([a, b, ga, gb]) => ({line: '#343f58', lineStyle: 'solid', bg: '#1b2232', sides: [[a, ga, ga > gb, 'none'], [b, gb, gb > ga, '2px solid #2c3549']].map(([k, g, won, top]) => Object.assign(badge(k), {
+        show: true, edit: false, ink: won ? '#ffd34d' : '#eef1f7', dim: won ? 1 : 0.55, g, gSize: '26px', gInk: won ? '#ffd34d' : '#eef1f7', top}))}))};
+    const r2 = {title: 'Round 2', at: 'Gym 2', state: editing ? 'Setting pairs' : 'Open · none played', stateInk: editing ? '#5ad1f0' : '#ffc878', bg: '#222a3b', line: '#5ad1f0', lineStyle: 'solid', titleInk: '#eef1f7',
+      canPair: !editing, editing,
+      matches: shown.map((pr, mi) => {
+        const clash = met(pr[0], pr[1]), dup = pr.some((k) => dupes.includes(k)), same = pr[0] === pr[1];
+        const warn = editing && (clash || dup || same), warnText = same ? 'Same' : dup ? 'Twice' : 'Met in R1';
+        return {line: warn ? '#c98a2e' : '#343f58', lineStyle: 'solid', bg: '#1b2232',
+          sides: pr.map((k, j) => Object.assign(badge(k), {show: !editing, edit: editing, ink: '#eef1f7', dim: 1, top: j ? '2px solid #2c3549' : 'none',
+            g: editing ? (warn && j === 1 ? warnText : '') : TEAM[k], gSize: '17px', gInk: editing ? '#ffc878' : TEAM_INK[TEAM[k]], label: 'Round 2, match ' + (mi + 1) + ', player ' + (j + 1),
+            set: (e) => { const v = e && e.target ? e.target.value : k; const nd = draft.map((p) => p.slice()); nd[mi][j] = v; this.setState({draft: nd}); },
+            opts: keys.map((o) => ({v: o, label: P[o].name, sel: o === k}))}))};
+      })};
+    const later = [[3, 'Gym 3'], [4, 'Gym 5'], [5, 'Gym 7']].map(([n, at], i) => {
+      const isOpen = n === 3 && opened;
+      return {title: 'Round ' + n, at, state: isOpen ? 'Open · drawn' : 'Not open', stateInk: isOpen ? '#ffc878' : '#6b7489', bg: isOpen ? '#222a3b' : 'transparent', line: isOpen ? '#5ad1f0' : '#343f58', lineStyle: isOpen ? 'solid' : 'dashed', titleInk: isOpen ? '#eef1f7' : '#a3acbf',
+        canOpen: n === 3 && !opened, openLabel: 'Open round 3',
+        matches: isOpen ? [['D', 'E'], ['V', 'T'], ['J', 'I']].map((pr) => ({line: '#343f58', lineStyle: 'solid', bg: '#1b2232', sides: pr.map((k, j) => Object.assign(badge(k), {show: true, edit: false, ink: '#eef1f7', dim: 1, top: j ? '2px solid #2c3549' : 'none', g: 'Needs the save', gSize: '17px', gInk: '#6b7489'}))}))
+          : [0, 1, 2].map(() => ({line: '#343f58', lineStyle: 'dashed', bg: 'transparent', sides: [0, 1].map((j) => ({i: '', c: '#2c3549', name: 'To be drawn', show: true, edit: false, ink: '#6b7489', dim: 1, top: j ? '2px dashed #2c3549' : 'none', g: '', gSize: '17px', gInk: '#6b7489'}))}))};
+    });
+    const bad = draft.some((pr) => pr[0] === pr[1] || met(pr[0], pr[1])) || keys.some((k) => draft.flat().filter((u) => u === k).length !== 1);
+    return {h: this.props.h || 880, admin: true, series: 'Series 2', tabs: TABS('rounds'), status: 'Round 2 of 5 · 3 of 15 played',
+      cols: [r1, r2].concat(later),
+      redraw: () => { const n = (di + 1) % DRAWS.length; this.setState({draw: n, pairs: DRAWS[n], draft: DRAWS[n]}); },
+      editPairs: () => this.setState({editing: true, draft: pairs}),
+      cancelPairs: () => this.setState({editing: false, draft: pairs}),
+      savePairs: () => { if (!bad) this.setState({editing: false, pairs: draft}); },
+      saveOff: bad, saveBg: bad ? '#5a2a27' : '#d93a30',
+      openRound: () => this.setState({opened: true}), browsePairs: !editing, editingPairs: editing, canOpen: !opened, opened};
+  }
+}
+</script>
+</body>
+</html>

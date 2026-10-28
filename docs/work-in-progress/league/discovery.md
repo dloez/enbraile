@@ -15,7 +15,7 @@ Done when, on `pkmn.enbraile.vip`: series 1's league reads as it does in the app
 - **Q: When does the site take over?** A: For series 1 itself: the app's whole data is imported once, league-related or not, and the cup is played on the site. **Why:** the owner. _(owner, 2026-10-27)_
 - **Q: Where does the import read from?** A: A full dump of the app's data, asked of the person who runs it, read by a one-off script. No pipeline: it runs once. Only the features matter; the dump will hold hidden teams and pending reports that the app's public `/api/state` leaves out. **Why:** the owner. _(owner, 2026-10-27)_
 - **Q: Wonder?** A: Left out. Its data is empty in series 1, and the rules have no fights against the AI ([Competition Format → Decisions](../../pkmn/series/1/explanation/competition-format.md#decisions)). **Why:** the owner. _(owner, 2026-10-27)_
-- **Q: The old app's look?** A: Not copied. Every league screen is designed anew on the Site v2 Screens canvas and signed off before it is built. **Why:** the owner: "we can do way better". _(owner, 2026-10-27)_
+- **Q: The old app's look?** A: Not copied. Every league screen is designed anew on the Site v2 Screens canvas and signed off before it is built; all of them are signed off and frozen in `pkmn/site/design/` ([The pkmn Site → Look](../../pkmn/site/explanation/site.md#look)). **Why:** the owner: "we can do way better". _(owner, 2026-10-27; signed off 2026-10-28)_
 
 ### Rounds
 
@@ -53,7 +53,7 @@ Done when, on `pkmn.enbraile.vip`: series 1's league reads as it does in the app
 
 ### Surfaces
 
-- **Q: Where does the league live?** A: Its own page, `/series/<n>/league`, with Overview (the standings, the cup's seeds and a few highlights), Rounds, Pokémon League and Cup, and admin tools in place for admins; the series page's League placeholder becomes a short summary (the standings' top, the current round, the cup once it starts) linking to it; the Teams tab flags a round or cup team still to build; the player profile's placeholder becomes each series' league record. The canvas design settles the layout. **Why:** four views and their admin tools would make the series page very long, a phone most of all, and a page of its own lets a round or a cup match be linked. _(proposed, 2026-10-27; the owner asked for a suggestion; Standings renamed Overview by the owner, 2026-10-28)_
+- **Q: Where does the league live?** A: Its own page, `/series/<n>/league`, with Overview (the standings, and beside them the viewer's next match and their own rounds), Rounds, Pokémon League and Cup, and admin tools in place for admins; the series page's League placeholder becomes a short summary (the standings' top, the current round, the cup once it starts) linking to it; the Teams tab flags a round or cup team still to build; the player profile's placeholder becomes each series' league record. The canvas design settles the layout. **Why:** four views and their admin tools would make the series page very long, a phone most of all, and a page of its own lets a round or a cup match be linked. _(proposed, 2026-10-27; the owner asked for a suggestion; Standings renamed Overview by the owner, 2026-10-28)_
 
 ### The Match Page
 
@@ -89,4 +89,4 @@ Read 2026-10-27 from its public `/api/state` and its `logic.js` and `app.js`: 6 
 - [Series 1 Rules](../../pkmn/series/1/reference/rules.md), [Competition Format](../../pkmn/series/1/explanation/competition-format.md).
 - Code: `pkmn/site/shared/series.ts` (`MILESTONE_MARKS`), `api/_lib/schema.ts` (`series`, `seriesPlayer`, `milestone`, `snapshot`, `team`, `teamSource`), `src/pages/series.tsx`, `src/pages/player-profile.tsx`.
 - The Trainer League app: `logic.js` (`rankPlayers`, `eggStats`, `buildBracket`, `losersTable`, `settleBracket`), `app.js`.
-- The [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas; version 43 held a first League design, not read for this scoping.
+- The [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas: its League page holds the signed-off league boards (2026-10-28); version 43 held a first League design, not read for this scoping.

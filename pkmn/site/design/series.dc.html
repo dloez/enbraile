@@ -42,7 +42,7 @@ select option{background:#10141d;color:#eef1f7}
 <nav aria-label="Sections" style="align-self: stretch; display: flex; align-items: flex-end; gap: 4px">
 <a href="SeriesList.dc.html" class="tab" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: #d93a30; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z" fill="currentColor"></path></svg>Series</a>
 <a href="Pc.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z" fill="currentColor"></path></svg>PC</a>
-<a href="#" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z" fill="currentColor"></path></svg>Teams</a>
+<a href="#" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z" fill="currentColor"></path></svg>Teams<span title="1 team to build" style="min-width: 24px; height: 24px; padding: 0 6px; box-sizing: border-box; border-radius: 12px; border: 3px solid #10141d; background: #ffd34d; color: #10141d; font-size: 18px; line-height: 18px; text-align: center">1</span></a>
 </nav>
 <div style="flex: 1"></div>
 <div style="display: flex; align-items: center; gap: 12px">
@@ -78,10 +78,41 @@ Download
 
 <main style="padding: 24px 40px 32px; display: flex; flex-direction: column; gap: 14px">
 <section aria-labelledby="league-title" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px">
 <h2 id="league-title" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 38px">League</h2>
-<div style="display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 140px; box-sizing: border-box; background: #1b2232; border: 3px dashed #44506d; border-radius: 18px">
-<svg width="56" height="56" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 3h12v4H1z" fill="#ffd34d"></path><path d="M1 3h2v4H1zM5 3h2v4H5zM9 3h2v4H9z" fill="#10141d"></path><path d="M2 7h2v7H2zM10 7h2v7h-2z" fill="#a3acbf"></path><path d="M1 13h4v1H1zM9 13h4v1H9z" fill="#6b7489"></path></svg>
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 36px; color: #ffd34d">Work in progress</span>
+<a href="League.dc.html" class="crumb" style="display: flex; align-items: center; gap: 6px; min-height: 44px; margin: -10px 0; font-family: 'Jersey 10', sans-serif; font-size: 22px; text-decoration: none; text-decoration-thickness: 2px; text-underline-offset: 4px">Full league<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 20px; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px">Standings</h3>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">4 of 5 rounds</span>
+</div>
+<div style="background: #1b2232; border: 3px solid #343f58; border-radius: 12px; overflow: hidden">
+<sc-for list="{{lgTop}}" as="t" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 56px 56px; align-items: center; gap: 10px; min-height: 52px; padding: 0 12px; background: {{t.bg}}; border-bottom: {{t.line}}">
+<span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 28px; color: {{t.placeInk}}">{{t.place}}</span>
+<span style="display: flex; align-items: center; gap: 10px; min-width: 0"><span aria-hidden="true" style="width: 30px; height: 30px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{t.c}}; background: {{t.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #10141d">{{t.i}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 24px">{{t.name}}</span></span>
+<span style="text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 28px; color: #ffd34d">{{t.pts}}</span>
+<span style="text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">{{t.wl}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 20px; background: #222a3b; border: 3px solid #5ad1f0; border-radius: 18px">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px">Round 5</h3>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Gym 7</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #ffc878">3 to play</span>
+</div>
+<sc-for list="{{lgRound}}" as="m" hint-placeholder-count="3">
+<a href="Match.dc.html" class="tile" style="display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 52px; padding: 0 12px; box-sizing: border-box; border-radius: 12px; background: #1b2232; border: 3px dashed {{m.line}}; color: #eef1f7; text-decoration: none">
+<span style="display: flex; align-items: center; gap: 10px; min-width: 0"><span aria-hidden="true" style="width: 28px; height: 28px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{m.a.c}}; background: {{m.a.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d">{{m.a.i}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 23px">{{m.a.name}}</span></span>
+<span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #6b7489">vs</span>
+<span style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0"><span style="font-family: 'Jersey 10', sans-serif; font-size: 23px">{{m.b.name}}</span><span aria-hidden="true" style="width: 28px; height: 28px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{m.b.c}}; background: {{m.b.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d">{{m.b.i}}</span></span>
+</a>
+</sc-for>
+</div>
 </div>
 </section>
 <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px">
@@ -211,7 +242,7 @@ Download
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"admin":{"editor":"boolean","default":false},"ingestion":{"editor":"enum","options":["manual","automatic"],"default":"manual"},"outcome":{"editor":"enum","options":["works","upload fails","no save in zip"],"default":"works"},"$preview":{"width":1440,"height":2040}}'>
+<script type="text/x-dc" data-dc-script data-props='{"admin":{"editor":"boolean","default":false},"ingestion":{"editor":"enum","options":["manual","automatic"],"default":"manual"},"outcome":{"editor":"enum","options":["works","upload fails","no save in zip"],"default":"works"},"$preview":{"width":1440,"height":2110}}'>
 
 function rng(seed) { let x = seed; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
 function blink(name, rand, lo, hi) { return name + ' ' + (lo + rand() * (hi - lo)).toFixed(2) + 's steps(2) ' + (rand() * 2).toFixed(2) + 's infinite alternate'; }
@@ -319,7 +350,11 @@ class Component extends DCLogic {
       };
     });
     const up = upFor >= 0 ? people[upFor] : null;
-    return {h: 2040, hasLives: false, maxLives, cols, rows, sky: nightScene(360, 65),
+    const lgP = {D: ['Dloez', '#ffd34d'], V: ['Vicky', '#5ad1f0'], J: ['Javi', '#7be08a'], I: ['Inop', '#ff8a80'], T: ['Tole', '#c39bff'], E: ['Elfo', '#ffb347']};
+    const lgB = (k) => ({name: lgP[k][0], i: lgP[k][0][0], c: lgP[k][1]});
+    const lgTop = [['D', 3, '3–1'], ['V', 3, '3–1'], ['T', 2, '2–2']].map(([k, pts, wl], i) => Object.assign(lgB(k), {place: i + 1, placeInk: i === 0 ? '#ffd34d' : '#6b7489', pts, wl, bg: k === 'D' ? 'rgba(255,211,77,0.06)' : 'transparent', line: i < 2 ? '3px solid #343f58' : 'none'}));
+    const lgRound = [['D', 'T'], ['J', 'V'], ['E', 'I']].map(([a, b]) => ({a: lgB(a), b: lgB(b), line: a === 'D' || b === 'D' ? '#8a7330' : '#44506d'}));
+    return {h: 2110, lgTop, lgRound, hasLives: false, maxLives, cols, rows, sky: nightScene(360, 65),
       upOpen: !!up, upWho: up ? whoOf(up, upFor) : null, outcome: this.props.outcome || 'works',
       closeUpload: () => this.setState({upFor: -1}),
       savedUpload: (m) => { if (!up) return; const list = (added[up.name] || []).concat([m]); this.setState({added: Object.assign({}, added, {[up.name]: list})}); }};

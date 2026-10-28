@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Design the league on the canvas
-
-Owner-run. Every screen of the league is designed anew on the [Site v2 Screens](https://claude.ai/artifact/JZpaCYGx2NQtPpcvAWYXrZ) canvas, desktop and phone, on League pages of its own placed by the canvas's page rules ([The pkmn Site → Look](../../pkmn/site/explanation/site.md#look)), not after the old app ([discovery → Goal and Scope](discovery.md#goal-and-scope), [Surfaces](discovery.md#surfaces)): the league page's Overview, Rounds, Pokémon League and Cup, each with its admin tools in place; the match page ([discovery → The Match Page](discovery.md#the-match-page)): both teams left and right, the Bo3 game by game, a cup game's blind ban (yours to make, waiting on the opponent, both shown), the pick of six with Copy for Showdown, and the admin recording a game's result; the series page's League summary; the Teams tab's flag and the locked badge on a round or cup team; logging a Pokémon League try (pick a team or paste one); the player profile's league record.
-
-**Do:**
-- [ ] Owner-run: design the boards and sign them off.
-- [ ] Freeze the signed-off boards into `pkmn/site/design/` and name them in [The pkmn Site → Look](../../pkmn/site/explanation/site.md#look).
-
-**Acceptance:**
-- Claude-run: the frozen boards are in `pkmn/site/design/`, each named in the site doc.
-- Human-run: the owner signs off every board.
-- Reuse: the site's design system ([Site Design System](../../pkmn/site/reference/design-system.md)) and the series page's boards.
-- Neighbors: `series.dc.html`, `teams-list.dc.html`, `player-profile.dc.html`.
-- Forbidden: copying the Trainer League app's look; editing a frozen board by hand.
-
-**Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
-**Needs the author:** the design and its sign-off.
-
 ## Series 1's rounds and standings come across from the app
 
 The thinnest league end to end: the tables for a series' rounds and matches (pairs, the Bo3 score, each side's fainted, replay links), the one-off import of the app's rounds, matches and replays from the dump ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)), `/series/<n>/league`'s Standings and Rounds, and the series page's League summary in place of its placeholder. Standings follow the rulebook's tie-breaks ([discovery → Standings](discovery.md#standings-the-pokémon-league-and-eggs)), from the league rules in `shared/league.ts`; Pokémon League points join them in [their entry](#players-log-their-pokémon-league-tries).
@@ -38,7 +20,6 @@ The thinnest league end to end: the tables for a series' rounds and matches (pai
 - Forbidden: the app's tie-breaks (game and Pokémon difference); league constants anywhere but `shared/league.ts`; a pipeline beyond one script.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Design the league on the canvas
 
 ## An admin records a match game by game on its page
 
@@ -111,6 +92,7 @@ An admin starts the cup and picks who enters; the bracket is drawn from the stan
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** The standings count eggs won and hatched
+**Needs the author:** a cup with an odd number of entrants (5 or 7): how its first round pairs, since the rulebook's pattern leaves one player without an opponent; the start-the-cup board keeps Start off for an odd count (raised in the design, 2026-10-28).
 
 ## Each cup match gives its players a locked team to build
 

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>League: an admin starts the cup</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jersey+10&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#5ad1f0}a:hover{color:#9be4f7}
+.tab:not([aria-current]):hover{background:#222a3b!important;color:#ffffff!important}.out:hover{color:#ffffff!important;background:#222a3b!important}
+.me:hover{background:#222a3b!important}
+.btn:not(:disabled):hover{background:rgba(255,255,255,0.18)!important}
+.go:not(:disabled):hover{background:#ef5148!important}
+.seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
+.mrow:hover{border-color:#5ad1f0!important;background:#283146!important}
+.srow:hover{background:#283146!important}
+.chev:hover{border-color:#5ad1f0!important}
+.rep:hover{background:#5ad1f0!important;color:#10141d!important}
+.pick:hover{border-color:#5ad1f0!important}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; min-height: {{h}}px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+
+<header style="flex: none; height: 64px; display: flex; align-items: center; gap: 28px; padding: 0 32px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
+<a href="Main.dc.html" aria-label="Home" style="flex: none; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 8px">
+<svg width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M4 0h4v1H4zM2 1h2v1H2zM8 1h2v1H8zM1 2h1v1H1zM10 2h1v1H10zM1 3h1v1H1zM10 3h1v1H10zM0 4h1v1H0zM5 4h2v1H5zM11 4h1v1H11zM0 5h5v1H0zM7 5h5v1H7zM0 6h1v1H0zM4 6h1v1H4zM7 6h1v1H7zM11 6h1v1H11zM0 7h1v1H0zM5 7h2v1H5zM11 7h1v1H11zM1 8h1v1H1zM10 8h1v1H10zM1 9h1v1H1zM10 9h1v1H10zM2 10h2v1H2zM8 10h2v1H8zM4 11h4v1H4z" fill="#4a5470"></path><path d="M4 1h4v1H4zM2 2h1v1H2zM4 2h6v1H4zM2 3h8v1H2zM1 4h4v1H1zM7 4h4v1H7z" fill="#e3403a"></path><path d="M3 2h1v1H3zM5 5h2v1H5zM1 6h3v1H1zM5 6h2v1H5zM8 6h3v1H8zM1 7h4v1H1zM7 7h4v1H7zM2 8h8v1H2zM2 9h8v1H2zM4 10h4v1H4z" fill="#ffffff"></path></svg>
+</a>
+<nav aria-label="Sections" style="align-self: stretch; display: flex; align-items: flex-end; gap: 4px">
+<a href="SeriesList.dc.html" class="tab" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: #d93a30; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z" fill="currentColor"></path></svg>Series</a>
+<a href="Pc.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z" fill="currentColor"></path></svg>PC</a>
+<a href="TeamsList.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M2 1h2v2H2zM6 1h2v2H6zM1 4h4v4H1zM5 4h4v4H5z" fill="currentColor"></path></svg>Teams</a>
+<sc-if value="{{admin}}" hint-placeholder-val="{{ false }}">
+<a href="AdminHome.dc.html" class="tab" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 10px 10px 0 0; background: transparent; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 26px; text-decoration: none">Admin</a>
+</sc-if>
+</nav>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 12px">
+<a href="Profile.dc.html" class="me" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 8px; border-radius: 8px; text-decoration: none">
+<span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 8px; border: 3px solid #10141d; box-shadow: 0 0 0 2px #ffd34d; background: #ffd34d; box-sizing: border-box; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">D</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #ffffff">Dloez</span>
+</a>
+<button type="button" class="out" aria-label="Sign out" title="Sign out" style="width: 44px; height: 44px; border: none; border-radius: 8px; background: transparent; color: #a3acbf; display: grid; place-items: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4v16h-4"></path><path d="M10 8l-4 4 4 4M6 12h10"></path></svg></button>
+</div>
+</header>
+
+<div style="flex: none; display: flex; flex-direction: column; gap: 14px; padding: 22px 40px 0">
+<nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 10px; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">
+<a href="Main.dc.html" style="color: #5ad1f0; text-decoration: none">{{series}}</a>
+<svg width="8" height="12" viewBox="0 0 14 18" aria-hidden="true"><path d="M2 2l10 7-10 7z" fill="#6b7489"></path></svg>
+<span>League</span>
+</nav>
+<div style="display: flex; align-items: flex-end; gap: 24px">
+<h1 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 64px; line-height: 0.85">League</h1>
+<div role="radiogroup" aria-label="View" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button type="button" role="radio" class="seg" aria-checked="{{t.on}}" onClick="{{t.pick}}" style="min-height: 44px; padding: 0 18px 2px; border: none; border-radius: 8px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer">{{t.label}}</button>
+</sc-for>
+</div>
+<div style="flex: 1"></div>
+<span style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border-radius: 10px; background: #10141d; border: 3px solid #343f58; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #c3cad8">{{status}}</span>
+</div>
+</div>
+
+<main style="flex: 1; padding: 22px 40px 40px; display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 20px; align-items: start">
+<section aria-labelledby="enter" style="display: flex; flex-direction: column; gap: 12px; padding: 18px 20px 20px; border-radius: 18px; background: #222a3b; border: 3px solid #343f58">
+<h2 id="enter" style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 30px">Who enters</h2>
+<div style="background: #1b2232; border: 3px solid #343f58; border-radius: 12px; overflow: hidden">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+<label style="display: grid; grid-template-columns: 56px 48px minmax(0, 1fr) 110px 220px; align-items: center; min-height: 72px; padding-right: 20px; border-bottom: {{r.line}}; background: {{r.bg}}; cursor: pointer">
+<span style="display: grid; place-items: center"><input type="checkbox" checked="{{r.on}}" onChange="{{r.toggle}}" aria-label="{{r.label}}" style="width: 24px; height: 24px; accent-color: #7be08a; cursor: pointer"></span>
+<span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 30px; color: {{r.seedInk}}">{{r.seed}}</span>
+<span style="display: flex; align-items: center; gap: 12px; opacity: {{r.dim}}">
+<span aria-hidden="true" style="width: 38px; height: 38px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{r.c}}; background: {{r.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #10141d">{{r.i}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px">{{r.name}}</span>
+</span>
+<span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #c3cad8; opacity: {{r.dim}}">{{r.pts}} pts</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: {{r.storyInk}}">{{r.story}}</span>
+</label>
+</sc-for>
+</div>
+</section>
+<aside aria-label="The cup's first round" style="display: flex; flex-direction: column; gap: 12px; padding: 18px 20px 20px; border-radius: 18px; background: #222a3b; border: 3px solid #343f58">
+<h2 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 30px">{{count}}</h2>
+<sc-for list="{{pairs}}" as="pr" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr); align-items: center; min-height: 52px; padding: 0 14px; border-radius: 12px; background: #1b2232; border: 3px solid #343f58">
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 16px; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #6b7489">{{pr.a.seed}}</span><span aria-hidden="true" style="width: 28px; height: 28px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{pr.a.c}}; background: {{pr.a.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d">{{pr.a.i}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 23px">{{pr.a.name}}</span></span>
+<span style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 19px; color: #6b7489">vs</span>
+<span style="display: flex; align-items: center; gap: 8px; flex-direction: row-reverse"><span style="width: 16px; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #6b7489">{{pr.b.seed}}</span><span aria-hidden="true" style="width: 28px; height: 28px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{pr.b.c}}; background: {{pr.b.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d">{{pr.b.i}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 23px">{{pr.b.name}}</span></span>
+</div>
+</sc-for>
+<button type="button" class="go" onClick="{{start}}" disabled="{{startOff}}" style="min-height: 56px; padding: 0 16px 4px; border: none; border-radius: 8px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; cursor: pointer; background: {{startBg}}; font-size: 26px">{{startLabel}}</button>
+</aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"h":{"editor":null,"default":880},"$preview":{"width":1440,"height":880}}'>
+const P = {
+  D: {name: 'Dloez', c: '#ffd34d'},
+  V: {name: 'Vicky', c: '#5ad1f0'},
+  J: {name: 'Javi', c: '#7be08a'},
+  I: {name: 'Inop', c: '#ff8a80'},
+  T: {name: 'Tole', c: '#c39bff'},
+  E: {name: 'Elfo', c: '#ffb347'}
+};
+const TABS = (on) => [['standings', 'Overview'], ['rounds', 'Rounds'], ['tries', 'Pokémon League'], ['cup', 'Cup']].map(([k, label]) => ({label, on: k === on ? 'true' : 'false', bg: k === on ? '#343f58' : 'transparent', ink: k === on ? '#ffffff' : '#a3acbf', pick: () => {}}));
+const badge = (k) => ({i: P[k].name[0], c: P[k].c, name: P[k].name});
+const FINAL = [['D', 9, 'Finished the story'], ['V', 8, 'Finished the story'], ['I', 5, 'Finished the story'], ['J', 4, 'Finished the story'], ['T', 3, 'Finished the story'], ['E', 1, 'Finished the story']];
+class Component extends DCLogic {
+  st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
+  renderVals() {
+    const out = this.st('out', []), started = this.st('started', false);
+    const ins = FINAL.filter(([k]) => !out.includes(k));
+    const seedOf = {}; ins.forEach(([k], i) => { seedOf[k] = i + 1; });
+    const rows = FINAL.map(([k, pts, story], i) => {
+      const on = !out.includes(k);
+      return Object.assign(badge(k), {on, pts, story: on ? story : 'Stays out', storyInk: on ? '#7be08a' : '#ff8a80', seed: on ? seedOf[k] : '–', seedInk: on && seedOf[k] === 1 ? '#ffd34d' : '#6b7489', dim: on ? 1 : 0.45,
+        label: P[k].name + ' enters the cup', bg: on ? 'transparent' : 'rgba(16,20,29,0.5)', line: i < FINAL.length - 1 ? '3px solid #343f58' : 'none',
+        toggle: () => this.setState({out: on ? out.concat([k]) : out.filter((x) => x !== k)})});
+    });
+    const n = ins.length;
+    const sd = (j) => Object.assign(badge(ins[j][0]), {seed: j + 1});
+    const pairs = [];
+    for (let j = 0; j < Math.floor(n / 2); j++) pairs.push({a: sd(j), b: sd(n - 1 - j)});
+    return {h: this.props.h || 880, admin: true, series: 'Series 1', tabs: TABS('cup'), status: started ? 'Cup · first round' : 'League finished · 15 of 15 played',
+      rows, pairs, count: n % 2 ? n + ' enter · no bracket yet' : n + ' enter · first round',
+      startOff: n < 2 || n % 2 === 1 || started, startBg: n < 2 || n % 2 === 1 || started ? '#5a2a27' : '#d93a30', startLabel: started ? 'Cup started' : 'Start the cup',
+      start: () => { if (n >= 2 && n % 2 === 0) this.setState({started: true}); }};
+  }
+}
+</script>
+</body>
+</html>
