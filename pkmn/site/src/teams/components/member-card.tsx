@@ -57,7 +57,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
     <article
       aria-label={name}
       className={cn(
-        "relative flex min-w-0 flex-1 flex-col justify-between gap-2 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5 short:gap-1.5 short:pb-2",
+        "relative flex min-w-0 flex-1 flex-col gap-2 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5 short:gap-1.5 short:pb-2",
         glow ? "border-yellow shadow-[0_0_0_3px_color-mix(in_srgb,var(--yellow)_35%,transparent)]" : lit ? "border-primary" : pick?.in ? "border-green" : "border-border",
         pick && !pick.in && "opacity-55",
       )}
@@ -193,7 +193,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           )}
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-1.5 short:gap-1">
+      <div className="grid flex-1 auto-rows-fr grid-cols-2 gap-1.5 short:gap-1">
         {member.moves.map((id, at) => {
           const move = id ? describeMove(id) : null;
           const introduced = id !== null && mon.free ? moveGen(id) : null;
