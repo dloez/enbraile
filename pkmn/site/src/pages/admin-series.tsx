@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { STATE_CHIP, STATE_NAMES } from "@/pages/admin-series-list";
 import { type Game, gameList } from "../../shared/games";
+import { MOVE_RULE_LABELS, MOVE_RULES } from "../../shared/pool";
 import { type Player, playerList } from "../../shared/players";
 import {
   type AdminSeries,
@@ -312,6 +313,20 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
               <span className="text-[0.8125rem] text-muted-foreground">A new team from this series' snapshots starts with this pool; its owner can change it.</span>
             </div>
             <PoolBar filters={draft.pool} onChange={editable ? (pool) => change({ pool }) : undefined} />
+            <div className="flex flex-col gap-1.5">
+              <span id="moves-label" className="font-heading text-xl text-muted-foreground">
+                Moves
+              </span>
+              <Segmented
+                labelledBy="moves-label"
+                size="lg"
+                options={MOVE_RULES.map((rule) => ({ value: rule, label: MOVE_RULE_LABELS[rule], disabled: !editable && rule !== draft.pool.moves }))}
+                value={draft.pool.moves}
+                onChange={(moves) => editable && change({ pool: { ...draft.pool, moves } })}
+                className="self-stretch sm:self-start"
+              />
+              <span className="text-[0.8125rem] text-muted-foreground">Which of a snapshot Pokémon's moves its team may pick: known only, or with its learnset up to its level, up to Lv 50 or at any level, and its bag TMs.</span>
+            </div>
           </section>
 
           <RulesEditor rules={draft.rules} others={others} onChange={(rules) => change({ rules })} />

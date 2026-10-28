@@ -5,7 +5,7 @@ import type { TeamPool } from "../../shared/pool";
 
 export type PoolFilters = TeamPool;
 
-export const DEFAULT_FILTERS: PoolFilters = { gen: 9, speciesGen: 9, movesGen: 9, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: 800 };
+export const DEFAULT_FILTERS: PoolFilters = { gen: 9, speciesGen: 9, movesGen: 9, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: 800, moves: "any" };
 
 export interface PoolMember {
   name: string;

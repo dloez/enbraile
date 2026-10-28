@@ -4,7 +4,8 @@ import { CategoryTag, TypeTag } from "@/components/pc/summary";
 import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
 import { describeMove, describeTm } from "../../../shared/describe";
-import { displayName, tmLabels, type Mon, type MoveInfo } from "../../../shared/mon";
+import { allowedMoves, displayName, tmLabels, type Mon, type MoveInfo } from "../../../shared/mon";
+import type { MoveRule } from "../../../shared/pool";
 import { learnset, movesUpTo } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
 import { EditorHead, editorScroll } from "@/teams/components/editors";
@@ -14,8 +15,8 @@ interface Option {
   label: string;
 }
 
-function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: number, learned: ReadonlySet<string> | null): { name: string; moves: Option[] }[] {
-  const learn = mon.learnable;
+function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: number, rule: MoveRule, learned: ReadonlySet<string> | null): { name: string; moves: Option[] }[] {
+  const learn = allowedMoves(mon, rule);
   if (learn) {
     const level = (id: string) => (learn.levels?.[id] !== undefined ? String(learn.levels[id]) : "");
     return [
@@ -39,10 +40,11 @@ function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: 
   ];
 }
 
-export function MoveEditor({ sheet, mon, movesGen, moves, at, back, onBack, onPick }: {
+export function MoveEditor({ sheet, mon, movesGen, rule, moves, at, back, onBack, onPick }: {
   sheet: Sheet;
   mon: Mon;
   movesGen: number;
+  rule: MoveRule;
   moves: readonly (string | null)[];
   at: number;
   back: string;
@@ -64,7 +66,7 @@ export function MoveEditor({ sheet, mon, movesGen, moves, at, back, onBack, onPi
       live = false;
     };
   }, [species]);
-  const groups = useMemo(() => options(sheet, mon, labels, movesGen, learned), [sheet, mon, labels, movesGen, learned]);
+  const groups = useMemo(() => options(sheet, mon, labels, movesGen, rule, learned), [sheet, mon, labels, movesGen, rule, learned]);
   const q = query.trim().toLowerCase();
   const replacing = moves[at];
   const seen = new Set<string>();

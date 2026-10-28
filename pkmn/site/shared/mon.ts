@@ -1,4 +1,5 @@
 import * as z from "zod";
+import type { MoveRule } from "./pool.js";
 
 export const STATS = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
 
@@ -186,8 +187,18 @@ export function tmLabels(tms: readonly { item: string; move: string }[]): Map<st
   return new Map(tms.map((t) => [t.move, tmLabel(t.item)]));
 }
 
-export function canLearn(mon: Mon, move: string): Learn | null {
+export function allowedMoves(mon: Mon, rule: MoveRule): Learnable | null {
   const l = mon.learnable;
+  if (!l) return null;
+  if (rule === "known") return { ...l, relearner: [], tms: [] };
+  const cap = rule === "level" ? mon.level : rule === "fifty" ? 50 : null;
+  if (cap === null || !l.levels) return l;
+  const levels = l.levels;
+  return { ...l, relearner: l.relearner.filter((m) => levels[m.id] === undefined || levels[m.id] <= cap) };
+}
+
+export function canLearn(mon: Mon, move: string, rule: MoveRule): Learn | null {
+  const l = allowedMoves(mon, rule);
   if (!l) return null;
   return [l.current, l.relearner, l.tms].some((list) => list.some((m) => m.id === move)) ? "yes" : "no";
 }

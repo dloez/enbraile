@@ -395,10 +395,9 @@ function relearnerMoves(pokemon: RubyObject, learnsets: unknown, perForm: boolea
     notices.push(`The learnset of ${label} has not been rolled yet; its relearner moves are its first moves only.`);
     learnset = [];
   }
-  const level = pokemon.get("level");
   const levels = new Map<string, number>();
   for (const entry of learnset as unknown[]) {
-    if (!Array.isArray(entry) || entry.length !== 2 || !isInt(level) || (entry[0] as number) > level) continue;
+    if (!Array.isArray(entry) || entry.length !== 2) continue;
     const move = moveId(entry[1]);
     found.push(move);
     if (move && isInt(entry[0]) && !(levels.get(move)! <= entry[0])) levels.set(move, entry[0]);

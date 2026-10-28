@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronLeft, ClipboardCheck, ClipboardCopy, Plus, X } from "lucide-react";
+import { ChevronLeft, ClipboardCheck, ClipboardCopy, Lock, Plus, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { toolPage } from "@/components/page";
 import { MiniSeta } from "@/components/pc/bag";
@@ -21,14 +21,15 @@ import { MoveEditor } from "@/teams/components/move-picker";
 import { PasteDialog } from "@/teams/components/paste-dialog";
 import { AnyMark, SnapshotMenu, sourceLabel } from "@/teams/components/snapshot-menu";
 import { preloadGraph, SheetAnalysis } from "@/teams/components/sheet-analysis";
-import { currentAbility, type Mon } from "../../shared/mon";
+import { allowedMoves, currentAbility, type Mon } from "../../shared/mon";
 import { defensesOf, describeMove, describeTm } from "../../shared/describe";
 import { liveSlots, memberMon } from "@/teams/dex";
 import { EMPTY_SHEET, formatMoney, freeCount, giveItem, isFree, lastFilled, moneyLeft, natureFrom, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, setNature, stockOf, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
 import { showdownTeam } from "@/teams/showdown";
 import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
-import type { TeamPool } from "../../shared/pool";
+import { MOVE_RULE_LABELS, MOVE_RULES, type MoveRule, type TeamPool } from "../../shared/pool";
+import { SelectField } from "@/components/select-field";
 
 const FROM = "/teams/$id";
 
@@ -93,14 +94,14 @@ export function TeamBuilderPage() {
   );
 }
 
-function asSet(mon: Mon, member: Member): Mon {
+function asSet(mon: Mon, member: Member, rule: MoveRule): Mon {
   const ability = member.ability ?? currentAbility(mon);
   const abilities = mon.abilities.map((a) => ({ ...a, current: a.id === ability }));
   return {
     ...mon,
     abilities,
     defenses: defensesOf(mon.types, abilities),
-    learnable: mon.learnable && { ...mon.learnable, current: member.moves.flatMap((m) => (m ? [describeMove(m)] : [])) },
+    learnable: mon.learnable && { ...allowedMoves(mon, rule)!, current: member.moves.flatMap((m) => (m ? [describeMove(m)] : [])) },
   };
 }
 
@@ -268,6 +269,7 @@ function Builder({ page }: { page: TeamPage }) {
                 natureFrom={natureFrom(slots, stocks, slot)}
                 setaCost={own?.costs.abilitySetas ?? 0}
                 movesGen={movesGen}
+                moveRule={pool.moves}
                 onMove={(at) => show({ t: "move", slot, at, back: backOf(slot) })}
                 onSet={() => show({ t: "set", slot, back: backOf(slot) })}
                 onRemove={() => {
@@ -301,7 +303,7 @@ function Builder({ page }: { page: TeamPage }) {
     if (!member || !mon || (!own && !isFree(member))) return null;
     const sheet = own?.sheet ?? EMPTY_SHEET;
     if (panel.t === "sum") {
-      const shown = asSet(mon, member);
+      const shown = asSet(mon, member, pool.moves);
       return (
         <>
           <div className="flex flex-none items-center px-2.5 pt-2">
@@ -384,6 +386,7 @@ function Builder({ page }: { page: TeamPage }) {
         sheet={sheet}
         mon={mon}
         movesGen={movesGen}
+        rule={pool.moves}
         moves={member.moves}
         at={panel.at}
         back={backLabel(panel)}
@@ -409,7 +412,13 @@ function Builder({ page }: { page: TeamPage }) {
               write({ name: next });
             }} />
             {!editable && (
-              <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.name) % PLAYER_FILL.length])}>{page.owner.name}'s team</span>
+              <>
+                <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.name) % PLAYER_FILL.length])}>{page.owner.name}'s team</span>
+                <span title={`Only ${page.owner.name} can change this team`} className="flex items-center gap-1.5 rounded-sm border-2 border-warning bg-warning-soft px-2 py-px font-heading text-xl text-warning-ink">
+                  <Lock className="size-4 text-warning" aria-hidden="true" />
+                  View only
+                </span>
+              </>
             )}
             {held.map((h) => (
               <SourceChip
@@ -427,6 +436,7 @@ function Builder({ page }: { page: TeamPage }) {
         <div className="flex-1" />
         <div className="flex flex-wrap items-center gap-3">
           {editable && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
+          {editable && <MovesSwitch rule={pool.moves} onRule={(moves) => choosePool({ ...pool, moves })} />}
           {editable && (
             <button type="button" onClick={() => setPasting(true)} className={buttonVariants({ className: "min-h-12" })}>
               Paste
@@ -630,6 +640,42 @@ function SizeSwitch({ size, least, onSize }: { size: number; least: number; onSi
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function MovesSwitch({ rule, onRule }: { rule: MoveRule; onRule: (rule: MoveRule) => void }) {
+  const wide = useMediaQuery("(min-width: 40rem)");
+  if (!wide) {
+    return (
+      <div className="flex items-center gap-2">
+        <span aria-hidden="true" className="pl-1 font-heading text-xl text-muted-foreground">
+          Moves
+        </span>
+        <SelectField label="Moves" value={rule} options={MOVE_RULES.map((r) => ({ value: r, label: MOVE_RULE_LABELS[r] }))} onChange={(next) => onRule(next as MoveRule)} />
+      </div>
+    );
+  }
+  return (
+    <div role="radiogroup" aria-label="Moves" className="flex items-center gap-1 rounded-xl border-3 bg-ink p-1">
+      <span aria-hidden="true" className="pr-1.5 pl-2 font-heading text-xl text-muted-foreground">
+        Moves
+      </span>
+      {MOVE_RULES.map((r) => (
+        <button
+          key={r}
+          type="button"
+          role="radio"
+          aria-checked={r === rule}
+          onClick={() => r !== rule && onRule(r)}
+          className={cn(
+            "min-h-9 cursor-pointer rounded-lg border-none px-3 font-heading text-[1.375rem] whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+            r === rule ? "bg-border text-white" : "bg-transparent text-muted-foreground hover:bg-cell hover:text-white",
+          )}
+        >
+          {MOVE_RULE_LABELS[r]}
+        </button>
+      ))}
     </div>
   );
 }

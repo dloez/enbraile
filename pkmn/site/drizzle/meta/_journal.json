@@ -113,6 +113,13 @@
       "when": 1793132207928,
       "tag": "0015_item_icons_and_world",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793212009570,
+      "tag": "0016_move_rule",
+      "breakpoints": true
     }
   ]
 }

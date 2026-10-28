@@ -8,6 +8,12 @@ export const MAX_BST = 800;
 
 const poolGen = z.literal(POOL_GENS);
 
+export const MOVE_RULES = ["known", "level", "fifty", "any"] as const;
+
+export type MoveRule = (typeof MOVE_RULES)[number];
+
+export const MOVE_RULE_LABELS: Record<MoveRule, string> = { known: "Known", level: "Its level", fifty: "Lv 50", any: "Any level" };
+
 export const teamPool = z.object({
   gen: poolGen,
   speciesGen: poolGen,
@@ -16,11 +22,12 @@ export const teamPool = z.object({
   noMythical: z.boolean(),
   fullyEvolved: z.boolean(),
   maxBst: z.int().min(MIN_BST).max(MAX_BST),
+  moves: z.enum(MOVE_RULES),
 });
 
 export type TeamPool = z.infer<typeof teamPool>;
 
-export const DEFAULT_POOL: TeamPool = { gen: 9, speciesGen: 5, movesGen: 5, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: MAX_BST };
+export const DEFAULT_POOL: TeamPool = { gen: 9, speciesGen: 5, movesGen: 5, noLegendary: false, noMythical: false, fullyEvolved: true, maxBst: MAX_BST, moves: "any" };
 
 export function poolLabel(pool: TeamPool): string {
   return [`Gen ${pool.gen}`, `species ≤ Gen ${Math.min(pool.gen, pool.speciesGen)}`, `moves ≤ Gen ${Math.min(pool.gen, pool.movesGen)}`, pool.fullyEvolved && "fully evolved", pool.noLegendary && "no legendaries", pool.noMythical && "no mythicals", pool.maxBst < MAX_BST && `BST ≤ ${pool.maxBst}`]
