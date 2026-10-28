@@ -232,8 +232,8 @@ function Builder({ page }: { page: TeamPage }) {
   const cards = (
     <ol
       aria-label="Members"
-      style={{ "--rows": Math.ceil(slots.length / 2), "--row-max": slots.length > TEAM_SIZE ? "1fr" : "246px" } as CSSProperties}
-      className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:grid-rows-[repeat(var(--rows),minmax(188px,var(--row-max)))] lg:content-start lg:overflow-y-auto"
+      style={{ "--rows": Math.ceil(slots.length / 2) } as CSSProperties}
+      className="m-0 grid min-h-0 list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:flex-1 lg:grid-rows-[repeat(var(--rows),minmax(188px,246px))] lg:content-start lg:overflow-y-auto"
     >
       {slots.map((member, slot) => {
         const mon = memberMon(member, stocks);
