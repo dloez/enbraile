@@ -194,7 +194,7 @@ function OwnerChip({ owner }: { owner: { id: string; name: string } }) {
   return (
     <div className="flex">
       <span className="flex min-h-12 items-center gap-2.5 rounded-full border-3 bg-card py-1 pr-1 pl-1.5">
-        <PlayerBadge name={owner.name} colour={playerColour(owner.id)} size="xs" />
+        <PlayerBadge name={owner.name} colour={playerColour(owner.name)} size="xs" />
         <span className="font-heading text-2xl leading-none">{owner.name}</span>
         <Link
           to="/teams"
@@ -272,7 +272,7 @@ function RowBody({ team, showOwner, filled }: { team: TeamRow; showOwner: boolea
   const size = team.members.length;
   return (
     <>
-      <PlayerBadge name={team.owner.name} colour={playerColour(team.owner.id)} />
+      <PlayerBadge name={team.owner.name} colour={playerColour(team.owner.name)} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:w-75 sm:flex-none">
         <span className="truncate font-heading text-[2.125rem] leading-[0.9]">{team.name}</span>
         <span className="truncate text-sm font-bold text-muted-foreground">

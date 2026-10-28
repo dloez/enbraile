@@ -135,7 +135,7 @@ function Account({ user }: { user: User }) {
           activeOptions={{ exact: true }}
           className={`flex min-h-11 min-w-0 items-center gap-3 rounded-lg px-2 hover:bg-card aria-[current=page]:bg-card ${focus}`}
         >
-          <PlayerBadge name={user.name} colour={playerColour(user.id)} />
+          <PlayerBadge name={user.name} colour={playerColour(user.name)} />
           <span className="truncate font-heading text-2xl text-white">{user.name}</span>
         </Link>
       )}
@@ -239,7 +239,7 @@ function PhoneMenu({
                   className={cn(menuItem, "text-white hover:bg-card aria-[current=page]:bg-card")}
                 >
                   <span className="-ml-1.75 flex">
-                    <PlayerBadge name={user.name} colour={playerColour(user.id)} size="xs" />
+                    <PlayerBadge name={user.name} colour={playerColour(user.name)} size="xs" />
                   </span>
                   <span className="truncate">{user.name}</span>
                 </Link>

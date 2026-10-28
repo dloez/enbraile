@@ -17,7 +17,7 @@ export function WaitingPage({ player, owed = [], onUploaded }: { player: { id: s
     <BallSplit title={<span className={ballTitleClass}>pkmn</span>} className="px-6 pb-9 sm:pb-12">
       <div className="flex flex-col items-center gap-4 sm:gap-5">
         <div className="flex items-center gap-2.5 sm:gap-3">
-          <PlayerBadge name={player.name} colour={playerColour(player.id)} />
+          <PlayerBadge name={player.name} colour={playerColour(player.name)} />
           <span className="font-heading text-2xl text-white">{player.name}</span>
         </div>
         <h1 className="m-0 text-center font-heading text-4xl leading-[0.9] font-normal text-white sm:text-6xl">

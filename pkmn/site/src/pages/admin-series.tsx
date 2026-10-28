@@ -286,7 +286,7 @@ function SeriesForm({ series: first, games, players, others }: Loaded) {
                           picked ? "border-primary bg-accent" : "border-cell bg-box enabled:hover:border-primary",
                         )}
                       >
-                        <PlayerBadge name={p.name} colour={playerColour(p.id)} size="xs" />
+                        <PlayerBadge name={p.name} colour={playerColour(p.name)} size="xs" />
                         <span className="min-w-0 flex-1 truncate font-heading text-[1.375rem] sm:text-[1.625rem]">{p.name}</span>
                         <span
                           aria-hidden="true"

@@ -188,7 +188,7 @@ function Waiting({ players, onAllowed }: { players: Player[]; onAllowed: (update
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {players.map((p) => (
             <li key={p.id} className="flex min-h-15 items-center gap-3 rounded-xl border-2 border-cell bg-box pr-2 pl-2.5 sm:min-h-16 sm:gap-3.5 sm:pr-3 sm:pl-3.5">
-              <PlayerBadge name={p.name} colour={playerColour(p.id)} />
+              <PlayerBadge name={p.name} colour={playerColour(p.name)} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate font-heading text-[1.5625rem] leading-none sm:text-[1.75rem]">{p.name}</span>
                 <span className="text-xs font-bold text-muted-foreground sm:text-[0.8125rem]">Signed in {joinedOn(p.joinedAt)}</span>

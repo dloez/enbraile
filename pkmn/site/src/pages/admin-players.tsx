@@ -115,7 +115,7 @@ function PlayerList({
                   params={{ player: p.id }}
                   className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:gap-3.5"
                 >
-                  <PlayerBadge name={p.name} colour={playerColour(p.id)} />
+                  <PlayerBadge name={p.name} colour={playerColour(p.name)} />
                   <span className="flex min-w-0 flex-col">
                     <span className="flex min-w-0 items-center gap-2.5">
                       <span className="truncate font-heading text-[1.5625rem] leading-none decoration-2 underline-offset-4 group-hover:underline sm:text-[1.75rem]">{p.name}</span>

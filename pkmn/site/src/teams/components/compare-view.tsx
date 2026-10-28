@@ -156,7 +156,7 @@ function OwnerMark({ owner, className }: { owner: Compared["owner"]; className?:
     <span className={cn("flex min-w-0 items-center gap-1.5", className)}>
       <span
         aria-hidden="true"
-        className={cn("grid size-5 flex-none place-items-center rounded-[5px] font-heading text-base leading-none text-ink", PLAYER_FILL[playerColour(owner.id)])}
+        className={cn("grid size-5 flex-none place-items-center rounded-[5px] font-heading text-base leading-none text-ink", PLAYER_FILL[playerColour(owner.name)])}
       >
         {owner.name.charAt(0).toUpperCase()}
       </span>

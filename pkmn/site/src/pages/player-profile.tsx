@@ -74,7 +74,7 @@ function Head({ page }: { page: ProfilePage }) {
   const you = data?.user.id === page.player.id;
   return (
     <div className="flex items-center gap-4 sm:gap-5.5">
-      <PlayerBadge name={page.player.name} colour={playerColour(page.player.id)} size="xl" />
+      <PlayerBadge name={page.player.name} colour={playerColour(page.player.name)} size="xl" />
       <div className="flex min-w-0 flex-col gap-1 sm:gap-1.5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3.5">
           <h1 className="m-0 min-w-0 truncate font-heading text-6xl leading-[0.8] font-normal sm:text-[5.25rem]">{page.player.name}</h1>

@@ -1,8 +1,34 @@
 import { cn } from "@/lib/utils";
 
-export const PLAYER_FILL = ["bg-player-1", "bg-player-2", "bg-player-3", "bg-player-4", "bg-player-5", "bg-player-6"] as const;
+export const PLAYER_FILL = [
+  "bg-player-1",
+  "bg-player-2",
+  "bg-player-3",
+  "bg-player-4",
+  "bg-player-5",
+  "bg-player-6",
+  "bg-player-7",
+  "bg-player-8",
+  "bg-player-9",
+  "bg-player-10",
+  "bg-player-11",
+  "bg-player-12",
+] as const;
 
-export const PLAYER_RING = ["ring-player-1", "ring-player-2", "ring-player-3", "ring-player-4", "ring-player-5", "ring-player-6"] as const;
+export const PLAYER_RING = [
+  "ring-player-1",
+  "ring-player-2",
+  "ring-player-3",
+  "ring-player-4",
+  "ring-player-5",
+  "ring-player-6",
+  "ring-player-7",
+  "ring-player-8",
+  "ring-player-9",
+  "ring-player-10",
+  "ring-player-11",
+  "ring-player-12",
+] as const;
 
 const SIZES = {
   xs: "size-8 rounded-[7px] ring-2 text-[1.375rem]",
@@ -12,9 +38,9 @@ const SIZES = {
   row: "size-8.5 rounded-lg ring-2 text-[1.375rem] sm:size-12.5 sm:ring-3 sm:text-3xl",
 } as const;
 
-export function playerColour(id: string): number {
+export function playerColour(name: string): number {
   let hash = 0;
-  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return hash % PLAYER_FILL.length;
 }
 

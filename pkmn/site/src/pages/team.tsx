@@ -116,7 +116,7 @@ function holding(sources: readonly TeamSource[]): Held[] {
     source,
     label: sourceLabel(source),
     owner: source.player.name,
-    colour: playerColour(source.player.id),
+    colour: playerColour(source.player.name),
     ...stockOf(source),
     tms: source.snapshot.tms.map(describeTm),
     gaps: source.missing?.missing ?? [],
@@ -404,7 +404,7 @@ function Builder({ page }: { page: TeamPage }) {
               write({ name: next });
             }} />
             {!editable && (
-              <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.id) % PLAYER_FILL.length])}>{page.owner.name}'s team</span>
+              <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.name) % PLAYER_FILL.length])}>{page.owner.name}'s team</span>
             )}
             {held.map((h) => (
               <SourceChip

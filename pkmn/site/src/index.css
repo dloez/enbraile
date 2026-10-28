@@ -43,6 +43,12 @@
     --color-player-4: var(--player-4);
     --color-player-5: var(--player-5);
     --color-player-6: var(--player-6);
+    --color-player-7: var(--player-7);
+    --color-player-8: var(--player-8);
+    --color-player-9: var(--player-9);
+    --color-player-10: var(--player-10);
+    --color-player-11: var(--player-11);
+    --color-player-12: var(--player-12);
     --color-pixel-rim: var(--pixel-rim);
     --color-pixel-red: var(--pixel-red);
     --color-pixel-case: var(--pixel-case);
@@ -194,6 +200,12 @@
     --player-4: var(--coral);
     --player-5: #c39bff;
     --player-6: var(--orange);
+    --player-7: #ff8fc8;
+    --player-8: #ffb8d9;
+    --player-9: #bfe4ff;
+    --player-10: #a8f5d6;
+    --player-11: #c9ea5e;
+    --player-12: #e8d6a8;
     --faint: #6b7489;
     --row-hi: #283146;
     --round: #c12d24;

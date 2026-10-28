@@ -92,7 +92,7 @@ function Head({ page }: { page: JourneyPage }) {
         </nav>
         <div className="flex min-w-0 items-center gap-3 sm:gap-3.5">
           <Link to="/players/$player" params={{ player: page.player.id }} aria-label={`${page.player.name}'s profile`} className="flex-none rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-            <PlayerBadge name={page.player.name} colour={playerColour(page.player.id)} size="lg" />
+            <PlayerBadge name={page.player.name} colour={playerColour(page.player.name)} size="lg" />
           </Link>
           <h1 className="m-0 min-w-0 font-heading text-[2.75rem] leading-[0.85] font-normal sm:text-6xl">
             {page.player.name} in Series {page.series.number}

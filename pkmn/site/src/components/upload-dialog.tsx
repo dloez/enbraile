@@ -144,7 +144,7 @@ export function UploadDialog({
         )}
       >
         <div className="flex items-center gap-3.5">
-          {forOther && <PlayerBadge name={trainer.name} colour={playerColour(trainer.id)} size="sm" />}
+          {forOther && <PlayerBadge name={trainer.name} colour={playerColour(trainer.name)} size="sm" />}
           <DialogTitle className="m-0 min-w-0 flex-1 font-heading text-4xl leading-[0.9] font-normal">
             {forOther ? `Upload for ${trainer.name}` : "Upload snapshot"}
           </DialogTitle>

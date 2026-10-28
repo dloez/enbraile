@@ -280,7 +280,7 @@ function TrainerRow({
             params={{ player: trainer.id }}
             className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg decoration-3 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 sm:gap-3.5"
           >
-            <PlayerBadge name={trainer.name} colour={playerColour(trainer.id)} size="row" />
+            <PlayerBadge name={trainer.name} colour={playerColour(trainer.name)} size="row" />
             <span className="truncate font-heading text-[1.625rem] leading-none sm:text-3xl sm:leading-tight">{trainer.name}</span>
           </Link>
           {you && <span className="flex-none rounded-sm bg-yellow px-1.5 font-heading text-base text-ink sm:px-1.75 sm:text-lg">You</span>}
@@ -464,7 +464,7 @@ function Track({
   interactive: boolean;
   onPick: (milestone: string) => void;
 }) {
-  const colour = playerColour(trainer.id);
+  const colour = playerColour(trainer.name);
   const taken = new Set(trainer.snapshots.map((s) => s.milestone));
   const at = trainer.progress ? milestones.findIndex((m) => m.name === trainer.progress) : -1;
   const count = Math.max(milestones.length, 1);
