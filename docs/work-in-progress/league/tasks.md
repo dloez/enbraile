@@ -20,23 +20,6 @@ Owner-run. Every screen of the league is designed anew on the [Site v2 Screens](
 **Touches:** `pkmn/site/design/`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** the design and its sign-off.
 
-## Write the cup's new rules into Series 1 Rules
-
-Docs only. The cup is now eight Pokémon with a blind ban in every game, replacing "No bans", and each player's sheet is their snapshot at the Tournament milestone, replacing the Open Sheet export made when they are done ([discovery → The Cup](discovery.md#the-cup)).
-
-**Do:**
-- [ ] Rewrite [Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament)'s open-sheet rule and add the ban rule, dated: eight Pokémon, one ban each per game made blind, six brought of the seven left, a game's winner not repeating their ban in the next game.
-- [ ] Record both in [Competition Format → Decisions](../../pkmn/series/1/explanation/competition-format.md#decisions) and fix its Final Tournament section.
-
-**Acceptance:**
-- Claude-run: `grep -rn "Open Sheet export\|No bans" docs/pkmn/series/1/` finds nothing stale.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: the 2026-10-22 rule changes entry in Competition Format.
-- Forbidden: a ban rule the owner did not give.
-
-**Touches:** `docs/pkmn/series/1/`
-
 ## Series 1's rounds and standings come across from the app
 
 The thinnest league end to end: the tables for a series' rounds and matches (pairs, the Bo3 score, each side's fainted, replay links), the one-off import of the app's rounds, matches and replays from the dump ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)), `/series/<n>/league`'s Standings and Rounds, and the series page's League summary in place of its placeholder. Standings follow the rulebook's tie-breaks ([discovery → Standings](discovery.md#standings-the-pokémon-league-and-eggs)), from the league rules in `shared/league.ts`; Pokémon League points join them in [their entry](#players-log-their-pokémon-league-tries).
@@ -163,7 +146,7 @@ Each cup game opens with both players' bans once the game before it has its resu
 - Forbidden: showing a ban before both are in, to anyone; a ban or pick written outside the match module.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Each cup match gives its players a locked team to build; Write the cup's new rules into Series 1 Rules
+**After:** Each cup match gives its players a locked team to build
 
 ## An admin opens a round and draws its pairs
 

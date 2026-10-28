@@ -14,6 +14,6 @@
 | Egg | One of the 16 eggs the mod gives every new game, opened by a league match win or by each combat won in the best Pokémon League try; the extra catch | Huevo, captura extra |
 | Series | One playthrough of a game by the group under its own rulebook, identified by number; series 1 is Pokémon Añil ([Repository Layout → Games and Series](../../../../general/explanation/repository-layout.md#games-and-series)) | |
 | Bo3 | Best of three games | |
-| Final Tournament | End-of-series open-sheet PvP among the players who finished the story without losing the challenge, from each player's whole-PC export | |
+| Final Tournament | End-of-series open-sheet PvP among the players who finished the story without losing the challenge, from each player's snapshot at the Tournament milestone: a team of eight per match, one blind ban each per game, six brought | |
 | Team Preview | Pre-battle reveal of the opponent's team; shows species only | |
 | Finisher | A player who completed the story without losing the challenge, qualifying for the final tournament whether or not they beat the League | |
