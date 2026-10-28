@@ -1,4 +1,4 @@
-import { ChevronRight, Plus, X } from "lucide-react";
+import { Check, ChevronRight, Plus, X } from "lucide-react";
 import { ItemIcon, MiniSeta, Mint } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import { TypeTag } from "@/components/pc/summary";
@@ -57,11 +57,33 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
     <article
       aria-label={name}
       className={cn(
-        "flex min-w-0 flex-1 flex-col gap-2 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5",
-        glow ? "border-yellow shadow-[0_0_0_3px_color-mix(in_srgb,var(--yellow)_35%,transparent)]" : lit ? "border-primary" : "border-border",
+        "relative flex min-w-0 flex-1 flex-col gap-2 rounded-[14px] border-3 bg-card pt-1.5 pr-3 pb-3 pl-1.5",
+        glow ? "border-yellow shadow-[0_0_0_3px_color-mix(in_srgb,var(--yellow)_35%,transparent)]" : lit ? "border-primary" : pick?.in ? "border-green" : "border-border",
         pick && !pick.in && "opacity-55",
       )}
     >
+      {pick && (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={pick.in}
+          aria-label={pick.in ? `Leave ${name} out of the six` : `Put ${name} in the six`}
+          title={pick.in ? "Leave out of the six" : "Put in the six"}
+          disabled={pick.off}
+          onClick={pick.onToggle}
+          className="group absolute top-0 left-0 z-1 grid size-11 place-items-center rounded-[14px] border-none bg-transparent p-0 outline-none enabled:cursor-pointer disabled:cursor-default"
+        >
+          <span
+            className={cn(
+              "grid size-6.5 place-items-center rounded-md border-3 group-focus-visible:ring-3 group-focus-visible:ring-ring/50",
+              pick.in ? "border-green bg-green text-ink" : "border-cell-hi bg-ink group-enabled:group-hover:border-green",
+              pick.off && "opacity-45",
+            )}
+          >
+            {pick.in && <Check className="size-4" strokeWidth={3.5} aria-hidden="true" />}
+          </span>
+        </button>
+      )}
       <div className="flex min-h-15 items-center gap-2">
         <button
           type="button"
@@ -94,21 +116,6 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           )}
           <ChevronRight className={cn("size-5 flex-none", looking ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
         </button>
-        {pick && (
-          <button
-            type="button"
-            aria-pressed={pick.in}
-            disabled={pick.off}
-            onClick={pick.onToggle}
-            title={pick.in ? "Leave out of the six" : "Put in the six"}
-            className={cn(
-              "h-8.5 flex-none rounded-lg border-3 px-2.25 font-heading text-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50 enabled:cursor-pointer disabled:cursor-default",
-              pick.in ? "border-primary bg-primary text-ink" : "border-cell-hi bg-cell text-subtle enabled:hover:border-primary",
-            )}
-          >
-            {pick.in ? "In" : "Out"}
-          </button>
-        )}
         {editable && !from && (
           <button
             type="button"
