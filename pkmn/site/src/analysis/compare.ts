@@ -54,6 +54,23 @@ export function calcHit(gen: Gen, a: Member, mv: MoveData, b: Member): Damage | 
   return { min: ((Math.floor(base * 0.85) * mod) / hp) * 100, max: ((base * mod) / hp) * 100, mult };
 }
 
+export interface BestHit {
+  move: number;
+  name: string;
+  damage: Damage | null;
+}
+
+export function bestHit(gen: Gen, a: Member, b: Member): BestHit | null {
+  const moves = attacks(a);
+  if (moves.length === 0) return null;
+  let best: BestHit = { move: 0, name: moves[0].name, damage: null };
+  moves.forEach((mv, move) => {
+    const damage = calcHit(gen, a, mv, b);
+    if (damage && (!best.damage || damage.max > best.damage.max)) best = { move, name: mv.name, damage };
+  });
+  return best;
+}
+
 const hitsToKo = (pct: number) => (pct <= 0 ? Infinity : Math.ceil(100 / pct));
 
 export function koLine(d: Damage | null): string {
