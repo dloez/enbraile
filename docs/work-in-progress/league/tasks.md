@@ -250,6 +250,10 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
 **After:** Each open round gives a player their team once their snapshot exists; Players see others' saves only up to their own round
 
+## Do pasted "Any Pokémon" teams keep a randomized ability?
+
+**Needs the author:** series 1 randomizes abilities, but an "Any Pokémon" member may only hold one of its species' own (the paste reader's `notItsAbility`, `src/teams/showdown.ts`), so every pasted Pokémon League try, the six imported ones included, falls back to its species' first ability, and so would series 1's game teams built from the replays and pastes. Does an "Any Pokémon" member accept any ability, only a pasted or imported team does, or is the fallback fine?
+
 ## Series 1's game teams come across from their replays, locked to their rounds
 
 Each imported game with a replay gets each side's team built from the replay: the six brought with the moves, items and abilities it revealed, sourced "Any Pokémon" and locked to the player's round; a game with no replay shows the player's matchday paste instead, the hidden one included ([discovery → Results](discovery.md#results)).
@@ -265,7 +269,7 @@ Each imported game with a replay gets each side's team built from the replay: th
 - Forbidden: a second Showdown paste parser; a paste overriding a replay.
 
 **Touches:** `pkmn/site/scripts/`, `pkmn/site/api/`, `docs/pkmn/site/`
-**After:** Each open round gives a player their team once their snapshot exists
+**After:** Each open round gives a player their team once their snapshot exists; Do pasted "Any Pokémon" teams keep a randomized ability?
 
 ## The player profile shows each series' league record
 
