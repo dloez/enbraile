@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { listPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { LeagueFrame } from "@/components/page-frames";
+import { combatsLabel, Pips, Tries } from "@/league/tries";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ const t = messages({
     view: "View",
     overview: "Overview",
     rounds: "Rounds",
+    tries: "Pokémon League",
     status: (open: number, all: number, done: number, total: number) => `${open} of ${all} rounds · ${done} of ${total} played`,
     standings: "Standings",
     place: "#",
@@ -27,6 +29,7 @@ const t = messages({
     wl: "W–L",
     games: "Games",
     fainted: "Fainted",
+    pokemonLeague: "Pokémon League",
     you: "You",
     beat: (names: string) => `Beat ${names}`,
     lostTo: (names: string) => `Lost to ${names}`,
@@ -59,6 +62,7 @@ const t = messages({
     view: "Vista",
     overview: "Resumen",
     rounds: "Rondas",
+    tries: "Liga Pokémon",
     status: (open: number, all: number, done: number, total: number) => `${open} de ${all} rondas · ${done} de ${total} jugados`,
     standings: "Clasificación",
     place: "#",
@@ -68,6 +72,7 @@ const t = messages({
     wl: "V–D",
     games: "Partidas",
     fainted: "Debilitados",
+    pokemonLeague: "Liga Pokémon",
     you: "Tú",
     beat: (names: string) => `Ganó a ${names}`,
     lostTo: (names: string) => `Perdió con ${names}`,
@@ -96,7 +101,7 @@ const t = messages({
 
 const FROM = "/series/$number/league";
 
-export type LeagueView = "overview" | "rounds";
+export type LeagueView = "overview" | "rounds" | "tries";
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : t.failed;
@@ -139,6 +144,7 @@ export function LeaguePage() {
   const views: { value: LeagueView; label: string }[] = [
     { value: "overview", label: t.overview },
     { value: "rounds", label: t.rounds },
+    { value: "tries", label: t.tries },
   ];
 
   return (
@@ -180,7 +186,13 @@ export function LeaguePage() {
           </div>
         </div>
       </div>
-      {view === "rounds" ? <Rounds league={league} me={me} nameOf={nameOf} /> : <Overview league={league} me={me} nameOf={nameOf} />}
+      {view === "rounds" ? (
+        <Rounds league={league} me={me} nameOf={nameOf} />
+      ) : view === "tries" ? (
+        <Tries league={league} me={me} nameOf={nameOf} onChange={setLeague} />
+      ) : (
+        <Overview league={league} me={me} nameOf={nameOf} />
+      )}
     </main>
   );
 }
@@ -203,7 +215,7 @@ function tieNote(row: Standing, nameOf: (id: string) => string): string | null {
   return t.drawn;
 }
 
-const STANDING_COLUMNS = "sm:grid-cols-[56px_minmax(0,1fr)_84px_72px_84px_84px]";
+const STANDING_COLUMNS = "sm:grid-cols-[56px_minmax(0,1fr)_84px_72px_84px_84px_124px]";
 
 function StandingsTable({ league, me, nameOf }: Named) {
   return (
@@ -225,6 +237,9 @@ function StandingsTable({ league, me, nameOf }: Named) {
           </span>
           <span role="columnheader" className="text-center">
             {t.fainted}
+          </span>
+          <span role="columnheader" className="text-center">
+            {t.pokemonLeague}
           </span>
         </div>
       </div>
@@ -256,8 +271,12 @@ function StandingsTable({ league, me, nameOf }: Named) {
                     <span className="truncate font-heading text-[1.5625rem] sm:text-[1.75rem]">{name}</span>
                     {row.player === me && <span className="rounded-sm bg-yellow px-1.5 font-heading text-sm text-ink sm:text-[0.9375rem]">{t.you}</span>}
                   </span>
-                  <span className="font-heading text-[1.0625rem] whitespace-nowrap text-muted-foreground sm:hidden">
-                    {row.wins}–{row.losses} · {row.gamesWon}–{row.gamesLost}
+                  <span className="flex items-center gap-2 sm:hidden">
+                    <Pips won={row.best ?? 0} size="sm" />
+                    <span className="sr-only">{combatsLabel(row.best)}</span>
+                    <span className="font-heading text-[1.0625rem] whitespace-nowrap text-muted-foreground">
+                      {row.wins}–{row.losses} · {row.gamesWon}–{row.gamesLost}
+                    </span>
                   </span>
                   {note && <span className="text-xs font-bold text-muted-foreground sm:text-[0.8125rem]">{note}</span>}
                 </span>
@@ -274,6 +293,10 @@ function StandingsTable({ league, me, nameOf }: Named) {
               </span>
               <span role="cell" className="hidden text-center font-heading text-2xl text-muted-foreground sm:block">
                 {row.fainted}
+              </span>
+              <span role="cell" className="hidden justify-center sm:flex">
+                <Pips won={row.best ?? 0} size="md" />
+                <span className="sr-only">{combatsLabel(row.best)}</span>
               </span>
             </Link>
           );

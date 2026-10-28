@@ -111,6 +111,8 @@ export interface AnyPokemon {
   species: ReadonlySet<string>;
 }
 
+export const EVERY_SPECIES: AnyPokemon = { species: new Set(gen.species.all().map((entry) => entry.id)) };
+
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, Math.round(value)));
 
 function capped(evs: StatsTable): StatsTable {

@@ -1,6 +1,13 @@
 import * as z from "zod";
+import { teamSlots } from "./team.js";
 
 export const POINTS_PER_WIN = 1;
+
+export const POINTS_PER_COMBAT = 1;
+
+export const LEAGUE_COMBATS = 5;
+
+export const PARTY_SIZE = 6;
 
 export const MATCH_GAMES = 3;
 
@@ -36,7 +43,21 @@ export const standing = z.object({
   gamesWon: z.int(),
   gamesLost: z.int(),
   fainted: z.int(),
+  best: z.int().nullable(),
   tie: z.object({ beat: z.array(z.string()), lostTo: z.array(z.string()) }).nullable(),
+});
+
+export const tryMember = z.object({ species: z.string().min(1), fell: z.int().min(1).max(LEAGUE_COMBATS).nullable() });
+
+export const leagueTry = z.object({
+  id: z.string(),
+  player: z.string(),
+  number: z.int(),
+  combatsWon: z.int(),
+  members: z.array(tryMember.extend({ name: z.string(), sprite: z.string().nullable() })),
+  team: z.string().nullable(),
+  best: z.boolean(),
+  at: z.string(),
 });
 
 export const leaguePage = z.object({
@@ -46,7 +67,17 @@ export const leaguePage = z.object({
   players: z.array(leaguePlayer),
   rounds: z.array(leagueRound),
   standings: z.array(standing),
+  tries: z.array(leagueTry),
+  admin: z.boolean(),
 });
+
+const combatsWon = z.int().min(0).max(LEAGUE_COMBATS);
+
+const fellIn = z.array(z.int().min(1).max(LEAGUE_COMBATS).nullable()).min(1).max(PARTY_SIZE);
+
+export const tryEdit = z.object({ combatsWon, fell: fellIn });
+
+export const tryInput = tryEdit.extend({ team: z.union([z.object({ id: z.string().min(1) }), z.object({ slots: teamSlots })]) });
 
 export const leagueGame = z.object({
   number: z.int(),
@@ -90,6 +121,10 @@ export type LeaguePage = z.infer<typeof leaguePage>;
 export type LeagueGame = z.infer<typeof leagueGame>;
 export type GameInput = z.infer<typeof gameInput>;
 export type MatchPage = z.infer<typeof matchPage>;
+export type TryMember = z.infer<typeof tryMember>;
+export type LeagueTry = z.infer<typeof leagueTry>;
+export type TryEdit = z.infer<typeof tryEdit>;
+export type TryInput = z.infer<typeof tryInput>;
 
 export type Result = Pick<LeagueMatch, "a" | "b" | "gamesA" | "gamesB" | "faintedA" | "faintedB">;
 
@@ -150,13 +185,30 @@ export function nextGame(match: Pick<Result, "a" | "b" | "gamesA" | "gamesB">, g
   return decided(won.gamesA, won.gamesB) ? null : games.length + 1;
 }
 
+export function lastCombat(combatsWon: number): number {
+  return Math.min(combatsWon + 1, LEAGUE_COMBATS);
+}
+
+export function fellProblem(combatsWon: number, fell: readonly (number | null)[]): boolean {
+  return fell.some((combat) => combat !== null && combat > lastCombat(combatsWon));
+}
+
+export function bestTries<T extends { player: string; combatsWon: number }>(tries: readonly T[]): Map<string, T> {
+  const best = new Map<string, T>();
+  for (const one of tries) {
+    const held = best.get(one.player);
+    if (!held || one.combatsWon > held.combatsWon) best.set(one.player, one);
+  }
+  return best;
+}
+
 export function drawOrder(seed: string, player: string): number {
   let hash = 0x811c9dc5;
   for (const char of `${seed}:${player}`) hash = Math.imul(hash ^ char.charCodeAt(0), 0x01000193) >>> 0;
   return hash;
 }
 
-export function standings(players: string[], results: Result[], seed: string): Standing[] {
+export function standings(players: string[], results: Result[], best: ReadonlyMap<string, number>, seed: string): Standing[] {
   const rows = new Map(players.map((player) => [player, { player, wins: 0, losses: 0, gamesWon: 0, gamesLost: 0, fainted: 0, beat: new Set<string>() }]));
   for (const match of results) {
     const winner = winnerOf(match);
@@ -174,7 +226,7 @@ export function standings(players: string[], results: Result[], seed: string): S
     a.fainted += match.faintedA ?? 0;
     b.fainted += match.faintedB ?? 0;
   }
-  const points = (player: string) => rows.get(player)!.wins * POINTS_PER_WIN;
+  const points = (player: string) => rows.get(player)!.wins * POINTS_PER_WIN + (best.get(player) ?? 0) * POINTS_PER_COMBAT;
   const beat = (x: string, y: string) => rows.get(x)!.beat.has(y);
   const byDraw = (group: string[]) => [...group].sort((x, y) => drawOrder(seed, y) - drawOrder(seed, x));
   const settle = (group: string[]): string[] => {
@@ -203,6 +255,7 @@ export function standings(players: string[], results: Result[], seed: string): S
       gamesWon: row.gamesWon,
       gamesLost: row.gamesLost,
       fainted: row.fainted,
+      best: best.get(player) ?? null,
       tie: tied.length === 0 ? null : { beat: tied.filter((other) => beat(player, other)), lostTo: tied.filter((other) => beat(other, player)) },
     };
   });

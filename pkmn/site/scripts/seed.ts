@@ -12,7 +12,7 @@ import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/f
 import { ingest, savePrefix } from "../api/_lib/ingest.js";
 import { refreshItemIcons } from "../api/_lib/item-icons.js";
 import { recordGame } from "../api/_lib/match.js";
-import { game, leagueMatch, leagueRound, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
+import { game, leagueMatch, leagueRound, leagueTry, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
 import { DEFAULT_POOL } from "../shared/pool.js";
 import { suggestMilestone } from "../shared/save-upload.js";
 import type { MilestoneMark } from "../shared/series.js";
@@ -66,6 +66,8 @@ const seedLeague = [
   },
   { milestone: "Gym 2", a: "Blue", b: "Red", games: [] },
 ];
+
+const seedTry = { player: "Red", team: seedTeam.name, combatsWon: 2, fell: [2, 3, 3], species: ["snorlax", "venusaur", "staraptor"] };
 
 const gameItems = new URL("../../games/anil/game/base/es-v4.14/Graphics/Items/", import.meta.url);
 
@@ -323,6 +325,19 @@ async function seedTheLeague(): Promise<string | null> {
   return `its league's rounds at ${seedLeague.map((r) => `${r.milestone} (${r.a} v ${r.b}, ${score(r.games, r.a, r.b)})`).join(" and ")}`;
 }
 
+async function seedTheTry(): Promise<string | null> {
+  const [row] = await db.select({ id: series.id }).from(series).where(eq(series.number, seedSeries.number));
+  const [player] = await db.select({ id: user.id }).from(user).where(eq(user.username, seedTry.player.toLowerCase()));
+  if (!row || !player) throw new Error(`${seedSeries.name} or ${seedTry.player} is missing`);
+  const [logged] = await db.select({ id: leagueTry.id }).from(leagueTry).where(and(eq(leagueTry.seriesId, row.id), eq(leagueTry.playerId, player.id)));
+  if (logged) return null;
+  const [made] = await db.select({ id: team.id, slots: team.slots }).from(team).where(and(eq(team.ownerId, player.id), eq(team.name, seedTry.team)));
+  const species = made ? made.slots.flatMap((member) => (member ? [member.species] : [])) : seedTry.species;
+  const members = species.map((one, at) => ({ species: one, fell: seedTry.fell[at] ?? null }));
+  await db.insert(leagueTry).values({ id: crypto.randomUUID(), seriesId: row.id, playerId: player.id, teamId: made?.id ?? null, combatsWon: seedTry.combatsWon, members, loggedBy: player.id });
+  return `a Pokémon League try of ${seedTry.player}'s${made ? ` with the ${seedTry.team}` : ""}, ${seedTry.combatsWon} combats won`;
+}
+
 async function seedTheFinishedSeries(): Promise<string | null> {
   const [existing] = await db.select({ id: series.id }).from(series).where(eq(series.number, finishedSeries.number));
   if (existing) return null;
@@ -383,9 +398,10 @@ async function main() {
   const seededSnapshot = await seedTheSnapshot();
   const seededTeam = await seedTheTeam();
   const seededLeague = await seedTheLeague();
+  const seededTry = await seedTheTry();
   const seededFinished = await seedTheFinishedSeries();
   console.log(
-    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
+    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededTry ? `, and ${seededTry}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
   );
 }
 

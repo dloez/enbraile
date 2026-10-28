@@ -1,10 +1,13 @@
 import { readdir, readFile } from "node:fs/promises";
+import { toID } from "@pkmn/dex";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import * as z from "zod";
 import { db, pool } from "../api/_lib/db.js";
 import { importMatch } from "../api/_lib/match.js";
-import { leagueRound, milestone, series, seriesPlayer, user } from "../api/_lib/schema.js";
-import { FAINTED_PER_GAME, played, standings, tally } from "../shared/league.js";
+import { leagueRound, leagueTry, milestone, series, seriesPlayer, team, user } from "../api/_lib/schema.js";
+import { insertTeam } from "../api/_lib/teams.js";
+import { bestTries, FAINTED_PER_GAME, fellProblem, PARTY_SIZE, played, standings, tally } from "../shared/league.js";
+import { EVERY_SPECIES, readShowdownTeam } from "../src/teams/showdown.js";
 import { createTestPlayer, usernameTaken } from "./accounts.js";
 import { localOrPreview } from "./target.js";
 
@@ -59,8 +62,21 @@ const exported = z.object({
     }),
   ),
   standings: z.array(
-    z.object({ player_name: z.string(), league_wins: z.int(), league_losses: z.int(), games_won: z.int(), games_lost: z.int() }),
+    z.object({ player_name: z.string(), points: z.int(), league_wins: z.int(), league_losses: z.int(), games_won: z.int(), games_lost: z.int() }),
   ),
+  pokemon_league: z.object({
+    tries: z.array(
+      z.object({
+        id: z.string(),
+        player_id: z.string(),
+        try_number: z.int(),
+        combats_won: z.int(),
+        at: z.string(),
+        team_text: z.string(),
+        pokemon: z.array(z.object({ species: z.string(), fainted_in_combat: z.int().nullable() })),
+      }),
+    ),
+  }),
 });
 
 async function findLeagueJson(): Promise<URL> {
@@ -111,7 +127,7 @@ async function main() {
     }),
   );
 
-  const [target] = await db.select({ id: series.id, name: series.name }).from(series).where(eq(series.number, seriesNumber));
+  const [target] = await db.select({ id: series.id, name: series.name, pool: series.pool }).from(series).where(eq(series.number, seriesNumber));
   if (!target) throw new Error(`No series ${seriesNumber}`);
   const rounds = await db
     .select({ id: milestone.id, name: milestone.name })
@@ -201,7 +217,39 @@ async function main() {
     };
   });
 
+  const tried = data.pokemon_league.tries.flatMap((one) => {
+    const label = `${nameOfPlayer.get(one.player_id)}'s Pokémon League try ${one.try_number}`;
+    const owner = siteId.get(one.player_id);
+    if (!owner) throw new Error(`${label} belongs to no player of the dump`);
+    const read = readShowdownTeam(one.team_text, new Map(), EVERY_SPECIES);
+    if (read.left.length > 0) reports.push(`${label}'s team leaves out ${read.left.join("; ")}`);
+    const fell = one.pokemon.map((p) => p.fainted_in_combat);
+    const members = read.slots.filter((member) => member !== null);
+    const same = members.length === one.pokemon.length && members.every((member, at) => member.species === toID(one.pokemon[at]!.species));
+    if (!same || members.length > PARTY_SIZE || fellProblem(one.combats_won, fell)) {
+      reports.push(`${label}: its paste does not read as the dump's ${one.pokemon.length} members in their order, or a Pokémon fell past its combats; it is left out`);
+      return [];
+    }
+    const teamId = `${one.id}-team`;
+    return [
+      {
+        team: { id: teamId, ownerId: owner, name: `Pokémon League try ${one.try_number}`, anyPokemon: true, slots: read.slots, pool: target.pool, sources: [] },
+        row: {
+          id: one.id,
+          seriesId: target.id,
+          playerId: owner,
+          teamId,
+          combatsWon: one.combats_won,
+          members: members.map((member, at) => ({ species: member.species, fell: fell[at] ?? null })),
+          loggedAt: new Date(one.at),
+        },
+      },
+    ];
+  });
+
   await db.transaction(async (tx) => {
+    await tx.delete(leagueTry).where(eq(leagueTry.seriesId, target.id));
+    if (tried.length > 0) await tx.delete(team).where(inArray(team.id, tried.map((one) => one.team.id)));
     await tx.delete(leagueRound).where(eq(leagueRound.seriesId, target.id));
     await tx.insert(seriesPlayer).values([...siteId.values()].map((userId) => ({ seriesId: target.id, userId }))).onConflictDoNothing();
     for (const { round, matches } of rows) {
@@ -211,29 +259,35 @@ async function main() {
         if (!loaded.done) throw new Error(`Match ${match.id} was refused: ${loaded.refused}`);
       }
     }
+    for (const one of tried) {
+      await insertTeam(tx, one.team);
+      await tx.insert(leagueTry).values(one.row);
+    }
   });
 
   const matches = rows.flatMap((r) => r.matches.map((m) => m.match));
   const games = rows.flatMap((r) => r.matches.flatMap((m) => m.games));
   const nameOf = new Map(data.players.map((p) => [siteId.get(p.id)!, p.name]));
+  const best = bestTries(tried.map((one) => ({ player: one.row.playerId, combatsWon: one.row.combatsWon, at: one.row.loggedAt })).sort((x, y) => x.at.getTime() - y.at.getTime()));
   const table = standings(
     [...siteId.values()],
     matches.map((m) => ({ a: m.playerA, b: m.playerB, gamesA: m.gamesA, gamesB: m.gamesB, faintedA: m.faintedA, faintedB: m.faintedB })),
+    new Map([...best].map(([player, one]) => [player, one.combatsWon])),
     target.id,
   );
   const disagreements = table.flatMap((row) => {
     const app = data.standings.find((s) => s.player_name === nameOf.get(row.player));
     if (!app) return [`${nameOf.get(row.player)} is missing from the dump's standings`];
-    const ours = `${row.wins}–${row.losses}, games ${row.gamesWon}–${row.gamesLost}`;
-    const theirs = `${app.league_wins}–${app.league_losses}, games ${app.games_won}–${app.games_lost}`;
+    const ours = `${row.points} points, ${row.wins}–${row.losses}, games ${row.gamesWon}–${row.gamesLost}`;
+    const theirs = `${app.points} points, ${app.league_wins}–${app.league_losses}, games ${app.games_won}–${app.games_lost}`;
     return ours === theirs ? [] : [`${app.player_name}: ${ours} here, ${theirs} in the app`];
   });
   console.log(
-    `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${games.length} games from their replays) into ${target.name}${preview ? " on the preview" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
+    `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${games.length} games from their replays) and ${tried.length} Pokémon League tries, each with its team, into ${target.name}${preview ? " on the preview" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
   );
   console.log(`Standings: ${table.map((row) => `${row.place}. ${nameOf.get(row.player)} ${row.points} (${row.wins}–${row.losses})`).join(", ")}`);
-  console.log(disagreements.length ? `Disagrees with the app:\n${disagreements.join("\n")}` : "Every player's wins, losses and games match the app's.");
-  console.log(reports.length ? `From the replays:\n${reports.join("\n")}` : "Every replay agrees with the app.");
+  console.log(disagreements.length ? `Disagrees with the app:\n${disagreements.join("\n")}` : "Every player's points, wins, losses and games match the app's.");
+  console.log(reports.length ? `From the replays and the tries:\n${reports.join("\n")}` : "Every replay and try agrees with the app.");
 }
 
 main()

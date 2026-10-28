@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
-import { FAINTED_PER_GAME, GAMES_TO_WIN, MATCH_GAMES } from "../../shared/league.js";
+import { FAINTED_PER_GAME, GAMES_TO_WIN, LEAGUE_COMBATS, MATCH_GAMES, PARTY_SIZE, type TryMember } from "../../shared/league.js";
 import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
 import type { ItemIcons } from "../../shared/items.js";
@@ -324,5 +324,32 @@ export const leagueGame = pgTable(
       "league_game_fainted",
       sql`${table.faintedA} BETWEEN 0 AND ${sql.raw(String(FAINTED_PER_GAME))} AND ${table.faintedB} BETWEEN 0 AND ${sql.raw(String(FAINTED_PER_GAME))}`,
     ),
+  ],
+);
+
+export const leagueTry = pgTable(
+  "league_try",
+  {
+    id: text("id").primaryKey(),
+    seriesId: text("series_id")
+      .notNull()
+      .references(() => series.id, { onDelete: "cascade" }),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    teamId: text("team_id").references(() => team.id, { onDelete: "set null" }),
+    combatsWon: integer("combats_won").notNull(),
+    members: jsonb("members").$type<TryMember[]>().notNull(),
+    loggedBy: text("logged_by").references(() => user.id, { onDelete: "set null" }),
+    loggedAt: timestamp("logged_at").notNull().defaultNow(),
+    editedBy: text("edited_by").references(() => user.id, { onDelete: "set null" }),
+    editedAt: timestamp("edited_at"),
+  },
+  (table) => [
+    index("league_try_series_id_idx").on(table.seriesId),
+    index("league_try_player_id_idx").on(table.playerId),
+    index("league_try_team_id_idx").on(table.teamId),
+    check("league_try_combats", sql`${table.combatsWon} BETWEEN 0 AND ${sql.raw(String(LEAGUE_COMBATS))}`),
+    check("league_try_members", sql`jsonb_array_length(${table.members}) BETWEEN 1 AND ${sql.raw(String(PARTY_SIZE))}`),
   ],
 );

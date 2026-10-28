@@ -50,6 +50,15 @@ const t = says({
 
 export const teams = new Hono();
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export type NewTeam = { id: string; ownerId: string; name: string; anyPokemon: boolean; slots: TeamSlots; pool: TeamPool; sources: readonly string[] };
+
+export async function insertTeam(tx: Tx, made: NewTeam) {
+  await tx.insert(team).values({ id: made.id, ownerId: made.ownerId, name: made.name, size: made.slots.length, anyPokemon: made.anyPokemon, slots: made.slots, pool: made.pool });
+  if (made.sources.length > 0) await tx.insert(teamSource).values(made.sources.map((snapshotId, position) => ({ teamId: made.id, snapshotId, position })));
+}
+
 const sourceColumns = {
   teamId: teamSource.teamId,
   id: snapshot.id,
@@ -226,10 +235,7 @@ teams.post("/", async (c) => {
   const names = await db.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
   const pool = input.pool ?? (await seriesPool(sources));
   const id = crypto.randomUUID();
-  await db.transaction(async (tx) => {
-    await tx.insert(team).values({ id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name), t(c).team), size: slots.length, anyPokemon, slots, pool });
-    if (sources.length > 0) await tx.insert(teamSource).values(sources.map((snapshotId, position) => ({ teamId: id, snapshotId, position })));
-  });
+  await db.transaction((tx) => insertTeam(tx, { id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name), t(c).team), anyPokemon, slots, pool, sources }));
   return c.json({ id });
 });
 

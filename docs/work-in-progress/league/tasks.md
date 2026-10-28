@@ -2,23 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Players log their Pokémon League tries
-
-The Pokémon League view lists each player's tries and their best; a player adds a try (combats won, the combat each member fainted in) with a team picked from theirs or pasted from Showdown, the paste creating a team sourced "Any Pokémon" and linked to the try; an admin edits or deletes any; the best try's points join the standings. The import brings series 1's tries, each paste as such a team ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)).
-
-**Do:**
-- [ ] Schema for tries and their team; the import extended.
-- [ ] The view, the add and edit flow, and the best try's points in the standings.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, see the imported tries; as a test player, log a try by paste and one by picking a team, and see the team made and the points move; as admin, edit one.
-- Human-run: the owner logs a try on the preview.
-- Reuse: Showdown paste-in (`src/teams/showdown.ts`) and team creation (`api/_lib/teams.ts`).
-- Neighbors: the team list's new-team flow.
-- Forbidden: a second Showdown parser.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## Sign off the Teams list's league marks and filters
 
 The frozen teams-list boards flag a round team and filter nothing; league teams need their kind, series and state shown, and the list filters by series, kind, state and owner ([discovery → Surfaces](discovery.md#surfaces)). Drawn on the Site v2 Screens canvas, desktop and phone, then frozen into `pkmn/site/design/`.
@@ -51,7 +34,7 @@ Each team shows its kind and, for a league team, its series, round or cup match 
 - Forbidden: a league team without its series.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** Players log their Pokémon League tries; Sign off the Teams list's league marks and filters
+**After:** Sign off the Teams list's league marks and filters
 
 ## Players make their free teams public or private
 
@@ -124,7 +107,7 @@ Eggs won from the rulebook (league wins, the best try's combats), hatched counte
 - Forbidden: eggs for cup wins.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Players log their Pokémon League tries; Sign off the hatched eggs override
+**After:** Sign off the hatched eggs override
 
 ## An admin runs the cup from its bracket to its champion
 
@@ -142,7 +125,6 @@ An admin starts the cup and picks who enters; the bracket is drawn from the stan
 - Forbidden: the app's semifinal pairing (1–6 with the triangular).
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Players log their Pokémon League tries
 **Needs the author:** a cup with an odd number of entrants (5 or 7): how its first round pairs, since the rulebook's pattern leaves one player without an opponent; the start-the-cup board keeps Start off for an odd count (raised in the design, 2026-10-28).
 
 ## Each cup match gives its players a locked team to build
