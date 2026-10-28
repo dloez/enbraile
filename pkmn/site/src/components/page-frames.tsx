@@ -40,6 +40,27 @@ export function LeagueFrame() {
   );
 }
 
+export function MatchFrame() {
+  return (
+    <main className={cn(listPage, "gap-4 pt-4 pb-8 sm:gap-4.5 sm:pt-4.5 sm:pb-8")}>
+      <Placeholder className="h-6 w-56 rounded-md" />
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6">
+        <Placeholder className="h-16 w-40 rounded-xl" />
+        <Placeholder className="h-14 w-28 rounded-xl sm:h-20 sm:w-40" />
+        <Placeholder className="h-16 w-40 justify-self-end rounded-xl" />
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:gap-5">
+        <div className="flex flex-col gap-3 lg:order-2">
+          <Placeholder className="h-18 rounded-xl" />
+          <Placeholder className="h-80 rounded-[18px]" />
+        </div>
+        <Placeholder className="h-24 rounded-[14px] lg:order-1 lg:h-full" />
+        <Placeholder className="h-24 rounded-[14px] lg:order-3 lg:h-full" />
+      </div>
+    </main>
+  );
+}
+
 export function TeamsBackLink() {
   return (
     <Link

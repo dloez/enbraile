@@ -288,7 +288,7 @@ function Mine({ league, me, nameOf }: Named & { me: string }) {
   const next = mine.find(({ match }) => !played(match));
   return (
     <aside aria-label={t.youInLeague} className="flex flex-col gap-3.5">
-      {next && <NextMatch round={next.round} match={next.match} me={me} nameOf={nameOf} />}
+      {next && <NextMatch number={league.number} round={next.round} match={next.match} me={me} nameOf={nameOf} />}
       <section aria-labelledby="yours" className="flex flex-col gap-2 rounded-[18px] border-3 bg-card px-3.5 pt-3.5 pb-4 sm:px-4.5 sm:pt-4 sm:pb-4.5">
         <h2 id="yours" className="m-0 mb-1 font-heading text-[1.625rem] font-normal">
           {t.yourRounds}
@@ -298,9 +298,14 @@ function Mine({ league, me, nameOf }: Named & { me: string }) {
           const done = played(match);
           const won = winnerOf(match) === me;
           return (
-            <div
+            <Link
               key={match.id}
-              className="grid min-h-11.5 grid-cols-[34px_26px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] border-3 bg-box px-3 sm:grid-cols-[44px_30px_minmax(0,1fr)_auto]"
+              to={MATCH}
+              params={{ number: String(league.number), id: match.id }}
+              className={cn(
+                "grid min-h-11.5 grid-cols-[34px_26px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-[10px] border-3 bg-box px-3 text-foreground sm:grid-cols-[44px_30px_minmax(0,1fr)_auto]",
+                matchRow,
+              )}
             >
               <span className="font-heading text-lg text-muted-foreground">{t.short(round.number)}</span>
               <span
@@ -315,7 +320,7 @@ function Mine({ league, me, nameOf }: Named & { me: string }) {
               <span className={cn("font-heading text-[1.4375rem] sm:text-2xl", won ? "text-yellow" : "text-foreground")}>
                 {score(match, home ? "a" : "b") ?? ""}
               </span>
-            </div>
+            </Link>
           );
         })}
       </section>
@@ -323,21 +328,27 @@ function Mine({ league, me, nameOf }: Named & { me: string }) {
   );
 }
 
-function NextMatch({ round, match, me, nameOf }: { round: LeagueRound; match: LeagueMatch; me: string; nameOf: (id: string) => string }) {
+function NextMatch({ number, round, match, me, nameOf }: { number: number; round: LeagueRound; match: LeagueMatch; me: string; nameOf: (id: string) => string }) {
   const other = nameOf(match.a === me ? match.b : match.a);
   return (
-    <section aria-labelledby="next" className="flex flex-col gap-3 rounded-[18px] border-3 border-primary bg-card px-3.5 pt-3.5 pb-4 sm:px-4.5 sm:pt-4 sm:pb-4.5">
-      <h2 id="next" className="m-0 font-heading text-xl font-normal text-primary">
+    <Link
+      to={MATCH}
+      params={{ number: String(number), id: match.id }}
+      aria-labelledby="next"
+      aria-describedby="next-match"
+      className={cn("flex flex-col gap-3 rounded-[18px] border-3 border-primary bg-card px-3.5 pt-3.5 pb-4 text-foreground sm:px-4.5 sm:pt-4 sm:pb-4.5", matchRow)}
+    >
+      <span id="next" className="font-heading text-xl text-primary">
         {t.next}
-      </h2>
+      </span>
       <span className="flex items-center gap-3">
         <PlayerBadge name={other} colour={playerColour(other)} size="sm" />
-        <span className="flex min-w-0 flex-1 flex-col leading-[1.1]">
+        <span id="next-match" className="flex min-w-0 flex-1 flex-col leading-[1.1]">
           <span className="truncate font-heading text-[1.75rem] sm:text-3xl">{t.vs(other)}</span>
           <span className="text-[0.8125rem] font-bold text-muted-foreground sm:text-sm">{t.stage(round.number, round.milestone)}</span>
         </span>
       </span>
-    </section>
+    </Link>
   );
 }
 
@@ -356,15 +367,20 @@ function Latest({ league, nameOf }: { league: League; nameOf: (id: string) => st
         {results.map(({ round, match }) => {
           const winner = winnerOf(match);
           return (
-            <div
+            <Link
               key={match.id}
-              className="grid min-h-11.5 grid-cols-[44px_minmax(0,1fr)_56px_minmax(0,1fr)] items-center gap-2 rounded-[10px] border-3 bg-box px-3 font-heading sm:grid-cols-[64px_minmax(0,1fr)_56px_minmax(0,1fr)]"
+              to={MATCH}
+              params={{ number: String(league.number), id: match.id }}
+              className={cn(
+                "grid min-h-11.5 grid-cols-[44px_minmax(0,1fr)_56px_minmax(0,1fr)] items-center gap-2 rounded-[10px] border-3 bg-box px-3 font-heading text-foreground sm:grid-cols-[64px_minmax(0,1fr)_56px_minmax(0,1fr)]",
+                matchRow,
+              )}
             >
               <span className="text-[1.0625rem] text-muted-foreground">{t.short(round.number)}</span>
               <span className={cn("truncate text-[1.375rem]", winner === match.a ? "text-yellow" : "text-muted-foreground")}>{nameOf(match.a)}</span>
               <span className="text-center text-[1.375rem]">{score(match)}</span>
               <span className={cn("truncate text-right text-[1.375rem]", winner === match.b ? "text-yellow" : "text-muted-foreground")}>{nameOf(match.b)}</span>
-            </div>
+            </Link>
           );
         })}
       </section>
@@ -381,7 +397,7 @@ function Rounds({ league, me, nameOf }: Named) {
     <>
       <div className="flex flex-col-reverse gap-3.5 sm:grid sm:grid-cols-2 lg:grid-cols-5">
         {league.rounds.map((round) => (
-          <RoundCard key={round.number} round={round} current={round.number === last} me={me} nameOf={nameOf} />
+          <RoundCard key={round.number} number={league.number} round={round} current={round.number === last} me={me} nameOf={nameOf} />
         ))}
       </div>
       <HeadToHead league={league} me={me} nameOf={nameOf} />
@@ -389,7 +405,7 @@ function Rounds({ league, me, nameOf }: Named) {
   );
 }
 
-function RoundCard({ round, current, me, nameOf }: { round: LeagueRound; current: boolean; me: string | null; nameOf: (id: string) => string }) {
+function RoundCard({ number, round, current, me, nameOf }: { number: number; round: LeagueRound; current: boolean; me: string | null; nameOf: (id: string) => string }) {
   const left = round.matches.filter((m) => !played(m)).length;
   return (
     <section
@@ -405,23 +421,32 @@ function RoundCard({ round, current, me, nameOf }: { round: LeagueRound; current
         <span className={cn("font-heading text-[1.1875rem] sm:text-xl", left ? "text-warning" : "text-green")}>{left ? t.toPlay(left) : t.allPlayed}</span>
       </div>
       {round.matches.map((match) => (
-        <MatchBox key={match.id} match={match} mine={match.a === me || match.b === me} nameOf={nameOf} />
+        <MatchBox key={match.id} number={number} match={match} mine={match.a === me || match.b === me} nameOf={nameOf} />
       ))}
       {round.bye && <span className="px-0.5 font-heading text-lg text-muted-foreground">{t.bye(nameOf(round.bye))}</span>}
     </section>
   );
 }
 
-function MatchBox({ match, mine, nameOf }: { match: LeagueMatch; mine: boolean; nameOf: (id: string) => string }) {
+const MATCH = "/series/$number/league/matches/$id";
+
+const matchRow = "outline-none hover:border-primary hover:bg-row-hi focus-visible:ring-3 focus-visible:ring-ring/50";
+
+function MatchBox({ number, match, mine, nameOf }: { number: number; match: LeagueMatch; mine: boolean; nameOf: (id: string) => string }) {
   const done = played(match);
   const winner = winnerOf(match);
   const sides = [
     { id: match.a, games: match.gamesA },
     { id: match.b, games: match.gamesB },
   ];
-  const border = cn("rounded-xl border-3 bg-box", done ? "border-solid" : "border-dashed", mine ? "border-trophy-rim" : "border-border");
+  const border = cn("rounded-xl border-3 bg-box group-hover:border-primary group-hover:bg-row-hi", done ? "border-solid" : "border-dashed", mine ? "border-trophy-rim" : "border-border");
   return (
-    <div role="group" aria-label={t.matchLabel(nameOf(match.a), nameOf(match.b), score(match))}>
+    <Link
+      to={MATCH}
+      params={{ number: String(number), id: match.id }}
+      aria-label={t.matchLabel(nameOf(match.a), nameOf(match.b), score(match))}
+      className="group rounded-xl text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
       <div aria-hidden="true" className={cn(border, "grid min-h-12 grid-cols-[minmax(0,1fr)_54px_minmax(0,1fr)] items-center gap-1.5 px-2.5 sm:hidden")}>
         {sides.map((side, index) => {
           const name = nameOf(side.id);
@@ -452,7 +477,7 @@ function MatchBox({ match, mine, nameOf }: { match: LeagueMatch; mine: boolean; 
           );
         })}
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -534,16 +559,18 @@ function HeadToHead({ league, me, nameOf }: Named) {
                 const result = score(met.match, met.side);
                 return (
                   <span key={other} role="cell" className="flex p-0.75 sm:p-1.5">
-                    <span
+                    <Link
+                      to={MATCH}
+                      params={{ number: String(league.number), id: met.match.id }}
                       aria-label={t.roundLabel(name, nameOf(other), met.round, result)}
                       className={cn(
-                        "flex flex-1 flex-col items-center justify-center rounded-[7px] border-2 leading-none sm:flex-row sm:gap-2.5 sm:rounded-[10px] sm:border-3",
+                        "flex flex-1 flex-col items-center justify-center rounded-[7px] border-2 leading-none outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:gap-2.5 sm:rounded-[10px] sm:border-3",
                         !done ? "border-dashed border-warning/40" : won ? "border-mult-2 bg-green/10" : "border-coral/35 bg-coral/8",
                       )}
                     >
                       <span className={cn("font-heading text-[1.1875rem] sm:text-[1.75rem]", !done ? "text-warning" : won ? "text-green" : "text-coral")}>{result ?? ""}</span>
                       <span className="font-heading text-[0.8125rem] text-muted-foreground sm:text-[1.0625rem]">{t.short(met.round)}</span>
-                    </span>
+                    </Link>
                   </span>
                 );
               })}

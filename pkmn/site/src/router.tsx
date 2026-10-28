@@ -1,7 +1,7 @@
 import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { prefetch } from "@/lib/api";
-import { abilitiesPage, adminGamesPage, adminHomePage, adminPlayersPage, adminSeriesListPage, adminSeriesPage, leaguePage, pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
+import { abilitiesPage, adminGamesPage, adminHomePage, adminPlayersPage, adminSeriesListPage, adminSeriesPage, leagueMatchPage, leaguePage, pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
 import { HomePage } from "@/pages/home";
 import type { LeagueView } from "@/pages/league";
 
@@ -45,6 +45,16 @@ const leagueRoute = createRoute({
     prefetch(`/series/${encodeURIComponent(params.number)}/league`);
   },
   component: leaguePage.Page,
+});
+
+const leagueMatchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/series/$number/league/matches/$id",
+  loader: ({ params }) => {
+    leagueMatchPage.load();
+    prefetch(`/series/${encodeURIComponent(params.number)}/league/matches/${encodeURIComponent(params.id)}`);
+  },
+  component: leagueMatchPage.Page,
 });
 
 const playerProfileRoute = createRoute({
@@ -178,6 +188,7 @@ const routeTree = rootRoute.addChildren([
   seriesListRoute,
   seriesRoute,
   leagueRoute,
+  leagueMatchRoute,
   playerProfileRoute,
   playerSeriesRoute,
   pcRoute,

@@ -2,8 +2,9 @@ import { readdir, readFile } from "node:fs/promises";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import * as z from "zod";
 import { db, pool } from "../api/_lib/db.js";
-import { leagueMatch, leagueRound, milestone, series, seriesPlayer, user } from "../api/_lib/schema.js";
-import { played, standings } from "../shared/league.js";
+import { importMatch } from "../api/_lib/match.js";
+import { leagueRound, milestone, series, seriesPlayer, user } from "../api/_lib/schema.js";
+import { FAINTED_PER_GAME, played, standings, tally } from "../shared/league.js";
 import { createTestPlayer, usernameTaken } from "./accounts.js";
 import { localOrPreview } from "./target.js";
 
@@ -18,6 +19,15 @@ const userMap: Record<string, string> = {
   Inop: "inop",
   Tole: "tole",
   Elfo: "elfo",
+};
+
+const showdownNames: Record<string, string> = {
+  Vicky: "Vicky182",
+  Javi: "Pokejavieff TIKTOK",
+  Dloez: "dloez",
+  Tole: "tolejota",
+  Elfo: "ElfNight",
+  Inop: "inop123",
 };
 
 const exported = z.object({
@@ -38,7 +48,16 @@ const exported = z.object({
       replay_ids: z.array(z.string()),
     }),
   ),
-  replays: z.array(z.object({ id: z.string(), type: z.string(), url: z.string().nullable() })),
+  replays: z.array(
+    z.object({
+      id: z.string(),
+      type: z.string(),
+      url: z.string().nullable(),
+      match_id: z.string().nullable(),
+      showdown_log_file: z.string().nullable(),
+      showdown: z.object({ uploadtime: z.int() }).nullable(),
+    }),
+  ),
   standings: z.array(
     z.object({ player_name: z.string(), league_wins: z.int(), league_losses: z.int(), games_won: z.int(), games_lost: z.int() }),
   ),
@@ -50,10 +69,31 @@ async function findLeagueJson(): Promise<URL> {
   return new URL(found[0], dump);
 }
 
+type Battle = { replay: string; url: string | null; at: number; sides: Record<"p1" | "p2", string>; fainted: Record<"p1" | "p2", number>; winner: string };
+
+function readLog(replay: string, url: string | null, uploaded: number, log: string): Battle | string {
+  const lines = log.split("\n");
+  const named = (side: "p1" | "p2") => lines.map((line) => line.split("|")).find((parts) => parts[1] === "player" && parts[2] === side && parts[3])?.[3];
+  const p1 = named("p1");
+  const p2 = named("p2");
+  const winner = lines.find((line) => line.startsWith("|win|"))?.slice(5).trim();
+  if (!p1 || !p2 || !winner) return `${replay} has no players or no winner in its log`;
+  const faints = (side: "p1" | "p2") => lines.filter((line) => line.startsWith(`|faint|${side}`)).length;
+  const started = lines.find((line) => line.startsWith("|t:|"));
+  return { replay, url, at: started ? Number(started.slice(4)) : uploaded, sides: { p1, p2 }, fainted: { p1: faints("p1"), p2: faints("p2") }, winner };
+}
+
 async function main() {
   const preview = localOrPreview("LEAGUE_TARGET", "league import");
   const source = await findLeagueJson();
   const data = exported.parse(JSON.parse(await readFile(source, "utf8")));
+  const playerOfShowdown = new Map(
+    data.players.map((player) => {
+      const name = showdownNames[player.name];
+      if (!name) throw new Error(`The Showdown names have none for ${player.name}`);
+      return [name.toLowerCase(), player.id];
+    }),
+  );
 
   for (const player of data.players) {
     const username = userMap[player.name];
@@ -81,7 +121,18 @@ async function main() {
   const matchdays = [...data.matchdays].sort((x, y) => x.n - y.n);
   if (matchdays.length > rounds.length) throw new Error(`${target.name} has ${rounds.length} round milestones for ${matchdays.length} matchdays`);
 
-  const replayUrl = new Map(data.replays.map((r) => [r.id, r.url]));
+  const reports: string[] = [];
+  const battles = new Map<string, Battle>();
+  for (const replay of data.replays) {
+    if (!replay.showdown_log_file) {
+      reports.push(`${replay.id} has no Showdown log`);
+      continue;
+    }
+    const read = readLog(replay.id, replay.url, replay.showdown?.uploadtime ?? 0, await readFile(new URL(replay.showdown_log_file, source), "utf8"));
+    if (typeof read === "string") reports.push(read);
+    else battles.set(replay.id, read);
+  }
+  const nameOfPlayer = new Map(data.players.map((p) => [p.id, p.name]));
   const rows = matchdays.map((day) => {
     const roundId = `${target.id}-md${day.n}`;
     return {
@@ -91,20 +142,60 @@ async function main() {
         if (!match || match.kind !== "league" || match.matchday !== day.n) throw new Error(`Matchday ${day.n} lists ${id}, which is not one of its league matches`);
         const done = match.status === "played";
         if (done && !played({ gamesA: match.games_a, gamesB: match.games_b })) throw new Error(`Match ${id} is played with ${match.games_a}–${match.games_b}`);
+        const label = `Round ${day.n}'s ${nameOfPlayer.get(match.player_a)} v ${nameOfPlayer.get(match.player_b)}`;
+        const read = match.replay_ids
+          .map((replay) => battles.get(replay))
+          .filter((battle) => battle !== undefined)
+          .sort((x, y) => x.at - y.at)
+          .flatMap((battle) => {
+            const of = (side: "p1" | "p2") => playerOfShowdown.get(battle.sides[side].toLowerCase());
+            const winner = playerOfShowdown.get(battle.winner.toLowerCase());
+            const sideA = of("p1") === match.player_a ? "p1" : of("p2") === match.player_a ? "p2" : null;
+            const sideB = sideA === "p1" ? "p2" : "p1";
+            if (!sideA || of(sideB) !== match.player_b || (winner !== match.player_a && winner !== match.player_b)) {
+              reports.push(`${label}: replay ${battle.replay} is ${battle.sides.p1} v ${battle.sides.p2}, won by ${battle.winner}, not this match's players`);
+              return [];
+            }
+            if (Math.max(battle.fainted.p1, battle.fainted.p2) > FAINTED_PER_GAME) {
+              reports.push(`${label}: replay ${battle.replay} has more than ${FAINTED_PER_GAME} fainted on a side`);
+              return [];
+            }
+            return [{ winner: siteId.get(winner)!, faintedA: battle.fainted[sideA], faintedB: battle.fainted[sideB], replay: battle.url, at: battle.at }];
+          });
+        const sides = { a: siteId.get(match.player_a)!, b: siteId.get(match.player_b)! };
+        const sum = tally(sides, read);
+        const whole = done && read.length === match.games_a + match.games_b;
+        const agrees = done ? sum.gamesA <= match.games_a && sum.gamesB <= match.games_b && (!whole || (sum.gamesA === match.games_a && sum.gamesB === match.games_b)) : read.length === 0;
+        if (!agrees) reports.push(`${label}: its replays make it ${sum.gamesA}–${sum.gamesB}, the app ${done ? `${match.games_a}–${match.games_b}` : "unplayed"}; its games are left out`);
+        const games = agrees
+          ? read.map((game, index) => ({
+              id: `${match.id}-g${index + 1}`,
+              matchId: match.id,
+              number: index + 1,
+              winnerId: game.winner,
+              faintedA: game.faintedA,
+              faintedB: game.faintedB,
+              replay: game.replay,
+              recordedAt: new Date(game.at * 1000),
+            }))
+          : [];
+        const fainted = whole && agrees ? { faintedA: sum.faintedA, faintedB: sum.faintedB } : { faintedA: match.fainted_a, faintedB: match.fainted_b };
+        if (whole && agrees && (fainted.faintedA !== match.fainted_a || fainted.faintedB !== match.fainted_b)) {
+          reports.push(`${label}: fainted ${fainted.faintedA}–${fainted.faintedB} from its replays, ${match.fainted_a}–${match.fainted_b} in the app`);
+        }
         return {
-          id: match.id,
-          roundId,
-          position,
-          playerA: siteId.get(match.player_a)!,
-          playerB: siteId.get(match.player_b)!,
-          gamesA: done ? match.games_a : null,
-          gamesB: done ? match.games_b : null,
-          faintedA: done ? match.fainted_a : null,
-          faintedB: done ? match.fainted_b : null,
-          replays: match.replay_ids.flatMap((replay) => {
-            const url = replayUrl.get(replay);
-            return url ? [url] : [];
-          }),
+          match: {
+            id: match.id,
+            roundId,
+            position,
+            playerA: sides.a,
+            playerB: sides.b,
+            gamesA: done ? match.games_a : null,
+            gamesB: done ? match.games_b : null,
+            faintedA: done ? fainted.faintedA : null,
+            faintedB: done ? fainted.faintedB : null,
+          },
+          games,
         };
       }),
     };
@@ -115,11 +206,15 @@ async function main() {
     await tx.insert(seriesPlayer).values([...siteId.values()].map((userId) => ({ seriesId: target.id, userId }))).onConflictDoNothing();
     for (const { round, matches } of rows) {
       await tx.insert(leagueRound).values(round);
-      if (matches.length > 0) await tx.insert(leagueMatch).values(matches);
+      for (const { match, games } of matches) {
+        const loaded = await importMatch(tx, match, games);
+        if (!loaded.done) throw new Error(`Match ${match.id} was refused: ${loaded.refused}`);
+      }
     }
   });
 
-  const matches = rows.flatMap((r) => r.matches);
+  const matches = rows.flatMap((r) => r.matches.map((m) => m.match));
+  const games = rows.flatMap((r) => r.matches.flatMap((m) => m.games));
   const nameOf = new Map(data.players.map((p) => [siteId.get(p.id)!, p.name]));
   const table = standings(
     [...siteId.values()],
@@ -134,10 +229,11 @@ async function main() {
     return ours === theirs ? [] : [`${app.player_name}: ${ours} here, ${theirs} in the app`];
   });
   console.log(
-    `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${matches.reduce((n, m) => n + m.replays.length, 0)} replay links) into ${target.name}${preview ? " on the preview" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
+    `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${games.length} games from their replays) into ${target.name}${preview ? " on the preview" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
   );
   console.log(`Standings: ${table.map((row) => `${row.place}. ${nameOf.get(row.player)} ${row.points} (${row.wins}–${row.losses})`).join(", ")}`);
   console.log(disagreements.length ? `Disagrees with the app:\n${disagreements.join("\n")}` : "Every player's wins, losses and games match the app's.");
+  console.log(reports.length ? `From the replays:\n${reports.join("\n")}` : "Every replay agrees with the app.");
 }
 
 main()

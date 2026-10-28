@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
-import { GAMES_TO_WIN } from "../../shared/league.js";
+import { FAINTED_PER_GAME, GAMES_TO_WIN, MATCH_GAMES } from "../../shared/league.js";
 import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
 import type { ItemIcons } from "../../shared/items.js";
@@ -286,7 +286,6 @@ export const leagueMatch = pgTable(
     gamesB: integer("games_b"),
     faintedA: integer("fainted_a"),
     faintedB: integer("fainted_b"),
-    replays: jsonb("replays").$type<string[]>().notNull().default([]),
   },
   (table) => [
     unique("league_match_round_position_unique").on(table.roundId, table.position),
@@ -298,5 +297,32 @@ export const leagueMatch = pgTable(
       sql`(${table.gamesA} IS NULL) = (${table.gamesB} IS NULL) AND (${table.gamesA} IS NULL OR (${table.gamesA} BETWEEN 0 AND ${sql.raw(String(GAMES_TO_WIN))} AND ${table.gamesB} BETWEEN 0 AND ${sql.raw(String(GAMES_TO_WIN))} AND ${table.gamesA} <> ${table.gamesB} AND GREATEST(${table.gamesA}, ${table.gamesB}) = ${sql.raw(String(GAMES_TO_WIN))}))`,
     ),
     check("league_match_fainted", sql`(${table.faintedA} IS NULL OR ${table.faintedA} >= 0) AND (${table.faintedB} IS NULL OR ${table.faintedB} >= 0)`),
+  ],
+);
+
+export const leagueGame = pgTable(
+  "league_game",
+  {
+    id: text("id").primaryKey(),
+    matchId: text("match_id")
+      .notNull()
+      .references(() => leagueMatch.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    winnerId: text("winner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    faintedA: integer("fainted_a").notNull(),
+    faintedB: integer("fainted_b").notNull(),
+    replay: text("replay"),
+    recordedBy: text("recorded_by").references(() => user.id, { onDelete: "set null" }),
+    recordedAt: timestamp("recorded_at").notNull().defaultNow(),
+  },
+  (table) => [
+    unique("league_game_match_number_unique").on(table.matchId, table.number),
+    check("league_game_number", sql`${table.number} BETWEEN 1 AND ${sql.raw(String(MATCH_GAMES))}`),
+    check(
+      "league_game_fainted",
+      sql`${table.faintedA} BETWEEN 0 AND ${sql.raw(String(FAINTED_PER_GAME))} AND ${table.faintedB} BETWEEN 0 AND ${sql.raw(String(FAINTED_PER_GAME))}`,
+    ),
   ],
 );

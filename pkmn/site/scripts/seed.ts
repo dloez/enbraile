@@ -11,6 +11,7 @@ import { readEntry, zipEntries } from "../api/_lib/export/zip.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
 import { ingest, savePrefix } from "../api/_lib/ingest.js";
 import { refreshItemIcons } from "../api/_lib/item-icons.js";
+import { recordGame } from "../api/_lib/match.js";
 import { game, leagueMatch, leagueRound, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
 import { DEFAULT_POOL } from "../shared/pool.js";
 import { suggestMilestone } from "../shared/save-upload.js";
@@ -53,8 +54,17 @@ const seedSnapshot = { player: "Red", saves: new URL("../saves/", import.meta.ur
 const seedTeam = { name: "Seed team", members: 3 };
 
 const seedLeague = [
-  { milestone: "Gym 1", a: "Red", b: "Blue", gamesA: 2, gamesB: 1, faintedA: 4, faintedB: 6 },
-  { milestone: "Gym 2", a: "Blue", b: "Red", gamesA: null, gamesB: null, faintedA: null, faintedB: null },
+  {
+    milestone: "Gym 1",
+    a: "Red",
+    b: "Blue",
+    games: [
+      { winner: "Red", faintedA: 1, faintedB: 6 },
+      { winner: "Blue", faintedA: 6, faintedB: 3 },
+      { winner: "Red", faintedA: 2, faintedB: 6 },
+    ],
+  },
+  { milestone: "Gym 2", a: "Blue", b: "Red", games: [] },
 ];
 
 const gameItems = new URL("../../games/anil/game/base/es-v4.14/Graphics/Items/", import.meta.url);
@@ -288,6 +298,7 @@ async function seedTheLeague(): Promise<string | null> {
   const milestones = await db.select({ id: milestone.id, name: milestone.name }).from(milestone).where(eq(milestone.seriesId, row.id));
   const players = await db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.username, seedSeries.players.map((name) => name.toLowerCase())));
   const idOf = (name: string) => players.find((p) => p.name === name)?.id;
+  const played: { matchId: string; games: { winner: string; faintedA: number; faintedB: number }[] }[] = [];
   await db.transaction(async (tx) => {
     for (const round of seedLeague) {
       const at = milestones.find((m) => m.name === round.milestone);
@@ -295,12 +306,21 @@ async function seedTheLeague(): Promise<string | null> {
       const b = idOf(round.b);
       if (!at || !a || !b) throw new Error(`${seedSeries.name} has no ${round.milestone}, ${round.a} or ${round.b}`);
       const roundId = crypto.randomUUID();
+      const matchId = crypto.randomUUID();
       await tx.insert(leagueRound).values({ id: roundId, seriesId: row.id, milestoneId: at.id });
-      const { gamesA, gamesB, faintedA, faintedB } = round;
-      await tx.insert(leagueMatch).values({ id: crypto.randomUUID(), roundId, position: 0, playerA: a, playerB: b, gamesA, gamesB, faintedA, faintedB });
+      await tx.insert(leagueMatch).values({ id: matchId, roundId, position: 0, playerA: a, playerB: b });
+      played.push({ matchId, games: round.games.map((game) => ({ ...game, winner: idOf(game.winner)! })) });
     }
   });
-  return `its league's rounds at ${seedLeague.map((r) => `${r.milestone} (${r.a} v ${r.b}, ${r.gamesA === null ? "to play" : `${r.gamesA}–${r.gamesB}`})`).join(" and ")}`;
+  for (const { matchId, games } of played) {
+    for (const game of games) {
+      const moved = await recordGame(matchId, { ...game, replay: null }, null);
+      if (!moved.done) throw new Error(`The seed's game was refused: ${moved.refused}`);
+    }
+  }
+  const score = (games: { winner: string }[], a: string, b: string) =>
+    games.length === 0 ? "to play" : `${games.filter((g) => g.winner === a).length}–${games.filter((g) => g.winner === b).length} in ${games.length} games`;
+  return `its league's rounds at ${seedLeague.map((r) => `${r.milestone} (${r.a} v ${r.b}, ${score(r.games, r.a, r.b)})`).join(" and ")}`;
 }
 
 async function seedTheFinishedSeries(): Promise<string | null> {

@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## An admin records a match game by game on its page
-
-Each match in the Rounds view links to its match page, both players left and right and the Bo3 below ([discovery → The Match Page](discovery.md#the-match-page)); an admin records each game's winner, each side's fainted and its replay link, and fixes any; the Bo3 score and the standings follow at once. An imported match gets a game for each of its Showdown replays, its winner and each side's fainted read from the replay's log, and keeps the app's score; games with no replay are left out ([discovery → Results](discovery.md#results)). Series 1's last league match gets its result this way. Every step is one server-side move on the match, in one module, so a private Showdown can later make the same moves.
-
-**Do:**
-- [ ] Schema for a match's games; the match's moves in one server module.
-- [ ] The match page, its admin route and the game editor.
-- [ ] The import makes a game of each replay from its log in the dump, takes a match's fainted from its replays where it has all of them, and reports any replay that disagrees with the app's score.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, as admin, play round 5's missing match game by game with a replay link and see the score close the Bo3 at two wins and the standings move; as a player, see no editor and get 403 from the route; an imported match with replays shows their games, winners and fainted as the replays have them, and the app's score; round 3's Elfo v Dloez shows 17 and 11 fainted, not 0–0; round 5's Elfo v Javi is the match played.
-- Human-run: the owner enters a result on the preview.
-- Reuse: the site's admin checks (`api/_lib/access.ts`).
-- Neighbors: the series page's admin overrides (`src/pages/series.tsx`).
-- Forbidden: a player report or confirm flow; a result written anywhere but the match module's moves.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## Players log their Pokémon League tries
 
 The Pokémon League view lists each player's tries and their best; a player adds a try (combats won, the combat each member fainted in) with a team picked from theirs or pasted from Showdown, the paste creating a team sourced "Any Pokémon" and linked to the try; an admin edits or deletes any; the best try's points join the standings. The import brings series 1's tries, each paste as such a team ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)).
@@ -155,7 +137,7 @@ An admin starts the cup and picks who enters; the bracket is drawn from the stan
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, start series 1's cup with six and see 1–6, 2–5, 3–4, the triangular and the rulebook's semifinals; a 1–1–1 triangular broken by its tie-breaks; also a four-player cup as a plain knockout.
 - Human-run: the owner starts series 1's real cup.
-- Reuse: the match page of [An admin records a match game by game on its page](#an-admin-records-a-match-game-by-game-on-its-page); the app's `buildBracket`, `losersTable` and `settleBracket` as reference only.
+- Reuse: the match page (`src/pages/league-match.tsx`) and its moves (`api/_lib/match.ts`); the app's `buildBracket`, `losersTable` and `settleBracket` as reference only.
 - Neighbors: the series page's tournament milestone.
 - Forbidden: the app's semifinal pairing (1–6 with the triangular).
 
@@ -296,7 +278,7 @@ Each imported game with a replay gets each side's team built from the replay: th
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, every series 1 match shows both sides' teams, locked; a game with a replay shows the six of its `|poke|` lines and the moves its log revealed; a game without one shows the paste's members.
 - Human-run: the owner reads a few matches against their replays.
-- Reuse: the replays' games of [An admin records a match game by game on its page](#an-admin-records-a-match-game-by-game-on-its-page); Showdown paste-in (`src/teams/showdown.ts`) for the pastes.
+- Reuse: the replays' games the import already makes (`scripts/league-import.ts`); Showdown paste-in (`src/teams/showdown.ts`) for the pastes.
 - Neighbors: the Pokémon League tries' pasted teams.
 - Forbidden: a second Showdown paste parser; a paste overriding a replay.
 
