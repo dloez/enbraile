@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import { lockNeeds } from "../../shared/league.js";
 import type { Snapshot } from "../../shared/snapshot.js";
 import {
@@ -170,8 +170,83 @@ function copyName(name: string, suffix: string): string {
   return `${name.slice(0, TEAM_NAME_MAX - suffix.length - 1).trimEnd()} ${suffix}`;
 }
 
-async function sourceIds(teamId: string): Promise<string[]> {
-  const rows = await db.select({ id: teamSource.snapshotId }).from(teamSource).where(eq(teamSource.teamId, teamId)).orderBy(asc(teamSource.position));
+export function copySuffix(c: Context): string {
+  return t(c).copy;
+}
+
+async function drafting(tx: Tx, matchId: string): Promise<boolean> {
+  const [drafted] = await tx
+    .select({ number: gameSide.number })
+    .from(gameSide)
+    .where(
+      and(
+        eq(gameSide.matchId, matchId),
+        or(isNotNull(gameSide.ban), isNotNull(gameSide.picks)),
+        sql`not exists (select 1 from ${leagueGame} where ${leagueGame.matchId} = ${gameSide.matchId} and ${leagueGame.number} = ${gameSide.number})`,
+      ),
+    )
+    .limit(1);
+  return drafted !== undefined;
+}
+
+export async function holdLeague(tx: Tx, seriesId: string): Promise<void> {
+  await tx.select({ id: series.id }).from(series).where(eq(series.id, seriesId)).for("update");
+  await tx.select({ id: cup.id }).from(cup).where(eq(cup.seriesId, seriesId)).for("update");
+}
+
+export async function startOver(tx: Tx, seriesId: string, snapshotId: string, suffix: string): Promise<void> {
+  const [now] = await tx.select({ milestoneId: snapshot.milestoneId }).from(snapshot).where(eq(snapshot.id, snapshotId));
+  if (!now) return;
+  const [tournament] = await tx
+    .select({ id: milestone.id })
+    .from(milestone)
+    .where(and(eq(milestone.seriesId, seriesId), eq(milestone.mark, "tournament")))
+    .orderBy(desc(milestone.position))
+    .limit(1);
+  const resting = await tx
+    .select({ matchId: leagueMatch.id, round: leagueRound.milestoneId })
+    .from(teamSource)
+    .innerJoin(team, eq(team.id, teamSource.teamId))
+    .innerJoin(leagueMatch, eq(leagueMatch.id, team.matchId))
+    .leftJoin(leagueRound, eq(leagueRound.id, leagueMatch.roundId))
+    .where(and(eq(teamSource.snapshotId, snapshotId), isNull(leagueMatch.gamesA)));
+  const matchIds = [...new Set(resting.filter((row) => (row.round ?? tournament?.id) !== now.milestoneId).map((row) => row.matchId))].sort();
+  if (matchIds.length === 0) return;
+  const open = await tx
+    .select({ id: leagueMatch.id })
+    .from(leagueMatch)
+    .where(and(inArray(leagueMatch.id, matchIds), isNull(leagueMatch.gamesA)))
+    .orderBy(asc(leagueMatch.id))
+    .for("update");
+  for (const match of open) {
+    if (await drafting(tx, match.id)) continue;
+    const held = await tx
+      .select({ id: team.id, ownerId: team.ownerId, name: team.name, slots: team.slots, pool: team.pool, freePool: team.freePool })
+      .from(team)
+      .innerJoin(teamSource, eq(teamSource.teamId, team.id))
+      .where(and(eq(team.matchId, match.id), eq(teamSource.snapshotId, snapshotId)))
+      .for("update");
+    for (const one of held) {
+      if (one.slots.some((member) => member !== null)) {
+        await insertTeam(tx, {
+          id: crypto.randomUUID(),
+          ownerId: one.ownerId,
+          name: copyName(one.name, suffix),
+          anyPokemon: true,
+          slots: one.slots,
+          pool: one.pool,
+          freePool: one.freePool,
+          sources: await sourceIds(one.id, tx),
+          private: true,
+        });
+      }
+      await tx.delete(team).where(eq(team.id, one.id));
+    }
+  }
+}
+
+async function sourceIds(teamId: string, tx: Tx | typeof db = db): Promise<string[]> {
+  const rows = await tx.select({ id: teamSource.snapshotId }).from(teamSource).where(eq(teamSource.teamId, teamId)).orderBy(asc(teamSource.position));
   return rows.map((row) => row.id);
 }
 
@@ -649,20 +724,7 @@ teams.post("/:id/unlock", requireAdmin, async (c) => {
     const [held] = await tx.select({ lockedAt: team.lockedAt }).from(team).where(eq(team.id, id)).for("update");
     if (!held) return "noTeam" as const;
     if (!held.lockedAt) return "notLocked" as const;
-    if (home.matchId) {
-      const [drafted] = await tx
-        .select({ number: gameSide.number })
-        .from(gameSide)
-        .where(
-          and(
-            eq(gameSide.matchId, home.matchId),
-            or(isNotNull(gameSide.ban), isNotNull(gameSide.picks)),
-            sql`not exists (select 1 from ${leagueGame} where ${leagueGame.matchId} = ${gameSide.matchId} and ${leagueGame.number} = ${gameSide.number})`,
-          ),
-        )
-        .limit(1);
-      if (drafted) return "drafting" as const;
-    }
+    if (home.matchId && (await drafting(tx, home.matchId))) return "drafting" as const;
     await tx.update(team).set({ lockedAt: null, lockedBy: null }).where(eq(team.id, id));
     return null;
   });

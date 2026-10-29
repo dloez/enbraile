@@ -7,6 +7,7 @@ import { body } from "./body.js";
 import { db } from "./db.js";
 import { giveCupTeams } from "./cup.js";
 import { giveRoundTeams } from "./rounds.js";
+import { copySuffix, holdLeague, startOver } from "./teams.js";
 import { dropIfUnused, saveFor } from "./ingest.js";
 import { milestone, save, snapshot } from "./schema.js";
 import { findShown, plays, viewer } from "./series-data.js";
@@ -155,16 +156,19 @@ overrides.post("/:number/trainers/:player/snapshots/:milestone/move", requireAdm
     .from(snapshot)
     .where(and(eq(snapshot.saveId, held.saveId), eq(snapshot.milestoneId, chosen.id)));
   if (other) return c.json({ error: occupied }, 409);
+  const suffix = copySuffix(c);
   try {
-    await db.update(snapshot).set({ milestoneId: chosen.id, movedBy: found.adminId, movedAt: new Date() }).where(eq(snapshot.id, held.id));
+    await db.transaction(async (tx) => {
+      await holdLeague(tx, found.seriesId);
+      await tx.update(snapshot).set({ milestoneId: chosen.id, movedBy: found.adminId, movedAt: new Date() }).where(eq(snapshot.id, held.id));
+      await startOver(tx, found.seriesId, held.id, suffix);
+      await giveRoundTeams(tx, found.seriesId);
+      await giveCupTeams(tx, found.seriesId);
+    });
   } catch (error) {
     if (taken(error)) return c.json({ error: occupied }, 409);
     throw error;
   }
-  await db.transaction(async (tx) => {
-    await giveRoundTeams(tx, found.seriesId);
-    await giveCupTeams(tx, found.seriesId);
-  });
   return c.json({});
 });
 
