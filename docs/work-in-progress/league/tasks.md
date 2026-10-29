@@ -24,23 +24,6 @@ An admin's snapshot move copies a round or cup team on a match without a result 
 - When that match has a result, is the delete refused, or does the played team lose its source?
 - When an admin moves the Tournament snapshot under a cup match with a game played but no result, is the move refused, does the match count as having a result so the team keeps its snapshot, or does the team start over with the played games' bans and sixes cleared?
 
-## A round team still unlocked when its match is decided locks as it stands
-
-An admin can record a round match's games whatever its teams' state: `recordGame` (`api/_lib/match.ts`) checks only the winner and the games' order, and both teams locked gates only a cup game's bans and picks (`started`, same file). Once the match is decided, the team list's waiting line drops it (`GET /api/teams/waiting` keeps only matches without a result, `api/_lib/teams.ts`), but an unlocked round team on it stays "To build" for good: `teamState` (`shared/team.ts`) reads only the lock, so the Teams tab's count (`GET /api/teams/to-build`) and the list's mark keep flagging it, and the lock route still locks it. The owner settled it: such a team is locked as it stands when its match is decided ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). Its reveal at the result (`revealed()` in `api/_lib/series-data.ts`) shows it while its owner can still change it. A cup game opens only on two locked teams, so only round matches reach this; series 1's round 5 Elfo v Javi does if its result is recorded on the site before Elfo locks. Found by the end-of-run gardener, 2026-10-29.
-
-**Do:**
-- [ ] The match module's move that decides a round match locking each unlocked team on it as it stands, by no one, in the same transaction; a team still missing stays missing.
-- [ ] Its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, an admin records both games of a round match on the local stack while one of its teams is unlocked: the team is locked by no one once the match is decided, the match page shows it locked, and the Teams tab's count and the list's mark no longer flag it.
-- Human-run: none.
-- Reuse: `recordGame` and `started` (`api/_lib/match.ts`); `teamState` (`shared/team.ts`); the to-build route (`api/_lib/teams.ts`).
-- Neighbors: a cup game's gate on two locked teams (`started`).
-- Forbidden: a lock written outside the match module's move; the Teams tab's count and the list's mark disagreeing.
-
-**Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/team.ts`, `pkmn/site/src/pages/league-match.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`, `docs/pkmn/site/how-to/verify-the-site.md`
-
 ## An admin enters a Pokémon League try and fixes a locked league team as the owner answers
 
 The Goal has an admin able to "enter and fix any of it (rounds, results, replays, standings, Pokémon League tries, eggs, every matchday team)" ([discovery → Goal](discovery.md#goal)). Two of those an admin cannot do today. `POST /api/series/<n>/league/tries` answers 403 to an admin (`api/_lib/league.ts`, the `notPlayer` refusal), and Edit opens a try without its team section ([The pkmn Site → League](../../pkmn/site/explanation/site.md#league), "Pokémon League tries"), so an admin can neither log a try for a player nor change the team a try was logged with. And a team page gives editing to its owner alone (`canEdit: mine && !locked && …`, `GET /api/teams/<id>` in `api/_lib/teams.ts`), so an admin fixes a locked matchday, round, cup or try team only by unlocking it for its owner to edit. Discovery settles that the player records a try and an admin edits or deletes any ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs), owner 2026-10-27); whether that is all the Goal's "enter and fix" means is not settled. Found by the mid-run gardener against the Goal, 2026-10-29.

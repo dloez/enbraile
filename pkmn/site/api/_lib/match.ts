@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, sql } from "drizzle-orm";
+import { and, asc, eq, gt, isNull, sql } from "drizzle-orm";
 import {
   barredBan,
   covers,
@@ -79,6 +79,7 @@ async function move(matchId: string, input: GameInput, by: string | null, place:
       const sum = tally(sides, after.map(played));
       const result = decided(sum.gamesA, sum.gamesB) ? sum : { gamesA: null, gamesB: null, faintedA: null, faintedB: null };
       await tx.update(leagueMatch).set(result).where(eq(leagueMatch.id, matchId));
+      if (match.gamesA === null && result.gamesA !== null) await tx.update(team).set({ lockedAt: new Date() }).where(and(eq(team.matchId, matchId), isNull(team.lockedAt)));
     }
     if (match.cupId) await settleCup(tx, match.cupId);
     return { done: true };
