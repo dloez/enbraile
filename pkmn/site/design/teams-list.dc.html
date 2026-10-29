@@ -18,10 +18,11 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 .btn:not(:disabled):hover{background:rgba(255,255,255,0.18)!important}
 .trow:hover{border-color:#5ad1f0!important}
 .me:hover{background:#222a3b!important}
+.seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
 </style>
 </helmet>
 <sc-if value="{{onList}}" hint-placeholder-val="{{ true }}">
-<div style="position: relative; width: 1440px; height: 1200px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
+<div style="position: relative; width: 1440px; height: 1880px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
 
 <header style="flex: none; height: 64px; display: flex; align-items: center; gap: 28px; padding: 0 32px; background: #10141d; border-bottom: 4px solid #d93a30; box-sizing: border-box">
 <a href="Main.dc.html" aria-label="Home" style="flex: none; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 8px">
@@ -56,12 +57,36 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 </sc-if>
 </div>
 
-<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 24px 40px 32px">
+<div role="group" aria-label="Filter teams" style="flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 20px 40px 0">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 14px; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<span id="{{f.id}}" style="margin-right: 6px; font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{f.label}}</span>
+<div role="radiogroup" aria-labelledby="{{f.id}}" style="display: flex; gap: 2px">
+<sc-for list="{{f.opts}}" as="o" hint-placeholder-count="3">
+<button type="button" role="radio" class="seg" aria-checked="{{o.on}}" onClick="{{o.pick}}" style="min-height: 40px; padding: 0 12px 2px; border: none; border-radius: 8px; background: {{o.bg}}; color: {{o.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<label style="display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 0 6px 0 14px; box-sizing: border-box; border-radius: 12px; border: 3px solid #343f58; background: #10141d">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Owner</span>
+<select onChange="{{pickOwner}}" style="min-height: 40px; padding: 0 10px; border: none; border-radius: 8px; background: {{ownerBg}}; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">
+<sc-for list="{{owners}}" as="w" hint-placeholder-count="4"><option value="{{w.v}}" selected="{{w.sel}}">{{w.label}}</option></sc-for>
+</select>
+</label>
+<div style="flex: 1"></div>
+<span role="status" style="font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">{{shown}}</span>
+<sc-if value="{{filtered}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" onClick="{{clear}}" style="min-height: 44px; padding: 0 14px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Clear filters</button>
+</sc-if>
+</div>
+
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 20px 40px 32px; height: 1572px">
 <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
 <section aria-labelledby="{{g.id}}" style="display: flex; flex-direction: column; gap: 8px">
 <h2 id="{{g.id}}" style="margin: 0; padding: 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 28px; line-height: 1; color: #c3cad8">{{g.title}}</h2>
 <sc-if value="{{g.empty}}" hint-placeholder-val="{{ false }}">
-<div style="display: flex; align-items: center; min-height: 92px; padding: 0 24px; box-sizing: border-box; border-radius: 14px; border: 3px dashed #343f58; font-family: 'Jersey 10', sans-serif; font-size: 28px; color: #a3acbf">No teams yet</div>
+<div style="display: flex; align-items: center; min-height: 92px; padding: 0 24px; box-sizing: border-box; border-radius: 14px; border: 3px dashed #343f58; font-family: 'Jersey 10', sans-serif; font-size: 28px; color: #a3acbf">{{g.emptyText}}</div>
 </sc-if>
 <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
 <div style="display: flex; align-items: center; gap: 12px">
@@ -74,7 +99,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 <span aria-hidden="true" style="flex: none; width: 40px; height: 40px; border-radius: 9px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{r.c}}; background: {{r.c}}; box-sizing: border-box; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #10141d">{{r.i}}</span>
 <span style="flex: none; width: 300px; display: flex; flex-direction: column; gap: 2px">
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 34px; line-height: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span>
-<span style="display: flex; align-items: center; gap: 8px; min-width: 0"><sc-if value="{{r.todo}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 5px; background: #c12d24; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 1">{{r.flag}}</span></sc-if><sc-if value="{{r.locked}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid #44506d; background: #10141d; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H3zM2 1h1v3H2zM7 1h1v3H7zM1 4h8v6H1z" fill="currentColor"></path></svg>{{r.lock}}</span></sc-if><span style="font-size: 14px; font-weight: 700; color: #a3acbf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.meta}}</span></span>
+<span style="display: flex; align-items: center; gap: 6px; min-width: 0"><sc-if value="{{r.league}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid {{r.kindLine}}; background: {{r.kindBg}}; color: {{r.kindInk}}; font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 1"><svg width="11" height="11" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="{{r.kindIcon}}" fill="currentColor"></path></svg>{{r.kind}}</span></sc-if><sc-if value="{{r.todo}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 5px; background: #c12d24; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 1">To build</span></sc-if><sc-if value="{{r.locked}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid #44506d; background: #10141d; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H3zM2 1h1v3H2zM7 1h1v3H7zM1 4h8v6H1z" fill="currentColor"></path></svg>Locked</span></sc-if><sc-if value="{{r.private}}" hint-placeholder-val="{{ false }}"><span title="Only you and admins see it" style="flex: none; display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px dashed #44506d; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 17px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1H0zM1 1h1v1H1zM2 2h1v1H2zM3 3h1v1H3zM4 4h1v1H4zM5 5h1v1H5zM6 6h1v1H6zM7 7h1v1H7zM8 8h1v1H8zM9 9h1v1H9zM2 4h1v2H2zM3 6h4v1H3zM7 3h1v2H7zM3 3h1v1H3zM5 2h2v1H5z" fill="currentColor"></path></svg>Private</span></sc-if><span style="font-size: 14px; font-weight: 700; color: #a3acbf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.meta}}</span></span>
 </span>
 <span style="flex: 1; display: flex; gap: 4px">
 <sc-for list="{{r.slots}}" as="s" hint-placeholder-count="6">
@@ -107,26 +132,42 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 </div>
 </sc-if>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"noTeams":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1200}}'>
+<script type="text/x-dc" data-dc-script data-props='{"noTeams":{"editor":"boolean","default":false},"kind":{"editor":"enum","options":["all","free","round","cup","try"],"default":"all"},"series":{"editor":"enum","options":["all","1","2"],"default":"all"},"$preview":{"width":1440,"height":1880}}'>
 const SHEET = '/_blob/df227043f0b439b7c33cd72640e52ca1';
 const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
   '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
 const TEAMS = [
   {preset: 'elesa', mine: true, name: 'Gym 7 team', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 7']], keys: [3, 9, 15, 21], when: 'Changed today', round: 5},
   {preset: 'rain', mine: true, name: 'Gym 5 team', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], keys: [2, 8, 14, 20, 26, 32], when: 'Locked 9 days ago', round: 4, locked: true},
-  {preset: 'elesa', mine: true, name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], keys: [0, 5, 11, 17], when: 'Changed today'},
+  {preset: 'elesa', mine: true, name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], keys: [0, 5, 11, 17], when: 'Changed today', private: true},
   {preset: 'rain', mine: true, name: 'Rain test', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], any: true, keys: [2, 8, 14, 20, 26, 32], when: 'Changed 3 days ago'},
-  {preset: 'ban', mine: true, name: 'Ban round', owner: 'Dloez', c: '#ffd34d', series: 2, size: 8, from: [['Dloez', 'Gym 5']], any: true, keys: [1, 7, 13, 19, 25, 31, 37], when: 'Changed 2 days ago'},
-  {preset: 'vicky', mine: true, name: 'Scouting Vicky', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30], when: 'Changed 4 days ago'},
-  {preset: 'elesa', mine: true, name: 'Final', owner: 'Dloez', c: '#ffd34d', series: 1, from: [['Dloez', 'Tournament']], keys: [1, 7, 13, 19, 25, 31], when: 'Changed in August'},
+  {preset: 'ban', mine: true, name: 'Ban round', owner: 'Dloez', c: '#ffd34d', series: 2, size: 8, from: [['Dloez', 'Gym 5']], any: true, keys: [1, 7, 13, 19, 25, 31, 37], when: 'Changed 2 days ago', private: true},
+  {preset: 'vicky', mine: true, name: 'Scouting Vicky', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30], when: 'Changed 4 days ago', private: true},
+  {preset: 'elesa', mine: true, name: 'Cup semifinal', owner: 'Dloez', c: '#ffd34d', series: 1, size: 8, from: [['Dloez', 'Tournament']], keys: [1, 7, 13, 19, 25, 31, 37, 43], when: 'Locked in August', cup: 'Semifinal v Javi', locked: true},
+  {preset: 'rain', mine: true, name: 'Pokémon League try 2', owner: 'Dloez', c: '#ffd34d', series: 1, from: [], any: true, keys: [43, 42, 33, 15, 41, 39], when: 'Logged in August', tryN: 2},
+  {preset: 'elesa', mine: true, name: 'Matchday 5', owner: 'Dloez', c: '#ffd34d', series: 1, from: [], any: true, keys: [0, 5, 29, 33, 42, 43], when: 'Locked in July', round: 5, locked: true},
   {preset: 'mira', mine: false, name: 'League run', owner: 'MIRAMEEE', c: '#ff9ec4', series: 2, from: [['MIRAMEEE', 'Post-League']], keys: [3, 9, 21, 27, 33, 40], when: 'Changed yesterday'},
+  {preset: 'vicky', mine: false, name: 'Gym 5 team', owner: 'Vicky', c: '#7be08a', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30, 36], when: 'Locked 8 days ago', round: 4, locked: true},
   {preset: 'vicky', mine: false, name: 'Gym 6 attempt', owner: 'Vicky', c: '#7be08a', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30], when: 'Changed 5 days ago'}
 ];
+const KINDS = {
+  round: {ink: '#5ad1f0', line: '#2b6a80', bg: '#132a35', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
+  cup: {ink: '#ffd34d', line: '#7a6420', bg: '#2a2410', icon: 'M1 0h8v1H1zM0 1h2v2H0zM8 1h2v2H8zM2 1h6v4H2zM1 3h1v1H1zM8 3h1v1H8zM3 5h4v1H3zM4 6h2v2H4zM2 8h6v2H2z'},
+  try: {ink: '#c39bff', line: '#5b4785', bg: '#211a33', icon: 'M4 0h2v1H4zM2 1h2v1H2zM6 1h2v1H6zM1 2h1v2H1zM8 2h1v2H8zM0 4h10v2H0zM1 6h1v2H1zM8 6h1v2H8zM2 8h2v1H2zM6 8h2v1H6zM4 9h2v1H4z'}
+};
+const kindOf = (t) => (t.round ? 'round' : t.cup ? 'cup' : t.tryN ? 'try' : 'free');
+const stateOf = (t) => (t.locked ? 'locked' : t.round || t.cup ? 'todo' : 'edit');
 function sourceLine(t) {
   const from = t.from.map(([who, at]) => (who === t.owner ? at : who + "'s " + at));
   if (t.any) from.push('Any Pokémon');
-  return 'Series ' + t.series + ' · ' + from.join(' + ');
+  return 'Series ' + t.series + (from.length ? ' · ' + from.join(' + ') : '');
 }
+const FILTERS = [
+  {k: 'series', label: 'Series', opts: [['all', 'All'], ['1', '1'], ['2', '2']]},
+  {k: 'kind', label: 'Kind', opts: [['all', 'All'], ['free', 'Free'], ['round', 'Round'], ['cup', 'Cup'], ['try', 'League try']]},
+  {k: 'state', label: 'State', opts: [['all', 'All'], ['todo', 'To build'], ['locked', 'Locked'], ['edit', 'Editable']]}
+];
+const OWNERS = [['all', 'Everyone'], ['Dloez', 'Dloez (you)'], ['MIRAMEEE', 'MIRAMEEE'], ['Vicky', 'Vicky']];
 class Component extends DCLogic {
   st(k, f) { const s = this.state || {}; return s[k] !== undefined ? s[k] : f; }
   renderVals() {
@@ -142,7 +183,9 @@ class Component extends DCLogic {
         return k === undefined ? {filled: false, bg: 'transparent', line: 'dashed', sprite: '', name: ''} : {filled: true, bg: '#1b2232', line: 'solid', sprite: SPRITES[k], name: ''};
       });
       const off = selecting && full && !on;
-      return {todo: !!t.round && !t.locked, flag: t.round ? 'Round ' + t.round : '', locked: !!t.locked, lock: t.locked ? 'Locked · Round ' + t.round : '', name: t.name, c: t.c, i: t.owner[0], meta: (t.mine ? '' : t.owner + ' · ') + sourceLine(t), slots, when: t.when,
+      const kind = kindOf(t), K = KINDS[kind] || {};
+      return {league: kind !== 'free', kind: kind === 'round' ? 'Round ' + t.round : kind === 'cup' ? 'Cup · ' + t.cup : kind === 'try' ? 'League try ' + t.tryN : '', kindInk: K.ink, kindLine: K.line, kindBg: K.bg, kindIcon: K.icon,
+        todo: stateOf(t) === 'todo', locked: !!t.locked, private: !!t.private && t.mine, name: t.name, c: t.c, i: t.owner[0], meta: (t.mine ? '' : t.owner + ' · ') + sourceLine(t), slots, when: t.when,
         state: t.keys.length + '/' + size, stateInk: t.keys.length === size ? '#7be08a' : '#ffc878',
         selecting, picked: on, pressed: selecting ? (on ? 'true' : 'false') : null, off, dim: off ? 0.45 : 1, cursor: off ? 'default' : 'pointer',
         line: on ? '#5ad1f0' : '#343f58', bg: on ? '#1d3242' : '#222a3b', boxLine: on ? '#5ad1f0' : '#4a5470', boxBg: on ? '#5ad1f0' : '#10141d',
@@ -150,10 +193,26 @@ class Component extends DCLogic {
     };
     const n = picked.length;
     const cmp = this.st('cmp', false);
-    const mine = this.props.noTeams ? [] : TEAMS.filter((t) => t.mine).map(row);
+    const f = this.st('f', {series: this.props.series || 'all', kind: this.props.kind || 'all', state: 'all', owner: 'all'});
+    const set = (k, v) => this.setState({f: Object.assign({}, f, {[k]: v})});
+    const keep = (t) => (f.series === 'all' || String(t.series) === f.series) && (f.kind === 'all' || kindOf(t) === f.kind) && (f.state === 'all' || stateOf(t) === f.state) && (f.owner === 'all' || t.owner === f.owner);
+    const filtered = Object.keys(f).some((k) => f[k] !== 'all');
+    const pool = this.props.noTeams ? TEAMS.filter((t) => !t.mine) : TEAMS;
+    const kept = pool.filter(keep);
+    const mine = kept.filter((t) => t.mine).map(row);
+    const others = kept.filter((t) => !t.mine).map(row);
+    const showMine = f.owner === 'all' || f.owner === 'Dloez';
+    const showOthers = f.owner !== 'Dloez';
+    const none = this.props.noTeams && !filtered ? 'No teams yet' : 'No teams match these filters';
+    const groups = [];
+    if (showMine) groups.push({id: 'g-mine', title: 'Yours', empty: mine.length === 0, emptyText: none, rows: mine});
+    if (showOthers) groups.push({id: 'g-others', title: 'Other trainers', empty: others.length === 0, emptyText: 'No teams match these filters', rows: others});
+    const filters = FILTERS.map((d) => ({id: 'flt-' + d.k, label: d.label, opts: d.opts.map(([v, label]) => ({label, on: f[d.k] === v ? 'true' : 'false', bg: f[d.k] === v ? '#343f58' : 'transparent', ink: f[d.k] === v ? '#ffffff' : '#a3acbf', pick: () => set(d.k, v)}))}));
+    const owners = OWNERS.map(([v, label]) => ({v, label, sel: f.owner === v}));
     const picks = TEAMS.filter((t) => picked.includes(t.name)).map((t) => t.name);
     return {noAdd: -1, onList: !open && !cmp, onTeam: !!open, onCmp: cmp && !open, picked: picks, closeCmp: () => this.setState({cmp: false, selecting: false, picked: []}), open: open || 'elesa',
-      groups: [{id: 'g-mine', title: 'Yours', empty: mine.length === 0, rows: mine}, {id: 'g-others', title: 'Other trainers', empty: false, rows: TEAMS.filter((t) => !t.mine).map(row)}],
+      groups, filters, owners, ownerBg: f.owner === 'all' ? 'transparent' : '#343f58', pickOwner: (e) => set('owner', e && e.target ? e.target.value : 'all'),
+      filtered, shown: kept.length + (kept.length === 1 ? ' team' : ' teams'), clear: () => this.setState({f: {series: 'all', kind: 'all', state: 'all', owner: 'all'}}),
       newTeam: () => this.setState({open: 'new'}),
       browsing: !selecting, selecting, pickCount: n + ' picked',
       startPick: () => this.setState({selecting: true, picked: []}), stopPick: () => this.setState({selecting: false, picked: []}),

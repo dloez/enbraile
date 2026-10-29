@@ -18,6 +18,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 .go[href]:hover,button.go:hover{background:#ef5148!important}
 .btn:hover{background:rgba(255,255,255,0.18)!important}
 .trow:hover{border-color:#5ad1f0!important}
+.seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
 </style>
 </helmet>
 <div style="position: relative; width: 390px; min-height: 844px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Nunito', system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.45; color: #eef1f7; background-color: #161b26; background-image: radial-gradient(#232b3c 1.5px, transparent 1.5px); background-size: 20px 20px">
@@ -50,13 +51,40 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 <a href="{{cmpHref}}" class="go" aria-disabled="{{cmpOff}}" style="display: flex; align-items: center; min-height: 48px; padding: 0 16px 4px; box-sizing: border-box; border-radius: 8px; background: {{cmpBg}}; color: {{cmpInk}}; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 24px; text-decoration: none">Compare teams</a>
 </div>
 </sc-if>
+<div style="display: flex; align-items: center; gap: 8px">
+<button type="button" class="btn" onClick="{{toggleFilters}}" aria-expanded="{{fOpenAttr}}" aria-controls="ph-filters" style="display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: {{fBtnBg}}; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 24px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 1h10v1H0zM2 4h6v1H2zM4 7h2v1H4z" fill="currentColor"></path></svg>Filters<sc-if value="{{filtered}}" hint-placeholder-val="{{ false }}"><span style="min-width: 24px; height: 24px; padding: 0 6px; box-sizing: border-box; border-radius: 12px; background: #5ad1f0; color: #10141d; font-size: 18px; line-height: 24px; text-align: center">{{nOn}}</span></sc-if></button>
+<span role="status" style="flex: 1; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #a3acbf">{{shown}}</span>
+<sc-if value="{{filtered}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" onClick="{{clear}}" style="min-height: 48px; padding: 0 12px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Clear</button>
+</sc-if>
+</div>
+<sc-if value="{{fOpen}}" hint-placeholder-val="{{ false }}">
+<div id="ph-filters" role="group" aria-label="Filter teams" style="display: flex; flex-direction: column; gap: 12px; padding: 12px; border-radius: 14px; border: 3px solid #343f58; background: #10141d">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span id="{{f.id}}" style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{f.label}}</span>
+<div role="radiogroup" aria-labelledby="{{f.id}}" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{f.opts}}" as="o" hint-placeholder-count="3">
+<button type="button" role="radio" class="seg" aria-checked="{{o.on}}" onClick="{{o.pick}}" style="min-height: 44px; padding: 0 14px 2px; box-sizing: border-box; border: 2px solid {{o.line}}; border-radius: 8px; background: {{o.bg}}; color: {{o.ink}}; font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<label style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">Owner</span>
+<select onChange="{{pickOwner}}" style="min-height: 48px; padding: 0 10px; border: 2px solid #343f58; border-radius: 8px; background: #222a3b; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 22px">
+<sc-for list="{{owners}}" as="w" hint-placeholder-count="4"><option value="{{w.v}}" selected="{{w.sel}}">{{w.label}}</option></sc-for>
+</select>
+</label>
+</div>
+</sc-if>
 </div>
 
 <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
 <section aria-labelledby="{{g.id}}" style="display: flex; flex-direction: column; gap: 8px">
 <h2 id="{{g.id}}" style="margin: 0; padding: 0 4px; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px; line-height: 1; color: #c3cad8">{{g.title}}</h2>
 <sc-if value="{{g.empty}}" hint-placeholder-val="{{ false }}">
-<div style="display: flex; align-items: center; min-height: 72px; padding: 0 16px; box-sizing: border-box; border-radius: 14px; border: 3px dashed #343f58; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #a3acbf">No teams yet</div>
+<div style="display: flex; align-items: center; min-height: 72px; padding: 0 16px; box-sizing: border-box; border-radius: 14px; border: 3px dashed #343f58; font-family: 'Jersey 10', sans-serif; font-size: 26px; color: #a3acbf">{{g.emptyText}}</div>
 </sc-if>
 <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
 <sc-if value="{{r.browsing}}" hint-placeholder-val="{{ true }}">
@@ -70,7 +98,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 <span aria-hidden="true" style="flex: none; width: 32px; height: 32px; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{r.c}}; background: {{r.c}}; box-sizing: border-box; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #10141d">{{r.i}}</span>
 <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span>
-<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px"><sc-if value="{{r.todo}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 5px; background: #c12d24; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1">{{r.flag}}</span></sc-if><sc-if value="{{r.locked}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid #44506d; background: #10141d; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H3zM2 1h1v3H2zM7 1h1v3H7zM1 4h8v6H1z" fill="currentColor"></path></svg>{{r.lock}}</span></sc-if><span style="font-size: 13px; font-weight: 700; line-height: 1.3; color: #a3acbf">{{r.meta}}</span></span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px"><sc-if value="{{r.league}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid {{r.kindLine}}; background: {{r.kindBg}}; color: {{r.kindInk}}; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1"><svg width="10" height="10" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="{{r.kindIcon}}" fill="currentColor"></path></svg>{{r.kind}}</span></sc-if><sc-if value="{{r.todo}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 5px; background: #c12d24; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1">To build</span></sc-if><sc-if value="{{r.locked}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid #44506d; background: #10141d; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H3zM2 1h1v3H2zM7 1h1v3H7zM1 4h8v6H1z" fill="currentColor"></path></svg>Locked</span></sc-if><sc-if value="{{r.private}}" hint-placeholder-val="{{ false }}"><span title="Only you and admins see it" style="flex: none; display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px dashed #44506d; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1H0zM1 1h1v1H1zM2 2h1v1H2zM3 3h1v1H3zM4 4h1v1H4zM5 5h1v1H5zM6 6h1v1H6zM7 7h1v1H7zM8 8h1v1H8zM9 9h1v1H9zM2 4h1v2H2zM3 6h4v1H3zM7 3h1v2H7zM3 3h1v1H3zM5 2h2v1H5z" fill="currentColor"></path></svg>Private</span></sc-if><span style="font-size: 13px; font-weight: 700; line-height: 1.3; color: #a3acbf">{{r.meta}}</span></span>
 </span>
 <span style="flex: none; font-family: 'Jersey 10', sans-serif; font-size: 22px; line-height: 1; color: {{r.stateInk}}">{{r.state}}</span>
 </span>
@@ -95,7 +123,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 <span aria-hidden="true" style="flex: none; width: 32px; height: 32px; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{r.c}}; background: {{r.c}}; box-sizing: border-box; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #10141d">{{r.i}}</span>
 <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 28px; line-height: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span>
-<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px"><sc-if value="{{r.todo}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 5px; background: #c12d24; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1">{{r.flag}}</span></sc-if><sc-if value="{{r.locked}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid #44506d; background: #10141d; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H3zM2 1h1v3H2zM7 1h1v3H7zM1 4h8v6H1z" fill="currentColor"></path></svg>{{r.lock}}</span></sc-if><span style="font-size: 13px; font-weight: 700; line-height: 1.3; color: #a3acbf">{{r.meta}}</span></span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px"><sc-if value="{{r.league}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid {{r.kindLine}}; background: {{r.kindBg}}; color: {{r.kindInk}}; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1"><svg width="10" height="10" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="{{r.kindIcon}}" fill="currentColor"></path></svg>{{r.kind}}</span></sc-if><sc-if value="{{r.todo}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 5px; background: #c12d24; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1">To build</span></sc-if><sc-if value="{{r.locked}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px solid #44506d; background: #10141d; color: #c3cad8; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M3 0h4v1H3zM2 1h1v3H2zM7 1h1v3H7zM1 4h8v6H1z" fill="currentColor"></path></svg>Locked</span></sc-if><sc-if value="{{r.private}}" hint-placeholder-val="{{ false }}"><span title="Only you and admins see it" style="flex: none; display: flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; box-sizing: border-box; border-radius: 5px; border: 2px dashed #44506d; color: #a3acbf; font-family: 'Jersey 10', sans-serif; font-size: 16px; line-height: 1"><svg width="12" height="12" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 0h1v1H0zM1 1h1v1H1zM2 2h1v1H2zM3 3h1v1H3zM4 4h1v1H4zM5 5h1v1H5zM6 6h1v1H6zM7 7h1v1H7zM8 8h1v1H8zM9 9h1v1H9zM2 4h1v2H2zM3 6h4v1H3zM7 3h1v2H7zM3 3h1v1H3zM5 2h2v1H5z" fill="currentColor"></path></svg>Private</span></sc-if><span style="font-size: 13px; font-weight: 700; line-height: 1.3; color: #a3acbf">{{r.meta}}</span></span>
 </span>
 <span style="flex: none; font-family: 'Jersey 10', sans-serif; font-size: 22px; line-height: 1; color: {{r.stateInk}}">{{r.state}}</span>
 </span>
@@ -128,7 +156,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"noTeams":{"editor":"boolean","default":false},"$preview":{"width":390,"height":1940}}'>
+<script type="text/x-dc" data-dc-script data-props='{"noTeams":{"editor":"boolean","default":false},"filtersOpen":{"editor":"boolean","default":false},"kind":{"editor":"enum","options":["all","free","round","cup","try"],"default":"all"},"$preview":{"width":390,"height":2620}}'>
 const TABS = [
   {name: 'Series', href: 'SeriesListPhone.dc.html', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
   {name: 'PC', href: 'Pc.dc.html', icon: 'M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z'},
@@ -139,19 +167,35 @@ const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fa
 const TEAMS = [
   {mine: true, name: 'Gym 7 team', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 7']], keys: [3, 9, 15, 21], when: 'Changed today', round: 5},
   {mine: true, name: 'Gym 5 team', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], keys: [2, 8, 14, 20, 26, 32], when: 'Locked 9 days ago', round: 4, locked: true},
-  {mine: true, name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], keys: [0, 5, 11, 17], when: 'Changed today'},
+  {mine: true, name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], keys: [0, 5, 11, 17], when: 'Changed today', private: true},
   {mine: true, name: 'Rain test', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], any: true, keys: [2, 8, 14, 20, 26, 32], when: 'Changed 3 days ago'},
-  {mine: true, name: 'Ban round', owner: 'Dloez', c: '#ffd34d', series: 2, size: 8, from: [['Dloez', 'Gym 5']], any: true, keys: [1, 7, 13, 19, 25, 31, 37], when: 'Changed 2 days ago'},
-  {mine: true, name: 'Scouting Vicky', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30], when: 'Changed 4 days ago'},
-  {mine: true, name: 'Final', owner: 'Dloez', c: '#ffd34d', series: 1, from: [['Dloez', 'Tournament']], keys: [1, 7, 13, 19, 25, 31], when: 'Changed in August'},
+  {mine: true, name: 'Ban round', owner: 'Dloez', c: '#ffd34d', series: 2, size: 8, from: [['Dloez', 'Gym 5']], any: true, keys: [1, 7, 13, 19, 25, 31, 37], when: 'Changed 2 days ago', private: true},
+  {mine: true, name: 'Scouting Vicky', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30], when: 'Changed 4 days ago', private: true},
+  {mine: true, name: 'Cup semifinal', owner: 'Dloez', c: '#ffd34d', series: 1, size: 8, from: [['Dloez', 'Tournament']], keys: [1, 7, 13, 19, 25, 31, 37, 43], when: 'Locked in August', cup: 'Semifinal v Javi', locked: true},
+  {mine: true, name: 'Pokémon League try 2', owner: 'Dloez', c: '#ffd34d', series: 1, from: [], any: true, keys: [43, 42, 33, 15, 41, 39], when: 'Logged in August', tryN: 2},
+  {mine: true, name: 'Matchday 5', owner: 'Dloez', c: '#ffd34d', series: 1, from: [], any: true, keys: [0, 5, 29, 33, 42, 43], when: 'Locked in July', round: 5, locked: true},
   {mine: false, name: 'League run', owner: 'MIRAMEEE', c: '#ff9ec4', series: 2, from: [['MIRAMEEE', 'Post-League']], keys: [3, 9, 21, 27, 33, 40], when: 'Changed yesterday'},
+  {mine: false, name: 'Gym 5 team', owner: 'Vicky', c: '#7be08a', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30, 36], when: 'Locked 8 days ago', round: 4, locked: true},
   {mine: false, name: 'Gym 6 attempt', owner: 'Vicky', c: '#7be08a', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30], when: 'Changed 5 days ago'}
 ];
+const KINDS = {
+  round: {ink: '#5ad1f0', line: '#2b6a80', bg: '#132a35', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
+  cup: {ink: '#ffd34d', line: '#7a6420', bg: '#2a2410', icon: 'M1 0h8v1H1zM0 1h2v2H0zM8 1h2v2H8zM2 1h6v4H2zM1 3h1v1H1zM8 3h1v1H8zM3 5h4v1H3zM4 6h2v2H4zM2 8h6v2H2z'},
+  try: {ink: '#c39bff', line: '#5b4785', bg: '#211a33', icon: 'M4 0h2v1H4zM2 1h2v1H2zM6 1h2v1H6zM1 2h1v2H1zM8 2h1v2H8zM0 4h10v2H0zM1 6h1v2H1zM8 6h1v2H8zM2 8h2v1H2zM6 8h2v1H6zM4 9h2v1H4z'}
+};
+const kindOf = (t) => (t.round ? 'round' : t.cup ? 'cup' : t.tryN ? 'try' : 'free');
+const stateOf = (t) => (t.locked ? 'locked' : t.round || t.cup ? 'todo' : 'edit');
 function sourceLine(t) {
   const from = t.from.map(([who, at]) => (who === t.owner ? at : who + "'s " + at));
   if (t.any) from.push('Any Pokémon');
-  return 'Series ' + t.series + ' · ' + from.join(' + ');
+  return 'Series ' + t.series + (from.length ? ' · ' + from.join(' + ') : '');
 }
+const FILTERS = [
+  {k: 'series', label: 'Series', opts: [['all', 'All'], ['1', '1'], ['2', '2']]},
+  {k: 'kind', label: 'Kind', opts: [['all', 'All'], ['free', 'Free'], ['round', 'Round'], ['cup', 'Cup'], ['try', 'League try']]},
+  {k: 'state', label: 'State', opts: [['all', 'All'], ['todo', 'To build'], ['locked', 'Locked'], ['edit', 'Editable']]}
+];
+const OWNERS = [['all', 'Everyone'], ['Dloez', 'Dloez (you)'], ['MIRAMEEE', 'MIRAMEEE'], ['Vicky', 'Vicky']];
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
@@ -168,25 +212,38 @@ class Component extends DCLogic {
         const k = t.keys[i];
         return k === undefined ? {filled: false, bg: 'transparent', line: 'dashed', sprite: '', px: px + 'px', img: img + 'px'} : {filled: true, bg: '#1b2232', line: 'solid', sprite: SPRITES[k], px: px + 'px', img: img + 'px'};
       });
-      return {todo: !!t.round && !t.locked, flag: t.round ? 'Round ' + t.round : '', locked: !!t.locked, lock: t.locked ? 'Locked · Round ' + t.round : '', name: t.name, c: t.c, i: t.owner[0], meta: (t.mine ? '' : t.owner + ' · ') + sourceLine(t), slots, when: t.when,
+      const kind = kindOf(t), K = KINDS[kind] || {};
+      return {league: kind !== 'free', kind: kind === 'round' ? 'Round ' + t.round : kind === 'cup' ? 'Cup · ' + t.cup : kind === 'try' ? 'League try ' + t.tryN : '', kindInk: K.ink, kindLine: K.line, kindBg: K.bg, kindIcon: K.icon,
+        todo: stateOf(t) === 'todo', locked: !!t.locked, private: !!t.private && t.mine, name: t.name, c: t.c, i: t.owner[0], meta: (t.mine ? '' : t.owner + ' · ') + sourceLine(t), slots, when: t.when,
         state: t.keys.length + '/' + size, stateInk: t.keys.length === size ? '#7be08a' : '#ffc878',
         browsing: !selecting, selecting, picked: on, pressed: on ? 'true' : 'false', off, dim: off ? 0.45 : 1, cursor: off ? 'default' : 'pointer',
         line: on ? '#5ad1f0' : '#343f58', bg: on ? '#1d3242' : '#222a3b', boxLine: on ? '#5ad1f0' : '#4a5470', boxBg: on ? '#5ad1f0' : '#10141d',
         toggle: () => this.setState({picked: on ? picked.filter((x) => x !== t.name) : picked.concat([t.name])})};
     };
     const n = picked.length;
-    const mine = this.props.noTeams ? [] : TEAMS.filter((t) => t.mine).map(row);
+    const f = s.f || {series: 'all', kind: this.props.kind || 'all', state: 'all', owner: 'all'};
+    const fOpen = s.fOpen !== undefined ? s.fOpen : !!this.props.filtersOpen;
+    const setF = (k, v) => this.setState({f: Object.assign({}, f, {[k]: v})});
+    const keep = (t) => (f.series === 'all' || String(t.series) === f.series) && (f.kind === 'all' || kindOf(t) === f.kind) && (f.state === 'all' || stateOf(t) === f.state) && (f.owner === 'all' || t.owner === f.owner);
+    const nOn = Object.keys(f).filter((k) => f[k] !== 'all').length;
+    const pool = this.props.noTeams ? TEAMS.filter((t) => !t.mine) : TEAMS;
+    const kept = pool.filter(keep);
+    const mine = kept.filter((t) => t.mine).map(row);
+    const others = kept.filter((t) => !t.mine).map(row);
+    const groups = [];
+    if (f.owner === 'all' || f.owner === 'Dloez') groups.push({id: 'p-mine', title: 'Yours', empty: mine.length === 0, emptyText: this.props.noTeams && !nOn ? 'No teams yet' : 'No teams match', rows: mine});
+    if (f.owner !== 'Dloez') groups.push({id: 'p-others', title: 'Other trainers', empty: others.length === 0, emptyText: 'No teams match', rows: others});
+    const filters = FILTERS.map((d) => ({id: 'pflt-' + d.k, label: d.label, opts: d.opts.map(([v, label]) => { const on = f[d.k] === v; return {label, on: on ? 'true' : 'false', bg: on ? '#343f58' : '#222a3b', line: on ? '#5ad1f0' : '#343f58', ink: on ? '#ffffff' : '#c3cad8', pick: () => setF(d.k, v)}; })}));
     return {
+      filters, groups, owners: OWNERS.map(([v, label]) => ({v, label, sel: f.owner === v})), pickOwner: (e) => setF('owner', e && e.target ? e.target.value : 'all'),
+      fOpen, fOpenAttr: fOpen ? 'true' : 'false', fBtnBg: fOpen ? '#343f58' : 'rgba(255,255,255,0.1)', toggleFilters: () => this.setState({fOpen: !fOpen}),
+      filtered: nOn > 0, nOn, shown: kept.length + (kept.length === 1 ? ' team' : ' teams'), clear: () => this.setState({f: {series: 'all', kind: 'all', state: 'all', owner: 'all'}}),
       open, closed: !open, btnBg: open ? '#222a3b' : 'transparent',
       toggle: () => this.setState({open: !open}),
       tabs: TABS.map((t, i) => ({flag: t.name === 'Teams', name: t.name, href: t.href, icon: t.icon, current: i === 2 ? 'page' : null, bg: i === 2 ? '#d93a30' : 'transparent', fg: i === 2 ? '#ffffff' : '#c3cad8'})),
       browsing: !selecting, selecting, pickCount: n + ' picked',
       startPick: () => this.setState({selecting: true, picked: []}), stopPick: () => this.setState({selecting: false, picked: []}),
       cmpOff: n < 2 ? 'true' : null, cmpHref: n < 2 ? null : 'ComparePhone.dc.html', cmpBg: n < 2 ? 'rgba(255,255,255,0.1)' : '#d93a30', cmpInk: n < 2 ? '#6b7489' : '#ffffff',
-      groups: [
-        {id: 'p-mine', title: 'Yours', empty: mine.length === 0, rows: mine},
-        {id: 'p-others', title: 'Other trainers', empty: false, rows: TEAMS.filter((t) => !t.mine).map(row)}
-      ]
     };
   }
 }

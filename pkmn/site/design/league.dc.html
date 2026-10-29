@@ -20,6 +20,9 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 .seg:not([aria-checked="true"]):hover{background:#2c3549!important;color:#ffffff!important}
 .mrow:hover{border-color:#5ad1f0!important;background:#283146!important}
 .srow:hover{background:#283146!important}
+.pname:hover{color:#5ad1f0!important}
+.pen:hover{border-color:#5ad1f0!important;color:#ffffff!important}
+.step:not(:disabled):hover{background:#283146!important}
 .chev:hover{border-color:#5ad1f0!important}
 .rep:hover{background:#5ad1f0!important;color:#10141d!important}
 </style>
@@ -82,13 +85,13 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 <span role="columnheader" style="text-align: center">Eggs</span>
 </div>
 <sc-for list="{{table}}" as="r" hint-placeholder-count="6">
-<a href="Profile.dc.html" role="row" class="srow" style="display: grid; grid-template-columns: {{scols}}; align-items: center; min-height: 76px; background: {{r.bg}}; border-bottom: {{r.line}}; color: #eef1f7; text-decoration: none">
+<div role="row" class="srow" style="display: grid; grid-template-columns: {{scols}}; align-items: center; min-height: 76px; background: {{r.bg}}; border-bottom: {{r.line}}; color: #eef1f7">
 <span role="cell" style="text-align: center; font-family: 'Jersey 10', sans-serif; font-size: 36px; color: {{r.placeInk}}">{{r.place}}</span>
 <span role="cell" style="display: flex; align-items: center; gap: 12px; min-width: 0">
 <span aria-hidden="true" style="width: 40px; height: 40px; flex: none; box-sizing: border-box; border-radius: 9px; border: 3px solid #10141d; box-shadow: 0 0 0 3px {{r.c}}; background: {{r.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">{{r.i}}</span>
 <span style="display: flex; flex-direction: column; min-width: 0; line-height: 1.1">
 <span style="display: flex; align-items: center; gap: 8px">
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px">{{r.name}}</span>
+<a href="Profile.dc.html" class="pname" style="font-family: 'Jersey 10', sans-serif; font-size: 28px; color: #eef1f7; text-decoration: none">{{r.name}}</a>
 <sc-if value="{{r.you}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 15px; color: #10141d; background: #ffd34d; padding: 0 6px; border-radius: 4px">You</span></sc-if>
 </span>
 <sc-if value="{{r.tied}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; font-weight: 700; color: #a3acbf">{{r.tieNote}}</span></sc-if>
@@ -102,11 +105,39 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 <sc-for list="{{r.pips}}" as="p" hint-placeholder-count="5"><span aria-hidden="true" style="width: 18px; height: 18px; box-sizing: border-box; border-radius: 5px; border: 3px solid {{p.line}}; background: {{p.bg}}"></span></sc-for>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{r.bestLabel}}</span>
 </span>
-<span role="cell" style="display: flex; flex-direction: column; align-items: center; line-height: 1">
+<span role="cell" style="display: flex; align-items: center; justify-content: center; gap: 6px">
+<span title="{{r.hatchTitle}}" style="display: flex; flex-direction: column; align-items: center; line-height: 1">
 <span style="font-family: 'Jersey 10', sans-serif; font-size: 26px">{{r.eggsWon}}</span>
-<span style="font-size: 12px; font-weight: 700; color: #a3acbf">{{r.eggsHatched}}</span>
+<span style="display: flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: {{r.hatchInk}}"><sc-if value="{{r.hatchSet}}" hint-placeholder-val="{{ false }}"><svg width="9" height="9" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v1H7zM6 1h1v1H6zM9 1h1v2H9zM5 2h1v1H5zM8 2h1v1H8zM4 3h1v1H4zM7 3h1v1H7zM3 4h1v1H3zM6 4h1v1H6zM2 5h1v1H2zM5 5h1v1H5zM1 6h1v1H1zM4 6h1v1H4zM0 7h1v3H0zM3 7h1v1H3zM1 9h2v1H1zM2 8h1v1H2z" fill="currentColor"></path></svg></sc-if>{{r.eggsHatched}}</span>
+<sc-if value="{{r.hatchSet}}" hint-placeholder-val="{{ false }}"><span style="margin-top: 2px; font-size: 11px; color: #a3acbf">{{r.hatchBy}}</span></sc-if>
 </span>
-</a>
+<sc-if value="{{r.admin}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="pen" onClick="{{r.edit}}" aria-label="{{r.editLabel}}" aria-expanded="{{r.editOpen}}" title="Set hatched eggs" style="flex: none; width: 32px; height: 32px; padding: 0; border: 2px solid {{r.penLine}}; border-radius: 7px; background: {{r.penBg}}; color: #c3cad8; display: grid; place-items: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0h2v1H7zM6 1h1v1H6zM9 1h1v2H9zM5 2h1v1H5zM8 2h1v1H8zM4 3h1v1H4zM7 3h1v1H7zM3 4h1v1H3zM6 4h1v1H6zM2 5h1v1H2zM5 5h1v1H5zM1 6h1v1H1zM4 6h1v1H4zM0 7h1v3H0zM3 7h1v1H3zM1 9h2v1H1zM2 8h1v1H2z" fill="currentColor"></path></svg></button>
+</sc-if>
+</span>
+</div>
+<sc-if value="{{r.editing}}" hint-placeholder-val="{{ false }}">
+<div role="row" style="background: #1b2232; border-bottom: {{r.line}}; border-top: 3px dashed #343f58">
+<div role="cell" style="display: flex; align-items: center; flex-wrap: wrap; gap: 14px 20px; padding: 16px 20px 18px 72px">
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 180px">
+<span id="hatch-label" style="font-family: 'Jersey 10', sans-serif; font-size: 24px; line-height: 1">Hatched eggs · {{r.name}}</span>
+<span style="font-size: 13px; color: #a3acbf">{{r.saveNote}}</span>
+</span>
+<span role="group" aria-labelledby="hatch-label" style="display: flex; align-items: center; gap: 0; border: 3px solid #343f58; border-radius: 10px; background: #10141d; overflow: hidden">
+<button type="button" class="step" onClick="{{r.dec}}" aria-label="One fewer" disabled="{{r.decOff}}" style="width: 44px; height: 44px; border: none; background: transparent; color: {{r.decInk}}; font-family: 'Jersey 10', sans-serif; font-size: 28px; cursor: pointer">−</button>
+<label style="display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Hatched eggs for {{r.name}}</span><input type="number" min="0" max="{{r.eggsWon}}" value="{{r.draft}}" onInput="{{r.type}}" style="width: 56px; height: 44px; box-sizing: border-box; border: none; border-left: 3px solid #343f58; border-right: 3px solid #343f58; background: #10141d; color: #ffffff; font-family: 'Jersey 10', sans-serif; font-size: 28px; text-align: center"></label>
+<button type="button" class="step" onClick="{{r.inc}}" aria-label="One more" disabled="{{r.incOff}}" style="width: 44px; height: 44px; border: none; background: transparent; color: {{r.incInk}}; font-family: 'Jersey 10', sans-serif; font-size: 28px; cursor: pointer">+</button>
+</span>
+<span style="font-size: 13px; font-weight: 700; color: #a3acbf">of {{r.eggsWon}} won</span>
+<span style="flex: 1"></span>
+<sc-if value="{{r.hatchSet}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="btn" onClick="{{r.reset}}" style="min-height: 44px; padding: 0 14px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Use the save's count</button>
+</sc-if>
+<button type="button" class="btn" onClick="{{r.cancel}}" style="min-height: 44px; padding: 0 14px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: rgba(255,255,255,0.1); color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.35); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Cancel</button>
+<button type="button" class="go" onClick="{{r.save}}" style="min-height: 44px; padding: 0 18px 4px; box-sizing: border-box; border: none; border-radius: 8px; background: #d93a30; color: #ffffff; box-shadow: inset 0 -4px 0 0 rgba(0,0,0,0.3); font-family: 'Jersey 10', sans-serif; font-size: 22px; cursor: pointer">Save</button>
+</div>
+</div>
+</sc-if>
 </sc-for>
 </div>
 
@@ -417,7 +448,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["standings","rounds","tries","cup"],"default":"standings"},"admin":{"editor":"boolean","default":false},"viewer":{"editor":"enum","options":["player","visitor"],"default":"player"},"logTry":{"editor":"boolean","default":false},"h":{"editor":null,"default":1000},"$preview":{"width":1440,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["standings","rounds","tries","cup"],"default":"standings"},"admin":{"editor":"boolean","default":false},"viewer":{"editor":"enum","options":["player","visitor"],"default":"player"},"logTry":{"editor":"boolean","default":false},"editEggs":{"editor":null,"default":""},"h":{"editor":null,"default":1000},"$preview":{"width":1440,"height":1000}}'>
 const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
   '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
 const NAMES = ['Walrein', 'Gardevoir', 'Snorlax', 'Donphan', 'Archeops', 'Magmortar', 'Poliwhirl', 'Lampent', 'Crustle', 'Budew', 'Luxio', 'Stunfisk', 'Hypno', 'Quilava', 'Archen', 'Steelix', 'Camerupt', 'Pelipper', 'Drifblim', 'Unfezant', 'Medicham', 'Claydol', 'Swalot', 'Dewgong', 'Slowking', 'Staraptor', 'Hariyama', 'Zebstrika', 'Zoroark', 'Eelektross', 'Chimecho', 'Primeape', 'Floatzel', 'Reuniclus', 'Gyarados', 'Cofagrigus', 'Braviary', 'Leavanny', 'Uxie', 'Electivire', 'Accelgor', 'Kingdra', 'Dragonite', 'Metagross', 'Dusclops', 'Venusaur', 'Purrloin', 'Uxie'];
@@ -444,7 +475,8 @@ const TRIES = {
   T: [{won: 1, keys: [12, 30, 10, 13, 6, 9], out: {6: 1, 9: 1, 13: 2, 10: 2}}],
   E: []
 };
-const HATCHED = {D: 6, V: 5, J: 3, I: 2, T: 3, E: 1};
+const HATCHED = {D: 6, V: 5, J: 3, I: 0, T: 3, E: 1};
+const SET = {I: {n: 2, by: 'Vicky', when: '2 days ago'}};
 const pips = (n, size) => Array.from({length: 5}, (_, i) => ({bg: i < n ? (i === 4 ? '#ffd34d' : '#5ad1f0') : '#10141d', line: i < n ? '#10141d' : '#44506d'}));
 const best = (k) => TRIES[k].reduce((b, t) => Math.max(b, t.won), 0);
 class Component extends DCLogic {
@@ -467,12 +499,32 @@ class Component extends DCLogic {
     }));
     Object.values(S).forEach((s) => { s.best = best(s.k); s.pts = s.w + s.best; });
     const order = Object.values(S).sort((x, y) => (y.pts - x.pts) || (x.beat.includes(y.k) ? -1 : y.beat.includes(x.k) ? 1 : 0));
+    const sets = this.st('sets', SET);
+    const editK = this.st('editK', this.props.editEggs || '');
+    const draft = this.st('draft', null);
     const table = order.map((s, i) => {
       const p = P[s.k];
       const tiedWith = order.filter((o) => o.k !== s.k && o.pts === s.pts);
       const beatTied = tiedWith.filter((o) => s.beat.includes(o.k));
+      const won = s.w + s.best;
+      const set = sets[s.k];
+      const hatched = set ? set.n : HATCHED[s.k];
+      const editing = admin && editK === s.k;
+      const d = editing ? (draft === null ? hatched : draft) : hatched;
+      const fix = (v) => Math.max(0, Math.min(won, v));
+      const close = () => this.setState({editK: '', draft: null});
       return {place: i + 1, placeInk: i === 0 ? '#ffd34d' : '#6b7489', name: p.name, i: p.name[0], c: p.c, you: !!p.you, pts: s.pts, ptsInk: i === 0 ? '#ffd34d' : '#eef1f7',
-        wl: s.w + '–' + s.l, games: s.gw + '–' + s.gl, fainted: s.f, eggsWon: s.w + s.best, eggsHatched: HATCHED[s.k] + ' hatched', pips: pips(s.best), bestLabel: s.best + ' of 5 combats won',
+        wl: s.w + '–' + s.l, games: s.gw + '–' + s.gl, fainted: s.f, eggsWon: won, eggsHatched: hatched + ' hatched', pips: pips(s.best), bestLabel: s.best + ' of 5 combats won',
+        hatchSet: !!set, hatchInk: set ? '#ffc878' : '#a3acbf', hatchBy: set ? 'by ' + set.by : '', hatchTitle: set ? 'Set by ' + set.by + ', ' + set.when + '. The save counts ' + HATCHED[s.k] + '.' : 'Counted from the latest save',
+        admin, editing, editOpen: editing ? 'true' : 'false', editLabel: 'Set ' + p.name + "'s hatched eggs", penBg: editing ? '#283146' : 'transparent', penLine: editing ? '#5ad1f0' : '#44506d',
+        edit: () => this.setState(editing ? {editK: '', draft: null} : {editK: s.k, draft: null}),
+        draft: d, decOff: d <= 0, incOff: d >= won, decInk: d <= 0 ? '#44506d' : '#ffffff', incInk: d >= won ? '#44506d' : '#ffffff',
+        dec: () => this.setState({draft: fix(d - 1)}), inc: () => this.setState({draft: fix(d + 1)}),
+        type: (e) => this.setState({draft: fix(Number(e && e.target ? e.target.value : 0) || 0)}),
+        saveNote: set ? 'Set by ' + set.by + ', ' + set.when + ' · the save counts ' + HATCHED[s.k] : 'Counted from the latest save: ' + HATCHED[s.k],
+        cancel: close,
+        reset: () => { const n = Object.assign({}, sets); delete n[s.k]; this.setState({sets: n, editK: '', draft: null}); },
+        save: () => { const n = Object.assign({}, sets); if (d === HATCHED[s.k] && !set) { close(); return; } n[s.k] = {n: d, by: me.name, when: 'just now'}; this.setState({sets: n, editK: '', draft: null}); },
         tied: tiedWith.length > 0, tieNote: beatTied.length ? 'Beat ' + beatTied.map((o) => P[o.k].name).join(', ') : 'Lost to ' + tiedWith.map((o) => P[o.k].name).join(', '),
         bg: p.you ? 'rgba(255,211,77,0.06)' : 'transparent', line: i < order.length - 1 ? '3px solid #343f58' : 'none'};
     });
@@ -541,7 +593,7 @@ class Component extends DCLogic {
       {name: 'Tole', i: 'T', c: P.T.c, w: 1, gd: '−1', gdInk: '#ff8a80', gdLine: 'transparent', pd: '−4', ink: '#eef1f7', bg: 'transparent'}];
     const tri = (a, ga, gb, b) => ({a: P[a].name, b: P[b].name, score: ga + '–' + gb, aInk: ga > gb ? '#ffd34d' : '#a3acbf', bInk: gb > ga ? '#ffd34d' : '#a3acbf'});
     const triMatches = [tri('E', 2, 0, 'T'), tri('T', 2, 1, 'I'), tri('I', 2, 1, 'E')];
-    const scols = '56px minmax(0, 1fr) 84px 72px 72px 76px 124px 76px';
+    const scols = admin ? '56px minmax(0, 1fr) 84px 72px 72px 76px 124px 120px' : '56px minmax(0, 1fr) 84px 72px 72px 76px 124px 88px';
     const meK = 'D';
     const mine = ROUNDS.map((r) => {
       const m = r.m.find((x) => x[0] === meK || x[1] === meK);
