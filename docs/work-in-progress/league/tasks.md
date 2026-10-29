@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## The Teams tab counts the reader's league teams still to build
-
-The signed-off boards draw the header's Teams tab with a yellow count, titled "1 team to build" (`series.dc.html`, `series-phone.dc.html`, `teams-list.dc.html`, `teams-list-phone.dc.html`, `player-profile.dc.html`, `player-profile-phone.dc.html`, `match-phone.dc.html`). Discovery says a round or cup team is flagged in the Teams tab until it is done ([discovery → Team Locking](discovery.md#team-locking), [Surfaces](discovery.md#surfaces)). The header's `TEAMS_TAB` (`src/components/site-header.tsx`) has no count, and no entry has aimed at it since the mid-run review moved "the Teams tab's flag" onto the team list's To build mark (99c3302). Series 1's players will need it to notice their cup teams. Found by the gardener, 2026-10-29.
-
-**Do:**
-- [ ] A count of the signed-in player's own round and cup teams in state `todo` (`teamState` in `shared/team.ts`), read by the header.
-- [ ] The count on the Teams tab, desktop and phone, as the boards draw it, titled in English and Spanish, with none at zero, for an admin or for a signed-out reader.
-- [ ] The header's count in [Site Design System](../../pkmn/site/reference/design-system.md), and the route, if one is added, in Team Builder's API list.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with Red's seeded "Cup v Blue" unlocked by `admin` (as the verify how-to does), `red` sees 1 on the Teams tab on desktop and at 390 wide; locking it again drops the count; `blue` with both final teams locked, and `admin`, see none.
-- Human-run: none.
-- Reuse: the team list's state (`teamState` in `shared/team.ts`, `GET /api/teams` in `api/_lib/teams.ts`); the header's tabs (`TabLink`, `PhoneMenu` in `src/components/site-header.tsx`); the `yellow` and `ink` tokens.
-- Neighbors: the header's own read of the running series (`useRunningSeries` in `src/components/site-header.tsx`).
-- Forbidden: raw colours in the component; counting another player's teams; a count that includes a round match still waiting on its snapshot, which has no team to build.
-
-**Touches:** `pkmn/site/src/components/site-header.tsx`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/team.ts`, `docs/pkmn/site/reference/design-system.md`, `docs/pkmn/site/explanation/team-builder.md`
-
 ## What becomes of a cup game's bans and picks when what they rest on changes?
 
 A ban is stored as a place in the other player's locked team of eight, and a six as places in the player's own (`league_game_side`; The pkmn Site → Decisions, the bans and picks' build choices). Whether a ban is barred follows from who won the game before (`barredBan` in `shared/league.ts`). Two admin moves change what these rest on and leave them standing:

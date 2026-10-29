@@ -7,13 +7,14 @@ import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { SignOutIcon, useSignOut } from "@/components/sign-out";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { useTeamsToBuild } from "@/lib/teams-to-build";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
 import { seriesBannerList } from "../../shared/series";
 
 const t = messages({
-  en: { series: "Series", teams: "Teams", admin: "Admin", pc: "PC", home: "Home", sections: "Sections", signOut: "Sign out", menu: "Menu", loading: "Loading the page" },
-  es: { series: "Series", teams: "Equipos", admin: "Admin", pc: "PC", home: "Inicio", sections: "Secciones", signOut: "Cerrar sesión", menu: "Menú", loading: "Cargando la página" },
+  en: { series: "Series", teams: "Teams", admin: "Admin", pc: "PC", home: "Home", sections: "Sections", signOut: "Sign out", menu: "Menu", loading: "Loading the page", toBuild: (n: number) => (n === 1 ? "1 team to build" : `${n} teams to build`) },
+  es: { series: "Series", teams: "Equipos", admin: "Admin", pc: "PC", home: "Inicio", sections: "Secciones", signOut: "Cerrar sesión", menu: "Menú", loading: "Cargando la página", toBuild: (n: number) => (n === 1 ? "1 equipo por montar" : `${n} equipos por montar`) },
 });
 
 type Target = { to: "/series" | "/teams" | "/admin" } | { to: "/players/$player/series/$number/pc"; player: string; number: string };
@@ -78,6 +79,15 @@ function useRunningSeries(player: User | undefined): number | null {
 
 type User = { id: string; name: string; admin?: boolean | null };
 
+function ToBuild({ count, className }: { count: number; className: string }) {
+  if (count === 0) return null;
+  return (
+    <span title={t.toBuild(count)} className={cn("rounded-full border-3 border-ink bg-yellow text-center text-ink", className)}>
+      {count}
+    </span>
+  );
+}
+
 const focus = "outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export function SiteHeader() {
@@ -86,6 +96,7 @@ export function SiteHeader() {
   const running = useRunningSeries(user);
   const tabs = !user ? [SERIES_TAB, TEAMS_TAB] : user.admin ? [SERIES_TAB, TEAMS_TAB, ADMIN_TAB] : [SERIES_TAB, pcTab(user, running), TEAMS_TAB];
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const toBuild = useTeamsToBuild(user && !user.admin ? user.id : null, pathname);
   const current = tabs.find((tab) => tab.open(pathname));
   const [open, setOpen] = useState(false);
   return (
@@ -106,6 +117,7 @@ export function SiteHeader() {
             >
               <PixelIcon name={tab.icon} />
               {tab.label}
+              {tab === TEAMS_TAB && <ToBuild count={toBuild} className="h-6 min-w-6 px-1.5 text-lg/4.5" />}
             </TabLink>
           ))}
         </nav>
@@ -113,7 +125,7 @@ export function SiteHeader() {
           <LanguageSwitch />
           {user && <Account user={user} />}
         </div>
-        <PhoneMenu tabs={tabs} current={current} pathname={pathname} user={user} open={open} setOpen={setOpen} />
+        <PhoneMenu tabs={tabs} current={current} pathname={pathname} user={user} toBuild={toBuild} open={open} setOpen={setOpen} />
         <NavProgress />
       </header>
       {open && (
@@ -170,6 +182,7 @@ function PhoneMenu({
   current,
   pathname,
   user,
+  toBuild,
   open,
   setOpen,
 }: {
@@ -177,6 +190,7 @@ function PhoneMenu({
   current: Tab | undefined;
   pathname: string;
   user: User | undefined;
+  toBuild: number;
   open: boolean;
   setOpen: (open: boolean) => void;
 }) {
@@ -209,12 +223,13 @@ function PhoneMenu({
         aria-controls="phone-menu"
         onClick={() => setOpen(!open)}
         className={cn(
-          "grid size-11 flex-none cursor-pointer place-items-center rounded-md text-white hover:bg-card sm:hidden",
+          "relative grid size-11 flex-none cursor-pointer place-items-center rounded-md text-white hover:bg-card sm:hidden",
           open && "bg-card",
           focus,
         )}
       >
         {open ? <PixelIcon name="cross" className="size-5" /> : <PixelIcon name="menu" className="size-5.5" />}
+        {toBuild > 0 && <span aria-hidden="true" className="absolute top-1.25 right-1.25 size-3 rounded-full border-2 border-ink bg-yellow" />}
       </button>
       {open && (
         <nav
@@ -231,6 +246,7 @@ function PhoneMenu({
             >
               <PixelIcon name={tab.icon} />
               {tab.label}
+              {tab === TEAMS_TAB && <ToBuild count={toBuild} className="h-6.5 min-w-6.5 px-1.75 text-xl/5" />}
             </TabLink>
           ))}
           {user && (

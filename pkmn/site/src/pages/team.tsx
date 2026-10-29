@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PLAYER_FILL, playerColour } from "@/components/player-badge";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
+import { recountTeamsToBuild } from "@/lib/teams-to-build";
 import { GameIconsProvider } from "@/lib/item-icons";
 import { cn } from "@/lib/utils";
 import { TeamFrame, TeamsBackLink } from "@/components/page-frames";
@@ -1060,6 +1061,7 @@ function LockButton({
       await api(`/teams/${encodeURIComponent(id)}/lock`, teamDone, { method: "POST" });
       setOpen(false);
       onDone();
+      recountTeamsToBuild();
     } catch (caught) {
       setError(message(caught));
     } finally {

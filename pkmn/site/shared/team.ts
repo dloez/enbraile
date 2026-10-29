@@ -159,6 +159,8 @@ export const teamWait = z.object({ series: z.int(), match: z.string(), round: z.
 
 export const teamWaits = z.array(teamWait);
 
+export const teamsToBuild = z.object({ count: z.int().min(0) });
+
 export const teamMade = z.object({ id: z.string() });
 
 export const teamDone = z.object({});

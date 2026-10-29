@@ -368,6 +368,18 @@ teams.get("/waiting", async (c) => {
   return c.json(list);
 });
 
+teams.get("/to-build", async (c) => {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
+  const rows = await db
+    .select({ id: team.id })
+    .from(team)
+    .where(and(eq(team.ownerId, reader.id), isNull(team.lockedAt), isNotNull(team.matchId)));
+  const leagues = await leaguesOf(rows.map((row) => row.id));
+  const count = rows.filter((row) => teamState(teamKind({ league: leagues.get(row.id) ?? null }), false) === "todo").length;
+  return c.json({ count });
+});
+
 teams.get("/:id", async (c) => {
   const reader = await viewer(c.req.raw);
   if (!reader) return c.json({ error: t(c).signIn }, 401);
