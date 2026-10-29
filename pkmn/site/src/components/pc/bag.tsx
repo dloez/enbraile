@@ -180,7 +180,7 @@ export function Bag({ items, tms, setas, money, gaps = [], open, onOpenChange }:
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        className="top-auto bottom-0 flex h-[90svh] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-2xl rounded-b-none border-3 border-cell-hi bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[min(780px,calc(100svh-80px))] sm:w-[min(1040px,calc(100vw-4rem))] sm:max-w-none sm:-translate-y-1/2 sm:rounded-[18px] sm:shadow-[0_12px_0_0_var(--edge)]"
+        className="top-auto bottom-0 flex h-[calc(var(--screen-h)*0.9)] max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-t-2xl rounded-b-none border-3 border-cell-hi bg-card p-0 ring-0 sm:top-1/2 sm:bottom-auto sm:h-[min(780px,calc(var(--screen-h)-80px))] sm:w-[min(1040px,calc(var(--screen-w)-4rem))] sm:max-w-none sm:-translate-y-1/2 sm:rounded-[18px] sm:shadow-[0_12px_0_0_var(--edge)]"
       >
         <div className="flex flex-none flex-wrap items-center gap-x-4 gap-y-3 border-b-3 py-3 pr-3 pl-5 sm:py-4 sm:pr-4 sm:pl-6">
           <svg viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true" className="size-7.5 flex-none">

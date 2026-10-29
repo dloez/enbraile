@@ -10,6 +10,7 @@ import { buttonClass, Toggle } from "@/components/controls";
 import { SelectField } from "@/components/select-field";
 import { spriteOf } from "@/analysis/sprite";
 import { cn } from "@/lib/utils";
+import { screenZoom } from "@/lib/zoom";
 import { dexName, typeLabel } from "../../../shared/dex-text";
 import { messages } from "../../../shared/i18n";
 
@@ -117,6 +118,7 @@ function typeIconUrl(type: string): string {
 }
 
 function layoutOptions(name: LayoutName, animate: boolean): LayoutOptions {
+  const padding = 30 * screenZoom();
   if (name === "concentric") {
     return {
       name,
@@ -125,7 +127,7 @@ function layoutOptions(name: LayoutName, animate: boolean): LayoutOptions {
       minNodeSpacing: 28,
       animate,
       animationDuration: 400,
-      padding: 30,
+      padding,
     };
   }
   if (name === "cose") {
@@ -136,11 +138,11 @@ function layoutOptions(name: LayoutName, animate: boolean): LayoutOptions {
       nodeRepulsion: () => 9000,
       idealEdgeLength: () => 110,
       edgeElasticity: (e) => (e.data("kind") === "synergy" ? 60 : 160),
-      padding: 30,
+      padding,
       randomize: false,
     };
   }
-  return { name, animate, animationDuration: 400, padding: 30 };
+  return { name, animate, animationDuration: 400, padding };
 }
 
 function elements(team: readonly Member[], a: Analysis, layers: Record<Layer, boolean>, minSynergy: number): ElementDefinition[] {
@@ -466,8 +468,8 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
       container: container.current,
       elements: els,
       style: style(),
-      minZoom: 0.2,
-      maxZoom: 3,
+      minZoom: 0.2 * screenZoom(),
+      maxZoom: 3 * screenZoom(),
     });
     cyRef.current = cy;
     if (labels) cy.edges().addClass("hl");
@@ -477,7 +479,7 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
         const p = known.get(n.id());
         if (p) n.position(p);
       });
-      cy.fit(undefined, 30);
+      cy.fit(undefined, 30 * screenZoom());
     } else {
       cy.layout(layoutOptions(layoutRef.current, false)).run();
     }
@@ -586,7 +588,7 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
         <button type="button" onClick={() => relayout(layout)} className={buttonClass}>
           {t.relayout}
         </button>
-        <button type="button" onClick={() => cyRef.current?.fit(undefined, 30)} className={buttonClass}>
+        <button type="button" onClick={() => cyRef.current?.fit(undefined, 30 * screenZoom())} className={buttonClass}>
           {t.fit}
         </button>
         <button type="button" onClick={exportPng} className={buttonClass} title={t.noSprites}>
@@ -595,7 +597,7 @@ export function TeamGraph({ team, analysis, height = 600, fill = false }: { team
       </div>
       <div className={cn("flex flex-wrap", fill && "flex-1")}>
         <div className="relative min-w-0 flex-[999_1_560px] bg-muted" style={fill ? { minHeight: height } : { height }}>
-          <div ref={container} className="h-full w-full" aria-label={t.graph} role="img" />
+          <div ref={container} className="h-full w-full [zoom:calc(1/var(--zoom))]" aria-label={t.graph} role="img" />
           <div className="pointer-events-none absolute bottom-3 left-3.5 flex flex-wrap gap-3.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-1 w-4.5 rounded-sm bg-primary" />

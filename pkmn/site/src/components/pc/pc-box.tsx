@@ -279,7 +279,7 @@ export function SummaryAside({ mon, tms, footer, gaps, series }: { mon: Mon; tms
   return (
     <aside
       aria-label={t.summary}
-      className="sticky top-4 flex max-h-[calc(100svh-2rem)] w-95 flex-none flex-col self-start overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0 lg:self-stretch"
+      className="sticky top-4 flex max-h-[calc(var(--screen-h)-2rem)] w-95 flex-none flex-col self-start overflow-hidden rounded-[18px] border-3 bg-card lg:min-h-0 lg:self-stretch"
     >
       <SummaryHead mon={mon} title={(text) => <h2 className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</h2>} />
       <SummaryBody key={mon.index} mon={mon} tms={tms} gaps={gaps} series={series} />
@@ -299,7 +299,7 @@ export function SummarySheet({ mon, tms, open, onClose, footer, gaps, series }: 
 }) {
   return (
     <BottomSheet open={open} onOpenChange={(next) => !next && onClose()}>
-      <SheetContent side="bottom" aria-describedby={undefined} className="max-h-[90svh] gap-0 overflow-hidden rounded-t-2xl bg-card">
+      <SheetContent side="bottom" aria-describedby={undefined} className="max-h-[calc(var(--screen-h)*0.9)] gap-0 overflow-hidden rounded-t-2xl bg-card">
         {mon && (
           <>
             <SummaryHead

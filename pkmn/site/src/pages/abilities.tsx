@@ -141,7 +141,7 @@ export function AbilitiesPage() {
   );
 
   return (
-    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
+    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(var(--screen-h)-4rem)] lg:min-h-144")}>
       <div className="flex min-w-0 flex-col gap-2">
         <nav aria-label={t.breadcrumb} className="flex font-heading text-[1.375rem]">
           <Link

@@ -74,7 +74,7 @@ export function SnapshotMenu({ label, taken = [], note, className, onClose, onPi
         role="menu"
         aria-label={label}
         className={cn(
-          "absolute z-30 flex max-h-[min(28rem,70svh)] w-[min(19rem,calc(100vw-2rem))] flex-col gap-0.5 overflow-y-auto rounded-xl border-3 border-cell-hi bg-ink p-1.5 shadow-[0_8px_0_var(--edge)]",
+          "absolute z-30 flex max-h-[min(28rem,calc(var(--screen-h)*0.7))] w-[min(19rem,calc(var(--screen-w)-2rem))] flex-col gap-0.5 overflow-y-auto rounded-xl border-3 border-cell-hi bg-ink p-1.5 shadow-[0_8px_0_var(--edge)]",
           className,
         )}
       >

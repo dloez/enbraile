@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cn } from "cn"
 import { Popover as PopoverPrimitive } from "radix-ui"
+import { screenZoom } from "@/lib/zoom"
 
 function Popover({
   ...props
@@ -25,7 +26,7 @@ function PopoverContent({
       <PopoverPrimitive.Content
         data-slot="popover-content"
         align={align}
-        sideOffset={sideOffset}
+        sideOffset={sideOffset * screenZoom()}
         className={cn(
           "z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 rounded-xl border-3 border-cell-hi bg-ink p-1.5 text-sm text-foreground shadow-[0_8px_0_0_var(--edge)] outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className

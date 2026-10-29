@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 
 export function BallSplit({ title, admin = false, className, children }: { title: ReactNode; admin?: boolean; className: string; children: ReactNode }) {
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex min-h-(--screen-h) flex-col">
       <div
         className={cn(
           "flex flex-none flex-col items-center justify-center gap-2.5 px-6 pb-10 sm:gap-3 sm:pb-15",
-          admin ? "h-[37svh] min-h-56 bg-ink" : "h-[51svh] min-h-60 bg-red sm:h-[52svh]",
+          admin ? "h-[calc(var(--screen-h)*0.37)] min-h-56 bg-ink" : "h-[calc(var(--screen-h)*0.51)] min-h-60 bg-red sm:h-[calc(var(--screen-h)*0.52)]",
         )}
       >
         {admin && (

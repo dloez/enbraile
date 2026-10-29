@@ -569,7 +569,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
   );
 
   return (
-    <main className={cn(toolPage, "gap-4 pt-4.5 pb-6 lg:max-h-[calc(100svh-4rem)] lg:min-h-160 lg:pb-7")}>
+    <main className={cn(toolPage, "gap-4 pt-4.5 pb-6 lg:max-h-[calc(var(--screen-h)-4rem)] lg:min-h-160 lg:pb-7")}>
       <div className="flex flex-none flex-wrap items-end gap-x-6 gap-y-3">
         <div className="flex min-w-0 flex-col gap-2">
           <TeamsBackLink />
@@ -672,7 +672,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
           {tab === "members" ? (
             cards
           ) : (
-            <section aria-label={t.analysis} className="flex min-h-[80svh] flex-col gap-2.5 rounded-[18px] border-3 bg-card px-3.5 pt-3 pb-3.5">
+            <section aria-label={t.analysis} className="flex min-h-[calc(var(--screen-h)*0.8)] flex-col gap-2.5 rounded-[18px] border-3 bg-card px-3.5 pt-3 pb-3.5">
               {analysis}
             </section>
           )}
@@ -680,7 +680,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
             <DialogContent
               showCloseButton={false}
               aria-describedby={undefined}
-              className="inset-0 top-0 left-0 flex h-svh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-2.5 rounded-none border-0 bg-card p-0 ring-0 sm:max-w-none"
+              className="inset-0 top-0 left-0 flex h-(--screen-h) w-(--screen-w) max-w-none translate-x-0 translate-y-0 flex-col gap-2.5 rounded-none border-0 bg-card p-0 ring-0 sm:max-w-none"
             >
               <DialogTitle className="sr-only">{summary ? t.summary : t.editor}</DialogTitle>
               <div className={cn("flex min-h-0 flex-1 flex-col gap-2.5", !summary && "px-4 pt-4 pb-5")}>{editor}</div>

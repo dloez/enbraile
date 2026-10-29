@@ -161,7 +161,7 @@ export function CompareDialog({ ids, onClose }: { ids: readonly string[] | null;
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        className="inset-0 top-0 left-0 flex h-svh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 bg-background p-0 ring-0 sm:max-w-none"
+        className="inset-0 top-0 left-0 flex h-(--screen-h) w-(--screen-w) max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 bg-background p-0 ring-0 sm:max-w-none"
       >
         {ids && <Comparison ids={ids} wide={wide} />}
       </DialogContent>

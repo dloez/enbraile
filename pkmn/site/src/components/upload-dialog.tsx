@@ -213,7 +213,7 @@ export function UploadDialog({
         aria-describedby={undefined}
         showCloseButton={false}
         className={cn(
-          "flex max-h-[90svh] flex-col gap-5 overflow-y-auto border-3 bg-card px-6 pt-5.5 pb-6 text-base ring-0 sm:max-w-150",
+          "flex max-h-[calc(var(--screen-h)*0.9)] flex-col gap-5 overflow-y-auto border-3 bg-card px-6 pt-5.5 pb-6 text-base ring-0 sm:max-w-150",
           "max-sm:top-auto max-sm:bottom-0 max-sm:max-w-full max-sm:translate-y-0 max-sm:rounded-b-none max-sm:border-b-0",
         )}
       >

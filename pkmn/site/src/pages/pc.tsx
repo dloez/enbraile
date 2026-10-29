@@ -91,7 +91,7 @@ export function PcPage() {
   }
 
   return (
-    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
+    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(var(--screen-h)-4rem)] lg:min-h-144")}>
       <PcHead page={page} onPick={pick} />
       {page.pc && mons ? (
         <GameIconsProvider game={page.series.gameId}>

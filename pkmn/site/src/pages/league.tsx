@@ -528,7 +528,7 @@ function Rounds({ league, me, nameOf, onChange }: Named & { onChange: (league: L
         <p className={cn("m-0 rounded-[18px] border-3 border-dashed bg-box px-5 py-8 text-center font-heading text-2xl text-faint", league.admin && "sm:hidden")}>{t.noRounds}</p>
       )}
       {(league.rounds.length > 0 || league.admin) && (
-        <div className="flex flex-col-reverse gap-3.5 sm:grid sm:grid-cols-2 lg:grid-cols-5 2xl:grid-cols-3">
+        <div className="flex flex-col-reverse gap-3.5 sm:grid sm:grid-cols-2 lg:grid-cols-5">
           {league.rounds.map((round) =>
             draft && round.number === last ? (
               <PairsCard key={round.number} league={league} round={round} draft={draft} onDraft={setDraft} nameOf={nameOf} />
