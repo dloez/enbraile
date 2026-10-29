@@ -98,6 +98,22 @@ async function seriesSaves(ids: readonly string[]): Promise<Map<string, SeriesSa
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .where(inArray(save.seriesId, ids));
+  const rounds = await db
+    .select({ id: leagueRound.id, seriesId: leagueRound.seriesId, milestoneId: leagueRound.milestoneId, mode: leagueRound.mode, bye: leagueRound.byeId })
+    .from(leagueRound)
+    .where(inArray(leagueRound.seriesId, ids));
+  const matches = rounds.length
+    ? await db
+        .select({ id: leagueMatch.id, roundId: leagueMatch.roundId, a: leagueMatch.playerA, b: leagueMatch.playerB, gamesA: leagueMatch.gamesA })
+        .from(leagueMatch)
+        .where(inArray(leagueMatch.roundId, rounds.map((round) => round.id)))
+    : [];
+  const locked = matches.length
+    ? await db
+        .select({ matchId: team.matchId, ownerId: team.ownerId })
+        .from(team)
+        .where(and(inArray(team.matchId, matches.map((match) => match.id)), isNotNull(team.lockedAt)))
+    : [];
   return new Map(
     ids.map((id) => [
       id,
@@ -108,6 +124,22 @@ async function seriesSaves(ids: readonly string[]): Promise<Map<string, SeriesSa
             .filter((player) => player.seriesId === id)
             .map((player) => [player.id, taken.filter((one) => one.seriesId === id && one.owner === player.id).map((one) => one.milestoneId)]),
         ),
+        rounds: rounds
+          .filter((round) => round.seriesId === id)
+          .map((round) => ({
+            milestoneId: round.milestoneId,
+            mode: round.mode,
+            bye: round.bye,
+            matches: matches
+              .filter((match) => match.roundId === round.id)
+              .map((match) => ({
+                id: match.id,
+                a: match.a,
+                b: match.b,
+                decided: match.gamesA !== null,
+                locked: locked.filter((held) => held.matchId === match.id).map((held) => held.ownerId),
+              })),
+          })),
       },
     ]),
   );

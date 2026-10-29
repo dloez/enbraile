@@ -80,7 +80,13 @@ export function pairsHidden(reader: string, round: PairedRound): { matches: Set<
   return { matches, bye: round.bye !== null && round.bye !== reader && matches.size > 0, yours: false };
 }
 
-export type SeriesSaves = { milestones: readonly { id: string; mark: MilestoneMark }[]; taken: ReadonlyMap<string, readonly string[]> };
+export type SavedRound = PairedRound & { milestoneId: string };
+
+export type SeriesSaves = {
+  milestones: readonly { id: string; mark: MilestoneMark }[];
+  taken: ReadonlyMap<string, readonly string[]>;
+  rounds: readonly SavedRound[];
+};
 
 function reach(reader: string, saves: SeriesSaves): { rounds: Map<string, number>; last: number; upTo: number } {
   const rounds = new Map<string, number>();
@@ -94,9 +100,27 @@ function reach(reader: string, saves: SeriesSaves): { rounds: Map<string, number
   return { rounds, last, upTo };
 }
 
+function roundHolds(reader: string, round: SavedRound, order: ReadonlyMap<string, number>): ((owner: string, milestoneId: string) => boolean) | undefined {
+  const unplayed = round.matches.filter((match) => !match.decided);
+  if (round.mode !== "closed" || unplayed.length === 0) return undefined;
+  const kept = pairsHidden(reader, round);
+  const players = new Set([...round.matches.flatMap((match) => [match.a, match.b]), ...(round.bye ? [round.bye] : [])]);
+  const from = order.get(round.milestoneId) ?? order.size;
+  return (owner, milestoneId) => {
+    const at = milestoneId === round.milestoneId;
+    const later = (order.get(milestoneId) ?? -1) > from;
+    const theirs = unplayed.find((match) => match.a === owner || match.b === owner);
+    if (theirs && (at || (later && (theirs.a === reader || theirs.b === reader)))) return true;
+    if (owner === round.bye && at && kept.bye) return true;
+    return kept.yours && later && players.has(owner);
+  };
+}
+
 export function savesSeen(reader: string, saves: SeriesSaves): (owner: string, milestoneId: string) => boolean {
   const { rounds, upTo } = reach(reader, saves);
-  return (owner, milestoneId) => owner === reader || (rounds.get(milestoneId) ?? 0) <= upTo;
+  const order = new Map(saves.milestones.map((at, index) => [at.id, index]));
+  const holds = saves.rounds.flatMap((round) => roundHolds(reader, round, order) ?? []);
+  return (owner, milestoneId) => owner === reader || (!holds.some((held) => held(owner, milestoneId)) && (rounds.get(milestoneId) ?? 0) <= upTo);
 }
 
 export function leagueSeen(reader: string, saves: SeriesSaves): boolean {

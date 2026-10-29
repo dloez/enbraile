@@ -2,22 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## A closed round hides its snapshots until the match has a result
-
-In a closed round, each player's snapshot at the round's milestone is seen only by its owner and admins until their match has a result: their PC at that snapshot, the abilities search, and as a source in others' team builds. While that match is unplayed, each player's later saves stay hidden from the other too. An open round leaves them to the series' save rule ([discovery → Team Locking](discovery.md#team-locking)).
-
-**Do:**
-- [ ] The hidden round snapshot, and the opponents' later saves, on the save rule's routes.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, in a closed round, a second test player cannot open the first's round snapshot, find its Pokémon in the abilities search, or add it as a team source, by page or route, until the match has a result, nor the first's later saves once both have moved on; in an open round they can.
-- Human-run: none until a series uses it.
-- Reuse: the save rule (`savesSeen` in `shared/league.ts`, `savesSeenBy` in `api/_lib/series-data.ts`; [The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots), "Whose saves a reader sees"); the reveal of the league teams' reveal (`revealed()` in `api/_lib/series-data.ts`).
-- Neighbors: the PC and abilities routes.
-- Forbidden: hiding in the browser only.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-
 ## A league team whose snapshot an admin moves off its milestone is copied and starts over
 
 A round team is sourced from its player's snapshot at the round's milestone, and a cup team from their Tournament snapshot ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). The passes that make them (`giveRoundTeams` in `api/_lib/rounds.ts`, `giveCupTeams` in `api/_lib/cup.ts`) give a source only to a team that has none, so when an admin moves that snapshot to another milestone (`POST …/trainers/<player>/snapshots/<milestone>/move`, `api/_lib/overrides.ts`) the team keeps the moved snapshot. The owner settled it: when the team's match has no result, locked or not, its members are copied into a new "Any Pokémon" team of the player's own, and the round or cup team starts over, unlocked and empty, on the snapshot now at its milestone, or waits for the player's upload; a team whose match has a result keeps its snapshot ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). Found by the round teams' validator, 2026-10-29.
@@ -51,6 +35,26 @@ An admin can record a round match's games whatever its teams' state: `recordGame
 - Forbidden: a lock written outside the match module's move; the Teams tab's count and the list's mark disagreeing.
 
 **Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/team.ts`, `pkmn/site/src/pages/league-match.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
+
+## A closed cup hides its players' Tournament snapshots until their match has a result
+
+Discovery's closed mode shows "a match's two teams and both players' snapshots for it" once the match has its result ([discovery → Team Locking](discovery.md#team-locking)), and a cup team is built from its player's Tournament snapshot ([The Cup](discovery.md#the-cup)). The closed round's hold in the save rule (`roundHolds` in `shared/league.ts`, fed by `seriesSaves` in `api/_lib/series-data.ts`) covers round matches only, so in a closed cup every cup player who has reached the Tournament still sees the others' Tournament snapshots. A cup player plays several matches on that one snapshot, so when it shows is not settled. Found by the closed round snapshots' validator, 2026-10-29.
+
+**Do:**
+- [ ] The closed cup's hold on its players' Tournament snapshots, in the save rule, once settled.
+- [ ] Its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, in a closed cup, a cup player cannot open another's Tournament snapshot, find its Pokémon in the abilities search or add it as a team source, by page or route, while the settled rule hides it; in an open cup they can.
+- Human-run: none until a series uses a closed cup.
+- Reuse: `savesSeen` and `roundHolds` (`shared/league.ts`); `seriesSaves` (`api/_lib/series-data.ts`); the cup's reveal in `revealed()`.
+- Neighbors: the closed round's hold.
+- Forbidden: hiding in the browser only.
+
+**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/series-data.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
+**Needs the author:**
+- In a closed cup, is a player's Tournament snapshot hidden from everyone but its owner and admins until their first cup match has a result, until their last, or from each opponent only until their match together has a result?
+- Does a closed cup also hide each cup player's saves later than the Tournament from the players they still have to meet?
 
 ## The Rounds view puts fewer, wider round cards on a wide screen
 
