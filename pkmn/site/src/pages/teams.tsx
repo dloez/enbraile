@@ -566,7 +566,7 @@ function RowBody({ team, showOwner, mine, filled }: { team: TeamRow; showOwner: 
         </span>
         <span className="text-[0.8125rem] whitespace-nowrap text-muted-foreground">{when(team)}</span>
       </span>
-      <span className="flex w-full min-w-0 gap-1 sm:w-auto sm:flex-1">
+      <span className="flex w-full min-w-0 gap-1 sm:w-auto sm:flex-1 sm:justify-center">
         {team.members.map((species, at) => {
           const sprite = species ? spriteOfName(species) : null;
           return (
