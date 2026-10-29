@@ -59,6 +59,24 @@ A closed round hides a match's pair from a player who has not locked, and from e
 **Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/shared/league.ts`, `pkmn/site/src/`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** in a closed round, does a reader's standings leave out a match whose pair is hidden from them, results and tie notes included, or do the standings count every result as they do now?
 
+## A closed round tells a player still without their round team to upload, not to lock
+
+In a closed round, `pairsHidden` (`shared/league.ts`) holds back every pair from a player of the round whose match has no result and who has not locked, and marks it as their own lock (`hidden.yours`) whether or not they have a team. So a player still waiting on their snapshot at the round's milestone, with no team to lock (`GET /api/teams/waiting`), reads "Lock your round team to see who you meet" in place of their next match (`LockToSee` in `src/pages/league.tsx`) and "Lock your round team to see this round's pairs" on the round's card (`RoundCard` there, `CurrentRound` in `src/pages/series.tsx`). Their own match page answers 404 while it is hidden (`matchOf` over `leagueOf`, `api/_lib/league.ts`), though [The pkmn Site → League](../../pkmn/site/explanation/site.md#league)'s round teams paragraph says the match page tells a waiting player which milestone to reach. The same doc's match page paragraph still calls a played round match with no team "an imported one until imported teams land with their entry", which landed (the imported game teams, 2026-10-29), and its decisions leave "No team on the site yet" (the match page's build choices) and the closed round's hidden pairs (the rounds' draw build choices) to entries that have landed. Found by the end-of-run gardener, 2026-10-29.
+
+**Do:**
+- [ ] The round's `hidden` (`leagueRound` in `shared/league.ts`) says when the reader's own team is still missing, with its milestone, worked out in `leagueOf` from the round teams it already loads; the next-match slot and the round card then read the team list's waiting line ("Reach <milestone> and upload its snapshot to get your team", `waiting` in `src/pages/teams.tsx`), in English and Spanish, on the league page and the series page's summary, and the lock prompts only to a player who has a team to lock.
+- [ ] The pkmn Site → League says so, and its round teams paragraph says a closed round's waiting player is told on the team list and the league page, not on the match page.
+- [ ] In passing, the match page paragraph's "an imported one until imported teams land with their entry" and the two decisions pointing at landed entries say what is true now.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, in a closed round, a player with no snapshot at its milestone reads the upload line on Overview, on the round card and on the series page's League summary, and still sees no pair, opponent or who rests; once they upload it and before they lock, the lock prompts; once locked, their match. `grep -n "until imported teams land" docs/pkmn/site/explanation/site.md` finds nothing.
+- Human-run: none until a series uses a closed round.
+- Reuse: `pairsHidden` and the round's `hidden` (`shared/league.ts`); the round teams `leagueOf` loads (`api/_lib/league.ts`); `LockToSee`; the team list's `waiting` line.
+- Neighbors: the match page's "Upload your <milestone> snapshot to get your round team" (`src/pages/league-match.tsx`).
+- Forbidden: showing the waiting player any pair, their opponent or who rests; a second hiding rule apart from `pairsHidden`; hiding in the browser only.
+
+**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/league.ts`, `pkmn/site/src/pages/league.tsx`, `pkmn/site/src/pages/series.tsx`, `docs/pkmn/site/explanation/site.md`
+
 ## A closed round hides its snapshots until the match has a result
 
 In a closed round, each player's snapshot at the round's milestone is seen only by its owner and admins until their match has a result: their PC at that snapshot, the abilities search, and as a source in others' team builds. While that match is unplayed, each player's later saves stay hidden from the other too. An open round leaves them to the series' save rule ([discovery → Team Locking](discovery.md#team-locking)).
@@ -92,3 +110,20 @@ A round team is sourced from its player's snapshot at the round's milestone, and
 
 **Touches:** `pkmn/site/api/_lib/rounds.ts`, `pkmn/site/api/_lib/cup.ts`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** when an admin moves a round or cup team's snapshot off its milestone, does the team keep it, move to whichever snapshot is now at the milestone (dropping the members picked from the old one), or go back to waiting on the save until one is there?
+
+## What becomes of a round team whose match gets its result before it is locked?
+
+An admin can record a round match's games whatever its teams' state: `recordGame` (`api/_lib/match.ts`) checks only the winner and the games' order, and both teams locked gates only a cup game's bans and picks (`started`, same file). Once the match is decided, the team list's waiting line drops it (`GET /api/teams/waiting` keeps only matches without a result, `api/_lib/teams.ts`), but an unlocked round team on it stays "To build" for good: `teamState` (`shared/team.ts`) reads only the lock, so the Teams tab's count (`GET /api/teams/to-build`) and the list's mark keep flagging it, and the lock route still locks it. Its reveal at the result (`revealed()` in `api/_lib/series-data.ts`) shows it while its owner can still change it. A cup game opens only on two locked teams, so only round matches reach this; series 1's round 5 Elfo v Javi does if its result is recorded on the site before Elfo locks. Found by the end-of-run gardener, 2026-10-29.
+
+**Do:**
+- [ ] Once answered, the chosen handling in the match module or the team routes, with its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, an admin records both games of a round match on the local stack while one of its teams is unlocked: the answered behaviour on the match page, the Teams tab's count and the team list.
+- Human-run: none.
+- Reuse: `recordGame` and `started` (`api/_lib/match.ts`); `teamState` (`shared/team.ts`); the to-build route (`api/_lib/teams.ts`).
+- Neighbors: a cup game's gate on two locked teams (`started`).
+- Forbidden: settling it without the owner's answer; the Teams tab's count and the list's mark disagreeing.
+
+**Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/team.ts`, `pkmn/site/src/pages/league-match.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
+**Needs the author:** when an admin records a round match's result while a player's round team is unlocked or still missing, is the result refused until both teams are locked (as a cup game opens only then), are the teams locked at the result, or do they stay unlocked and stop counting as to build?
