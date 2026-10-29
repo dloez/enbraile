@@ -103,7 +103,7 @@ overrides.put("/:number/trainers/:player/hatched", requireAdmin, async (c) => {
   const input = await body(c.req.raw, hatchedInput);
   if (!input) return c.json({ error: t(c).count }, 400);
   const saveId = await saveFor(found.seriesId, found.playerId);
-  await db.update(save).set({ hatchedSet: input.count, hatchedSetBy: found.adminId, hatchedSetAt: new Date() }).where(eq(save.id, saveId));
+  await db.update(save).set({ hatchedSet: input.count, hatchedSetBy: found.adminId, hatchedSetAt: new Date(), hatchedImported: false }).where(eq(save.id, saveId));
   return c.json({});
 });
 
@@ -112,7 +112,7 @@ overrides.delete("/:number/trainers/:player/hatched", requireAdmin, async (c) =>
   if (found instanceof Response) return found;
   await db
     .update(save)
-    .set({ hatchedSet: null, hatchedSetBy: null, hatchedSetAt: null })
+    .set({ hatchedSet: null, hatchedSetBy: null, hatchedSetAt: null, hatchedImported: false })
     .where(and(eq(save.seriesId, found.seriesId), eq(save.userId, found.playerId)));
   return c.json({});
 });

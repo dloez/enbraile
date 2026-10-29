@@ -13,13 +13,17 @@ const t = messages({
     eggs: (n: number) => `${n} ${n === 1 ? "egg" : "eggs"}`,
     hatched: (n: number) => `${n} hatched`,
     by: (name: string) => `by ${name}`,
+    fromApp: "from the app",
     setTitle: (by: string, at: string, saved: number | null) => `Set by ${by}, ${at}. ${saved === null ? "No save yet." : `The save counts ${saved}.`}`,
+    importTitle: (at: string, saved: number | null) =>
+      `Brought from the app, ${at}; a save uploaded after it takes over. ${saved === null ? "No save yet." : `The save counts ${saved}.`}`,
     fromSave: "Counted from the latest save",
     noSave: "No save yet",
     pen: "Set hatched eggs",
     penLabel: (name: string) => `Set ${name}'s hatched eggs`,
     title: (name: string) => `Hatched eggs · ${name}`,
     setNote: (by: string, at: string, saved: number | null) => `Set by ${by}, ${at} · ${saved === null ? "no save yet" : `the save counts ${saved}`}`,
+    importNote: (at: string, saved: number | null) => `Brought from the app, ${at} · ${saved === null ? "no save yet" : `the save counts ${saved}`}`,
     saveNote: (n: number) => `Counted from the latest save: ${n}`,
     fewer: "One fewer",
     more: "One more",
@@ -34,14 +38,18 @@ const t = messages({
     eggs: (n: number) => `${n} ${n === 1 ? "huevo" : "huevos"}`,
     hatched: (n: number) => `${n} ${n === 1 ? "eclosionado" : "eclosionados"}`,
     by: (name: string) => `por ${name}`,
+    fromApp: "de la app",
     setTitle: (by: string, at: string, saved: number | null) =>
       `Puesto por ${by}, ${at}. ${saved === null ? "Aún sin partida." : `La partida cuenta ${saved}.`}`,
+    importTitle: (at: string, saved: number | null) =>
+      `Traído de la app, ${at}; una partida subida después lo sustituye. ${saved === null ? "Aún sin partida." : `La partida cuenta ${saved}.`}`,
     fromSave: "Contados de la última partida",
     noSave: "Aún sin partida",
     pen: "Poner huevos eclosionados",
     penLabel: (name: string) => `Poner los huevos eclosionados de ${name}`,
     title: (name: string) => `Huevos eclosionados · ${name}`,
     setNote: (by: string, at: string, saved: number | null) => `Puesto por ${by}, ${at} · ${saved === null ? "aún sin partida" : `la partida cuenta ${saved}`}`,
+    importNote: (at: string, saved: number | null) => `Traído de la app, ${at} · ${saved === null ? "aún sin partida" : `la partida cuenta ${saved}`}`,
     saveNote: (n: number) => `Contados de la última partida: ${n}`,
     fewer: "Uno menos",
     more: "Uno más",
@@ -62,8 +70,17 @@ function message(error: unknown): string {
 }
 
 function title(eggs: HatchedEggs): string {
-  if (eggs.set) return t.setTitle(eggs.set.by, when(eggs.set.at), eggs.saved);
+  if (eggs.set) return eggs.set.by === null ? t.importTitle(when(eggs.set.at), eggs.saved) : t.setTitle(eggs.set.by, when(eggs.set.at), eggs.saved);
   return eggs.saved === null ? t.noSave : t.fromSave;
+}
+
+function note(eggs: HatchedEggs): string {
+  if (eggs.set) return eggs.set.by === null ? t.importNote(when(eggs.set.at), eggs.saved) : t.setNote(eggs.set.by, when(eggs.set.at), eggs.saved);
+  return eggs.saved === null ? t.noSave : t.saveNote(eggs.saved);
+}
+
+function setter(set: NonNullable<HatchedEggs["set"]>): string {
+  return set.by === null ? t.fromApp : t.by(set.by);
 }
 
 function Hatched({ eggs }: { eggs: HatchedEggs }) {
@@ -82,7 +99,7 @@ export function EggsCell({ won, eggs }: { won: number; eggs: HatchedEggs }) {
       <span className="text-xs font-bold">
         <Hatched eggs={eggs} />
       </span>
-      {eggs.set && <span className="mt-0.5 text-[0.6875rem] text-muted-foreground">{t.by(eggs.set.by)}</span>}
+      {eggs.set && <span className="mt-0.5 text-[0.6875rem] text-muted-foreground">{setter(eggs.set)}</span>}
     </span>
   );
 }
@@ -92,7 +109,7 @@ export function EggsLine({ won, eggs }: { won: number; eggs: HatchedEggs }) {
     <span title={title(eggs)} className="flex items-center gap-1 font-heading text-[1.0625rem] whitespace-nowrap text-muted-foreground">
       {t.eggs(won)} ·
       <Hatched eggs={eggs} />
-      {eggs.set && <span className="font-sans text-[0.6875rem] font-bold">{t.by(eggs.set.by)}</span>}
+      {eggs.set && <span className="font-sans text-[0.6875rem] font-bold">{setter(eggs.set)}</span>}
     </span>
   );
 }
@@ -167,7 +184,7 @@ export function EggsEditor({
           <span id={label} className="font-heading text-2xl leading-none">
             {t.title(name)}
           </span>
-          <span className="text-[0.8125rem] text-muted-foreground">{eggs.set ? t.setNote(eggs.set.by, when(eggs.set.at), eggs.saved) : eggs.saved === null ? t.noSave : t.saveNote(eggs.saved)}</span>
+          <span className="text-[0.8125rem] text-muted-foreground">{note(eggs)}</span>
         </span>
         <span className="flex items-center gap-3 sm:contents">
           <span role="group" aria-labelledby={label} className="flex items-stretch overflow-hidden rounded-[10px] border-3 bg-ink">

@@ -1,10 +1,10 @@
 import { readdir, readFile } from "node:fs/promises";
 import { toID } from "@pkmn/dex";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import * as z from "zod";
 import { db, pool } from "../api/_lib/db.js";
 import { importMatch } from "../api/_lib/match.js";
-import { leagueRound, leagueTry, milestone, series, seriesPlayer, team, user } from "../api/_lib/schema.js";
+import { leagueRound, leagueTry, milestone, save, series, seriesPlayer, team, user } from "../api/_lib/schema.js";
 import { insertTeam } from "../api/_lib/teams.js";
 import { bestTries, FAINTED_PER_GAME, fellProblem, PARTY_SIZE, played, standings, tally } from "../shared/league.js";
 import { EVERY_SPECIES, readShowdownTeam } from "../src/teams/showdown.js";
@@ -34,7 +34,7 @@ const showdownNames: Record<string, string> = {
 };
 
 const exported = z.object({
-  players: z.array(z.object({ id: z.string(), name: z.string() })),
+  players: z.array(z.object({ id: z.string(), name: z.string(), eggs: z.object({ hatched: z.int().min(0) }) })),
   matchdays: z.array(z.object({ n: z.int(), match_ids: z.array(z.string()), bye_player: z.string().nullable() })),
   matches: z.array(
     z.object({
@@ -247,6 +247,9 @@ async function main() {
     ];
   });
 
+  const importedAt = new Date();
+  const hatched = data.players.map((player) => ({ player: siteId.get(player.id)!, name: player.name, count: player.eggs.hatched }));
+
   await db.transaction(async (tx) => {
     await tx.delete(leagueTry).where(eq(leagueTry.seriesId, target.id));
     if (tried.length > 0) await tx.delete(team).where(inArray(team.id, tried.map((one) => one.team.id)));
@@ -263,6 +266,23 @@ async function main() {
       await insertTeam(tx, one.team);
       await tx.insert(leagueTry).values(one.row);
     }
+    await tx
+      .insert(save)
+      .values(
+        hatched.map((one) => ({
+          id: crypto.randomUUID(),
+          seriesId: target.id,
+          userId: one.player,
+          hatchedSet: one.count,
+          hatchedSetBy: null,
+          hatchedSetAt: importedAt,
+          hatchedImported: true,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: [save.seriesId, save.userId],
+        set: { hatchedSet: sql`excluded.hatched_set`, hatchedSetBy: null, hatchedSetAt: importedAt, hatchedImported: true },
+      });
   });
 
   const matches = rows.flatMap((r) => r.matches.map((m) => m.match));
@@ -285,6 +305,7 @@ async function main() {
   console.log(
     `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${games.length} games from their replays) and ${tried.length} Pokémon League tries, each with its team, into ${target.name}${preview ? " on the preview" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
   );
+  console.log(`Hatched eggs, from the app until a later save: ${hatched.map((one) => `${one.name} ${one.count}`).join(", ")}`);
   console.log(`Standings: ${table.map((row) => `${row.place}. ${nameOf.get(row.player)} ${row.points} (${row.wins}–${row.losses})`).join(", ")}`);
   console.log(disagreements.length ? `Disagrees with the app:\n${disagreements.join("\n")}` : "Every player's points, wins, losses and games match the app's.");
   console.log(reports.length ? `From the replays and the tries:\n${reports.join("\n")}` : "Every replay and try agrees with the app.");

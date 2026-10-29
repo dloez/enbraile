@@ -113,25 +113,30 @@ const hatchedIn = (list: "pokemon" | "fainted") =>
 async function hatchedOf(seriesId: string, players: string[]): Promise<HatchedEggs[]> {
   if (players.length === 0) return [];
   const saved = await db
-    .selectDistinctOn([save.userId], { player: save.userId, count: sql<number>`${hatchedIn("pokemon")} + ${hatchedIn("fainted")}`.mapWith(Number) })
+    .selectDistinctOn([save.userId], {
+      player: save.userId,
+      count: sql<number>`${hatchedIn("pokemon")} + ${hatchedIn("fainted")}`.mapWith(Number),
+      at: snapshot.takenAt,
+    })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
     .where(and(eq(save.seriesId, seriesId), inArray(save.userId, players)))
     .orderBy(save.userId, desc(milestone.position));
   const set = await db
-    .select({ player: save.userId, count: save.hatchedSet, by: setter.name, at: save.hatchedSetAt })
+    .select({ player: save.userId, count: save.hatchedSet, by: setter.name, at: save.hatchedSetAt, imported: save.hatchedImported })
     .from(save)
-    .innerJoin(setter, eq(setter.id, save.hatchedSetBy))
+    .leftJoin(setter, eq(setter.id, save.hatchedSetBy))
     .where(and(eq(save.seriesId, seriesId), inArray(save.userId, players)));
   return players.map((player) => {
-    const fromSave = saved.find((row) => row.player === player)?.count ?? null;
-    const hand = set.find((row) => row.player === player && row.count !== null && row.at !== null);
+    const latest = saved.find((row) => row.player === player);
+    const fromSave = latest?.count ?? null;
+    const hand = set.find((row) => row.player === player && row.count !== null && row.at !== null && !(row.imported && latest && latest.at > row.at));
     return {
       player,
       count: hand?.count ?? fromSave ?? 0,
       saved: fromSave,
-      set: hand ? { by: hand.by, at: hand.at!.toISOString() } : null,
+      set: hand ? { by: hand.imported ? null : hand.by, at: hand.at!.toISOString() } : null,
     };
   });
 }

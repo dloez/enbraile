@@ -169,6 +169,13 @@
       "when": 1793266340449,
       "tag": "0023_hatched_eggs",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793267452440,
+      "tag": "0024_hatched_imported",
+      "breakpoints": true
     }
   ]
 }

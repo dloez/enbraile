@@ -75,7 +75,7 @@ export const hatchedEggs = z.object({
   player: z.string(),
   count: z.int(),
   saved: z.int().nullable(),
-  set: z.object({ by: z.string(), at: z.string() }).nullable(),
+  set: z.object({ by: z.string().nullable(), at: z.string() }).nullable(),
 });
 
 export const hatchedInput = z.object({ count: z.int().min(0).max(999) });

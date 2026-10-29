@@ -2,22 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Series 1's hatched counts come across from the app
-
-The import brings each player's hatched count as the app holds it (Vicky 9, Javi 9, Dloez 8, Elfo 2, Inop 0, Tole 0) as an override on the Eggs cell that gives way by itself to the count of a snapshot the player uploads after the import, unlike an admin's own setting ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)).
-
-**Do:**
-- [ ] Extend the import (`scripts/league-import.ts`) to write the dump's hatched counts as imported overrides, replaced on each rerun; a snapshot uploaded after the import wins over one.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, after `npm run league-import` the Eggs cells read the app's counts, each marked as set; a rerun writes the same; a player who then uploads a snapshot with hatched Pokémon reads the save's count.
-- Human-run: the owner reads series 1's eggs against the app.
-- Reuse: the eggs override of the entry above.
-- Neighbors: the import's tries (`scripts/league-import.ts`).
-- Forbidden: none.
-
-**Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/`
-
 ## An admin runs the cup from its bracket to its champion
 
 An admin starts the cup and picks who enters; the bracket is drawn from the standings in the rulebook's pattern for any size, the losers' group with its own tie-breaks; the admin enters each cup match's result as a league match's; winners move on to the champion ([discovery → The Cup](discovery.md#the-cup)). Teams join in the next entry.
@@ -245,5 +229,5 @@ Owner-run. The league branch goes to `main` only now, on the owner's word; with 
 - Forbidden: none.
 
 **Touches:** none
-**After:** Series 1's game teams come across from their replays, locked to their rounds; Series 1's hatched counts come across from the app
+**After:** Series 1's game teams come across from their replays, locked to their rounds
 **Needs the author:** the go for production, the invites and the switch-off.

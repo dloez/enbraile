@@ -1,0 +1,3 @@
+ALTER TABLE "save" DROP CONSTRAINT "save_hatched_source";--> statement-breakpoint
+ALTER TABLE "save" ADD COLUMN "hatched_imported" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "save" ADD CONSTRAINT "save_hatched_source" CHECK (("save"."hatched_set" IS NULL AND NOT "save"."hatched_imported") OR ("save"."hatched_set" IS NOT NULL AND "save"."hatched_set_at" IS NOT NULL AND ("save"."hatched_set_by" IS NULL) = "save"."hatched_imported"));
