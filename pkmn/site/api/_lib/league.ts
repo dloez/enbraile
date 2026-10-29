@@ -10,6 +10,8 @@ import {
   type LeagueTry,
   type MatchPage,
   nextGame,
+  openInput,
+  pairsInput,
   PARTY_SIZE,
   standings,
   tryEdit,
@@ -23,6 +25,7 @@ import { body } from "./body.js";
 import { db } from "./db.js";
 import { says } from "./i18n.js";
 import { fixGame, type Move, recordGame, type Refusal } from "./match.js";
+import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
 import { leagueGame, leagueMatch, leagueRound, leagueTry, milestone, seriesPlayer, team, user } from "./schema.js";
 import { findShown, type SeriesRow, viewer } from "./series-data.js";
 import { insertTeam } from "./teams.js";
@@ -48,6 +51,19 @@ const t = says({
     noTry: "No such try",
     notYours: "Only the try's player or an admin changes it",
     tryTeam: "Pokémon League try",
+    badMode: "Open or closed",
+    badPairs: "Pairs of two players and the one who rests, or none",
+    noRound: "No such round",
+    allOpen: "Every round is already open",
+    noDraw: "No draw is left where nobody meets someone they have met",
+    notNewest: "Only the newest round's pairs can change",
+    started: "A match of the round has a game; its pairs stay",
+    player: "Every player must be one of the league's",
+    same: "A player cannot meet themselves",
+    twice: "Each player goes in once",
+    missing: "Every player of the league needs a pair or the rest",
+    bye: "One player rests when the league has an odd number, and none otherwise",
+    met: "Two of them have already met",
   },
   es: {
     signIn: "Inicia sesión primero",
@@ -69,6 +85,19 @@ const t = says({
     noTry: "Ese intento no existe",
     notYours: "Solo el jugador del intento o un administrador puede cambiarlo",
     tryTeam: "Intento de la Liga Pokémon",
+    badMode: "Abierta o cerrada",
+    badPairs: "Parejas de dos jugadores y el que descansa, o ninguno",
+    noRound: "Esa ronda no existe",
+    allOpen: "Todas las rondas están ya abiertas",
+    noDraw: "No queda sorteo en el que nadie repita rival",
+    notNewest: "Solo cambian las parejas de la ronda más reciente",
+    started: "Un combate de la ronda tiene una partida; sus parejas se quedan",
+    player: "Cada jugador tiene que ser de la liga",
+    same: "Un jugador no puede enfrentarse a sí mismo",
+    twice: "Cada jugador va una sola vez",
+    missing: "Cada jugador de la liga necesita pareja o descanso",
+    bye: "Descansa un jugador cuando la liga es impar, y ninguno si no",
+    met: "Dos de ellos ya se han enfrentado",
   },
 });
 
@@ -84,6 +113,11 @@ async function leagueOf(row: SeriesRow, admin: boolean): Promise<LeaguePage> {
   const matches = rounds.length
     ? await db.select().from(leagueMatch).where(inArray(leagueMatch.roundId, rounds.map((r) => r.id))).orderBy(asc(leagueMatch.position))
     : [];
+  const withGames = matches.length
+    ? new Set(
+        (await db.selectDistinct({ matchId: leagueGame.matchId }).from(leagueGame).where(inArray(leagueGame.matchId, matches.map((m) => m.id)))).map((g) => g.matchId),
+      )
+    : new Set<string>();
   const enrolled = await db
     .select({ id: user.id, name: user.name })
     .from(seriesPlayer)
@@ -107,9 +141,9 @@ async function leagueOf(row: SeriesRow, admin: boolean): Promise<LeaguePage> {
     });
   const best = bestTries(tries);
   const listed: LeagueTry[] = tries.map((one) => ({ ...one, best: best.get(one.player)?.id === one.id }));
-  const ordered = roundMilestones
-    .map((m, index) => ({ number: index + 1, milestone: m, round: rounds.find((r) => r.milestoneId === m.id) }))
-    .filter((r) => r.round !== undefined);
+  const placed = roundMilestones.map((m, index) => ({ number: index + 1, milestone: m, round: rounds.find((r) => r.milestoneId === m.id) }));
+  const ordered = placed.filter((r) => r.round !== undefined);
+  const next = placed.find((r) => r.round === undefined);
   return {
     number: row.number,
     name: row.name,
@@ -118,7 +152,9 @@ async function leagueOf(row: SeriesRow, admin: boolean): Promise<LeaguePage> {
     rounds: ordered.map(({ number, milestone: m, round }) => ({
       number,
       milestone: m.name,
+      mode: round!.mode,
       bye: round!.byeId,
+      started: matches.some((match) => match.roundId === round!.id && (match.gamesA !== null || withGames.has(match.id))),
       matches: matches
         .filter((match) => match.roundId === round!.id)
         .map((match) => ({
@@ -131,6 +167,7 @@ async function leagueOf(row: SeriesRow, admin: boolean): Promise<LeaguePage> {
           faintedB: match.faintedB,
         })),
     })),
+    next: next ? { number: next.number, milestone: next.milestone.name } : null,
     standings: standings(
       players.map((p) => p.id),
       matches.map((m) => ({ a: m.playerA, b: m.playerB, gamesA: m.gamesA, gamesB: m.gamesB, faintedA: m.faintedA, faintedB: m.faintedB })),
@@ -214,6 +251,46 @@ league.put("/:number/league/matches/:id/games/:game", requireAdmin, async (c) =>
   if (!Number.isInteger(number)) return c.json({ error: t(c).noGame }, 404);
   return moveOn(c, (matchId, input, by) => fixGame(matchId, number, input, by));
 });
+
+const roundStatus: Record<RoundRefusal, 400 | 404 | 409> = {
+  noRound: 404,
+  allOpen: 409,
+  noDraw: 409,
+  notNewest: 409,
+  started: 409,
+  player: 400,
+  same: 400,
+  twice: 400,
+  missing: 400,
+  bye: 400,
+  met: 409,
+};
+
+async function roundMove(c: Context, make: (seriesId: string) => Promise<RoundMove | null>) {
+  const row = await findShown(c.req.param("number") ?? "", true);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  const moved = await make(row.id);
+  if (!moved) return c.json({ error: t(c).badPairs }, 400);
+  if (!moved.done) return c.json({ error: t(c)[moved.refused] }, roundStatus[moved.refused]);
+  return c.json(await leagueOf(row, true));
+}
+
+league.post("/:number/league/rounds", requireAdmin, async (c) => {
+  const input = await body(c.req.raw, openInput);
+  if (!input) return c.json({ error: t(c).badMode }, 400);
+  return roundMove(c, (seriesId) => openRound(seriesId, input.mode));
+});
+
+const roundNumber = (c: Context) => Number(c.req.param("round"));
+
+league.post("/:number/league/rounds/:round/draw", requireAdmin, (c) => roundMove(c, (seriesId) => redrawRound(seriesId, roundNumber(c))));
+
+league.put("/:number/league/rounds/:round/pairs", requireAdmin, (c) =>
+  roundMove(c, async (seriesId) => {
+    const input = await body(c.req.raw, pairsInput);
+    return input ? setPairs(seriesId, roundNumber(c), input) : null;
+  }),
+);
 
 const filled = (slots: TeamSlots) => slots.filter((member) => member !== null);
 

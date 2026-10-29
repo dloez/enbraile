@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import { listPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { LeagueFrame } from "@/components/page-frames";
+import { modeName, PairsCard, RoundAdmin, UnopenedCard } from "@/league/round-admin";
 import { combatsLabel, Pips, Tries } from "@/league/tries";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
-import { type LeagueMatch, type LeaguePage as League, type LeagueRound, leaguePage, played, type Standing, winnerOf } from "../../shared/league";
+import { type LeagueMatch, type LeaguePage as League, type LeagueRound, leaguePage, type PairsInput, played, type Standing, winnerOf } from "../../shared/league";
 
 const t = messages({
   en: {
@@ -187,7 +188,7 @@ export function LeaguePage() {
         </div>
       </div>
       {view === "rounds" ? (
-        <Rounds league={league} me={me} nameOf={nameOf} />
+        <Rounds league={league} me={me} nameOf={nameOf} onChange={setLeague} />
       ) : view === "tries" ? (
         <Tries league={league} me={me} nameOf={nameOf} onChange={setLeague} />
       ) : (
@@ -411,19 +412,33 @@ function Latest({ league, nameOf }: { league: League; nameOf: (id: string) => st
   );
 }
 
-function Rounds({ league, me, nameOf }: Named) {
-  if (league.rounds.length === 0) {
-    return <p className="m-0 rounded-[18px] border-3 border-dashed bg-box px-5 py-8 text-center font-heading text-2xl text-faint">{t.noRounds}</p>;
-  }
-  const last = league.rounds.at(-1)!.number;
+function Rounds({ league, me, nameOf, onChange }: Named & { onChange: (league: League) => void }) {
+  const [draft, setDraft] = useState<PairsInput | null>(null);
+  const last = league.rounds.at(-1)?.number;
+  const unopened = league.admin
+    ? league.roundMilestones.map((milestone, index) => ({ number: index + 1, milestone })).filter((m) => !league.rounds.some((r) => r.number === m.number))
+    : [];
   return (
     <>
-      <div className="flex flex-col-reverse gap-3.5 sm:grid sm:grid-cols-2 lg:grid-cols-5">
-        {league.rounds.map((round) => (
-          <RoundCard key={round.number} number={league.number} round={round} current={round.number === last} me={me} nameOf={nameOf} />
-        ))}
-      </div>
-      <HeadToHead league={league} me={me} nameOf={nameOf} />
+      {league.admin && <RoundAdmin league={league} draft={draft} onDraft={setDraft} onChange={onChange} />}
+      {league.rounds.length === 0 && (
+        <p className={cn("m-0 rounded-[18px] border-3 border-dashed bg-box px-5 py-8 text-center font-heading text-2xl text-faint", league.admin && "sm:hidden")}>{t.noRounds}</p>
+      )}
+      {(league.rounds.length > 0 || league.admin) && (
+        <div className="flex flex-col-reverse gap-3.5 sm:grid sm:grid-cols-2 lg:grid-cols-5">
+          {league.rounds.map((round) =>
+            draft && round.number === last ? (
+              <PairsCard key={round.number} league={league} round={round} draft={draft} onDraft={setDraft} nameOf={nameOf} />
+            ) : (
+              <RoundCard key={round.number} number={league.number} round={round} current={round.number === last} me={me} nameOf={nameOf} />
+            ),
+          )}
+          {unopened.map((m) => (
+            <UnopenedCard key={m.number} number={m.number} milestone={m.milestone} matches={Math.floor(league.players.length / 2)} />
+          ))}
+        </div>
+      )}
+      {league.rounds.length > 0 && <HeadToHead league={league} me={me} nameOf={nameOf} />}
     </>
   );
 }
@@ -439,6 +454,7 @@ function RoundCard({ number, round, current, me, nameOf }: { number: number; rou
         <span className="flex items-baseline gap-2.5">
           <h2 className="m-0 font-heading text-[1.75rem] font-normal sm:text-3xl">{t.round(round.number)}</h2>
           <span className="font-heading text-[1.1875rem] text-muted-foreground sm:text-xl">{round.milestone}</span>
+          {round.mode === "closed" && <span className="rounded-sm bg-cell px-1.5 font-heading text-[0.9375rem] text-subtle">{modeName(round.mode)}</span>}
         </span>
         <span className="flex-1 sm:hidden" />
         <span className={cn("font-heading text-[1.1875rem] sm:text-xl", left ? "text-warning" : "text-green")}>{left ? t.toPlay(left) : t.allPlayed}</span>

@@ -152,7 +152,7 @@ async function main() {
   const rows = matchdays.map((day) => {
     const roundId = `${target.id}-md${day.n}`;
     return {
-      round: { id: roundId, seriesId: target.id, milestoneId: rounds[day.n - 1]!.id, byeId: day.bye_player ? siteId.get(day.bye_player)! : null },
+      round: { id: roundId, seriesId: target.id, milestoneId: rounds[day.n - 1]!.id, mode: "open" as const, byeId: day.bye_player ? siteId.get(day.bye_player)! : null },
       matches: day.match_ids.map((id, position) => {
         const match = data.matches.find((m) => m.id === id);
         if (!match || match.kind !== "league" || match.matchday !== day.n) throw new Error(`Matchday ${day.n} lists ${id}, which is not one of its league matches`);

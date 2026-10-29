@@ -15,6 +15,10 @@ export const GAMES_TO_WIN = 2;
 
 export const FAINTED_PER_GAME = 6;
 
+export const LEAGUE_MODES = ["open", "closed"] as const;
+
+export const leagueMode = z.enum(LEAGUE_MODES);
+
 export const leaguePlayer = z.object({ id: z.string(), name: z.string() });
 
 export const leagueMatch = z.object({
@@ -30,7 +34,9 @@ export const leagueMatch = z.object({
 export const leagueRound = z.object({
   number: z.int(),
   milestone: z.string(),
+  mode: leagueMode,
   bye: z.string().nullable(),
+  started: z.boolean(),
   matches: z.array(leagueMatch),
 });
 
@@ -66,6 +72,7 @@ export const leaguePage = z.object({
   roundMilestones: z.array(z.string()),
   players: z.array(leaguePlayer),
   rounds: z.array(leagueRound),
+  next: z.object({ number: z.int(), milestone: z.string() }).nullable(),
   standings: z.array(standing),
   tries: z.array(leagueTry),
   admin: z.boolean(),
@@ -113,6 +120,15 @@ export const matchPage = z.object({
   admin: z.boolean(),
 });
 
+export const openInput = z.object({ mode: leagueMode });
+
+export const pairsInput = z.object({
+  pairs: z.array(z.tuple([z.string().min(1), z.string().min(1)])).max(64),
+  bye: z.string().min(1).nullable(),
+});
+
+export type LeagueMode = z.infer<typeof leagueMode>;
+export type PairsInput = z.infer<typeof pairsInput>;
 export type LeaguePlayer = z.infer<typeof leaguePlayer>;
 export type LeagueMatch = z.infer<typeof leagueMatch>;
 export type LeagueRound = z.infer<typeof leagueRound>;
@@ -259,4 +275,94 @@ export function standings(players: string[], results: Result[], best: ReadonlyMa
       tie: tied.length === 0 ? null : { beat: tied.filter((other) => beat(player, other)), lostTo: tied.filter((other) => beat(other, player)) },
     };
   });
+}
+
+export type Pair = readonly [string, string];
+
+export function pairKey(x: string, y: string): string {
+  return x < y ? `${x}|${y}` : `${y}|${x}`;
+}
+
+export function metIn(rounds: readonly { number: number; matches: readonly { a: string; b: string }[] }[]): Map<string, number> {
+  const met = new Map<string, number>();
+  for (const round of rounds) for (const match of round.matches) if (!met.has(pairKey(match.a, match.b))) met.set(pairKey(match.a, match.b), round.number);
+  return met;
+}
+
+export type PairsProblem = "player" | "same" | "twice" | "missing" | "bye" | "met";
+
+export function pairsProblem(players: readonly string[], pairs: readonly Pair[], bye: string | null, met: ReadonlyMap<string, number>): PairsProblem | null {
+  const known = new Set(players);
+  const placed = [...pairs.flat(), ...(bye === null ? [] : [bye])];
+  if (placed.some((player) => !known.has(player))) return "player";
+  if (pairs.some(([x, y]) => x === y)) return "same";
+  if (new Set(placed).size !== placed.length) return "twice";
+  if (placed.length !== players.length) return "missing";
+  if ((bye !== null) !== (players.length % 2 === 1)) return "bye";
+  return pairs.some(([x, y]) => met.has(pairKey(x, y))) ? "met" : null;
+}
+
+const RESTS = "";
+
+const DRAW_STEPS = 200_000;
+
+function shuffled<T>(list: readonly T[], random: () => number): T[] {
+  const out = [...list];
+  for (let at = out.length - 1; at > 0; at--) {
+    const other = Math.floor(random() * (at + 1));
+    [out[at], out[other]] = [out[other]!, out[at]!];
+  }
+  return out;
+}
+
+export function drawRound(
+  players: readonly string[],
+  met: ReadonlySet<string>,
+  rested: ReadonlySet<string>,
+  rounds: number,
+  random: () => number,
+): { pairs: Pair[]; bye: string | null } | null {
+  const seats = players.length % 2 === 1 ? [...players, RESTS] : [...players];
+  if (seats.length < 2) return null;
+  const free = (x: string, y: string, used: ReadonlySet<string>) => {
+    if (x === RESTS || y === RESTS) return !rested.has(x === RESTS ? y : x) && !used.has(pairKey(x, y));
+    return !met.has(pairKey(x, y)) && !used.has(pairKey(x, y));
+  };
+  let steps = 0;
+  const season = (left: number, used: Set<string>): Pair[][] | null => {
+    if (left === 0) return [];
+    const matching = (open: string[], taken: Pair[]): Pair[][] | null => {
+      if (++steps > DRAW_STEPS) return null;
+      if (open.length === 0) {
+        for (const [x, y] of taken) used.add(pairKey(x, y));
+        const rest = season(left - 1, used);
+        for (const [x, y] of taken) used.delete(pairKey(x, y));
+        return rest && [[...taken], ...rest];
+      }
+      const [first, ...others] = open as [string, ...string[]];
+      for (const partner of shuffled(others, random)) {
+        if (!free(first, partner, used)) continue;
+        const found = matching(
+          others.filter((seat) => seat !== partner),
+          [...taken, [first, partner]],
+        );
+        if (found) return found;
+        if (steps > DRAW_STEPS) return null;
+      }
+      return null;
+    };
+    return matching(shuffled(seats, random), []);
+  };
+  for (let depth = Math.max(1, rounds); depth >= 1; depth--) {
+    steps = 0;
+    const found = season(depth, new Set());
+    if (!found) continue;
+    const [round] = found as [Pair[]];
+    const bye = round.find((pair) => pair.includes(RESTS));
+    return {
+      pairs: shuffled(round.filter((pair) => !pair.includes(RESTS)), random).map((pair) => (random() < 0.5 ? pair : [pair[1], pair[0]])),
+      bye: bye ? (bye[0] === RESTS ? bye[1] : bye[0]) : null,
+    };
+  }
+  return null;
 }

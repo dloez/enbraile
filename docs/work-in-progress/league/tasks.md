@@ -123,23 +123,6 @@ An open cup has bans and a closed one none; in an open cup, each cup game opens 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** League teams stay hidden until their mode reveals them
 
-## An admin opens a round and draws its pairs
-
-For a later series: an admin opens the next round in the mode they pick, prefilled with the previous round's, which draws pairs at random among players who have not met, with a bye on an odd count; the admin can redraw it or set the pairs by hand ([discovery → Rounds](discovery.md#rounds)). In a closed round, a player sees their pair only once they have locked their team ([discovery → Team Locking](discovery.md#team-locking)).
-
-**Do:**
-- [ ] Opening with its mode, the draw, redraw and hand-set pairs, in place on the Rounds view.
-- [ ] A closed round's pairs hidden from each player until they lock, enforced by the API.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, on a seeded series of five players, open rounds until each pair has met once, with byes, never repeating a pair; redraw one; set one by hand; open a closed round and see a player get no pair, by page or route, until they lock.
-- Human-run: none until a series uses it.
-- Reuse: the round tables of the first code entry.
-- Neighbors: the admin result editor.
-- Forbidden: rounds opening by themselves.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-
 ## Each open round gives a player their team once their snapshot exists
 
 An open round gives each player a team sourced from their snapshot at its milestone, sized by the league's rules, as soon as that snapshot exists; until then their Teams tab names the milestone to reach and upload. Locked and unlocked as a cup team ([discovery → Team Locking](discovery.md#team-locking)).
@@ -156,7 +139,24 @@ An open round gives each player a team sourced from their snapshot at its milest
 - Forbidden: a team sourced from a snapshot that does not exist.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** An admin opens a round and draws its pairs; League teams stay hidden until their mode reveals them
+**After:** League teams stay hidden until their mode reveals them
+
+## A closed round hides a player's pair until they lock their team
+
+In a closed round, a player sees their own pair only once they have locked their round team ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams come with [Each open round gives a player their team once their snapshot exists](#each-open-round-gives-a-player-their-team-once-their-snapshot-exists), and the lock with [Each cup match gives its players a locked team to build](#each-cup-match-gives-its-players-a-locked-team-to-build).
+
+**Do:**
+- [ ] A closed round's pair hidden from each of its players until they lock, enforced by the API wherever the pair is handed out: the league page's rounds, head-to-head and next match, the series page's League summary and the match page.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, open a closed round and see a player get no pair, by page or route, until they lock; an admin, and the players of an open round, always see the pairs.
+- Human-run: none until a series uses it.
+- Reuse: the round's `mode` (`league_round` in `api/_lib/schema.ts`); the lock of the cup teams entry.
+- Neighbors: the series page's League summary (`src/pages/series.tsx`).
+- Forbidden: hiding in the browser only.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
+**After:** Each open round gives a player their team once their snapshot exists
 
 ## Players see others' saves only up to their own round
 

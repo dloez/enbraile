@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
-import { FAINTED_PER_GAME, GAMES_TO_WIN, LEAGUE_COMBATS, MATCH_GAMES, PARTY_SIZE, type TryMember } from "../../shared/league.js";
+import { FAINTED_PER_GAME, GAMES_TO_WIN, LEAGUE_COMBATS, LEAGUE_MODES, MATCH_GAMES, PARTY_SIZE, type TryMember } from "../../shared/league.js";
 import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
 import type { ItemIcons } from "../../shared/items.js";
@@ -105,6 +105,8 @@ export const ingestionEnum = pgEnum("ingestion", INGESTION_MODES);
 export const seriesStateEnum = pgEnum("series_state", SERIES_STATES);
 
 export const milestoneMarkEnum = pgEnum("milestone_mark", MILESTONE_MARKS);
+
+export const leagueModeEnum = pgEnum("league_mode", LEAGUE_MODES);
 
 export const series = pgTable(
   "series",
@@ -262,6 +264,7 @@ export const leagueRound = pgTable(
     milestoneId: text("milestone_id")
       .notNull()
       .references(() => milestone.id, { onDelete: "restrict" }),
+    mode: leagueModeEnum("mode").notNull(),
     byeId: text("bye_id").references(() => user.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

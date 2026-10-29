@@ -309,7 +309,7 @@ async function seedTheLeague(): Promise<string | null> {
       if (!at || !a || !b) throw new Error(`${seedSeries.name} has no ${round.milestone}, ${round.a} or ${round.b}`);
       const roundId = crypto.randomUUID();
       const matchId = crypto.randomUUID();
-      await tx.insert(leagueRound).values({ id: roundId, seriesId: row.id, milestoneId: at.id });
+      await tx.insert(leagueRound).values({ id: roundId, seriesId: row.id, milestoneId: at.id, mode: "open" });
       await tx.insert(leagueMatch).values({ id: matchId, roundId, position: 0, playerA: a, playerB: b });
       played.push({ matchId, games: round.games.map((game) => ({ ...game, winner: idOf(game.winner)! })) });
     }
