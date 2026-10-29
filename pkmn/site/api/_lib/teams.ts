@@ -5,7 +5,12 @@ import type { Snapshot } from "../../shared/snapshot.js";
 import {
   backedBy,
   emptySlots,
+  FREE_LEVEL,
+  FREE_NATURE,
   isFree,
+  MAX_EV,
+  MAX_IV,
+  MAX_LEVEL,
   newTeamInput,
   nextTeamName,
   teamInput,
@@ -194,9 +199,72 @@ export async function holdLeague(tx: Tx, seriesId: string): Promise<void> {
   await tx.select({ id: cup.id }).from(cup).where(eq(cup.seriesId, seriesId)).for("update");
 }
 
-export async function startOver(tx: Tx, seriesId: string, snapshotId: string, suffix: string): Promise<void> {
-  const [now] = await tx.select({ milestoneId: snapshot.milestoneId }).from(snapshot).where(eq(snapshot.id, snapshotId));
-  if (!now) return;
+async function underWay(tx: Tx, matchId: string): Promise<boolean> {
+  const [played] = await tx.select({ number: leagueGame.number }).from(leagueGame).where(eq(leagueGame.matchId, matchId)).limit(1);
+  if (played) return true;
+  const [drafted] = await tx
+    .select({ number: gameSide.number })
+    .from(gameSide)
+    .where(and(eq(gameSide.matchId, matchId), or(isNotNull(gameSide.ban), isNotNull(gameSide.picks))))
+    .limit(1);
+  return drafted !== undefined;
+}
+
+export async function standsOn(tx: Tx, snapshotId: string, deleting: boolean): Promise<"underWay" | "played" | null> {
+  const homes = await tx
+    .selectDistinct({ matchId: team.matchId })
+    .from(teamSource)
+    .innerJoin(team, eq(team.id, teamSource.teamId))
+    .where(and(eq(teamSource.snapshotId, snapshotId), isNotNull(team.matchId)));
+  const matchIds = homes.flatMap((row) => (row.matchId ? [row.matchId] : [])).sort();
+  if (matchIds.length === 0) return null;
+  const matches = await tx
+    .select({ id: leagueMatch.id, gamesA: leagueMatch.gamesA })
+    .from(leagueMatch)
+    .where(inArray(leagueMatch.id, matchIds))
+    .orderBy(asc(leagueMatch.id))
+    .for("update");
+  let played = false;
+  for (const match of matches) {
+    if (match.gamesA !== null) played = true;
+    else if (await underWay(tx, match.id)) return "underWay";
+  }
+  return deleting && played ? "played" : null;
+}
+
+type SnapshotMon = Snapshot["pokemon"][number];
+
+function clamp(value: number, low: number, high: number): number {
+  return Math.min(high, Math.max(low, value));
+}
+
+function spread(from: SnapshotMon["evs"], fallback: number, max: number) {
+  const stat = (key: "hp" | "atk" | "def" | "spa" | "spd" | "spe") => clamp(from?.[key] ?? fallback, 0, max);
+  return { hp: stat("hp"), atk: stat("atk"), def: stat("def"), spa: stat("spa"), spd: stat("spd"), spe: stat("spe") };
+}
+
+function freed(slots: TeamSlots, snapshotId: string, pokemon: readonly SnapshotMon[]): TeamSlots {
+  return slots.map((member) => {
+    if (member === null || isFree(member) || member.source !== snapshotId) return member;
+    const mon = pokemon[member.index];
+    if (!mon || mon.species !== member.species) return null;
+    return {
+      free: true as const,
+      species: member.species,
+      item: member.item,
+      ability: member.ability ?? mon.ability,
+      level: clamp(mon.level ?? FREE_LEVEL, 1, MAX_LEVEL),
+      nature: member.nature ?? mon.nature ?? FREE_NATURE,
+      evs: spread(mon.evs, 0, MAX_EV),
+      ivs: spread(mon.ivs, MAX_IV, MAX_IV),
+      moves: member.moves,
+    };
+  });
+}
+
+export async function startOver(tx: Tx, seriesId: string, snapshotId: string, suffix: string, movedTo: string | null): Promise<void> {
+  const [sheet] = await tx.select({ data: snapshot.data }).from(snapshot).where(eq(snapshot.id, snapshotId));
+  if (!sheet) return;
   const [tournament] = await tx
     .select({ id: milestone.id })
     .from(milestone)
@@ -210,33 +278,26 @@ export async function startOver(tx: Tx, seriesId: string, snapshotId: string, su
     .innerJoin(leagueMatch, eq(leagueMatch.id, team.matchId))
     .leftJoin(leagueRound, eq(leagueRound.id, leagueMatch.roundId))
     .where(and(eq(teamSource.snapshotId, snapshotId), isNull(leagueMatch.gamesA)));
-  const matchIds = [...new Set(resting.filter((row) => (row.round ?? tournament?.id) !== now.milestoneId).map((row) => row.matchId))].sort();
-  if (matchIds.length === 0) return;
-  const open = await tx
-    .select({ id: leagueMatch.id })
-    .from(leagueMatch)
-    .where(and(inArray(leagueMatch.id, matchIds), isNull(leagueMatch.gamesA)))
-    .orderBy(asc(leagueMatch.id))
-    .for("update");
-  for (const match of open) {
-    if (await drafting(tx, match.id)) continue;
+  const matchIds = [...new Set(resting.filter((row) => movedTo === null || (row.round ?? tournament?.id) !== movedTo).map((row) => row.matchId))].sort();
+  for (const matchId of matchIds) {
     const held = await tx
       .select({ id: team.id, ownerId: team.ownerId, name: team.name, slots: team.slots, pool: team.pool, freePool: team.freePool })
       .from(team)
       .innerJoin(teamSource, eq(teamSource.teamId, team.id))
-      .where(and(eq(team.matchId, match.id), eq(teamSource.snapshotId, snapshotId)))
+      .where(and(eq(team.matchId, matchId), eq(teamSource.snapshotId, snapshotId)))
       .for("update");
     for (const one of held) {
       if (one.slots.some((member) => member !== null)) {
+        const sources = await sourceIds(one.id, tx);
         await insertTeam(tx, {
           id: crypto.randomUUID(),
           ownerId: one.ownerId,
           name: copyName(one.name, suffix),
           anyPokemon: true,
-          slots: one.slots,
+          slots: movedTo === null ? freed(one.slots, snapshotId, sheet.data.pokemon) : one.slots,
           pool: one.pool,
           freePool: one.freePool,
-          sources: await sourceIds(one.id, tx),
+          sources: movedTo === null ? sources.filter((id) => id !== snapshotId) : sources,
           private: true,
         });
       }

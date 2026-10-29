@@ -4,7 +4,7 @@ import { describePokemon } from "../../shared/describe";
 import { DEFAULT_COSTS, type GameCosts } from "../../shared/games";
 import { fightItems, setasOf } from "../../shared/items";
 import type { Sheet } from "@/teams/schema";
-import { isFree, MAX_IV, MOVE_SLOTS, type FreeMember, type OwnMember, type ShownMember, type ShownSlots, type TeamSource } from "../../shared/team";
+import { FREE_LEVEL, FREE_NATURE, isFree, MAX_IV, MOVE_SLOTS, type FreeMember, type OwnMember, type ShownMember, type ShownSlots, type TeamSource } from "../../shared/team";
 
 export { emptySlots, isFree, lastFilled, spreadShown, MAX_TEAM_SIZE, MOVE_SLOTS, nextTeamName, PICK_SIZE, resized, TEAM_SIZE, TEAM_SIZES } from "../../shared/team";
 
@@ -66,9 +66,9 @@ export function freeCount(slots: Slots): number {
 
 export type FreeSet = Pick<FreeMember, "level" | "nature" | "evs" | "ivs">;
 
-export function freeSet(nature = "serious"): FreeSet {
+export function freeSet(nature = FREE_NATURE): FreeSet {
   return {
-    level: 50,
+    level: FREE_LEVEL,
     nature,
     evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
     ivs: { hp: MAX_IV, atk: MAX_IV, def: MAX_IV, spa: MAX_IV, spd: MAX_IV, spe: MAX_IV },

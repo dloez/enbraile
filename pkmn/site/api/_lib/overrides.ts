@@ -7,7 +7,7 @@ import { body } from "./body.js";
 import { db } from "./db.js";
 import { giveCupTeams } from "./cup.js";
 import { giveRoundTeams } from "./rounds.js";
-import { copySuffix, holdLeague, startOver } from "./teams.js";
+import { copySuffix, holdLeague, standsOn, startOver } from "./teams.js";
 import { dropIfUnused, saveFor } from "./ingest.js";
 import { milestone, save, snapshot } from "./schema.js";
 import { findShown, plays, viewer } from "./series-data.js";
@@ -25,6 +25,8 @@ const t = says({
     count: "A count from 0 to 999",
     noSnapAtMilestone: "No snapshot at this milestone",
     alreadyThere: "The snapshot is already there",
+    underWay: "A league team built on this snapshot is on a match with a game, a ban or a six in",
+    played: "A league team built on this snapshot is on a match with a result",
   },
   es: {
     occupied: (name: string) => `${name} ya tiene una captura; bórrala antes`,
@@ -37,6 +39,8 @@ const t = says({
     count: "Un número de 0 a 999",
     noSnapAtMilestone: "No hay captura en este hito",
     alreadyThere: "La captura ya está ahí",
+    underWay: "Un equipo de liga hecho con esta captura está en un combate que ya tiene una partida, un veto o una elección",
+    played: "Un equipo de liga hecho con esta captura está en un combate con resultado",
   },
 });
 
@@ -158,13 +162,17 @@ overrides.post("/:number/trainers/:player/snapshots/:milestone/move", requireAdm
   if (other) return c.json({ error: occupied }, 409);
   const suffix = copySuffix(c);
   try {
-    await db.transaction(async (tx) => {
+    const refused = await db.transaction(async (tx) => {
       await holdLeague(tx, found.seriesId);
+      const stands = await standsOn(tx, held.id, false);
+      if (stands) return stands;
       await tx.update(snapshot).set({ milestoneId: chosen.id, movedBy: found.adminId, movedAt: new Date() }).where(eq(snapshot.id, held.id));
-      await startOver(tx, found.seriesId, held.id, suffix);
+      await startOver(tx, found.seriesId, held.id, suffix, chosen.id);
       await giveRoundTeams(tx, found.seriesId);
       await giveCupTeams(tx, found.seriesId);
+      return null;
     });
+    if (refused) return c.json({ error: t(c)[refused] }, 409);
   } catch (error) {
     if (taken(error)) return c.json({ error: occupied }, 409);
     throw error;
@@ -177,7 +185,18 @@ overrides.delete("/:number/trainers/:player/snapshots/:milestone", requireAdmin,
   if (found instanceof Response) return found;
   const held = await snapshotAt(found, c.req.param("milestone"));
   if (!held) return c.json({ error: t(c).noSnapAtMilestone }, 404);
-  await db.delete(snapshot).where(eq(snapshot.id, held.id));
+  const suffix = copySuffix(c);
+  const refused = await db.transaction(async (tx) => {
+    await holdLeague(tx, found.seriesId);
+    const stands = await standsOn(tx, held.id, true);
+    if (stands) return stands;
+    await startOver(tx, found.seriesId, held.id, suffix, null);
+    await tx.delete(snapshot).where(eq(snapshot.id, held.id));
+    await giveRoundTeams(tx, found.seriesId);
+    await giveCupTeams(tx, found.seriesId);
+    return null;
+  });
+  if (refused) return c.json({ error: t(c)[refused] }, 409);
   await dropIfUnused(held.fileKey);
   await dropIfUnused(held.rolledKey);
   return c.json({});

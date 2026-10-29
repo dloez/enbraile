@@ -31,6 +31,10 @@ export const EV_TOTAL = 510;
 
 export const MAX_IV = 31;
 
+export const FREE_LEVEL = 50;
+
+export const FREE_NATURE = "serious";
+
 const moves = z.array(id.nullable()).length(MOVE_SLOTS);
 
 const statTable = (max: number) =>
