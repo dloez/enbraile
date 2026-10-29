@@ -90,19 +90,19 @@ A round team is sourced from its player's snapshot at the round's milestone, and
 
 **Touches:** `pkmn/site/api/_lib/rounds.ts`, `pkmn/site/api/_lib/cup.ts`, `pkmn/site/api/_lib/overrides.ts`, `pkmn/site/api/_lib/teams.ts`, `docs/pkmn/site/explanation/site.md`
 
-## What becomes of a round team whose match gets its result before it is locked?
+## A round team still unlocked when its match is decided locks as it stands
 
-An admin can record a round match's games whatever its teams' state: `recordGame` (`api/_lib/match.ts`) checks only the winner and the games' order, and both teams locked gates only a cup game's bans and picks (`started`, same file). Once the match is decided, the team list's waiting line drops it (`GET /api/teams/waiting` keeps only matches without a result, `api/_lib/teams.ts`), but an unlocked round team on it stays "To build" for good: `teamState` (`shared/team.ts`) reads only the lock, so the Teams tab's count (`GET /api/teams/to-build`) and the list's mark keep flagging it, and the lock route still locks it. Its reveal at the result (`revealed()` in `api/_lib/series-data.ts`) shows it while its owner can still change it. A cup game opens only on two locked teams, so only round matches reach this; series 1's round 5 Elfo v Javi does if its result is recorded on the site before Elfo locks. Found by the end-of-run gardener, 2026-10-29.
+An admin can record a round match's games whatever its teams' state: `recordGame` (`api/_lib/match.ts`) checks only the winner and the games' order, and both teams locked gates only a cup game's bans and picks (`started`, same file). Once the match is decided, the team list's waiting line drops it (`GET /api/teams/waiting` keeps only matches without a result, `api/_lib/teams.ts`), but an unlocked round team on it stays "To build" for good: `teamState` (`shared/team.ts`) reads only the lock, so the Teams tab's count (`GET /api/teams/to-build`) and the list's mark keep flagging it, and the lock route still locks it. The owner settled it: such a team is locked as it stands when its match is decided ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). Its reveal at the result (`revealed()` in `api/_lib/series-data.ts`) shows it while its owner can still change it. A cup game opens only on two locked teams, so only round matches reach this; series 1's round 5 Elfo v Javi does if its result is recorded on the site before Elfo locks. Found by the end-of-run gardener, 2026-10-29.
 
 **Do:**
-- [ ] Once answered, the chosen handling in the match module or the team routes, with its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
+- [ ] The match module's move that decides a round match locking each unlocked team on it as it stands, by no one, in the same transaction; a team still missing stays missing.
+- [ ] Its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, an admin records both games of a round match on the local stack while one of its teams is unlocked: the answered behaviour on the match page, the Teams tab's count and the team list.
+- Claude-run: `npm run gate`; through `verify-site`, an admin records both games of a round match on the local stack while one of its teams is unlocked: the team is locked by no one once the match is decided, the match page shows it locked, and the Teams tab's count and the list's mark no longer flag it.
 - Human-run: none.
 - Reuse: `recordGame` and `started` (`api/_lib/match.ts`); `teamState` (`shared/team.ts`); the to-build route (`api/_lib/teams.ts`).
 - Neighbors: a cup game's gate on two locked teams (`started`).
-- Forbidden: settling it without the owner's answer; the Teams tab's count and the list's mark disagreeing.
+- Forbidden: a lock written outside the match module's move; the Teams tab's count and the list's mark disagreeing.
 
 **Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/team.ts`, `pkmn/site/src/pages/league-match.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
-**Needs the author:** when an admin records a round match's result while a player's round team is unlocked or still missing, is the result refused until both teams are locked (as a cup game opens only then), are the teams locked at the result, or do they stay unlocked and stop counting as to build?
