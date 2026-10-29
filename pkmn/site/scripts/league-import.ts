@@ -7,9 +7,9 @@ import { importMatch } from "../api/_lib/match.js";
 import { account, leagueRound, leagueTry, milestone, save, series, seriesPlayer, team, user } from "../api/_lib/schema.js";
 import { insertTeam } from "../api/_lib/teams.js";
 import { giveRoundTeams } from "../api/_lib/rounds.js";
-import { bestTries, FAINTED_PER_GAME, fellProblem, PARTY_SIZE, played, ROUND_TEAM_SIZE, standings, tally } from "../shared/league.js";
+import { bestTries, FAINTED_PER_GAME, fellProblem, PARTY_SIZE, played, standings, tally } from "../shared/league.js";
 import { invite } from "../shared/players.js";
-import { MOVE_SLOTS, type TeamSlots } from "../shared/team.js";
+import type { TeamSlots } from "../shared/team.js";
 import { EVERY_SPECIES, readShowdownTeam } from "../src/teams/showdown.js";
 import { createTestPlayer, usernameTaken } from "./accounts.js";
 import { localOrPreview } from "./target.js";
@@ -138,104 +138,7 @@ async function findLeagueJson(): Promise<URL> {
 
 type Side = "p1" | "p2";
 
-type Seen = { species: string; level: number; abilities: string[]; items: string[]; moves: string[] };
-
-type Battle = { replay: string; url: string | null; at: number; sides: Record<Side, string>; fainted: Record<Side, number>; winner: string; teams: Record<Side, Seen[]> };
-
-function add(list: string[], value: string | undefined) {
-  if (value && !list.includes(value)) list.push(value);
-}
-
-function revealed(lines: readonly string[][]): Record<Side, Seen[]> {
-  const teams: Record<Side, Seen[]> = { p1: [], p2: [] };
-  for (const parts of lines) {
-    const side = parts[2];
-    if (parts[1] !== "poke" || (side !== "p1" && side !== "p2") || !parts[3]) continue;
-    const [species, ...details] = parts[3].split(", ");
-    const level = details.find((detail) => /^L\d+$/.test(detail));
-    teams[side].push({ species: species!, level: level ? Number(level.slice(1)) : 100, abilities: [], items: [], moves: [] });
-  }
-  const named = new Map<string, Seen>();
-  const borrowed = new Set<string>();
-  const traced = new Set<string>();
-  const swapped = new Set<string>();
-  const who = (ident: string | undefined) => {
-    const found = ident?.match(/^(p[12])([a-z]?): (.+)$/);
-    return found ? { position: `${found[1]}${found[2] || "a"}`, key: `${found[1]}: ${found[3]}`, side: found[1] as Side } : null;
-  };
-  const ability = (ident: string | undefined, value: string) => {
-    const one = who(ident);
-    if (one && !borrowed.has(one.position) && !traced.has(one.position)) add(named.get(one.key)?.abilities ?? [], value);
-  };
-  const item = (ident: string | undefined, value: string) => {
-    const one = who(ident);
-    if (one && !swapped.has(one.key)) add(named.get(one.key)?.items ?? [], value);
-  };
-  const move = (ident: string | undefined, value: string) => {
-    const one = who(ident);
-    if (one && !borrowed.has(one.position) && value !== "Struggle") add(named.get(one.key)?.moves ?? [], value);
-  };
-  for (const parts of lines) {
-    const [, kind, main, value] = parts;
-    const tags = parts.slice(3);
-    const from = tags.find((tag) => tag.startsWith("[from]"))?.replace(/^\[from\]\s*/, "");
-    const of = tags.find((tag) => tag.startsWith("[of] "))?.slice(5);
-    if (kind === "switch" || kind === "drag") {
-      const one = who(main);
-      if (!one || !value) continue;
-      const species = value.split(", ")[0]!;
-      if (!named.has(one.key)) {
-        const taken = new Set(named.values());
-        const member = teams[one.side].find((m) => !taken.has(m) && (m.species === species || (m.species.endsWith("-*") && species.startsWith(m.species.slice(0, -1)))));
-        if (member) {
-          member.species = species;
-          named.set(one.key, member);
-        }
-      }
-      borrowed.delete(one.position);
-      traced.delete(one.position);
-      continue;
-    }
-    if (kind === "move" && value) {
-      if (!from || from === "lockedmove") move(main, value);
-      else if (from.startsWith("ability: ")) ability(main, from.slice(9));
-      continue;
-    }
-    if (kind === "-ability" && value) {
-      const one = who(main);
-      if (from === "ability: Trace") {
-        ability(main, "Trace");
-        ability(of, value);
-      } else if (!from) ability(main, value);
-      if (from && one) traced.add(one.position);
-      continue;
-    }
-    if (kind === "-item" && value) {
-      const one = who(main);
-      if (!from || from === "ability: Frisk") item(main, value);
-      else if (one) swapped.add(one.key);
-      if (from?.startsWith("ability: ")) ability(from === "ability: Frisk" ? (of ?? main) : main, from.slice(9));
-      continue;
-    }
-    if (kind === "-enditem" && value) {
-      item(main, value);
-      continue;
-    }
-    if (value === "move: Skill Swap") {
-      for (const swapper of [who(main), who(of)]) if (swapper) traced.add(swapper.position);
-      continue;
-    }
-    if (value?.startsWith("ability: ")) {
-      ability(main, value.slice(9));
-      if (value === "ability: Forewarn" && parts[4]) move(of, parts[4]);
-    } else if (value?.startsWith("item: ")) item(main, value.slice(6));
-    if (from?.startsWith("ability: ")) ability(kind === "-heal" ? main : (of ?? main), from.slice(9));
-    else if (from?.startsWith("item: ")) item(kind === "-heal" ? main : (of ?? main), from.slice(6));
-    const one = who(main);
-    if (kind === "-transform" && one) borrowed.add(one.position);
-  }
-  return teams;
-}
+type Battle = { replay: string; url: string | null; at: number; sides: Record<Side, string>; fainted: Record<Side, number>; winner: string };
 
 function readLog(replay: string, url: string | null, uploaded: number, log: string): Battle | string {
   const lines = log.split("\n").map((line) => line.split("|"));
@@ -253,50 +156,13 @@ function readLog(replay: string, url: string | null, uploaded: number, log: stri
     sides: { p1, p2 },
     fainted: { p1: faints("p1"), p2: faints("p2") },
     winner,
-    teams: revealed(lines),
   };
 }
 
-type Built = { slots: TeamSlots; at: Date; from: "replays" | "paste" };
-
-function replayTeam(label: string, played: readonly { at: number; team: Seen[] }[], reports: string[]): Built | null {
-  const [first] = played;
-  if (!first || first.team.length === 0) return null;
-  const members = first.team.map((one) => ({ ...one, abilities: [...one.abilities], items: [...one.items], moves: [...one.moves] }));
-  for (const { team: later } of played.slice(1)) {
-    for (const one of later) {
-      const same = members.find((member) => member.species === one.species);
-      if (!same) {
-        reports.push(`${label}: ${one.species} is in a later replay but not in the first`);
-        continue;
-      }
-      for (const value of one.abilities) add(same.abilities, value);
-      for (const value of one.items) add(same.items, value);
-      for (const value of one.moves) add(same.moves, value);
-    }
-  }
-  const slots = members.map((member) => {
-    if (member.abilities.length > 1) reports.push(`${label}: ${member.species} shows ${member.abilities.join(" and ")}; it keeps ${member.abilities[0]}`);
-    if (member.items.length > 1) reports.push(`${label}: ${member.species} shows ${member.items.join(" and ")}; it keeps ${member.items[0]}`);
-    if (member.moves.length > MOVE_SLOTS) reports.push(`${label}: ${member.species} shows ${member.moves.join(", ")}; it keeps the first ${MOVE_SLOTS}`);
-    const set = [
-      `${member.species}${member.items[0] ? ` @ ${member.items[0]}` : ""}`,
-      ...(member.abilities[0] ? [`Ability: ${member.abilities[0]}`] : []),
-      `Level: ${member.level}`,
-      ...member.moves.map((one) => `- ${one}`),
-    ].join("\n");
-    const read = readShowdownTeam(set, new Map(), EVERY_SPECIES);
-    if (read.left.length > 0) reports.push(`${label}'s team leaves out ${read.left.join("; ")}`);
-    const slot = read.slots[0] ?? null;
-    return slot && "free" in slot && !member.abilities[0] ? { ...slot, ability: null } : slot;
-  });
-  return { slots: Array.from({ length: Math.max(ROUND_TEAM_SIZE, slots.length) }, (_, at) => slots[at] ?? null), at: new Date(first.at * 1000), from: "replays" };
-}
-
-function pasteTeam(label: string, paste: { text: string; updated: string }, reports: string[]): Built {
+function pasteTeam(label: string, paste: { text: string; updated: string }, reports: string[]): { slots: TeamSlots; at: Date } {
   const read = readShowdownTeam(paste.text, new Map(), EVERY_SPECIES);
   if (read.left.length > 0) reports.push(`${label}'s paste leaves out ${read.left.join("; ")}`);
-  return { slots: read.slots, at: new Date(paste.updated), from: "paste" };
+  return { slots: read.slots, at: new Date(paste.updated) };
 }
 
 async function main() {
@@ -370,7 +236,6 @@ async function main() {
                 faintedB: battle.fainted[sideB],
                 replay: battle.url,
                 at: battle.at,
-                teams: { a: battle.teams[sideA], b: battle.teams[sideB] },
               },
             ];
           });
@@ -398,11 +263,10 @@ async function main() {
         const teamOf = (key: "a" | "b") => {
           const owner = key === "a" ? match.player_a : match.player_b;
           const side = `${label}, ${nameOfPlayer.get(owner)}'s side`;
-          const built = replayTeam(side, read.map((game) => ({ at: game.at, team: game.teams[key] })), reports);
-          if (built) return built;
           const pasteId = key === "a" ? match.team_a_id : match.team_b_id;
           const paste = pasteId ? data.teams.find((one) => one.id === pasteId) : undefined;
           if (pasteId && (!paste || paste.owner_player_id !== owner)) throw new Error(`${side} names team ${pasteId}, which is not one of its player's in the dump`);
+          if (!paste && done) reports.push(`${side} has no matchday paste; it is left without a team`);
           return paste ? pasteTeam(side, paste, reports) : null;
         };
         const teams = (["a", "b"] as const).flatMap((key) => {
@@ -421,7 +285,6 @@ async function main() {
                     matchId: match.id,
                     locked: { at: built.at, by: null },
                   },
-                  from: built.from,
                 },
               ]
             : [];
@@ -548,7 +411,7 @@ async function main() {
     return ours === theirs ? [] : [`${app.player_name}: ${ours} here, ${theirs} in the app`];
   });
   console.log(
-    `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${games.length} games from their replays), ${teams.length} match teams (${teams.filter((one) => one.from === "replays").length} from their replays, ${teams.filter((one) => one.from === "paste").length} from the matchday paste) and ${tried.length} Pokémon League tries, each with its team, into ${target.name}${preview ? " on the preview" : production ? " through the production map" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
+    `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${games.length} games from their replays), ${teams.length} match teams from their matchday pastes and ${tried.length} Pokémon League tries, each with its team, into ${target.name}${preview ? " on the preview" : production ? " through the production map" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
   );
   console.log(`Hatched eggs, from the app until a later save: ${hatched.filter((one) => fromApp.has(one.player)).map((one) => `${one.name} ${one.count}`).join(", ") || "none"}`);
   if (kept.length > 0) console.log(`Hatched eggs an admin set, kept: ${kept.map((one) => one.name).join(", ")}`);
