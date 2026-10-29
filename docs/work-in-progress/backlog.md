@@ -35,24 +35,6 @@ On the series page, the head of the Trainers' milestone track writes each milest
 
 **Touches:** `pkmn/site/src/pages/series.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
 
-### pkmn/site: the cup's "Who enters" reads each player's story from their saves
-
-Before the cup starts, the Cup view's "Who enters" (`src/league/cup.tsx`, after `league-cup-start.dc.html`) labels every ticked player "Finished the story" ("Terminó la historia") from the checkbox alone, so on production a player with no save reads as having finished. The board's sample rows were all finishers, so it never drew another state. The owner settled it: "Finished the story" only for a player with a save at the milestone after the series' `league` mark or later (series 1's Hall of Fame and Tournament), and "Still playing" ("Sigue jugando"), dimmed, for anyone else; every player stays ticked to begin with, as now, and an unticked one still reads "Stays out" (owner, 2026-10-29). A series without the `league` mark counts from its `tournament` milestone.
-
-**Do:**
-- [ ] The league read giving the admin, for each player, whether they have finished the story by that rule, worked out on the server.
-- [ ] "Who enters" showing "Finished the story" or "Still playing" from it, in English and Spanish, the ticks unchanged.
-- [ ] The Cup view's description and a dated decision in [The pkmn Site](../pkmn/site/explanation/site.md#decisions).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, in the browser: on the seed's Series 1 with Red at Hall of Fame and Blue without a save, signed in as `admin`, "Who enters" reads Red "Finished the story" and Blue "Still playing", both ticked, and "Sigue jugando" in Spanish; an unticked player reads "Stays out".
-- Human-run: the owner opens series 1's Cup view on production.
-- Reuse: `leagueOf` (`api/_lib/league.ts`); the `league` mark's step (`shared/league.ts`).
-- Neighbors: the start of the cup, unchanged.
-- Forbidden: working out the story in the browser from data the reader may not see; changing who is ticked.
-
-**Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/shared/league.ts`, `pkmn/site/src/league/cup.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
-
 ### pkmn/site: the team page writes its pick of six as a digit
 
 The team page's member cards say "Leave out of the six" and "Put in the six" ("Dejar fuera de los seis", "Meter en los seis"; `src/teams/components/member-card.tsx`), as the frozen `team.dc.html` and `team-phone.dc.html` spell it, while the same page's switch and count read `PICK_SIZE` (`shared/team.ts`) as a digit. The owner settled it on 2026-10-29: the digit, from `PICK_SIZE`, as the league's labels write theirs (The pkmn Site → Decisions, "The league's labels write its rules' numbers as digits too").

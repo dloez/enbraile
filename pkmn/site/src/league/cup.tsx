@@ -36,6 +36,7 @@ const t = messages({
     enters: (name: string) => `${name} enters the cup`,
     pts: (n: number) => `${n} ${n === 1 ? "pt" : "pts"}`,
     finished: "Finished the story",
+    playing: "Still playing",
     out: "Stays out",
     count: (n: number, ready: boolean) => (ready ? `${n} enter · first round` : n > CUP_MAX ? `${n} enter · ${CUP_MAX} at most` : `${n} enter · no bracket yet`),
     firstRound: "The cup's first round",
@@ -71,6 +72,7 @@ const t = messages({
     enters: (name: string) => `${name} entra en la copa`,
     pts: (n: number) => `${n} ${n === 1 ? "pt" : "pts"}`,
     finished: "Terminó la historia",
+    playing: "Sigue jugando",
     out: "Se queda fuera",
     count: (n: number, ready: boolean) => (ready ? `Entran ${n} · primera ronda` : n > CUP_MAX ? `Entran ${n} · ${CUP_MAX} como máximo` : `Entran ${n} · aún sin cuadro`),
     firstRound: "Primera ronda de la copa",
@@ -524,6 +526,9 @@ function CupStart({ league, nameOf, onChange }: Named & { onChange: (league: Lea
             const name = nameOf(row.player);
             const on = !out.includes(row.player);
             const seed = entrants.indexOf(row.player) + 1;
+            const done = league.finished?.includes(row.player) ?? false;
+            const status = on ? (done ? t.finished : t.playing) : t.out;
+            const tone = on ? (done ? "text-green" : "text-muted-foreground") : "text-coral";
             return (
               <label
                 key={row.player}
@@ -547,11 +552,11 @@ function CupStart({ league, nameOf, onChange }: Named & { onChange: (league: Lea
                   <PlayerBadge name={name} colour={playerColour(name)} size="sm" />
                   <span className="flex min-w-0 flex-col leading-[1.05]">
                     <span className="truncate font-heading text-[1.75rem]">{name}</span>
-                    <span className={cn("font-heading text-lg sm:hidden", on ? "text-green" : "text-coral")}>{on ? t.finished : t.out}</span>
+                    <span className={cn("font-heading text-lg sm:hidden", tone)}>{status}</span>
                   </span>
                 </span>
                 <span className={cn("text-center font-heading text-[1.625rem] text-subtle", !on && "opacity-45")}>{t.pts(row.points)}</span>
-                <span className={cn("hidden font-heading text-xl sm:block", on ? "text-green" : "text-coral")}>{on ? t.finished : t.out}</span>
+                <span className={cn("hidden font-heading text-xl sm:block", tone)}>{status}</span>
               </label>
             );
           })}

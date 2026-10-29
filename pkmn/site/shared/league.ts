@@ -141,6 +141,12 @@ export function leagueSeen(reader: string, saves: SeriesSaves): boolean {
   return league <= upTo;
 }
 
+export function storyMilestones(milestones: readonly { id: string; mark: MilestoneMark }[]): string[] {
+  const league = milestones.findIndex((at) => at.mark === "league");
+  const from = league >= 0 ? league + 1 : milestones.findLastIndex((at) => at.mark === "tournament");
+  return from < 0 ? [] : milestones.slice(from).map((at) => at.id);
+}
+
 export const CUP_KINDS = ["first", "group", "bracket"] as const;
 
 export const cupKind = z.enum(CUP_KINDS);
@@ -225,6 +231,7 @@ export const leaguePage = z.object({
   tries: z.array(leagueTry),
   hatched: z.array(hatchedEggs),
   cup: leagueCup.nullable(),
+  finished: z.array(z.string()).nullable(),
   enrolled: z.boolean(),
   admin: z.boolean(),
 });

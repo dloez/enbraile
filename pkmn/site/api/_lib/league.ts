@@ -41,6 +41,7 @@ import {
   PARTY_SIZE,
   pickInput,
   standings,
+  storyMilestones,
   tryChange,
   type TryInput,
   tryInput,
@@ -239,6 +240,18 @@ async function cupOf(seriesId: string): Promise<LeagueCup | null> {
   };
 }
 
+async function finishedOf(seriesId: string, players: string[]): Promise<string[]> {
+  const milestones = await db.select({ id: milestone.id, mark: milestone.mark }).from(milestone).where(eq(milestone.seriesId, seriesId)).orderBy(asc(milestone.position));
+  const story = storyMilestones(milestones);
+  if (story.length === 0 || players.length === 0) return [];
+  const done = await db
+    .selectDistinct({ player: save.userId })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .where(and(eq(save.seriesId, seriesId), inArray(save.userId, players), inArray(snapshot.milestoneId, story)));
+  return players.filter((player) => done.some((row) => row.player === player));
+}
+
 export async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
   const roundMilestones = await db
     .select({ id: milestone.id, name: milestone.name })
@@ -343,6 +356,7 @@ export async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePa
     tries: listed,
     hatched: await hatchedOf(row.id, players.map((p) => p.id)),
     cup: await cupOf(row.id),
+    finished: reader.admin ? await finishedOf(row.id, players.map((p) => p.id)) : null,
     enrolled: enrolled.some((p) => p.id === reader.id),
     admin: !!reader.admin,
   };
