@@ -135,7 +135,30 @@ Series 1's rounds, results, matchday teams, Pokémon League tries and hatched eg
 npm run league-import
 ```
 
-It makes the accounts Vicky, Dloez, Javi, Inop, Tole and Elfo as allowed test players where they are missing, adds them to series 1, replaces series 1's rounds, matches and Pokémon League tries with the dump's, makes a game of each replay from its Showdown log in the dump, a locked Any Pokémon team for each side of each match from what its replays show (its matchday paste where it has no replay; Elfo, with no team for the unplayed Elfo v Javi, gets his round team once his Gym 7 snapshot exists), and an Any Pokémon team of each try's paste, writes each player's hatched count from the app as an override that a snapshot they upload afterwards takes over, leaving alone a count an admin set, and prints what it wrote, the hatched counts and whose admin-set count it kept, the standings, any player whose points, wins, losses or games differ from the app's, anything a try's paste or a match team leaves out (nothing in the dump's: every try keeps its randomized abilities and moves), and any replay or match whose replays disagree with the app (today only round 3's Elfo v Dloez, whose fainted read 17–11 from its replays against the app's 0–0). Running it again writes the same rows, so it is also how the preview's matches get their games after the league's games migration drops the old replay links. For the preview, run it with the preview's `DATABASE_URL` (the Neon `dev` branch), `S3_*` variables and `LEAGUE_TARGET=preview`; it refuses any other database or store off the local stack, so it never reaches production. Each imported player signs in on the local stack or the preview through the test sign-in, `/api/auth/dev/sign-in?username=<name>` with `vicky`, `dloez`, `javi`, `inop`, `tole` or `elfo`.
+On the local stack or the preview, it makes the accounts Vicky, Dloez, Javi, Inop, Tole and Elfo as allowed test players where they are missing, adds them to series 1, replaces series 1's rounds, matches and Pokémon League tries with the dump's, makes a game of each replay from its Showdown log in the dump, a locked Any Pokémon team for each side of each match from what its replays show (its matchday paste where it has no replay; Elfo, with no team for the unplayed Elfo v Javi, gets his round team once his Gym 7 snapshot exists), and an Any Pokémon team of each try's paste, writes each player's hatched count from the app as an override that a snapshot they upload afterwards takes over, leaving alone a count an admin set, and prints what it wrote, the hatched counts and whose admin-set count it kept, the standings, any player whose points, wins, losses or games differ from the app's, anything a try's paste or a match team leaves out (nothing in the dump's: every try keeps its randomized abilities and moves), and any replay or match whose replays disagree with the app (today only round 3's Elfo v Dloez, whose fainted read 17–11 from its replays against the app's 0–0). Running it again writes the same rows, so it is also how the preview's matches get their games after the league's games migration drops the old replay links. For the preview, run it with the preview's `DATABASE_URL` (the Neon `dev` branch), `S3_*` variables and `LEAGUE_TARGET=preview`; it refuses any other database or store off the local stack, unless `LEAGUE_TARGET` is `production`, its production mode below. Each imported player signs in on the local stack or the preview through the test sign-in, `/api/auth/dev/sign-in?username=<name>` with `vicky`, `dloez`, `javi`, `inop`, `tole` or `elfo`.
+
+For production, the import runs once `league` has merged into `main` and that deploy has migrated the production branch, and again when the owner says the app holds Elfo v Javi. It makes no account there: it maps the six to their own Discord accounts.
+
+1. Write `pkmn/site/saves/league-users.json` (gitignored) with each app player's Discord user ID, the one an admin invites by (Discord's Copy User ID, with Developer Mode on):
+
+   ```json
+   {
+     "Vicky": "<Discord user ID>",
+     "Dloez": "<Discord user ID>",
+     "Javi": "<Discord user ID>",
+     "Inop": "<Discord user ID>",
+     "Tole": "<Discord user ID>",
+     "Elfo": "<Discord user ID>"
+   }
+   ```
+
+2. From `pkmn/site/`, with the production branch's direct connection string (Neon's `main`, the one without `-pooler`) and `LEAGUE_TARGET=production` set in the shell:
+
+   ```sh
+   DATABASE_URL='<production direct connection string>' LEAGUE_TARGET=production npm run league-import
+   ```
+
+It prints what the preview's run prints, the import "through the production map". It stops before writing anything, naming the player, when the map leaves one out or no account has their Discord user ID: invite them at `/admin/players` with that ID, or fix the map, and run it again. The import writes no file to the bucket and makes no session, so the `S3_*` variables and `BETTER_AUTH_SECRET`, which the script needs set to start, can stay the local ones from `.env.local`. Then check series 1's league against the app (rounds, results, replays, standings, Pokémon League tries, eggs and every matchday team) before retiring the Trainer League app.
 
 ### Inspect deployments and the database from the shell
 

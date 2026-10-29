@@ -4,16 +4,19 @@ import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import * as z from "zod";
 import { db, pool } from "../api/_lib/db.js";
 import { importMatch } from "../api/_lib/match.js";
-import { leagueRound, leagueTry, milestone, save, series, seriesPlayer, team, user } from "../api/_lib/schema.js";
+import { account, leagueRound, leagueTry, milestone, save, series, seriesPlayer, team, user } from "../api/_lib/schema.js";
 import { insertTeam } from "../api/_lib/teams.js";
 import { giveRoundTeams } from "../api/_lib/rounds.js";
 import { bestTries, FAINTED_PER_GAME, fellProblem, PARTY_SIZE, played, ROUND_TEAM_SIZE, standings, tally } from "../shared/league.js";
+import { invite } from "../shared/players.js";
 import { MOVE_SLOTS, type TeamSlots } from "../shared/team.js";
 import { EVERY_SPECIES, readShowdownTeam } from "../src/teams/showdown.js";
 import { createTestPlayer, usernameTaken } from "./accounts.js";
 import { localOrPreview } from "./target.js";
 
 const dump = new URL("../saves/league-export/", import.meta.url);
+
+const productionMap = new URL("../saves/league-users.json", import.meta.url);
 
 const seriesNumber = 1;
 
@@ -25,6 +28,49 @@ const userMap: Record<string, string> = {
   Tole: "tole",
   Elfo: "elfo",
 };
+
+const discordUsers = z.record(z.string(), invite.shape.discordId);
+
+type Player = { id: string; name: string };
+
+async function testAccounts(players: readonly Player[]): Promise<Map<string, string>> {
+  for (const player of players) {
+    const username = userMap[player.name];
+    if (!username) throw new Error(`The user map has no site account for ${player.name}`);
+    if (await usernameTaken(username)) continue;
+    if (username !== player.name.toLowerCase()) throw new Error(`No site account ${username} for ${player.name}`);
+    await createTestPlayer(player.name, true);
+  }
+  const accounts = await db.select({ id: user.id, username: user.username }).from(user).where(inArray(user.username, Object.values(userMap)));
+  return new Map(
+    players.map((player) => {
+      const found = accounts.find((a) => a.username === userMap[player.name]);
+      if (!found) throw new Error(`No site account ${userMap[player.name]} for ${player.name}`);
+      return [player.id, found.id];
+    }),
+  );
+}
+
+async function mappedAccounts(players: readonly Player[]): Promise<Map<string, string>> {
+  const map = discordUsers.parse(JSON.parse(await readFile(productionMap, "utf8")));
+  const discordIds = players.map((player) => {
+    const discordId = map[player.name];
+    if (!discordId) throw new Error(`The production map ${productionMap.pathname} has no Discord user for ${player.name}`);
+    return discordId;
+  });
+  if (new Set(discordIds).size < discordIds.length) throw new Error(`The production map gives two players the same Discord user`);
+  const found = await db
+    .select({ userId: account.userId, discordId: account.accountId })
+    .from(account)
+    .where(and(eq(account.providerId, "discord"), inArray(account.accountId, discordIds)));
+  return new Map(
+    players.map((player, at) => {
+      const owner = found.find((one) => one.discordId === discordIds[at]);
+      if (!owner) throw new Error(`No site account has the Discord user ${discordIds[at]} for ${player.name}; invite them at /admin/players and run the import again`);
+      return [player.id, owner.userId];
+    }),
+  );
+}
 
 const showdownNames: Record<string, string> = {
   Vicky: "Vicky182",
@@ -254,7 +300,8 @@ function pasteTeam(label: string, paste: { text: string; updated: string }, repo
 }
 
 async function main() {
-  const preview = localOrPreview("LEAGUE_TARGET", "league import");
+  const production = process.env.LEAGUE_TARGET === "production";
+  const preview = !production && localOrPreview("LEAGUE_TARGET", "league import");
   const source = await findLeagueJson();
   const data = exported.parse(JSON.parse(await readFile(source, "utf8")));
   const playerOfShowdown = new Map(
@@ -265,21 +312,7 @@ async function main() {
     }),
   );
 
-  for (const player of data.players) {
-    const username = userMap[player.name];
-    if (!username) throw new Error(`The user map has no site account for ${player.name}`);
-    if (await usernameTaken(username)) continue;
-    if (username !== player.name.toLowerCase()) throw new Error(`No site account ${username} for ${player.name}`);
-    await createTestPlayer(player.name, true);
-  }
-  const accounts = await db.select({ id: user.id, username: user.username }).from(user).where(inArray(user.username, Object.values(userMap)));
-  const siteId = new Map(
-    data.players.map((player) => {
-      const account = accounts.find((a) => a.username === userMap[player.name]);
-      if (!account) throw new Error(`No site account ${userMap[player.name]} for ${player.name}`);
-      return [player.id, account.id];
-    }),
-  );
+  const siteId = production ? await mappedAccounts(data.players) : await testAccounts(data.players);
 
   const [target] = await db.select({ id: series.id, name: series.name, pool: series.pool }).from(series).where(eq(series.number, seriesNumber));
   if (!target) throw new Error(`No series ${seriesNumber}`);
@@ -515,7 +548,7 @@ async function main() {
     return ours === theirs ? [] : [`${app.player_name}: ${ours} here, ${theirs} in the app`];
   });
   console.log(
-    `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${games.length} games from their replays), ${teams.length} match teams (${teams.filter((one) => one.from === "replays").length} from their replays, ${teams.filter((one) => one.from === "paste").length} from the matchday paste) and ${tried.length} Pokémon League tries, each with its team, into ${target.name}${preview ? " on the preview" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
+    `Imported ${rows.length} rounds and ${matches.length} matches (${matches.filter((m) => m.gamesA !== null).length} played, ${games.length} games from their replays), ${teams.length} match teams (${teams.filter((one) => one.from === "replays").length} from their replays, ${teams.filter((one) => one.from === "paste").length} from the matchday paste) and ${tried.length} Pokémon League tries, each with its team, into ${target.name}${preview ? " on the preview" : production ? " through the production map" : ""}, with ${[...nameOf.values()].join(", ")} as its players.`,
   );
   console.log(`Hatched eggs, from the app until a later save: ${hatched.filter((one) => fromApp.has(one.player)).map((one) => `${one.name} ${one.count}`).join(", ") || "none"}`);
   if (kept.length > 0) console.log(`Hatched eggs an admin set, kept: ${kept.map((one) => one.name).join(", ")}`);
