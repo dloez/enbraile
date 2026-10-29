@@ -42,7 +42,7 @@ export function LeagueFrame({ wide = false }: { wide?: boolean }) {
 
 export function MatchFrame() {
   return (
-    <main className={cn(listPage, "gap-4 pt-4 pb-8 sm:gap-4.5 sm:pt-4.5 sm:pb-8")}>
+    <main className={cn(toolPage, "gap-4 pt-4 pb-8 sm:gap-4.5 sm:pt-4.5 sm:pb-8")}>
       <Placeholder className="h-6 w-56 rounded-md" />
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6">
         <Placeholder className="h-16 w-40 rounded-xl" />

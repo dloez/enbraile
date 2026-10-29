@@ -174,7 +174,7 @@ No shadows but the boards' two: the quiet button's inset bottom edge (`shadow-[i
   | Class | Width | Page kind |
   |-------|-------|-----------|
   | `listPage` | `max-w-344` (86rem) | A page listing links or a form: the admin pages |
-  | `toolPage` | the full width, `px-12` from `2xl` | A tool, a series or a PC page: the team list and the team page, `/series`, the player's profile, the player's series page, the PC page, the league page's Rounds view |
+  | `toolPage` | the full width, `px-12` from `2xl` | A tool, a series or a PC page: the team list and the team page, `/series`, the player's profile, the player's series page, the PC page, the league page's Rounds view, the match page |
   | `readPage` | `max-w-344` (86rem) | A page read more than worked in: `/series/<n>` (its scene header runs the full width, its sections on this column) |
   | `messageWidth` | `max-w-180` (45rem) | A single message or form inside a page: drop zone, refusal, storage error |
 

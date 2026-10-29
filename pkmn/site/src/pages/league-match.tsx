@@ -1,6 +1,6 @@
 import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { listPage } from "@/components/page";
+import { listPage, toolPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { MatchFrame } from "@/components/page-frames";
 import { Button } from "@/components/ui/button";
@@ -352,7 +352,7 @@ export function LeagueMatchPage() {
   const teamOrder = (side: SideKey) => (acting === side ? "order-2" : "order-4");
 
   return (
-    <main className={cn(listPage, "gap-4 pt-4 pb-8 sm:gap-4.5 sm:pt-4.5 sm:pb-8")}>
+    <main className={cn(toolPage, "gap-4 pt-4 pb-8 sm:gap-4.5 sm:pt-4.5 sm:pb-8")}>
       <nav aria-label={t.breadcrumb} className="flex flex-wrap items-center gap-2 font-heading text-lg text-muted-foreground sm:gap-2.5 sm:text-[1.375rem]">
         <Link to="/series/$number" params={{ number: String(match.number) }} className="text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50">
           {t.series(match.number)}
@@ -381,7 +381,7 @@ export function LeagueMatchPage() {
         <Side side={match.b} you={match.b.id === me} end />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:grid-rows-[auto_1fr] lg:gap-x-5 lg:gap-y-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:grid-rows-[auto_1fr] lg:gap-x-5 lg:gap-y-3 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_minmax(0,1fr)]">
         <section aria-label={t.games} className="order-1 lg:col-start-2 lg:row-start-1">
           <GameSlots match={match} decided={decided} phase={phase} editing={editing} onEdit={setEditing} nameOf={nameOf} />
         </section>
@@ -464,11 +464,11 @@ function TeamColumn({
   className?: string;
 }) {
   return (
-    <section aria-label={t.team(name)} className={cn("flex flex-col gap-2", className)}>
+    <section aria-label={t.team(name)} className={cn("@container flex flex-col gap-2", className)}>
       <h2 className="m-0 px-0.5 font-heading text-[1.625rem] leading-none font-normal lg:sr-only">{t.team(name)}</h2>
       {team.state === "shown" ? (
         <>
-          <ol aria-label={team.name} className="m-0 grid list-none grid-cols-2 gap-2 p-0">
+          <ol aria-label={team.name} className="m-0 grid list-none grid-cols-2 gap-2 p-0 @min-[54rem]:grid-cols-3">
             {team.members.map((member, at) => (
               <li key={at} className="flex min-w-0">
                 {member ? (
@@ -554,13 +554,13 @@ function MemberTile({ member, mark }: { member: MatchMember; mark?: Mark }) {
         </span>
       )}
       {member.sprite ? (
-        <img src={member.sprite} alt="" className={cn("size-14 flex-none [image-rendering:pixelated] sm:size-19", tone === "banned" && "grayscale")} />
+        <img src={member.sprite} alt="" className={cn("size-14 flex-none [image-rendering:pixelated] sm:size-19 @min-[54rem]:size-32", tone === "banned" && "grayscale")} />
       ) : (
-        <span aria-hidden="true" className="size-14 flex-none sm:size-19" />
+        <span aria-hidden="true" className="size-14 flex-none sm:size-19 @min-[54rem]:size-32" />
       )}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.75">
-        <span className="truncate font-heading text-2xl leading-none">{member.nickname ?? member.species}</span>
-        <span className="truncate text-[0.8125rem] font-bold text-muted-foreground">{[member.nickname ? member.species : null, item].filter(Boolean).join(" · ")}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.75 @min-[54rem]:w-full @min-[54rem]:flex-none @min-[54rem]:items-center @min-[54rem]:gap-1.5">
+        <span className="max-w-full truncate font-heading text-2xl leading-none @min-[54rem]:text-[1.75rem]">{member.nickname ?? member.species}</span>
+        <span className="max-w-full truncate text-[0.8125rem] font-bold text-muted-foreground @min-[54rem]:text-sm">{[member.nickname ? member.species : null, item].filter(Boolean).join(" · ")}</span>
         <span className="flex flex-wrap gap-1">
           {member.types.map((type) => (
             <TypeTag key={type} type={type} className="px-1.5 text-[0.9375rem] leading-[19px]" />
@@ -572,7 +572,7 @@ function MemberTile({ member, mark }: { member: MatchMember; mark?: Mark }) {
       )}
     </>
   );
-  const frame = cn("relative flex min-h-22 min-w-0 flex-1 items-center gap-2 rounded-[14px] border-3 py-1.5 pr-2.5 pl-1 text-left", TONES[tone]);
+  const frame = cn("relative flex min-h-22 min-w-0 flex-1 items-center gap-2 rounded-[14px] border-3 py-1.5 pr-2.5 pl-1 text-left @min-[54rem]:flex-col @min-[54rem]:justify-start @min-[54rem]:gap-1 @min-[54rem]:px-3 @min-[54rem]:pt-3 @min-[54rem]:pb-4 @min-[54rem]:text-center", TONES[tone]);
   if (!mark?.onClick) return <span className={frame}>{body}</span>;
   return (
     <button
