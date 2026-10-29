@@ -34,7 +34,7 @@ import {
 
 const t = messages({
   en: {
-    marks: { none: "Checkpoint", round: "Round", tournament: "Tournament" },
+    marks: { none: "Checkpoint", round: "Round", league: "League", tournament: "Tournament" },
     ingestion: { manual: "Manual", automatic: "Automatic" },
     ingestionNotes: { manual: "Players upload their own saves from the series page.", automatic: "Saves are read in without an upload." },
     failed: "Something went wrong",
@@ -90,7 +90,7 @@ const t = messages({
     rulesLanguage: "Rules language",
   },
   es: {
-    marks: { none: "Control", round: "Ronda", tournament: "Torneo" },
+    marks: { none: "Control", round: "Ronda", league: "Liga", tournament: "Torneo" },
     ingestion: { manual: "Manual", automatic: "Automática" },
     ingestionNotes: { manual: "Los jugadores suben sus partidas desde la página de la serie.", automatic: "Las partidas se leen sin subirlas." },
     failed: "Algo ha fallado",
@@ -149,7 +149,7 @@ const t = messages({
 
 const MARK_NAMES: Record<MilestoneMark, string> = t.marks;
 
-const MARK_ON: Record<MilestoneMark, string> = { none: "bg-cell text-white", round: "bg-round text-white", tournament: "bg-yellow text-ink" };
+const MARK_ON: Record<MilestoneMark, string> = { none: "bg-cell text-white", round: "bg-round text-white", league: "bg-try text-ink", tournament: "bg-yellow text-ink" };
 
 const INGESTION_NAMES: Record<SeriesInput["ingestion"], string> = t.ingestion;
 
@@ -574,6 +574,8 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
   const heads = milestones.map((m) => ({ ...m, round: m.mark === "round" ? ++round : 0 }));
   const columns = `repeat(${Math.max(milestones.length, 1)}, minmax(0, 1fr))`;
   const set = (index: number, patch: Partial<Draft["milestones"][number]>) => onChange(milestones.map((m, i) => (i === index ? { ...m, ...patch } : m)));
+  const pick = (index: number, mark: MilestoneMark) =>
+    onChange(milestones.map((m, i) => (i === index ? { ...m, mark } : mark === "league" && m.mark === "league" ? { ...m, mark: "none" } : m)));
   const move = (index: number, by: number) => {
     const list = [...milestones];
     const [taken] = list.splice(index, 1);
@@ -647,7 +649,7 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
             <div
               role="radiogroup"
               aria-label={t.milestoneKind(index + 1)}
-              className="grid flex-none grid-cols-3 gap-0.75 rounded-[10px] border-2 bg-ink p-0.75 sm:flex"
+              className="grid flex-none grid-cols-2 gap-0.75 rounded-[10px] border-2 bg-ink p-0.75 sm:flex"
             >
               {MILESTONE_MARKS.map((mark) => (
                 <button
@@ -656,7 +658,7 @@ function Milestones({ milestones, locked, onChange }: { milestones: Draft["miles
                   role="radio"
                   aria-checked={m.mark === mark}
                   disabled={locked}
-                  onClick={() => set(index, { mark })}
+                  onClick={() => pick(index, mark)}
                   className={cn(
                     "min-h-8.5 cursor-pointer rounded-[7px] px-3 font-heading text-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default sm:min-h-8 sm:text-[1.1875rem]",
                     m.mark === mark ? MARK_ON[mark] : "text-muted-foreground enabled:hover:bg-card enabled:hover:text-white",

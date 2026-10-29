@@ -88,16 +88,18 @@ export type SeriesSaves = {
   rounds: readonly SavedRound[];
 };
 
-function reach(reader: string, saves: SeriesSaves): { rounds: Map<string, number>; last: number; upTo: number } {
+function reach(reader: string, saves: SeriesSaves): { rounds: Map<string, number>; league: number; upTo: number } {
   const rounds = new Map<string, number>();
-  let last = 0;
+  let step = 0;
+  let league: number | undefined;
   for (const at of saves.milestones) {
-    if (at.mark === "round") last += 1;
-    rounds.set(at.id, last);
+    if (at.mark === "round" || at.mark === "league") step += 1;
+    if (at.mark === "league") league ??= step;
+    rounds.set(at.id, step);
   }
   const reached = (player: string) => Math.max(0, ...(saves.taken.get(player) ?? []).map((id) => rounds.get(id) ?? 0));
   const upTo = saves.taken.has(reader) ? reached(reader) : Math.min(...[...saves.taken.keys()].map(reached));
-  return { rounds, last, upTo };
+  return { rounds, league: league ?? step, upTo };
 }
 
 function roundHolds(reader: string, round: SavedRound, order: ReadonlyMap<string, number>): ((owner: string, milestoneId: string) => boolean) | undefined {
@@ -124,8 +126,8 @@ export function savesSeen(reader: string, saves: SeriesSaves): (owner: string, m
 }
 
 export function leagueSeen(reader: string, saves: SeriesSaves): boolean {
-  const { last, upTo } = reach(reader, saves);
-  return last <= upTo;
+  const { league, upTo } = reach(reader, saves);
+  return league <= upTo;
 }
 
 export const CUP_KINDS = ["first", "group", "bracket"] as const;

@@ -45,13 +45,14 @@ const seedSeries = {
     ["Gym 6", "none"],
     ["Gym 7", "round"],
     ["Gym 8", "none"],
-    ["Post-League", "none"],
+    ["Victory Road", "league"],
+    ["Hall of Fame", "none"],
     ["Tournament", "tournament"],
   ] satisfies [string, MilestoneMark][],
 };
 const finishedSeries = { number: 2, name: "Series 2", players: ["Red", "Blue"], milestone: "Tournament", extraPlayTime: 7200 };
 
-const seedSnapshot = { player: "Red", saves: new URL("../saves/", import.meta.url), fallback: "Post-League" };
+const seedSnapshot = { player: "Red", saves: new URL("../saves/", import.meta.url), fallback: "Hall of Fame" };
 
 const seedTeam = { name: "Seed team", members: 3 };
 
@@ -214,8 +215,12 @@ async function seedTheSnapshot(): Promise<string | null> {
   const fileName = zips[0];
   const zip = await readFile(new URL(encodeURIComponent(fileName), seedSnapshot.saves));
   const [slot] = saveSlots(zip);
-  const milestones = await db.select({ id: milestone.id, name: milestone.name }).from(milestone).where(eq(milestone.seriesId, row.id)).orderBy(asc(milestone.position));
-  const name = suggestMilestone(milestones.map((m) => m.name), slot) ?? seedSnapshot.fallback;
+  const milestones = await db
+    .select({ id: milestone.id, name: milestone.name, mark: milestone.mark })
+    .from(milestone)
+    .where(eq(milestone.seriesId, row.id))
+    .orderBy(asc(milestone.position));
+  const name = suggestMilestone(milestones, slot) ?? seedSnapshot.fallback;
   const chosen = milestones.find((m) => m.name === name);
   if (!chosen) throw new Error(`${seedSeries.name} has no milestone ${name}`);
   const key = `${savePrefix(row.id, player.id)}${crypto.randomUUID()}.zip`;

@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { uploadDone } from "./games.js";
+import type { MilestoneMark } from "./series.js";
 import { exportReport } from "./snapshot.js";
 
 export const largestSaveZip = 100 * 1024 * 1024;
@@ -55,14 +56,20 @@ export const savedSnapshot = z.object({
   missing: exportReport.nullable(),
 });
 
-export function suggestMilestone(milestones: readonly string[], progress: { badges: number | null; hallOfFame: number | null }): string | null {
+export function suggestMilestone(
+  milestones: readonly { name: string; mark: MilestoneMark }[],
+  progress: { badges: number | null; hallOfFame: number | null },
+): string | null {
   if (progress.hallOfFame && progress.hallOfFame > 0) {
-    const league = milestones.find((name) => /league/i.test(name));
-    if (league) return league;
+    const door = milestones.findIndex((m) => m.mark === "league");
+    const after = door === -1 ? undefined : milestones[door + 1];
+    if (after) return after.name;
+    const league = milestones.find((m) => /league/i.test(m.name));
+    if (league) return league.name;
   }
   if (progress.badges && progress.badges > 0) {
-    const gym = milestones.find((name) => name.toLowerCase() === `gym ${progress.badges}`);
-    if (gym) return gym;
+    const gym = milestones.find((m) => m.name.toLowerCase() === `gym ${progress.badges}`);
+    if (gym) return gym.name;
   }
   return null;
 }

@@ -218,6 +218,13 @@
       "when": 1793304261889,
       "tag": "0030_team_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793305413290,
+      "tag": "0031_milestone_league",
+      "breakpoints": true
     }
   ]
 }

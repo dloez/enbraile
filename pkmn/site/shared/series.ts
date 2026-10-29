@@ -23,7 +23,7 @@ export const INGESTION_MODES = ["manual", "automatic"] as const;
 
 export const SERIES_STATES = ["draft", "running", "finished"] as const;
 
-export const MILESTONE_MARKS = ["none", "round", "tournament"] as const;
+export const MILESTONE_MARKS = ["none", "round", "league", "tournament"] as const;
 
 export const scene = z.enum(SCENES);
 

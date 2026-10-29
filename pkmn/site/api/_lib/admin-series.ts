@@ -19,6 +19,7 @@ const t = says({
     draftEdited: "Only a draft is edited in full",
     fillAll: "Fill in every field",
     sameMilestone: "Two milestones share a name",
+    oneLeague: "Only one milestone is the League",
     noGame: "No such game",
     allowlist: "Every player must be on the allowlist",
     rulesMarkdown: "Rules are Markdown text",
@@ -43,6 +44,7 @@ const t = says({
     draftEdited: "Solo un borrador se edita por completo",
     fillAll: "Rellena todos los campos",
     sameMilestone: "Dos hitos comparten nombre",
+    oneLeague: "Solo un hito es la Liga",
     noGame: "Ese juego no existe",
     allowlist: "Todos los jugadores deben estar en la lista de acceso",
     rulesMarkdown: "Las reglas son texto en Markdown",
@@ -113,6 +115,7 @@ adminSeries.put("/:id", async (c) => {
   if (!input) return c.json({ error: t(c).fillAll }, 400);
   const names = input.milestones.map((m) => m.name.toLowerCase());
   if (new Set(names).size !== names.length) return c.json({ error: t(c).sameMilestone }, 400);
+  if (input.milestones.filter((m) => m.mark === "league").length > 1) return c.json({ error: t(c).oneLeague }, 400);
   if (input.gameId) {
     const [found] = await db.select({ id: game.id }).from(game).where(eq(game.id, input.gameId));
     if (!found) return c.json({ error: t(c).noGame }, 400);
@@ -198,6 +201,7 @@ adminSeries.put("/:id/milestones", async (c) => {
   if (!input) return c.json({ error: t(c).oneMilestone }, 400);
   const names = input.milestones.map((m) => m.name.toLowerCase());
   if (new Set(names).size !== names.length) return c.json({ error: t(c).sameMilestone }, 400);
+  if (input.milestones.filter((m) => m.mark === "league").length > 1) return c.json({ error: t(c).oneLeague }, 400);
   const current = await db.select({ id: milestone.id, name: milestone.name }).from(milestone).where(eq(milestone.seriesId, row.id));
   const kept = input.milestones.flatMap((m) => (m.id ? [m.id] : []));
   if (new Set(kept).size !== kept.length || kept.some((id) => !current.some((m) => m.id === id))) {

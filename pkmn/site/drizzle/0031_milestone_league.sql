@@ -1,0 +1,1 @@
+ALTER TYPE "public"."milestone_mark" ADD VALUE 'league' BEFORE 'tournament';

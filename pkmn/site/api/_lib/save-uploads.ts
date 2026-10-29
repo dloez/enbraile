@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { partRequest, uploadAbort } from "../../shared/games.js";
 import {
@@ -20,7 +20,7 @@ import { saveSlots } from "./export/save-zip.js";
 import { abortUpload, abortUploadsUnder, completeUpload, deleteObject, downloadUrl, objectSize, objectsUnder, partUrl, readObject, startUpload } from "./files.js";
 import { ingest, isExportKey, parseExport, savePrefix, stillUsed } from "./ingest.js";
 import { milestone, save, snapshot } from "./schema.js";
-import { findShown, mayUpload, plays, type SeriesRow, viewer } from "./series-data.js";
+import { findShown, mayUpload, milestonesOf, plays, type SeriesRow, viewer } from "./series-data.js";
 import { says } from "./i18n.js";
 
 const t = says({
@@ -88,10 +88,6 @@ async function clearStale(prefix: string) {
   }
 }
 
-async function milestoneNames(seriesId: string): Promise<{ id: string; name: string }[]> {
-  return db.select({ id: milestone.id, name: milestone.name }).from(milestone).where(eq(milestone.seriesId, seriesId)).orderBy(asc(milestone.position));
-}
-
 function reason(c: Context, error: unknown): string | undefined {
   return error instanceof ExportError ? says(error.texts)(c) : undefined;
 }
@@ -145,7 +141,7 @@ saveUploads.post("/:number/trainers/:player/file", async (c) => {
   }
   const size = await objectSize(input.key);
   if (size === undefined) return c.json({ error: t(c).noReach }, 400);
-  const names = (await milestoneNames(found.row.id)).map((m) => m.name);
+  const milestones = await milestonesOf(found.row.id);
   try {
     const file = await readObject(input.key);
     if (isExportKey(input.key)) {
@@ -153,7 +149,7 @@ saveUploads.post("/:number/trainers/:player/file", async (c) => {
       const answer: UploadedSave = { key: input.key, fileName: input.fileName, size, slots: [], export: { pokemon: sheet.pokemon.length, report } };
       return c.json(answer);
     }
-    const slots = saveSlots(file).map((slot) => ({ ...slot, suggested: suggestMilestone(names, slot) }));
+    const slots = saveSlots(file).map((slot) => ({ ...slot, suggested: suggestMilestone(milestones, slot) }));
     const answer: UploadedSave = { key: input.key, fileName: input.fileName, size, slots, export: null };
     return c.json(answer);
   } catch (error) {

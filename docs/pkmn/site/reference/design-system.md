@@ -102,7 +102,7 @@ Scales of one hue are built with opacity on the token (`bg-chart-2/10`, `/15`, `
 | `round-dim` | `#7a3a36` | A round's node not reached yet |
 | `trophy`, `trophy-rim` | `#2a2416`, `#8a7330` | The tournament node's disc and rim, around a `yellow` cup; the team page's Locked chip's fill and border, around its `yellow` text and lock |
 | `round-team`, `round-team-rim`, `round-team-fill` | `cyan`, `#2b6a80`, `#132a35` | A round team's kind chip on the team list: its text and flag, its border, its fill |
-| `try`, `try-rim`, `try-fill` | `#c39bff`, `#5b4785`, `#211a33` | A Pokémon League try's kind chip on the team list: its text and mark, its border, its fill |
+| `try`, `try-rim`, `try-fill` | `#c39bff`, `#5b4785`, `#211a33` | A Pokémon League try's kind chip on the team list: its text and mark, its border, its fill; `try` also fills the series form's League mark when picked |
 | `cup`, `cup-rim`, `cup-fill` | `yellow`, `#7a6420`, `#2a2410` | A cup team's kind chip on the team list: its text and cup mark, its border, its fill; `cup-rim` and `cup-fill` also the series page's League summary's Champion strip |
 
 ### Scenes
