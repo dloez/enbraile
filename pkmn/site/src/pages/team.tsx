@@ -16,18 +16,18 @@ import { recountTeamsToBuild } from "@/lib/teams-to-build";
 import { GameIconsProvider } from "@/lib/item-icons";
 import { cn } from "@/lib/utils";
 import { TeamFrame, TeamsBackLink } from "@/components/page-frames";
-import { AddDialog, type AddSource } from "@/teams/components/add-dialog";
+import { AddDialog } from "@/teams/components/add-dialog";
 import { SetEditor } from "@/teams/components/free-member";
 import { AbilityEditor, ItemEditor, NatureEditor, segButton, segTrack } from "@/teams/components/editors";
 import { EmptyCard, MemberCard, type Focus } from "@/teams/components/member-card";
 import { MoveEditor } from "@/teams/components/move-picker";
 import { PasteDialog } from "@/teams/components/paste-dialog";
-import { AnyMark, SnapshotMenu, sourceLabel } from "@/teams/components/snapshot-menu";
+import { AnyMark, SnapshotMenu } from "@/teams/components/snapshot-menu";
 import { preloadGraph, SheetAnalysis } from "@/teams/components/sheet-analysis";
-import { allowedMoves, currentAbility, type Mon } from "../../shared/mon";
-import { defensesOf, describeMove, describeTm } from "../../shared/describe";
+import { currentAbility } from "../../shared/mon";
 import { liveSlots, memberMon } from "@/teams/dex";
-import { EMPTY_SHEET, formatMoney, freeCount, giveItem, isFree, lastFilled, moneyLeft, natureFrom, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, setNature, spreadShown, stockOf, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
+import { asSet, holding, type Held } from "@/teams/summary";
+import { EMPTY_SHEET, formatMoney, freeCount, giveItem, isFree, lastFilled, moneyLeft, natureFrom, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, setNature, spreadShown, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Slots, type Stocks } from "@/teams/team";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
 import { ANY_POKEMON, showdownTeam } from "@/teams/showdown";
 import { hasToggle, teamDone, teamKind, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
@@ -226,37 +226,6 @@ export function TeamBuilderPage() {
       <Builder key={`${page.id}:${page.lockedAt}`} page={page} onReload={() => setLoads((n) => n + 1)} />
     </GameIconsProvider>
   );
-}
-
-function asSet(mon: Mon, member: Member, rule: MoveRule): Mon {
-  const ability = member.ability ?? currentAbility(mon);
-  const abilities = mon.abilities.map((a) => ({ ...a, current: a.id === ability }));
-  return {
-    ...mon,
-    abilities,
-    defenses: defensesOf(mon.types, abilities),
-    learnable: mon.learnable && { ...allowedMoves(mon, rule)!, current: member.moves.flatMap((m) => (m ? [describeMove(m)] : [])) },
-  };
-}
-
-interface Held extends Stock, AddSource {
-  source: TeamSource;
-  owner: string;
-  colour: number;
-}
-
-function holding(sources: readonly TeamSource[]): Held[] {
-  return sources.map((source) => ({
-    id: source.id,
-    source,
-    label: sourceLabel(source),
-    series: source.series.number,
-    owner: source.player.name,
-    colour: playerColour(source.player.name),
-    ...stockOf(source),
-    tms: source.snapshot.tms.map(describeTm),
-    gaps: source.missing?.missing ?? [],
-  }));
 }
 
 function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {

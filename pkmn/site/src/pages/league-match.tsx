@@ -1,9 +1,15 @@
 import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Info, X } from "lucide-react";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import { listPage, toolPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { MatchFrame } from "@/components/page-frames";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Placeholder } from "@/components/placeholder";
+import { SummaryBody, SummaryHead } from "@/components/pc/summary";
+import { GameIconsProvider } from "@/lib/item-icons";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { ordinal } from "@/lib/records";
@@ -28,11 +34,12 @@ import {
   SHOWDOWN_FORMAT,
   tally,
 } from "../../shared/league";
-import { teamPage } from "../../shared/team";
+import { teamPage, type TeamPage } from "../../shared/team";
 import { liveSlots } from "@/teams/dex";
 import { analysedSlots } from "@/teams/pick";
 import { showdownTeam } from "@/teams/showdown";
 import { stockOf } from "@/teams/team";
+import { slotSummary } from "@/teams/summary";
 
 const t = messages({
   en: {
@@ -61,6 +68,10 @@ const t = messages({
     locked: "Locked",
     toBuild: "To build",
     empty: "Empty",
+    look: (name: string) => `${name}'s summary`,
+    summary: "Summary",
+    heldItem: "Held item",
+    close: "Close",
     games: "Games",
     game: (n: number | null) => (n === null ? "Game" : `Game ${n}`),
     won: (name: string) => `${name} won`,
@@ -139,6 +150,10 @@ const t = messages({
     locked: "Bloqueado",
     toBuild: "Por montar",
     empty: "Vacío",
+    look: (name: string) => `Resumen de ${name}`,
+    summary: "Resumen",
+    heldItem: "Objeto",
+    close: "Cerrar",
     games: "Partidas",
     game: (n: number | null) => (n === null ? "Partida" : `Partida ${n}`),
     won: (name: string) => `Ganó ${name}`,
@@ -463,6 +478,7 @@ function TeamColumn({
   mark: ((at: number) => Mark | undefined) | undefined;
   className?: string;
 }) {
+  const [looking, setLooking] = useState<number | null>(null);
   return (
     <section aria-label={t.team(name)} className={cn("@container flex flex-col gap-2", className)}>
       <h2 className="m-0 px-0.5 font-heading text-[1.625rem] leading-none font-normal lg:sr-only">{t.team(name)}</h2>
@@ -472,7 +488,7 @@ function TeamColumn({
             {team.members.map((member, at) => (
               <li key={at} className="flex min-w-0">
                 {member ? (
-                  <MemberTile member={member} mark={mark?.(at)} />
+                  <MemberTile member={member} mark={mark?.(at)} onLook={() => setLooking(at)} />
                 ) : (
                   <span className="grid min-h-22 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-lg text-faint">{t.empty}</span>
                 )}
@@ -496,6 +512,7 @@ function TeamColumn({
               <span className="flex h-5.5 items-center rounded-[5px] bg-round px-2 font-heading text-[1.0625rem] leading-none text-white">{t.toBuild}</span>
             )}
           </span>
+          <MemberSummary teamId={team.id} slot={looking} item={looking === null ? null : (team.members[looking]?.item ?? null)} onClose={() => setLooking(null)} />
         </>
       ) : (
         <div className="grid min-h-24 flex-1 place-items-center content-center gap-2 rounded-[14px] border-3 border-dashed bg-box px-4 py-4 text-center font-heading text-xl text-faint lg:min-h-80">
@@ -537,8 +554,9 @@ const TONES: Record<Tone, string> = {
 
 const TAGS = { red: "bg-round text-white", muted: "bg-cell text-muted-foreground", warn: "bg-cell text-warning" };
 
-function MemberTile({ member, mark }: { member: MatchMember; mark?: Mark }) {
+function MemberTile({ member, mark, onLook }: { member: MatchMember; mark?: Mark; onLook: () => void }) {
   const item = member.item ? dexName("items", member.item.id, member.item.name) : null;
+  const name = member.nickname ?? member.species;
   const tone = mark?.tone ?? "plain";
   const body = (
     <>
@@ -554,16 +572,28 @@ function MemberTile({ member, mark }: { member: MatchMember; mark?: Mark }) {
         </span>
       )}
       {member.sprite ? (
-        <img src={member.sprite} alt="" className={cn("size-14 flex-none [image-rendering:pixelated] sm:size-19 @min-[36rem]:size-24 upright:size-48", tone === "banned" && "grayscale")} />
+        <img
+          src={member.sprite}
+          alt=""
+          className={cn(
+            "size-14 flex-none [image-rendering:pixelated] sm:size-19 @min-[36rem]:h-0 @min-[36rem]:min-h-24 @min-[36rem]:w-full @min-[36rem]:grow @min-[36rem]:basis-0 @min-[36rem]:object-contain",
+            tone === "banned" && "grayscale",
+          )}
+        />
       ) : (
-        <span aria-hidden="true" className="size-14 flex-none sm:size-19 @min-[36rem]:size-24 upright:size-48" />
+        <span aria-hidden="true" className="size-14 flex-none sm:size-19 @min-[36rem]:h-0 @min-[36rem]:min-h-24 @min-[36rem]:w-full @min-[36rem]:grow @min-[36rem]:basis-0" />
       )}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.75 upright:w-full upright:flex-none upright:items-center upright:gap-2.5">
-        <span className="max-w-full truncate font-heading text-2xl leading-none @min-[36rem]:text-[1.75rem] upright:text-4xl">{member.nickname ?? member.species}</span>
-        <span className="max-w-full truncate text-[0.8125rem] font-bold text-muted-foreground @min-[36rem]:text-sm upright:min-h-6 upright:text-base">{[member.nickname ? member.species : null, item].filter(Boolean).join(" · ")}</span>
+      <span
+        className={cn(
+          "flex min-w-0 flex-1 flex-col gap-0.75 @min-[36rem]:flex-none @min-[36rem]:flex-row @min-[36rem]:flex-wrap @min-[36rem]:items-center @min-[36rem]:justify-center @min-[36rem]:gap-x-2.5 @min-[36rem]:gap-y-1.5",
+          mark?.onClick && "@min-[36rem]:px-8",
+        )}
+      >
+        <span className="max-w-full truncate font-heading text-2xl leading-none @min-[36rem]:text-[2rem]">{name}</span>
+        <span className="max-w-full truncate text-[0.8125rem] font-bold text-muted-foreground @min-[36rem]:hidden">{[member.nickname ? member.species : null, item].filter(Boolean).join(" · ")}</span>
         <span className="flex flex-wrap gap-1">
           {member.types.map((type) => (
-            <TypeTag key={type} type={type} className="px-1.5 text-[0.9375rem] leading-[19px] upright:px-2.5 upright:text-xl upright:leading-7" />
+            <TypeTag key={type} type={type} className="px-1.5 text-[0.9375rem] leading-[19px] @min-[36rem]:px-2 @min-[36rem]:text-lg @min-[36rem]:leading-6" />
           ))}
         </span>
       </span>
@@ -572,19 +602,97 @@ function MemberTile({ member, mark }: { member: MatchMember; mark?: Mark }) {
       )}
     </>
   );
-  const frame = cn("relative flex min-h-22 min-w-0 flex-1 items-center gap-2 rounded-[14px] border-3 py-1.5 pr-2.5 pl-1 text-left @min-[36rem]:gap-3 @min-[36rem]:px-4 upright:flex-col upright:justify-center upright:gap-1 upright:px-3 upright:pt-3 upright:pb-4 upright:text-center", TONES[tone]);
-  if (!mark?.onClick) return <span className={frame}>{body}</span>;
+  const frame = cn(
+    "relative flex min-h-22 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-[14px] border-3 py-1.5 pr-2.5 pl-1 text-left font-[inherit] text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 @min-[36rem]:flex-col @min-[36rem]:items-stretch @min-[36rem]:gap-2 @min-[36rem]:p-3 @min-[36rem]:text-center",
+    TONES[tone],
+  );
+  if (!mark?.onClick) {
+    return (
+      <button type="button" aria-label={t.look(name)} onClick={onLook} className={cn(frame, "hover:border-primary")}>
+        {body}
+      </button>
+    );
+  }
   return (
-    <button
-      type="button"
-      aria-pressed={mark.tone === "chosen" || mark.tone === "picked"}
-      aria-label={mark.label}
-      disabled={mark.disabled}
-      onClick={mark.onClick}
-      className={cn(frame, "cursor-pointer font-[inherit] text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 enabled:hover:border-primary disabled:cursor-default")}
-    >
-      {body}
-    </button>
+    <span className="relative flex min-w-0 flex-1">
+      <button
+        type="button"
+        aria-pressed={mark.tone === "chosen" || mark.tone === "picked"}
+        aria-label={mark.label}
+        disabled={mark.disabled}
+        onClick={mark.onClick}
+        className={cn(frame, "enabled:hover:border-primary disabled:cursor-default")}
+      >
+        {body}
+      </button>
+      <button
+        type="button"
+        aria-label={t.look(name)}
+        onClick={onLook}
+        className="absolute right-1.5 bottom-1.5 grid size-8 cursor-pointer place-items-center rounded-lg border-2 border-cell-hi bg-ink text-subtle outline-none hover:border-primary hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <Info className="size-4" aria-hidden="true" />
+      </button>
+    </span>
+  );
+}
+
+function MemberSummary({ teamId, slot, item, onClose }: { teamId: string; slot: number | null; item: MatchMember["item"]; onClose: () => void }) {
+  const [page, setPage] = useState<TeamPage | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (slot === null || page) return;
+    let live = true;
+    setError(null);
+    api(`/teams/${encodeURIComponent(teamId)}`, teamPage).then(
+      (next) => live && setPage(next),
+      (caught: unknown) => live && setError(message(caught)),
+    );
+    return () => {
+      live = false;
+    };
+  }, [teamId, slot, page]);
+
+  const shown = page && slot !== null ? slotSummary(page, slot) : null;
+  return (
+    <Dialog open={slot !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        aria-describedby={undefined}
+        className="flex max-h-[90svh] w-95 max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[18px] border-3 bg-card p-0 ring-0 sm:max-w-95"
+      >
+        {shown && page ? (
+          <GameIconsProvider game={page.sources.find((source) => source.gameId !== null)?.gameId ?? null}>
+            <SummaryHead mon={shown.mon} closeRoom title={(text) => <DialogTitle className="m-0 truncate font-heading text-[2.625rem] leading-[0.85] font-normal">{text}</DialogTitle>} />
+            {item && (
+              <p className="m-0 mx-3.5 mt-3.5 flex flex-none items-baseline gap-3 rounded-xl border-3 border-cell bg-box px-3.5 py-2.5">
+                <span className="font-heading text-lg text-muted-foreground">{t.heldItem}</span>
+                <span className="font-heading text-[1.375rem] text-white">{dexName("items", item.id, item.name)}</span>
+              </p>
+            )}
+            <SummaryBody key={slot} mon={shown.mon} tms={shown.tms} gaps={shown.gaps} series={shown.series} />
+          </GameIconsProvider>
+        ) : (
+          <>
+            <DialogTitle className="sr-only">{t.summary}</DialogTitle>
+            {error || page ? (
+              <p role="alert" className="m-0 px-5 py-8 text-destructive">
+                {error ?? t.failed}
+              </p>
+            ) : (
+              <Placeholder className="m-4 h-96 rounded-xl" />
+            )}
+          </>
+        )}
+        <DialogPrimitive.Close
+          aria-label={t.close}
+          className="absolute top-3 right-3 grid size-10 cursor-pointer place-items-center rounded-[10px] border-3 border-cell-hi bg-cell text-subtle outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <X className="size-5" aria-hidden="true" />
+        </DialogPrimitive.Close>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -639,7 +747,7 @@ function GameSlots({
           <li
             key={slot.key}
             className={cn(
-              "flex min-h-18 flex-col gap-0.5 rounded-xl border-3 px-2 pt-1.5 pb-2 sm:px-3 sm:pt-2",
+              "flex min-h-18 flex-col gap-0.5 rounded-xl border-3 px-2 pt-1.5 pb-2 sm:px-3 sm:pt-2 2xl:min-h-28 2xl:gap-1.5 2xl:px-4 2xl:pt-3 2xl:pb-3.5",
               slot.kind === "played" && (open ? "border-primary bg-primary/10" : "bg-card"),
               slot.kind === "unrecorded" && "border-dashed bg-card",
               slot.kind === "next" && "border-primary bg-primary/10",
@@ -647,13 +755,13 @@ function GameSlots({
             )}
           >
             <span className="flex items-center gap-2">
-              <span className={cn("flex-1 font-heading text-xl sm:text-[1.375rem]", slot.kind === "later" || slot.kind === "unrecorded" ? "text-faint" : "text-white")}>{slot.title}</span>
+              <span className={cn("flex-1 font-heading text-xl sm:text-[1.375rem] 2xl:text-[2rem]", slot.kind === "later" || slot.kind === "unrecorded" ? "text-faint" : "text-white")}>{slot.title}</span>
               {match.admin && slot.game && !open && (
                 <button
                   type="button"
                   aria-label={t.editGame(numbered(match, slot.game.number))}
                   onClick={() => onEdit(slot.game!.number)}
-                  className="min-h-6.5 cursor-pointer rounded-md bg-cell px-2 font-heading text-base text-subtle outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="min-h-6.5 cursor-pointer rounded-md bg-cell px-2 font-heading text-base text-subtle outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 2xl:min-h-8 2xl:px-2.5 2xl:text-lg"
                 >
                   {t.edit}
                 </button>
@@ -661,7 +769,7 @@ function GameSlots({
             </span>
             <span
               className={cn(
-                "flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs leading-[1.35] font-bold sm:gap-2 sm:text-sm",
+                "flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs leading-[1.35] font-bold sm:gap-2 sm:text-sm 2xl:text-base",
                 slot.kind === "next" ? "text-primary" : slot.kind === "later" ? "text-faint" : "text-subtle",
               )}
             >
@@ -671,7 +779,7 @@ function GameSlots({
                   href={slot.game.replay}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-md bg-cell px-1.75 font-heading text-base font-normal text-subtle no-underline outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="rounded-md bg-cell px-1.75 font-heading text-base font-normal text-subtle no-underline outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 2xl:px-2.5 2xl:text-lg"
                 >
                   {t.replay}
                 </a>
