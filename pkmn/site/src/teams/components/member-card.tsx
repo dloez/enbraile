@@ -2,7 +2,7 @@ import { Check, ChevronRight, Plus, X } from "lucide-react";
 import { ItemIcon, MiniSeta, Mint } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import { TypeTag } from "@/components/pc/summary";
-import { UnknownMark } from "@/components/marks";
+import { TypeDot, UnknownMark } from "@/components/marks";
 import { PLAYER_FILL } from "@/components/player-badge";
 import { cn } from "@/lib/utils";
 import { canLearn, currentAbility, displayName, type Mon } from "../../../shared/mon";
@@ -276,17 +276,20 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
               title={late ? t.late(move?.name ?? "", introduced, movesGen) : unlearnable ? t.unlearnable(name, move?.name ?? "") : ruled ? t.ruled(move?.name ?? "", MOVE_RULE_LABELS[moveRule]) : move?.desc}
               className={cn(
                 field(on),
-                "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px_23px] gap-x-1.5 @max-[380px]/card:grid-cols-[52px_minmax(0,1fr)_24px] pr-2 pl-1.25 short:min-h-7.5",
+                "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px_23px] gap-x-1.5 pr-2 pl-1.25 short:min-h-7.5 lg:grid-cols-[20px_minmax(0,1fr)_24px]",
                 wrong && !on && "border-destructive bg-destructive-soft",
               )}
             >
-              <TypeTag type={move?.type ?? null} className="px-0 text-base leading-5.25" />
+              <TypeTag type={move?.type ?? null} className="px-0 text-base leading-5.25 lg:sr-only" />
+              {move ? <TypeDot type={move.type} className="hidden size-5 lg:inline-grid" /> : <span aria-hidden="true" className="hidden size-5 rounded-full bg-faint lg:block" />}
               <span className={cn("min-w-0 truncate text-sm font-extrabold", !move && "text-muted-foreground")}>
                 {move ? move.name : "—"}
                 {move?.marked && <UnknownMark />}
               </span>
-              <span className="text-right font-heading text-xl text-subtle">{move ? (move.power ?? "—") : ""}</span>
-              <span className="text-right font-heading text-sm text-muted-foreground @max-[380px]/card:hidden">{move ? (move.accuracy === null ? "—" : `${move.accuracy}%`) : ""}</span>
+              <span className="contents lg:flex lg:flex-col lg:items-end">
+                <span className="text-right font-heading text-xl text-subtle lg:text-base lg:leading-[0.8]">{move ? (move.power ?? "—") : ""}</span>
+                <span className="text-right font-heading text-sm text-muted-foreground lg:leading-[0.8]">{move ? (move.accuracy === null ? "—" : `${move.accuracy}%`) : ""}</span>
+              </span>
             </button>
           );
         })}
