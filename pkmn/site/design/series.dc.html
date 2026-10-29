@@ -86,7 +86,7 @@ Download
 <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 20px; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
 <div style="display: flex; align-items: baseline; gap: 10px">
 <h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px">Standings</h3>
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">4 of 5 rounds</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{lgNote}}</span>
 </div>
 <div style="background: #1b2232; border: 3px solid #343f58; border-radius: 12px; overflow: hidden">
 <sc-for list="{{lgTop}}" as="t" hint-placeholder-count="3">
@@ -99,6 +99,35 @@ Download
 </sc-for>
 </div>
 </div>
+<sc-if value="{{cupOn}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 20px; background: #222a3b; border: 3px solid #ffd34d; border-radius: 18px">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<svg width="20" height="20" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true" style="align-self: center"><path d="M1 0h8v1H1zM0 1h2v2H0zM8 1h2v2H8zM2 1h6v4H2zM1 3h1v1H1zM8 3h1v1H8zM3 5h4v1H3zM4 6h2v2H4zM2 8h6v2H2z" fill="#ffd34d"></path></svg>
+<h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px">Cup</h3>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{cupStage}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: {{cupNoteInk}}">{{cupNote}}</span>
+<span style="flex: 1"></span>
+<a href="LeagueCup.dc.html" class="crumb" style="font-family: 'Jersey 10', sans-serif; font-size: 20px; text-decoration: none">Bracket</a>
+</div>
+<sc-if value="{{champ.on}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 8px 16px; box-sizing: border-box; border-radius: 12px; background: #2a2410; border: 3px solid #7a6420">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; box-sizing: border-box; border-radius: 9px; border: 3px solid #10141d; box-shadow: 0 0 0 3px {{champ.c}}; background: {{champ.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 24px; color: #10141d">{{champ.i}}</span>
+<span style="display: flex; flex-direction: column; line-height: 1">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #ffd34d">Champion</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 30px">{{champ.name}}</span>
+</span>
+</div>
+</sc-if>
+<sc-for list="{{cupMatches}}" as="m" hint-placeholder-count="2">
+<a href="Match.dc.html" class="tile" style="display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 52px; padding: 0 12px; box-sizing: border-box; border-radius: 12px; background: #1b2232; border: 3px {{m.style}} {{m.line}}; color: #eef1f7; text-decoration: none">
+<span style="display: flex; align-items: center; gap: 8px; min-width: 0; opacity: {{m.a.dim}}"><span style="width: 16px; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #6b7489">{{m.a.seed}}</span><span aria-hidden="true" style="width: 28px; height: 28px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{m.a.c}}; background: {{m.a.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d">{{m.a.i}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 23px; color: {{m.a.ink}}">{{m.a.name}}</span></span>
+<span style="display: flex; flex-direction: column; align-items: center; line-height: 1"><span style="font-family: 'Jersey 10', sans-serif; font-size: 24px">{{m.score}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 14px; color: {{m.tagInk}}">{{m.tag}}</span></span>
+<span style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; opacity: {{m.b.dim}}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 23px; color: {{m.b.ink}}">{{m.b.name}}</span><span aria-hidden="true" style="width: 28px; height: 28px; flex: none; box-sizing: border-box; border-radius: 7px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{m.b.c}}; background: {{m.b.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 18px; color: #10141d">{{m.b.i}}</span><span style="width: 16px; text-align: right; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #6b7489">{{m.b.seed}}</span></span>
+</a>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{noCup}}" hint-placeholder-val="{{ true }}">
 <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 20px; background: #222a3b; border: 3px solid #5ad1f0; border-radius: 18px">
 <div style="display: flex; align-items: baseline; gap: 10px">
 <h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 26px">Round 5</h3>
@@ -113,6 +142,7 @@ Download
 </a>
 </sc-for>
 </div>
+</sc-if>
 </div>
 </section>
 <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px">
@@ -242,7 +272,7 @@ Download
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"admin":{"editor":"boolean","default":false},"ingestion":{"editor":"enum","options":["manual","automatic"],"default":"manual"},"outcome":{"editor":"enum","options":["works","upload fails","no save in zip"],"default":"works"},"$preview":{"width":1440,"height":2110}}'>
+<script type="text/x-dc" data-dc-script data-props='{"admin":{"editor":"boolean","default":false},"cup":{"editor":"enum","options":["off","semifinals","champion"],"default":"off"},"ingestion":{"editor":"enum","options":["manual","automatic"],"default":"manual"},"outcome":{"editor":"enum","options":["works","upload fails","no save in zip"],"default":"works"},"$preview":{"width":1440,"height":2110}}'>
 
 function rng(seed) { let x = seed; return () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
 function blink(name, rand, lo, hi) { return name + ' ' + (lo + rand() * (hi - lo)).toFixed(2) + 's steps(2) ' + (rand() * 2).toFixed(2) + 's infinite alternate'; }
@@ -354,7 +384,14 @@ class Component extends DCLogic {
     const lgB = (k) => ({name: lgP[k][0], i: lgP[k][0][0], c: lgP[k][1]});
     const lgTop = [['D', 3, '3–1'], ['V', 3, '3–1'], ['T', 2, '2–2']].map(([k, pts, wl], i) => Object.assign(lgB(k), {place: i + 1, placeInk: i === 0 ? '#ffd34d' : '#6b7489', pts, wl, bg: k === 'D' ? 'rgba(255,211,77,0.06)' : 'transparent', line: i < 2 ? '3px solid #343f58' : 'none'}));
     const lgRound = [['D', 'T'], ['J', 'V'], ['E', 'I']].map(([a, b]) => ({a: lgB(a), b: lgB(b), line: a === 'D' || b === 'D' ? '#8a7330' : '#44506d'}));
-    return {h: 2110, lgTop, lgRound, hasLives: false, maxLives, cols, rows, sky: nightScene(360, 65),
+    const cupMode = this.props.cup || 'off';
+    const cupSide = (k, seed, g, won, lost) => Object.assign(lgB(k), {seed, dim: lost ? 0.55 : 1, ink: won ? '#ffd34d' : '#eef1f7'});
+    const cupMatch = (a, sa, b, sb, ga, gb, done) => ({a: cupSide(a, sa, ga, done && ga > gb, done && ga < gb), b: cupSide(b, sb, gb, done && gb > ga, done && gb < ga), score: ga + '–' + gb, tag: done ? 'Final score' : 'Playing', tagInk: done ? '#6b7489' : '#ffc878', style: done ? 'solid' : 'dashed', line: done ? '#343f58' : (a === 'D' || b === 'D' ? '#8a7330' : '#44506d')});
+    const cupMatches = cupMode === 'champion' ? [cupMatch('J', 1, 'V', 2, 2, 1, true)] : [cupMatch('J', 1, 'D', 4, 1, 0, false), cupMatch('V', 2, 'E', 3, 2, 0, true)];
+    const cupOn = cupMode !== 'off';
+    return {h: 2110, lgTop, lgRound, cupOn, noCup: !cupOn, cupMatches, lgNote: cupOn ? 'Final standings' : '4 of 5 rounds',
+      cupStage: cupMode === 'champion' ? 'Final' : 'Semifinals', cupNote: cupMode === 'champion' ? 'Done' : '1 to play', cupNoteInk: cupMode === 'champion' ? '#7be08a' : '#ffc878',
+      champ: cupMode === 'champion' ? Object.assign(lgB('J'), {on: true}) : {on: false, name: '', i: '', c: '#10141d'}, hasLives: false, maxLives, cols, rows, sky: nightScene(360, 65),
       upOpen: !!up, upWho: up ? whoOf(up, upFor) : null, outcome: this.props.outcome || 'works',
       closeUpload: () => this.setState({upFor: -1}),
       savedUpload: (m) => { if (!up) return; const list = (added[up.name] || []).concat([m]); this.setState({added: Object.assign({}, added, {[up.name]: list})}); }};

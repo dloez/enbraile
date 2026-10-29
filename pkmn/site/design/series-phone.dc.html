@@ -79,7 +79,7 @@ Download
 <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 16px; background: #222a3b; border: 3px solid #343f58; border-radius: 18px">
 <div style="display: flex; align-items: baseline; gap: 10px">
 <h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 24px">Standings</h3>
-<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">4 of 5 rounds</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{lgNote}}</span>
 </div>
 <div style="background: #1b2232; border: 3px solid #343f58; border-radius: 12px; overflow: hidden">
 <sc-for list="{{lgTop}}" as="t" hint-placeholder-count="3">
@@ -92,6 +92,35 @@ Download
 </sc-for>
 </div>
 </div>
+<sc-if value="{{cupOn}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 16px; background: #222a3b; border: 3px solid #ffd34d; border-radius: 18px">
+<div style="display: flex; align-items: baseline; gap: 8px">
+<svg width="18" height="18" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true" style="align-self: center"><path d="M1 0h8v1H1zM0 1h2v2H0zM8 1h2v2H8zM2 1h6v4H2zM1 3h1v1H1zM8 3h1v1H8zM3 5h4v1H3zM4 6h2v2H4zM2 8h6v2H2z" fill="#ffd34d"></path></svg>
+<h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 24px">Cup</h3>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: #a3acbf">{{cupStage}}</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 20px; color: {{cupNoteInk}}">{{cupNote}}</span>
+<span style="flex: 1"></span>
+<a href="LeagueCupPhone.dc.html" class="crumb" style="display: flex; align-items: center; min-height: 44px; margin: -10px 0; font-family: 'Jersey 10', sans-serif; font-size: 20px; text-decoration: none">Bracket</a>
+</div>
+<sc-if value="{{champ.on}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 12px; box-sizing: border-box; border-radius: 12px; background: #2a2410; border: 3px solid #7a6420">
+<span aria-hidden="true" style="width: 36px; height: 36px; flex: none; box-sizing: border-box; border-radius: 8px; border: 3px solid #10141d; box-shadow: 0 0 0 3px {{champ.c}}; background: {{champ.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 22px; color: #10141d">{{champ.i}}</span>
+<span style="display: flex; flex-direction: column; line-height: 1">
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #ffd34d">Champion</span>
+<span style="font-family: 'Jersey 10', sans-serif; font-size: 28px">{{champ.name}}</span>
+</span>
+</div>
+</sc-if>
+<sc-for list="{{cupMatches}}" as="m" hint-placeholder-count="2">
+<a href="MatchPhone.dc.html" class="tile" style="display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); align-items: center; gap: 6px; min-height: 52px; padding: 0 10px; box-sizing: border-box; border-radius: 12px; background: #1b2232; border: 3px {{m.style}} {{m.line}}; color: #eef1f7; text-decoration: none">
+<span style="display: flex; align-items: center; gap: 6px; min-width: 0; opacity: {{m.a.dim}}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #6b7489">{{m.a.seed}}</span><span aria-hidden="true" style="width: 26px; height: 26px; flex: none; box-sizing: border-box; border-radius: 6px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{m.a.c}}; background: {{m.a.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #10141d">{{m.a.i}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 21px; color: {{m.a.ink}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{m.a.name}}</span></span>
+<span style="display: flex; flex-direction: column; align-items: center; line-height: 1"><span style="font-family: 'Jersey 10', sans-serif; font-size: 22px">{{m.score}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 13px; color: {{m.tagInk}}">{{m.tag}}</span></span>
+<span style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; opacity: {{m.b.dim}}"><span style="font-family: 'Jersey 10', sans-serif; font-size: 21px; color: {{m.b.ink}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{m.b.name}}</span><span aria-hidden="true" style="width: 26px; height: 26px; flex: none; box-sizing: border-box; border-radius: 6px; border: 3px solid #10141d; box-shadow: 0 0 0 2px {{m.b.c}}; background: {{m.b.c}}; display: grid; place-items: center; font-family: 'Jersey 10', sans-serif; font-size: 17px; color: #10141d">{{m.b.i}}</span><span style="font-family: 'Jersey 10', sans-serif; font-size: 16px; color: #6b7489">{{m.b.seed}}</span></span>
+</a>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{noCup}}" hint-placeholder-val="{{ true }}">
 <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 16px; background: #222a3b; border: 3px solid #5ad1f0; border-radius: 18px">
 <div style="display: flex; align-items: baseline; gap: 10px">
 <h3 style="margin: 0; font-family: 'Jersey 10', sans-serif; font-weight: 400; font-size: 24px">Round 5</h3>
@@ -106,6 +135,7 @@ Download
 </a>
 </sc-for>
 </div>
+</sc-if>
 </div>
 </section>
 
@@ -218,7 +248,7 @@ Download
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"admin":{"editor":"boolean","default":false},"ingestion":{"editor":"enum","options":["manual","automatic"],"default":"manual"},"$preview":{"width":390,"height":2020}}'>
+<script type="text/x-dc" data-dc-script data-props='{"admin":{"editor":"boolean","default":false},"cup":{"editor":"enum","options":["off","semifinals","champion"],"default":"off"},"ingestion":{"editor":"enum","options":["manual","automatic"],"default":"manual"},"$preview":{"width":390,"height":2020}}'>
 const TABS = [
   {name: 'Series', href: 'SeriesListPhone.dc.html', icon: 'M1 0h1v10H1zM2 1h6v1H2zM2 2h7v1H2zM2 3h6v1H2zM2 4h5v1H2z'},
   {name: 'PC', href: 'Pc.dc.html', icon: 'M0 1h10v1H0zM0 2h1v4H0zM9 2h1v4H9zM0 6h10v1H0zM2 3h1v1H2zM4 7h2v1H4zM2 8h6v1H2z'},
@@ -321,7 +351,14 @@ class Component extends DCLogic {
     const lgB = (k) => ({name: lgP[k][0], i: lgP[k][0][0], c: lgP[k][1]});
     const lgTop = [['D', 3, '3–1'], ['V', 3, '3–1'], ['T', 2, '2–2']].map(([k, pts, wl], i) => Object.assign(lgB(k), {place: i + 1, placeInk: i === 0 ? '#ffd34d' : '#6b7489', pts, wl, bg: k === 'D' ? 'rgba(255,211,77,0.06)' : 'transparent', line: i < 2 ? '3px solid #343f58' : 'none'}));
     const lgRound = [['D', 'T'], ['J', 'V'], ['E', 'I']].map(([a, b]) => ({a: lgB(a), b: lgB(b), line: a === 'D' || b === 'D' ? '#8a7330' : '#44506d'}));
-    return {lgTop, lgRound,
+    const cupMode = this.props.cup || 'off';
+    const cupSide = (k, seed, g, won, lost) => Object.assign(lgB(k), {seed, dim: lost ? 0.55 : 1, ink: won ? '#ffd34d' : '#eef1f7'});
+    const cupMatch = (a, sa, b, sb, ga, gb, done) => ({a: cupSide(a, sa, ga, done && ga > gb, done && ga < gb), b: cupSide(b, sb, gb, done && gb > ga, done && gb < ga), score: ga + '–' + gb, tag: done ? 'Final score' : 'Playing', tagInk: done ? '#6b7489' : '#ffc878', style: done ? 'solid' : 'dashed', line: done ? '#343f58' : (a === 'D' || b === 'D' ? '#8a7330' : '#44506d')});
+    const cupMatches = cupMode === 'champion' ? [cupMatch('J', 1, 'V', 2, 2, 1, true)] : [cupMatch('J', 1, 'D', 4, 1, 0, false), cupMatch('V', 2, 'E', 3, 2, 0, true)];
+    const cupOn = cupMode !== 'off';
+    return {lgTop, lgRound, cupOn, noCup: !cupOn, cupMatches, lgNote: cupOn ? 'Final standings' : '4 of 5 rounds',
+      cupStage: cupMode === 'champion' ? 'Final' : 'Semifinals', cupNote: cupMode === 'champion' ? 'Done' : '1 to play', cupNoteInk: cupMode === 'champion' ? '#7be08a' : '#ffc878',
+      champ: cupMode === 'champion' ? Object.assign(lgB('J'), {on: true}) : {on: false, name: '', i: '', c: '#10141d'},
       cols, rows, sky: nightScene(98, 55),
       menu, menuClosed: !menu, btnBg: menu ? '#222a3b' : 'transparent', toggleMenu: () => this.setState({menu: !menu}),
       tabs: TABS.map((t, i) => ({flag: t.name === 'Teams', name: t.name, href: t.href, icon: t.icon, current: i === 0 ? 'page' : null, bg: i === 0 ? '#d93a30' : 'transparent', fg: i === 0 ? '#ffffff' : '#c3cad8'}))
