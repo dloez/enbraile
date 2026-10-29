@@ -169,10 +169,6 @@ Each run of `npm run league-import` writes every player's hatched count from the
 
 **Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
 
-## Is the Eggs cell's "from the app" label signed off?
-
-**Needs the author:** an imported hatched count reads "from the app" ("de la app") in the amber-and-pencil style where an admin's name goes; no signed-off board draws it (`league-eggs*.dc.html`). Keep it, or draw it on the canvas for sign-off?
-
 ## Retire the Trainer League app
 
 Owner-run. The league branch goes to `main` only now, on the owner's word; with the real players invited, the dump is imported on production and read against the app, the group moves to the site and the app is switched off ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)).

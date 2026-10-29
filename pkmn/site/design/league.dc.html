@@ -448,7 +448,7 @@ a{color:#5ad1f0}a:hover{color:#9be4f7}
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["standings","rounds","tries","cup"],"default":"standings"},"admin":{"editor":"boolean","default":false},"viewer":{"editor":"enum","options":["player","visitor"],"default":"player"},"logTry":{"editor":"boolean","default":false},"editEggs":{"editor":null,"default":""},"h":{"editor":null,"default":1000},"$preview":{"width":1440,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["standings","rounds","tries","cup"],"default":"standings"},"admin":{"editor":"boolean","default":false},"viewer":{"editor":"enum","options":["player","visitor"],"default":"player"},"logTry":{"editor":"boolean","default":false},"editEggs":{"editor":null,"default":""},"fromApp":{"editor":"boolean","default":false},"h":{"editor":null,"default":1000},"$preview":{"width":1440,"height":1000}}'>
 const SPRITES = ['/_blob/feb2ab657a51426a183b6beaf1579a18', '/_blob/ad7eec8fe5fac11dbe76aa7c4baf26cf', '/_blob/557d8315299b199f56848444fb11a42d', '/_blob/ee7dab5530df6d3a44173ba34c10dea0', '/_blob/38cf8ada830b8ee04d27b6ee77f18e5d', '/_blob/86935b6ccfe3bb7e2635ec1e2470e94e', '/_blob/b82a5f88764c486a184ad80678d8cd3b', '/_blob/ee14f6e3cf1a82e03e26ac67894f2b65', '/_blob/6ac25302bf9efa3bd14740852450314e', '/_blob/16e4a2e6f10a47c4a02a9ed2e5d348a6', '/_blob/cd5bdb931e4981241f703d94f39bc0a4', '/_blob/49347f3bf3b9ddba1187c95dd600d230', '/_blob/4a33cf8d9d0f34bcc7029cf086d4b291', '/_blob/e87434b6eb8f4457ce261019a22a5bc7', '/_blob/c4ca8647897a7571e291f9dbf11813d4', '/_blob/0d9a7ee1f7cc36d764858df9adf21ae6', '/_blob/f86e1aa9705837e88316ca605fb605ef', '/_blob/52e03be970d9aa9fb6db9d4e251c95c2', '/_blob/2a9a80642e89024eacde96f1973397ff', '/_blob/fc9c3fdcc7c1bdfcb843aaf6a6ae13e8', '/_blob/a3f0c6e7ee9eb5b81c12b54c9e0e4ed5', '/_blob/583a1530f5f7f3a30678df2a4866bd39', '/_blob/c7c15307f21a4baf86bd0e6db37f2078', '/_blob/feafb352590c4c5d14419b676fe84bb6', '/_blob/031302cdd30109d33e07cd362b9e254a', '/_blob/d1e56154533ddad771b7f5ec0649a978', '/_blob/2ed05f876a3261519fd0faa5a78c7a6d', '/_blob/0542aa4caf94130665a0d384d1baa26f', '/_blob/c00e7acc4c19e1f6c08f561ae70ccae3', '/_blob/ae0f49384bbbbe335c5a5421f233753c',
   '/_blob/060f77224a0cf3bcfdab5aec873b52a5', '/_blob/06123608eba222d9cc4fe0acf45e5cd0', '/_blob/6018be365c3a251b081ec06c230ee828', '/_blob/63611bc613de43db662fe970d5d47cc8', '/_blob/89a1562203bfc204e753d7b27121540a', '/_blob/77eba39330e355cf42d9e1abb25421cc', '/_blob/b32a48ab7db1d0ef1dfd16edd4bea59b', '/_blob/44442ca716bfd7bcc8f56f935e1f7b08', '/_blob/b38c98b85643b0a3a962619432621bc9', '/_blob/8eaa23635cb2a252bf9977a2078728a7', '/_blob/81571990606df341f55930700a4d0798', '/_blob/4b95c10fb2821c49e30ce7c87dd95273', '/_blob/f67feb6189b44a8417dda89d8492c897', '/_blob/4ae506f49fdc5344ea92e49866b64d70', '/_blob/e3dd53cfebc8143b50a19af82ac5b100', '/_blob/3cf33d89d0bde98c2f9c7679478c6083', '/_blob/4feb84d54f08df09c0b6e8b00e92c8ce', '/_blob/b38c98b85643b0a3a962619432621bc9'];
 const NAMES = ['Walrein', 'Gardevoir', 'Snorlax', 'Donphan', 'Archeops', 'Magmortar', 'Poliwhirl', 'Lampent', 'Crustle', 'Budew', 'Luxio', 'Stunfisk', 'Hypno', 'Quilava', 'Archen', 'Steelix', 'Camerupt', 'Pelipper', 'Drifblim', 'Unfezant', 'Medicham', 'Claydol', 'Swalot', 'Dewgong', 'Slowking', 'Staraptor', 'Hariyama', 'Zebstrika', 'Zoroark', 'Eelektross', 'Chimecho', 'Primeape', 'Floatzel', 'Reuniclus', 'Gyarados', 'Cofagrigus', 'Braviary', 'Leavanny', 'Uxie', 'Electivire', 'Accelgor', 'Kingdra', 'Dragonite', 'Metagross', 'Dusclops', 'Venusaur', 'Purrloin', 'Uxie'];
@@ -477,6 +477,7 @@ const TRIES = {
 };
 const HATCHED = {D: 6, V: 5, J: 3, I: 0, T: 3, E: 1};
 const SET = {I: {n: 2, by: 'Vicky', when: '2 days ago'}};
+const APP = {D: {n: 5, app: true, when: 'today'}, V: {n: 6, app: true, when: 'today'}, J: {n: 3, app: true, when: 'today'}, T: {n: 2, app: true, when: 'today'}, E: {n: 1, app: true, when: 'today'}};
 const pips = (n, size) => Array.from({length: 5}, (_, i) => ({bg: i < n ? (i === 4 ? '#ffd34d' : '#5ad1f0') : '#10141d', line: i < n ? '#10141d' : '#44506d'}));
 const best = (k) => TRIES[k].reduce((b, t) => Math.max(b, t.won), 0);
 class Component extends DCLogic {
@@ -499,7 +500,7 @@ class Component extends DCLogic {
     }));
     Object.values(S).forEach((s) => { s.best = best(s.k); s.pts = s.w + s.best; });
     const order = Object.values(S).sort((x, y) => (y.pts - x.pts) || (x.beat.includes(y.k) ? -1 : y.beat.includes(x.k) ? 1 : 0));
-    const sets = this.st('sets', SET);
+    const sets = this.st('sets', this.props.fromApp ? Object.assign({}, APP, SET) : SET);
     const editK = this.st('editK', this.props.editEggs || '');
     const draft = this.st('draft', null);
     const table = order.map((s, i) => {
@@ -515,13 +516,13 @@ class Component extends DCLogic {
       const close = () => this.setState({editK: '', draft: null});
       return {place: i + 1, placeInk: i === 0 ? '#ffd34d' : '#6b7489', name: p.name, i: p.name[0], c: p.c, you: !!p.you, pts: s.pts, ptsInk: i === 0 ? '#ffd34d' : '#eef1f7',
         wl: s.w + '–' + s.l, games: s.gw + '–' + s.gl, fainted: s.f, eggsWon: won, eggsHatched: hatched + ' hatched', pips: pips(s.best), bestLabel: s.best + ' of 5 combats won',
-        hatchSet: !!set, hatchInk: set ? '#ffc878' : '#a3acbf', hatchBy: set ? 'by ' + set.by : '', hatchTitle: set ? 'Set by ' + set.by + ', ' + set.when + '. The save counts ' + HATCHED[s.k] + '.' : 'Counted from the latest save',
+        hatchSet: !!set, hatchInk: set ? '#ffc878' : '#a3acbf', hatchBy: set ? (set.app ? 'from the app' : 'by ' + set.by) : '', hatchTitle: set ? (set.app ? 'Brought from the app, ' + set.when + '; a save uploaded after it takes over. The save counts ' + HATCHED[s.k] + '.' : 'Set by ' + set.by + ', ' + set.when + '. The save counts ' + HATCHED[s.k] + '.') : 'Counted from the latest save',
         admin, editing, editOpen: editing ? 'true' : 'false', editLabel: 'Set ' + p.name + "'s hatched eggs", penBg: editing ? '#283146' : 'transparent', penLine: editing ? '#5ad1f0' : '#44506d',
         edit: () => this.setState(editing ? {editK: '', draft: null} : {editK: s.k, draft: null}),
         draft: d, decOff: d <= 0, incOff: d >= won, decInk: d <= 0 ? '#44506d' : '#ffffff', incInk: d >= won ? '#44506d' : '#ffffff',
         dec: () => this.setState({draft: fix(d - 1)}), inc: () => this.setState({draft: fix(d + 1)}),
         type: (e) => this.setState({draft: fix(Number(e && e.target ? e.target.value : 0) || 0)}),
-        saveNote: set ? 'Set by ' + set.by + ', ' + set.when + ' · the save counts ' + HATCHED[s.k] : 'Counted from the latest save: ' + HATCHED[s.k],
+        saveNote: set ? (set.app ? 'Brought from the app, ' + set.when + ' · the save counts ' + HATCHED[s.k] : 'Set by ' + set.by + ', ' + set.when + ' · the save counts ' + HATCHED[s.k]) : 'Counted from the latest save: ' + HATCHED[s.k],
         cancel: close,
         reset: () => { const n = Object.assign({}, sets); delete n[s.k]; this.setState({sets: n, editK: '', draft: null}); },
         save: () => { const n = Object.assign({}, sets); if (d === HATCHED[s.k] && !set) { close(); return; } n[s.k] = {n: d, by: me.name, when: 'just now'}; this.setState({sets: n, editK: '', draft: null}); },
