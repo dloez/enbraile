@@ -21,26 +21,24 @@ An admin's snapshot move copies a round or cup team on a match without a result 
 
 **Touches:** `pkmn/site/api/_lib/overrides.ts`, `pkmn/site/api/_lib/teams.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
 
-## An admin enters a Pokémon League try and fixes a locked league team as the owner answers
+## An admin logs a player's try, changes a try's team and fixes a locked league team in place
 
-The Goal has an admin able to "enter and fix any of it (rounds, results, replays, standings, Pokémon League tries, eggs, every matchday team)" ([discovery → Goal](discovery.md#goal)). Two of those an admin cannot do today. `POST /api/series/<n>/league/tries` answers 403 to an admin (`api/_lib/league.ts`, the `notPlayer` refusal), and Edit opens a try without its team section ([The pkmn Site → League](../../pkmn/site/explanation/site.md#league), "Pokémon League tries"), so an admin can neither log a try for a player nor change the team a try was logged with. And a team page gives editing to its owner alone (`canEdit: mine && !locked && …`, `GET /api/teams/<id>` in `api/_lib/teams.ts`), so an admin fixes a locked matchday, round, cup or try team only by unlocking it for its owner to edit. Discovery settles that the player records a try and an admin edits or deletes any ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs), owner 2026-10-27); whether that is all the Goal's "enter and fix" means is not settled. Found by the mid-run gardener against the Goal, 2026-10-29.
+The Goal has an admin able to "enter and fix any of it (rounds, results, replays, standings, Pokémon League tries, eggs, every matchday team)" ([discovery → Goal](discovery.md#goal)). Today `POST /api/series/<n>/league/tries` answers 403 to an admin (`api/_lib/league.ts`, the `notPlayer` refusal), Edit opens a try without its team section ([The pkmn Site → League](../../pkmn/site/explanation/site.md#league), "Pokémon League tries"), and a team page gives editing to its owner alone (`canEdit: mine && !locked && …`, `GET /api/teams/<id>` in `api/_lib/teams.ts`), so an admin fixes a locked team only by unlocking it, which does nothing for an imported team whose player has no real account yet. The owner settled it: an admin logs a try on any player's behalf, changes a logged try's team, and edits a locked league team's members in place, each through the same checks as the player's own write, with who last fixed a team and when kept and shown, as the Eggs override is ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs), owner 2026-10-29). Found by the mid-run gardener against the Goal, 2026-10-29.
 
 **Do:**
-- [ ] Per the author's answers.
-- [ ] Its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions), and in [Team Builder](../../pkmn/site/explanation/team-builder.md#decisions) if a team's editing changes.
+- [ ] An admin logging a try for any player of the series: the log dialog's player picker for an admin, the route taking the player, the team picked from that player's teams or pasted, through the player's own checks.
+- [ ] An admin's Edit of a try with its team section: another team of the try's player or a paste, the new try team locked as logging locks it, the old one unlocked back into its owner's list.
+- [ ] An admin editing a locked league team's members on its page, through `PUT /api/teams/<id>`'s checks, the team staying locked; who last fixed it and when stored on the team (a migration, and the seed giving one fixed team) and shown on its page, as the Eggs override shows its own.
+- [ ] Its decisions in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions) and [Team Builder](../../pkmn/site/explanation/team-builder.md#decisions).
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, signed in as `admin` on series 1's imported league, each answered move goes through by page and route, and a player's own moves are unchanged.
+- Claude-run: `npm run gate`; through `verify-site`, in the browser since the dialog and the team page change: signed in as `admin` on the seed's Series 1, an admin logs a try for Blue with one of Blue's teams and with a paste, changes Red's try's team and finds the old one unlocked in Red's list, and fixes a member of a locked round team, which stays locked and shows the admin and the time; a player's own log, edit and team edit are unchanged, and a player still cannot edit a locked team.
 - Human-run: none.
-- Reuse: the try routes (`api/_lib/league.ts`) and the log dialog (`src/league/try-dialog.tsx`); the team page's editor and `PUT /api/teams/<id>` (`api/_lib/teams.ts`); `lockTryTeam`.
-- Neighbors: the Eggs cell's admin override, which records who set it and when.
+- Reuse: the try routes (`api/_lib/league.ts`) and the log dialog (`src/league/try-dialog.tsx`); the team page's editor and `PUT /api/teams/<id>` (`api/_lib/teams.ts`); `lockTryTeam`; the Eggs cell's admin override, which records who set it and when.
+- Neighbors: the unlock route, unchanged.
 - Forbidden: a control hidden in the browser only; an admin's write skipping a check the player's own write goes through.
 
-**Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/src/league/`, `pkmn/site/src/pages/team.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`, `docs/pkmn/site/how-to/verify-the-site.md`
-**Needs the author:**
-- Does an admin log a Pokémon League try on a player's behalf, or do tries stay the player's to log, an admin only editing and deleting them?
-- Does an admin change the team a logged try was played with?
-- Does an admin edit a locked league team's members themselves (an imported matchday team, a round, cup or try team), or is unlocking it for its owner to fix, as today, the fix?
+**Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/api/_lib/schema.ts`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `pkmn/site/shared/`, `pkmn/site/src/league/`, `pkmn/site/src/pages/team.tsx`, `pkmn/site/src/teams/`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`, `docs/pkmn/site/how-to/verify-the-site.md`
 
 ## Others' Pokémon League tries show from the milestone the owner names
 
