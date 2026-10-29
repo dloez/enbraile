@@ -196,6 +196,10 @@ async function cupOf(seriesId: string): Promise<LeagueCup | null> {
   const [held] = await db.select().from(cup).where(eq(cup.seriesId, seriesId));
   if (!held) return null;
   const { seeds, rows, draw } = await cupState(db, held.id);
+  const games = rows.length
+    ? await db.select({ matchId: leagueGame.matchId, winner: leagueGame.winnerId }).from(leagueGame).where(inArray(leagueGame.matchId, rows.map((r) => r.id)))
+    : [];
+  const won = (match: string | undefined, player: string | null) => games.filter((g) => g.matchId === match && g.winner === player).length;
   return {
     mode: held.mode,
     seeds,
@@ -212,6 +216,8 @@ async function cupOf(seriesId: string): Promise<LeagueCup | null> {
         gamesB: row?.gamesB ?? null,
         faintedA: row?.faintedA ?? null,
         faintedB: row?.faintedB ?? null,
+        wonA: won(row?.id, slot.a),
+        wonB: won(row?.id, slot.b),
       };
     }),
     group: draw.group,

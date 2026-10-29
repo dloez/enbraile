@@ -11,6 +11,7 @@ import { SCENE_LOOK, SceneArt } from "@/components/scene";
 import { TrainerAdmin } from "@/components/trainer-admin";
 import { UploadDialog } from "@/components/upload-dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { cupNow, seedOf } from "@/league/cup";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { playTime } from "@/lib/records";
@@ -18,7 +19,7 @@ import { downloadSnapshotZip } from "@/lib/snapshot-zip";
 import { cn } from "@/lib/utils";
 import { downloadLink } from "../../shared/games";
 import { lang, messages } from "../../shared/i18n";
-import { type LeaguePage, leaguePage, type LeagueRound, played, winnerOf } from "../../shared/league";
+import { type CupSlotView, type LeagueCup, type LeaguePage, leaguePage, type LeagueRound, played, winnerOf } from "../../shared/league";
 import { type SeriesPage as Series, seriesPage, type Trainer } from "../../shared/series";
 
 const t = messages({
@@ -55,6 +56,14 @@ const t = messages({
     allPlayed: "All played",
     vs: "vs",
     matchLabel: (a: string, b: string, score: string | null) => `${a} vs ${b}, ${score ?? "to play"}`,
+    finalStandings: "Final standings",
+    cup: "Cup",
+    done: "Done",
+    bracket: "Bracket",
+    champion: "Champion",
+    playing: "Playing",
+    finalScore: "Final score",
+    cupMatchLabel: (a: string, b: string, score: string, done: boolean) => `${a} vs ${b}, ${score}${done ? "" : ", playing"}`,
   },
   es: {
     failed: "Algo ha fallado",
@@ -89,6 +98,14 @@ const t = messages({
     allPlayed: "Todo jugado",
     vs: "vs",
     matchLabel: (a: string, b: string, score: string | null) => `${a} contra ${b}, ${score ?? "por jugar"}`,
+    finalStandings: "Clasificación final",
+    cup: "Copa",
+    done: "Terminada",
+    bracket: "Cuadro",
+    champion: "Campeón",
+    playing: "En juego",
+    finalScore: "Jugado",
+    cupMatchLabel: (a: string, b: string, score: string, done: boolean) => `${a} contra ${b}, ${score}${done ? "" : ", en juego"}`,
   },
 });
 
@@ -173,7 +190,9 @@ function LeagueSummary({ number }: { number: number }) {
         <div className="flex flex-col gap-2.5 rounded-[18px] border-3 bg-card px-4 pt-3.5 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
           <div className="flex items-baseline gap-2.5">
             <h3 className="m-0 font-heading text-[1.625rem] font-normal">{t.standings}</h3>
-            <span className="font-heading text-xl text-muted-foreground">{t.roundsOf(league.rounds.length, league.roundMilestones.length)}</span>
+            <span className="font-heading text-xl text-muted-foreground">
+              {league.cup ? t.finalStandings : t.roundsOf(league.rounds.length, league.roundMilestones.length)}
+            </span>
           </div>
           <div className="overflow-hidden rounded-xl border-3 bg-box">
             {league.standings.slice(0, SUMMARY_PLACES).map((row, index, shown) => {
@@ -202,9 +221,105 @@ function LeagueSummary({ number }: { number: number }) {
             })}
           </div>
         </div>
-        {current && <CurrentRound round={current} me={session?.user.id ?? null} nameOf={nameOf} />}
+        {league.cup ? (
+          <CupCard number={number} cup={league.cup} me={session?.user.id ?? null} nameOf={nameOf} />
+        ) : (
+          current && <CurrentRound round={current} me={session?.user.id ?? null} nameOf={nameOf} />
+        )}
       </div>
     </section>
+  );
+}
+
+function CupCard({ number, cup, me, nameOf }: { number: number; cup: LeagueCup; me: string | null; nameOf: (id: string) => string }) {
+  const { stage, slots } = cupNow(cup);
+  const left = slots.filter((slot) => slot.gamesA === null).length;
+  const champion = cup.champion ? nameOf(cup.champion) : null;
+  return (
+    <div className="flex flex-col gap-2.5 rounded-[18px] border-3 border-yellow bg-card px-3.5 pt-3.5 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
+      <div className="flex flex-wrap items-baseline gap-x-2 sm:gap-x-2.5">
+        <PixelIcon name="cup" className="size-4.5 self-center text-yellow sm:size-5" />
+        <h3 className="m-0 font-heading text-2xl font-normal sm:text-[1.625rem]">{t.cup}</h3>
+        <span className="font-heading text-xl text-muted-foreground">{stage}</span>
+        <span className={cn("font-heading text-xl", left ? "text-warning" : "text-green")}>{left ? t.toPlay(left) : t.done}</span>
+        <Link
+          to="/series/$number/league"
+          params={{ number: String(number) }}
+          search={{ view: "cup" }}
+          className="-my-2.5 ml-auto flex min-h-11 items-center font-heading text-xl text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {t.bracket}
+        </Link>
+      </div>
+      {champion && (
+        <div className="flex min-h-15 items-center gap-3 rounded-xl border-3 border-cup-rim bg-cup-fill px-3 py-2 sm:min-h-16 sm:gap-3.5 sm:px-4">
+          <PlayerBadge name={champion} colour={playerColour(champion)} size="sm" />
+          <span className="flex flex-col leading-none">
+            <span className="font-heading text-[1.0625rem] text-yellow sm:text-lg">{t.champion}</span>
+            <span className="font-heading text-[1.75rem] sm:text-[1.875rem]">{champion}</span>
+          </span>
+        </div>
+      )}
+      {slots.map((slot) => (
+        <CupTile key={slot.key} number={number} cup={cup} slot={slot} me={me} nameOf={nameOf} />
+      ))}
+    </div>
+  );
+}
+
+function CupTile({ number, cup, slot, me, nameOf }: { number: number; cup: LeagueCup; slot: CupSlotView; me: string | null; nameOf: (id: string) => string }) {
+  if (!slot.a || !slot.b) return null;
+  const done = slot.gamesA !== null;
+  const result = { a: slot.a, b: slot.b, gamesA: slot.gamesA, gamesB: slot.gamesB, faintedA: slot.faintedA, faintedB: slot.faintedB };
+  const winner = winnerOf(result);
+  const score = done ? `${slot.gamesA}–${slot.gamesB}` : `${slot.wonA}–${slot.wonB}`;
+  const sides = [
+    { id: slot.a, end: false },
+    { id: slot.b, end: true },
+  ];
+  const [a, b] = sides.map((side) => {
+    const name = nameOf(side.id);
+    return (
+      <span
+        aria-hidden="true"
+        className={cn("flex min-w-0 items-center gap-1.5 sm:gap-2", side.end && "flex-row-reverse", winner && winner !== side.id && "opacity-55")}
+      >
+        <span className={cn("font-heading text-base text-faint sm:w-4 sm:text-[1.0625rem]", side.end && "sm:text-right")}>{seedOf(cup, side.id)}</span>
+        <PlayerBadge name={name} colour={playerColour(name)} size="cell" />
+        <span className={cn("truncate font-heading text-[1.3125rem] sm:text-[1.4375rem]", winner === side.id && "text-yellow")}>{name}</span>
+      </span>
+    );
+  });
+  const frame = cn(
+    "grid min-h-13 grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] items-center gap-1.5 rounded-xl border-3 bg-box px-2.5 text-foreground sm:grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)] sm:gap-2 sm:px-3",
+    done ? "border-solid border-border" : cn("border-dashed", slot.a === me || slot.b === me ? "border-trophy-rim" : "border-cell-hi"),
+  );
+  const body = (
+    <>
+      {a}
+      <span aria-hidden="true" className="flex flex-col items-center leading-none">
+        <span className="font-heading text-[1.375rem] sm:text-2xl">{score}</span>
+        <span className={cn("font-heading text-[0.8125rem] whitespace-nowrap sm:text-sm", done ? "text-faint" : "text-warning")}>{done ? t.finalScore : t.playing}</span>
+      </span>
+      {b}
+    </>
+  );
+  const label = t.cupMatchLabel(nameOf(slot.a), nameOf(slot.b), score, done);
+  if (!slot.match)
+    return (
+      <div role="group" aria-label={label} className={frame}>
+        {body}
+      </div>
+    );
+  return (
+    <Link
+      to="/series/$number/league/matches/$id"
+      params={{ number: String(number), id: slot.match }}
+      aria-label={label}
+      className={cn(frame, "outline-none hover:border-primary focus-visible:ring-3 focus-visible:ring-ring/50")}
+    >
+      {body}
+    </Link>
   );
 }
 

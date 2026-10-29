@@ -2,22 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## The series page's League summary shows the cup once it starts
-
-Discovery's series page summary holds "the standings' top, the current round, the cup once it starts" ([discovery → Surfaces](discovery.md#surfaces)); the landed `LeagueSummary` (`src/pages/series.tsx`) shows the first two. The third is signed off (2026-10-29) as the Cup card that takes the current round's place, drawn in `series-cup.dc.html`, `series-cup-champion.dc.html` and `series-phone-cup.dc.html` (the `cup` tweak of `series.dc.html` and `series-phone.dc.html`).
-
-**Do:**
-- [ ] The cup in the series page's League summary, as the signed-off boards draw it: the stage's matches, what is left, the Bracket link and, once the final is played, the champion.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with series 1's cup started, the series page's League section shows it in place of the round and links to the Cup view; with its final played, the champion; before it starts, it shows none.
-- Human-run: none.
-- Reuse: the cup's state (`cupState` in `api/_lib/cup.ts`) as the league page's Cup view reads it; `LeagueSummary` (`src/pages/series.tsx`).
-- Neighbors: the league page's Cup view.
-- Forbidden: none.
-
-**Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
-
 ## An opened round gives each player their team once their snapshot exists
 
 A round, once an admin opens it, in either mode, gives each player a team sourced from their snapshot at its milestone, sized by the league's rules, as soon as that snapshot exists; until then their team list names the milestone to reach and upload. Locked and unlocked as a cup team ([discovery → Team Locking](discovery.md#team-locking)).

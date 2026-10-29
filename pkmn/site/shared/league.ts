@@ -67,6 +67,8 @@ export const cupSlot = z.object({
   gamesB: z.int().nullable(),
   faintedA: z.int().nullable(),
   faintedB: z.int().nullable(),
+  wonA: z.int(),
+  wonB: z.int(),
 });
 
 export const groupRow = z.object({

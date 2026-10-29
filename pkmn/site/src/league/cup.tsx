@@ -130,14 +130,31 @@ export function CupView({ league, nameOf, onChange }: Named & { onChange: (leagu
   );
 }
 
+function openSlot(cup: LeagueCup): CupSlotView | undefined {
+  return cup.slots.find((slot) => !(slot.a && slot.b && slot.gamesA !== null));
+}
+
+function stageKey(slot: CupSlotView): string {
+  return slot.kind === "bracket" ? `b${slot.left}` : slot.kind;
+}
+
 export function cupStatus(cup: LeagueCup): string {
   const group = cupShape(cup.seeds.length).half;
-  const open = cup.slots.find((slot) => !(slot.a && slot.b && slot.gamesA !== null));
+  const open = openSlot(cup);
   if (cup.champion || !open) return t.champion;
   return stageName({ kind: open.kind, left: open.left, group });
 }
 
-function seedOf(cup: LeagueCup, player: string | null): number | null {
+export function cupNow(cup: LeagueCup): { stage: string; slots: CupSlotView[] } {
+  const at = openSlot(cup) ?? cup.slots.at(-1)!;
+  const key = stageKey(at);
+  return {
+    stage: stageName({ kind: at.kind, left: at.left, group: cupShape(cup.seeds.length).half }),
+    slots: cup.slots.filter((slot) => stageKey(slot) === key),
+  };
+}
+
+export function seedOf(cup: LeagueCup, player: string | null): number | null {
   if (!player) return null;
   const at = cup.seeds.indexOf(player);
   return at < 0 ? null : at + 1;
@@ -321,7 +338,7 @@ function Flow({ league, cup, nameOf }: Named & { cup: LeagueCup }) {
   const group = cupShape(cup.seeds.length).half;
   const stages: { key: string; stage: Stage; slots: CupSlotView[] }[] = [];
   for (const slot of cup.slots) {
-    const key = slot.kind === "bracket" ? `b${slot.left}` : slot.kind;
+    const key = stageKey(slot);
     const held = stages.find((s) => s.key === key);
     if (held) held.slots.push(slot);
     else stages.push({ key, stage: { kind: slot.kind, left: slot.left, group }, slots: [slot] });
