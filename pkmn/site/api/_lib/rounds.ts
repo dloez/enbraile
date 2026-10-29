@@ -86,6 +86,7 @@ export async function giveRoundTeams(tx: Tx, seriesId: string): Promise<void> {
       id: team.id,
       matchId: team.matchId,
       ownerId: team.ownerId,
+      anyPokemon: team.anyPokemon,
       sources: sql<number>`(select count(*) from ${teamSource} where ${teamSource.teamId} = ${team.id})`.mapWith(Number),
     })
     .from(team)
@@ -102,7 +103,7 @@ export async function giveRoundTeams(tx: Tx, seriesId: string): Promise<void> {
       if (!sheet) continue;
       const have = made.find((one) => one.matchId === match.id && one.ownerId === owner);
       if (have) {
-        if (have.sources === 0) await tx.insert(teamSource).values({ teamId: have.id, snapshotId: sheet.id, position: 0 });
+        if (have.sources === 0 && !have.anyPokemon) await tx.insert(teamSource).values({ teamId: have.id, snapshotId: sheet.id, position: 0 });
         continue;
       }
       await insertTeam(tx, {

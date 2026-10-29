@@ -2,23 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Series 1's game teams come across from their replays, locked to their rounds
-
-Each imported match gets one team per side, built from its games' replays together: the six brought with every move, item and ability any of them revealed, sourced "Any Pokémon" and locked to the player's round; a match with no replay (round 5's Dloez v Vicky, and Javi's side of the unplayed Elfo v Javi) takes the player's matchday paste instead, the hidden one included ([discovery → Results](discovery.md#results)). Placed here, above the later series' entries, since it brings series 1's league across.
-
-**Do:**
-- [ ] Extend the import: one team per side of a match from its replays' logs together (`|poke|` and what each battle revealed; `readLog` reads only the players, winner and faints today), the matchday paste for a match with no replay; show them in the match page's team columns.
-- [ ] Keep Javi's imported paste on the unplayed Elfo v Javi as it came. Today the round teams' pass (`giveRoundTeams` in `api/_lib/rounds.ts`, landed in ed19340) gives the round's snapshot as a source to every team, on a match still to play, that has none, an Any Pokémon team included; make it leave a team that allows Any Pokémon alone. The import also writes rounds without running that pass, though every other writer of a round's matches runs it (The pkmn Site → League, Round teams), so make it run the pass after writing them. Found by the gardener, 2026-10-29.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, every played series 1 match shows both sides' teams, locked, one per side; a match with replays shows the six of their `|poke|` lines and every move they revealed; round 5's Dloez v Vicky shows the pastes' members; after the import and an upload to series 1, Javi's Elfo v Javi team still has no snapshot source (`select * from team_source` holds none for it).
-- Human-run: the owner reads a few matches against their replays.
-- Reuse: the replays' games the import already makes (`scripts/league-import.ts`); Showdown paste-in (`readShowdownTeam` in `src/teams/showdown.ts`) for the pastes; the match page's team columns (`src/pages/league-match.tsx`).
-- Neighbors: the Pokémon League tries' pasted teams.
-- Forbidden: a second Showdown paste parser; a paste overriding a replay.
-
-**Touches:** `pkmn/site/scripts/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## The cup starts only with two, four or six entrants
 
 The rulebook draws the cup for six and a plain knockout for four or two, and nothing bigger ([Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament), owner 2026-10-29). The cup's code starts any even size: powers of two as a plain knockout and every other size through the pattern "The cup's build choices" worked out ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
