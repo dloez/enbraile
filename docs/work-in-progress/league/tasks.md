@@ -8,15 +8,105 @@ Each imported match gets one team per side, built from its games' replays togeth
 
 **Do:**
 - [ ] Extend the import: one team per side of a match from its replays' logs together (`|poke|` and what each battle revealed; `readLog` reads only the players, winner and faints today), the matchday paste for a match with no replay; show them in the match page's team columns.
+- [ ] Keep Javi's imported paste on the unplayed Elfo v Javi as it came. Today the round teams' pass (`giveRoundTeams` in `api/_lib/rounds.ts`, landed in ed19340) gives the round's snapshot as a source to every team, on a match still to play, that has none, an Any Pokémon team included; make it leave a team that allows Any Pokémon alone. The import also writes rounds without running that pass, though every other writer of a round's matches runs it (The pkmn Site → League, Round teams), so make it run the pass after writing them. Found by the gardener, 2026-10-29.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, every played series 1 match shows both sides' teams, locked, one per side; a match with replays shows the six of their `|poke|` lines and every move they revealed; round 5's Dloez v Vicky shows the pastes' members.
+- Claude-run: `npm run gate`; through `verify-site`, every played series 1 match shows both sides' teams, locked, one per side; a match with replays shows the six of their `|poke|` lines and every move they revealed; round 5's Dloez v Vicky shows the pastes' members; after the import and an upload to series 1, Javi's Elfo v Javi team still has no snapshot source (`select * from team_source` holds none for it).
 - Human-run: the owner reads a few matches against their replays.
 - Reuse: the replays' games the import already makes (`scripts/league-import.ts`); Showdown paste-in (`readShowdownTeam` in `src/teams/showdown.ts`) for the pastes; the match page's team columns (`src/pages/league-match.tsx`).
 - Neighbors: the Pokémon League tries' pasted teams.
 - Forbidden: a second Showdown paste parser; a paste overriding a replay.
 
 **Touches:** `pkmn/site/scripts/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
+
+## The cup starts only with two, four or six entrants
+
+The rulebook draws the cup for six and a plain knockout for four or two, and nothing bigger ([Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament), owner 2026-10-29). The cup's code starts any even size: powers of two as a plain knockout and every other size through the pattern "The cup's build choices" worked out ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
+
+**Do:**
+- [ ] The largest cup named in `shared/league.ts` beside `CUP_MIN`; `startCup` and the start panel refuse more entrants, the refusal in English and Spanish.
+- [ ] "The cup's build choices" rewritten to drop the pattern for ten, twelve and fourteen.
+- [ ] The League section's own cup paragraphs in `docs/pkmn/site/explanation/site.md` rewritten to the sizes that start: **The cup** ("an even number of two or more", "A power of two of entrants (2, 4, 8, …)") and the Cup view's ("ten, twelve or fourteen entrants"). Found by the gardener, 2026-10-29.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, an admin starting a cup with eight entrants is refused, by page and route; six, four and two still start.
+- Human-run: none.
+- Reuse: `CUP_MIN`, `cupShape` and `startCup` (`shared/league.ts`, `api/_lib/cup.ts`); the start panel's refusals.
+- Neighbors: the cup's bracket (`cupSlots`).
+- Forbidden: a cup size written as a number outside `shared/league.ts`.
+
+**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/cup.ts`, `pkmn/site/api/_lib/league.ts`, `pkmn/site/src/`, `docs/pkmn/site/explanation/site.md`
+
+## Rerunning the league import leaves an admin's hatched count alone
+
+Each run of `npm run league-import` writes every player's hatched count from the app's dump, an admin's own setting included (`scripts/league-import.ts`, the `save` upsert); a rerun leaves an admin's setting alone, and a count still from the app takes the dump's again, timed by the rerun ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs), owner 2026-10-29).
+
+**Do:**
+- [ ] The import's hatched upsert skips a player whose count an admin set.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, run the import, set one player's count as the admin, rerun it: that player keeps the admin's count and who set it, and the others read the app's.
+- Human-run: none.
+- Reuse: the import's `save` upsert; `hatched_set_by` (`api/_lib/schema.ts`).
+- Neighbors: the admin's Eggs override (`api/_lib/overrides.ts`).
+- Forbidden: none.
+
+**Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
+
+## The Teams tab counts the reader's league teams still to build
+
+The signed-off boards draw the header's Teams tab with a yellow count, titled "1 team to build" (`series.dc.html`, `series-phone.dc.html`, `teams-list.dc.html`, `teams-list-phone.dc.html`, `player-profile.dc.html`, `player-profile-phone.dc.html`, `match-phone.dc.html`). Discovery says a round or cup team is flagged in the Teams tab until it is done ([discovery → Team Locking](discovery.md#team-locking), [Surfaces](discovery.md#surfaces)). The header's `TEAMS_TAB` (`src/components/site-header.tsx`) has no count, and no entry has aimed at it since the mid-run review moved "the Teams tab's flag" onto the team list's To build mark (99c3302). Series 1's players will need it to notice their cup teams. Found by the gardener, 2026-10-29.
+
+**Do:**
+- [ ] A count of the signed-in player's own round and cup teams in state `todo` (`teamState` in `shared/team.ts`), read by the header.
+- [ ] The count on the Teams tab, desktop and phone, as the boards draw it, titled in English and Spanish, with none at zero, for an admin or for a signed-out reader.
+- [ ] The header's count in [Site Design System](../../pkmn/site/reference/design-system.md), and the route, if one is added, in Team Builder's API list.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, with Red's seeded "Cup v Blue" unlocked by `admin` (as the verify how-to does), `red` sees 1 on the Teams tab on desktop and at 390 wide; locking it again drops the count; `blue` with both final teams locked, and `admin`, see none.
+- Human-run: none.
+- Reuse: the team list's state (`teamState` in `shared/team.ts`, `GET /api/teams` in `api/_lib/teams.ts`); the header's tabs (`TabLink`, `PhoneMenu` in `src/components/site-header.tsx`); the `yellow` and `ink` tokens.
+- Neighbors: the header's own read of the running series (`useRunningSeries` in `src/components/site-header.tsx`).
+- Forbidden: raw colours in the component; counting another player's teams; a count that includes a round match still waiting on its snapshot, which has no team to build.
+
+**Touches:** `pkmn/site/src/components/site-header.tsx`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/team.ts`, `docs/pkmn/site/reference/design-system.md`, `docs/pkmn/site/explanation/team-builder.md`
+
+## What becomes of a cup game's bans and picks when what they rest on changes?
+
+A ban is stored as a place in the other player's locked team of eight, and a six as places in the player's own (`league_game_side`; The pkmn Site → Decisions, the bans and picks' build choices). Whether a ban is barred follows from who won the game before (`barredBan` in `shared/league.ts`). Two admin moves change what these rest on and leave them standing:
+- `fixGame` (`api/_lib/match.ts`) rewriting an earlier game's winner after the next game's bans are in. That can leave a ban the rule now bars, or keep barring one it no longer should.
+- `POST /api/teams/<id>/unlock` (`api/_lib/teams.ts`) on a cup team after bans or sixes are in. Its owner may then move or swap the Pokémon that a stored place points at.
+
+Only a pairing that `settleCup` changes clears them (`api/_lib/cup.ts`). Series 1's cup is open, so it has bans. Found by the gardener, 2026-10-29.
+
+**Do:**
+- [ ] Once answered, the chosen handling in the match module and the team unlock, with its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, from the seed's Series 2 final at game 2's bans, the answered behaviour after an admin fixes game 1's winner and after an admin unlocks a final team.
+- Human-run: none.
+- Reuse: `fixGame` and `banIn` (`api/_lib/match.ts`); `barredBan` (`shared/league.ts`); the unlock route (`api/_lib/teams.ts`).
+- Neighbors: `settleCup`'s clearing of a changed match's sides (`api/_lib/cup.ts`).
+- Forbidden: settling either case without the owner's answer.
+
+**Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/league.ts`, `docs/pkmn/site/explanation/site.md`
+**Needs the author:** when an admin fixes a cup game's winner after the next game's bans are in, do that game's bans and sixes stand, or are they cleared so it is banned again? And when an admin unlocks a cup team whose match already has bans or sixes, are they cleared, kept as places, or is the unlock refused while they stand?
+
+## The player profile shows each series' league record
+
+The profile's league placeholder becomes, per series, the player's place, points, W–L, their best Pokémon League try's pips and how far they went in the cup, as `player-profile.dc.html` and `player-profile-phone.dc.html` draw it ([discovery → Surfaces](discovery.md#surfaces)).
+
+**Do:**
+- [ ] Extend `GET /api/profiles/<player>` (`api/_lib/profiles.ts`, `profilePage` in `shared/profile.ts`) and the profile.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, a series 1 player's profile matches the standings, their best try and the cup.
+- Human-run: none.
+- Reuse: `standings` and `bestTries` in `shared/league.ts`, fed as the league read (`leagueOf` in `api/_lib/league.ts`) feeds them.
+- Neighbors: the profile's totals (`src/pages/player-profile.tsx`).
+- Forbidden: working the standings out a second way.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/profile.ts`, `pkmn/site/src/pages/player-profile.tsx`, `docs/pkmn/site/`
 
 ## A closed round hides a player's pair until they lock their team
 
@@ -68,21 +158,39 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
 **After:** Players see others' saves only up to their own round
 
-## The player profile shows each series' league record
+## A round team's lock counts only the Pokémon its player may field
 
-The profile's league placeholder becomes, per series, the player's place, points, W–L, their best Pokémon League try's pips and how far they went in the cup, as `player-profile.dc.html` and `player-profile-phone.dc.html` draw it ([discovery → Surfaces](discovery.md#surfaces)).
+A round team may lock with fewer than six when its snapshot holds fewer living Pokémon (`lockNeeds` in `shared/league.ts`). The count it takes is every Pokémon in the snapshot's `pokemon`, legendaries and mythicals included (`livingOn` in `api/_lib/teams.ts`, `page.sources[0]?.snapshot.pokemon.length` in `src/pages/team.tsx`). But the rulebook bars legendaries and mythicals from every pokepaste ([Series 1 Rules → Rules in Every Battle](../../pkmn/series/1/reference/rules.md#rules-in-every-battle)) and lets a player with fewer alive bring what they have ([The League](../../pkmn/series/1/reference/rules.md#the-league)). So a player with five usable Pokémon and a legendary cannot lock without fielding the legendary. Found by the round teams' validator, 2026-10-29.
 
 **Do:**
-- [ ] Extend `GET /api/profiles/<player>` (`api/_lib/profiles.ts`, `profilePage` in `shared/profile.ts`) and the profile.
+- [ ] `lockNeeds` fed the count of the snapshot's living Pokémon that are neither legendary nor mythical, by Showdown's tags (Restricted Legendary, Sub-Legendary, Mythical), on the lock route and on the team page alike.
+- [ ] The round teams' build choice and the lock route's refusal in the site docs say so.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, a series 1 player's profile matches the standings, their best try and the cup.
+- Claude-run: `npm run gate`; through `verify-site`, a round team on a snapshot with fewer than six usable Pokémon and a legendary locks with just the usable ones, by page and route; "Fill <n> slots" names that count; a cup team still needs all eight.
 - Human-run: none.
-- Reuse: `standings` and `bestTries` in `shared/league.ts`, fed as the league read (`leagueOf` in `api/_lib/league.ts`) feeds them.
-- Neighbors: the profile's totals (`src/pages/player-profile.tsx`).
-- Forbidden: working the standings out a second way.
+- Reuse: `lockNeeds` (`shared/league.ts`); the species tags as `src/teams/dex.ts` reads them, through `dexFor` (`shared/dex.ts`), which the API can load.
+- Neighbors: the team pool's no-legendaries rule (`src/teams/dex.ts`).
+- Forbidden: a second count worked out apart from `lockNeeds`; the rule written outside `shared/league.ts`.
 
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/profile.ts`, `pkmn/site/src/pages/player-profile.tsx`, `docs/pkmn/site/`
+**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/src/pages/team.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
+
+## What becomes of a league team whose snapshot an admin moves off its milestone?
+
+A round team is sourced from its player's snapshot at the round's milestone, and a cup team from their Tournament snapshot ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). The passes that make them (`giveRoundTeams` in `api/_lib/rounds.ts`, `giveCupTeams` in `api/_lib/cup.ts`) give a source only to a team that has none. So when an admin moves that snapshot to another milestone (`POST …/trainers/<player>/snapshots/<milestone>/move`, `api/_lib/overrides.ts`), the team keeps the moved snapshot as its source, and a snapshot uploaded at the right milestone afterwards never becomes it. Found by the round teams' validator, 2026-10-29.
+
+**Do:**
+- [ ] Once answered, both passes follow the answer on an admin's move and on an upload, with its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, an admin moves a player's round snapshot to another milestone and the player uploads a new one at the round's milestone: their round team and cup team show the answered source.
+- Human-run: none.
+- Reuse: `giveRoundTeams` and `giveCupTeams`; the snapshot move (`api/_lib/overrides.ts`).
+- Neighbors: the cup pass's deletion of a team moved out of its match (`giveCupTeams`).
+- Forbidden: settling it without the owner's answer; a team pointing at a snapshot that does not exist.
+
+**Touches:** `pkmn/site/api/_lib/rounds.ts`, `pkmn/site/api/_lib/cup.ts`, `docs/pkmn/site/explanation/site.md`
+**Needs the author:** when an admin moves a round or cup team's snapshot off its milestone, does the team keep it, move to whichever snapshot is now at the milestone (dropping the members picked from the old one), or go back to waiting on the save until one is there?
 
 ## League refusal messages read their numbers from `shared/league.ts`
 
@@ -90,45 +198,13 @@ The league's refusal messages write the rules' numbers as text ("fainted from 0 
 
 **Do:**
 - [ ] Build those messages from `FAINTED_PER_GAME`, `MATCH_GAMES`, `LEAGUE_COMBATS`, `PARTY_SIZE` and `GAMES_TO_WIN`.
+- [ ] The cup's ban and pick refusals that landed since (84ac5ff) too: "one of the other's eight" / "uno de los ocho del otro" (`badBan`) from `CUP_TEAM_SIZE`, and "Your six for this game are in" / "Tus seis para esta partida ya están" (`picked`) from `CUP_BROUGHT`, in `api/_lib/league.ts`. Found by the gardener, 2026-10-29.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; `grep` finds none of those literals in the messages; through `verify-site`, an admin's bad game and a bad try still show their refusals in English and Spanish.
+- Claude-run: `npm run gate`; `grep` finds none of those literals in the messages, the cup's "eight" and "six" included; through `verify-site`, an admin's bad game and a bad try still show their refusals in English and Spanish, and so do a cup ban sent twice and a six sent twice.
 - Human-run: none.
 - Reuse: the constants in `shared/league.ts`.
 - Neighbors: the round routes' messages (`api/_lib/rounds.ts`).
 - Forbidden: a rule number written into a message.
 
 **Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/src/pages/league-match.tsx`
-
-## The cup starts only with two, four or six entrants
-
-The rulebook draws the cup for six and a plain knockout for four or two, and nothing bigger ([Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament), owner 2026-10-29). The cup's code starts any even size: powers of two as a plain knockout and every other size through the pattern "The cup's build choices" worked out ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
-
-**Do:**
-- [ ] The largest cup named in `shared/league.ts` beside `CUP_MIN`; `startCup` and the start panel refuse more entrants, the refusal in English and Spanish.
-- [ ] "The cup's build choices" rewritten to drop the pattern for ten, twelve and fourteen.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, an admin starting a cup with eight entrants is refused, by page and route; six, four and two still start.
-- Human-run: none.
-- Reuse: `CUP_MIN`, `cupShape` and `startCup` (`shared/league.ts`, `api/_lib/cup.ts`); the start panel's refusals.
-- Neighbors: the cup's bracket (`cupSlots`).
-- Forbidden: a cup size written as a number outside `shared/league.ts`.
-
-**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/cup.ts`, `pkmn/site/src/`, `docs/pkmn/site/explanation/site.md`
-
-## Rerunning the league import leaves an admin's hatched count alone
-
-Each run of `npm run league-import` writes every player's hatched count from the app's dump, an admin's own setting included (`scripts/league-import.ts`, the `save` upsert); a rerun leaves an admin's setting alone, and a count still from the app takes the dump's again, timed by the rerun ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs), owner 2026-10-29).
-
-**Do:**
-- [ ] The import's hatched upsert skips a player whose count an admin set.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, run the import, set one player's count as the admin, rerun it: that player keeps the admin's count and who set it, and the others read the app's.
-- Human-run: none.
-- Reuse: the import's `save` upsert; `hatched_set_by` (`api/_lib/schema.ts`).
-- Neighbors: the admin's Eggs override (`api/_lib/overrides.ts`).
-- Forbidden: none.
-
-**Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
