@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## The standings count eggs won and hatched
-
-Eggs won from the rulebook (league wins, the best try's combats), hatched counted from each player's latest snapshot, with an admin override that keeps who set it and when ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)). The app's hatched counts come across in [their own entry](#series-1s-hatched-counts-come-across-from-the-app).
-
-**Do:**
-- [ ] Eggs won worked out with the standings, from egg sources named in `shared/league.ts`.
-- [ ] Count hatched Pokémon from the snapshot (`obtained.hatchedAt`, living and fainted).
-- [ ] The override, its in-place editor on the Eggs cell, and the eggs columns, as the signed-off boards draw them (`league-eggs.dc.html`, `league-eggs-phone.dc.html`, `league.dc.html`, `league-phone.dc.html`).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, a seeded snapshot with hatched Pokémon gives its count, an admin override wins over it and shows its source, and Use the save's count clears it.
-- Human-run: the owner reads series 1's eggs won against the rulebook.
-- Reuse: the site's admin overrides (`api/_lib/overrides.ts`, The pkmn Site → Admin overrides); `standings` and `bestTries` in `shared/league.ts`.
-- Neighbors: the snapshot fainted count's override.
-- Forbidden: eggs for cup wins.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/seed.ts`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## Series 1's hatched counts come across from the app
 
 The import brings each player's hatched count as the app holds it (Vicky 9, Javi 9, Dloez 8, Elfo 2, Inop 0, Tole 0) as an override on the Eggs cell that gives way by itself to the count of a snapshot the player uploads after the import, unlike an admin's own setting ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)).
@@ -35,7 +17,6 @@ The import brings each player's hatched count as the app holds it (Vicky 9, Javi
 - Forbidden: none.
 
 **Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/`
-**After:** The standings count eggs won and hatched
 
 ## An admin runs the cup from its bracket to its champion
 

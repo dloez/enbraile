@@ -169,12 +169,16 @@ export const save = pgTable(
     progressId: text("progress_id").references(() => milestone.id, { onDelete: "set null" }),
     progressSetBy: text("progress_set_by").references(() => user.id, { onDelete: "restrict" }),
     progressSetAt: timestamp("progress_set_at"),
+    hatchedSet: integer("hatched_set"),
+    hatchedSetBy: text("hatched_set_by").references(() => user.id, { onDelete: "restrict" }),
+    hatchedSetAt: timestamp("hatched_set_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
     unique("save_series_user_unique").on(table.seriesId, table.userId),
     index("save_user_id_idx").on(table.userId),
     check("save_progress_source", sql`${table.progressId} IS NULL OR (${table.progressSetBy} IS NOT NULL AND ${table.progressSetAt} IS NOT NULL)`),
+    check("save_hatched_source", sql`${table.hatchedSet} IS NULL OR (${table.hatchedSetBy} IS NOT NULL AND ${table.hatchedSetAt} IS NOT NULL)`),
   ],
 );
 

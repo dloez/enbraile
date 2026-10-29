@@ -1,4 +1,5 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { type Context, Hono } from "hono";
 import {
   bestTries,
@@ -6,6 +7,7 @@ import {
   fellProblem,
   type GameInput,
   gameInput,
+  type HatchedEggs,
   type LeaguePage,
   type LeagueTry,
   type MatchPage,
@@ -26,7 +28,7 @@ import { db } from "./db.js";
 import { says } from "./i18n.js";
 import { fixGame, type Move, recordGame, type Refusal } from "./match.js";
 import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
-import { leagueGame, leagueMatch, leagueRound, leagueTry, milestone, seriesPlayer, team, user } from "./schema.js";
+import { leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, user } from "./schema.js";
 import { findShown, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 import { insertTeam } from "./teams.js";
 
@@ -103,6 +105,37 @@ const t = says({
 
 export const league = new Hono();
 
+const setter = alias(user, "setter");
+
+const hatchedIn = (list: "pokemon" | "fainted") =>
+  sql`(select count(*) from jsonb_array_elements(${snapshot.data}->${sql.raw(`'${list}'`)}) as mon where jsonb_typeof(mon->'details'->'obtained'->'hatchedAt') = 'number')`;
+
+async function hatchedOf(seriesId: string, players: string[]): Promise<HatchedEggs[]> {
+  if (players.length === 0) return [];
+  const saved = await db
+    .selectDistinctOn([save.userId], { player: save.userId, count: sql<number>`${hatchedIn("pokemon")} + ${hatchedIn("fainted")}`.mapWith(Number) })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .where(and(eq(save.seriesId, seriesId), inArray(save.userId, players)))
+    .orderBy(save.userId, desc(milestone.position));
+  const set = await db
+    .select({ player: save.userId, count: save.hatchedSet, by: setter.name, at: save.hatchedSetAt })
+    .from(save)
+    .innerJoin(setter, eq(setter.id, save.hatchedSetBy))
+    .where(and(eq(save.seriesId, seriesId), inArray(save.userId, players)));
+  return players.map((player) => {
+    const fromSave = saved.find((row) => row.player === player)?.count ?? null;
+    const hand = set.find((row) => row.player === player && row.count !== null && row.at !== null);
+    return {
+      player,
+      count: hand?.count ?? fromSave ?? 0,
+      saved: fromSave,
+      set: hand ? { by: hand.by, at: hand.at!.toISOString() } : null,
+    };
+  });
+}
+
 async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
   const roundMilestones = await db
     .select({ id: milestone.id, name: milestone.name })
@@ -177,6 +210,7 @@ async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
       row.id,
     ),
     tries: listed,
+    hatched: await hatchedOf(row.id, players.map((p) => p.id)),
     admin: !!reader.admin,
   };
 }

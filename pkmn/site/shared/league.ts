@@ -15,6 +15,10 @@ export const GAMES_TO_WIN = 2;
 
 export const FAINTED_PER_GAME = 6;
 
+export const EGGS_PER_WIN = 1;
+
+export const EGGS_PER_COMBAT = 1;
+
 export const LEAGUE_MODES = ["open", "closed"] as const;
 
 export const leagueMode = z.enum(LEAGUE_MODES);
@@ -50,6 +54,7 @@ export const standing = z.object({
   gamesLost: z.int(),
   fainted: z.int(),
   best: z.int().nullable(),
+  eggsWon: z.int(),
   tie: z.object({ beat: z.array(z.string()), lostTo: z.array(z.string()) }).nullable(),
 });
 
@@ -66,6 +71,15 @@ export const leagueTry = z.object({
   at: z.string(),
 });
 
+export const hatchedEggs = z.object({
+  player: z.string(),
+  count: z.int(),
+  saved: z.int().nullable(),
+  set: z.object({ by: z.string(), at: z.string() }).nullable(),
+});
+
+export const hatchedInput = z.object({ count: z.int().min(0).max(999) });
+
 export const leaguePage = z.object({
   number: z.int(),
   name: z.string(),
@@ -75,6 +89,7 @@ export const leaguePage = z.object({
   next: z.object({ number: z.int(), milestone: z.string() }).nullable(),
   standings: z.array(standing),
   tries: z.array(leagueTry),
+  hatched: z.array(hatchedEggs),
   admin: z.boolean(),
 });
 
@@ -139,6 +154,7 @@ export type GameInput = z.infer<typeof gameInput>;
 export type MatchPage = z.infer<typeof matchPage>;
 export type TryMember = z.infer<typeof tryMember>;
 export type LeagueTry = z.infer<typeof leagueTry>;
+export type HatchedEggs = z.infer<typeof hatchedEggs>;
 export type TryEdit = z.infer<typeof tryEdit>;
 export type TryInput = z.infer<typeof tryInput>;
 
@@ -272,6 +288,7 @@ export function standings(players: string[], results: Result[], best: ReadonlyMa
       gamesLost: row.gamesLost,
       fainted: row.fainted,
       best: best.get(player) ?? null,
+      eggsWon: row.wins * EGGS_PER_WIN + (best.get(player) ?? 0) * EGGS_PER_COMBAT,
       tie: tied.length === 0 ? null : { beat: tied.filter((other) => beat(player, other)), lostTo: tied.filter((other) => beat(other, player)) },
     };
   });

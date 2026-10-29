@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
+import { hatchedInput } from "../../shared/league.js";
 import { faintedInput, moveInput, progressInput } from "../../shared/series.js";
 import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
@@ -92,6 +93,26 @@ overrides.delete("/:number/trainers/:player/progress", requireAdmin, async (c) =
   await db
     .update(save)
     .set({ progressId: null, progressSetBy: null, progressSetAt: null })
+    .where(and(eq(save.seriesId, found.seriesId), eq(save.userId, found.playerId)));
+  return c.json({});
+});
+
+overrides.put("/:number/trainers/:player/hatched", requireAdmin, async (c) => {
+  const found = await target(c);
+  if (found instanceof Response) return found;
+  const input = await body(c.req.raw, hatchedInput);
+  if (!input) return c.json({ error: t(c).count }, 400);
+  const saveId = await saveFor(found.seriesId, found.playerId);
+  await db.update(save).set({ hatchedSet: input.count, hatchedSetBy: found.adminId, hatchedSetAt: new Date() }).where(eq(save.id, saveId));
+  return c.json({});
+});
+
+overrides.delete("/:number/trainers/:player/hatched", requireAdmin, async (c) => {
+  const found = await target(c);
+  if (found instanceof Response) return found;
+  await db
+    .update(save)
+    .set({ hatchedSet: null, hatchedSetBy: null, hatchedSetAt: null })
     .where(and(eq(save.seriesId, found.seriesId), eq(save.userId, found.playerId)));
   return c.json({});
 });

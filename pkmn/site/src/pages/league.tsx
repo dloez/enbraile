@@ -4,12 +4,23 @@ import { listPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { LeagueFrame } from "@/components/page-frames";
 import { modeName, PairsCard, RoundAdmin, UnopenedCard } from "@/league/round-admin";
+import { EggsCell, EggsEditor, EggsLine, EggsPen } from "@/league/eggs";
 import { combatsLabel, Pips, Tries } from "@/league/tries";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
-import { type LeagueMatch, type LeaguePage as League, type LeagueRound, leaguePage, type PairsInput, played, type Standing, winnerOf } from "../../shared/league";
+import {
+  type HatchedEggs,
+  type LeagueMatch,
+  type LeaguePage as League,
+  type LeagueRound,
+  leaguePage,
+  type PairsInput,
+  played,
+  type Standing,
+  winnerOf,
+} from "../../shared/league";
 
 const t = messages({
   en: {
@@ -31,6 +42,7 @@ const t = messages({
     games: "Games",
     fainted: "Fainted",
     pokemonLeague: "Pokémon League",
+    eggs: "Eggs",
     you: "You",
     beat: (names: string) => `Beat ${names}`,
     lostTo: (names: string) => `Lost to ${names}`,
@@ -74,6 +86,7 @@ const t = messages({
     games: "Partidas",
     fainted: "Debilitados",
     pokemonLeague: "Liga Pokémon",
+    eggs: "Huevos",
     you: "Tú",
     beat: (names: string) => `Ganó a ${names}`,
     lostTo: (names: string) => `Perdió con ${names}`,
@@ -192,7 +205,7 @@ export function LeaguePage() {
       ) : view === "tries" ? (
         <Tries league={league} me={me} nameOf={nameOf} onChange={setLeague} />
       ) : (
-        <Overview league={league} me={me} nameOf={nameOf} />
+        <Overview league={league} me={me} nameOf={nameOf} onChange={setLeague} />
       )}
     </main>
   );
@@ -200,10 +213,10 @@ export function LeaguePage() {
 
 type Named = { league: League; me: string | null; nameOf: (id: string) => string };
 
-function Overview({ league, me, nameOf }: Named) {
+function Overview({ league, me, nameOf, onChange }: Named & { onChange: (league: League) => void }) {
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-5">
-      <StandingsTable league={league} me={me} nameOf={nameOf} />
+      <StandingsTable league={league} me={me} nameOf={nameOf} onChange={onChange} />
       {me ? <Mine league={league} me={me} nameOf={nameOf} /> : <Latest league={league} nameOf={nameOf} />}
     </div>
   );
@@ -216,13 +229,18 @@ function tieNote(row: Standing, nameOf: (id: string) => string): string | null {
   return t.drawn;
 }
 
-const STANDING_COLUMNS = "sm:grid-cols-[56px_minmax(0,1fr)_84px_72px_84px_84px_124px]";
+const STANDING_COLUMNS = "grid-cols-[30px_minmax(0,1fr)_56px] sm:grid-cols-[56px_minmax(0,1fr)_84px_72px_84px_84px_124px_88px]";
 
-function StandingsTable({ league, me, nameOf }: Named) {
+const ADMIN_COLUMNS = "grid-cols-[30px_minmax(0,1fr)_40px_44px] sm:grid-cols-[56px_minmax(0,1fr)_84px_72px_84px_84px_124px_120px]";
+
+function StandingsTable({ league, me, nameOf, onChange }: Named & { onChange: (league: League) => void }) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const columns = league.admin ? ADMIN_COLUMNS : STANDING_COLUMNS;
+  const eggsOf = (player: string): HatchedEggs => league.hatched.find((h) => h.player === player) ?? { player, count: 0, saved: null, set: null };
   return (
     <div role="table" aria-label={t.standings} className="overflow-hidden rounded-[18px] border-3 bg-card">
       <div role="rowgroup" className="hidden sm:block">
-        <div role="row" className={cn("grid min-h-12 items-center border-b-3 bg-box font-heading text-xl text-muted-foreground", STANDING_COLUMNS)}>
+        <div role="row" className={cn("grid min-h-12 items-center border-b-3 bg-box font-heading text-xl text-muted-foreground", columns)}>
           <span role="columnheader" className="text-center">
             {t.place}
           </span>
@@ -242,6 +260,9 @@ function StandingsTable({ league, me, nameOf }: Named) {
           <span role="columnheader" className="text-center">
             {t.pokemonLeague}
           </span>
+          <span role="columnheader" className="text-center">
+            {t.eggs}
+          </span>
         </div>
       </div>
       <div role="rowgroup">
@@ -249,57 +270,84 @@ function StandingsTable({ league, me, nameOf }: Named) {
           const name = nameOf(row.player);
           const note = tieNote(row, nameOf);
           const first = row.place === 1;
+          const eggs = eggsOf(row.player);
+          const open = league.admin && editing === row.player;
+          const toggle = () => setEditing(open ? null : row.player);
           return (
-            <Link
-              key={row.player}
-              to="/players/$player"
-              params={{ player: row.player }}
-              role="row"
-              className={cn(
-                "grid min-h-17 grid-cols-[30px_minmax(0,1fr)_56px] items-center gap-2.5 py-1.5 pr-3 pl-2 text-foreground outline-none hover:bg-row-hi focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset sm:min-h-19 sm:gap-0 sm:p-0",
-                STANDING_COLUMNS,
-                row.player === me && "bg-yellow/6",
-                index < league.standings.length - 1 && "border-b-3",
-              )}
-            >
-              <span role="cell" className={cn("text-center font-heading text-[1.875rem] sm:text-4xl", first ? "text-yellow" : "text-faint")}>
-                {row.place}
-              </span>
-              <span role="cell" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-                <PlayerBadge name={name} colour={playerColour(name)} size="sm" />
-                <span className="flex min-w-0 flex-col gap-0.5 leading-[1.05]">
-                  <span className="flex items-center gap-1.5 sm:gap-2">
-                    <span className="truncate font-heading text-[1.5625rem] sm:text-[1.75rem]">{name}</span>
-                    {row.player === me && <span className="rounded-sm bg-yellow px-1.5 font-heading text-sm text-ink sm:text-[0.9375rem]">{t.you}</span>}
-                  </span>
-                  <span className="flex items-center gap-2 sm:hidden">
-                    <Pips won={row.best ?? 0} size="sm" />
-                    <span className="sr-only">{combatsLabel(row.best)}</span>
-                    <span className="font-heading text-[1.0625rem] whitespace-nowrap text-muted-foreground">
-                      {row.wins}–{row.losses} · {row.gamesWon}–{row.gamesLost}
-                    </span>
-                  </span>
-                  {note && <span className="text-xs font-bold text-muted-foreground sm:text-[0.8125rem]">{note}</span>}
+            <div key={row.player} className={cn(row.player === me && "bg-yellow/6", index < league.standings.length - 1 && "border-b-3")}>
+              <div
+                role="row"
+                className={cn("grid min-h-17 items-center gap-2.5 py-1.5 pr-3 pl-2 text-foreground hover:bg-row-hi sm:min-h-19 sm:gap-0 sm:p-0", columns)}
+              >
+                <span role="cell" className={cn("text-center font-heading text-[1.875rem] sm:text-4xl", first ? "text-yellow" : "text-faint")}>
+                  {row.place}
                 </span>
-              </span>
-              <span role="cell" className="flex flex-col items-end leading-[0.95] sm:items-center">
-                <span className={cn("font-heading text-4xl sm:text-[2.5rem]", first ? "text-yellow" : "text-foreground")}>{row.points}</span>
-                <span className="font-heading text-sm text-muted-foreground sm:hidden">{t.pts(row.points)}</span>
-              </span>
-              <span role="cell" className="hidden text-center font-heading text-[1.625rem] sm:block">
-                {row.wins}–{row.losses}
-              </span>
-              <span role="cell" className="hidden text-center font-heading text-2xl text-muted-foreground sm:block">
-                {row.gamesWon}–{row.gamesLost}
-              </span>
-              <span role="cell" className="hidden text-center font-heading text-2xl text-muted-foreground sm:block">
-                {row.fainted}
-              </span>
-              <span role="cell" className="hidden justify-center sm:flex">
-                <Pips won={row.best ?? 0} size="md" />
-                <span className="sr-only">{combatsLabel(row.best)}</span>
-              </span>
-            </Link>
+                <span role="cell" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                  <PlayerBadge name={name} colour={playerColour(name)} size="sm" />
+                  <span className="flex min-w-0 flex-col gap-0.5 leading-[1.05]">
+                    <span className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                      <Link
+                        to="/players/$player"
+                        params={{ player: row.player }}
+                        className="truncate rounded-sm font-heading text-[1.5625rem] text-foreground outline-none hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50 sm:text-[1.75rem]"
+                      >
+                        {name}
+                      </Link>
+                      {row.player === me && <span className="rounded-sm bg-yellow px-1.5 font-heading text-sm text-ink sm:text-[0.9375rem]">{t.you}</span>}
+                    </span>
+                    <span className="flex items-center gap-2 sm:hidden">
+                      <Pips won={row.best ?? 0} size="sm" />
+                      <span className="sr-only">{combatsLabel(row.best)}</span>
+                      <span className="font-heading text-[1.0625rem] whitespace-nowrap text-muted-foreground">
+                        {row.wins}–{row.losses} · {row.gamesWon}–{row.gamesLost}
+                      </span>
+                    </span>
+                    <span className="sm:hidden">
+                      <EggsLine won={row.eggsWon} eggs={eggs} />
+                    </span>
+                    {note && <span className="text-xs font-bold text-muted-foreground sm:text-[0.8125rem]">{note}</span>}
+                  </span>
+                </span>
+                <span role="cell" className="flex flex-col items-end leading-[0.95] sm:items-center">
+                  <span className={cn("font-heading text-4xl sm:text-[2.5rem]", first ? "text-yellow" : "text-foreground")}>{row.points}</span>
+                  <span className="font-heading text-sm text-muted-foreground sm:hidden">{t.pts(row.points)}</span>
+                </span>
+                <span role="cell" className="hidden text-center font-heading text-[1.625rem] sm:block">
+                  {row.wins}–{row.losses}
+                </span>
+                <span role="cell" className="hidden text-center font-heading text-2xl text-muted-foreground sm:block">
+                  {row.gamesWon}–{row.gamesLost}
+                </span>
+                <span role="cell" className="hidden text-center font-heading text-2xl text-muted-foreground sm:block">
+                  {row.fainted}
+                </span>
+                <span role="cell" className="hidden justify-center sm:flex">
+                  <Pips won={row.best ?? 0} size="md" />
+                  <span className="sr-only">{combatsLabel(row.best)}</span>
+                </span>
+                <span role="cell" className="hidden items-center justify-center gap-1.5 sm:flex">
+                  <EggsCell won={row.eggsWon} eggs={eggs} />
+                  {league.admin && <EggsPen name={name} open={open} onClick={toggle} size="sm" />}
+                </span>
+                {league.admin && (
+                  <span role="cell" className="sm:hidden">
+                    <EggsPen name={name} open={open} onClick={toggle} size="lg" />
+                  </span>
+                )}
+              </div>
+              {open && (
+                <EggsEditor
+                  key={`${row.player}:${eggs.count}:${eggs.set?.at ?? ""}`}
+                  number={league.number}
+                  player={row.player}
+                  name={name}
+                  won={row.eggsWon}
+                  eggs={eggs}
+                  onDone={onChange}
+                  onClose={() => setEditing(null)}
+                />
+              )}
+            </div>
           );
         })}
       </div>
