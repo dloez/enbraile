@@ -141,9 +141,6 @@
 
 :root {
     color-scheme: dark;
-    --zoom: 1;
-    --screen-h: calc(100svh / var(--zoom));
-    --screen-w: calc(100vw / var(--zoom));
     --ink: #10141d;
     --background: #161b26;
     --dot: #232b3c;
@@ -303,35 +300,6 @@
     --type-fairy: #c44fc4;
 }
 
-@media (width >= 1520px) { :root { --zoom: 1.0555; } }
-@media (width >= 1600px) { :root { --zoom: 1.1111; } }
-@media (width >= 1680px) { :root { --zoom: 1.1666; } }
-@media (width >= 1760px) { :root { --zoom: 1.2222; } }
-@media (width >= 1840px) { :root { --zoom: 1.2777; } }
-@media (width >= 1920px) { :root { --zoom: 1.3333; } }
-@media (width >= 2000px) { :root { --zoom: 1.3888; } }
-@media (width >= 2080px) { :root { --zoom: 1.4444; } }
-@media (width >= 2160px) { :root { --zoom: 1.5; } }
-@media (width >= 2240px) { :root { --zoom: 1.5555; } }
-@media (width >= 2320px) { :root { --zoom: 1.6111; } }
-@media (width >= 2400px) { :root { --zoom: 1.6666; } }
-@media (width >= 2480px) { :root { --zoom: 1.7222; } }
-@media (width >= 2560px) { :root { --zoom: 1.7777; } }
-@media (width >= 2720px) { :root { --zoom: 1.8888; } }
-@media (width >= 2880px) { :root { --zoom: 2; } }
-@media (width >= 3040px) { :root { --zoom: 2.1111; } }
-@media (width >= 3200px) { :root { --zoom: 2.2222; } }
-@media (width >= 3360px) { :root { --zoom: 2.3333; } }
-@media (width >= 3520px) { :root { --zoom: 2.4444; } }
-@media (width >= 3680px) { :root { --zoom: 2.5555; } }
-@media (width >= 3840px) { :root { --zoom: 2.6666; } }
-
-@supports (zoom: calc(100vw / 1440px)) {
-    :root {
-        --zoom: max(1, 100vw / 1440px);
-    }
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -344,13 +312,6 @@
   html {
     @apply font-sans;
     font-synthesis: none;
-    zoom: var(--zoom);
-  }
-  [data-radix-popper-content-wrapper] {
-    zoom: calc(1 / var(--zoom));
-  }
-  [data-radix-popper-content-wrapper] > * {
-    zoom: var(--zoom);
   }
 }
 

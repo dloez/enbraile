@@ -45,7 +45,7 @@ export function ComboField({
         <span className="min-w-0 flex-1 truncate text-left">{chosen?.label ?? (value || all)}</span>
         <ChevronDownIcon className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
       </PopoverTrigger>
-      <PopoverContent align="start" sideOffset={6} className="w-72 max-w-[calc(var(--screen-w)-2rem)] gap-1.5">
+      <PopoverContent align="start" sideOffset={6} className="w-72 max-w-[calc(100vw-2rem)] gap-1.5">
         <Command filter={(item, search) => (item.toLowerCase().includes(search.trim().toLowerCase()) ? 1 : 0)}>
           <CommandInput placeholder={t.search} aria-label={t.searchIn(label)} />
           <CommandList className="mt-1.5">

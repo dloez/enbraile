@@ -25,9 +25,9 @@ export function League() {
   );
 }
 
-export function LeagueFrame() {
+export function LeagueFrame({ wide = false }: { wide?: boolean }) {
   return (
-    <main className={cn(listPage, "gap-4 pt-4 pb-8 sm:gap-5.5 sm:pt-5.5 sm:pb-10")}>
+    <main className={cn(wide ? toolPage : listPage, "gap-4 pt-4 pb-8 sm:gap-5.5 sm:pt-5.5 sm:pb-10")}>
       <div className="flex flex-col gap-2.5 sm:gap-3.5">
         <Placeholder className="h-6 w-24 rounded-md" />
         <h1 className="m-0 font-heading text-[3.25rem] leading-[0.85] font-normal sm:text-6xl">{t.league}</h1>
@@ -145,7 +145,7 @@ export function PlayerSeriesFrame() {
 
 export function PcFrame() {
   return (
-    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(var(--screen-h)-4rem)] lg:min-h-144")}>
+    <main className={cn(toolPage, "pt-5 lg:max-h-[calc(100svh-4rem)] lg:min-h-144")}>
       <Placeholder className="h-23 w-full max-w-74 rounded-xl" />
       <div className="flex flex-1 gap-6 pt-3.5 pb-3 sm:pb-6 lg:min-h-0">
         <Placeholder className="min-h-120 flex-1 rounded-[18px]" />
@@ -166,7 +166,7 @@ export function TeamsFrame() {
 
 export function TeamFrame() {
   return (
-    <main className={cn(toolPage, "gap-4 pt-4.5 pb-6 lg:max-h-[calc(var(--screen-h)-4rem)] lg:min-h-160 lg:pb-7")}>
+    <main className={cn(toolPage, "gap-4 pt-4.5 pb-6 lg:max-h-[calc(100svh-4rem)] lg:min-h-160 lg:pb-7")}>
       <TeamsBackLink />
       <Placeholder className="h-14 w-full max-w-120 rounded-xl" />
       <div className="flex min-h-0 flex-1 gap-6">

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { listPage } from "@/components/page";
+import { listPage, toolPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { LeagueFrame } from "@/components/page-frames";
 import { modeName, PairsCard, RoundAdmin, UnopenedCard } from "@/league/round-admin";
@@ -167,7 +167,7 @@ export function LeaguePage() {
       </main>
     );
   }
-  if (!league) return <LeagueFrame />;
+  if (!league) return <LeagueFrame wide={view === "rounds"} />;
 
   const names = new Map(league.players.map((p) => [p.id, p.name]));
   const nameOf = (id: string) => names.get(id) ?? "?";
@@ -181,7 +181,7 @@ export function LeaguePage() {
   ];
 
   return (
-    <main className={cn(listPage, "gap-4 pt-4 pb-8 sm:gap-5.5 sm:pt-5.5 sm:pb-10")}>
+    <main className={cn(view === "rounds" ? toolPage : listPage, "gap-4 pt-4 pb-8 sm:gap-5.5 sm:pt-5.5 sm:pb-10")}>
       <div className="flex flex-col gap-2.5 sm:gap-3.5">
         <nav aria-label={t.breadcrumb} className="flex font-heading text-xl sm:text-[1.375rem]">
           <Link

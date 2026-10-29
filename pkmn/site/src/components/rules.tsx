@@ -3,7 +3,6 @@ import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { readPage } from "@/components/page";
 import { cn } from "@/lib/utils";
-import { screenZoom } from "@/lib/zoom";
 import { messages } from "../../shared/i18n";
 
 const t = messages({
@@ -147,7 +146,7 @@ export function Rules({ rules }: { rules: string }) {
     if (targets.length === 0) return;
     const update = () => {
       let current: string | null = null;
-      for (const el of targets) if (el.getBoundingClientRect().top <= 120 * screenZoom()) current = el.id;
+      for (const el of targets) if (el.getBoundingClientRect().top <= 120) current = el.id;
       setActive(current ?? targets[0].id);
     };
     update();
@@ -164,7 +163,7 @@ export function Rules({ rules }: { rules: string }) {
         {entries.length > 0 && (
           <nav
             aria-label={t.rulesContents}
-            className="sticky top-4 hidden max-h-[calc(var(--screen-h)-2rem)] w-72 flex-none overflow-y-auto rounded-2xl border-3 bg-card p-2.5 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin] lg:block"
+            className="sticky top-4 hidden max-h-[calc(100svh-2rem)] w-72 flex-none overflow-y-auto rounded-2xl border-3 bg-card p-2.5 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin] lg:block"
           >
             <Index entries={entries} active={active} />
           </nav>

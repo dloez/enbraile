@@ -117,7 +117,7 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, free
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        className="inset-0 top-0 left-0 flex h-(--screen-h) w-(--screen-w) max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 bg-background p-0 ring-0 sm:max-w-none"
+        className="inset-0 top-0 left-0 flex h-svh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 bg-background p-0 ring-0 sm:max-w-none"
       >
         <div className="flex min-h-19 flex-none flex-wrap items-center gap-x-4 gap-y-2 border-b-4 border-red bg-ink py-3 pr-4 pl-4 sm:pr-8 sm:pl-10">
           <DialogTitle className="m-0 font-heading text-[2.5rem] leading-none font-normal">{t.title((slot ?? 0) + 1)}</DialogTitle>

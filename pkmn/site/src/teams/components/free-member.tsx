@@ -283,7 +283,7 @@ export function FreePicker({ slot, wide, freePool, onFreePool, onPut }: { slot: 
       )}
       {!wide && (
         <BottomSheet open={draft !== null} onOpenChange={(next) => !next && setPicked(null)}>
-          <SheetContent side="bottom" aria-describedby={undefined} className="max-h-[calc(var(--screen-h)*0.9)] gap-0 overflow-hidden rounded-t-2xl bg-card">
+          <SheetContent side="bottom" aria-describedby={undefined} className="max-h-[90svh] gap-0 overflow-hidden rounded-t-2xl bg-card">
             <SheetTitle className="sr-only">{t.newFree}</SheetTitle>
             {draft && <Aside member={draft} onChange={change} footer={footer} />}
           </SheetContent>

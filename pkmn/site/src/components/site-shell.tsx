@@ -51,7 +51,7 @@ export function SiteShell() {
   }
 
   return (
-    <div className="flex min-h-(--screen-h) flex-col">
+    <div className="flex min-h-svh flex-col">
       <SiteHeader />
       <Outlet />
     </div>
