@@ -40,24 +40,25 @@ The Goal has an admin able to "enter and fix any of it (rounds, results, replays
 
 **Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/api/_lib/schema.ts`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `pkmn/site/shared/`, `pkmn/site/src/league/`, `pkmn/site/src/pages/team.tsx`, `pkmn/site/src/teams/`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`, `docs/pkmn/site/how-to/verify-the-site.md`
 
-## Others' Pokémon League tries show from the milestone the owner names
+## A `league` milestone mark sets when others' tries and later saves show
 
-A try's members and team show to another player "only once they have reached the Pokémon League themselves" ([discovery → Team Locking](discovery.md#team-locking), "Who decides a locked team's visibility?", owner 2026-10-29). No milestone marks the Pokémon League (`MILESTONE_MARKS` is `none`, `round` and `tournament`, `shared/series.ts`), and the try teams' pass of 2026-10-29 placed it at the series' last round: `leagueSeen` (`shared/league.ts`) answers `last <= upTo`, so a player whose latest snapshot is at series 1's Gym 7, with Gym 8 still to beat, sees every try, as `verify-the-site.md` checks ("moved to Gym 7, the last round milestone, both tries show"). [The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions) records it as a delegated build choice ("The try teams' save rule, build choices"). The reading agrees with the save rule, which already shows others' Post-League and Tournament PCs from round 5 (`savesSeen`), but when another's tries show is a product choice with more than one workable answer. Found by the mid-run gardener, 2026-10-29.
+A try's members and team show to another player "only once they have reached the Pokémon League themselves" ([discovery → Team Locking](discovery.md#team-locking)). No milestone marks the Pokémon League (`MILESTONE_MARKS` is `none`, `round` and `tournament`, `shared/series.ts`), so the try teams' pass placed it at the series' last round (`leagueSeen` answers `last <= upTo`, `shared/league.ts`), and the save rule lets a Gym 7 player open others' saves past it, which hold those tries' Pokémon. The owner settled it: a fourth mark, `league`, set by an admin on the milestone at the League's door; series 1's become Victory Road (marked `league`) and Hall of Fame (replacing Post-League); others' tries show from a save at the `league` milestone or later, and the mark is one more step of the save rule, so others' saves at it or later show only from there; a series without the mark keeps its last round ([discovery → Team Locking](discovery.md#team-locking), "When has a player reached the Pokémon League?", owner 2026-10-29). The upload suggests a save with a Hall of Fame entry the milestone whose name holds "league" (`suggestMilestone`, `shared/save-upload.ts`), which Hall of Fame does not. Found by the mid-run gardener, 2026-10-29.
 
 **Do:**
-- [ ] Per the author's answer, `leagueSeen` and its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions), recorded as the owner's rather than a build choice, and the Pokémon League view's held-back line if what it names changes.
+- [ ] `league` in `MILESTONE_MARKS` (a migration if the column needs one), offered in the admin series form's mark picker in English and Spanish, at most one milestone per series.
+- [ ] `leagueSeen` and the save rule's reach (`reach`, `savesSeen`, `shared/league.ts`) reading the `league` milestone as one more step after the last round, and the last round when a series has none.
+- [ ] `suggestMilestone` suggesting a save with a Hall of Fame entry the milestone after the `league` one, falling back to today's name match.
+- [ ] The seed's series 1 and 2 milestones ending Gym 8, Victory Road (`league`), Hall of Fame, Tournament, and its fallback milestone Hall of Fame; the league import's milestone mapping if it names Post-League.
+- [ ] The decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions), replacing "The try teams' save rule, build choices"' last-round reading, and the held-back line's wording if it names the League.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with Red's try logged and Blue's latest snapshot moved through Gym 7, Gym 8 and Post-League in step 3's `psql`, Blue sees the try's members and its team from exactly the milestone the author names, by page and route; an admin and Red always.
-- Human-run: none.
-- Reuse: `leagueSeen` and `savesSeen` (`shared/league.ts`); `leaguesSeenBy` and `seriesSaves` (`api/_lib/series-data.ts`).
-- Neighbors: the save rule's reach (`reach` in `shared/league.ts`).
-- Forbidden: hiding in the browser only; a new milestone mark or setting the author's answer does not ask for.
+- Claude-run: `npm run gate`; through `verify-site`, by its routes, except the series form's mark picker in the browser: on the seed's Series 1 with Red's try logged and Red's snapshots at Victory Road and Hall of Fame, Blue at Gym 7 sees neither the try's members and team nor Red's Victory Road or Hall of Fame PC, abilities or team sources; at Victory Road Blue sees both; Leaf, outside the series, once every player has a Victory Road save; with the mark removed, Blue sees them from Gym 7 as before; an upload of a save with a Hall of Fame entry suggests Hall of Fame.
+- Human-run: the owner adds Victory Road and renames Post-League to Hall of Fame in series 1's form on the preview and on production once the league is live.
+- Reuse: `leagueSeen`, `reach` and `savesSeen` (`shared/league.ts`); `leaguesSeenBy` and `seriesSaves` (`api/_lib/series-data.ts`); the series form's mark picker; `suggestMilestone`.
+- Neighbors: the `tournament` mark, at most one per series.
+- Forbidden: hiding in the browser only; matching the milestone by its name.
 
-**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/series-data.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`, `docs/pkmn/site/how-to/verify-the-site.md`
-**Needs the author:**
-- Has a player reached the Pokémon League, for seeing others' tries, once they have a snapshot in the series' last round (series 1's Gym 7, as built), or only from a later milestone (series 1's Gym 8, or Post-League)?
-- If later: since the save rule already shows others' Post-League and Tournament PCs from round 5, does a try stay hidden from a Gym 7 player who can open the PC holding its Pokémon?
+**Touches:** `pkmn/site/shared/series.ts`, `pkmn/site/shared/league.ts`, `pkmn/site/shared/save-upload.ts`, `pkmn/site/api/_lib/series-data.ts`, `pkmn/site/api/_lib/schema.ts`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `pkmn/site/scripts/league-import.ts`, `pkmn/site/src/pages/admin-series.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/run-and-deploy-the-site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
 
 ## Series 1's league goes live on pkmn.enbraile.vip
 
