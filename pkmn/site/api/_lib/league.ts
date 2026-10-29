@@ -15,7 +15,9 @@ import {
   type HatchedEggs,
   type LeaguePage,
   type LeagueTry,
+  type MatchMember,
   type MatchPage,
+  type MatchTeam,
   nextGame,
   openInput,
   pairsInput,
@@ -25,8 +27,9 @@ import {
   tryInput,
   wins,
 } from "../../shared/league.js";
-import { describeMember } from "../../shared/species.js";
-import { backedBy, nextTeamName, type TeamSlots } from "../../shared/team.js";
+import type { Snapshot } from "../../shared/snapshot.js";
+import { describeMember, itemName, speciesTypes } from "../../shared/species.js";
+import { backedBy, isFree, nextTeamName, type TeamMember, type TeamSlots } from "../../shared/team.js";
 import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
 import { type CupRefusal, cupState, startCup } from "./cup.js";
@@ -34,7 +37,7 @@ import { db } from "./db.js";
 import { says } from "./i18n.js";
 import { fixGame, type Move, recordGame, type Refusal } from "./match.js";
 import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
-import { cup, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, user } from "./schema.js";
+import { cup, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
 import { findShown, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 import { insertTeam } from "./teams.js";
 
@@ -282,6 +285,57 @@ function cupPlace(page: LeaguePage, matchId: string): MatchCup | null {
   return { kind: at.kind, left: at.left, group: cupShape(held.seeds.length).half, onward: next ? { left: next.left ?? 0, opponent } : null };
 }
 
+function matchMember(member: TeamMember | null, sheets: ReadonlyMap<string, Snapshot>): MatchMember | null {
+  if (!member) return null;
+  let nickname: string | null = null;
+  if (!isFree(member)) {
+    const mon = sheets.get(member.source)?.pokemon[member.index];
+    if (!mon || mon.species !== member.species) return null;
+    nickname = mon.nickname;
+  }
+  const look = describeMember(member.species, member.species);
+  const item = member.item ? itemName(member.item) : null;
+  return {
+    nickname: nickname && nickname.toLowerCase() !== look.name.toLowerCase() ? nickname : null,
+    species: look.name,
+    item: member.item && item ? { id: member.item, name: item } : null,
+    types: speciesTypes(member.species),
+    sprite: look.sprite,
+  };
+}
+
+async function matchTeams(row: SeriesRow, matchId: string, players: { a: string; b: string }, inCup: boolean, reader: Viewer): Promise<{ a: MatchTeam; b: MatchTeam }> {
+  const seen = teamsSeenBy(reader);
+  const held = await db
+    .select({ id: team.id, name: team.name, ownerId: team.ownerId, slots: team.slots, lockedAt: team.lockedAt, seen: seen ? sql<boolean>`(${seen})` : sql<boolean>`true` })
+    .from(team)
+    .where(eq(team.matchId, matchId));
+  const shownIds = held.filter((one) => one.seen).map((one) => one.id);
+  const sheetRows = shownIds.length
+    ? await db
+        .select({ id: snapshot.id, data: snapshot.data })
+        .from(teamSource)
+        .innerJoin(snapshot, eq(snapshot.id, teamSource.snapshotId))
+        .where(inArray(teamSource.teamId, shownIds))
+    : [];
+  const sheets = new Map(sheetRows.map((one) => [one.id, one.data]));
+  const [tournament] = inCup
+    ? await db
+        .select({ name: milestone.name })
+        .from(milestone)
+        .where(and(eq(milestone.seriesId, row.id), eq(milestone.mark, "tournament")))
+        .orderBy(desc(milestone.position))
+        .limit(1)
+    : [];
+  const side = (player: string): MatchTeam => {
+    const one = held.find((h) => h.ownerId === player);
+    if (!one) return tournament ? { state: "waiting", milestone: tournament.name } : { state: "none" };
+    if (!one.seen) return { state: "hidden", locked: one.lockedAt !== null };
+    return { state: "shown", id: one.id, name: one.name, locked: one.lockedAt !== null, members: one.slots.map((member) => matchMember(member, sheets)) };
+  };
+  return { a: side(players.a), b: side(players.b) };
+}
+
 async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise<MatchPage | null> {
   const page = await leagueOf(row, reader);
   const round = page.rounds.find((r) => r.matches.some((m) => m.id === matchId));
@@ -306,6 +360,7 @@ async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise
     cup: round ? null : cupPlace(page, matchId),
     a: side(match.a),
     b: side(match.b),
+    teams: await matchTeams(row, matchId, match, !round, reader),
     gamesA: match.gamesA,
     gamesB: match.gamesB,
     faintedA: match.faintedA,

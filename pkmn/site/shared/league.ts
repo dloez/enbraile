@@ -15,6 +15,8 @@ export const GAMES_TO_WIN = 2;
 
 export const FAINTED_PER_GAME = 6;
 
+export const CUP_TEAM_SIZE = 8;
+
 export const EGGS_PER_WIN = 1;
 
 export const EGGS_PER_COMBAT = 1;
@@ -160,6 +162,21 @@ export const matchCup = z.object({
   onward: z.object({ left: z.int(), opponent: z.string().nullable() }).nullable(),
 });
 
+export const matchMember = z.object({
+  nickname: z.string().nullable(),
+  species: z.string(),
+  item: z.object({ id: z.string(), name: z.string() }).nullable(),
+  types: z.array(z.string()),
+  sprite: z.string().nullable(),
+});
+
+export const matchTeam = z.discriminatedUnion("state", [
+  z.object({ state: z.literal("none") }),
+  z.object({ state: z.literal("waiting"), milestone: z.string() }),
+  z.object({ state: z.literal("hidden"), locked: z.boolean() }),
+  z.object({ state: z.literal("shown"), id: z.string(), name: z.string(), locked: z.boolean(), members: z.array(matchMember.nullable()) }),
+]);
+
 export const matchPage = z.object({
   id: z.string(),
   number: z.int(),
@@ -168,6 +185,7 @@ export const matchPage = z.object({
   cup: matchCup.nullable(),
   a: matchSide,
   b: matchSide,
+  teams: z.object({ a: matchTeam, b: matchTeam }),
   gamesA: z.int().nullable(),
   gamesB: z.int().nullable(),
   faintedA: z.int().nullable(),
@@ -203,6 +221,8 @@ export type LeaguePage = z.infer<typeof leaguePage>;
 export type LeagueGame = z.infer<typeof leagueGame>;
 export type GameInput = z.infer<typeof gameInput>;
 export type MatchPage = z.infer<typeof matchPage>;
+export type MatchTeam = z.infer<typeof matchTeam>;
+export type MatchMember = z.infer<typeof matchMember>;
 export type TryMember = z.infer<typeof tryMember>;
 export type LeagueTry = z.infer<typeof leagueTry>;
 export type HatchedEggs = z.infer<typeof hatchedEggs>;

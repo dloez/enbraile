@@ -27,7 +27,9 @@ import { liveSlots, memberMon } from "@/teams/dex";
 import { EMPTY_SHEET, formatMoney, freeCount, giveItem, isFree, lastFilled, moneyLeft, natureFrom, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, setNature, spreadShown, stockOf, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
 import { ANY_POKEMON, showdownTeam } from "@/teams/showdown";
-import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
+import { hasToggle, teamDone, teamKind, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
+import { PixelIcon } from "@/components/pixel-icon";
+import { cupStage } from "@/league/cup";
 import { MOVE_RULE_LABELS, MOVE_RULES, type FreePool, type MoveRule, type TeamPool } from "../../shared/pool";
 import { SelectField } from "@/components/select-field";
 import { messages } from "../../shared/i18n";
@@ -77,6 +79,13 @@ const t = messages({
     delete: "Delete",
     deleteName: (name: string) => `Delete ${name}?`,
     cancel: "Cancel",
+    locked: "Locked",
+    lockedTo: (to: string) => `Locked · ${to}`,
+    lockIn: "Lock in",
+    lockName: (name: string) => `Lock in ${name}?`,
+    lockNote: "Once locked, nothing in it can change; only an admin can unlock it.",
+    fillFirst: (size: number) => `Fill all ${size} slots to lock it in`,
+    unlock: "Unlock",
   },
   es: {
     failed: "Algo ha fallado",
@@ -122,6 +131,13 @@ const t = messages({
     delete: "Borrar",
     deleteName: (name: string) => `¿Borrar ${name}?`,
     cancel: "Cancelar",
+    locked: "Bloqueado",
+    lockedTo: (to: string) => `Bloqueado · ${to}`,
+    lockIn: "Bloquear",
+    lockName: (name: string) => `¿Bloquear ${name}?`,
+    lockNote: "Una vez bloqueado no se puede cambiar nada; solo un administrador puede desbloquearlo.",
+    fillFirst: (size: number) => `Llena los ${size} huecos para bloquearlo`,
+    unlock: "Desbloquear",
   },
 });
 
@@ -147,9 +163,10 @@ export function TeamBuilderPage() {
   const [page, setPage] = useState<TeamPage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [loads, setLoads] = useState(0);
+
   useEffect(() => {
     let live = true;
-    setPage(null);
     setError(null);
     api(`/teams/${encodeURIComponent(id)}`, teamPage).then(
       (next) => live && setPage(next),
@@ -158,7 +175,9 @@ export function TeamBuilderPage() {
     return () => {
       live = false;
     };
-  }, [id]);
+  }, [id, loads]);
+
+  useEffect(() => setPage(null), [id]);
 
   if (error) {
     return (
@@ -183,7 +202,7 @@ export function TeamBuilderPage() {
   }
   return (
     <GameIconsProvider game={page.sources.find((source) => source.gameId !== null)?.gameId ?? null}>
-      <Builder key={page.id} page={page} />
+      <Builder key={`${page.id}:${page.lockedAt}`} page={page} onReload={() => setLoads((n) => n + 1)} />
     </GameIconsProvider>
   );
 }
@@ -219,7 +238,7 @@ function holding(sources: readonly TeamSource[]): Held[] {
   }));
 }
 
-function Builder({ page }: { page: TeamPage }) {
+function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
   const navigate = useNavigate();
   const wide = useMediaQuery("(min-width: 64rem)");
   const [sources, setSources] = useState<readonly TeamSource[]>(page.sources);
@@ -243,6 +262,7 @@ function Builder({ page }: { page: TeamPage }) {
   const [joining, setJoining] = useState(false);
   const writes = useRef<Promise<unknown>>(Promise.resolve());
   const editable = page.canEdit;
+  const fixed = page.league?.kind === "cup";
   const size = slots.length;
   const pickMode = size > TEAM_SIZE && pick.scope === "six";
   const picked = pickedOf(slots, pick);
@@ -518,14 +538,20 @@ function Builder({ page }: { page: TeamPage }) {
               setName(next);
               write({ name: next });
             }} />
-            {!editable && (
-              <>
-                <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.name) % PLAYER_FILL.length])}>{t.ownerTeam(page.owner.name)}</span>
-                <span title={t.onlyOwner(page.owner.name)} className="flex items-center gap-1.5 rounded-sm border-2 border-warning bg-warning-soft px-2 py-px font-heading text-xl text-warning-ink">
-                  <Lock className="size-4 text-warning" aria-hidden="true" />
-                  {t.viewOnly}
-                </span>
-              </>
+            {!page.mine && (
+              <span className={cn("rounded-sm px-2 py-px font-heading text-xl text-ink", PLAYER_FILL[playerColour(page.owner.name) % PLAYER_FILL.length])}>{t.ownerTeam(page.owner.name)}</span>
+            )}
+            {!page.mine && !page.lockedAt && (
+              <span title={t.onlyOwner(page.owner.name)} className="flex items-center gap-1.5 rounded-sm border-2 border-warning bg-warning-soft px-2 py-px font-heading text-xl text-warning-ink">
+                <Lock className="size-4 text-warning" aria-hidden="true" />
+                {t.viewOnly}
+              </span>
+            )}
+            {page.lockedAt && (
+              <span className="flex min-h-8.5 items-center gap-2 rounded-lg border-3 border-trophy-rim bg-trophy pr-3 pl-2.5 font-heading text-xl text-yellow">
+                <PixelIcon name="lock" className="size-3.5" />
+                {page.league?.kind === "cup" ? t.lockedTo(cupStage(page.league)) : t.locked}
+              </span>
             )}
             {held.map((h) => (
               <SourceChip
@@ -533,25 +559,27 @@ function Builder({ page }: { page: TeamPage }) {
                 held={h}
                 setas={setasLeft(slots, stocks, h.id)}
                 money={moneyLeft(slots, stocks, h.id)}
-                onRemove={editable && sourceCount > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
+                onRemove={editable && !fixed && sourceCount > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
               />
             ))}
-            {anyPokemon && <AnyChip onRemove={editable && sourceCount > 1 && freeCount(slots) === 0 ? () => chooseAny(false) : undefined} />}
-            {editable && <SourceMenu taken={held.map((h) => h.id)} busy={joining} onPick={addSource} onAny={anyPokemon ? undefined : () => chooseAny(true)} />}
+            {anyPokemon && <AnyChip onRemove={editable && !fixed && sourceCount > 1 && freeCount(slots) === 0 ? () => chooseAny(false) : undefined} />}
+            {editable && !fixed && <SourceMenu taken={held.map((h) => h.id)} busy={joining} onPick={addSource} onAny={anyPokemon ? undefined : () => chooseAny(true)} />}
           </div>
         </div>
         <div className="flex-1" />
         <div className="flex flex-wrap items-center gap-3">
-          {editable && <SeenSwitch hidden={hidden} onHidden={chooseHidden} />}
-          {editable && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
+          {editable && hasToggle(teamKind(page)) && <SeenSwitch hidden={hidden} onHidden={chooseHidden} />}
+          {editable && !fixed && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
           {editable && <MovesSwitch rule={pool.moves} onRule={(moves) => choosePool({ ...pool, moves })} />}
-          {editable && (
+          {editable && !fixed && (
             <button type="button" onClick={() => setPasting(true)} className={buttonVariants({ className: "min-h-12" })}>
               {t.paste}
             </button>
           )}
+          {page.canUnlock && <UnlockButton id={page.id} onDone={onReload} />}
           <CopyButton slots={slots} stocks={stocks} />
-          {editable && <DeleteButton id={page.id} name={name} />}
+          {page.canLock && <LockButton id={page.id} name={name} full={filledAt(slots).length === size} size={size} settled={() => writes.current} onDone={onReload} />}
+          {editable && !fixed && <DeleteButton id={page.id} name={name} />}
         </div>
       </div>
       {failed && (
@@ -924,6 +952,89 @@ function CopyButton({ slots, stocks }: { slots: Slots; stocks: Stocks }) {
       {copied === "copied" ? <ClipboardCheck className="size-4 text-primary" aria-hidden="true" /> : <ClipboardCopy className="size-4" aria-hidden="true" />}
       {copied === "copied" ? t.copied : copied === "failed" ? t.copyFailed : t.copy}
     </button>
+  );
+}
+
+function LockButton({ id, name, full, size, settled, onDone }: { id: string; name: string; full: boolean; size: number; settled: () => Promise<unknown>; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function lock() {
+    setBusy(true);
+    setError(null);
+    try {
+      await settled();
+      await api(`/teams/${encodeURIComponent(id)}/lock`, teamDone, { method: "POST" });
+      setOpen(false);
+      onDone();
+    } catch (caught) {
+      setError(message(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={!full}
+        title={full ? undefined : t.fillFirst(size)}
+        onClick={() => setOpen(true)}
+        className={buttonVariants({ variant: "go", className: "min-h-12" })}
+      >
+        <PixelIcon name="lock" className="size-3.5" />
+        {t.lockIn}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent aria-describedby={undefined} className="bg-card sm:max-w-sm">
+          <DialogTitle className="font-heading text-2xl">{t.lockName(name)}</DialogTitle>
+          <p className="m-0 text-subtle">{t.lockNote}</p>
+          {error && (
+            <p role="alert" className="m-0 text-destructive">
+              {error}
+            </p>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setOpen(false)}>{t.cancel}</Button>
+            <Button variant="go" disabled={busy} onClick={() => void lock()}>
+              {t.lockIn}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function UnlockButton({ id, onDone }: { id: string; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <span className="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          setError(null);
+          api(`/teams/${encodeURIComponent(id)}/unlock`, teamDone, { method: "POST" }).then(onDone, (caught: unknown) => {
+            setError(message(caught));
+            setBusy(false);
+          });
+        }}
+        className={buttonVariants({ className: "min-h-12" })}
+      >
+        <PixelIcon name="unlock" className="size-3.5 text-yellow" />
+        {t.unlock}
+      </button>
+      {error && (
+        <span role="alert" className="text-sm text-destructive">
+          {error}
+        </span>
+      )}
+    </span>
   );
 }
 

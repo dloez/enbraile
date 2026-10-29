@@ -4,6 +4,7 @@ import { db } from "./db.js";
 import { ExportError, itemFromShowdown, type TmRolls, type World } from "./export/export.js";
 import { exportZipSlot } from "./export/save-zip.js";
 import { deleteObject, putObject, readObject } from "./files.js";
+import { giveCupTeams } from "./cup.js";
 import { save, seriesPlayer, snapshot } from "./schema.js";
 
 export type RawSave = {
@@ -151,6 +152,7 @@ export async function ingest(raw: RawSave): Promise<Ingested> {
     if (rolledKey) await deleteObject(rolledKey).catch(() => undefined);
     throw error;
   }
+  await db.transaction((tx) => giveCupTeams(tx, raw.seriesId));
   if (previous && previous.fileKey !== raw.fileKey) await dropIfUnused(previous.fileKey);
   await dropIfUnused(previous?.rolledKey);
   return {

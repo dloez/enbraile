@@ -19,28 +19,9 @@ Discovery's series page summary holds "the standings' top, the current round, th
 **Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/api/`, `pkmn/site/design/`, `docs/pkmn/site/`
 **Needs the author:** the sign-off of the summary's cup, which Claude draws on the Site v2 Screens canvas (owner, 2026-10-29).
 
-## Each cup match gives its players a locked team to build
-
-A cup match gives each of its players a team of eight sourced from their Tournament snapshot, marked To build in their team list until it is locked; Lock in freezes the whole build, an admin unlocks it, and the team list and page mark it locked; the match page shows both teams to their owners and admins, and to everyone once the cup's mode reveals them, in [their own entry](#league-teams-stay-hidden-until-their-mode-reveals-them) ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). A player with no Tournament snapshot is told to upload it. A cup team has no public/private toggle.
-
-**Do:**
-- [ ] The lock on a team, its admin unlock, and the frozen editor (`team-locked.dc.html`).
-- [ ] Cup teams made per match and player, their size (eight) named in `shared/league.ts`.
-- [ ] The team list's marks for them: `GET /api/teams` gives a cup team its kind (`teamLeague` in `shared/team.ts`, today `try` only) and its state, `todo` or `locked` (`TEAM_STATES`, today always `edit` in `api/_lib/teams.ts`), and `src/pages/teams.tsx` adds the Cup kind chip in gold beside its `try` one (`KIND_CHIP`); its To build and Locked chips are already drawn from `state`.
-- [ ] The match page's team columns (`src/pages/league-match.tsx`, "No team on the site yet" today) showing a cup match's teams.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, as a test player with a Tournament snapshot, see the cup team "To build" on the team list, build and lock it, see it "Locked" there and every editor refuse; without one, see the upload prompt; as admin, unlock it; a cup team shows no public/private toggle.
-- Human-run: the owner builds and locks a cup team on the preview.
-- Reuse: team sources and size (`shared/team.ts`, `api/_lib/teams.ts`), the team page (`src/pages/team.tsx`) and its read-only view (`canEdit`), the team list's chips (`Chip`, `KIND_CHIP` in `src/pages/teams.tsx`).
-- Neighbors: the team page's read-only view of another's team.
-- Forbidden: an "Any Pokémon" source on a cup team.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
-
 ## A Pokémon League try locks its team, and a locked team can be cloned
 
-Logging a try locks the team it uses, picked or pasted, and editing a try leaves it locked; series 1's imported try teams are locked too. A locked team, a try's or a round or cup team, shows Clone on its page, which copies it into a new editable team of the reader's own: a player clones only their own, an admin any ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)). The lock, its admin unlock and the frozen editor come with [Each cup match gives its players a locked team to build](#each-cup-match-gives-its-players-a-locked-team-to-build).
+Logging a try locks the team it uses, picked or pasted, and editing a try leaves it locked; series 1's imported try teams are locked too. A locked team, a try's or a round or cup team, shows Clone on its page, which copies it into a new editable team of the reader's own: a player clones only their own, an admin any ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)). The lock, its admin unlock and the frozen editor come with the cup teams' lock (`POST /api/teams/<id>/lock` and `/unlock`, `api/_lib/teams.ts`).
 
 **Do:**
 - [ ] Lock a try's team when the try is logged, and on the import's try teams.
@@ -54,7 +35,6 @@ Logging a try locks the team it uses, picked or pasted, and editing a try leaves
 - Forbidden: a clone carrying EVs or IVs the reader may not see.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/`
-**After:** Each cup match gives its players a locked team to build
 
 ## League teams stay hidden until their mode reveals them
 
@@ -72,7 +52,6 @@ The cup gets its mode when an admin starts it. A round or cup team is seen only 
 - Forbidden: hiding in the browser only; a mode hard-coded rather than read from the round or cup.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Each cup match gives its players a locked team to build
 
 ## Players ban blind and pick their six on a cup match's page
 
@@ -130,7 +109,7 @@ Each imported match gets one team per side, built from its games' replays togeth
 
 ## A closed round hides a player's pair until they lock their team
 
-In a closed round, a player sees their own pair only once they have locked their round team, and so none of the round's pairs, nor who rests, since the others give their own away; everyone else sees a match's pair once both its players have locked ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams come with [An opened round gives each player their team once their snapshot exists](#an-opened-round-gives-each-player-their-team-once-their-snapshot-exists), and the lock with [Each cup match gives its players a locked team to build](#each-cup-match-gives-its-players-a-locked-team-to-build).
+In a closed round, a player sees their own pair only once they have locked their round team, and so none of the round's pairs, nor who rests, since the others give their own away; everyone else sees a match's pair once both its players have locked ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams come with [An opened round gives each player their team once their snapshot exists](#an-opened-round-gives-each-player-their-team-once-their-snapshot-exists), and the lock with the cup teams' lock (`POST /api/teams/<id>/lock` and `/unlock`, `api/_lib/teams.ts`).
 
 **Do:**
 - [ ] A closed round's pairs hidden from each of its players until they lock, and from everyone else until that match's two players have both locked, enforced by the API wherever the pairs are handed out: the league page's rounds, head-to-head, the reader's rounds and next match, the series page's League summary and the match page.

@@ -21,6 +21,7 @@ const t = messages({
     roundOf: (n: number) => `Round of ${n}`,
     champion: "Champion",
     bracket: "Cup bracket",
+    cup: "Cup",
     toBeDecided: "To be decided",
     bo3: "Bo3",
     seeds: (a: number, b: number) => `${a} vs ${b} · Bo3`,
@@ -53,6 +54,7 @@ const t = messages({
     roundOf: (n: number) => `Ronda de ${n}`,
     champion: "Campeón",
     bracket: "Cuadro de la copa",
+    cup: "Copa",
     toBeDecided: "Por decidir",
     bo3: "Bo3",
     seeds: (a: number, b: number) => `${a} contra ${b} · Bo3`,
@@ -83,6 +85,11 @@ export function stageName({ kind, left, group }: Stage, one = false): string {
   if (left === 1) return one ? t.semi : t.semis;
   if (left === 2) return one ? t.quarter : t.quarters;
   return t.roundOf(2 ** (left + 1));
+}
+
+export function cupStage(league: { slot: string; entrants: number }): string {
+  const slot = cupSlots(league.entrants).find((one) => one.key === league.slot);
+  return slot ? stageName({ kind: slot.kind, left: slot.left, group: cupShape(league.entrants).half }, true) : t.cup;
 }
 
 function message(error: unknown): string {

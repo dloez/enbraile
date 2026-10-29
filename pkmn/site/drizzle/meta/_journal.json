@@ -190,6 +190,13 @@
       "when": 1793270759124,
       "tag": "0026_team_free_pool",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793271326626,
+      "tag": "0027_cup_teams",
+      "breakpoints": true
     }
   ]
 }

@@ -100,7 +100,10 @@ export const teamSourceRow = z.object({
   milestone: z.string(),
 });
 
-export const teamLeague = z.object({ kind: z.literal("try"), series: z.int(), number: z.int(), at: z.string() });
+export const teamLeague = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("try"), series: z.int(), number: z.int(), at: z.string() }),
+  z.object({ kind: z.literal("cup"), series: z.int(), match: z.string(), slot: z.string(), entrants: z.int(), opponent: z.string() }),
+]);
 
 export const teamRow = z.object({
   id: z.string(),
@@ -109,6 +112,7 @@ export const teamRow = z.object({
   series: z.array(z.int()),
   league: teamLeague.nullable(),
   state: z.enum(TEAM_STATES),
+  lockedAt: z.string().nullable(),
   sources: z.array(teamSourceRow),
   anyPokemon: z.boolean(),
   private: z.boolean(),
@@ -132,7 +136,12 @@ export const teamPage = z.object({
   id: z.string(),
   name: z.string(),
   owner: person,
+  mine: z.boolean(),
+  league: teamLeague.nullable(),
+  lockedAt: z.string().nullable(),
   canEdit: z.boolean(),
+  canLock: z.boolean(),
+  canUnlock: z.boolean(),
   sources: z.array(teamSource),
   anyPokemon: z.boolean(),
   private: z.boolean(),
@@ -170,6 +179,15 @@ export type TeamState = (typeof TEAM_STATES)[number];
 
 export function teamKind(row: Pick<TeamRow, "league">): TeamKind {
   return row.league?.kind ?? "free";
+}
+
+export function hasToggle(kind: TeamKind): boolean {
+  return kind === "free" || kind === "try";
+}
+
+export function teamState(kind: TeamKind, locked: boolean): TeamState {
+  if (locked) return "locked";
+  return kind === "round" || kind === "cup" ? "todo" : "edit";
 }
 
 export type TeamSourceRow = z.infer<typeof teamSourceRow>;

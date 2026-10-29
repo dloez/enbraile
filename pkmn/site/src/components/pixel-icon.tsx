@@ -42,6 +42,8 @@ const ICONS = {
     ],
   },
   lock: { size: 10, paths: [["fill-current", "M3 0h4v1H3zM2 1h1v3H2zM7 1h1v3H7zM1 4h8v6H1z"]] },
+  unlock: { size: 10, paths: [["fill-current", "M3 0h4v1H3zM2 1h1v3H2zM7 1h1v1H7zM1 4h8v6H1z"]] },
+  cup: { size: 10, paths: [["fill-current", "M1 0h8v1H1zM0 1h2v2H0zM8 1h2v2H8zM2 1h6v4H2zM1 3h1v1H1zM8 3h1v1H8zM3 5h4v1H3zM4 6h2v2H4zM2 8h6v2H2z"]] },
   hidden: {
     size: 10,
     paths: [["fill-current", "M0 0h1v1H0zM1 1h1v1H1zM2 2h1v1H2zM3 3h1v1H3zM4 4h1v1H4zM5 5h1v1H5zM6 6h1v1H6zM7 7h1v1H7zM8 8h1v1H8zM9 9h1v1H9zM2 4h1v2H2zM3 6h4v1H3zM7 3h1v2H7zM3 3h1v1H3zM5 2h2v1H5z"]],

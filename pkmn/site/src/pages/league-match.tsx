@@ -9,7 +9,10 @@ import { authClient } from "@/lib/auth-client";
 import { stageName } from "@/league/cup";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
-import { FAINTED_PER_GAME, type GameInput, MATCH_GAMES, type MatchPage, matchPage, POINTS_PER_WIN, tally } from "../../shared/league";
+import { PixelIcon } from "@/components/pixel-icon";
+import { TypeTag } from "@/components/pc/summary";
+import { dexName } from "../../shared/dex-text";
+import { FAINTED_PER_GAME, type GameInput, MATCH_GAMES, type MatchMember, type MatchPage, matchPage, type MatchTeam, POINTS_PER_WIN, tally } from "../../shared/league";
 
 const t = messages({
   en: {
@@ -28,6 +31,15 @@ const t = messages({
     you: "You",
     team: (name: string) => `${name}'s team`,
     noTeam: "No team on the site yet",
+    uploadFor: (milestone: string) => `Upload your ${milestone} snapshot to get your cup team`,
+    toSeries: "Upload it on the series page",
+    waitingFor: (name: string, milestone: string) => `Waiting for ${name}'s ${milestone} snapshot`,
+    hiddenLocked: (name: string) => `${name} has locked their team; it shows once the cup reveals it`,
+    hiddenBuilding: (name: string) => `${name} is building their team; it shows once the cup reveals it`,
+    openTeam: (team: string) => `Open ${team}`,
+    locked: "Locked",
+    toBuild: "To build",
+    empty: "Empty",
     games: "Games",
     game: (n: number | null) => (n === null ? "Game" : `Game ${n}`),
     won: (name: string) => `${name} won`,
@@ -69,6 +81,15 @@ const t = messages({
     you: "Tú",
     team: (name: string) => `Equipo de ${name}`,
     noTeam: "Aún no hay equipo en la web",
+    uploadFor: (milestone: string) => `Sube tu captura de ${milestone} para tener tu equipo de copa`,
+    toSeries: "Súbela en la página de la serie",
+    waitingFor: (name: string, milestone: string) => `Esperando la captura de ${milestone} de ${name}`,
+    hiddenLocked: (name: string) => `${name} ha bloqueado su equipo; se verá cuando la copa lo muestre`,
+    hiddenBuilding: (name: string) => `${name} está montando su equipo; se verá cuando la copa lo muestre`,
+    openTeam: (team: string) => `Abrir ${team}`,
+    locked: "Bloqueado",
+    toBuild: "Por montar",
+    empty: "Vacío",
     games: "Partidas",
     game: (n: number | null) => (n === null ? "Partida" : `Partida ${n}`),
     won: (name: string) => `Ganó ${name}`,
@@ -191,8 +212,8 @@ export function LeagueMatchPage() {
           <GameSlots match={match} decided={decided} editing={editing} onEdit={setEditing} nameOf={nameOf} />
           <ResultPanel match={match} decided={decided} sum={sum} editing={editing} onCancel={() => setEditing(null)} onSaved={saved} nameOf={nameOf} />
         </section>
-        <TeamColumn name={match.a.name} className="lg:order-1" />
-        <TeamColumn name={match.b.name} className="lg:order-3" />
+        <TeamColumn number={match.number} name={match.a.name} team={match.teams.a} you={match.a.id === me} className="lg:order-1" />
+        <TeamColumn number={match.number} name={match.b.name} team={match.teams.b} you={match.b.id === me} className="lg:order-3" />
       </div>
     </main>
   );
@@ -221,14 +242,83 @@ function Side({ side, you, end = false }: { side: MatchPage["a"]; you: boolean; 
   );
 }
 
-function TeamColumn({ name, className }: { name: string; className?: string }) {
+function TeamColumn({ number, name, team, you, className }: { number: number; name: string; team: MatchTeam; you: boolean; className?: string }) {
   return (
     <section aria-label={t.team(name)} className={cn("flex flex-col gap-2", className)}>
       <h2 className="m-0 px-0.5 font-heading text-[1.625rem] leading-none font-normal lg:sr-only">{t.team(name)}</h2>
-      <p className="m-0 grid min-h-24 flex-1 place-items-center rounded-[14px] border-3 border-dashed bg-box px-4 text-center font-heading text-xl text-faint lg:min-h-80">
-        {t.noTeam}
-      </p>
+      {team.state === "shown" ? (
+        <>
+          <ol aria-label={team.name} className="m-0 grid list-none grid-cols-2 gap-2 p-0">
+            {team.members.map((member, at) => (
+              <li key={at} className="flex min-w-0">
+                {member ? (
+                  <MemberTile member={member} />
+                ) : (
+                  <span className="grid min-h-22 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-lg text-faint">{t.empty}</span>
+                )}
+              </li>
+            ))}
+          </ol>
+          <span className="flex flex-wrap items-center gap-2 px-0.5">
+            <Link
+              to="/teams/$id"
+              params={{ id: team.id }}
+              className="min-w-0 truncate font-heading text-xl text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {t.openTeam(team.name)}
+            </Link>
+            {team.locked ? (
+              <span className="flex h-5.5 items-center gap-1.25 rounded-[5px] border-2 border-cell-hi bg-ink px-2 font-heading text-[1.0625rem] leading-none text-subtle">
+                <PixelIcon name="lock" className="size-3" />
+                {t.locked}
+              </span>
+            ) : (
+              <span className="flex h-5.5 items-center rounded-[5px] bg-round px-2 font-heading text-[1.0625rem] leading-none text-white">{t.toBuild}</span>
+            )}
+          </span>
+        </>
+      ) : (
+        <div className="grid min-h-24 flex-1 place-items-center content-center gap-2 rounded-[14px] border-3 border-dashed bg-box px-4 py-4 text-center font-heading text-xl text-faint lg:min-h-80">
+          {team.state === "none" && <p className="m-0">{t.noTeam}</p>}
+          {team.state === "waiting" && you && (
+            <>
+              <p className="m-0 text-subtle">{t.uploadFor(team.milestone)}</p>
+              <Link
+                to="/series/$number"
+                params={{ number: String(number) }}
+                className="text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {t.toSeries}
+              </Link>
+            </>
+          )}
+          {team.state === "waiting" && !you && <p className="m-0">{t.waitingFor(name, team.milestone)}</p>}
+          {team.state === "hidden" && <p className="m-0">{team.locked ? t.hiddenLocked(name) : t.hiddenBuilding(name)}</p>}
+        </div>
+      )}
     </section>
+  );
+}
+
+function MemberTile({ member }: { member: MatchMember }) {
+  const item = member.item ? dexName("items", member.item.id, member.item.name) : null;
+  return (
+    <span className="flex min-h-22 min-w-0 flex-1 items-center gap-2 rounded-[14px] border-3 bg-card py-1.5 pr-2.5 pl-1">
+      {member.sprite ? (
+        <img src={member.sprite} alt="" className="size-14 flex-none [image-rendering:pixelated] sm:size-19" />
+      ) : (
+        <span aria-hidden="true" className="size-14 flex-none sm:size-19" />
+      )}
+      <span className="flex min-w-0 flex-1 flex-col gap-0.75">
+        <span className="truncate font-heading text-2xl leading-none">{member.nickname ?? member.species}</span>
+        <span className="truncate text-[0.8125rem] font-bold text-muted-foreground">{[member.nickname ? member.species : null, item].filter(Boolean).join(" · ")}</span>
+        <span className="flex flex-wrap gap-1">
+          {member.types.map((type) => (
+            <TypeTag key={type} type={type} className="px-1.5 text-[0.9375rem] leading-[19px]" />
+          ))}
+        </span>
+      </span>
+    </span>
   );
 }
 

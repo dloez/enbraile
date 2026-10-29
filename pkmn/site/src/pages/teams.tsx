@@ -13,12 +13,14 @@ import { cn } from "@/lib/utils";
 import { TwoBlocks } from "@/components/page-frames";
 import { spriteOfName } from "@/analysis/sprite";
 import { SnapshotMenu } from "@/teams/components/snapshot-menu";
+import { cupStage } from "@/league/cup";
 import { profilePage } from "../../shared/profile";
 import {
   MAX_COMPARED,
   MIN_COMPARED,
   TEAM_KINDS,
   TEAM_STATES,
+  hasToggle,
   teamKind,
   teamList,
   teamMade,
@@ -34,6 +36,7 @@ const t = messages({
     failed: "Something went wrong",
     changedOn: (when: string) => `Changed ${when}`,
     loggedOn: (when: string) => `Logged ${when}`,
+    lockedOn: (when: string) => `Locked ${when}`,
     today: "today",
     yesterday: "yesterday",
     daysAgo: (days: number) => `${days} days ago`,
@@ -69,6 +72,7 @@ const t = messages({
     kinds: { free: "Free", round: "Round", cup: "Cup", try: "League try" } satisfies Record<TeamKind, string>,
     states: { todo: "To build", locked: "Locked", edit: "Editable" } satisfies Record<TeamState, string>,
     leagueTry: (n: number) => `League try ${n}`,
+    cupMatch: (stage: string, opponent: string) => `Cup · ${stage} v ${opponent}`,
     private: "Private",
     privateTitle: "Only you and admins see it",
     shown: (n: number) => (n === 1 ? "1 team" : `${n} teams`),
@@ -79,6 +83,7 @@ const t = messages({
     failed: "Algo ha fallado",
     changedOn: (when: string) => `Cambiado ${when}`,
     loggedOn: (when: string) => `Anotado ${when}`,
+    lockedOn: (when: string) => `Bloqueado ${when}`,
     today: "hoy",
     yesterday: "ayer",
     daysAgo: (days: number) => `hace ${days} días`,
@@ -114,6 +119,7 @@ const t = messages({
     kinds: { free: "Libre", round: "Ronda", cup: "Copa", try: "Intento de liga" } satisfies Record<TeamKind, string>,
     states: { todo: "Por montar", locked: "Bloqueado", edit: "Editable" } satisfies Record<TeamState, string>,
     leagueTry: (n: number) => `Intento de liga ${n}`,
+    cupMatch: (stage: string, opponent: string) => `Copa · ${stage} contra ${opponent}`,
     private: "Privado",
     privateTitle: "Solo tú y los administradores lo veis",
     shown: (n: number) => (n === 1 ? "1 equipo" : `${n} equipos`),
@@ -139,8 +145,10 @@ function ago(iso: string, now = Date.now()): string {
   return t.inMonth(at.toLocaleString(locale, { month: "long" }));
 }
 
-function when(team: Pick<TeamRow, "league" | "updatedAt">): string {
-  return team.league ? t.loggedOn(ago(team.league.at)) : t.changedOn(ago(team.updatedAt));
+function when(team: Pick<TeamRow, "league" | "lockedAt" | "updatedAt">): string {
+  if (team.league?.kind === "try") return t.loggedOn(ago(team.league.at));
+  if (team.lockedAt) return t.lockedOn(ago(team.lockedAt));
+  return t.changedOn(ago(team.updatedAt));
 }
 
 export function sourceLine(team: Pick<TeamRow, "owner" | "series" | "sources" | "anyPokemon">): string {
@@ -548,7 +556,7 @@ function RowBody({ team, showOwner, mine, filled }: { team: TeamRow; showOwner: 
               {t.states.locked}
             </Chip>
           )}
-          {mine && team.private && (
+          {mine && team.private && hasToggle(teamKind(team)) && (
             <Chip className="border-2 border-dashed border-cell-hi text-muted-foreground" title={t.privateTitle}>
               <PixelIcon name="hidden" className="size-3" />
               {t.private}
@@ -595,16 +603,18 @@ function Chip({ className, title, children }: { className: string; title?: strin
   );
 }
 
-const KIND_CHIP: Record<TeamLeague["kind"], { className: string; icon: PixelIconName; label: (league: TeamLeague) => string }> = {
+const KIND_CHIP: { [K in TeamLeague["kind"]]: { className: string; icon: PixelIconName; label: (league: Extract<TeamLeague, { kind: K }>) => string } } = {
   try: { className: "border-2 border-try-rim bg-try-fill text-try", icon: "league", label: (league) => t.leagueTry(league.number) },
+  cup: { className: "border-2 border-cup-rim bg-cup-fill text-cup", icon: "cup", label: (league) => t.cupMatch(cupStage(league), league.opponent) },
 };
 
 function KindChip({ league }: { league: TeamLeague }) {
   const chip = KIND_CHIP[league.kind];
+  const label = league.kind === "try" ? KIND_CHIP.try.label(league) : KIND_CHIP.cup.label(league);
   return (
     <Chip className={chip.className}>
       <PixelIcon name={chip.icon} className="size-2.5 sm:size-2.75" />
-      {chip.label(league)}
+      {label}
     </Chip>
   );
 }

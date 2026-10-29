@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
 import { FAINTED_PER_GAME, GAMES_TO_WIN, LEAGUE_COMBATS, LEAGUE_MODES, MATCH_GAMES, PARTY_SIZE, type TryMember } from "../../shared/league.js";
@@ -242,11 +242,16 @@ export const team = pgTable(
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
+    matchId: text("match_id").references((): AnyPgColumn => leagueMatch.id, { onDelete: "cascade" }),
+    lockedAt: timestamp("locked_at"),
+    lockedBy: text("locked_by").references(() => user.id, { onDelete: "set null" }),
   },
   (table) => [
     index("team_owner_id_idx").on(table.ownerId),
+    unique("team_match_owner_unique").on(table.matchId, table.ownerId),
     check("team_size", sql`${table.size} BETWEEN 6 AND 8`),
     check("team_slots_size", sql`jsonb_array_length(${table.slots}) = ${table.size}`),
+    check("team_locked_by", sql`${table.lockedBy} IS NULL OR ${table.lockedAt} IS NOT NULL`),
   ],
 );
 
