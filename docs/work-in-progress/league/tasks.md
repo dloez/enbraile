@@ -154,12 +154,25 @@ The league's refusal messages write the rules' numbers as text ("fainted from 0 
 
 **Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/src/pages/league-match.tsx`
 
+## Does the cup's bracket for 10, 12 and 14 entrants stand?
+
+**Needs the author:** the rulebook draws the cup for six, and for two, four or eight as a plain knockout; the cup's build chose a pattern for 10, 12 and 14 that the rules never settled ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), "The cup's build choices": the group's best meet the winners of seed 2's, seed 3's, … first-round matches, the other winners pairing highest against lowest). Does it stand, or do those sizes stay unable to start until the rules say?
+
+## Should rerunning the league import keep an admin's hatched count?
+
+**Needs the author:** each run of `npm run league-import` re-stamps every player's hatched count with the app's, an admin's own setting included, and its new time puts the app's count back ahead of snapshots uploaded before the rerun. It matters for reruns on the preview or before production. Keep it, or leave an admin's count and a count a later snapshot replaced alone?
+
+## Is the Eggs cell's "from the app" label signed off?
+
+**Needs the author:** an imported hatched count reads "from the app" ("de la app") in the amber-and-pencil style where an admin's name goes; no signed-off board draws it (`league-eggs*.dc.html`). Keep it, or draw it on the canvas for sign-off?
+
 ## Retire the Trainer League app
 
 Owner-run. The league branch goes to `main` only now, on the owner's word; with the real players invited, the dump is imported on production and read against the app, the group moves to the site and the app is switched off ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)).
 
 **Do:**
 - [ ] Owner-run: invite the real players; merge the league branch to `main`; run the import on production with the map pointed at their accounts.
+- [ ] Owner-run: paste series 1's new "Fewer than six" cup rule (Rules → Final Tournament, 2026-10-29) into series 1's rules on the site, in English and Spanish, on the preview and on production: the site's copy of a series' rules is held in the database, set on the admin series form.
 - [ ] Owner-run: read the league against the app; tell the group; switch it off.
 
 **Acceptance:**
