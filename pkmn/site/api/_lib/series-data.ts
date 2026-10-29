@@ -1,5 +1,6 @@
-import { and, asc, count, eq, inArray, isNull, ne, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, isNull, ne, or, type SQL, sql } from "drizzle-orm";
 import { alias, type AnyPgTable } from "drizzle-orm/pg-core";
+import { pairsHidden } from "../../shared/league.js";
 import { type AdminSeries, CHECKLIST_TEXT, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
@@ -36,6 +37,39 @@ export function revealed(): SQL {
 
 export function teamsSeenBy(reader: Viewer): SQL | undefined {
   return reader.admin ? undefined : or(eq(team.ownerId, reader.id), and(isNull(team.matchId), eq(team.private, false)), revealed());
+}
+
+export async function hiddenPairs(reader: Viewer, matchIds: readonly string[]): Promise<Set<string>> {
+  if (reader.admin || matchIds.length === 0) return new Set();
+  const asked = await db.selectDistinct({ roundId: leagueMatch.roundId }).from(leagueMatch).where(inArray(leagueMatch.id, [...matchIds]));
+  const roundIds = asked.flatMap((row) => (row.roundId ? [row.roundId] : []));
+  if (roundIds.length === 0) return new Set();
+  const rounds = await db.select({ id: leagueRound.id, mode: leagueRound.mode, bye: leagueRound.byeId }).from(leagueRound).where(inArray(leagueRound.id, roundIds));
+  const matches = await db
+    .select({ id: leagueMatch.id, roundId: leagueMatch.roundId, a: leagueMatch.playerA, b: leagueMatch.playerB, gamesA: leagueMatch.gamesA })
+    .from(leagueMatch)
+    .where(inArray(leagueMatch.roundId, roundIds));
+  const locked = await db
+    .select({ matchId: team.matchId, ownerId: team.ownerId })
+    .from(team)
+    .where(and(inArray(team.matchId, matches.map((match) => match.id)), isNotNull(team.lockedAt)));
+  return new Set(
+    rounds.flatMap((round) => [
+      ...pairsHidden(reader.id, {
+        mode: round.mode,
+        bye: round.bye,
+        matches: matches
+          .filter((match) => match.roundId === round.id)
+          .map((match) => ({
+            id: match.id,
+            a: match.a,
+            b: match.b,
+            decided: match.gamesA !== null,
+            locked: locked.filter((held) => held.matchId === match.id).map((held) => held.ownerId),
+          })),
+      }).matches,
+    ]),
+  );
 }
 
 export async function viewer(request: Request) {

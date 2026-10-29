@@ -23,7 +23,7 @@ import { body } from "./body.js";
 import { db } from "./db.js";
 import { requireAdmin } from "./admin.js";
 import { cup, cupEntrant, game, leagueMatch, leagueRound, leagueTry, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
-import { teamsSeenBy, viewer } from "./series-data.js";
+import { hiddenPairs, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 import { seesSpreads, slotsWithoutSpreads, withoutSpreads } from "./spreads.js";
 import { says } from "./i18n.js";
 
@@ -273,7 +273,7 @@ async function cupTeams(ids: readonly string[]): Promise<Map<string, TeamLeague>
 
 const roundNumber = sql<number>`(select count(*) from ${milestone} as round_mark where round_mark.series_id = ${milestone.seriesId} and round_mark.mark = 'round' and round_mark.position <= ${milestone.position})`.mapWith(Number);
 
-async function roundTeams(ids: readonly string[]): Promise<Map<string, TeamLeague>> {
+async function roundTeams(ids: readonly string[], reader: Viewer): Promise<Map<string, TeamLeague>> {
   if (ids.length === 0) return new Map();
   const rows = await db
     .select({ id: team.id, ownerId: team.ownerId, match: leagueMatch.id, a: leagueMatch.playerA, b: leagueMatch.playerB, series: series.number, round: roundNumber, milestone: milestone.name })
@@ -284,10 +284,18 @@ async function roundTeams(ids: readonly string[]): Promise<Map<string, TeamLeagu
     .innerJoin(series, eq(series.id, leagueRound.seriesId))
     .where(inArray(team.id, [...ids]));
   const names = await namesOf(rows.map((row) => (row.ownerId === row.a ? row.b : row.a)));
+  const hidden = await hiddenPairs(reader, rows.map((row) => row.match));
   return new Map(
     rows.map((row) => [
       row.id,
-      { kind: "round", series: row.series, match: row.match, round: row.round, milestone: row.milestone, opponent: names.get(row.ownerId === row.a ? row.b : row.a) ?? "?" },
+      {
+        kind: "round",
+        series: row.series,
+        match: hidden.has(row.match) ? null : row.match,
+        round: row.round,
+        milestone: row.milestone,
+        opponent: hidden.has(row.match) ? null : (names.get(row.ownerId === row.a ? row.b : row.a) ?? "?"),
+      },
     ]),
   );
 }
@@ -297,8 +305,8 @@ async function namesOf(players: readonly string[]): Promise<Map<string, string>>
   return new Map(unique.length ? (await db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.id, unique))).map((p) => [p.id, p.name]) : []);
 }
 
-async function leaguesOf(ids: readonly string[]): Promise<Map<string, TeamLeague>> {
-  const [tries, cups, rounds] = await Promise.all([tryTeams(ids), cupTeams(ids), roundTeams(ids)]);
+async function leaguesOf(ids: readonly string[], reader: Viewer): Promise<Map<string, TeamLeague>> {
+  const [tries, cups, rounds] = await Promise.all([tryTeams(ids), cupTeams(ids), roundTeams(ids, reader)]);
   return new Map([...tries, ...cups, ...rounds]);
 }
 
@@ -324,7 +332,7 @@ teams.get("/", async (c) => {
     .orderBy(desc(team.updatedAt));
   const ids = rows.map((row) => row.id);
   const sources = ids.length ? await sourcesQuery().where(inArray(teamSource.teamId, ids)).orderBy(asc(teamSource.position)) : [];
-  const leagues = await leaguesOf(ids);
+  const leagues = await leaguesOf(ids, reader);
   const list: TeamRow[] = rows.map((row) => {
     const own = sources.filter((s) => s.teamId === row.id).map(sourceOf);
     const league = leagues.get(row.id) ?? null;
@@ -364,7 +372,14 @@ teams.get("/waiting", async (c) => {
     )
     .orderBy(desc(series.number), asc(milestone.position));
   const names = await namesOf(rows.map((row) => (row.a === reader.id ? row.b : row.a)));
-  const list: TeamWait[] = rows.map((row) => ({ series: row.series, match: row.match, round: row.round, milestone: row.milestone, opponent: names.get(row.a === reader.id ? row.b : row.a) ?? "?" }));
+  const hidden = await hiddenPairs(reader, rows.map((row) => row.match));
+  const list: TeamWait[] = rows.map((row) => ({
+    series: row.series,
+    match: row.match,
+    round: row.round,
+    milestone: row.milestone,
+    opponent: hidden.has(row.match) ? null : (names.get(row.a === reader.id ? row.b : row.a) ?? "?"),
+  }));
   return c.json(list);
 });
 
@@ -375,7 +390,7 @@ teams.get("/to-build", async (c) => {
     .select({ id: team.id })
     .from(team)
     .where(and(eq(team.ownerId, reader.id), isNull(team.lockedAt), isNotNull(team.matchId)));
-  const leagues = await leaguesOf(rows.map((row) => row.id));
+  const leagues = await leaguesOf(rows.map((row) => row.id), reader);
   const count = rows.filter((row) => teamState(teamKind({ league: leagues.get(row.id) ?? null }), false) === "todo").length;
   return c.json({ count });
 });
@@ -412,7 +427,7 @@ teams.get("/:id", async (c) => {
     .leftJoin(game, eq(game.id, series.gameId))
     .where(eq(teamSource.teamId, row.id))
     .orderBy(asc(teamSource.position));
-  const league = (await leaguesOf([row.id])).get(row.id) ?? null;
+  const league = (await leaguesOf([row.id], reader)).get(row.id) ?? null;
   const mine = reader.id === row.ownerId;
   const locked = row.lockedAt !== null;
   const page: TeamPage = {

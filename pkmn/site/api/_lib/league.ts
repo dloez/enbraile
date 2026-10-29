@@ -32,6 +32,7 @@ import {
   type LeagueGame,
   nextGame,
   openInput,
+  pairsHidden,
   pairsInput,
   PARTY_SIZE,
   pickInput,
@@ -282,26 +283,44 @@ export async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePa
     name: row.name,
     roundMilestones: roundMilestones.map((m) => m.name),
     players,
-    rounds: ordered.map(({ number, milestone: m, round }) => ({
-      number,
-      milestone: m.name,
-      mode: round!.mode,
-      bye: round!.byeId,
-      started: matches.some((match) => match.roundId === round!.id && (match.gamesA !== null || withGames.has(match.id))),
-      matches: matches
-        .filter((match) => match.roundId === round!.id)
-        .map((match) => ({
-          id: match.id,
-          a: match.playerA,
-          b: match.playerB,
-          gamesA: match.gamesA,
-          gamesB: match.gamesB,
-          faintedA: match.faintedA,
-          faintedB: match.faintedB,
-          teamA: teamState(match.id, match.playerA),
-          teamB: teamState(match.id, match.playerB),
-        })),
-    })),
+    rounds: ordered.map(({ number, milestone: m, round }) => {
+      const own = matches.filter((match) => match.roundId === round!.id);
+      const hidden = reader.admin
+        ? null
+        : pairsHidden(reader.id, {
+            mode: round!.mode,
+            bye: round!.byeId,
+            matches: own.map((match) => ({
+              id: match.id,
+              a: match.playerA,
+              b: match.playerB,
+              decided: match.gamesA !== null,
+              locked: roundTeams.filter((held) => held.matchId === match.id && held.lockedAt !== null).map((held) => held.ownerId),
+            })),
+          });
+      const unseen = own.filter((match) => hidden?.matches.has(match.id));
+      return {
+        number,
+        milestone: m.name,
+        mode: round!.mode,
+        bye: hidden?.bye ? null : round!.byeId,
+        started: own.some((match) => match.gamesA !== null || withGames.has(match.id)),
+        matches: own
+          .filter((match) => !hidden?.matches.has(match.id))
+          .map((match) => ({
+            id: match.id,
+            a: match.playerA,
+            b: match.playerB,
+            gamesA: match.gamesA,
+            gamesB: match.gamesB,
+            faintedA: match.faintedA,
+            faintedB: match.faintedB,
+            teamA: teamState(match.id, match.playerA),
+            teamB: teamState(match.id, match.playerB),
+          })),
+        hidden: hidden && unseen.length > 0 ? { pairs: unseen.length, toPlay: unseen.filter((match) => match.gamesA === null).length, yours: hidden.yours } : null,
+      };
+    }),
     next: next ? { number: next.number, milestone: next.milestone.name } : null,
     standings: standings(
       players.map((p) => p.id),

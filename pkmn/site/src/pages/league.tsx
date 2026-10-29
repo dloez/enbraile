@@ -63,6 +63,9 @@ const t = messages({
     allPlayed: "All played",
     toPlay: (n: number) => `${n} to play`,
     bye: (name: string) => `${name} rests`,
+    lockToSee: "Lock your round team to see who you meet",
+    lockToSeeAll: "Lock your round team to see this round's pairs",
+    hiddenPairs: (n: number) => (n === 1 ? "1 pair shows once both its players lock" : `${n} pairs show once both their players lock`),
     won: "W",
     lost: "L",
     matchLabel: (a: string, b: string, score: string | null) => `${a} vs ${b}, ${score ?? "to play"}`,
@@ -111,6 +114,9 @@ const t = messages({
     allPlayed: "Todo jugado",
     toPlay: (n: number) => `${n} por jugar`,
     bye: (name: string) => `${name} descansa`,
+    lockToSee: "Bloquea tu equipo de ronda para ver contra quién juegas",
+    lockToSeeAll: "Bloquea tu equipo de ronda para ver las parejas de esta ronda",
+    hiddenPairs: (n: number) => (n === 1 ? "1 pareja se ve cuando sus dos jugadores bloqueen" : `${n} parejas se ven cuando sus dos jugadores bloqueen`),
     won: "V",
     lost: "D",
     matchLabel: (a: string, b: string, score: string | null) => `${a} contra ${b}, ${score ?? "por jugar"}`,
@@ -190,7 +196,7 @@ export function LeaguePage() {
         <div className="flex flex-wrap items-end gap-3 sm:gap-6">
           <h1 className="m-0 font-heading text-[3.25rem] leading-[0.85] font-normal sm:text-6xl">{t.title}</h1>
           <span className="ml-auto flex min-h-9 items-center rounded-lg border-3 bg-ink px-2.5 font-heading text-lg whitespace-nowrap text-subtle sm:order-last sm:min-h-11 sm:rounded-[10px] sm:px-3.5 sm:text-[1.375rem]">
-            {view === "cup" && league.cup ? cupStatus(league.cup) : t.status(league.rounds.length, league.roundMilestones.length, matches.filter(played).length, matches.length)}
+            {view === "cup" && league.cup ? cupStatus(league.cup) : t.status(league.rounds.length, league.roundMilestones.length, matches.filter(played).length + hiddenPlayed(league), matches.length + hiddenPairs(league))}
           </span>
           <div role="radiogroup" aria-label={t.view} className="grid w-full grid-cols-2 gap-1 rounded-xl border-3 bg-ink p-1 sm:flex sm:w-auto">
             {views.map((v) => (
@@ -368,12 +374,25 @@ function StandingsTable({ league, me, nameOf, onChange }: Named & { onChange: (l
   );
 }
 
+function hiddenPairs(league: League): number {
+  return league.rounds.reduce((sum, round) => sum + (round.hidden?.pairs ?? 0), 0);
+}
+
+function hiddenPlayed(league: League): number {
+  return league.rounds.reduce((sum, round) => sum + (round.hidden ? round.hidden.pairs - round.hidden.toPlay : 0), 0);
+}
+
 function Mine({ league, me, nameOf }: Named & { me: string }) {
   const mine = league.rounds.flatMap((round) => round.matches.filter((m) => m.a === me || m.b === me).map((match) => ({ round, match })));
   const next = mine.find(({ match }) => !played(match));
+  const locking = league.rounds.find((round) => round.hidden?.yours);
   return (
     <aside aria-label={t.youInLeague} className="flex flex-col gap-3.5">
-      {next && <NextMatch number={league.number} round={next.round} match={next.match} me={me} nameOf={nameOf} />}
+      {next ? (
+        <NextMatch number={league.number} round={next.round} match={next.match} me={me} nameOf={nameOf} />
+      ) : (
+        locking && <LockToSee round={locking} />
+      )}
       <section aria-labelledby="yours" className="flex flex-col gap-2 rounded-[18px] border-3 bg-card px-3.5 pt-3.5 pb-4 sm:px-4.5 sm:pt-4 sm:pb-4.5">
         <h2 id="yours" className="m-0 mb-1 font-heading text-[1.625rem] font-normal">
           {t.yourRounds}
@@ -432,6 +451,25 @@ function NextMatch({ number, round, match, me, nameOf }: { number: number; round
           <span className="truncate font-heading text-[1.75rem] sm:text-3xl">{t.vs(other)}</span>
           <span className="text-[0.8125rem] font-bold text-muted-foreground sm:text-sm">{t.stage(round.number, round.milestone)}</span>
         </span>
+      </span>
+    </Link>
+  );
+}
+
+function LockToSee({ round }: { round: LeagueRound }) {
+  return (
+    <Link
+      to="/teams"
+      aria-labelledby="next"
+      aria-describedby="next-match"
+      className={cn("flex flex-col gap-3 rounded-[18px] border-3 border-primary bg-card px-3.5 pt-3.5 pb-4 text-foreground sm:px-4.5 sm:pt-4 sm:pb-4.5", matchRow)}
+    >
+      <span id="next" className="font-heading text-xl text-primary">
+        {t.next}
+      </span>
+      <span id="next-match" className="flex min-w-0 flex-col leading-[1.1]">
+        <span className="font-heading text-[1.75rem] sm:text-3xl">{t.lockToSee}</span>
+        <span className="text-[0.8125rem] font-bold text-muted-foreground sm:text-sm">{t.stage(round.number, round.milestone)}</span>
       </span>
     </Link>
   );
@@ -506,7 +544,7 @@ function Rounds({ league, me, nameOf, onChange }: Named & { onChange: (league: L
 }
 
 function RoundCard({ number, round, current, me, nameOf }: { number: number; round: LeagueRound; current: boolean; me: string | null; nameOf: (id: string) => string }) {
-  const left = round.matches.filter((m) => !played(m)).length;
+  const left = round.matches.filter((m) => !played(m)).length + (round.hidden?.toPlay ?? 0);
   return (
     <section
       aria-label={t.round(round.number)}
@@ -524,6 +562,11 @@ function RoundCard({ number, round, current, me, nameOf }: { number: number; rou
       {round.matches.map((match) => (
         <MatchBox key={match.id} number={number} match={match} mine={match.a === me || match.b === me} states={current && !played(match)} nameOf={nameOf} />
       ))}
+      {round.hidden && (
+        <p className="m-0 rounded-xl border-3 border-dashed bg-box px-3 py-2.5 font-heading text-lg text-subtle">
+          {round.hidden.yours ? t.lockToSeeAll : t.hiddenPairs(round.hidden.pairs)}
+        </p>
+      )}
       {round.bye && <span className="px-0.5 font-heading text-lg text-muted-foreground">{t.bye(nameOf(round.bye))}</span>}
     </section>
   );

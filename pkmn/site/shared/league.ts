@@ -58,7 +58,24 @@ export const leagueRound = z.object({
   bye: z.string().nullable(),
   started: z.boolean(),
   matches: z.array(leagueMatch),
+  hidden: z.object({ pairs: z.int(), toPlay: z.int(), yours: z.boolean() }).nullable(),
 });
+
+export type PairedRound = {
+  mode: LeagueMode;
+  bye: string | null;
+  matches: readonly { id: string; a: string; b: string; decided: boolean; locked: readonly string[] }[];
+};
+
+export function pairsHidden(reader: string, round: PairedRound): { matches: Set<string>; bye: boolean; yours: boolean } {
+  if (round.mode === "open") return { matches: new Set(), bye: false, yours: false };
+  const mine = round.matches.find((match) => match.a === reader || match.b === reader);
+  if (mine && !mine.decided && !mine.locked.includes(reader)) return { matches: new Set(round.matches.map((match) => match.id)), bye: round.bye !== null, yours: true };
+  const matches = new Set(
+    round.matches.filter((match) => match !== mine && !match.decided && !(match.locked.includes(match.a) && match.locked.includes(match.b))).map((match) => match.id),
+  );
+  return { matches, bye: round.bye !== null && round.bye !== reader && matches.size > 0, yours: false };
+}
 
 export const CUP_KINDS = ["first", "group", "bracket"] as const;
 

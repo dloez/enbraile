@@ -55,6 +55,8 @@ const t = messages({
     toPlay: (n: number) => `${n} to play`,
     allPlayed: "All played",
     vs: "vs",
+    lockToSeeAll: "Lock your round team to see this round's pairs",
+    hiddenPairs: (n: number) => (n === 1 ? "1 pair shows once both its players lock" : `${n} pairs show once both their players lock`),
     matchLabel: (a: string, b: string, score: string | null) => `${a} vs ${b}, ${score ?? "to play"}`,
     finalStandings: "Final standings",
     cup: "Cup",
@@ -97,6 +99,8 @@ const t = messages({
     toPlay: (n: number) => `${n} por jugar`,
     allPlayed: "Todo jugado",
     vs: "vs",
+    lockToSeeAll: "Bloquea tu equipo de ronda para ver las parejas de esta ronda",
+    hiddenPairs: (n: number) => (n === 1 ? "1 pareja se ve cuando sus dos jugadores bloqueen" : `${n} parejas se ven cuando sus dos jugadores bloqueen`),
     matchLabel: (a: string, b: string, score: string | null) => `${a} contra ${b}, ${score ?? "por jugar"}`,
     finalStandings: "Clasificación final",
     cup: "Copa",
@@ -324,7 +328,7 @@ function CupTile({ number, cup, slot, me, nameOf }: { number: number; cup: Leagu
 }
 
 function CurrentRound({ round, me, nameOf }: { round: LeagueRound; me: string | null; nameOf: (id: string) => string }) {
-  const left = round.matches.filter((m) => !played(m)).length;
+  const left = round.matches.filter((m) => !played(m)).length + (round.hidden?.toPlay ?? 0);
   return (
     <div className="flex flex-col gap-2.5 rounded-[18px] border-3 border-primary bg-card px-4 pt-3.5 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
       <div className="flex flex-wrap items-baseline gap-x-2.5">
@@ -363,6 +367,11 @@ function CurrentRound({ round, me, nameOf }: { round: LeagueRound; me: string | 
           </div>
         );
       })}
+      {round.hidden && (
+        <p className="m-0 rounded-xl border-3 border-dashed bg-box px-3 py-2.5 font-heading text-lg text-subtle">
+          {round.hidden.yours ? t.lockToSeeAll : t.hiddenPairs(round.hidden.pairs)}
+        </p>
+      )}
     </div>
   );
 }

@@ -23,22 +23,6 @@ Only a pairing that `settleCup` changes clears them (`api/_lib/cup.ts`). Series 
 **Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/league.ts`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** when an admin fixes a cup game's winner after the next game's bans are in, do that game's bans and sixes stand, or are they cleared so it is banned again? And when an admin unlocks a cup team whose match already has bans or sixes, are they cleared, kept as places, or is the unlock refused while they stand?
 
-## A closed round hides a player's pair until they lock their team
-
-In a closed round, a player sees their own pair only once they have locked their round team, and so none of the round's pairs, nor who rests, since the others give their own away; everyone else sees a match's pair once both its players have locked ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams are made by `giveRoundTeams` (`api/_lib/rounds.ts`), and the lock with the cup teams' lock (`POST /api/teams/<id>/lock` and `/unlock`, `api/_lib/teams.ts`).
-
-**Do:**
-- [ ] A closed round's pairs hidden from each of its players until they lock, and from everyone else until that match's two players have both locked, enforced by the API wherever the pairs are handed out: the league page's rounds, head-to-head, the reader's rounds and next match, the series page's League summary, the match page, the team list's waiting note (`GET /api/teams/waiting`) and a round team's opponent in `GET /api/teams` (`api/_lib/teams.ts`).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, open a closed round and see a player get no pair of it, by page or route, until they lock; a reader outside the league sees a match's pair only once its two players have locked; an admin, and the players of an open round, always see the pairs.
-- Human-run: none until a series uses it.
-- Reuse: the round's `mode` (`league_round` in `api/_lib/schema.ts`); the team lock (`POST /api/teams/<id>/lock`, `api/_lib/teams.ts`); the league read (`leagueOf` in `api/_lib/league.ts`).
-- Neighbors: the series page's League summary (`src/pages/series.tsx`).
-- Forbidden: hiding in the browser only.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-
 ## Players see others' saves only up to their own round
 
 A player sees another's snapshots only from their own round or older; someone outside the series only once every player has reached the snapshot's round; admins all ([discovery → Team Locking](discovery.md#team-locking)). Enforced wherever a snapshot is handed out: the PC, the player's series page and its journey, the abilities search and team sources.
@@ -55,6 +39,23 @@ A player sees another's snapshots only from their own round or older; someone ou
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
+
+## Do a closed round's standings hide the matches its pairs hide?
+
+A closed round hides a match's pair from a player who has not locked, and from everyone else until both its players have locked or it has a result (`pairsHidden` in `shared/league.ts`, The pkmn Site → Decisions, "The closed round's pairs, build choices"). The standings are still worked out from every match (`standings(…)` in `leagueOf`, `api/_lib/league.ts`), so a hidden match that already has a result moves its players' W–L and points, and a tie's note ("Beat <name>") can name its other side ([discovery → Team Locking](discovery.md#team-locking)).
+
+**Do:**
+- [ ] As the author decides.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, in a closed round with one match decided and hidden from a reader, the reader's standings follow the decision.
+- Human-run: none.
+- Reuse: `pairsHidden` (`shared/league.ts`); `standings` and `leagueOf`.
+- Neighbors: the series page's League summary and the profile's league record, which read the same standings.
+- Forbidden: hiding in the browser only.
+
+**Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/shared/league.ts`, `pkmn/site/src/`, `docs/pkmn/site/explanation/site.md`
+**Needs the author:** in a closed round, does a reader's standings leave out a match whose pair is hidden from them, results and tie notes included, or do the standings count every result as they do now?
 
 ## A closed round hides its snapshots until the match has a result
 
