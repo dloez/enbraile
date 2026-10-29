@@ -1,6 +1,6 @@
 # The League Tasks
 
-Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
+Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
 ## An opened round gives each player their team once their snapshot exists
 
@@ -152,23 +152,3 @@ Each run of `npm run league-import` writes every player's hatched count from the
 - Forbidden: none.
 
 **Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
-
-## Retire the Trainer League app
-
-Owner-run. The league branch goes to `main` only now, on the owner's word; with the real players invited, the dump is imported on production and read against the app, the group moves to the site and the app is switched off ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)).
-
-**Do:**
-- [ ] Owner-run: invite the real players; merge the league branch to `main`; run the import on production with the map pointed at their accounts.
-- [ ] Owner-run: paste series 1's new "Fewer than six" cup rule (Rules → Final Tournament, 2026-10-29) into series 1's rules on the site, in English and Spanish, on the preview and on production: the site's copy of a series' rules is held in the database, set on the admin series form.
-- [ ] Owner-run: read the league against the app; tell the group; switch it off.
-
-**Acceptance:**
-- Claude-run: none.
-- Human-run: the owner's read-through on production.
-- Reuse: the import script.
-- Neighbors: none.
-- Forbidden: none.
-
-**Touches:** none
-**After:** Series 1's game teams come across from their replays, locked to their rounds
-**Needs the author:** the go for production, the invites and the switch-off.
