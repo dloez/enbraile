@@ -56,7 +56,7 @@ import { says } from "./i18n.js";
 import { banIn, fixGame, matchTeamsOf, type Move, pickSix, recordGame, type Refusal, sidesOf, started } from "./match.js";
 import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
 import { cup, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
-import { findShown, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
+import { findShown, leaguesSeenBy, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 import { insertTeam, lockTryTeam } from "./teams.js";
 
 const gameNumbers = Array.from({ length: MATCH_GAMES }, (_, at) => at + 1).join(", ");
@@ -269,14 +269,15 @@ export async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePa
   const known = new Set(players.map((p) => p.id));
   const logged = await db.select().from(leagueTry).where(eq(leagueTry.seriesId, row.id)).orderBy(asc(leagueTry.loggedAt), asc(leagueTry.id));
   const linked = logged.flatMap((one) => (one.teamId ? [one.teamId] : []));
-  const seen = new Set(linked.length ? (await db.select({ id: team.id }).from(team).where(and(inArray(team.id, linked), teamsSeenBy(reader)))).map((r) => r.id) : []);
+  const seen = new Set(linked.length ? (await db.select({ id: team.id }).from(team).where(and(inArray(team.id, linked), await teamsSeenBy(reader)))).map((r) => r.id) : []);
+  const others = (await leaguesSeenBy(reader, [row.id]))(row.id);
   const counted = new Map<string, number>();
   const tries = logged
     .filter((one) => known.has(one.playerId))
     .map((one) => {
       const number = (counted.get(one.playerId) ?? 0) + 1;
       counted.set(one.playerId, number);
-      const members = one.members.map((member) => ({ ...member, ...describeMember(member.species, member.species) }));
+      const members = others || one.playerId === reader.id ? one.members.map((member) => ({ ...member, ...describeMember(member.species, member.species) })) : null;
       return { id: one.id, player: one.playerId, number, combatsWon: one.combatsWon, members, team: one.teamId !== null && seen.has(one.teamId) ? one.teamId : null, at: one.loggedAt.toISOString() };
     });
   const best = bestTries(tries);
@@ -339,6 +340,7 @@ export async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePa
     tries: listed,
     hatched: await hatchedOf(row.id, players.map((p) => p.id)),
     cup: await cupOf(row.id),
+    enrolled: enrolled.some((p) => p.id === reader.id),
     admin: !!reader.admin,
   };
 }
@@ -391,7 +393,7 @@ async function matchTeams(
   reader: Viewer,
 ): Promise<{ a: MatchTeam; b: MatchTeam }> {
   const inCup = round === null;
-  const seen = teamsSeenBy(reader);
+  const seen = await teamsSeenBy(reader);
   const held = await db
     .select({ id: team.id, name: team.name, ownerId: team.ownerId, slots: team.slots, lockedAt: team.lockedAt, seen: seen ? sql<boolean>`(${seen})` : sql<boolean>`true` })
     .from(team)

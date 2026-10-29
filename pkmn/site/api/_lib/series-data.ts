@@ -1,10 +1,10 @@
-import { and, asc, count, eq, inArray, isNotNull, isNull, ne, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, isNull, ne, notExists, or, type SQL, sql } from "drizzle-orm";
 import { alias, type AnyPgTable } from "drizzle-orm/pg-core";
-import { pairsHidden, savesSeen } from "../../shared/league.js";
+import { leagueSeen, pairsHidden, type SeriesSaves, savesSeen } from "../../shared/league.js";
 import { type AdminSeries, CHECKLIST_TEXT, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
-import { cup, game, leagueMatch, leagueRound, milestone, save, series, seriesPlayer, snapshot, team, user } from "./schema.js";
+import { cup, game, leagueMatch, leagueRound, leagueTry, milestone, save, series, seriesPlayer, snapshot, team, user } from "./schema.js";
 
 export type SeriesRow = typeof series.$inferSelect;
 
@@ -35,8 +35,20 @@ export function revealed(): SQL {
         where ${f.cupId} = ${m.cupId} and ${f.createdAt} <= ${m.createdAt} and ${f.gamesA} is null and ${lockedOn(f)} < 2))))`;
 }
 
-export function teamsSeenBy(reader: Viewer): SQL | undefined {
-  return reader.admin ? undefined : or(eq(team.ownerId, reader.id), and(isNull(team.matchId), eq(team.private, false)), revealed());
+export async function teamsSeenBy(reader: Viewer): Promise<SQL | undefined> {
+  if (reader.admin) return undefined;
+  const logged = (await db.selectDistinct({ seriesId: leagueTry.seriesId }).from(leagueTry)).map((row) => row.seriesId);
+  const seen = await leaguesSeenBy(reader, logged);
+  const held = logged.filter((id) => !seen(id));
+  const tryShown = held.length
+    ? notExists(
+        db
+          .select({ id: leagueTry.id })
+          .from(leagueTry)
+          .where(and(eq(leagueTry.teamId, team.id), inArray(leagueTry.seriesId, held))),
+      )
+    : undefined;
+  return or(eq(team.ownerId, reader.id), and(isNull(team.matchId), eq(team.private, false), tryShown), revealed());
 }
 
 export async function hiddenPairs(reader: Viewer, matchIds: readonly string[]): Promise<Set<string>> {
@@ -74,9 +86,7 @@ export async function hiddenPairs(reader: Viewer, matchIds: readonly string[]): 
 
 export type SeenSave = (seriesId: string, owner: string, milestoneId: string) => boolean;
 
-export async function savesSeenBy(reader: Viewer, seriesIds: readonly string[]): Promise<SeenSave> {
-  const ids = [...new Set(seriesIds)];
-  if (reader.admin || ids.length === 0) return () => true;
+async function seriesSaves(ids: readonly string[]): Promise<Map<string, SeriesSaves>> {
   const marks = await db
     .select({ seriesId: milestone.seriesId, id: milestone.id, mark: milestone.mark })
     .from(milestone)
@@ -88,20 +98,33 @@ export async function savesSeenBy(reader: Viewer, seriesIds: readonly string[]):
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .where(inArray(save.seriesId, ids));
-  const rules = new Map(
+  return new Map(
     ids.map((id) => [
       id,
-      savesSeen(reader.id, {
+      {
         milestones: marks.filter((at) => at.seriesId === id),
         taken: new Map(
           players
             .filter((player) => player.seriesId === id)
             .map((player) => [player.id, taken.filter((one) => one.seriesId === id && one.owner === player.id).map((one) => one.milestoneId)]),
         ),
-      }),
+      },
     ]),
   );
+}
+
+export async function savesSeenBy(reader: Viewer, seriesIds: readonly string[]): Promise<SeenSave> {
+  const ids = [...new Set(seriesIds)];
+  if (reader.admin || ids.length === 0) return () => true;
+  const rules = new Map([...(await seriesSaves(ids))].map(([id, saves]) => [id, savesSeen(reader.id, saves)]));
   return (seriesId, owner, milestoneId) => rules.get(seriesId)?.(owner, milestoneId) ?? false;
+}
+
+export async function leaguesSeenBy(reader: Viewer, seriesIds: readonly string[]): Promise<(seriesId: string) => boolean> {
+  const ids = [...new Set(seriesIds)];
+  if (reader.admin || ids.length === 0) return () => true;
+  const seen = new Set([...(await seriesSaves(ids))].flatMap(([id, saves]) => (leagueSeen(reader.id, saves) ? [id] : [])));
+  return (seriesId) => seen.has(seriesId);
 }
 
 export async function viewer(request: Request) {
@@ -169,7 +192,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
     ? await db
         .select({ ownerId: team.ownerId, teams: count() })
         .from(team)
-        .where(and(inArray(team.ownerId, players.map((p) => p.id)), teamsSeenBy(reader)))
+        .where(and(inArray(team.ownerId, players.map((p) => p.id)), await teamsSeenBy(reader)))
         .groupBy(team.ownerId)
     : [];
   const names = reader.admin

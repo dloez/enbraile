@@ -71,7 +71,7 @@ const seedLeague = [
 
 const seedCupGame = { winner: "Red", faintedA: 3, faintedB: 6, bans: { Red: 0, Blue: 1 } };
 
-const seedTry = { player: "Red", team: seedTeam.name, combatsWon: 2, fell: [2, 3, 3], species: ["snorlax", "venusaur", "staraptor"] };
+const seedTry = { player: "Red", combatsWon: 2, fell: [2, 3, 3], species: ["snorlax", "venusaur", "staraptor"] };
 
 const gameItems = new URL("../../games/anil/game/base/es-v4.14/Graphics/Items/", import.meta.url);
 
@@ -335,11 +335,9 @@ async function seedTheTry(): Promise<string | null> {
   if (!row || !player) throw new Error(`${seedSeries.name} or ${seedTry.player} is missing`);
   const [logged] = await db.select({ id: leagueTry.id }).from(leagueTry).where(and(eq(leagueTry.seriesId, row.id), eq(leagueTry.playerId, player.id)));
   if (logged) return null;
-  const [made] = await db.select({ id: team.id, slots: team.slots }).from(team).where(and(eq(team.ownerId, player.id), eq(team.name, seedTry.team)));
-  const species = made ? made.slots.flatMap((member) => (member ? [member.species] : [])) : seedTry.species;
-  const members = species.map((one, at) => ({ species: one, fell: seedTry.fell[at] ?? null }));
-  await db.insert(leagueTry).values({ id: crypto.randomUUID(), seriesId: row.id, playerId: player.id, teamId: made?.id ?? null, combatsWon: seedTry.combatsWon, members, loggedBy: player.id });
-  return `a Pokémon League try of ${seedTry.player}'s${made ? ` with the ${seedTry.team}` : ""}, ${seedTry.combatsWon} combats won`;
+  const members = seedTry.species.map((one, at) => ({ species: one, fell: seedTry.fell[at] ?? null }));
+  await db.insert(leagueTry).values({ id: crypto.randomUUID(), seriesId: row.id, playerId: player.id, teamId: null, combatsWon: seedTry.combatsWon, members, loggedBy: player.id });
+  return `a Pokémon League try of ${seedTry.player}'s, ${seedTry.combatsWon} combats won`;
 }
 
 async function seedTheFinishedSeries(): Promise<string | null> {

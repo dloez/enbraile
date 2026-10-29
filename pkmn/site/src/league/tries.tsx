@@ -25,6 +25,8 @@ const t = messages({
     edit: "Edit",
     editLabel: (name: string, n: number) => `Edit ${name}'s try ${n}`,
     tries: "Pokémon League tries",
+    heldYou: "Its Pokémon show once you reach the Pokémon League",
+    heldAll: "Its Pokémon show once every player reaches the Pokémon League",
   },
   es: {
     log: "Anotar un intento",
@@ -41,6 +43,8 @@ const t = messages({
     edit: "Editar",
     editLabel: (name: string, n: number) => `Editar el intento ${n} de ${name}`,
     tries: "Intentos de la Liga Pokémon",
+    heldYou: "Sus Pokémon se ven cuando llegues a la Liga Pokémon",
+    heldAll: "Sus Pokémon se ven cuando todos los jugadores lleguen a la Liga Pokémon",
   },
 });
 
@@ -72,6 +76,7 @@ export function Tries({ league, me, nameOf, onChange }: { league: LeaguePage; me
   const [editing, setEditing] = useState<Editing | null>(null);
   const canLog = me !== null && !league.admin;
   const order = league.standings.map((row) => row.player);
+  const held = league.enrolled ? t.heldYou : t.heldAll;
   return (
     <>
       {canLog && (
@@ -126,6 +131,7 @@ export function Tries({ league, me, nameOf, onChange }: { league: LeaguePage; me
                       key={one.id}
                       one={one}
                       name={name}
+                      held={held}
                       canEdit={league.admin || one.player === me}
                       onEdit={() => setEditing({ mode: "edit", one })}
                     />
@@ -154,7 +160,7 @@ export function Tries({ league, me, nameOf, onChange }: { league: LeaguePage; me
   );
 }
 
-function TryCard({ one, name, canEdit, onEdit }: { one: LeagueTry; name: string; canEdit: boolean; onEdit: () => void }) {
+function TryCard({ one, name, held, canEdit, onEdit }: { one: LeagueTry; name: string; held: string; canEdit: boolean; onEdit: () => void }) {
   const actions = (
     <>
       {one.team && (
@@ -190,31 +196,35 @@ function TryCard({ one, name, canEdit, onEdit }: { one: LeagueTry; name: string;
         <span className="flex-1 sm:hidden" />
         <span className="flex items-center gap-2.5 sm:hidden">{actions}</span>
       </div>
-      <ul className="m-0 grid list-none grid-cols-6 gap-1 p-0 sm:flex">
-        {one.members.map((member, at) => (
-          <li
-            key={at}
-            className="relative flex h-12.5 items-center justify-center overflow-hidden rounded-lg border-2 bg-box sm:h-15 sm:w-17 sm:rounded-[10px]"
-          >
-            {member.sprite ? (
-              <img
-                src={member.sprite}
-                alt={member.fell ? t.fellIn(member.name, member.fell) : member.name}
-                width={68}
-                height={68}
-                className={cn("block size-full object-contain [image-rendering:pixelated]", member.fell && "opacity-45 grayscale")}
-              />
-            ) : (
-              <span className="px-1 text-center text-xs font-bold text-muted-foreground">{member.fell ? t.fellIn(member.name, member.fell) : member.name}</span>
-            )}
-            {member.fell && (
-              <span aria-hidden="true" className="absolute right-0.5 bottom-0.5 h-4.25 min-w-4.25 rounded-sm bg-red px-0.75 text-center font-heading text-sm leading-4.25 text-white sm:right-0.75 sm:bottom-0.75 sm:h-5 sm:min-w-5 sm:rounded-[5px] sm:px-1 sm:text-base sm:leading-5">
-                {member.fell}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
+      {one.members === null ? (
+        <p className="m-0 flex min-h-12.5 items-center rounded-lg border-2 border-dashed bg-box px-3 py-1.5 font-heading leading-[1.15] text-lg text-subtle sm:min-h-15 sm:rounded-[10px] sm:text-xl">{held}</p>
+      ) : (
+        <ul className="m-0 grid list-none grid-cols-6 gap-1 p-0 sm:flex">
+          {one.members.map((member, at) => (
+            <li
+              key={at}
+              className="relative flex h-12.5 items-center justify-center overflow-hidden rounded-lg border-2 bg-box sm:h-15 sm:w-17 sm:rounded-[10px]"
+            >
+              {member.sprite ? (
+                <img
+                  src={member.sprite}
+                  alt={member.fell ? t.fellIn(member.name, member.fell) : member.name}
+                  width={68}
+                  height={68}
+                  className={cn("block size-full object-contain [image-rendering:pixelated]", member.fell && "opacity-45 grayscale")}
+                />
+              ) : (
+                <span className="px-1 text-center text-xs font-bold text-muted-foreground">{member.fell ? t.fellIn(member.name, member.fell) : member.name}</span>
+              )}
+              {member.fell && (
+                <span aria-hidden="true" className="absolute right-0.5 bottom-0.5 h-4.25 min-w-4.25 rounded-sm bg-red px-0.75 text-center font-heading text-sm leading-4.25 text-white sm:right-0.75 sm:bottom-0.75 sm:h-5 sm:min-w-5 sm:rounded-[5px] sm:px-1 sm:text-base sm:leading-5">
+                  {member.fell}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
       <span className="hidden flex-1 sm:block" />
       <span className="hidden items-center gap-3.5 sm:flex">{actions}</span>
     </div>

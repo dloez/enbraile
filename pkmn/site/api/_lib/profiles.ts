@@ -79,7 +79,7 @@ profiles.get("/:player", async (c) => {
         .innerJoin(teamSource, eq(teamSource.teamId, team.id))
         .innerJoin(snapshot, eq(snapshot.id, teamSource.snapshotId))
         .innerJoin(save, eq(save.id, snapshot.saveId))
-        .where(and(eq(team.ownerId, player.id), inArray(save.seriesId, ids), teamsSeenBy(reader)))
+        .where(and(eq(team.ownerId, player.id), inArray(save.seriesId, ids), await teamsSeenBy(reader)))
         .groupBy(save.seriesId)
     : [];
   const rows = played.map((s) => {

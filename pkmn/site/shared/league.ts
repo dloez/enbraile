@@ -80,18 +80,28 @@ export function pairsHidden(reader: string, round: PairedRound): { matches: Set<
   return { matches, bye: round.bye !== null && round.bye !== reader && matches.size > 0, yours: false };
 }
 
-type SeriesSaves = { milestones: readonly { id: string; mark: MilestoneMark }[]; taken: ReadonlyMap<string, readonly string[]> };
+export type SeriesSaves = { milestones: readonly { id: string; mark: MilestoneMark }[]; taken: ReadonlyMap<string, readonly string[]> };
 
-export function savesSeen(reader: string, saves: SeriesSaves): (owner: string, milestoneId: string) => boolean {
+function reach(reader: string, saves: SeriesSaves): { rounds: Map<string, number>; last: number; upTo: number } {
   const rounds = new Map<string, number>();
-  let round = 0;
+  let last = 0;
   for (const at of saves.milestones) {
-    if (at.mark === "round") round += 1;
-    rounds.set(at.id, round);
+    if (at.mark === "round") last += 1;
+    rounds.set(at.id, last);
   }
   const reached = (player: string) => Math.max(0, ...(saves.taken.get(player) ?? []).map((id) => rounds.get(id) ?? 0));
   const upTo = saves.taken.has(reader) ? reached(reader) : Math.min(...[...saves.taken.keys()].map(reached));
+  return { rounds, last, upTo };
+}
+
+export function savesSeen(reader: string, saves: SeriesSaves): (owner: string, milestoneId: string) => boolean {
+  const { rounds, upTo } = reach(reader, saves);
   return (owner, milestoneId) => owner === reader || (rounds.get(milestoneId) ?? 0) <= upTo;
+}
+
+export function leagueSeen(reader: string, saves: SeriesSaves): boolean {
+  const { last, upTo } = reach(reader, saves);
+  return last <= upTo;
 }
 
 export const CUP_KINDS = ["first", "group", "bracket"] as const;
@@ -152,7 +162,7 @@ export const leagueTry = z.object({
   player: z.string(),
   number: z.int(),
   combatsWon: z.int(),
-  members: z.array(tryMember.extend({ name: z.string(), sprite: z.string().nullable() })),
+  members: z.array(tryMember.extend({ name: z.string(), sprite: z.string().nullable() })).nullable(),
   team: z.string().nullable(),
   best: z.boolean(),
   at: z.string(),
@@ -178,6 +188,7 @@ export const leaguePage = z.object({
   tries: z.array(leagueTry),
   hatched: z.array(hatchedEggs),
   cup: leagueCup.nullable(),
+  enrolled: z.boolean(),
   admin: z.boolean(),
 });
 

@@ -2,23 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## A Pokémon League try's team and members follow the save rule
-
-A try's team is never private but follows the save rule as a milestone's PC does: a player sees another's try team, and on the league page its members and the combat each fell in, only once they have reached the Pokémon League themselves; someone outside the series once every player has; admins always ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). Today a try's team is made public when its try locks it (`lockTryTeam` in `api/_lib/teams.ts`, The Team Builder → Decisions, "The locked teams' visibility build choices"), and the Pokémon League view lists every try's members to every reader (`src/league/tries.tsx`, fed by `leagueOf` in `api/_lib/league.ts`).
-
-**Do:**
-- [ ] A try's team, by `GET /api/teams` and `GET /api/teams/<id>`, and a try's members and falls in the league read, held back from a reader the save rule does not yet let see the Pokémon League, its combats won and pips still shown; the try's team never marked private.
-- [ ] The Team Builder's and The pkmn Site's visibility decisions rewritten to say so.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with Red's try logged and Blue short of the Pokémon League, Blue sees Red's combats won but not the try's members or its team, by page or route, and does once Blue reaches it; an admin always sees them; the try's team shows no Private tag.
-- Human-run: none.
-- Reuse: the save rule (`savesSeen` in `shared/league.ts`, `savesSeenBy` in `api/_lib/series-data.ts`; [The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots), "Whose saves a reader sees"); `lockTryTeam` (`api/_lib/teams.ts`); `leagueOf` (`api/_lib/league.ts`).
-- Neighbors: the profile's league record, which shows the best try's pips.
-- Forbidden: hiding in the browser only; a try's team marked private.
-
-**Touches:** `pkmn/site/api/_lib/teams.ts`, `pkmn/site/api/_lib/league.ts`, `pkmn/site/shared/`, `pkmn/site/src/league/tries.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
-
 ## A closed round hides its snapshots until the match has a result
 
 In a closed round, each player's snapshot at the round's milestone is seen only by its owner and admins until their match has a result: their PC at that snapshot, the abilities search, and as a source in others' team builds. While that match is unplayed, each player's later saves stay hidden from the other too. An open round leaves them to the series' save rule ([discovery → Team Locking](discovery.md#team-locking)).

@@ -349,7 +349,7 @@ teams.get("/", async (c) => {
     })
     .from(team)
     .innerJoin(user, eq(user.id, team.ownerId))
-    .where(and(owner ? eq(team.ownerId, owner) : undefined, teamsSeenBy(reader)))
+    .where(and(owner ? eq(team.ownerId, owner) : undefined, await teamsSeenBy(reader)))
     .orderBy(desc(team.updatedAt));
   const ids = rows.map((row) => row.id);
   const sources = ids.length ? await sourcesQuery().where(inArray(teamSource.teamId, ids)).orderBy(asc(teamSource.position)) : [];
@@ -438,7 +438,7 @@ teams.get("/:id", async (c) => {
     })
     .from(team)
     .innerJoin(user, eq(user.id, team.ownerId))
-    .where(and(eq(team.id, c.req.param("id")), teamsSeenBy(reader)));
+    .where(and(eq(team.id, c.req.param("id")), await teamsSeenBy(reader)));
   if (!row) return c.json({ error: t(c).noTeam }, 404);
   const sources = await db
     .select({
@@ -628,7 +628,7 @@ teams.post("/:id/clone", async (c) => {
   const [held] = await db
     .select({ name: team.name, ownerId: team.ownerId, anyPokemon: team.anyPokemon, slots: team.slots, pool: team.pool, freePool: team.freePool, lockedAt: team.lockedAt })
     .from(team)
-    .where(and(eq(team.id, id), teamsSeenBy(reader)));
+    .where(and(eq(team.id, id), await teamsSeenBy(reader)));
   if (!held) return c.json({ error: t(c).noTeam }, 404);
   if (!reader.admin && held.ownerId !== reader.id) return c.json({ error: t(c).ownerClones }, 403);
   if (!held.lockedAt) return c.json({ error: t(c).notLocked }, 409);

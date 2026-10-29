@@ -103,7 +103,7 @@ export function TryDialog({
   const [picked, setPicked] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [won, setWon] = useState(one?.combatsWon ?? 0);
-  const [fell, setFell] = useState<(number | null)[]>(one?.members.map((m) => m.fell) ?? []);
+  const [fell, setFell] = useState<(number | null)[]>(one?.members?.map((m) => m.fell) ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -124,7 +124,7 @@ export function TryDialog({
   const read = useMemo(() => (from === "paste" && !one ? readShowdownTeam(text, EMPTY, EVERY_SPECIES) : null), [from, text, one]);
 
   const members: Shown[] = useMemo(() => {
-    if (one) return one.members.map((m) => ({ name: m.name, sprite: m.sprite }));
+    if (one) return (one.members ?? []).map((m) => ({ name: m.name, sprite: m.sprite }));
     if (read) return read.slots.flatMap((member) => (member ? [shown(member.species)] : []));
     const row = teams?.find((r) => r.id === picked);
     return row ? brought(row).map(shown) : [];
