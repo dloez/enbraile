@@ -76,23 +76,6 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
 **After:** Players see others' saves only up to their own round
 
-## A round team's lock counts only the Pokémon its player may field
-
-A round team may lock with fewer than six when its snapshot holds fewer living Pokémon (`lockNeeds` in `shared/league.ts`). The count it takes is every Pokémon in the snapshot's `pokemon`, legendaries and mythicals included (`livingOn` in `api/_lib/teams.ts`, `page.sources[0]?.snapshot.pokemon.length` in `src/pages/team.tsx`). But the rulebook bars legendaries and mythicals from every pokepaste ([Series 1 Rules → Rules in Every Battle](../../pkmn/series/1/reference/rules.md#rules-in-every-battle)) and lets a player with fewer alive bring what they have ([The League](../../pkmn/series/1/reference/rules.md#the-league)). So a player with five usable Pokémon and a legendary cannot lock without fielding the legendary. Found by the round teams' validator, 2026-10-29.
-
-**Do:**
-- [ ] `lockNeeds` fed the count of the snapshot's living Pokémon that are neither legendary nor mythical, by Showdown's tags (Restricted Legendary, Sub-Legendary, Mythical), on the lock route and on the team page alike.
-- [ ] The round teams' build choice and the lock route's refusal in the site docs say so.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, a round team on a snapshot with fewer than six usable Pokémon and a legendary locks with just the usable ones, by page and route; "Fill <n> slots" names that count; a cup team still needs all eight.
-- Human-run: none.
-- Reuse: `lockNeeds` (`shared/league.ts`); the species tags as `src/teams/dex.ts` reads them, through `dexFor` (`shared/dex.ts`), which the API can load.
-- Neighbors: the team pool's no-legendaries rule (`src/teams/dex.ts`).
-- Forbidden: a second count worked out apart from `lockNeeds`; the rule written outside `shared/league.ts`.
-
-**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/src/pages/team.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
-
 ## The league's labels read their numbers from `shared/league.ts`
 
 The match page's draft labels write the cup's brought count as a word ("Your six", "Picking six", "Six in", "Confirm these six", "Copy my six for Showdown"; "Tus seis", "Eligiendo seis", "Seis elegidos", "Confirmar estos seis", "Copiar mis seis" in `src/pages/league-match.tsx`), and the Cup view writes "Bo3" (`bo3` and `seeds` in `src/league/cup.tsx`), while discovery keeps every rule in `shared/league.ts` ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)); a changed rule would leave them wrong. The refusals already read theirs, as digits ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)). Found by the refusal entry's validator, 2026-10-29.

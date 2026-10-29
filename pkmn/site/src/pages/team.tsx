@@ -32,6 +32,7 @@ import { ANY_POKEMON, showdownTeam } from "@/teams/showdown";
 import { hasToggle, teamDone, teamKind, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
 import { PixelIcon } from "@/components/pixel-icon";
 import { cupStage } from "@/league/cup";
+import { speciesTags } from "../../shared/dex";
 import { lockNeeds } from "../../shared/league";
 import { MOVE_RULE_LABELS, MOVE_RULES, type FreePool, type MoveRule, type TeamPool } from "../../shared/pool";
 import { SelectField } from "@/components/select-field";
@@ -609,7 +610,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
               id={page.id}
               name={name}
               filled={filledAt(slots).length}
-              need={lockNeeds(page.league?.kind === "round" ? "round" : "cup", size, page.sources[0]?.snapshot.pokemon.length ?? null)}
+              need={lockNeeds(page.league?.kind === "round" ? "round" : "cup", size, page.sources[0]?.snapshot.pokemon.map((mon) => speciesTags(mon.species)) ?? null)}
               size={size}
               settled={() => writes.current}
               onDone={onReload}

@@ -9,6 +9,11 @@ export function dexFor(gen: Gen): ModdedDex {
   return Dex.forGen(gen);
 }
 
+export function speciesTags(species: string): readonly string[] {
+  const entry = dexFor(9).species.get(species);
+  return entry.exists ? entry.tags : [];
+}
+
 export function available(entry: { exists: boolean; isNonstandard?: string | null }): boolean {
   return entry.exists && (entry.isNonstandard == null || entry.isNonstandard === "Past");
 }

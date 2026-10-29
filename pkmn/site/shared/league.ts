@@ -364,8 +364,14 @@ export function barredBan(player: string, number: number, games: readonly Pick<L
   return before && before.winner === player ? banOf(before.number) : null;
 }
 
-export function lockNeeds(kind: "round" | "cup", size: number, living: number | null): number {
-  return kind === "cup" || living === null ? size : Math.max(1, Math.min(size, living));
+export const UNFIELDABLE_TAGS: readonly string[] = ["Restricted Legendary", "Sub-Legendary", "Mythical"];
+
+export function fieldable(tags: readonly string[]): boolean {
+  return !tags.some((tag) => UNFIELDABLE_TAGS.includes(tag));
+}
+
+export function lockNeeds(kind: "round" | "cup", size: number, living: readonly (readonly string[])[] | null): number {
+  return kind === "cup" || living === null ? size : Math.max(1, Math.min(size, living.filter(fieldable).length));
 }
 
 export function pickProblem(size: number, slots: readonly number[], banned: number | null): boolean {

@@ -139,15 +139,17 @@ async function owned(id: string, ownerId: string) {
   return row;
 }
 
-async function livingOn(teamId: string): Promise<number | null> {
+async function livingOn(teamId: string): Promise<(readonly string[])[] | null> {
   const [row] = await db
-    .select({ living: sql<number>`jsonb_array_length(${snapshot.data}->'pokemon')`.mapWith(Number) })
+    .select({ living: sql<string[]>`jsonb_path_query_array(${snapshot.data}->'pokemon', '$[*].species')` })
     .from(teamSource)
     .innerJoin(snapshot, eq(snapshot.id, teamSource.snapshotId))
     .where(eq(teamSource.teamId, teamId))
     .orderBy(asc(teamSource.position))
     .limit(1);
-  return row?.living ?? null;
+  if (!row) return null;
+  const { speciesTags } = await import("../../shared/dex.js");
+  return row.living.map(speciesTags);
 }
 
 export async function lockTryTeam(tx: Tx, id: string, by: string) {
