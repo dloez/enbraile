@@ -18,6 +18,23 @@ The "Add to team" menu in a PC summary shows each team as a strip of sprites tha
 
 ## Tasks
 
+### pkmn/site: the series page's milestone names never run together
+
+On the series page, the head of the Trainers' milestone track writes each milestone's full name over its column (`src/pages/series.tsx`), and series 1's names since 2026-10-29, Gym 8, Victory Road, Hall of Fame and Tournament, are too long for their columns: at 1440 wide and every width above it they run together as "Victory RoadHall of FameTournament", on production too. The phone already writes each as a short label (`shortName`). Found while checking the site's scale-up, 2026-10-29.
+
+**Do:**
+- [ ] The track's head fitting eleven milestones with names as long as series 1's at 1440 wide and above, every name readable and none touching the next, in the layout `series.dc.html` draws.
+- [ ] The series page's description in [The pkmn Site](../pkmn/site/explanation/site.md#series) if what the head shows changes.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, in the browser: series 1 of the seed at 1440×900 and 2560×1440, every milestone name in the track's head readable with space between them, the track's nodes still under their names; at 390 wide unchanged.
+- Human-run: the owner opens series 1 on production.
+- Reuse: `Track` and `shortName` (`src/pages/series.tsx`).
+- Neighbors: the phone's short labels.
+- Forbidden: renaming a milestone; editing a board in `pkmn/site/design/`.
+
+**Touches:** `pkmn/site/src/pages/series.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
+
 ### pkmn/site: the cup's "Who enters" reads each player's story from their saves
 
 Before the cup starts, the Cup view's "Who enters" (`src/league/cup.tsx`, after `league-cup-start.dc.html`) labels every ticked player "Finished the story" ("Terminó la historia") from the checkbox alone, so on production a player with no save reads as having finished. The board's sample rows were all finishers, so it never drew another state. The owner settled it: "Finished the story" only for a player with a save at the milestone after the series' `league` mark or later (series 1's Hall of Fame and Tournament), and "Still playing" ("Sigue jugando"), dimmed, for anyone else; every player stays ticked to begin with, as now, and an unticked one still reads "Stays out" (owner, 2026-10-29). A series without the `league` mark counts from its `tournament` milestone.
