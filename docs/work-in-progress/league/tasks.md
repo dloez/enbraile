@@ -39,13 +39,13 @@ Eggs won from the rulebook (league wins, the best try's combats), hatched counte
 
 ## Series 1's hatched counts come across from the app
 
-The import brings each player's hatched count as the app holds it (Vicky 9, Javi 9, Dloez 8, Elfo 2, Inop 0, Tole 0) as an admin override on the Eggs cell ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)). Discovery says both that the import's counts are overrides "until a snapshot says otherwise" and that the Eggs cell's override works "as the site's other overrides are", which win over the save until an admin clears them, as the signed-off eggs board's "Use the save's count" does.
+The import brings each player's hatched count as the app holds it (Vicky 9, Javi 9, Dloez 8, Elfo 2, Inop 0, Tole 0) as an override on the Eggs cell that gives way by itself to the count of a snapshot the player uploads after the import, unlike an admin's own setting ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)).
 
 **Do:**
-- [ ] Extend the import (`scripts/league-import.ts`) to write the dump's hatched counts as overrides, replaced on each rerun, as the answer below says.
+- [ ] Extend the import (`scripts/league-import.ts`) to write the dump's hatched counts as imported overrides, replaced on each rerun; a snapshot uploaded after the import wins over one.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, after `npm run league-import` the Eggs cells read the app's counts, each marked as set; a rerun writes the same.
+- Claude-run: `npm run gate`; through `verify-site`, after `npm run league-import` the Eggs cells read the app's counts, each marked as set; a rerun writes the same; a player who then uploads a snapshot with hatched Pokémon reads the save's count.
 - Human-run: the owner reads series 1's eggs against the app.
 - Reuse: the eggs override of the entry above.
 - Neighbors: the import's tries (`scripts/league-import.ts`).
@@ -53,7 +53,6 @@ The import brings each player's hatched count as the app holds it (Vicky 9, Javi
 
 **Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/`
 **After:** The standings count eggs won and hatched
-**Needs the author:** does an imported hatched count give way by itself to the count of a snapshot uploaded after the import, or stand like any admin override until an admin clears it?
 
 ## An admin runs the cup from its bracket to its champion
 
@@ -77,7 +76,7 @@ An admin starts the cup and picks who enters; the bracket is drawn from the stan
 Discovery's series page summary holds "the standings' top, the current round, the cup once it starts" ([discovery → Surfaces](discovery.md#surfaces)); the landed `LeagueSummary` (`src/pages/series.tsx`) shows the first two, and no signed-off board draws the third: `series.dc.html` and `series-phone.dc.html` hold no cup.
 
 **Do:**
-- [ ] The cup in the series page's League summary, as the board the answer below gives draws it.
+- [ ] The cup in the series page's League summary, as the signed-off board draws it.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, with series 1's cup started, the series page's League section shows it and links to the Cup view; before it starts, it shows none.
@@ -88,7 +87,7 @@ Discovery's series page summary holds "the standings' top, the current round, th
 
 **Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/api/`, `pkmn/site/design/`, `docs/pkmn/site/`
 **After:** An admin runs the cup from its bracket to its champion
-**Needs the author:** draw the summary's cup on the Site v2 Screens canvas for sign-off, or leave the cup out of the summary?
+**Needs the author:** the sign-off of the summary's cup, which Claude draws on the Site v2 Screens canvas (owner, 2026-10-29).
 
 ## Each cup match gives its players a locked team to build
 
@@ -165,73 +164,39 @@ A round, once an admin opens it, in either mode, gives each player a team source
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
 **After:** League teams stay hidden until their mode reveals them
 
-## Settle whether an imported team is one per side of a match or one per game
-
-Discovery's Results builds "the team of an imported game" from that game's replay, and the entry below gives each game with a replay each side's team; but the same discovery counts "about five locked matchday teams" per player from the import (Surfaces), one per round, and the signed-off match page draws one team per side of a match (`match.dc.html`'s `LEAGUE`, `aTeam` and `bTeam`), as the landed page's two team columns hold. One team per game with a replay makes 56 from the dump's 28 replays, about nine a player, before the pastes of the four games without one. The dump's replays of a match all bring the paste's six, so they differ only in what each battle revealed.
-
-**Do:**
-- [ ] Record the answer in discovery.md's Results and fold it into the entry below.
-
-**Acceptance:**
-- Claude-run: none.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: none.
-- Forbidden: none.
-
-**Touches:** `docs/work-in-progress/league/discovery.md`
-**Needs the author:** one team per side of a match, holding the moves, items and abilities any of its games' replays revealed, or one team per game?
-
 ## Series 1's game teams come across from their replays, locked to their rounds
 
-Each imported game with a replay gets each side's team built from the replay: the six brought with the moves, items and abilities it revealed, sourced "Any Pokémon" and locked to the player's round; a game with no replay shows the player's matchday paste instead, the hidden one included ([discovery → Results](discovery.md#results)). Placed here, above the later series' entries, since it brings series 1's league across.
+Each imported match gets one team per side, built from its games' replays together: the six brought with every move, item and ability any of them revealed, sourced "Any Pokémon" and locked to the player's round; a match with no replay (round 5's Dloez v Vicky, and Javi's side of the unplayed Elfo v Javi) takes the player's matchday paste instead, the hidden one included ([discovery → Results](discovery.md#results)). Placed here, above the later series' entries, since it brings series 1's league across.
 
 **Do:**
-- [ ] Extend the import: teams from the replays' logs (`|poke|` and what the battle revealed; `readLog` reads only the players, winner and faints today), the matchday pastes for games without one; show them on their matches and games.
+- [ ] Extend the import: one team per side of a match from its replays' logs together (`|poke|` and what each battle revealed; `readLog` reads only the players, winner and faints today), the matchday paste for a match with no replay; show them in the match page's team columns.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, every series 1 match shows both sides' teams, locked; a game with a replay shows the six of its `|poke|` lines and the moves its log revealed; a game without one shows the paste's members.
+- Claude-run: `npm run gate`; through `verify-site`, every played series 1 match shows both sides' teams, locked, one per side; a match with replays shows the six of their `|poke|` lines and every move they revealed; round 5's Dloez v Vicky shows the pastes' members.
 - Human-run: the owner reads a few matches against their replays.
 - Reuse: the replays' games the import already makes (`scripts/league-import.ts`); Showdown paste-in (`readShowdownTeam` in `src/teams/showdown.ts`) for the pastes; the match page's team columns (`src/pages/league-match.tsx`).
 - Neighbors: the Pokémon League tries' pasted teams.
 - Forbidden: a second Showdown paste parser; a paste overriding a replay.
 
 **Touches:** `pkmn/site/scripts/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** An opened round gives each player their team once their snapshot exists; Settle whether an imported team is one per side of a match or one per game
-
-## Settle who outside a closed round's matches sees its pairs before they lock
-
-A closed round shows a player their pair only once they have locked ([discovery → Team Locking](discovery.md#team-locking)); discovery says nothing of anyone else, and the open mode makes pairs public at all times. A player of the league cannot see the round's other pairs before locking either, since with them their own pair follows by elimination (every player is in one pair or resting), so the entry below hides the whole round from them. Left open: readers who play no match of the round, the series' other readers and the players who have already locked.
-
-**Do:**
-- [ ] Record the answer in discovery.md's Team Locking and fold it into the entry below.
-
-**Acceptance:**
-- Claude-run: none.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: none.
-- Forbidden: none.
-
-**Touches:** `docs/work-in-progress/league/discovery.md`
-**Needs the author:** before every player of a closed round has locked, do readers outside the league, and players who have already locked, see its pairs at once, only those of matches whose two players have both locked, or none until all have?
+**After:** An opened round gives each player their team once their snapshot exists
 
 ## A closed round hides a player's pair until they lock their team
 
-In a closed round, a player sees their own pair only once they have locked their round team, and so none of the round's pairs, nor who rests, since the others give their own away ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams come with [An opened round gives each player their team once their snapshot exists](#an-opened-round-gives-each-player-their-team-once-their-snapshot-exists), and the lock with [Each cup match gives its players a locked team to build](#each-cup-match-gives-its-players-a-locked-team-to-build).
+In a closed round, a player sees their own pair only once they have locked their round team, and so none of the round's pairs, nor who rests, since the others give their own away; everyone else sees a match's pair once both its players have locked ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams come with [An opened round gives each player their team once their snapshot exists](#an-opened-round-gives-each-player-their-team-once-their-snapshot-exists), and the lock with [Each cup match gives its players a locked team to build](#each-cup-match-gives-its-players-a-locked-team-to-build).
 
 **Do:**
-- [ ] A closed round's pairs hidden from each of its players until they lock, and from everyone else as the answer above says, enforced by the API wherever the pairs are handed out: the league page's rounds, head-to-head, the reader's rounds and next match, the series page's League summary and the match page.
+- [ ] A closed round's pairs hidden from each of its players until they lock, and from everyone else until that match's two players have both locked, enforced by the API wherever the pairs are handed out: the league page's rounds, head-to-head, the reader's rounds and next match, the series page's League summary and the match page.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, open a closed round and see a player get no pair of it, by page or route, until they lock; an admin, and the players of an open round, always see the pairs.
+- Claude-run: `npm run gate`; through `verify-site`, open a closed round and see a player get no pair of it, by page or route, until they lock; a reader outside the league sees a match's pair only once its two players have locked; an admin, and the players of an open round, always see the pairs.
 - Human-run: none until a series uses it.
 - Reuse: the round's `mode` (`league_round` in `api/_lib/schema.ts`); the lock of the cup teams entry; the league read (`leagueOf` in `api/_lib/league.ts`).
 - Neighbors: the series page's League summary (`src/pages/series.tsx`).
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** An opened round gives each player their team once their snapshot exists; Settle who outside a closed round's matches sees its pairs before they lock
+**After:** An opened round gives each player their team once their snapshot exists
 
 ## Players see others' saves only up to their own round
 
