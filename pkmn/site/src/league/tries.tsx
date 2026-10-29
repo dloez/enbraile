@@ -74,7 +74,7 @@ type Editing = { mode: "log" } | { mode: "edit"; one: LeagueTry };
 export function Tries({ league, me, nameOf, onChange }: { league: LeaguePage; me: string | null; nameOf: (id: string) => string; onChange: (page: LeaguePage) => void }) {
   const [open, setOpen] = useState<string | null>(me);
   const [editing, setEditing] = useState<Editing | null>(null);
-  const canLog = me !== null && !league.admin;
+  const canLog = league.admin || me !== null;
   const order = league.standings.map((row) => row.player);
   const held = league.enrolled ? t.heldYou : t.heldAll;
   return (
@@ -148,6 +148,8 @@ export function Tries({ league, me, nameOf, onChange }: { league: LeaguePage; me
             number={league.number}
             editing={editing.mode === "edit" ? { one: editing.one, name: nameOf(editing.one.player) } : null}
             me={me}
+            players={order.map((id) => ({ id, name: nameOf(id) }))}
+            admin={league.admin}
             onClose={() => setEditing(null)}
             onSaved={(page) => {
               onChange(page);

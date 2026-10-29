@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { segButton, segTrack } from "@/teams/components/editors";
 import { EVERY_SPECIES, readShowdownTeam } from "@/teams/showdown";
 import { messages } from "../../shared/i18n";
-import { LEAGUE_COMBATS, lastCombat, leaguePage, type LeaguePage, type LeagueTry, PARTY_SIZE } from "../../shared/league";
+import { SelectField } from "@/components/select-field";
+import { LEAGUE_COMBATS, lastCombat, leaguePage, type LeaguePage, type LeaguePlayer, type LeagueTry, PARTY_SIZE } from "../../shared/league";
 import { describeMember } from "../../shared/species";
 import { teamList, type TeamRow } from "../../shared/team";
 
@@ -21,9 +22,12 @@ const t = messages({
     theTeam: "The team",
     teamFrom: "Team from",
     yours: "Your teams",
+    theirs: (name: string) => `${name}'s teams`,
+    itsTeam: "Its team",
+    player: "Player",
     paste: "Paste",
     pasteLabel: "Showdown paste",
-    loading: "Loading your teams…",
+    loading: "Loading the teams…",
     noTeams: `No team of 1 to ${PARTY_SIZE} Pokémon yet: paste one instead`,
     read: (n: number) => (n === 1 ? "1 Pokémon read, as a new Any Pokémon team" : `${n} Pokémon read, as a new Any Pokémon team`),
     tooMany: `A Pokémon League team brings at most ${PARTY_SIZE}`,
@@ -52,10 +56,13 @@ const t = messages({
     theTeam: "El equipo",
     teamFrom: "Equipo de",
     yours: "Tus equipos",
+    theirs: (name: string) => `Equipos de ${name}`,
+    itsTeam: "Su equipo",
+    player: "Jugador",
     paste: "Pegar",
     pasteLabel: "Equipo de Showdown",
-    loading: "Cargando tus equipos…",
-    noTeams: `Aún no tienes un equipo de 1 a ${PARTY_SIZE} Pokémon: pega uno`,
+    loading: "Cargando los equipos…",
+    noTeams: `Aún no hay un equipo de 1 a ${PARTY_SIZE} Pokémon: pega uno`,
     read: (n: number) => (n === 1 ? "1 Pokémon leído, como un equipo nuevo de Cualquier Pokémon" : `${n} Pokémon leídos, como un equipo nuevo de Cualquier Pokémon`),
     tooMany: `Un equipo de la Liga Pokémon lleva como mucho ${PARTY_SIZE}`,
     leftOut: "Se han quedado fuera:",
@@ -88,17 +95,22 @@ export function TryDialog({
   number,
   editing,
   me,
+  players,
+  admin,
   onClose,
   onSaved,
 }: {
   number: number;
   editing: { one: LeagueTry; name: string } | null;
   me: string | null;
+  players: readonly LeaguePlayer[];
+  admin: boolean;
   onClose: () => void;
   onSaved: (page: LeaguePage) => void;
 }) {
   const one = editing?.one ?? null;
-  const [from, setFrom] = useState<"pick" | "paste">("pick");
+  const [from, setFrom] = useState<"keep" | "pick" | "paste">(one ? "keep" : "pick");
+  const [player, setPlayer] = useState<string | null>(one?.player ?? (admin ? (players[0]?.id ?? null) : me));
   const [teams, setTeams] = useState<TeamRow[] | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -108,38 +120,49 @@ export function TryDialog({
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const teamed = !one || admin;
+  const kept = from === "keep" && one !== null;
+
   useEffect(() => {
-    if (one || !me) return;
-    api(`/teams?owner=${encodeURIComponent(me)}`, teamList).then(
+    if (!teamed || !player) return;
+    let live = true;
+    setTeams(null);
+    api(`/teams?owner=${encodeURIComponent(player)}`, teamList).then(
       (rows) => {
+        if (!live) return;
         const usable = rows.filter((row) => row.league?.kind !== "cup" && row.league?.kind !== "round" && brought(row).length > 0 && brought(row).length <= PARTY_SIZE);
         setTeams(usable);
         setPicked(usable[0]?.id ?? null);
-        if (usable.length === 0) setFrom("paste");
+        if (usable.length === 0) setFrom((now) => (now === "pick" ? "paste" : now));
       },
-      (caught: unknown) => setError(caught instanceof Error ? caught.message : t.failed),
+      (caught: unknown) => live && setError(caught instanceof Error ? caught.message : t.failed),
     );
-  }, [one, me]);
+    return () => {
+      live = false;
+    };
+  }, [teamed, player]);
 
-  const read = useMemo(() => (from === "paste" && !one ? readShowdownTeam(text, EMPTY, EVERY_SPECIES) : null), [from, text, one]);
+  const read = useMemo(() => (from === "paste" ? readShowdownTeam(text, EMPTY, EVERY_SPECIES) : null), [from, text]);
 
   const members: Shown[] = useMemo(() => {
-    if (one) return (one.members ?? []).map((m) => ({ name: m.name, sprite: m.sprite }));
+    if (kept) return (one.members ?? []).map((m) => ({ name: m.name, sprite: m.sprite }));
     if (read) return read.slots.flatMap((member) => (member ? [shown(member.species)] : []));
     const row = teams?.find((r) => r.id === picked);
     return row ? brought(row).map(shown) : [];
-  }, [one, read, teams, picked]);
+  }, [kept, one, read, teams, picked]);
 
   const memberKey = members.map((m) => m.name).join("|");
   useEffect(() => {
-    if (one) return;
-    setFell(members.map(() => null));
-  }, [memberKey]);
+    setFell(kept ? (one.members?.map((m) => m.fell) ?? []) : members.map(() => null));
+  }, [memberKey, kept]);
 
   const last = lastCombat(won);
   const out = fell.filter((combat) => combat !== null).length;
   const tooMany = read !== null && read.added > PARTY_SIZE;
-  const ready = !busy && members.length > 0 && members.length <= PARTY_SIZE && fell.length === members.length && !tooMany;
+  const ready = !busy && members.length > 0 && members.length <= PARTY_SIZE && fell.length === members.length && !tooMany && (kept || read !== null || picked !== null);
+  const playerName = players.find((p) => p.id === player)?.name ?? editing?.name ?? "";
+  const pickLabel = admin ? t.theirs(playerName) : t.yours;
+  const choices = [...(one ? ([["keep", t.itsTeam]] as const) : []), ["pick", pickLabel] as const, ["paste", t.paste] as const];
 
   function chooseWon(n: number) {
     setWon(n);
@@ -159,13 +182,13 @@ export function TryDialog({
 
   function save() {
     const path = `/series/${number}/league/tries`;
+    const team = read ? { slots: read.slots } : picked ? { id: picked } : null;
     if (one) {
-      void send(() => api(`${path}/${encodeURIComponent(one.id)}`, leaguePage, { method: "PUT", body: { combatsWon: won, fell } }));
+      void send(() => api(`${path}/${encodeURIComponent(one.id)}`, leaguePage, { method: "PUT", body: kept ? { combatsWon: won, fell } : { combatsWon: won, fell, team } }));
       return;
     }
-    const team = read ? { slots: read.slots } : picked ? { id: picked } : null;
     if (!team) return;
-    void send(() => api(path, leaguePage, { body: { combatsWon: won, fell, team } }));
+    void send(() => api(path, leaguePage, { body: admin ? { combatsWon: won, fell, team, player } : { combatsWon: won, fell, team } }));
   }
 
   function remove() {
@@ -206,18 +229,21 @@ export function TryDialog({
           </button>
         </div>
 
-        {!one && (
+        {admin && !one && (
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <span className="font-heading text-[1.3125rem] text-subtle sm:text-[1.375rem]">{t.player}</span>
+            <span className="flex-1 sm:hidden" />
+            <SelectField label={t.player} value={player ?? ""} onChange={(next) => setPlayer(next)} options={players.map((p) => ({ value: p.id, label: p.name }))} />
+          </div>
+        )}
+
+        {teamed && (
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center gap-2.5 sm:gap-3.5">
               <span className="font-heading text-[1.3125rem] text-subtle sm:text-[1.375rem]">{t.theTeam}</span>
               <span className="flex-1 sm:hidden" />
               <div role="radiogroup" aria-label={t.teamFrom} className={segTrack}>
-                {(
-                  [
-                    ["pick", t.yours],
-                    ["paste", t.paste],
-                  ] as const
-                ).map(([value, label]) => (
+                {choices.map(([value, label]) => (
                   <button key={value} type="button" role="radio" aria-checked={from === value} onClick={() => setFrom(value)} className={cn(segButton(from === value), "min-h-9.5 sm:min-h-10 sm:px-4")}>
                     {label}
                   </button>
@@ -230,7 +256,7 @@ export function TryDialog({
               ) : teams.length === 0 ? (
                 <p className="m-0 font-heading text-xl text-faint">{t.noTeams}</p>
               ) : (
-                <div role="radiogroup" aria-label={t.yours} className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
+                <div role="radiogroup" aria-label={pickLabel} className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
                   {teams.map((row) => {
                     const on = row.id === picked;
                     return (

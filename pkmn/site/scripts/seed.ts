@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { crc32 } from "node:zlib";
 import { Dex } from "@pkmn/dex";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db, pool } from "../api/_lib/db.js";
 import { requireEnv } from "../api/_lib/env.js";
 import { readSave } from "../api/_lib/export/export.js";
@@ -70,6 +70,8 @@ const seedLeague = [
 ];
 
 const seedCupGame = { winner: "Red", faintedA: 3, faintedB: 6, bans: { Red: 0, Blue: 1 } };
+
+const seedFix = { player: "Red" };
 
 const seedTry = { player: "Red", combatsWon: 2, fell: [2, 3, 3], species: ["snorlax", "venusaur", "staraptor"] };
 
@@ -459,6 +461,22 @@ async function seedTheCupGame(): Promise<string | null> {
   return `the final's teams of eight locked, game 1 banned, picked and won by ${seedCupGame.winner}, game 2's bans open`;
 }
 
+async function seedTheFix(): Promise<string | null> {
+  const [row] = await db.select({ id: series.id }).from(series).where(eq(series.number, finishedSeries.number));
+  const [fixer] = await db.select({ id: user.id }).from(user).where(eq(user.username, admin.name));
+  const [player] = await db.select({ id: user.id }).from(user).where(eq(user.username, seedFix.player.toLowerCase()));
+  if (!row || !fixer || !player) throw new Error(`${finishedSeries.name}, ${admin.name} or ${seedFix.player} is missing`);
+  const [held] = await db
+    .select({ id: team.id, name: team.name, fixedAt: team.fixedAt })
+    .from(team)
+    .innerJoin(leagueMatch, eq(leagueMatch.id, team.matchId))
+    .innerJoin(cup, eq(cup.id, leagueMatch.cupId))
+    .where(and(eq(cup.seriesId, row.id), eq(team.ownerId, player.id), isNotNull(team.lockedAt)));
+  if (!held || held.fixedAt) return null;
+  await db.update(team).set({ fixedBy: fixer.id, fixedAt: new Date() }).where(eq(team.id, held.id));
+  return `${seedFix.player}'s "${held.name}" marked fixed by ${admin.name}`;
+}
+
 async function main() {
   const preview = localOrPreview("SEED_TARGET", "seed");
   const adminPassword = preview ? requireEnv("SEED_ADMIN_PASSWORD") : admin.password;
@@ -476,8 +494,9 @@ async function main() {
   const seededFinished = await seedTheFinishedSeries();
   const seededCup = await seedTheCup();
   const seededCupGame = await seedTheCupGame();
+  const seededFix = await seedTheFix();
   console.log(
-    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededTry ? `, and ${seededTry}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}${seededCup ? (seededFinished ? `, with ${seededCup}` : `; and ${finishedSeries.name} with ${seededCup}`) : ""}${seededCupGame ? `, ${seededCupGame}` : ""}`,
+    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededTry ? `, and ${seededTry}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}${seededCup ? (seededFinished ? `, with ${seededCup}` : `; and ${finishedSeries.name} with ${seededCup}`) : ""}${seededCupGame ? `, ${seededCupGame}` : ""}${seededFix ? `, and ${seededFix}` : ""}`,
   );
 }
 

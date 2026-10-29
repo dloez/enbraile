@@ -222,7 +222,11 @@ const fellIn = z.array(z.int().min(1).max(LEAGUE_COMBATS).nullable()).min(1).max
 
 export const tryEdit = z.object({ combatsWon, fell: fellIn });
 
-export const tryInput = tryEdit.extend({ team: z.union([z.object({ id: z.string().min(1) }), z.object({ slots: teamSlots })]) });
+const tryTeam = z.union([z.object({ id: z.string().min(1) }), z.object({ slots: teamSlots })]);
+
+export const tryInput = tryEdit.extend({ team: tryTeam, player: z.string().min(1).optional() });
+
+export const tryChange = tryEdit.extend({ team: tryTeam.optional() });
 
 export const leagueGame = z.object({
   number: z.int(),
@@ -347,6 +351,7 @@ export type LeagueTry = z.infer<typeof leagueTry>;
 export type HatchedEggs = z.infer<typeof hatchedEggs>;
 export type TryEdit = z.infer<typeof tryEdit>;
 export type TryInput = z.infer<typeof tryInput>;
+export type TryChange = z.infer<typeof tryChange>;
 
 export type Result = Pick<LeagueMatch, "a" | "b" | "gamesA" | "gamesB" | "faintedA" | "faintedB">;
 

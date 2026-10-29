@@ -15,3 +15,7 @@ export function formatSize(bytes: number): string {
 export function joinedOn(iso: string): string {
   return new Date(iso).toLocaleDateString(locale, { dateStyle: "medium" });
 }
+
+export function setAt(iso: string): string {
+  return new Date(iso).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
+}

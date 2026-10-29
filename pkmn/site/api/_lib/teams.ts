@@ -56,6 +56,8 @@ const t = says({
     fillFirst: (need: number, size: number) => (need === size ? `Fill all ${size} slots before locking in` : `Fill ${need} slots before locking in`),
     ownerClones: "Only the team's owner or an admin clones it",
     drafting: "A game of this team's match without a result has bans or picks in",
+    adminFixes: "An admin changes only the members of a locked league team, keeping its size",
+    tryCount: "A try's team keeps its number of Pokémon; change the try's team instead",
     copy: "(copy)",
   },
   es: {
@@ -79,6 +81,8 @@ const t = says({
     fillFirst: (need: number, size: number) => (need === size ? `Llena los ${size} huecos antes de bloquearlo` : `Llena ${need} huecos antes de bloquearlo`),
     ownerClones: "Solo el dueño del equipo o un administrador lo clona",
     drafting: "Una partida sin resultado del combate de este equipo ya tiene vetos o elecciones",
+    adminFixes: "Un administrador solo cambia los miembros de un equipo de liga bloqueado, sin cambiar su tamaño",
+    tryCount: "El equipo de un intento conserva su número de Pokémon; cambia el equipo del intento",
     copy: "(copia)",
   },
 });
@@ -568,6 +572,8 @@ teams.get("/:id", async (c) => {
       pool: team.pool,
       freePool: team.freePool,
       lockedAt: team.lockedAt,
+      fixedAt: team.fixedAt,
+      fixedBy: sql<string | null>`(select ${user.name} from ${user} where ${user.id} = ${team.fixedBy})`,
       updatedAt: team.updatedAt,
       ownerId: user.id,
       ownerName: user.name,
@@ -611,6 +617,8 @@ teams.get("/:id", async (c) => {
     canLock: mine && !locked && (league?.kind === "cup" || league?.kind === "round"),
     canUnlock: !!reader.admin && locked,
     canClone: locked && (mine || !!reader.admin),
+    canFix: !!reader.admin && locked && league !== null && cut.size === 0,
+    fix: row.fixedAt ? { by: row.fixedBy, at: row.fixedAt.toISOString() } : null,
     sources: sources.map((s) => {
       const shown = seesSpreads(reader, s.playerId);
       const data = cut.get(s.id)?.data ?? s.data;
@@ -686,7 +694,7 @@ teams.put("/:id", async (c) => {
   if (!reader) return c.json({ error: t(c).signIn }, 401);
   const id = c.req.param("id");
   const held = await owned(id, reader.id);
-  if (!held) return c.json({ error: t(c).ownerChanges }, 403);
+  if (!held) return reader.admin ? fixTeam(c, reader, id) : c.json({ error: t(c).ownerChanges }, 403);
   const input = await body(c.req.raw, teamInput);
   if (!input) return c.json({ error: t(c).notTeam }, 400);
   if (held.lockedAt) return c.json({ error: t(c).locked }, 409);
@@ -725,6 +733,44 @@ teams.put("/:id", async (c) => {
   if (!written) return c.json({ error: t(c).locked }, 409);
   return c.json({});
 });
+
+async function fixTeam(c: Context, reader: Viewer, id: string) {
+  const input = await body(c.req.raw, teamInput);
+  if (!input) return c.json({ error: t(c).notTeam }, 400);
+  const { slots, ...rest } = input;
+  if (!slots || Object.values(rest).some((value) => value !== undefined)) return c.json({ error: t(c).adminFixes }, 400);
+  const refused = await db.transaction(async (tx) => {
+    const [home] = await tx.select({ matchId: team.matchId }).from(team).where(eq(team.id, id));
+    if (!home) return "noTeam" as const;
+    if (home.matchId) await tx.select({ id: leagueMatch.id }).from(leagueMatch).where(eq(leagueMatch.id, home.matchId)).for("update");
+    const [held] = await tx.select({ lockedAt: team.lockedAt, slots: team.slots, anyPokemon: team.anyPokemon }).from(team).where(eq(team.id, id)).for("update");
+    if (!held) return "noTeam" as const;
+    const tries = await tx.select({ id: leagueTry.id, members: leagueTry.members }).from(leagueTry).where(eq(leagueTry.teamId, id)).for("update");
+    if (!held.lockedAt || (!home.matchId && tries.length === 0)) return "adminFixes" as const;
+    if (slots.length !== held.slots.length) return "resized" as const;
+    const sources = await sourceIds(id, tx);
+    if (!(await shownSnapshots(reader, sources))) return "noSnapshot" as const;
+    if (!backedBy(slots, sources, held.anyPokemon)) return "outsideSources" as const;
+    if (home.matchId && (await drafting(tx, home.matchId))) return "drafting" as const;
+    const members = slots.filter((member) => member !== null);
+    if (tries.some((one) => one.members.length !== members.length)) return "tryCount" as const;
+    const now = new Date();
+    await tx.update(team).set({ slots, fixedBy: reader.id, fixedAt: now, updatedAt: now }).where(eq(team.id, id));
+    for (const one of tries) {
+      await tx
+        .update(leagueTry)
+        .set({ members: one.members.map((was, at) => ({ species: members[at]?.species ?? was.species, fell: was.fell })), editedBy: reader.id, editedAt: now })
+        .where(eq(leagueTry.id, one.id));
+    }
+    return null;
+  });
+  if (refused === "noTeam") return c.json({ error: t(c).noTeam }, 404);
+  if (refused === "adminFixes") return c.json({ error: t(c).adminFixes }, 403);
+  if (refused === "resized") return c.json({ error: t(c).adminFixes }, 400);
+  if (refused === "drafting") return c.json({ error: t(c).drafting }, 409);
+  if (refused) return c.json({ error: t(c)[refused] }, 400);
+  return c.json({});
+}
 
 teams.delete("/:id", async (c) => {
   const reader = await viewer(c.req.raw);

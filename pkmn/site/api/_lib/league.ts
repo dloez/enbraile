@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { type Context, Hono } from "hono";
 import type * as z from "zod";
@@ -41,7 +41,8 @@ import {
   PARTY_SIZE,
   pickInput,
   standings,
-  tryEdit,
+  tryChange,
+  type TryInput,
   tryInput,
   wins,
 } from "../../shared/league.js";
@@ -74,13 +75,14 @@ const t = says({
     order: `The games must run ${gameNumbers} with none missing`,
     score: "That would not fit the score the match keeps from the Trainer League app",
     badTry: `Combats won from 0 to ${LEAGUE_COMBATS}, and where each Pokémon fell`,
-    notPlayer: "Only the league's players log their Pokémon League tries",
-    noTeam: "No such team of yours",
+    notPlayer: "Only the league's players log their Pokémon League tries, and an admin for any of them",
+    noTeam: "No such team of the try's player",
     partySize: `A Pokémon League team brings 1 to ${PARTY_SIZE} Pokémon`,
     notFree: "A pasted team holds only Any Pokémon members",
     fell: "A Pokémon can only fall in a combat the try reached",
     noTry: "No such try",
     notYours: "Only the try's player or an admin changes it",
+    teamByAdmin: "Only an admin changes the team a try was played with",
     tryTeam: "Pokémon League try",
     badMode: "Open or closed",
     badPairs: "Pairs of two players and the one who rests, or none",
@@ -124,13 +126,14 @@ const t = says({
     order: `Las partidas tienen que ir ${gameNumbers} sin huecos`,
     score: "No encajaría con el resultado que el combate conserva de la app de la Liga",
     badTry: `Combates ganados de 0 a ${LEAGUE_COMBATS}, y dónde cayó cada Pokémon`,
-    notPlayer: "Solo los jugadores de la liga anotan sus intentos de la Liga Pokémon",
-    noTeam: "No tienes ese equipo",
+    notPlayer: "Solo los jugadores de la liga anotan sus intentos de la Liga Pokémon, y un administrador los de cualquiera de ellos",
+    noTeam: "El jugador del intento no tiene ese equipo",
     partySize: `Un equipo de la Liga Pokémon lleva de 1 a ${PARTY_SIZE} Pokémon`,
     notFree: "Un equipo pegado solo lleva miembros de Cualquier Pokémon",
     fell: "Un Pokémon solo puede caer en un combate al que llegó el intento",
     noTry: "Ese intento no existe",
     notYours: "Solo el jugador del intento o un administrador puede cambiarlo",
+    teamByAdmin: "Solo un administrador cambia el equipo con el que se jugó un intento",
     tryTeam: "Intento de la Liga Pokémon",
     badMode: "Abierta o cerrada",
     badPairs: "Parejas de dos jugadores y el que descansa, o ninguno",
@@ -643,52 +646,68 @@ league.post("/:number/league/cup", requireAdmin, async (c) => {
 
 const filled = (slots: TeamSlots) => slots.filter((member) => member !== null);
 
+type TryTeam = TryInput["team"];
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function tryMembers(c: Context, player: string, picked: TryTeam): Promise<{ slots: TeamSlots } | Response> {
+  let slots: TeamSlots;
+  if ("id" in picked) {
+    const [held] = await db.select({ slots: team.slots }).from(team).where(and(eq(team.id, picked.id), eq(team.ownerId, player), isNull(team.matchId)));
+    if (!held) return c.json({ error: t(c).noTeam }, 404);
+    slots = held.slots;
+  } else {
+    slots = picked.slots;
+    if (!backedBy(slots, [], true)) return c.json({ error: t(c).notFree }, 400);
+  }
+  const members = filled(slots);
+  if (members.length === 0 || members.length > PARTY_SIZE) return c.json({ error: t(c).partySize }, 400);
+  return { slots };
+}
+
+async function placeTryTeam(c: Context, tx: Tx, picked: TryTeam, player: string, pool: SeriesRow["pool"], by: string): Promise<string> {
+  if ("id" in picked) {
+    await lockTryTeam(tx, picked.id, by);
+    return picked.id;
+  }
+  const names = await tx.select({ name: team.name }).from(team).where(eq(team.ownerId, player));
+  const id = crypto.randomUUID();
+  await insertTeam(tx, {
+    id,
+    ownerId: player,
+    name: nextTeamName(names.map((n) => n.name), t(c).tryTeam),
+    anyPokemon: true,
+    slots: picked.slots,
+    pool,
+    sources: [],
+    locked: { at: new Date(), by },
+    private: false,
+  });
+  return id;
+}
+
 league.post("/:number/league/tries", async (c) => {
   const reader = await viewer(c.req.raw);
   if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!reader.admin);
   if (!row) return c.json({ error: t(c).noSeries }, 404);
   const page = await leagueOf(row, reader);
-  if (reader.admin || !page.players.some((p) => p.id === reader.id)) return c.json({ error: t(c).notPlayer }, 403);
+  if (!reader.admin && !page.players.some((p) => p.id === reader.id)) return c.json({ error: t(c).notPlayer }, 403);
   const input = await body(c.req.raw, tryInput);
   if (!input) return c.json({ error: t(c).badTry }, 400);
-  let slots: TeamSlots;
-  if ("id" in input.team) {
-    const [picked] = await db.select({ slots: team.slots }).from(team).where(and(eq(team.id, input.team.id), eq(team.ownerId, reader.id), isNull(team.matchId)));
-    if (!picked) return c.json({ error: t(c).noTeam }, 404);
-    slots = picked.slots;
-  } else {
-    slots = input.team.slots;
-    if (!backedBy(slots, [], true)) return c.json({ error: t(c).notFree }, 400);
-  }
-  const members = filled(slots);
-  if (members.length === 0 || members.length > PARTY_SIZE) return c.json({ error: t(c).partySize }, 400);
+  const player = reader.admin ? input.player : reader.id;
+  if (!player || (input.player !== undefined && input.player !== player) || !page.players.some((p) => p.id === player)) return c.json({ error: t(c).notPlayer }, 403);
+  const read = await tryMembers(c, player, input.team);
+  if (read instanceof Response) return read;
+  const members = filled(read.slots);
   if (input.fell.length !== members.length) return c.json({ error: t(c).badTry }, 400);
   if (fellProblem(input.combatsWon, input.fell)) return c.json({ error: t(c).fell }, 400);
-  const pasted = "slots" in input.team ? input.team.slots : null;
   await db.transaction(async (tx) => {
-    let teamId = "id" in input.team ? input.team.id : null;
-    if (pasted) {
-      const names = await tx.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
-      teamId = crypto.randomUUID();
-      await insertTeam(tx, {
-        id: teamId,
-        ownerId: reader.id,
-        name: nextTeamName(names.map((n) => n.name), t(c).tryTeam),
-        anyPokemon: true,
-        slots: pasted,
-        pool: row.pool,
-        sources: [],
-        locked: { at: new Date(), by: reader.id },
-        private: false,
-      });
-    } else if (teamId) {
-      await lockTryTeam(tx, teamId, reader.id);
-    }
+    const teamId = await placeTryTeam(c, tx, input.team, player, row.pool, reader.id);
     await tx.insert(leagueTry).values({
       id: crypto.randomUUID(),
       seriesId: row.id,
-      playerId: reader.id,
+      playerId: player,
       teamId,
       combatsWon: input.combatsWon,
       members: members.map((member, at) => ({ species: member.species, fell: input.fell[at] ?? null })),
@@ -698,7 +717,7 @@ league.post("/:number/league/tries", async (c) => {
   return c.json(await leagueOf(row, reader));
 });
 
-async function changeTry(c: Context, change: (id: string, by: string) => Promise<Response | null>) {
+async function changeTry(c: Context, change: (id: string, reader: Viewer, row: SeriesRow) => Promise<Response | null>) {
   const reader = await viewer(c.req.raw);
   if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number") ?? "", !!reader.admin);
@@ -707,26 +726,50 @@ async function changeTry(c: Context, change: (id: string, by: string) => Promise
   const [held] = await db.select({ playerId: leagueTry.playerId }).from(leagueTry).where(and(eq(leagueTry.id, id), eq(leagueTry.seriesId, row.id)));
   if (!held) return c.json({ error: t(c).noTry }, 404);
   if (!reader.admin && held.playerId !== reader.id) return c.json({ error: t(c).notYours }, 403);
-  const refused = await change(id, reader.id);
+  const refused = await change(id, reader, row);
   return refused ?? c.json(await leagueOf(row, reader));
 }
 
 league.put("/:number/league/tries/:id", (c) =>
-  changeTry(c, async (id, by) => {
-    const input = await body(c.req.raw, tryEdit);
+  changeTry(c, async (id, reader, row) => {
+    const input = await body(c.req.raw, tryChange);
     if (!input) return c.json({ error: t(c).badTry }, 400);
-    const [held] = await db.select({ members: leagueTry.members }).from(leagueTry).where(eq(leagueTry.id, id));
-    if (!held || input.fell.length !== held.members.length) return c.json({ error: t(c).badTry }, 400);
+    if (input.team && !reader.admin) return c.json({ error: t(c).teamByAdmin }, 403);
+    const [held] = await db.select({ members: leagueTry.members, playerId: leagueTry.playerId, teamId: leagueTry.teamId }).from(leagueTry).where(eq(leagueTry.id, id));
+    if (!held) return c.json({ error: t(c).noTry }, 404);
+    const picked = input.team;
+    let species = held.members.map((member) => member.species);
+    if (picked) {
+      const read = await tryMembers(c, held.playerId, picked);
+      if (read instanceof Response) return read;
+      species = filled(read.slots).map((member) => member.species);
+    }
+    if (input.fell.length !== species.length) return c.json({ error: t(c).badTry }, 400);
     if (fellProblem(input.combatsWon, input.fell)) return c.json({ error: t(c).fell }, 400);
-    await db
-      .update(leagueTry)
-      .set({
-        combatsWon: input.combatsWon,
-        members: held.members.map((member, at) => ({ species: member.species, fell: input.fell[at] ?? null })),
-        editedBy: by,
-        editedAt: new Date(),
-      })
-      .where(eq(leagueTry.id, id));
+    await db.transaction(async (tx) => {
+      let teamId = held.teamId;
+      if (picked) {
+        teamId = await placeTryTeam(c, tx, picked, held.playerId, row.pool, reader.id);
+        if (held.teamId && held.teamId !== teamId) {
+          const [other] = await tx
+            .select({ id: leagueTry.id })
+            .from(leagueTry)
+            .where(and(eq(leagueTry.teamId, held.teamId), ne(leagueTry.id, id)))
+            .limit(1);
+          if (!other) await tx.update(team).set({ lockedAt: null, lockedBy: null }).where(eq(team.id, held.teamId));
+        }
+      }
+      await tx
+        .update(leagueTry)
+        .set({
+          teamId,
+          combatsWon: input.combatsWon,
+          members: species.map((one, at) => ({ species: one, fell: input.fell[at] ?? null })),
+          editedBy: reader.id,
+          editedAt: new Date(),
+        })
+        .where(eq(leagueTry.id, id));
+    });
     return null;
   }),
 );

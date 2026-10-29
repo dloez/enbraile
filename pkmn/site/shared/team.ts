@@ -151,6 +151,8 @@ export const teamPage = z.object({
   canLock: z.boolean(),
   canUnlock: z.boolean(),
   canClone: z.boolean(),
+  canFix: z.boolean(),
+  fix: z.object({ by: z.string().nullable(), at: z.string() }).nullable(),
   sources: z.array(teamSource),
   anyPokemon: z.boolean(),
   private: z.boolean(),

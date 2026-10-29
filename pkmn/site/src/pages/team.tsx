@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PLAYER_FILL, playerColour } from "@/components/player-badge";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
+import { setAt } from "@/lib/admin-format";
 import { recountTeamsToBuild } from "@/lib/teams-to-build";
 import { GameIconsProvider } from "@/lib/item-icons";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,9 @@ const t = messages({
     unlock: "Unlock",
     clone: "Clone",
     cloneTitle: "Copy it into a new team of yours to edit",
+    fixedBy: (by: string | null, at: string) => (by ? `Fixed by ${by} · ${at}` : `Fixed · ${at}`),
+    fixTitle: "An admin's change to its members while it stays locked",
+    fixing: "Your changes to its members fix it in place; it stays locked",
   },
   es: {
     failed: "Algo ha fallado",
@@ -152,6 +156,9 @@ const t = messages({
     unlock: "Desbloquear",
     clone: "Clonar",
     cloneTitle: "Cópialo en un equipo nuevo tuyo para editarlo",
+    fixedBy: (by: string | null, at: string) => (by ? `Corregido por ${by} · ${at}` : `Corregido · ${at}`),
+    fixTitle: "Un cambio de un administrador en sus miembros sin desbloquearlo",
+    fixing: "Tus cambios en sus miembros lo corrigen tal cual; sigue bloqueado",
   },
 });
 
@@ -275,7 +282,8 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
   const [pick, setPick] = useState<Pick>(() => loadPick(page.id));
   const [joining, setJoining] = useState(false);
   const writes = useRef<Promise<unknown>>(Promise.resolve());
-  const editable = page.canEdit;
+  const editable = page.canEdit || page.canFix;
+  const owned = page.canEdit;
   const fixed = page.league?.kind === "cup" || page.league?.kind === "round";
   const size = slots.length;
   const pickMode = size > TEAM_SIZE && pick.scope === "six";
@@ -296,7 +304,10 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
         await after?.();
       })
       .then(
-        () => setFailed(null),
+        () => {
+          setFailed(null);
+          if (page.canFix) onReload();
+        },
         (caught: unknown) => setFailed(message(caught)),
       );
   }
@@ -431,7 +442,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
   const analysis = (
     <>
       {size > TEAM_SIZE && <ScopeSwitch scope={pickMode ? "six" : "all"} filled={filledAt(slots).length} picked={picked.length} onScope={(scope) => choosePick({ ...pick, scope })} />}
-      <SheetAnalysis slots={analysed} stocks={stocks} name={name} pool={pool} onPool={editable ? choosePool : undefined} />
+      <SheetAnalysis slots={analysed} stocks={stocks} name={name} pool={pool} onPool={owned ? choosePool : undefined} />
     </>
   );
 
@@ -550,10 +561,10 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
           held={h}
           setas={setasLeft(slots, stocks, h.id)}
           money={moneyLeft(slots, stocks, h.id)}
-          onRemove={editable && !fixed && sourceCount > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
+          onRemove={owned && !fixed && sourceCount > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
         />
       ))}
-      {anyPokemon && <AnyChip onRemove={editable && !fixed && sourceCount > 1 && freeCount(slots) === 0 ? () => chooseAny(false) : undefined} />}
+      {anyPokemon && <AnyChip onRemove={owned && !fixed && sourceCount > 1 && freeCount(slots) === 0 ? () => chooseAny(false) : undefined} />}
     </>
   );
 
@@ -563,7 +574,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
         <div className="flex min-w-0 flex-col gap-2">
           <TeamsBackLink />
           <div className="flex flex-wrap items-center gap-3.5">
-            <Title name={name} editable={editable} onRename={(next) => {
+            <Title name={name} editable={owned} onRename={(next) => {
               setName(next);
               write({ name: next });
             }} />
@@ -582,6 +593,11 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
                 {page.league?.kind === "cup" ? t.lockedTo(cupStage(page.league)) : page.league?.kind === "round" ? t.lockedTo(t.round(page.league.round)) : t.locked}
               </span>
             )}
+            {page.fix && (
+              <span title={t.fixTitle} className="font-heading text-xl text-muted-foreground">
+                {t.fixedBy(page.fix.by, setAt(page.fix.at))}
+              </span>
+            )}
             {sourceCount > FOLD_AFTER ? (
               <SourcesFold held={held} anyPokemon={anyPokemon} over={overspent}>
                 {sourceChips}
@@ -589,15 +605,15 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
             ) : (
               sourceChips
             )}
-            {editable && !fixed && <SourceMenu taken={held.map((h) => h.id)} busy={joining} onPick={addSource} onAny={anyPokemon ? undefined : () => chooseAny(true)} />}
+            {owned && !fixed && <SourceMenu taken={held.map((h) => h.id)} busy={joining} onPick={addSource} onAny={anyPokemon ? undefined : () => chooseAny(true)} />}
           </div>
         </div>
         <div className="flex-1" />
         <div className="flex flex-wrap items-center gap-3">
           {page.mine && hasToggle(teamKind(page), page.lockedAt !== null) && <SeenSwitch hidden={hidden} onHidden={chooseHidden} />}
-          {editable && !fixed && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
-          {editable && <MovesSwitch rule={pool.moves} onRule={(moves) => choosePool({ ...pool, moves })} />}
-          {editable && !fixed && (
+          {owned && !fixed && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
+          {owned && <MovesSwitch rule={pool.moves} onRule={(moves) => choosePool({ ...pool, moves })} />}
+          {owned && !fixed && (
             <button type="button" onClick={() => setPasting(true)} className={buttonVariants({ className: "min-h-12" })}>
               {t.paste}
             </button>
@@ -616,9 +632,10 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
               onDone={onReload}
             />
           )}
-          {editable && !fixed && <DeleteButton id={page.id} name={name} />}
+          {owned && !fixed && <DeleteButton id={page.id} name={name} />}
         </div>
       </div>
+      {page.canFix && <p className="m-0 font-heading text-xl text-subtle">{t.fixing}</p>}
       {failed && (
         <p role="alert" className="m-0 text-destructive">
           {t.notSaved(failed)}
@@ -688,7 +705,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
           anyPokemon={anyPokemon}
           pool={pool}
           freePool={freePool}
-          onFreePool={chooseFreePool}
+          onFreePool={owned ? chooseFreePool : setFreePool}
           onClose={() => setAdding(null)}
           onPut={(slot, mon, source) => {
             save(putMember(slots, slot, mon, source));
@@ -704,7 +721,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
           }}
         />
       )}
-      {editable && (
+      {owned && (
         <PasteDialog
           stocks={stocks}
           any={anyPokemon ? ANY_POKEMON : null}

@@ -245,6 +245,8 @@ export const team = pgTable(
     matchId: text("match_id").references((): AnyPgColumn => leagueMatch.id, { onDelete: "cascade" }),
     lockedAt: timestamp("locked_at"),
     lockedBy: text("locked_by").references(() => user.id, { onDelete: "set null" }),
+    fixedBy: text("fixed_by").references(() => user.id, { onDelete: "set null" }),
+    fixedAt: timestamp("fixed_at"),
   },
   (table) => [
     index("team_owner_id_idx").on(table.ownerId),
