@@ -68,7 +68,9 @@ export const shownMember = z.union([shownFreeMember, ownMember]);
 
 export const shownSlots = z.array(shownMember.nullable()).min(TEAM_SIZE).max(MAX_TEAM_SIZE);
 
-export const teamName = z.string().trim().min(1).max(60);
+export const TEAM_NAME_MAX = 60;
+
+export const teamName = z.string().trim().min(1).max(TEAM_NAME_MAX);
 
 export const teamSourceIds = z.array(id).refine((ids) => new Set(ids).size === ids.length);
 
@@ -142,6 +144,7 @@ export const teamPage = z.object({
   canEdit: z.boolean(),
   canLock: z.boolean(),
   canUnlock: z.boolean(),
+  canClone: z.boolean(),
   sources: z.array(teamSource),
   anyPokemon: z.boolean(),
   private: z.boolean(),

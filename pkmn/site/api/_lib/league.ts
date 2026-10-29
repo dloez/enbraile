@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { type Context, Hono } from "hono";
 import {
@@ -39,7 +39,7 @@ import { fixGame, type Move, recordGame, type Refusal } from "./match.js";
 import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
 import { cup, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
 import { findShown, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
-import { insertTeam } from "./teams.js";
+import { insertTeam, lockTeam } from "./teams.js";
 
 const t = says({
   en: {
@@ -481,7 +481,7 @@ league.post("/:number/league/tries", async (c) => {
   if (!input) return c.json({ error: t(c).badTry }, 400);
   let slots: TeamSlots;
   if ("id" in input.team) {
-    const [picked] = await db.select({ slots: team.slots }).from(team).where(and(eq(team.id, input.team.id), eq(team.ownerId, reader.id)));
+    const [picked] = await db.select({ slots: team.slots }).from(team).where(and(eq(team.id, input.team.id), eq(team.ownerId, reader.id), isNull(team.matchId)));
     if (!picked) return c.json({ error: t(c).noTeam }, 404);
     slots = picked.slots;
   } else {
@@ -498,7 +498,18 @@ league.post("/:number/league/tries", async (c) => {
     if (pasted) {
       const names = await tx.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
       teamId = crypto.randomUUID();
-      await insertTeam(tx, { id: teamId, ownerId: reader.id, name: nextTeamName(names.map((n) => n.name), t(c).tryTeam), anyPokemon: true, slots: pasted, pool: row.pool, sources: [] });
+      await insertTeam(tx, {
+        id: teamId,
+        ownerId: reader.id,
+        name: nextTeamName(names.map((n) => n.name), t(c).tryTeam),
+        anyPokemon: true,
+        slots: pasted,
+        pool: row.pool,
+        sources: [],
+        locked: { at: new Date(), by: reader.id },
+      });
+    } else if (teamId) {
+      await lockTeam(tx, teamId, reader.id);
     }
     await tx.insert(leagueTry).values({
       id: crypto.randomUUID(),

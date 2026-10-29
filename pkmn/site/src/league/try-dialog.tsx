@@ -112,7 +112,7 @@ export function TryDialog({
     if (one || !me) return;
     api(`/teams?owner=${encodeURIComponent(me)}`, teamList).then(
       (rows) => {
-        const usable = rows.filter((row) => brought(row).length > 0 && brought(row).length <= PARTY_SIZE);
+        const usable = rows.filter((row) => row.league?.kind !== "cup" && brought(row).length > 0 && brought(row).length <= PARTY_SIZE);
         setTeams(usable);
         setPicked(usable[0]?.id ?? null);
         if (usable.length === 0) setFrom("paste");

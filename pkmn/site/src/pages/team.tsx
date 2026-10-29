@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronLeft, ClipboardCheck, ClipboardCopy, Lock, Plus, X } from "lucide-react";
+import { ChevronLeft, ClipboardCheck, ClipboardCopy, CopyPlus, Lock, Plus, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { toolPage } from "@/components/page";
 import { MiniSeta } from "@/components/pc/bag";
@@ -86,6 +86,8 @@ const t = messages({
     lockNote: "Once locked, nothing in it can change; only an admin can unlock it.",
     fillFirst: (size: number) => `Fill all ${size} slots to lock it in`,
     unlock: "Unlock",
+    clone: "Clone",
+    cloneTitle: "Copy it into a new team of yours to edit",
   },
   es: {
     failed: "Algo ha fallado",
@@ -138,6 +140,8 @@ const t = messages({
     lockNote: "Una vez bloqueado no se puede cambiar nada; solo un administrador puede desbloquearlo.",
     fillFirst: (size: number) => `Llena los ${size} huecos para bloquearlo`,
     unlock: "Desbloquear",
+    clone: "Clonar",
+    cloneTitle: "Cópialo en un equipo nuevo tuyo para editarlo",
   },
 });
 
@@ -568,7 +572,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
         </div>
         <div className="flex-1" />
         <div className="flex flex-wrap items-center gap-3">
-          {editable && hasToggle(teamKind(page)) && <SeenSwitch hidden={hidden} onHidden={chooseHidden} />}
+          {page.mine && hasToggle(teamKind(page)) && <SeenSwitch hidden={hidden} onHidden={chooseHidden} />}
           {editable && !fixed && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
           {editable && <MovesSwitch rule={pool.moves} onRule={(moves) => choosePool({ ...pool, moves })} />}
           {editable && !fixed && (
@@ -578,6 +582,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
           )}
           {page.canUnlock && <UnlockButton id={page.id} onDone={onReload} />}
           <CopyButton slots={slots} stocks={stocks} />
+          {page.canClone && <CloneButton id={page.id} />}
           {page.canLock && <LockButton id={page.id} name={name} full={filledAt(slots).length === size} size={size} settled={() => writes.current} onDone={onReload} />}
           {editable && !fixed && <DeleteButton id={page.id} name={name} />}
         </div>
@@ -1005,6 +1010,41 @@ function LockButton({ id, name, full, size, settled, onDone }: { id: string; nam
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function CloneButton({ id }: { id: string }) {
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <span className="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        disabled={busy}
+        title={t.cloneTitle}
+        onClick={() => {
+          setBusy(true);
+          setError(null);
+          api(`/teams/${encodeURIComponent(id)}/clone`, teamMade, { method: "POST" }).then(
+            (made) => void navigate({ to: FROM, params: { id: made.id } }),
+            (caught: unknown) => {
+              setError(message(caught));
+              setBusy(false);
+            },
+          );
+        }}
+        className={buttonVariants({ className: "min-h-12" })}
+      >
+        <CopyPlus className="size-4" aria-hidden="true" />
+        {t.clone}
+      </button>
+      {error && (
+        <span role="alert" className="text-sm text-destructive">
+          {error}
+        </span>
+      )}
+    </span>
   );
 }
 

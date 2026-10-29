@@ -233,7 +233,16 @@ async function main() {
     const teamId = `${one.id}-team`;
     return [
       {
-        team: { id: teamId, ownerId: owner, name: `Pokémon League try ${one.try_number}`, anyPokemon: true, slots: read.slots, pool: target.pool, sources: [] },
+        team: {
+          id: teamId,
+          ownerId: owner,
+          name: `Pokémon League try ${one.try_number}`,
+          anyPokemon: true,
+          slots: read.slots,
+          pool: target.pool,
+          sources: [],
+          locked: { at: new Date(one.at), by: null },
+        },
         row: {
           id: one.id,
           seriesId: target.id,
