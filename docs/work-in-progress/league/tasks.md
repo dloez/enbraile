@@ -2,26 +2,23 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## What becomes of a cup game's bans and picks when what they rest on changes?
+## An admin's fix or unlock never leaves a cup game's bans and picks standing on what changed
 
-A ban is stored as a place in the other player's locked team of eight, and a six as places in the player's own (`league_game_side`; The pkmn Site → Decisions, the bans and picks' build choices). Whether a ban is barred follows from who won the game before (`barredBan` in `shared/league.ts`). Two admin moves change what these rest on and leave them standing:
-- `fixGame` (`api/_lib/match.ts`) rewriting an earlier game's winner after the next game's bans are in. That can leave a ban the rule now bars, or keep barring one it no longer should.
-- `POST /api/teams/<id>/unlock` (`api/_lib/teams.ts`) on a cup team after bans or sixes are in. Its owner may then move or swap the Pokémon that a stored place points at.
-
-Only a pairing that `settleCup` changes clears them (`api/_lib/cup.ts`). Series 1's cup is open, so it has bans. Found by the gardener, 2026-10-29.
+A ban is stored as a place in the other player's locked team of eight, and a six as places in the player's own (`league_game_side`; The pkmn Site → Decisions, the bans and picks' build choices); whether a ban is barred follows from who won the game before (`barredBan` in `shared/league.ts`). Two admin moves leave them standing today: `fixGame` (`api/_lib/match.ts`) rewriting an earlier game's winner after the next game's bans are in, and `POST /api/teams/<id>/unlock` (`api/_lib/teams.ts`) on a cup team after bans or sixes are in. The owner settled both: a changed winner clears the bans and picks of the match's next game without a result, games with a result keeping theirs, and a cup team cannot be unlocked while a game of its match without a result has bans or picks in ([discovery → The Match Page](discovery.md#the-match-page), owner 2026-10-29). Found by the gardener, 2026-10-29.
 
 **Do:**
-- [ ] Once answered, the chosen handling in the match module and the team unlock, with its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
+- [ ] `fixGame` clearing the next unplayed game's sides when the winner it rewrites changes, in the same transaction.
+- [ ] The unlock route refusing (409) a cup team whose match has an unplayed game with a ban or a six in, in English and Spanish.
+- [ ] Their decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, from the seed's Series 2 final at game 2's bans, the answered behaviour after an admin fixes game 1's winner and after an admin unlocks a final team.
+- Claude-run: `npm run gate`; through `verify-site`, from the seed's Series 2 final at game 2's bans: an admin fixing game 1's winner clears game 2's bans and both ban again; a fix that keeps the winner clears nothing; an admin's unlock of a final team is refused while game 2 has a ban in, and goes through once the match has no unplayed game with one.
 - Human-run: none.
 - Reuse: `fixGame` and `banIn` (`api/_lib/match.ts`); `barredBan` (`shared/league.ts`); the unlock route (`api/_lib/teams.ts`).
 - Neighbors: `settleCup`'s clearing of a changed match's sides (`api/_lib/cup.ts`).
-- Forbidden: settling either case without the owner's answer.
+- Forbidden: a game's sides cleared outside the match module.
 
 **Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/league.ts`, `docs/pkmn/site/explanation/site.md`
-**Needs the author:** when an admin fixes a cup game's winner after the next game's bans are in, do that game's bans and sixes stand, or are they cleared so it is banned again? And when an admin unlocks a cup team whose match already has bans or sixes, are they cleared, kept as places, or is the unlock refused while they stand?
 
 ## Players see others' saves only up to their own round
 
