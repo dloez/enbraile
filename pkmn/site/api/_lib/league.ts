@@ -1,9 +1,14 @@
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { type Context, Hono } from "hono";
+import type * as z from "zod";
 import {
+  banInput,
+  barredBan,
   bestTries,
   covers,
+  CUP_BROUGHT,
+  cupBans,
   cupInput,
   cupShape,
   cupSlots,
@@ -19,10 +24,14 @@ import {
   type MatchPage,
   type LeagueMode,
   type MatchTeam,
+  type GameDraft,
+  type GameSide,
+  type LeagueGame,
   nextGame,
   openInput,
   pairsInput,
   PARTY_SIZE,
+  pickInput,
   standings,
   tryEdit,
   tryInput,
@@ -36,7 +45,7 @@ import { body } from "./body.js";
 import { type CupRefusal, cupState, startCup } from "./cup.js";
 import { db } from "./db.js";
 import { says } from "./i18n.js";
-import { fixGame, type Move, recordGame, type Refusal } from "./match.js";
+import { banIn, fixGame, matchTeamsOf, type Move, pickSix, recordGame, type Refusal, sidesOf, started } from "./match.js";
 import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
 import { cup, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
 import { findShown, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
@@ -80,6 +89,18 @@ const t = says({
     cupStarted: "The cup has already started",
     cupSize: "The cup needs an even number of players, two or more",
     badCup: "The players who enter the cup and its mode, open or closed",
+    badBan: "The player who bans and one of the other's eight",
+    badPick: (n: number) => `The player who picks and ${n} of their team`,
+    notSide: "Only a player bans and picks, and only for themselves",
+    noDraft: "Only a cup match's games have bans and picks",
+    noBans: "A closed cup's games have no bans",
+    notOpen: "That game is not open for bans and picks",
+    banned: "Your ban for this game is in",
+    barred: "You won the last game, so you cannot ban the Pokémon you banned in it again",
+    slot: "That is not one of the other player's Pokémon",
+    bansFirst: "Both bans go in before the picks",
+    picked: "Your six for this game are in",
+    pick: (n: number) => `Pick ${n} of your Pokémon, none of them banned`,
   },
   es: {
     signIn: "Inicia sesión primero",
@@ -118,6 +139,18 @@ const t = says({
     cupStarted: "La copa ya ha empezado",
     cupSize: "La copa necesita un número par de jugadores, dos o más",
     badCup: "Los jugadores que entran en la copa y su modo, abierta o cerrada",
+    badBan: "El jugador que veta y uno de los ocho del otro",
+    badPick: (n: number) => `El jugador que elige y ${n} de su equipo`,
+    notSide: "Solo un jugador veta y elige, y solo por sí mismo",
+    noDraft: "Solo las partidas de un combate de copa tienen vetos y elecciones",
+    noBans: "Las partidas de una copa cerrada no tienen vetos",
+    notOpen: "Esa partida no está abierta para vetos y elecciones",
+    banned: "Tu veto para esta partida ya está",
+    barred: "Ganaste la partida anterior, así que no puedes volver a vetar el Pokémon que vetaste en ella",
+    slot: "Ese no es uno de los Pokémon del otro jugador",
+    bansFirst: "Primero van los dos vetos y luego las elecciones",
+    picked: "Tus seis para esta partida ya están",
+    pick: (n: number) => `Elige ${n} de tus Pokémon, ninguno vetado`,
   },
 });
 
@@ -355,6 +388,7 @@ async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise
     return { id, name: page.players.find((p) => p.id === id)?.name ?? "?", place: standing?.place ?? null, points: standing?.points ?? 0, seed: seed < 0 ? null : seed + 1 };
   };
   const whole = covers(match, played);
+  const teams = await matchTeams(row, matchId, match, !round, mode, reader);
   return {
     id: match.id,
     number: page.number,
@@ -363,7 +397,7 @@ async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise
     cup: round ? null : cupPlace(page, matchId),
     a: side(match.a),
     b: side(match.b),
-    teams: await matchTeams(row, matchId, match, !round, mode, reader),
+    teams,
     gamesA: match.gamesA,
     gamesB: match.gamesB,
     faintedA: match.faintedA,
@@ -371,7 +405,45 @@ async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise
     games: played,
     unrecorded: whole ? { a: 0, b: 0 } : { a: (match.gamesA ?? 0) - won.gamesA, b: (match.gamesB ?? 0) - won.gamesB },
     next: nextGame(match, played),
+    draft: round ? null : await draftOf(matchId, match, played, mode, teams, reader),
     admin: !!reader.admin,
+  };
+}
+
+async function draftOf(
+  matchId: string,
+  match: { a: string; b: string; gamesA: number | null; gamesB: number | null },
+  games: LeagueGame[],
+  mode: LeagueMode,
+  teams: { a: MatchTeam; b: MatchTeam },
+  reader: Viewer,
+): Promise<GameDraft | null> {
+  const next = nextGame(match, games);
+  const number = next ?? games.at(-1)?.number ?? null;
+  if (number === null) return null;
+  const held = await matchTeamsOf(db, matchId);
+  const sides = await sidesOf(db, matchId);
+  const at = (player: string, n: number) => sides.find((side) => side.playerId === player && side.number === n);
+  const bans = cupBans(mode);
+  const bothBanned = [match.a, match.b].every((player) => at(player, number)?.ban != null);
+  const bothPicked = [match.a, match.b].every((player) => at(player, number)?.picks != null);
+  const side = (player: string, shown: boolean): GameSide => {
+    const mine = at(player, number);
+    const own = reader.id === player;
+    return {
+      banned: mine?.ban != null,
+      ban: own || bothBanned ? (mine?.ban ?? null) : null,
+      barred: own && bans ? barredBan(player, number, games, (n) => at(player, n)?.ban ?? null) : null,
+      picked: mine?.picks != null,
+      picks: own || (bothPicked && shown) ? (mine?.picks ?? null) : null,
+    };
+  };
+  return {
+    number,
+    bans,
+    open: next !== null && started({ playerA: match.a, playerB: match.b }, mode, held),
+    a: side(match.a, teams.a.state === "shown"),
+    b: side(match.b, teams.b.state === "shown"),
   };
 }
 
@@ -385,7 +457,31 @@ league.get("/:number/league/matches/:id", async (c) => {
   return c.json(page);
 });
 
-const refusalStatus: Record<Refusal, 400 | 404 | 409> = { noMatch: 404, winner: 400, order: 409, closed: 409, noGame: 404, past: 409, score: 409, later: 409 };
+const refusalStatus: Record<Refusal, 400 | 403 | 404 | 409> = {
+  noMatch: 404,
+  winner: 400,
+  order: 409,
+  closed: 409,
+  noGame: 404,
+  past: 409,
+  score: 409,
+  later: 409,
+  notSide: 403,
+  noDraft: 409,
+  noBans: 409,
+  notOpen: 409,
+  banned: 409,
+  barred: 409,
+  slot: 400,
+  bansFirst: 409,
+  picked: 409,
+  pick: 400,
+};
+
+function refusalText(c: Context, refused: Refusal): string {
+  const said = t(c);
+  return refused === "pick" ? said.pick(CUP_BROUGHT) : said[refused];
+}
 
 async function moveOn(c: Context, make: (matchId: string, input: GameInput, by: string) => Promise<Move>) {
   const reader = await viewer(c.req.raw);
@@ -397,9 +493,29 @@ async function moveOn(c: Context, make: (matchId: string, input: GameInput, by: 
   const input = await body(c.req.raw, gameInput);
   if (!input) return c.json({ error: t(c).badGame }, 400);
   const moved = await make(matchId, input, reader.id);
-  if (!moved.done) return c.json({ error: t(c)[moved.refused] }, refusalStatus[moved.refused]);
+  if (!moved.done) return c.json({ error: refusalText(c, moved.refused) }, refusalStatus[moved.refused]);
   return c.json(await matchOf(row, matchId, reader));
 }
+
+async function draftOn<S extends z.ZodType>(c: Context, schema: S, bad: string, make: (matchId: string, number: number, input: z.infer<S>, by: string) => Promise<Move>) {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
+  const row = await findShown(c.req.param("number") ?? "", !!reader.admin);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  const matchId = c.req.param("id") ?? "";
+  if (!(await matchOf(row, matchId, reader))) return c.json({ error: t(c).noMatch }, 404);
+  const input = await body(c.req.raw, schema);
+  if (!input) return c.json({ error: bad }, 400);
+  const moved = await make(matchId, Number(c.req.param("game")), input, reader.id);
+  if (!moved.done) return c.json({ error: refusalText(c, moved.refused) }, refusalStatus[moved.refused]);
+  return c.json(await matchOf(row, matchId, reader));
+}
+
+league.post("/:number/league/matches/:id/games/:game/ban", (c) => draftOn(c, banInput, t(c).badBan, (matchId, number, input, by) => banIn(matchId, number, input.player, input.slot, by)));
+
+league.post("/:number/league/matches/:id/games/:game/pick", (c) =>
+  draftOn(c, pickInput, t(c).badPick(CUP_BROUGHT), (matchId, number, input, by) => pickSix(matchId, number, input.player, input.slots, by)),
+);
 
 league.post("/:number/league/matches/:id/games", requireAdmin, (c) => moveOn(c, recordGame));
 

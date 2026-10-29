@@ -22,7 +22,7 @@ function lockedOn(match: typeof shownMatch.columns): SQL {
   return sql`(select count(*) from ${lockedTeam.as} where ${locked.matchId} = ${match.id} and ${locked.lockedAt} is not null)`;
 }
 
-function revealed(): SQL {
+export function revealed(): SQL {
   const [m, c, r, f] = [shownMatch.columns, shownCup.columns, shownRound.columns, fellowMatch.columns];
   return sql`exists (select 1 from ${shownMatch.as}
     left join ${shownCup.as} on ${c.id} = ${m.cupId}

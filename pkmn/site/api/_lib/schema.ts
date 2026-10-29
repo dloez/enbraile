@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { type AnyPgColumn, bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
-import { FAINTED_PER_GAME, GAMES_TO_WIN, LEAGUE_COMBATS, LEAGUE_MODES, MATCH_GAMES, PARTY_SIZE, type TryMember } from "../../shared/league.js";
+import { CUP_TEAM_SIZE, FAINTED_PER_GAME, GAMES_TO_WIN, LEAGUE_COMBATS, LEAGUE_MODES, MATCH_GAMES, PARTY_SIZE, type TryMember } from "../../shared/league.js";
 import { DEFAULT_FREE_POOL, DEFAULT_POOL, type FreePool, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
 import type { ItemIcons } from "../../shared/items.js";
@@ -375,6 +375,30 @@ export const leagueGame = pgTable(
       "league_game_fainted",
       sql`${table.faintedA} BETWEEN 0 AND ${sql.raw(String(FAINTED_PER_GAME))} AND ${table.faintedB} BETWEEN 0 AND ${sql.raw(String(FAINTED_PER_GAME))}`,
     ),
+  ],
+);
+
+export const gameSide = pgTable(
+  "league_game_side",
+  {
+    matchId: text("match_id")
+      .notNull()
+      .references(() => leagueMatch.id, { onDelete: "cascade" }),
+    number: integer("number").notNull(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    ban: integer("ban"),
+    bannedAt: timestamp("banned_at"),
+    picks: jsonb("picks").$type<number[]>(),
+    pickedAt: timestamp("picked_at"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.matchId, table.number, table.playerId] }),
+    index("league_game_side_player_id_idx").on(table.playerId),
+    check("league_game_side_number", sql`${table.number} BETWEEN 1 AND ${sql.raw(String(MATCH_GAMES))}`),
+    check("league_game_side_ban", sql`(${table.ban} IS NULL) = (${table.bannedAt} IS NULL) AND (${table.ban} IS NULL OR ${table.ban} BETWEEN 0 AND ${sql.raw(String(CUP_TEAM_SIZE - 1))})`),
+    check("league_game_side_picks", sql`(${table.picks} IS NULL) = (${table.pickedAt} IS NULL)`),
   ],
 );
 

@@ -2,7 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { CUP_TEAM_SIZE, type CupMatch, cupDraw, type CupProblem, cupProblem, type LeagueMode } from "../../shared/league.js";
 import { emptySlots } from "../../shared/team.js";
 import { db } from "./db.js";
-import { cup, cupEntrant, leagueGame, leagueMatch, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
+import { cup, cupEntrant, gameSide, leagueGame, leagueMatch, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
 import { insertTeam } from "./teams.js";
 
 export type CupRefusal = "started" | CupProblem;
@@ -36,6 +36,7 @@ export async function settleCup(tx: Tx, cupId: string): Promise<void> {
       } else if (row.playerA !== slot.a || row.playerB !== slot.b) {
         if (busy(row)) throw new CupConflict();
         await tx.update(leagueMatch).set({ playerA: slot.a, playerB: slot.b }).where(eq(leagueMatch.id, row.id));
+        await tx.delete(gameSide).where(eq(gameSide.matchId, row.id));
       }
     } else if (row) {
       if (busy(row)) throw new CupConflict();

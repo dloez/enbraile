@@ -1,10 +1,42 @@
-import { asc, eq } from "drizzle-orm";
-import { covers, decided, fits, type GameInput, gamesProblem, nextGame, tally } from "../../shared/league.js";
+import { and, asc, eq, sql } from "drizzle-orm";
+import {
+  barredBan,
+  covers,
+  cupBans,
+  decided,
+  fits,
+  type GameInput,
+  gamesProblem,
+  type LeagueMode,
+  MATCH_GAMES,
+  nextGame,
+  pickProblem,
+  tally,
+} from "../../shared/league.js";
 import { CupConflict, lockCup, settleCup } from "./cup.js";
 import { db } from "./db.js";
-import { leagueGame, leagueMatch } from "./schema.js";
+import { cup, gameSide, leagueGame, leagueMatch, team } from "./schema.js";
+import { revealed } from "./series-data.js";
 
-export type Refusal = "noMatch" | "winner" | "order" | "closed" | "noGame" | "past" | "score" | "later";
+export type Refusal =
+  | "noMatch"
+  | "winner"
+  | "order"
+  | "closed"
+  | "noGame"
+  | "past"
+  | "score"
+  | "later"
+  | "notSide"
+  | "noDraft"
+  | "noBans"
+  | "notOpen"
+  | "banned"
+  | "barred"
+  | "slot"
+  | "bansFirst"
+  | "picked"
+  | "pick";
 
 export type Move = { done: true } | { done: false; refused: Refusal };
 
@@ -74,4 +106,87 @@ export async function importMatch(tx: Tx, match: typeof leagueMatch.$inferInsert
   await tx.insert(leagueMatch).values(row);
   if (games.length > 0) await tx.insert(leagueGame).values(games);
   return { done: true };
+}
+
+type Reader = Tx | typeof db;
+
+export type SideRow = typeof gameSide.$inferSelect;
+
+export async function cupModeOf(tx: Reader, match: Pick<MatchRow, "cupId">): Promise<LeagueMode | null> {
+  if (!match.cupId) return null;
+  const [held] = await tx.select({ mode: cup.mode }).from(cup).where(eq(cup.id, match.cupId));
+  return held?.mode ?? null;
+}
+
+export async function matchTeamsOf(tx: Reader, matchId: string) {
+  return tx
+    .select({ ownerId: team.ownerId, slots: team.slots, lockedAt: team.lockedAt, revealed: sql<boolean>`(${revealed()})` })
+    .from(team)
+    .where(eq(team.matchId, matchId));
+}
+
+export function started(match: Pick<MatchRow, "playerA" | "playerB">, mode: LeagueMode, teams: Awaited<ReturnType<typeof matchTeamsOf>>): boolean {
+  const both = [match.playerA, match.playerB].map((player) => teams.find((one) => one.ownerId === player));
+  return both.every((one) => one?.lockedAt) && (!cupBans(mode) || both.every((one) => one?.revealed));
+}
+
+export async function sidesOf(tx: Reader, matchId: string): Promise<SideRow[]> {
+  return tx.select().from(gameSide).where(eq(gameSide.matchId, matchId));
+}
+
+type Draft = { match: MatchRow; games: GameRow[]; mode: LeagueMode; teams: Awaited<ReturnType<typeof matchTeamsOf>>; sides: SideRow[]; other: string };
+
+async function draftMove(matchId: string, number: number, player: string, by: string, make: (tx: Tx, draft: Draft) => Promise<Refusal | null>): Promise<Move> {
+  if (!Number.isInteger(number) || number < 1 || number > MATCH_GAMES) return { done: false, refused: "noGame" };
+  return db.transaction(async (tx): Promise<Move> => {
+    const [match] = await tx.select().from(leagueMatch).where(eq(leagueMatch.id, matchId)).for("update");
+    if (!match) return { done: false, refused: "noMatch" };
+    if (player !== by || (player !== match.playerA && player !== match.playerB)) return { done: false, refused: "notSide" };
+    const mode = await cupModeOf(tx, match);
+    if (!mode) return { done: false, refused: "noDraft" };
+    const games = await tx.select().from(leagueGame).where(eq(leagueGame.matchId, matchId)).orderBy(asc(leagueGame.number));
+    const next = nextGame({ a: match.playerA, b: match.playerB, gamesA: match.gamesA, gamesB: match.gamesB }, games.map(played));
+    const teams = await matchTeamsOf(tx, matchId);
+    if (next !== number || !started(match, mode, teams)) return { done: false, refused: "notOpen" };
+    const sides = (await sidesOf(tx, matchId)).filter((side) => side.number === number);
+    const refused = await make(tx, { match, games, mode, teams, sides, other: player === match.playerA ? match.playerB : match.playerA });
+    return refused ? { done: false, refused } : { done: true };
+  });
+}
+
+async function writeSide(tx: Tx, matchId: string, number: number, player: string, set: Partial<Pick<SideRow, "ban" | "bannedAt" | "picks" | "pickedAt">>) {
+  await tx
+    .insert(gameSide)
+    .values({ matchId, number, playerId: player, ...set })
+    .onConflictDoUpdate({ target: [gameSide.matchId, gameSide.number, gameSide.playerId], set });
+}
+
+export function banIn(matchId: string, number: number, player: string, slot: number, by: string): Promise<Move> {
+  return draftMove(matchId, number, player, by, async (tx, { games, mode, teams, sides, other }) => {
+    if (!cupBans(mode)) return "noBans";
+    const mine = sides.find((side) => side.playerId === player);
+    if (mine?.ban !== null && mine?.ban !== undefined) return "banned";
+    const theirs = teams.find((one) => one.ownerId === other);
+    if (!theirs || slot >= theirs.slots.length || theirs.slots[slot] === null) return "slot";
+    const before = await tx
+      .select({ ban: gameSide.ban })
+      .from(gameSide)
+      .where(and(eq(gameSide.matchId, matchId), eq(gameSide.number, number - 1), eq(gameSide.playerId, player)));
+    if (barredBan(player, number, games.map(played), () => before[0]?.ban ?? null) === slot) return "barred";
+    await writeSide(tx, matchId, number, player, { ban: slot, bannedAt: new Date() });
+    return null;
+  });
+}
+
+export function pickSix(matchId: string, number: number, player: string, slots: readonly number[], by: string): Promise<Move> {
+  return draftMove(matchId, number, player, by, async (tx, { mode, teams, sides, other }) => {
+    const mine = sides.find((side) => side.playerId === player);
+    const theirs = sides.find((side) => side.playerId === other);
+    if (cupBans(mode) && (mine?.ban == null || theirs?.ban == null)) return "bansFirst";
+    if (mine?.picks) return "picked";
+    const own = teams.find((one) => one.ownerId === player);
+    if (!own || pickProblem(own.slots.length, slots, cupBans(mode) ? (theirs?.ban ?? null) : null) || slots.some((at) => own.slots[at] === null)) return "pick";
+    await writeSide(tx, matchId, number, player, { picks: [...slots], pickedAt: new Date() });
+    return null;
+  });
 }

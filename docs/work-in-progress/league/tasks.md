@@ -18,23 +18,6 @@ Discovery's series page summary holds "the standings' top, the current round, th
 
 **Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/api/`, `pkmn/site/shared/`, `docs/pkmn/site/`
 
-## Players ban blind and pick their six on a cup match's page
-
-An open cup has bans and a closed one none; in an open cup, each cup game opens with both players' bans once the game before it has its result: each bans one of the other's eight, sees only whether the opponent has banned, and both bans show once both are in; the winner of the last game cannot repeat their ban; each then picks six of their seven left, kept with the game and copied for Showdown; the admin's result opens the next game ([discovery → The Cup](discovery.md#the-cup), [The Match Page](discovery.md#the-match-page)). The page refreshes itself while it waits on the other side.
-
-**Do:**
-- [ ] Bans and picks on a match's games, as moves of the match module, the ban rule in `shared/league.ts`.
-- [ ] The ban and pick steps on the match page, and its refresh while waiting.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, two test players in two browsers: the first to ban sees "waiting" and not the other's ban until both are in; the game 1 winner is refused their game 1 ban in game 2 and the loser is not; a pick of other than six of the seven is refused; Copy for Showdown gives the six; a ban sent for the other player, or after the bans close, gets 403 or 409; a closed cup goes straight to the pick of six.
-- Human-run: the owner, as two players, bans and picks for a cup match on the preview.
-- Reuse: the cup teams of the entry above; the team page's pick of six (`src/teams/pick.ts`) and Copy for Showdown.
-- Neighbors: the admin game editor on the match page.
-- Forbidden: showing a ban before both are in, to anyone; a ban or pick written outside the match module.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
-
 ## An opened round gives each player their team once their snapshot exists
 
 A round, once an admin opens it, in either mode, gives each player a team sourced from their snapshot at its milestone, sized by the league's rules, as soon as that snapshot exists; until then their team list names the milestone to reach and upload. Locked and unlocked as a cup team ([discovery → Team Locking](discovery.md#team-locking)).

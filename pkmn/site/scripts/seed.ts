@@ -11,10 +11,10 @@ import { readEntry, zipEntries } from "../api/_lib/export/zip.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
 import { ingest, savePrefix } from "../api/_lib/ingest.js";
 import { refreshItemIcons } from "../api/_lib/item-icons.js";
-import { startCup } from "../api/_lib/cup.js";
-import { recordGame } from "../api/_lib/match.js";
-import { cup, game, leagueMatch, leagueRound, leagueTry, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
-import { standings } from "../shared/league.js";
+import { giveCupTeams, startCup } from "../api/_lib/cup.js";
+import { banIn, pickSix, recordGame } from "../api/_lib/match.js";
+import { cup, game, gameSide, leagueMatch, leagueRound, leagueTry, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
+import { CUP_BROUGHT, CUP_TEAM_SIZE, standings } from "../shared/league.js";
 import { DEFAULT_POOL } from "../shared/pool.js";
 import { suggestMilestone } from "../shared/save-upload.js";
 import type { MilestoneMark } from "../shared/series.js";
@@ -68,6 +68,8 @@ const seedLeague = [
   },
   { milestone: "Gym 2", a: "Blue", b: "Red", games: [] },
 ];
+
+const seedCupGame = { winner: "Red", faintedA: 3, faintedB: 6, bans: { Red: 0, Blue: 1 } };
 
 const seedTry = { player: "Red", team: seedTeam.name, combatsWon: 2, fell: [2, 3, 3], species: ["snorlax", "venusaur", "staraptor"] };
 
@@ -399,6 +401,66 @@ async function seedTheCup(): Promise<string | null> {
   return `its cup started with ${finishedSeries.players.join(" and ")}, their final to play`;
 }
 
+async function seedTheCupGame(): Promise<string | null> {
+  const [row] = await db.select({ id: series.id }).from(series).where(eq(series.number, finishedSeries.number));
+  if (!row) throw new Error(`${finishedSeries.name} is missing`);
+  const [final] = await db.select().from(leagueMatch).innerJoin(cup, eq(cup.id, leagueMatch.cupId)).where(eq(cup.seriesId, row.id));
+  if (!final) return null;
+  const match = final.league_match;
+  const [sided] = await db.select({ number: gameSide.number }).from(gameSide).where(eq(gameSide.matchId, match.id)).limit(1);
+  if (sided) return null;
+  const players = await db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.id, [match.playerA, match.playerB]));
+  const idOf = (name: string) => players.find((p) => p.name === name)?.id;
+  const sheets = await db
+    .select({ owner: save.userId, snapshot })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
+    .where(and(eq(save.seriesId, row.id), eq(milestone.name, finishedSeries.milestone)));
+  const [held] = sheets;
+  if (!held || held.snapshot.data.pokemon.length < CUP_TEAM_SIZE) return null;
+  await db.transaction(async (tx) => {
+    for (const player of [match.playerA, match.playerB]) {
+      if (sheets.some((sheet) => sheet.owner === player)) continue;
+      const saveId = crypto.randomUUID();
+      await tx.insert(save).values({ id: saveId, seriesId: row.id, userId: player });
+      const { id: _id, saveId: _save, takenAt: _takenAt, ...kept } = held.snapshot;
+      await tx.insert(snapshot).values({ ...kept, id: crypto.randomUUID(), saveId });
+    }
+    await giveCupTeams(tx, row.id);
+    const made = await tx.select({ id: team.id, source: teamSource.snapshotId }).from(team).innerJoin(teamSource, eq(teamSource.teamId, team.id)).where(eq(team.matchId, match.id));
+    for (const one of made) {
+      const [sheet] = await tx.select({ data: snapshot.data }).from(snapshot).where(eq(snapshot.id, one.source));
+      const slots = sheet!.data.pokemon.slice(0, CUP_TEAM_SIZE).map((p, index) => ({
+        source: one.source,
+        index,
+        species: p.species,
+        item: null,
+        ability: null,
+        nature: null,
+        moves: Array.from({ length: MOVE_SLOTS }, (_, at) => p.moves?.current[at] ?? null),
+      }));
+      await tx.update(team).set({ slots, lockedAt: new Date() }).where(eq(team.id, one.id));
+    }
+  });
+  const red = idOf(seedCupGame.winner);
+  const sides = players.map((p) => ({ ...p, ban: seedCupGame.bans[p.name as keyof typeof seedCupGame.bans] }));
+  if (!red || sides.some((side) => side.ban === undefined)) throw new Error(`${finishedSeries.name}'s final is not ${finishedSeries.players.join(" v ")}`);
+  for (const side of sides) {
+    const banned = await banIn(match.id, 1, side.id, side.ban, side.id);
+    if (!banned.done) throw new Error(`The seed's ban was refused: ${banned.refused}`);
+  }
+  for (const side of sides) {
+    const against = sides.find((other) => other.id !== side.id)!.ban;
+    const six = Array.from({ length: CUP_TEAM_SIZE }, (_, at) => at).filter((at) => at !== against).slice(0, CUP_BROUGHT);
+    const picked = await pickSix(match.id, 1, side.id, six, side.id);
+    if (!picked.done) throw new Error(`The seed's pick was refused: ${picked.refused}`);
+  }
+  const recorded = await recordGame(match.id, { winner: red, faintedA: seedCupGame.faintedA, faintedB: seedCupGame.faintedB, replay: null }, null);
+  if (!recorded.done) throw new Error(`The seed's cup game was refused: ${recorded.refused}`);
+  return `the final's teams of eight locked, game 1 banned, picked and won by ${seedCupGame.winner}, game 2's bans open`;
+}
+
 async function main() {
   const preview = localOrPreview("SEED_TARGET", "seed");
   const adminPassword = preview ? requireEnv("SEED_ADMIN_PASSWORD") : admin.password;
@@ -415,8 +477,9 @@ async function main() {
   const seededTry = await seedTheTry();
   const seededFinished = await seedTheFinishedSeries();
   const seededCup = await seedTheCup();
+  const seededCupGame = await seedTheCupGame();
   console.log(
-    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededTry ? `, and ${seededTry}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}${seededCup ? (seededFinished ? `, with ${seededCup}` : `; and ${finishedSeries.name} with ${seededCup}`) : ""}`,
+    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededTry ? `, and ${seededTry}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}${seededCup ? (seededFinished ? `, with ${seededCup}` : `; and ${finishedSeries.name} with ${seededCup}`) : ""}${seededCupGame ? `, ${seededCupGame}` : ""}`,
   );
 }
 

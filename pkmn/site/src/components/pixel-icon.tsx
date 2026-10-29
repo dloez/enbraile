@@ -33,6 +33,7 @@ const ICONS = {
     ],
   },
   upload: { size: 10, paths: [["fill-current", "M4 1h2v1H4zM3 2h4v1H3zM2 3h6v1H2zM4 4h2v4H4zM1 9h8v1H1z"]] },
+  wait: { size: 10, paths: [["fill-current", "M2 0h6v1H2zM2 9h6v1H2zM3 1h4v2H3zM4 3h2v1H4zM4 6h2v1H4zM3 7h4v2H3z"]] },
   check: { size: 10, paths: [["fill-current", "M8 1h2v2H8zM7 3h2v2H7zM6 5h2v2H6zM4 7h3v2H4zM2 5h2v2H2zM0 3h2v2H0z"]] },
   zip: {
     size: 10,

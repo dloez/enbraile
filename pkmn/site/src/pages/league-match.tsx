@@ -12,7 +12,26 @@ import { messages } from "../../shared/i18n";
 import { PixelIcon } from "@/components/pixel-icon";
 import { TypeTag } from "@/components/pc/summary";
 import { dexName } from "../../shared/dex-text";
-import { FAINTED_PER_GAME, type GameInput, MATCH_GAMES, type MatchMember, type MatchPage, matchPage, type MatchTeam, POINTS_PER_WIN, tally } from "../../shared/league";
+import {
+  CUP_BROUGHT,
+  FAINTED_PER_GAME,
+  type GameDraft,
+  type GameInput,
+  MATCH_GAMES,
+  type MatchMember,
+  type MatchPage,
+  matchPage,
+  type MatchTeam,
+  POINTS_PER_WIN,
+  SHOWDOWN_CLAUSES,
+  SHOWDOWN_FORMAT,
+  tally,
+} from "../../shared/league";
+import { teamPage } from "../../shared/team";
+import { liveSlots } from "@/teams/dex";
+import { analysedSlots } from "@/teams/pick";
+import { showdownTeam } from "@/teams/showdown";
+import { stockOf } from "@/teams/team";
 
 const t = messages({
   en: {
@@ -65,6 +84,29 @@ const t = messages({
     cancel: "Cancel",
     record: (n: number) => `Record game ${n}`,
     save: (n: number | null) => (n === null ? "Save game" : `Save game ${n}`),
+    bansTitle: (n: number) => `Game ${n} · Bans`,
+    yourSix: (n: number) => `Game ${n} · Your six`,
+    pickingSix: (n: number) => `Game ${n} · Picking six`,
+    playTitle: (n: number) => `Game ${n} · Play`,
+    bansSub: "Bans",
+    pickingSub: "Picking six",
+    playingSub: "Playing",
+    choosing: "Choosing",
+    banned: "Banned",
+    sixIn: "Six in",
+    yourBan: "Your ban",
+    ban: "Ban",
+    banName: (name: string) => `Ban ${name}`,
+    barred: (n: number) => `Your game ${n} ban`,
+    waitingOn: (name: string) => `Waiting for ${name}`,
+    picked: (n: number, of: number) => `${n} of ${of} in`,
+    confirmSix: "Confirm these six",
+    notBrought: "Not brought",
+    onShowdown: "On Showdown",
+    clauses: (clauses: readonly string[]) => [...clauses, "team preview"].join(" · "),
+    copySix: "Copy my six for Showdown",
+    copied: "Copied",
+    copyFailed: "Copy failed",
   },
   es: {
     failed: "Algo ha fallado",
@@ -120,6 +162,29 @@ const t = messages({
     cancel: "Cancelar",
     record: (n: number) => `Anotar la partida ${n}`,
     save: (n: number | null) => (n === null ? "Guardar la partida" : `Guardar la partida ${n}`),
+    bansTitle: (n: number) => `Partida ${n} · Vetos`,
+    yourSix: (n: number) => `Partida ${n} · Tus seis`,
+    pickingSix: (n: number) => `Partida ${n} · Eligiendo seis`,
+    playTitle: (n: number) => `Partida ${n} · A jugar`,
+    bansSub: "Vetos",
+    pickingSub: "Eligiendo seis",
+    playingSub: "Jugando",
+    choosing: "Eligiendo",
+    banned: "Vetado",
+    sixIn: "Seis elegidos",
+    yourBan: "Tu veto",
+    ban: "Vetar",
+    banName: (name: string) => `Vetar a ${name}`,
+    barred: (n: number) => `Tu veto de la partida ${n}`,
+    waitingOn: (name: string) => `Esperando a ${name}`,
+    picked: (n: number, of: number) => `${n} de ${of} elegidos`,
+    confirmSix: "Confirmar estos seis",
+    notBrought: "No va",
+    onShowdown: "En Showdown",
+    clauses: (clauses: readonly string[]) => [...clauses, "vista previa de equipos"].join(" · "),
+    copySix: "Copiar mis seis para Showdown",
+    copied: "Copiado",
+    copyFailed: "No se pudo copiar",
   },
 });
 
@@ -147,19 +212,75 @@ function message(error: unknown): string {
   return error instanceof Error ? error.message : t.failed;
 }
 
+const REFRESH_MS = 5000;
+
+type SideKey = "a" | "b";
+
+type Phase = "ban" | "pick" | "play" | "done";
+
+const otherSide = (side: SideKey): SideKey => (side === "a" ? "b" : "a");
+
+function phaseOf(match: MatchPage): Phase | null {
+  const draft = match.draft;
+  if (!draft) return null;
+  if (!draft.open) return match.games.some((g) => g.number === draft.number) ? "done" : null;
+  if (draft.bans && !(draft.a.banned && draft.b.banned)) return "ban";
+  if (!(draft.a.picked && draft.b.picked)) return "pick";
+  return "play";
+}
+
+type Tone = "plain" | "chosen" | "banned" | "picked" | "unpicked" | "brought" | "dim";
+
+type Mark = {
+  tone: Tone;
+  tag?: { text: string; tone: "red" | "muted" | "warn" };
+  check?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
+  label?: string;
+};
+
+type Choice = { key: string; ban: number | null; six: number[] | null };
+
+function filledOf(team: MatchTeam): number[] {
+  return team.state === "shown" ? team.members.flatMap((member, at) => (member ? [at] : [])) : [];
+}
+
+function memberName(team: MatchTeam, at: number | null): string | null {
+  if (team.state !== "shown" || at === null) return null;
+  const member = team.members[at];
+  return member ? (member.nickname ?? member.species) : null;
+}
+
+function memberSprite(team: MatchTeam, at: number | null): string | null {
+  return team.state === "shown" && at !== null ? (team.members[at]?.sprite ?? null) : null;
+}
+
 export function LeagueMatchPage() {
   const { number, id } = useParams({ from: FROM });
   const { data: session } = authClient.useSession();
   const [match, setMatch] = useState<MatchPage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
+  const [choice, setChoice] = useState<Choice>({ key: "", ban: null, six: null });
+  const path = `/series/${encodeURIComponent(number)}/league/matches/${encodeURIComponent(id)}`;
+  const live = match?.draft?.open ?? false;
 
   useEffect(() => {
     setMatch(null);
     setError(null);
     setEditing(null);
-    api(`/series/${encodeURIComponent(number)}/league/matches/${encodeURIComponent(id)}`, matchPage).then(setMatch, (caught: unknown) => setError(message(caught)));
-  }, [number, id]);
+    api(path, matchPage).then(setMatch, (caught: unknown) => setError(message(caught)));
+  }, [path]);
+
+  useEffect(() => {
+    if (!live) return;
+    const timer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      api(path, matchPage).then(setMatch, () => undefined);
+    }, REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [live, path]);
 
   if (error) {
     return (
@@ -182,6 +303,59 @@ export function LeagueMatchPage() {
     setMatch(next);
     setEditing(null);
   };
+
+  const draft = match.draft;
+  const phase = phaseOf(match);
+  const mine: SideKey | null = me === match.a.id ? "a" : me === match.b.id ? "b" : null;
+  const theirs = mine && otherSide(mine);
+  const key = draft ? `${draft.number}:${phase}` : "";
+  const banning = phase === "ban" && !!draft && !!mine && !draft[mine].banned && match.teams[theirs!].state === "shown";
+  const picking = phase === "pick" && !!draft && !!mine && !draft[mine].picked && match.teams[mine].state === "shown";
+  const banChoice = choice.key === key ? choice.ban : null;
+  const defaultSix = mine && draft ? filledOf(match.teams[mine]).filter((at) => at !== draft[theirs!].ban).slice(0, CUP_BROUGHT) : [];
+  const sixChoice = choice.key === key && choice.six ? choice.six : defaultSix;
+
+  const markOf = (side: SideKey) => {
+    if (!draft || !phase) return undefined;
+    const other = otherSide(side);
+    const team = match.teams[side];
+    return (at: number): Mark | undefined => {
+      const member = team.state === "shown" ? team.members[at] : null;
+      const name = member ? (member.nickname ? `${member.nickname}, ${member.species}` : member.species) : "";
+      if (phase === "ban") {
+        if (banning && side === theirs) {
+          if (at === draft[mine!].barred) return { tone: "dim", tag: { text: t.barred(draft.number - 1), tone: "warn" } };
+          const on = banChoice === at;
+          return {
+            tone: on ? "chosen" : "plain",
+            tag: on ? { text: t.ban, tone: "red" } : undefined,
+            onClick: () => setChoice({ key, ban: on ? null : at, six: null }),
+            label: name,
+          };
+        }
+        if (mine && side === theirs && draft[mine].ban === at) return { tone: "chosen", tag: { text: t.yourBan, tone: "red" } };
+        return undefined;
+      }
+      if (draft[other].ban === at) return { tone: "banned", tag: { text: t.banned, tone: "red" } };
+      if (picking && side === mine) {
+        const on = sixChoice.includes(at);
+        const full = sixChoice.length >= CUP_BROUGHT;
+        return {
+          tone: on ? "picked" : "unpicked",
+          check: on,
+          disabled: !on && full,
+          onClick: () => setChoice({ key, ban: null, six: on ? sixChoice.filter((x) => x !== at) : [...sixChoice, at] }),
+          label: name,
+        };
+      }
+      const picks = draft[side].picks;
+      if (!picks) return undefined;
+      return picks.includes(at) ? { tone: "brought" } : { tone: "dim", tag: { text: t.notBrought, tone: "muted" } };
+    };
+  };
+
+  const acting: SideKey | null = banning ? theirs : picking ? mine : null;
+  const teamOrder = (side: SideKey) => (acting === side ? "order-2" : "order-4");
 
   return (
     <main className={cn(listPage, "gap-4 pt-4 pb-8 sm:gap-4.5 sm:pt-4.5 sm:pb-8")}>
@@ -213,13 +387,41 @@ export function LeagueMatchPage() {
         <Side side={match.b} you={match.b.id === me} end />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:gap-5">
-        <section aria-label={t.games} className="flex flex-col gap-3 lg:order-2">
-          <GameSlots match={match} decided={decided} editing={editing} onEdit={setEditing} nameOf={nameOf} />
-          <ResultPanel match={match} decided={decided} sum={sum} editing={editing} onCancel={() => setEditing(null)} onSaved={saved} nameOf={nameOf} />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:grid-rows-[auto_1fr] lg:gap-x-5 lg:gap-y-3">
+        <section aria-label={t.games} className="order-1 lg:col-start-2 lg:row-start-1">
+          <GameSlots match={match} decided={decided} phase={phase} editing={editing} onEdit={setEditing} nameOf={nameOf} />
         </section>
-        <TeamColumn number={match.number} name={match.a.name} team={match.teams.a} you={match.a.id === me} className="lg:order-1" />
-        <TeamColumn number={match.number} name={match.b.name} team={match.teams.b} you={match.b.id === me} className="lg:order-3" />
+        <ResultPanel
+          match={match}
+          decided={decided}
+          sum={sum}
+          phase={phase}
+          mine={mine}
+          banChoice={banChoice}
+          sixChoice={sixChoice}
+          editing={editing}
+          onCancel={() => setEditing(null)}
+          onSaved={saved}
+          onMoved={setMatch}
+          nameOf={nameOf}
+          className="order-3 lg:col-start-2 lg:row-start-2"
+        />
+        <TeamColumn
+          number={match.number}
+          name={match.a.name}
+          team={match.teams.a}
+          you={match.a.id === me}
+          mark={markOf("a")}
+          className={cn(teamOrder("a"), "lg:col-start-1 lg:row-span-2 lg:row-start-1")}
+        />
+        <TeamColumn
+          number={match.number}
+          name={match.b.name}
+          team={match.teams.b}
+          you={match.b.id === me}
+          mark={markOf("b")}
+          className={cn(teamOrder("b"), "lg:col-start-3 lg:row-span-2 lg:row-start-1")}
+        />
       </div>
     </main>
   );
@@ -248,7 +450,21 @@ function Side({ side, you, end = false }: { side: MatchPage["a"]; you: boolean; 
   );
 }
 
-function TeamColumn({ number, name, team, you, className }: { number: number; name: string; team: MatchTeam; you: boolean; className?: string }) {
+function TeamColumn({
+  number,
+  name,
+  team,
+  you,
+  mark,
+  className,
+}: {
+  number: number;
+  name: string;
+  team: MatchTeam;
+  you: boolean;
+  mark: ((at: number) => Mark | undefined) | undefined;
+  className?: string;
+}) {
   return (
     <section aria-label={t.team(name)} className={cn("flex flex-col gap-2", className)}>
       <h2 className="m-0 px-0.5 font-heading text-[1.625rem] leading-none font-normal lg:sr-only">{t.team(name)}</h2>
@@ -258,7 +474,7 @@ function TeamColumn({ number, name, team, you, className }: { number: number; na
             {team.members.map((member, at) => (
               <li key={at} className="flex min-w-0">
                 {member ? (
-                  <MemberTile member={member} />
+                  <MemberTile member={member} mark={mark?.(at)} />
                 ) : (
                   <span className="grid min-h-22 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-lg text-faint">{t.empty}</span>
                 )}
@@ -311,12 +527,36 @@ function TeamColumn({ number, name, team, you, className }: { number: number; na
   );
 }
 
-function MemberTile({ member }: { member: MatchMember }) {
+const TONES: Record<Tone, string> = {
+  plain: "bg-card",
+  chosen: "border-destructive bg-destructive/10",
+  banned: "border-round-dim bg-round/10 opacity-60",
+  picked: "border-green bg-card",
+  unpicked: "bg-card opacity-55",
+  brought: "border-mult-2 bg-card",
+  dim: "bg-card opacity-45",
+};
+
+const TAGS = { red: "bg-round text-white", muted: "bg-cell text-muted-foreground", warn: "bg-cell text-warning" };
+
+function MemberTile({ member, mark }: { member: MatchMember; mark?: Mark }) {
   const item = member.item ? dexName("items", member.item.id, member.item.name) : null;
-  return (
-    <span className="flex min-h-22 min-w-0 flex-1 items-center gap-2 rounded-[14px] border-3 bg-card py-1.5 pr-2.5 pl-1">
+  const tone = mark?.tone ?? "plain";
+  const body = (
+    <>
+      {mark?.check !== undefined && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "absolute top-1.5 left-1.5 z-1 grid size-6 place-items-center rounded-md border-3 text-ink",
+            mark.check ? "border-green bg-green" : "border-cell-hi bg-ink",
+          )}
+        >
+          {mark.check && <Check />}
+        </span>
+      )}
       {member.sprite ? (
-        <img src={member.sprite} alt="" className="size-14 flex-none [image-rendering:pixelated] sm:size-19" />
+        <img src={member.sprite} alt="" className={cn("size-14 flex-none [image-rendering:pixelated] sm:size-19", tone === "banned" && "grayscale")} />
       ) : (
         <span aria-hidden="true" className="size-14 flex-none sm:size-19" />
       )}
@@ -329,13 +569,32 @@ function MemberTile({ member }: { member: MatchMember }) {
           ))}
         </span>
       </span>
-    </span>
+      {mark?.tag && (
+        <span className={cn("absolute top-2 right-2 rounded-[5px] px-1.75 font-heading text-base leading-5.25", TAGS[mark.tag.tone])}>{mark.tag.text}</span>
+      )}
+    </>
+  );
+  const frame = cn("relative flex min-h-22 min-w-0 flex-1 items-center gap-2 rounded-[14px] border-3 py-1.5 pr-2.5 pl-1 text-left", TONES[tone]);
+  if (!mark?.onClick) return <span className={frame}>{body}</span>;
+  return (
+    <button
+      type="button"
+      aria-pressed={mark.tone === "chosen" || mark.tone === "picked"}
+      aria-label={mark.label}
+      disabled={mark.disabled}
+      onClick={mark.onClick}
+      className={cn(frame, "cursor-pointer font-[inherit] text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 enabled:hover:border-primary disabled:cursor-default")}
+    >
+      {body}
+    </button>
   );
 }
 
 type Slot = { key: string; title: string; sub: string; kind: "played" | "unrecorded" | "next" | "later"; game?: MatchPage["games"][number] };
 
-function slotsOf(match: MatchPage, decided: boolean, nameOf: (id: string) => string): Slot[] {
+const NOW_SUB: Record<"ban" | "pick" | "play", string> = { ban: t.bansSub, pick: t.pickingSub, play: t.playingSub };
+
+function slotsOf(match: MatchPage, decided: boolean, phase: Phase | null, nameOf: (id: string) => string): Slot[] {
   const slots: Slot[] = match.games.map((game) => ({
     key: `g${game.number}`,
     title: t.game(numbered(match, game.number)),
@@ -352,7 +611,7 @@ function slotsOf(match: MatchPage, decided: boolean, nameOf: (id: string) => str
   for (let n = slots.length + 1; n <= MATCH_GAMES; n++) {
     slots.push(
       n === match.next
-        ? { key: `n${n}`, title: t.game(n), sub: t.toPlay, kind: "next" }
+        ? { key: `n${n}`, title: t.game(n), sub: phase && phase !== "done" ? NOW_SUB[phase] : t.toPlay, kind: "next" }
         : { key: `n${n}`, title: t.game(n), sub: decided ? t.notNeeded : t.ifNeeded, kind: "later" },
     );
   }
@@ -362,19 +621,21 @@ function slotsOf(match: MatchPage, decided: boolean, nameOf: (id: string) => str
 function GameSlots({
   match,
   decided,
+  phase,
   editing,
   onEdit,
   nameOf,
 }: {
   match: MatchPage;
   decided: boolean;
+  phase: Phase | null;
   editing: number | null;
   onEdit: (n: number) => void;
   nameOf: (id: string) => string;
 }) {
   return (
     <ol className="m-0 grid list-none grid-cols-3 gap-2 p-0">
-      {slotsOf(match, decided, nameOf).map((slot) => {
+      {slotsOf(match, decided, phase, nameOf).map((slot) => {
         const open = slot.game !== undefined && slot.game.number === editing;
         return (
           <li
@@ -425,61 +686,131 @@ function GameSlots({
   );
 }
 
+type Row = { id: string; name: string; state: string; ink: string; line: string; icon: "check" | "wait" | null; sprite: string | null };
+
+function draftRows(match: MatchPage, draft: GameDraft, phase: "ban" | "pick" | "play"): Row[] {
+  return (["a", "b"] as const).map((key) => {
+    const side = match[key];
+    const own = draft[key];
+    const base = { id: side.id, name: side.name, sprite: null, line: "border-border" };
+    if (phase === "ban") {
+      return own.banned
+        ? { ...base, state: t.banned, ink: "text-green", line: "border-mult-2", icon: "check" }
+        : { ...base, state: t.choosing, ink: "text-warning", icon: "wait" };
+    }
+    if (phase === "pick" && !own.picked) {
+      return draft.bans
+        ? { ...base, state: t.banned, ink: "text-coral", icon: null, sprite: memberSprite(match.teams[otherSide(key)], own.ban) }
+        : { ...base, state: t.choosing, ink: "text-warning", icon: "wait" };
+    }
+    return { ...base, state: t.sixIn, ink: "text-green", icon: "check" };
+  });
+}
+
 function ResultPanel({
   match,
   decided,
   sum,
+  phase,
+  mine,
+  banChoice,
+  sixChoice,
   editing,
   onCancel,
   onSaved,
+  onMoved,
   nameOf,
+  className,
 }: {
   match: MatchPage;
   decided: boolean;
   sum: ReturnType<typeof tally>;
+  phase: Phase | null;
+  mine: SideKey | null;
+  banChoice: number | null;
+  sixChoice: number[];
   editing: number | null;
   onCancel: () => void;
   onSaved: (next: MatchPage) => void;
+  onMoved: (next: MatchPage) => void;
   nameOf: (id: string) => string;
+  className?: string;
 }) {
+  const draft = match.draft;
+  const drafting = draft && (phase === "ban" || phase === "pick" || phase === "play") ? phase : null;
   const editGame = editing === null ? undefined : match.games.find((g) => g.number === editing);
-  const formFor = editGame?.number ?? (match.admin ? match.next : null);
+  const formFor = editGame?.number ?? (match.admin && drafting !== "ban" && drafting !== "pick" ? match.next : null);
   const winner = decided ? (match.gamesA! > match.gamesB! ? match.a : match.b) : null;
-  const sides = [
-    { side: match.a, games: decided ? match.gamesA! : sum.gamesA, fainted: decided ? (match.faintedA ?? sum.faintedA) : sum.faintedA },
-    { side: match.b, games: decided ? match.gamesB! : sum.gamesB, fainted: decided ? (match.faintedB ?? sum.faintedB) : sum.faintedB },
-  ];
+  const rows: Row[] =
+    drafting && draft && !editGame
+      ? draftRows(match, draft, drafting)
+      : [
+          { side: match.a, games: decided ? match.gamesA! : sum.gamesA, fainted: decided ? (match.faintedA ?? sum.faintedA) : sum.faintedA },
+          { side: match.b, games: decided ? match.gamesB! : sum.gamesB, fainted: decided ? (match.faintedB ?? sum.faintedB) : sum.faintedB },
+        ].map(({ side, games, fainted }) => {
+          const won = winner?.id === side.id;
+          return {
+            id: side.id,
+            name: side.name,
+            state: t.sideState(games, fainted),
+            ink: won ? "text-yellow" : "text-muted-foreground",
+            line: won ? "border-trophy-rim" : "border-border",
+            icon: won ? "check" : null,
+            sprite: null,
+          };
+        });
+  const title =
+    drafting && draft && !editGame
+      ? drafting === "ban"
+        ? t.bansTitle(draft.number)
+        : drafting === "pick"
+          ? mine && !draft[mine].picked
+            ? t.yourSix(draft.number)
+            : t.pickingSix(draft.number)
+          : t.playTitle(draft.number)
+      : decided || match.next === null
+        ? t.result
+        : t.game(match.next);
+  const other = mine ? match[otherSide(mine)] : null;
   return (
     <section
       aria-labelledby="result-title"
       className={cn(
-        "flex flex-1 flex-col gap-3.5 rounded-[18px] border-3 bg-card p-4 sm:gap-4 sm:px-5.5 sm:pt-5 sm:pb-5.5",
-        editGame ? "border-primary" : decided ? "border-trophy-rim" : "border-border",
+        "flex flex-col gap-3.5 rounded-[18px] border-3 bg-card p-4 sm:gap-4 sm:px-5.5 sm:pt-5 sm:pb-5.5",
+        editGame || (drafting === "play" && match.admin) ? "border-primary" : decided ? "border-trophy-rim" : "border-border",
+        className,
       )}
     >
       <h2 id="result-title" className="m-0 font-heading text-[1.75rem] leading-none font-normal sm:text-[2.125rem]">
-        {decided || match.next === null ? t.result : t.game(match.next)}
+        {title}
       </h2>
       <div className="flex flex-col gap-2">
-        {sides.map(({ side, games, fainted }) => {
-          const won = winner?.id === side.id;
-          return (
-            <div key={side.id} className={cn("flex min-h-13 items-center gap-3 rounded-xl border-3 bg-box px-3 sm:min-h-14 sm:px-3.5", won ? "border-trophy-rim" : "border-border")}>
-              <PlayerBadge name={side.name} colour={playerColour(side.name)} size="xs" />
-              <span className="font-heading text-2xl">{side.name}</span>
-              <span className="flex-1" />
-              <span className={cn("flex items-center gap-2 font-heading text-[1.375rem]", won ? "text-yellow" : "text-muted-foreground")}>
-                {won && <Check />}
-                {t.sideState(games, fainted)}
-              </span>
-            </div>
-          );
-        })}
+        {rows.map((row) => (
+          <div key={row.id} className={cn("flex min-h-13 items-center gap-3 rounded-xl border-3 bg-box px-3 sm:min-h-14 sm:px-3.5", row.line)}>
+            <PlayerBadge name={row.name} colour={playerColour(row.name)} size="xs" />
+            <span className="font-heading text-2xl">{row.name}</span>
+            <span className="flex-1" />
+            {row.sprite && <img src={row.sprite} alt="" className="-my-1.5 size-11 [image-rendering:pixelated]" />}
+            <span className={cn("flex items-center gap-2 font-heading text-[1.375rem]", row.ink)}>
+              {row.icon === "check" && <Check />}
+              {row.icon === "wait" && <PixelIcon name="wait" className="size-4 motion-safe:animate-wait-blink" />}
+              {row.state}
+            </span>
+          </div>
+        ))}
       </div>
+      {drafting === "ban" && draft && mine && other && !editGame && (
+        <BanBox key={draft.number} match={match} draft={draft} mine={mine} choice={banChoice} other={other.name} onMoved={onMoved} />
+      )}
+      {drafting === "pick" && draft && mine && other && !editGame && (
+        <PickBox key={draft.number} match={match} draft={draft} mine={mine} six={sixChoice} other={other.name} onMoved={onMoved} />
+      )}
+      {drafting === "play" && draft && !editGame && <PlayBox draft={draft} team={mine ? match.teams[mine] : null} picks={mine ? draft[mine].picks : null} />}
       {formFor !== null && formFor !== undefined ? (
         <GameForm key={`${formFor}-${editGame ? "edit" : "new"}`} match={match} number={formFor} game={editGame} onCancel={editGame ? onCancel : undefined} onSaved={onSaved} nameOf={nameOf} />
       ) : (
-        winner && (
+        winner &&
+        !drafting && (
           <div className="mt-auto flex items-center gap-4 rounded-[14px] border-3 border-trophy-rim bg-trophy px-4.5 py-4">
             <svg viewBox="0 0 24 24" aria-hidden="true" className="size-10 flex-none fill-yellow">
               <path d="M7 3h10v5a5 5 0 0 1-10 0z" />
@@ -487,14 +818,183 @@ function ResultPanel({
             </svg>
             <span className="flex flex-col leading-[1.1]">
               <span className="font-heading text-3xl text-yellow">{t.wins(winner.name, Math.max(match.gamesA!, match.gamesB!), Math.min(match.gamesA!, match.gamesB!))}</span>
-              <span className="font-heading text-xl text-subtle">
-                {afterWin(match)}
-              </span>
+              <span className="font-heading text-xl text-subtle">{afterWin(match)}</span>
             </span>
           </div>
         )
       )}
     </section>
+  );
+}
+
+function draftPath(match: MatchPage, number: number, step: "ban" | "pick"): string {
+  return `/series/${match.number}/league/matches/${encodeURIComponent(match.id)}/games/${number}/${step}`;
+}
+
+function useMove(onMoved: (next: MatchPage) => void) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const send = async (path: string, body: unknown) => {
+    setBusy(true);
+    setError(null);
+    try {
+      onMoved(await api(path, matchPage, { method: "POST", body }));
+    } catch (caught) {
+      setError(message(caught));
+    }
+    setBusy(false);
+  };
+  return { busy, error, send };
+}
+
+function MoveError({ error }: { error: string | null }) {
+  return error ? (
+    <p role="alert" className="m-0 text-sm font-bold text-destructive">
+      {error}
+    </p>
+  ) : null;
+}
+
+function BanBox({
+  match,
+  draft,
+  mine,
+  choice,
+  other,
+  onMoved,
+}: {
+  match: MatchPage;
+  draft: GameDraft;
+  mine: SideKey;
+  choice: number | null;
+  other: string;
+  onMoved: (next: MatchPage) => void;
+}) {
+  const move = useMove(onMoved);
+  const done = draft[mine].banned;
+  const shown = done ? draft[mine].ban : choice;
+  const team = match.teams[otherSide(mine)];
+  const name = memberName(team, shown);
+  const sprite = memberSprite(team, shown);
+  const ready = !done && choice !== null && !move.busy;
+  return (
+    <div className="mt-auto flex flex-col gap-3">
+      <div className={cn("flex min-h-23 items-center gap-3.5 rounded-[14px] border-3 border-dashed bg-box px-4 py-2", name ? "border-destructive" : "border-cell-hi")}>
+        {sprite && <img src={sprite} alt="" className="size-18 [image-rendering:pixelated]" />}
+        <span className="flex flex-col leading-[1.1]">
+          <span className="font-heading text-xl text-muted-foreground">{t.yourBan}</span>
+          <span className={cn("font-heading text-3xl", name ? "text-coral" : "text-faint")}>{name ?? "—"}</span>
+        </span>
+      </div>
+      <MoveError error={move.error} />
+      <Button
+        type="button"
+        variant="go"
+        disabled={!ready}
+        onClick={() => void move.send(draftPath(match, draft.number, "ban"), { player: match[mine].id, slot: choice })}
+        className="min-h-14 text-[1.75rem]"
+      >
+        {done ? t.waitingOn(other) : name ? t.banName(name) : t.ban}
+      </Button>
+    </div>
+  );
+}
+
+function PickBox({
+  match,
+  draft,
+  mine,
+  six,
+  other,
+  onMoved,
+}: {
+  match: MatchPage;
+  draft: GameDraft;
+  mine: SideKey;
+  six: number[];
+  other: string;
+  onMoved: (next: MatchPage) => void;
+}) {
+  const move = useMove(onMoved);
+  const done = draft[mine].picked;
+  const count = done ? (draft[mine].picks?.length ?? CUP_BROUGHT) : six.length;
+  const ready = !done && six.length === CUP_BROUGHT && !move.busy;
+  return (
+    <div className="mt-auto flex flex-col gap-3">
+      <span role="status" className={cn("font-heading text-[1.625rem]", count === CUP_BROUGHT ? "text-green" : "text-warning")}>
+        {t.picked(count, CUP_BROUGHT)}
+      </span>
+      <MoveError error={move.error} />
+      <Button
+        type="button"
+        variant="go"
+        disabled={!ready}
+        onClick={() => void move.send(draftPath(match, draft.number, "pick"), { player: match[mine].id, slots: six })}
+        className="min-h-14 text-[1.75rem]"
+      >
+        {done ? t.waitingOn(other) : t.confirmSix}
+      </Button>
+    </div>
+  );
+}
+
+function PlayBox({ draft, team, picks }: { draft: GameDraft; team: MatchTeam | null; picks: number[] | null }) {
+  return (
+    <div className="mt-auto flex flex-col gap-3">
+      <div className="flex flex-col gap-1 rounded-xl border-3 bg-box px-4 py-3">
+        <span className="font-heading text-xl text-muted-foreground">{t.onShowdown}</span>
+        <span className="font-heading text-2xl">{SHOWDOWN_FORMAT}</span>
+        <span className="text-sm font-bold text-subtle">{t.clauses(SHOWDOWN_CLAUSES)}</span>
+      </div>
+      {team?.state === "shown" && picks && <CopySix key={`${draft.number}:${team.id}`} teamId={team.id} picks={picks} />}
+    </div>
+  );
+}
+
+function CopySix({ teamId, picks }: { teamId: string; picks: number[] }) {
+  const [text, setText] = useState<string | null>(null);
+  const six = picks.join(",");
+  const [copied, setCopied] = useState<"copied" | "failed" | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    api(`/teams/${encodeURIComponent(teamId)}`, teamPage).then(
+      (page) => {
+        const stocks = new Map(page.sources.map((source) => [source.id, stockOf(source)]));
+        const at = six.split(",").map(Number);
+        if (live) setText(showdownTeam(analysedSlots(liveSlots(page.slots, stocks), at), stocks));
+      },
+      () => live && setCopied("failed"),
+    );
+    return () => {
+      live = false;
+    };
+  }, [teamId, six]);
+
+  useEffect(() => {
+    if (copied !== "copied") return;
+    const timer = setTimeout(() => setCopied(null), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  return (
+    <Button
+      type="button"
+      disabled={!text}
+      onClick={() =>
+        text &&
+        navigator.clipboard.writeText(text).then(
+          () => setCopied("copied"),
+          () => setCopied("failed"),
+        )
+      }
+      className="min-h-14 text-[1.625rem]"
+    >
+      <svg viewBox="0 0 10 10" shapeRendering="crispEdges" aria-hidden="true" className="size-4 fill-primary">
+        <path d="M3 0h7v7H8V2H3zM0 3h7v7H0z" />
+      </svg>
+      {copied === "copied" ? t.copied : copied === "failed" ? t.copyFailed : t.copySix}
+    </Button>
   );
 }
 

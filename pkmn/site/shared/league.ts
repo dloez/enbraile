@@ -17,6 +17,12 @@ export const FAINTED_PER_GAME = 6;
 
 export const CUP_TEAM_SIZE = 8;
 
+export const CUP_BROUGHT = 6;
+
+export const SHOWDOWN_FORMAT = "[Gen 9] Custom Game";
+
+export const SHOWDOWN_CLAUSES = ["Species", "Sleep", "OHKO", "Evasion Moves"] as const;
+
 export const EGGS_PER_WIN = 1;
 
 export const EGGS_PER_COMBAT = 1;
@@ -182,6 +188,28 @@ export const matchTeam = z.discriminatedUnion("state", [
   z.object({ state: z.literal("shown"), id: z.string(), name: z.string(), locked: z.boolean(), members: z.array(matchMember.nullable()) }),
 ]);
 
+const cupSlotAt = z.int().min(0).max(CUP_TEAM_SIZE - 1);
+
+export const gameSide = z.object({
+  banned: z.boolean(),
+  ban: cupSlotAt.nullable(),
+  barred: cupSlotAt.nullable(),
+  picked: z.boolean(),
+  picks: z.array(cupSlotAt).nullable(),
+});
+
+export const gameDraft = z.object({
+  number: z.int(),
+  bans: z.boolean(),
+  open: z.boolean(),
+  a: gameSide,
+  b: gameSide,
+});
+
+export const banInput = z.object({ player: z.string().min(1), slot: cupSlotAt });
+
+export const pickInput = z.object({ player: z.string().min(1), slots: z.array(cupSlotAt).length(CUP_BROUGHT) });
+
 export const matchPage = z.object({
   id: z.string(),
   number: z.int(),
@@ -198,6 +226,7 @@ export const matchPage = z.object({
   games: z.array(leagueGame),
   unrecorded: z.object({ a: z.int(), b: z.int() }),
   next: z.int().nullable(),
+  draft: gameDraft.nullable(),
   admin: z.boolean(),
 });
 
@@ -229,6 +258,10 @@ export type MatchPage = z.infer<typeof matchPage>;
 export type MatchTeam = z.infer<typeof matchTeam>;
 export type TeamReveal = z.infer<typeof teamReveal>;
 export type MatchMember = z.infer<typeof matchMember>;
+export type GameSide = z.infer<typeof gameSide>;
+export type GameDraft = z.infer<typeof gameDraft>;
+export type BanInput = z.infer<typeof banInput>;
+export type PickInput = z.infer<typeof pickInput>;
 export type TryMember = z.infer<typeof tryMember>;
 export type LeagueTry = z.infer<typeof leagueTry>;
 export type HatchedEggs = z.infer<typeof hatchedEggs>;
@@ -292,6 +325,19 @@ export function nextGame(match: Pick<Result, "a" | "b" | "gamesA" | "gamesB">, g
   if (match.gamesA !== null && match.gamesB !== null) return null;
   const won = wins(match, games);
   return decided(won.gamesA, won.gamesB) ? null : games.length + 1;
+}
+
+export function cupBans(mode: LeagueMode): boolean {
+  return mode === "open";
+}
+
+export function barredBan(player: string, number: number, games: readonly Pick<LeagueGame, "number" | "winner">[], banOf: (number: number) => number | null): number | null {
+  const before = games.find((g) => g.number === number - 1);
+  return before && before.winner === player ? banOf(before.number) : null;
+}
+
+export function pickProblem(size: number, slots: readonly number[], banned: number | null): boolean {
+  return slots.length !== CUP_BROUGHT || new Set(slots).size !== slots.length || slots.some((at) => at < 0 || at >= size || at === banned);
 }
 
 export function lastCombat(combatsWon: number): number {
