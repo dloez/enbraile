@@ -19,6 +19,7 @@ import {
   leaguePage,
   type PairsInput,
   played,
+  type RoundTeamState,
   type Standing,
   winnerOf,
 } from "../../shared/league";
@@ -68,6 +69,9 @@ const t = messages({
     roundLabel: (a: string, b: string, n: number, score: string | null) => `${a} vs ${b}, round ${n}, ${score ?? "to play"}`,
     headToHead: "Head to head",
     noRounds: "No round has been opened yet",
+    roundTeams: "Round teams",
+    teamStates: { locked: "Locked", building: "Building", save: "Needs the save" } satisfies Record<RoundTeamState, string>,
+    teamsLabel: (a: string, stateA: string, b: string, stateB: string) => `${a}: ${stateA}, ${b}: ${stateB}`,
   },
   es: {
     failed: "Algo ha fallado",
@@ -113,6 +117,9 @@ const t = messages({
     roundLabel: (a: string, b: string, n: number, score: string | null) => `${a} contra ${b}, ronda ${n}, ${score ?? "por jugar"}`,
     headToHead: "Cara a cara",
     noRounds: "Aún no se ha abierto ninguna ronda",
+    roundTeams: "Equipos de ronda",
+    teamStates: { locked: "Bloqueado", building: "Montando", save: "Falta la captura" } satisfies Record<RoundTeamState, string>,
+    teamsLabel: (a: string, stateA: string, b: string, stateB: string) => `${a}: ${stateA}, ${b}: ${stateB}`,
   },
 });
 
@@ -492,6 +499,7 @@ function Rounds({ league, me, nameOf, onChange }: Named & { onChange: (league: L
           ))}
         </div>
       )}
+      {league.rounds.at(-1)?.matches.some((m) => !played(m)) && !draft && <TeamStatesKey />}
       {league.rounds.length > 0 && <HeadToHead league={league} me={me} nameOf={nameOf} />}
     </>
   );
@@ -514,7 +522,7 @@ function RoundCard({ number, round, current, me, nameOf }: { number: number; rou
         <span className={cn("font-heading text-[1.1875rem] sm:text-xl", left ? "text-warning" : "text-green")}>{left ? t.toPlay(left) : t.allPlayed}</span>
       </div>
       {round.matches.map((match) => (
-        <MatchBox key={match.id} number={number} match={match} mine={match.a === me || match.b === me} nameOf={nameOf} />
+        <MatchBox key={match.id} number={number} match={match} mine={match.a === me || match.b === me} states={current && !played(match)} nameOf={nameOf} />
       ))}
       {round.bye && <span className="px-0.5 font-heading text-lg text-muted-foreground">{t.bye(nameOf(round.bye))}</span>}
     </section>
@@ -525,22 +533,42 @@ const MATCH = "/series/$number/league/matches/$id";
 
 const matchRow = "outline-none hover:border-primary hover:bg-row-hi focus-visible:ring-3 focus-visible:ring-ring/50";
 
-function MatchBox({ number, match, mine, nameOf }: { number: number; match: LeagueMatch; mine: boolean; nameOf: (id: string) => string }) {
+const TEAM_TONE: Record<RoundTeamState, string> = { locked: "text-green", building: "text-warning", save: "text-faint" };
+
+function TeamStatesKey() {
+  return (
+    <p className="m-0 flex flex-wrap items-center gap-x-5.5 gap-y-1 rounded-[14px] border-3 bg-box px-5 py-3.5 font-heading text-xl text-subtle">
+      <span className="text-muted-foreground">{t.roundTeams}</span>
+      {(Object.keys(TEAM_TONE) as RoundTeamState[]).map((state) => (
+        <span key={state} className={TEAM_TONE[state]}>
+          {t.teamStates[state]}
+        </span>
+      ))}
+    </p>
+  );
+}
+
+function TeamState({ state, className }: { state: RoundTeamState; className?: string }) {
+  return <span className={cn("font-heading text-[1.0625rem] whitespace-nowrap", TEAM_TONE[state], className)}>{t.teamStates[state]}</span>;
+}
+
+function MatchBox({ number, match, mine, states, nameOf }: { number: number; match: LeagueMatch; mine: boolean; states: boolean; nameOf: (id: string) => string }) {
   const done = played(match);
   const winner = winnerOf(match);
   const sides = [
-    { id: match.a, games: match.gamesA },
-    { id: match.b, games: match.gamesB },
+    { id: match.a, games: match.gamesA, team: match.teamA },
+    { id: match.b, games: match.gamesB, team: match.teamB },
   ];
+  const label = t.matchLabel(nameOf(match.a), nameOf(match.b), score(match));
   const border = cn("rounded-xl border-3 bg-box group-hover:border-primary group-hover:bg-row-hi", done ? "border-solid" : "border-dashed", mine ? "border-trophy-rim" : "border-border");
   return (
     <Link
       to={MATCH}
       params={{ number: String(number), id: match.id }}
-      aria-label={t.matchLabel(nameOf(match.a), nameOf(match.b), score(match))}
+      aria-label={states ? `${label}; ${t.teamsLabel(nameOf(match.a), t.teamStates[match.teamA], nameOf(match.b), t.teamStates[match.teamB])}` : label}
       className="group rounded-xl text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      <div aria-hidden="true" className={cn(border, "grid min-h-12 grid-cols-[minmax(0,1fr)_54px_minmax(0,1fr)] items-center gap-1.5 px-2.5 sm:hidden")}>
+      <div aria-hidden="true" className={cn(border, "grid min-h-12 grid-cols-[minmax(0,1fr)_54px_minmax(0,1fr)] items-center gap-1.5 px-2.5 sm:hidden", states && "py-1.5")}>
         {sides.map((side, index) => {
           const name = nameOf(side.id);
           return (
@@ -549,7 +577,10 @@ function MatchBox({ number, match, mine, nameOf }: { number: number; match: Leag
               className={cn("flex min-w-0 items-center gap-2", index === 1 && "order-last flex-row-reverse", winner && winner !== side.id && "opacity-55")}
             >
               <PlayerBadge name={name} colour={playerColour(name)} size="cell" />
-              <span className={cn("truncate font-heading text-[1.375rem]", winner === side.id ? "text-yellow" : "text-foreground")}>{name}</span>
+              <span className={cn("flex min-w-0 flex-col", index === 1 && "items-end")}>
+                <span className={cn("truncate font-heading text-[1.375rem]", winner === side.id ? "text-yellow" : "text-foreground")}>{name}</span>
+                {states && <TeamState state={side.team} className="-mt-1 leading-none" />}
+              </span>
             </span>
           );
         })}
@@ -565,7 +596,11 @@ function MatchBox({ number, match, mine, nameOf }: { number: number; match: Leag
             >
               <PlayerBadge name={name} colour={playerColour(name)} size="cell" />
               <span className={cn("min-w-0 flex-1 truncate font-heading text-[1.4375rem]", winner === side.id ? "text-yellow" : "text-foreground")}>{name}</span>
-              <span className={cn("font-heading text-[1.625rem]", winner === side.id ? "text-yellow" : "text-foreground")}>{side.games ?? ""}</span>
+              {states ? (
+                <TeamState state={side.team} />
+              ) : (
+                <span className={cn("font-heading text-[1.625rem]", winner === side.id ? "text-yellow" : "text-foreground")}>{side.games ?? ""}</span>
+              )}
             </span>
           );
         })}

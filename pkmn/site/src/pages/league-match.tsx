@@ -50,7 +50,7 @@ const t = messages({
     you: "You",
     team: (name: string) => `${name}'s team`,
     noTeam: "No team on the site yet",
-    uploadFor: (milestone: string) => `Upload your ${milestone} snapshot to get your cup team`,
+    uploadFor: (milestone: string, round: boolean) => `Upload your ${milestone} snapshot to get your ${round ? "round" : "cup"} team`,
     toSeries: "Upload it on the series page",
     waitingFor: (name: string, milestone: string) => `Waiting for ${name}'s ${milestone} snapshot`,
     hiddenLocked: (name: string) => `${name} has locked their team`,
@@ -124,7 +124,7 @@ const t = messages({
     you: "Tú",
     team: (name: string) => `Equipo de ${name}`,
     noTeam: "Aún no hay equipo en la web",
-    uploadFor: (milestone: string) => `Sube tu captura de ${milestone} para tener tu equipo de copa`,
+    uploadFor: (milestone: string, round: boolean) => `Sube tu captura de ${milestone} para tener tu equipo de ${round ? "ronda" : "copa"}`,
     toSeries: "Súbela en la página de la serie",
     waitingFor: (name: string, milestone: string) => `Esperando la captura de ${milestone} de ${name}`,
     hiddenLocked: (name: string) => `${name} ha bloqueado su equipo`,
@@ -408,6 +408,7 @@ export function LeagueMatchPage() {
         />
         <TeamColumn
           number={match.number}
+          round={match.round !== null}
           name={match.a.name}
           team={match.teams.a}
           you={match.a.id === me}
@@ -416,6 +417,7 @@ export function LeagueMatchPage() {
         />
         <TeamColumn
           number={match.number}
+          round={match.round !== null}
           name={match.b.name}
           team={match.teams.b}
           you={match.b.id === me}
@@ -452,6 +454,7 @@ function Side({ side, you, end = false }: { side: MatchPage["a"]; you: boolean; 
 
 function TeamColumn({
   number,
+  round,
   name,
   team,
   you,
@@ -459,6 +462,7 @@ function TeamColumn({
   className,
 }: {
   number: number;
+  round: boolean;
   name: string;
   team: MatchTeam;
   you: boolean;
@@ -504,7 +508,7 @@ function TeamColumn({
           {team.state === "none" && <p className="m-0">{t.noTeam}</p>}
           {team.state === "waiting" && you && (
             <>
-              <p className="m-0 text-subtle">{t.uploadFor(team.milestone)}</p>
+              <p className="m-0 text-subtle">{t.uploadFor(team.milestone, round)}</p>
               <Link
                 to="/series/$number"
                 params={{ number: String(number) }}

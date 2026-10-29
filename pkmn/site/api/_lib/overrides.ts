@@ -6,6 +6,7 @@ import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
 import { giveCupTeams } from "./cup.js";
+import { giveRoundTeams } from "./rounds.js";
 import { dropIfUnused, saveFor } from "./ingest.js";
 import { milestone, save, snapshot } from "./schema.js";
 import { findShown, plays, viewer } from "./series-data.js";
@@ -160,7 +161,10 @@ overrides.post("/:number/trainers/:player/snapshots/:milestone/move", requireAdm
     if (taken(error)) return c.json({ error: occupied }, 409);
     throw error;
   }
-  await db.transaction((tx) => giveCupTeams(tx, found.seriesId));
+  await db.transaction(async (tx) => {
+    await giveRoundTeams(tx, found.seriesId);
+    await giveCupTeams(tx, found.seriesId);
+  });
   return c.json({});
 });
 

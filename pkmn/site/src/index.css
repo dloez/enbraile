@@ -65,6 +65,9 @@
     --color-round: var(--round);
     --color-round-ink: var(--round-ink);
     --color-round-dim: var(--round-dim);
+    --color-round-team: var(--round-team);
+    --color-round-team-rim: var(--round-team-rim);
+    --color-round-team-fill: var(--round-team-fill);
     --color-try: var(--try);
     --color-try-rim: var(--try-rim);
     --color-try-fill: var(--try-fill);
@@ -223,6 +226,9 @@
     --round: #c12d24;
     --round-ink: #ffb0a8;
     --round-dim: #7a3a36;
+    --round-team: var(--cyan);
+    --round-team-rim: #2b6a80;
+    --round-team-fill: #132a35;
     --try: #c39bff;
     --try-rim: #5b4785;
     --try-fill: #211a33;

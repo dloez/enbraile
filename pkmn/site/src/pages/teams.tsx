@@ -24,10 +24,12 @@ import {
   teamKind,
   teamList,
   teamMade,
+  teamWaits,
   type TeamKind,
   type TeamLeague,
   type TeamRow,
   type TeamState,
+  type TeamWait,
 } from "../../shared/team";
 import { locale, messages } from "../../shared/i18n";
 
@@ -74,6 +76,9 @@ const t = messages({
     states: { todo: "To build", locked: "Locked", edit: "Editable" } satisfies Record<TeamState, string>,
     leagueTry: (n: number) => `League try ${n}`,
     cupMatch: (stage: string, opponent: string) => `Cup · ${stage} v ${opponent}`,
+    roundMatch: (round: number, opponent: string) => `Round ${round} v ${opponent}`,
+    waiting: (milestone: string) => `Reach ${milestone} and upload its snapshot to get your team`,
+    toSeries: "Upload it on the series page",
     private: "Private",
     privateTitle: "Only you and admins see it",
     shown: (n: number) => (n === 1 ? "1 team" : `${n} teams`),
@@ -122,6 +127,9 @@ const t = messages({
     states: { todo: "Por montar", locked: "Bloqueado", edit: "Editable" } satisfies Record<TeamState, string>,
     leagueTry: (n: number) => `Intento de liga ${n}`,
     cupMatch: (stage: string, opponent: string) => `Copa · ${stage} contra ${opponent}`,
+    roundMatch: (round: number, opponent: string) => `Ronda ${round} contra ${opponent}`,
+    waiting: (milestone: string) => `Llega a ${milestone} y sube su captura para tener tu equipo`,
+    toSeries: "Súbela en la página de la serie",
     private: "Privado",
     privateTitle: "Solo tú y los administradores lo veis",
     shown: (n: number) => (n === 1 ? "1 equipo" : `${n} equipos`),
@@ -175,6 +183,10 @@ function kept(team: TeamRow, search: Search): boolean {
   );
 }
 
+function waitShown(wait: TeamWait, search: Search): boolean {
+  return (search.series === undefined || search.series === wait.series) && (search.kind === undefined || search.kind === "round") && (search.state === undefined || search.state === "todo");
+}
+
 export function TeamsPage() {
   const { data } = authClient.useSession();
   const me = data?.user;
@@ -191,7 +203,21 @@ export function TeamsPage() {
   const [comparing, setComparing] = useState<string[] | null>(null);
   const [compareOpened, setCompareOpened] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [waits, setWaits] = useState<TeamWait[]>([]);
   const listed = list !== null && list.length > 0;
+  const playing = me !== undefined && !me.admin;
+
+  useEffect(() => {
+    if (!playing) return;
+    let live = true;
+    api("/teams/waiting", teamWaits).then(
+      (next) => live && setWaits(next),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [playing]);
 
   useEffect(() => {
     if (listed) teamPage.load();
@@ -406,7 +432,17 @@ export function TeamsPage() {
       {!list && !error && <TwoBlocks className="h-32 rounded-2xl" />}
       {list && (
         <div className="flex flex-col gap-3.5">
-          {player && (!filter || filter === player.id) && <Group id="teams-yours" title={t.yours} rows={yours} pick={pick} empty={filtered ? t.noMatch : t.empty} mine />}
+          {player && (!filter || filter === player.id) && (
+            <Group
+              id="teams-yours"
+              title={t.yours}
+              rows={yours}
+              pick={pick}
+              empty={filtered ? t.noMatch : t.empty}
+              lead={waits.filter((wait) => waitShown(wait, search)).map((wait) => <Waiting key={wait.match} wait={wait} />)}
+              mine
+            />
+          )}
           {(!filter || filter !== player?.id) && (
             <Group id="teams-others" title={player ? t.others : t.every} rows={others} pick={pick} empty={filtered ? t.noMatch : t.empty} showOwner />
           )}
@@ -483,6 +519,7 @@ function Group({
   empty,
   showOwner = false,
   mine = false,
+  lead = [],
 }: {
   id: string;
   title: string;
@@ -491,13 +528,15 @@ function Group({
   empty: string;
   showOwner?: boolean;
   mine?: boolean;
+  lead?: ReactNode[];
 }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2">
       <h2 id={id} className="m-0 px-1 font-heading text-[1.75rem] leading-none font-normal text-subtle">
         {title}
       </h2>
-      {rows.length === 0 ? (
+      {lead}
+      {rows.length === 0 && lead.length > 0 ? null : rows.length === 0 ? (
         <p className="m-0 flex min-h-23 items-center rounded-[14px] border-3 border-dashed px-6 font-heading text-[1.75rem] text-muted-foreground">{empty}</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -610,6 +649,22 @@ function RowBody({ team, showOwner, mine, filled }: { team: TeamRow; showOwner: 
   );
 }
 
+function Waiting({ wait }: { wait: TeamWait }) {
+  return (
+    <p className="m-0 flex min-h-16 flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[14px] border-3 border-dashed bg-box px-4 py-3 font-heading text-xl text-subtle sm:px-6">
+      <KindChip league={{ kind: "round", series: wait.series, match: wait.match, round: wait.round, milestone: wait.milestone, opponent: wait.opponent }} />
+      <span>{t.waiting(wait.milestone)}</span>
+      <Link
+        to="/series/$number"
+        params={{ number: String(wait.series) }}
+        className="text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        {t.toSeries}
+      </Link>
+    </p>
+  );
+}
+
 function Chip({ className, title, children }: { className: string; title?: string; children: ReactNode }) {
   return (
     <span title={title} className={cn("flex h-5 flex-none items-center gap-1.25 rounded-[5px] px-2 font-heading text-base leading-none sm:h-5.5 sm:text-[1.0625rem]", className)}>
@@ -618,14 +673,21 @@ function Chip({ className, title, children }: { className: string; title?: strin
   );
 }
 
-const KIND_CHIP: { [K in TeamLeague["kind"]]: { className: string; icon: PixelIconName; label: (league: Extract<TeamLeague, { kind: K }>) => string } } = {
-  try: { className: "border-2 border-try-rim bg-try-fill text-try", icon: "league", label: (league) => t.leagueTry(league.number) },
-  cup: { className: "border-2 border-cup-rim bg-cup-fill text-cup", icon: "cup", label: (league) => t.cupMatch(cupStage(league), league.opponent) },
+const KIND_CHIP: { [K in TeamLeague["kind"]]: { className: string; icon: PixelIconName } } = {
+  try: { className: "border-2 border-try-rim bg-try-fill text-try", icon: "league" },
+  round: { className: "border-2 border-round-team-rim bg-round-team-fill text-round-team", icon: "flag" },
+  cup: { className: "border-2 border-cup-rim bg-cup-fill text-cup", icon: "cup" },
 };
+
+function kindLabel(league: TeamLeague): string {
+  if (league.kind === "try") return t.leagueTry(league.number);
+  if (league.kind === "round") return t.roundMatch(league.round, league.opponent);
+  return t.cupMatch(cupStage(league), league.opponent);
+}
 
 function KindChip({ league }: { league: TeamLeague }) {
   const chip = KIND_CHIP[league.kind];
-  const label = league.kind === "try" ? KIND_CHIP.try.label(league) : KIND_CHIP.cup.label(league);
+  const label = kindLabel(league);
   return (
     <Chip className={chip.className}>
       <PixelIcon name={chip.icon} className="size-2.5 sm:size-2.75" />

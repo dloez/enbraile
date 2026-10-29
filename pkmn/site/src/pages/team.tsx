@@ -31,6 +31,7 @@ import { ANY_POKEMON, showdownTeam } from "@/teams/showdown";
 import { hasToggle, teamDone, teamKind, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
 import { PixelIcon } from "@/components/pixel-icon";
 import { cupStage } from "@/league/cup";
+import { lockNeeds } from "../../shared/league";
 import { MOVE_RULE_LABELS, MOVE_RULES, type FreePool, type MoveRule, type TeamPool } from "../../shared/pool";
 import { SelectField } from "@/components/select-field";
 import { messages } from "../../shared/i18n";
@@ -87,7 +88,8 @@ const t = messages({
     lockIn: "Lock in",
     lockName: (name: string) => `Lock in ${name}?`,
     lockNote: "Once locked, nothing in it can change; only an admin can unlock it.",
-    fillFirst: (size: number) => `Fill all ${size} slots to lock it in`,
+    fillFirst: (need: number, size: number) => (need === size ? `Fill all ${size} slots to lock it in` : `Fill ${need} slots to lock it in`),
+    round: (n: number) => `Round ${n}`,
     unlock: "Unlock",
     clone: "Clone",
     cloneTitle: "Copy it into a new team of yours to edit",
@@ -143,7 +145,8 @@ const t = messages({
     lockIn: "Bloquear",
     lockName: (name: string) => `¿Bloquear ${name}?`,
     lockNote: "Una vez bloqueado no se puede cambiar nada; solo un administrador puede desbloquearlo.",
-    fillFirst: (size: number) => `Llena los ${size} huecos para bloquearlo`,
+    fillFirst: (need: number, size: number) => (need === size ? `Llena los ${size} huecos para bloquearlo` : `Llena ${need} huecos para bloquearlo`),
+    round: (n: number) => `Ronda ${n}`,
     unlock: "Desbloquear",
     clone: "Clonar",
     cloneTitle: "Cópialo en un equipo nuevo tuyo para editarlo",
@@ -271,7 +274,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
   const [joining, setJoining] = useState(false);
   const writes = useRef<Promise<unknown>>(Promise.resolve());
   const editable = page.canEdit;
-  const fixed = page.league?.kind === "cup";
+  const fixed = page.league?.kind === "cup" || page.league?.kind === "round";
   const size = slots.length;
   const pickMode = size > TEAM_SIZE && pick.scope === "six";
   const picked = pickedOf(slots, pick);
@@ -574,7 +577,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
             {page.lockedAt && (
               <span className="flex min-h-8.5 items-center gap-2 rounded-lg border-3 border-trophy-rim bg-trophy pr-3 pl-2.5 font-heading text-xl text-yellow">
                 <PixelIcon name="lock" className="size-3.5" />
-                {page.league?.kind === "cup" ? t.lockedTo(cupStage(page.league)) : t.locked}
+                {page.league?.kind === "cup" ? t.lockedTo(cupStage(page.league)) : page.league?.kind === "round" ? t.lockedTo(t.round(page.league.round)) : t.locked}
               </span>
             )}
             {sourceCount > FOLD_AFTER ? (
@@ -600,7 +603,17 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
           {page.canUnlock && <UnlockButton id={page.id} onDone={onReload} />}
           <CopyButton slots={slots} stocks={stocks} />
           {page.canClone && <CloneButton id={page.id} />}
-          {page.canLock && <LockButton id={page.id} name={name} full={filledAt(slots).length === size} size={size} settled={() => writes.current} onDone={onReload} />}
+          {page.canLock && (
+            <LockButton
+              id={page.id}
+              name={name}
+              filled={filledAt(slots).length}
+              need={lockNeeds(page.league?.kind === "round" ? "round" : "cup", size, page.sources[0]?.snapshot.pokemon.length ?? null)}
+              size={size}
+              settled={() => writes.current}
+              onDone={onReload}
+            />
+          )}
           {editable && !fixed && <DeleteButton id={page.id} name={name} />}
         </div>
       </div>
@@ -1017,7 +1030,24 @@ function CopyButton({ slots, stocks }: { slots: Slots; stocks: Stocks }) {
   );
 }
 
-function LockButton({ id, name, full, size, settled, onDone }: { id: string; name: string; full: boolean; size: number; settled: () => Promise<unknown>; onDone: () => void }) {
+function LockButton({
+  id,
+  name,
+  filled,
+  need,
+  size,
+  settled,
+  onDone,
+}: {
+  id: string;
+  name: string;
+  filled: number;
+  need: number;
+  size: number;
+  settled: () => Promise<unknown>;
+  onDone: () => void;
+}) {
+  const full = filled >= need;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1042,7 +1072,7 @@ function LockButton({ id, name, full, size, settled, onDone }: { id: string; nam
       <button
         type="button"
         disabled={!full}
-        title={full ? undefined : t.fillFirst(size)}
+        title={full ? undefined : t.fillFirst(need, size)}
         onClick={() => setOpen(true)}
         className={buttonVariants({ variant: "go", className: "min-h-12" })}
       >

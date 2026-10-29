@@ -1,7 +1,9 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
-import { drawRound, type LeagueMode, metIn, type Pair, type PairsInput, pairsProblem, type PairsProblem } from "../../shared/league.js";
+import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { drawRound, type LeagueMode, metIn, type Pair, type PairsInput, pairsProblem, type PairsProblem, ROUND_TEAM_SIZE } from "../../shared/league.js";
+import { emptySlots } from "../../shared/team.js";
 import { db } from "./db.js";
-import { leagueGame, leagueMatch, leagueRound, milestone, series, seriesPlayer } from "./schema.js";
+import { leagueGame, leagueMatch, leagueRound, milestone, save, series, seriesPlayer, snapshot, team, teamSource } from "./schema.js";
+import { insertTeam } from "./teams.js";
 
 export type RoundRefusal = "noRound" | "allOpen" | "noDraw" | "notNewest" | "started" | PairsProblem;
 
@@ -45,9 +47,76 @@ function before(league: League, except: RoundRow | null) {
 }
 
 async function writePairs(tx: Tx, roundId: string, pairs: readonly Pair[]) {
+  const old = await tx.select({ id: leagueMatch.id }).from(leagueMatch).where(eq(leagueMatch.roundId, roundId));
+  const kept = old.length
+    ? await tx
+        .update(team)
+        .set({ matchId: null })
+        .where(inArray(team.matchId, old.map((m) => m.id)))
+        .returning({ id: team.id, ownerId: team.ownerId })
+    : [];
   await tx.delete(leagueMatch).where(eq(leagueMatch.roundId, roundId));
-  if (pairs.length === 0) return;
-  await tx.insert(leagueMatch).values(pairs.map(([a, b], position) => ({ id: crypto.randomUUID(), roundId, position, playerA: a, playerB: b })));
+  const made = pairs.map(([a, b], position) => ({ id: crypto.randomUUID(), roundId, position, playerA: a, playerB: b }));
+  if (made.length > 0) await tx.insert(leagueMatch).values(made);
+  for (const one of kept) {
+    const home = made.find((m) => m.playerA === one.ownerId || m.playerB === one.ownerId);
+    if (home) await tx.update(team).set({ matchId: home.id }).where(eq(team.id, one.id));
+    else await tx.delete(team).where(eq(team.id, one.id));
+  }
+  const [held] = await tx.select({ seriesId: leagueRound.seriesId }).from(leagueRound).where(eq(leagueRound.id, roundId));
+  if (held) await giveRoundTeams(tx, held.seriesId);
+}
+
+export async function giveRoundTeams(tx: Tx, seriesId: string): Promise<void> {
+  const [row] = await tx.select({ pool: series.pool }).from(series).where(eq(series.id, seriesId)).for("update");
+  if (!row) return;
+  const rounds = await tx
+    .select({ id: leagueRound.id, milestoneId: leagueRound.milestoneId, milestone: milestone.name })
+    .from(leagueRound)
+    .innerJoin(milestone, eq(milestone.id, leagueRound.milestoneId))
+    .where(eq(leagueRound.seriesId, seriesId));
+  if (rounds.length === 0) return;
+  const matches = await tx
+    .select({ id: leagueMatch.id, roundId: leagueMatch.roundId, a: leagueMatch.playerA, b: leagueMatch.playerB })
+    .from(leagueMatch)
+    .where(and(inArray(leagueMatch.roundId, rounds.map((r) => r.id)), isNull(leagueMatch.gamesA)));
+  if (matches.length === 0) return;
+  const made = await tx
+    .select({
+      id: team.id,
+      matchId: team.matchId,
+      ownerId: team.ownerId,
+      sources: sql<number>`(select count(*) from ${teamSource} where ${teamSource.teamId} = ${team.id})`.mapWith(Number),
+    })
+    .from(team)
+    .where(inArray(team.matchId, matches.map((m) => m.id)));
+  const sheets = await tx
+    .select({ player: save.userId, milestoneId: snapshot.milestoneId, id: snapshot.id })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .where(and(eq(save.seriesId, seriesId), inArray(snapshot.milestoneId, rounds.map((r) => r.milestoneId))));
+  for (const match of matches) {
+    const round = rounds.find((r) => r.id === match.roundId)!;
+    for (const owner of [match.a, match.b]) {
+      const sheet = sheets.find((one) => one.player === owner && one.milestoneId === round.milestoneId);
+      if (!sheet) continue;
+      const have = made.find((one) => one.matchId === match.id && one.ownerId === owner);
+      if (have) {
+        if (have.sources === 0) await tx.insert(teamSource).values({ teamId: have.id, snapshotId: sheet.id, position: 0 });
+        continue;
+      }
+      await insertTeam(tx, {
+        id: crypto.randomUUID(),
+        ownerId: owner,
+        name: `${round.milestone} team`,
+        anyPokemon: false,
+        slots: emptySlots(ROUND_TEAM_SIZE),
+        pool: row.pool,
+        sources: [sheet.id],
+        matchId: match.id,
+      });
+    }
+  }
 }
 
 export function openRound(seriesId: string, mode: LeagueMode): Promise<RoundMove> {

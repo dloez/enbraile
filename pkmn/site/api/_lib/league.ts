@@ -24,6 +24,7 @@ import {
   type MatchPage,
   type LeagueMode,
   type MatchTeam,
+  type RoundTeamState,
   type GameDraft,
   type GameSide,
   type LeagueGame,
@@ -241,6 +242,11 @@ async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
         (await db.selectDistinct({ matchId: leagueGame.matchId }).from(leagueGame).where(inArray(leagueGame.matchId, matches.map((m) => m.id)))).map((g) => g.matchId),
       )
     : new Set<string>();
+  const roundTeams = matches.length ? await db.select({ matchId: team.matchId, ownerId: team.ownerId, lockedAt: team.lockedAt }).from(team).where(inArray(team.matchId, matches.map((m) => m.id))) : [];
+  const teamState = (matchId: string, player: string): RoundTeamState => {
+    const one = roundTeams.find((held) => held.matchId === matchId && held.ownerId === player);
+    return one ? (one.lockedAt ? "locked" : "building") : "save";
+  };
   const enrolled = await db
     .select({ id: user.id, name: user.name })
     .from(seriesPlayer)
@@ -290,6 +296,8 @@ async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
           gamesB: match.gamesB,
           faintedA: match.faintedA,
           faintedB: match.faintedB,
+          teamA: teamState(match.id, match.playerA),
+          teamB: teamState(match.id, match.playerB),
         })),
     })),
     next: next ? { number: next.number, milestone: next.milestone.name } : null,
@@ -345,7 +353,15 @@ function matchMember(member: TeamMember | null, sheets: ReadonlyMap<string, Snap
   };
 }
 
-async function matchTeams(row: SeriesRow, matchId: string, players: { a: string; b: string }, inCup: boolean, mode: LeagueMode, reader: Viewer): Promise<{ a: MatchTeam; b: MatchTeam }> {
+async function matchTeams(
+  row: SeriesRow,
+  matchId: string,
+  players: { a: string; b: string },
+  round: { milestone: string; unplayed: boolean } | null,
+  mode: LeagueMode,
+  reader: Viewer,
+): Promise<{ a: MatchTeam; b: MatchTeam }> {
+  const inCup = round === null;
   const seen = teamsSeenBy(reader);
   const held = await db
     .select({ id: team.id, name: team.name, ownerId: team.ownerId, slots: team.slots, lockedAt: team.lockedAt, seen: seen ? sql<boolean>`(${seen})` : sql<boolean>`true` })
@@ -368,9 +384,10 @@ async function matchTeams(row: SeriesRow, matchId: string, players: { a: string;
         .orderBy(desc(milestone.position))
         .limit(1)
     : [];
+  const sheet = inCup ? tournament?.name : round.unplayed ? round.milestone : undefined;
   const side = (player: string): MatchTeam => {
     const one = held.find((h) => h.ownerId === player);
-    if (!one) return tournament ? { state: "waiting", milestone: tournament.name } : { state: "none" };
+    if (!one) return sheet ? { state: "waiting", milestone: sheet } : { state: "none" };
     if (!one.seen) return { state: "hidden", locked: one.lockedAt !== null, reveal: mode === "closed" ? "result" : inCup ? "all" : "both" };
     return { state: "shown", id: one.id, name: one.name, locked: one.lockedAt !== null, members: one.slots.map((member) => matchMember(member, sheets)) };
   };
@@ -394,7 +411,7 @@ async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise
     return { id, name: page.players.find((p) => p.id === id)?.name ?? "?", place: standing?.place ?? null, points: standing?.points ?? 0, seed: seed < 0 ? null : seed + 1 };
   };
   const whole = covers(match, played);
-  const teams = await matchTeams(row, matchId, match, !round, mode, reader);
+  const teams = await matchTeams(row, matchId, match, round ? { milestone: round.milestone, unplayed: match.gamesA === null } : null, mode, reader);
   return {
     id: match.id,
     number: page.number,

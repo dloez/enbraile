@@ -104,6 +104,7 @@ export const teamSourceRow = z.object({
 
 export const teamLeague = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("try"), series: z.int(), number: z.int(), at: z.string() }),
+  z.object({ kind: z.literal("round"), series: z.int(), match: z.string(), round: z.int(), milestone: z.string(), opponent: z.string() }),
   z.object({ kind: z.literal("cup"), series: z.int(), match: z.string(), slot: z.string(), entrants: z.int(), opponent: z.string() }),
 ]);
 
@@ -154,6 +155,10 @@ export const teamPage = z.object({
   updatedAt: z.string(),
 });
 
+export const teamWait = z.object({ series: z.int(), match: z.string(), round: z.int(), milestone: z.string(), opponent: z.string() });
+
+export const teamWaits = z.array(teamWait);
+
 export const teamMade = z.object({ id: z.string() });
 
 export const teamDone = z.object({});
@@ -175,6 +180,8 @@ export type ShownSlots = z.infer<typeof shownSlots>;
 export type TeamRow = z.infer<typeof teamRow>;
 
 export type TeamLeague = z.infer<typeof teamLeague>;
+
+export type TeamWait = z.infer<typeof teamWait>;
 
 export type TeamKind = (typeof TEAM_KINDS)[number];
 

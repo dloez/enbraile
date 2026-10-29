@@ -15,6 +15,8 @@ export const GAMES_TO_WIN = 2;
 
 export const FAINTED_PER_GAME = 6;
 
+export const ROUND_TEAM_SIZE = 6;
+
 export const CUP_TEAM_SIZE = 8;
 
 export const CUP_BROUGHT = 6;
@@ -33,6 +35,10 @@ export const leagueMode = z.enum(LEAGUE_MODES);
 
 export const leaguePlayer = z.object({ id: z.string(), name: z.string() });
 
+export const ROUND_TEAM_STATES = ["locked", "building", "save"] as const;
+
+export const roundTeamState = z.enum(ROUND_TEAM_STATES);
+
 export const leagueMatch = z.object({
   id: z.string(),
   a: z.string(),
@@ -41,6 +47,8 @@ export const leagueMatch = z.object({
   gamesB: z.int().nullable(),
   faintedA: z.int().nullable(),
   faintedB: z.int().nullable(),
+  teamA: roundTeamState,
+  teamB: roundTeamState,
 });
 
 export const leagueRound = z.object({
@@ -251,6 +259,7 @@ export type MatchCup = z.infer<typeof matchCup>;
 export type CupInput = z.infer<typeof cupInput>;
 export type LeaguePlayer = z.infer<typeof leaguePlayer>;
 export type LeagueMatch = z.infer<typeof leagueMatch>;
+export type RoundTeamState = z.infer<typeof roundTeamState>;
 export type LeagueRound = z.infer<typeof leagueRound>;
 export type Standing = z.infer<typeof standing>;
 export type LeaguePage = z.infer<typeof leaguePage>;
@@ -336,6 +345,10 @@ export function cupBans(mode: LeagueMode): boolean {
 export function barredBan(player: string, number: number, games: readonly Pick<LeagueGame, "number" | "winner">[], banOf: (number: number) => number | null): number | null {
   const before = games.find((g) => g.number === number - 1);
   return before && before.winner === player ? banOf(before.number) : null;
+}
+
+export function lockNeeds(kind: "round" | "cup", size: number, living: number | null): number {
+  return kind === "cup" || living === null ? size : Math.max(1, Math.min(size, living));
 }
 
 export function pickProblem(size: number, slots: readonly number[], banned: number | null): boolean {

@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## An opened round gives each player their team once their snapshot exists
-
-A round, once an admin opens it, in either mode, gives each player a team sourced from their snapshot at its milestone, sized by the league's rules, as soon as that snapshot exists; until then their team list names the milestone to reach and upload. Locked and unlocked as a cup team ([discovery → Team Locking](discovery.md#team-locking)).
-
-**Do:**
-- [ ] Round teams made when the round is open and the snapshot exists (on opening and on upload), their size named in `shared/league.ts`.
-- [ ] The team list's Round kind chip in blue and their To build and Locked states, as the cup teams' entry wires the Cup's; the waiting note (no board draws it); the match shows both teams.
-- [ ] Each side's round team state on the newest round's card, Locked, Building or Needs the save, as `league-draw.dc.html` draws it (The pkmn Site → Decisions, the rounds' draw build choices, leave it to this entry).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, open round 2 with one test player at Gym 2 and one at Gym 1: the first gets the team, the second the note, and gets it on uploading Gym 2; the round card reads Building and Needs the save, then Locked once the first locks; in an open round, a match's teams show to others once both are locked; in a closed one, once it has a result.
-- Human-run: none until a series uses it.
-- Reuse: the lock and the team list's marks of the cup teams entry; the round opening (`openRound` in `api/_lib/rounds.ts`).
-- Neighbors: the upload flow (`api/_lib/ingest.ts`).
-- Forbidden: a team sourced from a snapshot that does not exist.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## Series 1's game teams come across from their replays, locked to their rounds
 
 Each imported match gets one team per side, built from its games' replays together: the six brought with every move, item and ability any of them revealed, sourced "Any Pokémon" and locked to the player's round; a match with no replay (round 5's Dloez v Vicky, and Javi's side of the unplayed Elfo v Javi) takes the player's matchday paste instead, the hidden one included ([discovery → Results](discovery.md#results)). Placed here, above the later series' entries, since it brings series 1's league across.
@@ -35,24 +17,22 @@ Each imported match gets one team per side, built from its games' replays togeth
 - Forbidden: a second Showdown paste parser; a paste overriding a replay.
 
 **Touches:** `pkmn/site/scripts/`, `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** An opened round gives each player their team once their snapshot exists
 
 ## A closed round hides a player's pair until they lock their team
 
-In a closed round, a player sees their own pair only once they have locked their round team, and so none of the round's pairs, nor who rests, since the others give their own away; everyone else sees a match's pair once both its players have locked ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams come with [An opened round gives each player their team once their snapshot exists](#an-opened-round-gives-each-player-their-team-once-their-snapshot-exists), and the lock with the cup teams' lock (`POST /api/teams/<id>/lock` and `/unlock`, `api/_lib/teams.ts`).
+In a closed round, a player sees their own pair only once they have locked their round team, and so none of the round's pairs, nor who rests, since the others give their own away; everyone else sees a match's pair once both its players have locked ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams are made by `giveRoundTeams` (`api/_lib/rounds.ts`), and the lock with the cup teams' lock (`POST /api/teams/<id>/lock` and `/unlock`, `api/_lib/teams.ts`).
 
 **Do:**
-- [ ] A closed round's pairs hidden from each of its players until they lock, and from everyone else until that match's two players have both locked, enforced by the API wherever the pairs are handed out: the league page's rounds, head-to-head, the reader's rounds and next match, the series page's League summary and the match page.
+- [ ] A closed round's pairs hidden from each of its players until they lock, and from everyone else until that match's two players have both locked, enforced by the API wherever the pairs are handed out: the league page's rounds, head-to-head, the reader's rounds and next match, the series page's League summary, the match page, the team list's waiting note (`GET /api/teams/waiting`) and a round team's opponent in `GET /api/teams` (`api/_lib/teams.ts`).
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, open a closed round and see a player get no pair of it, by page or route, until they lock; a reader outside the league sees a match's pair only once its two players have locked; an admin, and the players of an open round, always see the pairs.
 - Human-run: none until a series uses it.
-- Reuse: the round's `mode` (`league_round` in `api/_lib/schema.ts`); the lock of the cup teams entry; the league read (`leagueOf` in `api/_lib/league.ts`).
+- Reuse: the round's `mode` (`league_round` in `api/_lib/schema.ts`); the team lock (`POST /api/teams/<id>/lock`, `api/_lib/teams.ts`); the league read (`leagueOf` in `api/_lib/league.ts`).
 - Neighbors: the series page's League summary (`src/pages/series.tsx`).
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** An opened round gives each player their team once their snapshot exists
 
 ## Players see others' saves only up to their own round
 
@@ -86,7 +66,7 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** An opened round gives each player their team once their snapshot exists; Players see others' saves only up to their own round
+**After:** Players see others' saves only up to their own round
 
 ## The player profile shows each series' league record
 
