@@ -6,6 +6,7 @@ import { MatchFrame } from "@/components/page-frames";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { ordinal } from "@/lib/records";
 import { stageName } from "@/league/cup";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
@@ -187,13 +188,6 @@ const t = messages({
     copyFailed: "No se pudo copiar",
   },
 });
-
-function ordinal(n: number, lang: "en" | "es"): string {
-  if (lang === "es") return `${n}.º`;
-  const tens = n % 100;
-  const suffix = tens >= 11 && tens <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
-  return `${n}${suffix}`;
-}
 
 const FROM = "/series/$number/league/matches/$id";
 

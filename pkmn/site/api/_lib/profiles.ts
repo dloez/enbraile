@@ -1,11 +1,13 @@
 import { and, asc, countDistinct, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { careerOf, type LatestRecord, type ProfilePage } from "../../shared/profile.js";
+import { cupReach } from "../../shared/league.js";
+import { careerOf, type LatestRecord, type ProfileLeague, type ProfilePage } from "../../shared/profile.js";
 import type { Snapshot } from "../../shared/snapshot.js";
 import { db } from "./db.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
 import { says } from "./i18n.js";
-import { teamsSeenBy, viewer } from "./series-data.js";
+import { leagueOf } from "./league.js";
+import { teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 
 const t = says({
   en: {
@@ -99,6 +101,7 @@ profiles.get("/:player", async (c) => {
     player,
     since: played.at(-1)?.name ?? null,
     career: careerOf(rows.map(({ s, latest }) => ({ finished: s.state === "finished", latest }))),
+    leagues: await leaguesOf(player.id, ids, reader),
     series: rows.map(({ s, reached, latest, end }) => ({
       number: s.number,
       name: s.name,
@@ -114,3 +117,29 @@ profiles.get("/:player", async (c) => {
   };
   return c.json(page);
 });
+
+async function leaguesOf(player: string, ids: string[], reader: Viewer): Promise<ProfileLeague[]> {
+  if (ids.length === 0) return [];
+  const held = await db.select().from(series).where(inArray(series.id, ids)).orderBy(desc(series.number));
+  const pages = await Promise.all(held.map((row) => leagueOf(row, reader)));
+  return pages.flatMap((page, at) => {
+    const row = held[at]!;
+    const standing = page.standings.find((one) => one.player === player);
+    if (!standing || (page.rounds.length === 0 && page.tries.length === 0 && !page.cup)) return [];
+    return [
+      {
+        number: row.number,
+        name: row.name,
+        state: row.state,
+        round: page.rounds.at(-1)?.number ?? null,
+        cupOn: page.cup !== null,
+        place: standing.place,
+        points: standing.points,
+        wins: standing.wins,
+        losses: standing.losses,
+        best: standing.best,
+        cup: page.cup && cupReach(page.cup, player),
+      },
+    ];
+  });
+}

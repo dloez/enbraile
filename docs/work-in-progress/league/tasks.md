@@ -23,22 +23,6 @@ Only a pairing that `settleCup` changes clears them (`api/_lib/cup.ts`). Series 
 **Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/league.ts`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** when an admin fixes a cup game's winner after the next game's bans are in, do that game's bans and sixes stand, or are they cleared so it is banned again? And when an admin unlocks a cup team whose match already has bans or sixes, are they cleared, kept as places, or is the unlock refused while they stand?
 
-## The player profile shows each series' league record
-
-The profile's league placeholder becomes, per series, the player's place, points, W–L, their best Pokémon League try's pips and how far they went in the cup, as `player-profile.dc.html` and `player-profile-phone.dc.html` draw it ([discovery → Surfaces](discovery.md#surfaces)).
-
-**Do:**
-- [ ] Extend `GET /api/profiles/<player>` (`api/_lib/profiles.ts`, `profilePage` in `shared/profile.ts`) and the profile.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, a series 1 player's profile matches the standings, their best try and the cup.
-- Human-run: none.
-- Reuse: `standings` and `bestTries` in `shared/league.ts`, fed as the league read (`leagueOf` in `api/_lib/league.ts`) feeds them.
-- Neighbors: the profile's totals (`src/pages/player-profile.tsx`).
-- Forbidden: working the standings out a second way.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/profile.ts`, `pkmn/site/src/pages/player-profile.tsx`, `docs/pkmn/site/`
-
 ## A closed round hides a player's pair until they lock their team
 
 In a closed round, a player sees their own pair only once they have locked their round team, and so none of the round's pairs, nor who rests, since the others give their own away; everyone else sees a match's pair once both its players have locked ([discovery → Team Locking](discovery.md#team-locking)). The round's mode is stored on `league_round` (`api/_lib/schema.ts`, set by the admin's round opening in `api/_lib/rounds.ts`), round teams are made by `giveRoundTeams` (`api/_lib/rounds.ts`), and the lock with the cup teams' lock (`POST /api/teams/<id>/lock` and `/unlock`, `api/_lib/teams.ts`).

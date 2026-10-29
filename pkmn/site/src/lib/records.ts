@@ -1,4 +1,4 @@
-import { locale } from "../../shared/i18n";
+import { type Lang, locale } from "../../shared/i18n";
 
 export function playTime(seconds: number | null): string {
   if (seconds === null) return "—";
@@ -8,4 +8,11 @@ export function playTime(seconds: number | null): string {
 
 export function money(amount: number | null): string {
   return amount === null ? "—" : `₽${amount.toLocaleString(locale)}`;
+}
+
+export function ordinal(n: number, lang: Lang): string {
+  if (lang === "es") return `${n}.º`;
+  const tens = n % 100;
+  const suffix = tens >= 11 && tens <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
+  return `${n}${suffix}`;
 }

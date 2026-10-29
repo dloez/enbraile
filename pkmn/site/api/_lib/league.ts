@@ -229,7 +229,7 @@ async function cupOf(seriesId: string): Promise<LeagueCup | null> {
   };
 }
 
-async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
+export async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
   const roundMilestones = await db
     .select({ id: milestone.id, name: milestone.name })
     .from(milestone)

@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { cupKind } from "./league.js";
 import { scene, seriesState } from "./series.js";
 
 const count = z.int().nullable();
@@ -29,15 +30,31 @@ export const profileSeries = z.object({
   teams: z.int(),
 });
 
+export const profileLeague = z.object({
+  number: z.int(),
+  name: z.string(),
+  state: seriesState,
+  round: z.int().nullable(),
+  cupOn: z.boolean(),
+  place: z.int(),
+  points: z.int(),
+  wins: z.int(),
+  losses: z.int(),
+  best: z.int().nullable(),
+  cup: z.object({ kind: cupKind, left: z.int().nullable(), group: z.int(), champion: z.boolean() }).nullable(),
+});
+
 export const profilePage = z.object({
   player: z.object({ id: z.string(), name: z.string() }),
   since: z.string().nullable(),
   career: careerTotals,
+  leagues: z.array(profileLeague),
   series: z.array(profileSeries),
 });
 
 export type CareerTotals = z.infer<typeof careerTotals>;
 export type ProfileSeries = z.infer<typeof profileSeries>;
+export type ProfileLeague = z.infer<typeof profileLeague>;
 export type ProfilePage = z.infer<typeof profilePage>;
 
 export type LatestRecord = {

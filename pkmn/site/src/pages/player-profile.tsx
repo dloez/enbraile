@@ -1,19 +1,20 @@
 import { Link, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { liftCardClass } from "@/components/controls";
 import { toolPage } from "@/components/page";
-import { PixelIcon } from "@/components/pixel-icon";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { SCENE_LOOK, SceneArt } from "@/components/scene";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { stageName } from "@/league/cup";
+import { combatsLabel, Pips } from "@/league/tries";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
-import { playTime } from "@/lib/records";
+import { ordinal, playTime } from "@/lib/records";
 import { cn } from "@/lib/utils";
 import { ProfileFrame } from "@/components/page-frames";
 import { BANNER_SIZE, gameLine, PHONE_BANNER_SIZE } from "@/pages/series-list";
 import { messages } from "../../shared/i18n";
-import { type CareerTotals, type ProfilePage, type ProfileSeries, profilePage } from "../../shared/profile";
+import { type CareerTotals, type ProfileLeague, type ProfilePage, type ProfileSeries, profilePage } from "../../shared/profile";
 
 const t = messages({
   en: {
@@ -32,7 +33,16 @@ const t = messages({
     blackouts: "Blackouts",
     fallen: "Fallen",
     career: "Career",
-    league: "League results · Work in progress",
+    league: "League",
+    place: "Place",
+    points: "Points",
+    wl: "W–L",
+    pokemonLeague: "Pokémon League",
+    cup: "Cup",
+    champion: "Champion",
+    round: (n: number) => `Round ${n}`,
+    ordinal: (n: number) => ordinal(n, "en"),
+    open: (series: string) => `Open ${series}'s league`,
     reached: "Reached",
     teams: "Teams",
     playing: "Playing now",
@@ -54,7 +64,16 @@ const t = messages({
     blackouts: "Desmayos",
     fallen: "Caídos",
     career: "Trayectoria",
-    league: "Resultados de la liga · En obras",
+    league: "Liga",
+    place: "Puesto",
+    points: "Puntos",
+    wl: "V–D",
+    pokemonLeague: "Liga Pokémon",
+    cup: "Copa",
+    champion: "Campeón",
+    round: (n: number) => `Ronda ${n}`,
+    ordinal: (n: number) => ordinal(n, "es"),
+    open: (series: string) => `Abrir la liga de ${series}`,
     reached: "Llegó a",
     teams: "Equipos",
     playing: "En juego",
@@ -104,7 +123,7 @@ export function PlayerProfilePage() {
   return (
     <main className={cn(toolPage, "gap-7 pt-5.5 pb-9 sm:gap-8 sm:pt-9 sm:pb-12")}>
       <Head page={page} />
-      <Career career={page.career} />
+      <Career career={page.career} leagues={page.leagues} />
       <section aria-labelledby="series" className="flex flex-col gap-3 sm:gap-3.5">
         <h2 id="series" className="m-0 font-heading text-[2.125rem] font-normal sm:text-[2.375rem]">
           {t.series}
@@ -136,8 +155,9 @@ function Head({ page }: { page: ProfilePage }) {
 
 type Total = { label: string; value: string; sub?: string; alarm?: boolean; wide: boolean };
 
-function Career({ career }: { career: CareerTotals }) {
+function Career({ career, leagues }: { career: CareerTotals; leagues: ProfileLeague[] }) {
   const desktop = useMediaQuery("(min-width: 40rem)");
+  const wide = useMediaQuery("(min-width: 64rem)");
   const series: Total = { label: t.series, value: String(career.series), sub: t.finished(career.finished), wide: false };
   const time: Total = { label: t.playTime, value: playTime(career.playTime), wide: true };
   const badges: Total = {
@@ -190,11 +210,140 @@ function Career({ career }: { career: CareerTotals }) {
           </div>
         ))}
       </div>
-      <div className="flex min-h-21 items-center justify-center gap-3 rounded-[18px] border-3 border-dashed border-cell-hi bg-box px-4 py-3 sm:min-h-27.5 sm:gap-4.5">
-        <PixelIcon name="barrier" className="size-9 flex-none sm:size-11" />
-        <span className="font-heading text-2xl leading-[1.05] text-yellow sm:text-3xl">{t.league}</span>
-      </div>
+      {leagues.length > 0 && (wide ? <LeagueTable leagues={leagues} /> : <LeagueCards leagues={leagues} />)}
     </section>
+  );
+}
+
+const LEAGUE_COLUMNS = "grid-cols-[minmax(0,1fr)_120px_120px_120px_200px_180px_40px]";
+
+function leagueState(league: ProfileLeague): { label: string; running: boolean } {
+  if (league.state !== "running") return { label: t.done, running: false };
+  if (league.cupOn) return { label: t.cup, running: true };
+  return { label: league.round === null ? t.playing : t.round(league.round), running: true };
+}
+
+function cupLabel(league: ProfileLeague): { label: string; ink: string } {
+  if (!league.cup) return { label: "—", ink: "text-faint" };
+  if (league.cup.champion) return { label: t.champion, ink: "text-yellow" };
+  return { label: stageName(league.cup, true), ink: "text-foreground" };
+}
+
+function StateChip({ league, className }: { league: ProfileLeague; className: string }) {
+  const state = leagueState(league);
+  return <span className={cn("rounded-[5px] font-heading", state.running ? "bg-red text-white" : "bg-ink text-subtle", className)}>{state.label}</span>;
+}
+
+function TriesPips({ best }: { best: number | null }) {
+  return (
+    <>
+      {best === null ? <span className="font-heading text-2xl text-faint">—</span> : <Pips won={best} size="md" />}
+      <span className="sr-only">{combatsLabel(best)}</span>
+    </>
+  );
+}
+
+function LeagueLink({ league, className, children, role }: { league: ProfileLeague; className: string; children: ReactNode; role?: "row" }) {
+  return (
+    <Link
+      to="/series/$number/league"
+      params={{ number: String(league.number) }}
+      role={role}
+      aria-label={role ? undefined : t.open(league.name)}
+      className={cn("text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50", className)}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function LeagueTable({ leagues }: { leagues: ProfileLeague[] }) {
+  const heads = [t.place, t.points, t.wl, t.pokemonLeague, t.cup];
+  return (
+    <div role="table" aria-label={t.league} className="overflow-hidden rounded-[18px] border-3 bg-card">
+      <div role="row" className={cn("grid min-h-12 items-center border-b-3 bg-box px-5 font-heading text-xl text-muted-foreground", LEAGUE_COLUMNS)}>
+        <span role="columnheader">{t.league}</span>
+        {heads.map((head) => (
+          <span key={head} role="columnheader" className="text-center">
+            {head}
+          </span>
+        ))}
+        <span />
+      </div>
+      {leagues.map((league, index) => {
+        const cup = cupLabel(league);
+        return (
+          <LeagueLink
+            key={league.number}
+            role="row"
+            league={league}
+            className={cn("grid min-h-17 items-center px-5 hover:bg-row-hi focus-visible:ring-inset", LEAGUE_COLUMNS, index < leagues.length - 1 && "border-b-3")}
+          >
+            <span role="cell" className="flex min-w-0 items-center gap-3">
+              <span className="truncate font-heading text-3xl">{league.name}</span>
+              <StateChip league={league} className="flex-none px-2 py-px text-lg" />
+            </span>
+            <span role="cell" className={cn("text-center font-heading text-[2rem]", league.place === 1 && "text-yellow")}>
+              {t.ordinal(league.place)}
+            </span>
+            <span role="cell" className="text-center font-heading text-[2rem]">
+              {league.points}
+            </span>
+            <span role="cell" className="text-center font-heading text-[1.625rem] text-subtle">
+              {league.wins}–{league.losses}
+            </span>
+            <span role="cell" className="flex justify-center">
+              <TriesPips best={league.best} />
+            </span>
+            <span role="cell" className={cn("text-center font-heading text-[1.625rem]", cup.ink)}>
+              {cup.label}
+            </span>
+            <Chevron className="h-5 w-3.5 justify-self-end" />
+          </LeagueLink>
+        );
+      })}
+    </div>
+  );
+}
+
+function LeagueCards({ leagues }: { leagues: ProfileLeague[] }) {
+  return (
+    <>
+      <h3 className="m-0 mt-1 font-heading text-[1.75rem] font-normal">{t.league}</h3>
+      {leagues.map((league) => {
+        const cup = cupLabel(league);
+        const boxes = [
+          { label: t.place, value: t.ordinal(league.place), ink: league.place === 1 ? "text-yellow" : "text-foreground", size: "text-[1.75rem]" },
+          { label: t.points, value: String(league.points), ink: "text-foreground", size: "text-[1.75rem]" },
+          { label: t.wl, value: `${league.wins}–${league.losses}`, ink: "text-subtle", size: "text-2xl" },
+          { label: t.cup, value: cup.label, ink: cup.ink, size: "text-[1.375rem]" },
+        ];
+        return (
+          <LeagueLink key={league.number} league={league} className="flex flex-col gap-2.5 rounded-[14px] border-3 bg-card p-3 hover:border-primary">
+            <span className="flex items-center gap-2.5">
+              <span className="font-heading text-[1.75rem] leading-none">{league.name}</span>
+              <StateChip league={league} className="px-1.75 py-px text-base" />
+              <span className="flex-1" />
+              <Chevron className="h-4.5 w-3 flex-none" />
+            </span>
+            <span className="grid grid-cols-4 gap-1.5">
+              {boxes.map((box) => (
+                <span key={box.label} className="flex min-w-0 flex-col gap-0.5 rounded-[10px] border-3 bg-box px-2 py-1.5">
+                  <span className="truncate font-heading text-base text-muted-foreground">{box.label}</span>
+                  <span title={box.value} className={cn("truncate font-heading leading-[0.95]", box.size, box.ink)}>
+                    {box.value}
+                  </span>
+                </span>
+              ))}
+            </span>
+            <span className="flex items-center gap-2.5">
+              <span className="font-heading text-lg text-muted-foreground">{t.pokemonLeague}</span>
+              <TriesPips best={league.best} />
+            </span>
+          </LeagueLink>
+        );
+      })}
+    </>
   );
 }
 

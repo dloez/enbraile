@@ -628,6 +628,13 @@ export function groupTable(seeds: readonly string[], players: readonly string[],
   return list.map(({ beat: _beat, ...row }, index) => ({ ...row, through: settled && index < qualifiers }));
 }
 
+export type CupReach = { kind: CupKind; left: number | null; group: number; champion: boolean };
+
+export function cupReach(cup: Pick<LeagueCup, "seeds" | "slots" | "champion">, player: string): CupReach | null {
+  const at = cup.slots.findLast((slot) => slot.a === player || slot.b === player);
+  return at ? { kind: at.kind, left: at.left, group: cupShape(cup.seeds.length).half, champion: cup.champion === player } : null;
+}
+
 export type DrawnSlot = Omit<CupSlot, "a" | "b"> & { a: string | null; b: string | null; winner: string | null };
 
 export type CupDraw = { slots: DrawnSlot[]; group: GroupRow[]; champion: string | null };
