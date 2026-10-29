@@ -73,22 +73,22 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
 **After:** Players see others' saves only up to their own round
 
-## What becomes of a league team whose snapshot an admin moves off its milestone?
+## A league team whose snapshot an admin moves off its milestone is copied and starts over
 
-A round team is sourced from its player's snapshot at the round's milestone, and a cup team from their Tournament snapshot ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). The passes that make them (`giveRoundTeams` in `api/_lib/rounds.ts`, `giveCupTeams` in `api/_lib/cup.ts`) give a source only to a team that has none. So when an admin moves that snapshot to another milestone (`POST …/trainers/<player>/snapshots/<milestone>/move`, `api/_lib/overrides.ts`), the team keeps the moved snapshot as its source, and a snapshot uploaded at the right milestone afterwards never becomes it. Found by the round teams' validator, 2026-10-29.
+A round team is sourced from its player's snapshot at the round's milestone, and a cup team from their Tournament snapshot ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). The passes that make them (`giveRoundTeams` in `api/_lib/rounds.ts`, `giveCupTeams` in `api/_lib/cup.ts`) give a source only to a team that has none, so when an admin moves that snapshot to another milestone (`POST …/trainers/<player>/snapshots/<milestone>/move`, `api/_lib/overrides.ts`) the team keeps the moved snapshot. The owner settled it: when the team's match has no result, locked or not, its members are copied into a new "Any Pokémon" team of the player's own, and the round or cup team starts over, unlocked and empty, on the snapshot now at its milestone, or waits for the player's upload; a team whose match has a result keeps its snapshot ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). Found by the round teams' validator, 2026-10-29.
 
 **Do:**
-- [ ] Once answered, both passes follow the answer on an admin's move and on an upload, with its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
+- [ ] On an admin's snapshot move, in the move's transaction: each round or cup team sourced from it on a match without a result copied to a new Any Pokémon team of its owner (members kept, unlocked, private), then emptied, unlocked and stripped of that source, the passes then giving it the milestone's current snapshot or leaving it waiting.
+- [ ] Its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions).
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, an admin moves a player's round snapshot to another milestone and the player uploads a new one at the round's milestone: their round team and cup team show the answered source.
+- Claude-run: `npm run gate`; through `verify-site`, an admin moves a player's round snapshot to another milestone: the player finds an Any Pokémon copy of their round team in their list, and the round team is empty and unlocked, waiting on the save; they upload at the round's milestone and the team takes that snapshot; a team on a played match keeps its snapshot; the same for a cup team and the Tournament snapshot.
 - Human-run: none.
-- Reuse: `giveRoundTeams` and `giveCupTeams`; the snapshot move (`api/_lib/overrides.ts`).
+- Reuse: `giveRoundTeams` and `giveCupTeams`; the snapshot move (`api/_lib/overrides.ts`); a team's Clone (`POST /api/teams/<id>/clone`, `api/_lib/teams.ts`).
 - Neighbors: the cup pass's deletion of a team moved out of its match (`giveCupTeams`).
-- Forbidden: settling it without the owner's answer; a team pointing at a snapshot that does not exist.
+- Forbidden: a team pointing at a snapshot that does not exist; a team on a match with a result changed.
 
-**Touches:** `pkmn/site/api/_lib/rounds.ts`, `pkmn/site/api/_lib/cup.ts`, `docs/pkmn/site/explanation/site.md`
-**Needs the author:** when an admin moves a round or cup team's snapshot off its milestone, does the team keep it, move to whichever snapshot is now at the milestone (dropping the members picked from the old one), or go back to waiting on the save until one is there?
+**Touches:** `pkmn/site/api/_lib/rounds.ts`, `pkmn/site/api/_lib/cup.ts`, `pkmn/site/api/_lib/overrides.ts`, `pkmn/site/api/_lib/teams.ts`, `docs/pkmn/site/explanation/site.md`
 
 ## What becomes of a round team whose match gets its result before it is locked?
 
