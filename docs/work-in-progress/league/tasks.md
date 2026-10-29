@@ -136,9 +136,22 @@ The league's refusal messages write the rules' numbers as text ("fainted from 0 
 
 **Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/src/pages/league-match.tsx`
 
-## Does the cup's bracket for 10, 12 and 14 entrants stand?
+## The cup starts only with two, four or six entrants
 
-**Needs the author:** the rulebook draws the cup for six, and for two, four or eight as a plain knockout; the cup's build chose a pattern for 10, 12 and 14 that the rules never settled ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions), "The cup's build choices": the group's best meet the winners of seed 2's, seed 3's, … first-round matches, the other winners pairing highest against lowest). Does it stand, or do those sizes stay unable to start until the rules say?
+The rulebook draws the cup for six and a plain knockout for four or two, and nothing bigger ([Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament), owner 2026-10-29). The cup's code starts any even size: powers of two as a plain knockout and every other size through the pattern "The cup's build choices" worked out ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
+
+**Do:**
+- [ ] The largest cup named in `shared/league.ts` beside `CUP_MIN`; `startCup` and the start panel refuse more entrants, the refusal in English and Spanish.
+- [ ] "The cup's build choices" rewritten to drop the pattern for ten, twelve and fourteen.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, an admin starting a cup with eight entrants is refused, by page and route; six, four and two still start.
+- Human-run: none.
+- Reuse: `CUP_MIN`, `cupShape` and `startCup` (`shared/league.ts`, `api/_lib/cup.ts`); the start panel's refusals.
+- Neighbors: the cup's bracket (`cupSlots`).
+- Forbidden: a cup size written as a number outside `shared/league.ts`.
+
+**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/cup.ts`, `pkmn/site/src/`, `docs/pkmn/site/explanation/site.md`
 
 ## Should rerunning the league import keep an admin's hatched count?
 
