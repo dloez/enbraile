@@ -56,23 +56,6 @@ A try's team is never private but follows the save rule as a milestone's PC does
 **Touches:** `pkmn/site/api/_lib/teams.ts`, `pkmn/site/api/_lib/league.ts`, `pkmn/site/shared/`, `pkmn/site/src/league/tries.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
 **After:** Players see others' saves only up to their own round
 
-## Do a closed round's standings hide the matches its pairs hide?
-
-A closed round hides a match's pair from a player who has not locked, and from everyone else until both its players have locked or it has a result (`pairsHidden` in `shared/league.ts`, The pkmn Site → Decisions, "The closed round's pairs, build choices"). The standings are still worked out from every match (`standings(…)` in `leagueOf`, `api/_lib/league.ts`), so a hidden match that already has a result moves its players' W–L and points, and a tie's note ("Beat <name>") can name its other side ([discovery → Team Locking](discovery.md#team-locking)).
-
-**Do:**
-- [ ] As the author decides.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, in a closed round with one match decided and hidden from a reader, the reader's standings follow the decision.
-- Human-run: none.
-- Reuse: `pairsHidden` (`shared/league.ts`); `standings` and `leagueOf`.
-- Neighbors: the series page's League summary and the profile's league record, which read the same standings.
-- Forbidden: hiding in the browser only.
-
-**Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/shared/league.ts`, `pkmn/site/src/`, `docs/pkmn/site/explanation/site.md`
-**Needs the author:** in a closed round, does a reader's standings leave out a match whose pair is hidden from them, results and tie notes included, or do the standings count every result as they do now?
-
 ## A closed round hides its snapshots until the match has a result
 
 In a closed round, each player's snapshot at the round's milestone is seen only by its owner and admins until their match has a result: their PC at that snapshot, the abilities search, and as a source in others' team builds. While that match is unplayed, each player's later saves stay hidden from the other too. An open round leaves them to the series' save rule ([discovery → Team Locking](discovery.md#team-locking)).
