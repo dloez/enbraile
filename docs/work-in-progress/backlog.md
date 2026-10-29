@@ -89,6 +89,22 @@ The Accounts section of [The pkmn Site](../pkmn/site/explanation/site.md#account
 
 **Touches:** `docs/pkmn/site/explanation/site.md`
 
+### pkmn/site: one formatter for an override's date and time
+
+`setAt` in `src/lib/admin-format.ts:19-21`, added for the team page's "Fixed by" line (`813d7bd`), formats a time with `{ dateStyle: "medium", timeStyle: "short" }` in the site's locale, and two private copies do the same: `when` in `src/league/eggs.tsx:64-66`, for the Eggs cell's title and note, and `when` in `src/components/trainer-admin.tsx:59-61`, for the trainer panel's set-by-hand and moved-by lines. Belongs to no idea: one copy is the league's, one the site's; found by the league's end-of-run gardener, 2026-10-29.
+
+**Do:**
+- [ ] Replace both `when`s with `setAt` from `@/lib/admin-format`.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `grep -rn 'timeStyle' pkmn/site/src` finds only `admin-format.ts`; through `verify-site`, the standings' Eggs cell and the trainer panel's set-by-hand line read their times as before.
+- Human-run: none.
+- Reuse: `setAt` (`src/lib/admin-format.ts`).
+- Neighbors: `joinedOn`, in the same file.
+- Forbidden: a fourth formatter.
+
+**Touches:** `pkmn/site/src/league/eggs.tsx`, `pkmn/site/src/components/trainer-admin.tsx`
+
 ## Ideas
 
 ### pkmn/site: a private Showdown tied to the site
