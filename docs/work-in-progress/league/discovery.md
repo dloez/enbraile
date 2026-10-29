@@ -23,6 +23,7 @@ Done when, on `pkmn.enbraile.vip`: series 1's league reads as it does in the app
 - **Q: Who opens a round?** A: An admin, by hand; opening rounds by themselves may come later. **Why:** the owner. _(owner, 2026-10-27)_
 - **Q: Pairings?** A: Opening a round draws pairs at random among players who have not met yet, with a bye on an odd count, as the app does; the admin can redraw it or set the pairs by hand. **Why:** the owner. _(owner, 2026-10-27)_
 - **Q: A player joining mid-league?** A: Not handled; open in the [backlog](../backlog.md#pkmnsite-what-does-the-league-do-with-a-player-who-joins-mid-league). _(owner, 2026-10-27)_
+- **Q: How does the league page's Rounds view use a wide screen?** A: Fewer, wider round cards: past the 1440 width the boards are drawn at, the rounds sit fewer to a row than the five they take from `lg`, in the page's 86rem column, which stays as it is; the page's width, its type sizes and every other page are left alone. **Why:** the owner: five cards to a row read very small on a 1440p screen. _(owner, 2026-10-29)_
 
 ### Team Locking
 

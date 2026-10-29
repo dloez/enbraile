@@ -68,3 +68,20 @@ An admin can record a round match's games whatever its teams' state: `recordGame
 - Forbidden: a lock written outside the match module's move; the Teams tab's count and the list's mark disagreeing.
 
 **Touches:** `pkmn/site/api/_lib/match.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/shared/team.ts`, `pkmn/site/src/pages/league-match.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
+
+## The Rounds view puts fewer, wider round cards on a wide screen
+
+From `lg` the league page's Rounds view lays every round out five to a row (`lg:grid-cols-5`, `src/pages/league.tsx`) inside the page's `readPage` column, capped at 86rem (`max-w-344`, `src/components/page.ts`), so on a wide screen each round card is about 250px wide; the owner finds it very small on a 1440p screen. The owner settled it: past the 1440 width the boards are drawn at, the rounds sit fewer to a row, the column, the type sizes and every other page left as they are ([discovery → Rounds](discovery.md#rounds), owner 2026-10-29). The cards keep the same type sizes, so they get wider, not larger.
+
+**Do:**
+- [ ] The Rounds view's grid putting fewer rounds to a row from `2xl` (1536px), so `league-rounds.dc.html` still reads as drawn at its own 1440 width; how many to a row is a build choice, recorded with its reason.
+- [ ] Its decision in [The pkmn Site](../../pkmn/site/explanation/site.md#decisions), and the Rounds view's description in the League section if it names five to a row.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, the seed's Series 1 league on the Rounds view at 2560×1440 shows the rounds fewer to a row, each card's matches and states laid out as before, and at 1440×900 and 1024×768 shows them five to a row as today; a screenshot at each width.
+- Human-run: the owner looks at series 1's Rounds view on their 1440p screen and says whether it still reads small; if the type is what is small, that is a new decision, not this entry.
+- Reuse: the `readPage` column (`src/components/page.ts`); `RoundCard`, `PairsCard` and `UnopenedCard` (`src/pages/league.tsx`).
+- Neighbors: the standings and head-to-head under the rounds, which keep their layout.
+- Forbidden: changing `readPage`, `listPage` or any token; editing a board in `pkmn/site/design/`.
+
+**Touches:** `pkmn/site/src/pages/league.tsx`, `docs/pkmn/site/explanation/site.md`
