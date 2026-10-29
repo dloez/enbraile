@@ -43,8 +43,9 @@ const t = messages({
     inMonth: (month: string) => `in ${month}`,
     any: "Any Pokémon",
     noSource: "No source",
-    series: (n: number) => `Series ${n}`,
+    series: (n: number | string) => `Series ${n}`,
     theirs: (player: string, milestone: string) => `${player}'s ${milestone}`,
+    snapshots: (n: number) => `${n} snapshots`,
     title: "Teams",
     picked: (n: number) => `${n} picked`,
     cancel: "Cancel",
@@ -90,8 +91,9 @@ const t = messages({
     inMonth: (month: string) => `en ${month}`,
     any: "Cualquier Pokémon",
     noSource: "Sin fuente",
-    series: (n: number) => `Serie ${n}`,
+    series: (n: number | string) => `Serie ${n}`,
     theirs: (player: string, milestone: string) => `${milestone} de ${player}`,
+    snapshots: (n: number) => `${n} capturas`,
     title: "Equipos",
     picked: (n: number) => (n === 1 ? "1 elegido" : `${n} elegidos`),
     cancel: "Cancelar",
@@ -151,11 +153,14 @@ function when(team: Pick<TeamRow, "league" | "lockedAt" | "updatedAt">): string 
   return t.changedOn(ago(team.updatedAt));
 }
 
-export function sourceLine(team: Pick<TeamRow, "owner" | "series" | "sources" | "anyPokemon">): string {
-  const from = team.sources.map((s) => (s.player.id === team.owner.id ? s.milestone : t.theirs(s.player.name, s.milestone)));
+export function sourceLine(team: Pick<TeamRow, "owner" | "series" | "sources" | "anyPokemon">, whole = false): string {
+  const from =
+    team.sources.length > 2 && !whole
+      ? [t.snapshots(team.sources.length)]
+      : team.sources.map((s) => (s.player.id === team.owner.id ? s.milestone : t.theirs(s.player.name, s.milestone)));
   if (team.anyPokemon) from.push(t.any);
   if (team.series.length === 0) return from.join(" + ") || t.noSource;
-  const series = team.series.map((n) => t.series(n)).join(", ");
+  const series = t.series(team.series.join(", "));
   return from.length ? `${series} · ${from.join(" + ")}` : series;
 }
 
@@ -542,28 +547,38 @@ function TeamLink({ team, showOwner, mine, pick }: { team: TeamRow; showOwner: b
 
 function RowBody({ team, showOwner, mine, filled }: { team: TeamRow; showOwner: boolean; mine: boolean; filled: number }) {
   const size = team.members.length;
+  const shown = mine && team.private && hasToggle(teamKind(team), team.lockedAt !== null);
+  const marked = team.league !== null || team.state !== "edit" || shown;
+  const owner = showOwner ? `${team.owner.name} · ` : "";
   return (
     <>
       <PlayerBadge name={team.owner.name} colour={playerColour(team.owner.name)} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:w-75 sm:flex-none">
         <span className="truncate font-heading text-[2.125rem] leading-[0.9]">{team.name}</span>
-        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 sm:flex-nowrap">
-          {team.league && <KindChip league={team.league} />}
-          {team.state === "todo" && <Chip className="bg-round text-white">{t.states.todo}</Chip>}
-          {team.state === "locked" && (
-            <Chip className="border-2 border-cell-hi bg-ink text-subtle">
-              <PixelIcon name="lock" className="size-3" />
-              {t.states.locked}
-            </Chip>
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 sm:flex-col sm:flex-nowrap sm:items-start sm:gap-0.5">
+          {marked && (
+            <span className="contents sm:mt-0.5 sm:flex sm:items-center sm:gap-1.5">
+              {team.league && <KindChip league={team.league} />}
+              {team.state === "todo" && <Chip className="bg-round text-white">{t.states.todo}</Chip>}
+              {team.state === "locked" && (
+                <Chip className="border-2 border-cell-hi bg-ink text-subtle">
+                  <PixelIcon name="lock" className="size-3" />
+                  {t.states.locked}
+                </Chip>
+              )}
+              {shown && (
+                <Chip className="border-2 border-dashed border-cell-hi text-muted-foreground" title={t.privateTitle}>
+                  <PixelIcon name="hidden" className="size-3" />
+                  {t.private}
+                </Chip>
+              )}
+            </span>
           )}
-          {mine && team.private && hasToggle(teamKind(team), team.lockedAt !== null) && (
-            <Chip className="border-2 border-dashed border-cell-hi text-muted-foreground" title={t.privateTitle}>
-              <PixelIcon name="hidden" className="size-3" />
-              {t.private}
-            </Chip>
-          )}
-          <span className="text-[0.8125rem] leading-[1.3] font-bold text-muted-foreground sm:truncate sm:text-sm sm:leading-normal">
-            {showOwner && `${team.owner.name} · `}
+          <span
+            title={owner + sourceLine(team, true)}
+            className="text-[0.8125rem] leading-[1.3] font-bold text-muted-foreground sm:w-full sm:truncate sm:text-sm sm:leading-normal"
+          >
+            {owner}
             {sourceLine(team)}
           </span>
         </span>
@@ -574,7 +589,7 @@ function RowBody({ team, showOwner, mine, filled }: { team: TeamRow; showOwner: 
         </span>
         <span className="text-[0.8125rem] whitespace-nowrap text-muted-foreground">{when(team)}</span>
       </span>
-      <span className="flex w-full min-w-0 gap-1 sm:w-auto sm:flex-1 sm:justify-center">
+      <span className="flex w-full min-w-0 gap-1 sm:w-auto sm:flex-1">
         {team.members.map((species, at) => {
           const sprite = species ? spriteOfName(species) : null;
           return (

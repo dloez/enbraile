@@ -170,7 +170,7 @@ const TEAMS = [
   {mine: true, name: 'For Elesa', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], keys: [0, 5, 11, 17], when: 'Changed today', private: true},
   {mine: true, name: 'Rain test', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5']], any: true, keys: [2, 8, 14, 20, 26, 32], when: 'Changed 3 days ago'},
   {mine: true, name: 'Ban round', owner: 'Dloez', c: '#ffd34d', series: 2, size: 8, from: [['Dloez', 'Gym 5']], any: true, keys: [1, 7, 13, 19, 25, 31, 37], when: 'Changed 2 days ago', private: true},
-  {mine: true, name: 'Scouting Vicky', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Vicky', 'Gym 5']], keys: [6, 12, 18, 24, 30], when: 'Changed 4 days ago', private: true},
+  {mine: true, name: 'Scouting the group', owner: 'Dloez', c: '#ffd34d', series: 2, from: [['Dloez', 'Gym 5'], ['Vicky', 'Gym 5'], ['MIRAMEEE', 'Post-League'], ['Tole', 'Gym 7']], any: true, keys: [6, 3, 12, 0, 18, 32], when: 'Changed 4 days ago', private: true},
   {mine: true, name: 'Cup semifinal', owner: 'Dloez', c: '#ffd34d', series: 1, size: 8, from: [['Dloez', 'Tournament']], keys: [1, 7, 13, 19, 25, 31, 37, 43], when: 'Locked in August', cup: 'Semifinal v Javi', locked: true},
   {mine: true, name: 'Pokémon League try 2', owner: 'Dloez', c: '#ffd34d', series: 1, from: [], any: true, keys: [43, 42, 33, 15, 41, 39], when: 'Logged in August', tryN: 2},
   {mine: true, name: 'Matchday 5', owner: 'Dloez', c: '#ffd34d', series: 1, from: [], any: true, keys: [0, 5, 29, 33, 42, 43], when: 'Locked in July', round: 5, locked: true},
@@ -186,7 +186,7 @@ const KINDS = {
 const kindOf = (t) => (t.round ? 'round' : t.cup ? 'cup' : t.tryN ? 'try' : 'free');
 const stateOf = (t) => (t.locked ? 'locked' : t.round || t.cup ? 'todo' : 'edit');
 function sourceLine(t) {
-  const from = t.from.map(([who, at]) => (who === t.owner ? at : who + "'s " + at));
+  const from = t.from.length > 2 ? [t.from.length + ' snapshots'] : t.from.map(([who, at]) => (who === t.owner ? at : who + "'s " + at));
   if (t.any) from.push('Any Pokémon');
   return 'Series ' + t.series + (from.length ? ' · ' + from.join(' + ') : '');
 }

@@ -1,12 +1,13 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronLeft, ClipboardCheck, ClipboardCopy, CopyPlus, Lock, Plus, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { ChevronDown, ChevronLeft, ClipboardCheck, ClipboardCopy, CopyPlus, Lock, Plus, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { toolPage } from "@/components/page";
 import { MiniSeta } from "@/components/pc/bag";
 import { SummaryBody, SummaryHead } from "@/components/pc/summary";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PLAYER_FILL, playerColour } from "@/components/player-badge";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { api } from "@/lib/api";
@@ -59,6 +60,8 @@ const t = messages({
     any: "Any Pokémon",
     removeAny: "Remove Any Pokémon",
     source: "Source",
+    sources: (n: number) => `${n} sources`,
+    overspent: "A source has spent more than it has",
     addSource: "Add a source",
     memberCount: (n: number) => `${n} members`,
     seenBy: "Seen by",
@@ -113,6 +116,8 @@ const t = messages({
     any: "Cualquier Pokémon",
     removeAny: "Quitar Cualquier Pokémon",
     source: "Fuente",
+    sources: (n: number) => `${n} fuentes`,
+    overspent: "Una fuente ha gastado más de lo que tiene",
     addSource: "Añadir una fuente",
     memberCount: (n: number) => `${n} miembros`,
     seenBy: "Lo ve",
@@ -531,6 +536,21 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
   }
 
   const summary = panel.t === "sum";
+  const overspent = held.some((h) => setasLeft(slots, stocks, h.id) < 0 || (moneyLeft(slots, stocks, h.id) ?? 0) < 0);
+  const sourceChips = (
+    <>
+      {held.map((h) => (
+        <SourceChip
+          key={h.id}
+          held={h}
+          setas={setasLeft(slots, stocks, h.id)}
+          money={moneyLeft(slots, stocks, h.id)}
+          onRemove={editable && !fixed && sourceCount > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
+        />
+      ))}
+      {anyPokemon && <AnyChip onRemove={editable && !fixed && sourceCount > 1 && freeCount(slots) === 0 ? () => chooseAny(false) : undefined} />}
+    </>
+  );
 
   return (
     <main className={cn(toolPage, "gap-4 pt-4.5 pb-6 lg:max-h-[calc(100svh-4rem)] lg:min-h-160 lg:pb-7")}>
@@ -557,16 +577,13 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
                 {page.league?.kind === "cup" ? t.lockedTo(cupStage(page.league)) : t.locked}
               </span>
             )}
-            {held.map((h) => (
-              <SourceChip
-                key={h.id}
-                held={h}
-                setas={setasLeft(slots, stocks, h.id)}
-                money={moneyLeft(slots, stocks, h.id)}
-                onRemove={editable && !fixed && sourceCount > 1 && usedBy(slots, h.id) === 0 ? () => removeSource(h.id) : undefined}
-              />
-            ))}
-            {anyPokemon && <AnyChip onRemove={editable && !fixed && sourceCount > 1 && freeCount(slots) === 0 ? () => chooseAny(false) : undefined} />}
+            {sourceCount > FOLD_AFTER ? (
+              <SourcesFold held={held} anyPokemon={anyPokemon} over={overspent}>
+                {sourceChips}
+              </SourcesFold>
+            ) : (
+              sourceChips
+            )}
             {editable && !fixed && <SourceMenu taken={held.map((h) => h.id)} busy={joining} onPick={addSource} onAny={anyPokemon ? undefined : () => chooseAny(true)} />}
           </div>
         </div>
@@ -683,6 +700,46 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
         />
       )}
     </main>
+  );
+}
+
+const FOLD_AFTER = 3;
+
+function SourcesFold({ held, anyPokemon, over, children }: { held: readonly Held[]; anyPokemon: boolean; over: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const count = held.length + (anyPokemon ? 1 : 0);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        className={cn(
+          "flex min-h-8.5 cursor-pointer items-center gap-2 rounded-lg border-3 bg-ink pr-2.5 pl-1.5 font-heading text-xl text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          open ? "border-primary" : over ? "border-coral" : "border-border",
+        )}
+      >
+        <span aria-hidden="true" className="flex">
+          {held.map((h, at) => (
+            <span key={h.id} className={cn("grid size-5 place-items-center rounded-[5px] text-base text-ink shadow-[0_0_0_2px_var(--ink)]", PLAYER_FILL[h.colour % PLAYER_FILL.length], at > 0 && "-ml-1.5")}>
+              {h.owner.charAt(0).toUpperCase()}
+            </span>
+          ))}
+          {anyPokemon && (
+            <span className={cn("grid size-5 place-items-center rounded-[5px] border-2 border-dashed border-faint bg-ink shadow-[0_0_0_2px_var(--ink)]", held.length > 0 && "-ml-1.5")}>
+              <AnyMark className="size-2.5" />
+            </span>
+          )}
+        </span>
+        {t.sources(count)}
+        {over && (
+          <span title={t.overspent} className="text-coral">
+            !<span className="sr-only">{t.overspent}</span>
+          </span>
+        )}
+        <ChevronDown className={cn("size-4 text-muted-foreground", open && "rotate-180")} aria-hidden="true" />
+      </PopoverTrigger>
+      <PopoverContent align="start" sideOffset={6} aria-label={t.sources(count)} className="w-auto gap-1.5 p-2 whitespace-nowrap">
+        {children}
+      </PopoverContent>
+    </Popover>
   );
 }
 
