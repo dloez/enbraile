@@ -1,0 +1,1 @@
+ALTER TABLE "team" ADD COLUMN "free_pool" jsonb DEFAULT '{"speciesGen":9,"noLegendary":false,"noMythical":false,"fullyEvolved":false,"maxBst":800,"tms":"any"}'::jsonb NOT NULL;

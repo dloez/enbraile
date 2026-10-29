@@ -2,7 +2,7 @@ import { Dex, toID } from "@pkmn/dex";
 import { parsePaste, type PokemonSet } from "@/analysis/paste";
 import { currentAbility, displayName, type Mon, STATS, type StatID } from "../../shared/mon";
 import { describeItem, describeMove } from "../../shared/describe";
-import { ANY_ABILITIES, memberMon, NATURES, speciesAbilities } from "@/teams/dex";
+import { ANY_ABILITIES, ANY_SPECIES_IDS, memberMon, NATURES, speciesAbilities } from "@/teams/dex";
 import { emptySlots, freeSet, isFree, itemsLeft, MAX_TEAM_SIZE, naturePrice, TEAM_SIZE, MOVE_SLOTS, type FreeMember, type Member, type OwnMember, type Slots, type Stocks } from "@/teams/team";
 import { describeMember } from "../../shared/species";
 import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL, type TeamSlots } from "../../shared/team";
@@ -16,7 +16,7 @@ const t = messages({
     notItsAbility: (name: string, ability: string) => `${name}'s ${ability}: not one of its abilities`,
     unknownAbility: (name: string, ability: string) => `${name}'s ${ability}: not an ability the site can give`,
     unknownMove: (name: string, move: string) => `${name}'s ${move}: not a move Showdown knows`,
-    notInPool: (species: string) => `${species}: not in the team's pool`,
+    unknownSpecies: (species: string) => `${species}: not a species the site can give`,
     allOnTeam: (species: string) => `${species}: every one in the team's sources is already on the team`,
     notInSources: (species: string) => `${species}: not in the team's sources`,
     noMint: (name: string, nature: string) => `${name}'s ${nature} Nature: no mint of it in its bag and not enough money to buy one`,
@@ -28,7 +28,7 @@ const t = messages({
     notItsAbility: (name: string, ability: string) => `${ability} de ${name}: no es una de sus habilidades`,
     unknownAbility: (name: string, ability: string) => `${ability} de ${name}: la web no puede dar esa habilidad`,
     unknownMove: (name: string, move: string) => `${move} de ${name}: Showdown no conoce ese movimiento`,
-    notInPool: (species: string) => `${species}: no está en la reserva del equipo`,
+    unknownSpecies: (species: string) => `${species}: la web no puede dar esa especie`,
     allOnTeam: (species: string) => `${species}: todos los de las fuentes del equipo ya están en el equipo`,
     notInSources: (species: string) => `${species}: no está en las fuentes del equipo`,
     noMint: (name: string, nature: string) => `Naturaleza ${nature} de ${name}: no hay menta de ella en su mochila ni dinero para comprarla`,
@@ -116,6 +116,8 @@ export interface AnyPokemon {
 
 export const EVERY_SPECIES: AnyPokemon = { species: new Set(gen.species.all().map((entry) => entry.id)) };
 
+export const ANY_POKEMON: AnyPokemon = { species: ANY_SPECIES_IDS };
+
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, Math.round(value)));
 
 function capped(evs: StatsTable): StatsTable {
@@ -192,7 +194,7 @@ export function readShowdownTeam(text: string, stocks: Stocks, any: AnyPokemon |
       }
       left.push(
         any
-          ? t.notInPool(set.species)
+          ? t.unknownSpecies(set.species)
           : all.some(({ mon }) => mon.species.id === id)
             ? t.allOnTeam(set.species)
             : t.notInSources(set.species),

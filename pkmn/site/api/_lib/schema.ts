@@ -3,7 +3,7 @@ import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, primary
 import type { ExportReport, Snapshot } from "../../shared/snapshot.js";
 import { DEFAULT_ABILITY_SETAS, DEFAULT_MINT_PRICE } from "../../shared/games.js";
 import { FAINTED_PER_GAME, GAMES_TO_WIN, LEAGUE_COMBATS, LEAGUE_MODES, MATCH_GAMES, PARTY_SIZE, type TryMember } from "../../shared/league.js";
-import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
+import { DEFAULT_FREE_POOL, DEFAULT_POOL, type FreePool, type TeamPool } from "../../shared/pool.js";
 import type { TeamSlots } from "../../shared/team.js";
 import type { ItemIcons } from "../../shared/items.js";
 import type { TmRolls, World } from "./export/export.js";
@@ -236,6 +236,7 @@ export const team = pgTable(
     private: boolean("private").notNull().default(true),
     slots: jsonb("slots").$type<TeamSlots>().notNull(),
     pool: jsonb("pool").$type<TeamPool>().notNull().default(DEFAULT_POOL),
+    freePool: jsonb("free_pool").$type<FreePool>().notNull().default(DEFAULT_FREE_POOL),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
       .notNull()

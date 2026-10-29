@@ -13,7 +13,7 @@ import {
   type TeamSourceRow,
 } from "../../shared/team.js";
 import { DEFAULT_COSTS } from "../../shared/games.js";
-import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
+import { DEFAULT_POOL, type FreePool, type TeamPool } from "../../shared/pool.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
 import { game, leagueTry, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
@@ -54,10 +54,10 @@ export const teams = new Hono();
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export type NewTeam = { id: string; ownerId: string; name: string; anyPokemon: boolean; slots: TeamSlots; pool: TeamPool; sources: readonly string[] };
+export type NewTeam = { id: string; ownerId: string; name: string; anyPokemon: boolean; slots: TeamSlots; pool: TeamPool; freePool?: FreePool; sources: readonly string[] };
 
 export async function insertTeam(tx: Tx, made: NewTeam) {
-  await tx.insert(team).values({ id: made.id, ownerId: made.ownerId, name: made.name, size: made.slots.length, anyPokemon: made.anyPokemon, slots: made.slots, pool: made.pool });
+  await tx.insert(team).values({ id: made.id, ownerId: made.ownerId, name: made.name, size: made.slots.length, anyPokemon: made.anyPokemon, slots: made.slots, pool: made.pool, ...(made.freePool ? { freePool: made.freePool } : {}) });
   if (made.sources.length > 0) await tx.insert(teamSource).values(made.sources.map((snapshotId, position) => ({ teamId: made.id, snapshotId, position })));
 }
 
@@ -217,7 +217,7 @@ teams.get("/:id", async (c) => {
   const reader = await viewer(c.req.raw);
   if (!reader) return c.json({ error: t(c).signIn }, 401);
   const [row] = await db
-    .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, private: team.private, slots: team.slots, pool: team.pool, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
+    .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, private: team.private, slots: team.slots, pool: team.pool, freePool: team.freePool, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
     .from(team)
     .innerJoin(user, eq(user.id, team.ownerId))
     .where(and(eq(team.id, c.req.param("id")), teamsSeenBy(reader)));
@@ -253,6 +253,7 @@ teams.get("/:id", async (c) => {
     private: row.private,
     slots: seesSpreads(reader, row.ownerId) ? row.slots : slotsWithoutSpreads(row.slots),
     pool: row.pool,
+    freePool: row.freePool,
     updatedAt: row.updatedAt.toISOString(),
   };
   return c.json(page);
@@ -274,7 +275,7 @@ teams.post("/", async (c) => {
   const names = await db.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
   const pool = input.pool ?? (await seriesPool(sources));
   const id = crypto.randomUUID();
-  await db.transaction((tx) => insertTeam(tx, { id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name), t(c).team), anyPokemon, slots, pool, sources }));
+  await db.transaction((tx) => insertTeam(tx, { id, ownerId: reader.id, name: input.name ?? nextTeamName(names.map((n) => n.name), t(c).team), anyPokemon, slots, pool, freePool: input.freePool, sources }));
   return c.json({ id });
 });
 
@@ -301,6 +302,7 @@ teams.put("/:id", async (c) => {
         ...(input.slots ? { size: input.slots.length, slots: input.slots } : {}),
         ...(input.anyPokemon !== undefined ? { anyPokemon: input.anyPokemon } : {}),
         ...(input.pool ? { pool: input.pool } : {}),
+        ...(input.freePool ? { freePool: input.freePool } : {}),
         ...(input.private !== undefined ? { private: input.private } : {}),
         updatedAt: new Date(),
       })

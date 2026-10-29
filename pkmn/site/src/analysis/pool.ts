@@ -83,7 +83,7 @@ function sameAsBase(gen: Gen, s: Species): boolean {
   return base.types.join() === s.types.join() || !!s.requiredItem || !!s.requiredItems?.length;
 }
 
-function selectable(gen: Gen, speciesGen: Gen, s: Species): boolean {
+export function selectable(gen: Gen, speciesGen: Gen, s: Species): boolean {
   return (
     available(s) &&
     s.gen <= Math.min(gen, speciesGen) &&

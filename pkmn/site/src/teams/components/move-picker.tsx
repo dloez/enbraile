@@ -5,8 +5,8 @@ import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
 import { describeMove, describeTm } from "../../../shared/describe";
 import { allowedMoves, displayName, tmLabels, type Mon, type MoveInfo } from "../../../shared/mon";
-import type { MoveRule } from "../../../shared/pool";
-import { learnset, movesUpTo } from "@/teams/dex";
+import type { FreePool, MoveRule } from "../../../shared/pool";
+import { anyMoves, freeMoves, learnset, movesUpTo, type Learnset } from "@/teams/dex";
 import type { Sheet } from "@/teams/schema";
 import { EditorHead, editorScroll } from "@/teams/components/editors";
 import { messages } from "../../../shared/i18n";
@@ -19,6 +19,8 @@ const t = messages({
     all: "All moves",
     canLearn: "Can learn",
     other: "Other moves",
+    levelUp: "Level up",
+    machines: (gens: string) => `Gen ${gens} TMs`,
     replace: (move: string) => `replace ${move}`,
     move: (n: number) => `move ${n}`,
     searchMoves: "Search moves",
@@ -36,6 +38,8 @@ const t = messages({
     all: "Todos los movimientos",
     canLearn: "Puede aprender",
     other: "Otros movimientos",
+    levelUp: "Por nivel",
+    machines: (gens: string) => `MT de la Gen ${gens}`,
     replace: (move: string) => `sustituir ${move}`,
     move: (n: number) => `movimiento ${n}`,
     searchMoves: "Buscar movimientos",
@@ -53,7 +57,23 @@ interface Option {
   label: string;
 }
 
-function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: number, rule: MoveRule, learned: ReadonlySet<string> | null): { name: string; moves: Option[] }[] {
+export function useLearnset(species: string | null): Learnset | null {
+  const [learned, setLearned] = useState<{ species: string; moves: Learnset } | null>(null);
+  useEffect(() => {
+    if (species === null) return;
+    let live = true;
+    learnset(species).then(
+      (moves) => live && setLearned({ species, moves }),
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [species]);
+  return learned && learned.species === species ? learned.moves : null;
+}
+
+function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: number, rule: MoveRule, freePool: FreePool, learned: Learnset | null): { name: string; moves: Option[] }[] {
   const learn = allowedMoves(mon, rule);
   if (learn) {
     const level = (id: string) => (learn.levels?.[id] !== undefined ? String(learn.levels[id]) : "");
@@ -63,14 +83,22 @@ function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: 
       { name: t.tms, moves: learn.tms.map((move) => ({ move, label: labels.get(move.id) ?? "" })) },
     ];
   }
-  const all = movesUpTo(movesGen).map((move) => ({ move, label: "" }));
   if (mon.free) {
-    if (!learned) return [{ name: t.all, moves: all }];
+    const every = anyMoves().map((move) => ({ move, label: "" }));
+    if (!learned) return freePool.tms === "any" ? [{ name: t.all, moves: every }] : [];
+    const narrowed = freeMoves(learned, freePool);
+    if (narrowed) {
+      return [
+        { name: t.levelUp, moves: every.filter((o) => narrowed.levelUp.has(o.move.id)) },
+        { name: t.machines(narrowed.gens.join(", ")), moves: every.filter((o) => narrowed.tms.has(o.move.id)) },
+      ];
+    }
     return [
-      { name: t.canLearn, moves: all.filter((o) => learned.has(o.move.id)) },
-      { name: t.other, moves: all.filter((o) => !learned.has(o.move.id)) },
+      { name: t.canLearn, moves: every.filter((o) => learned.has(o.move.id)) },
+      { name: t.other, moves: every.filter((o) => !learned.has(o.move.id)) },
     ];
   }
+  const all = movesUpTo(movesGen).map((move) => ({ move, label: "" }));
   const tms = sheet.tms.map(describeTm);
   return [
     { name: t.tms, moves: tms.map((tm) => ({ move: describeMove(tm.move.id), label: tm.label })) },
@@ -78,11 +106,12 @@ function options(sheet: Sheet, mon: Mon, labels: Map<string, string>, movesGen: 
   ];
 }
 
-export function MoveEditor({ sheet, mon, movesGen, rule, moves, at, back, onBack, onPick }: {
+export function MoveEditor({ sheet, mon, movesGen, rule, freePool, moves, at, back, onBack, onPick }: {
   sheet: Sheet;
   mon: Mon;
   movesGen: number;
   rule: MoveRule;
+  freePool: FreePool;
   moves: readonly (string | null)[];
   at: number;
   back: string;
@@ -91,20 +120,8 @@ export function MoveEditor({ sheet, mon, movesGen, rule, moves, at, back, onBack
 }) {
   const [query, setQuery] = useState("");
   const labels = useMemo(() => tmLabels(sheet.tms), [sheet]);
-  const [learned, setLearned] = useState<ReadonlySet<string> | null>(null);
-  const species = mon.free ? mon.species.id : null;
-  useEffect(() => {
-    if (species === null) return;
-    let live = true;
-    learnset(species).then(
-      (next) => live && setLearned(next),
-      () => undefined,
-    );
-    return () => {
-      live = false;
-    };
-  }, [species]);
-  const groups = useMemo(() => options(sheet, mon, labels, movesGen, rule, learned), [sheet, mon, labels, movesGen, rule, learned]);
+  const learned = useLearnset(mon.free ? mon.species.id : null);
+  const groups = useMemo(() => options(sheet, mon, labels, movesGen, rule, freePool, learned), [sheet, mon, labels, movesGen, rule, freePool, learned]);
   const q = query.trim().toLowerCase();
   const replacing = moves[at];
   const seen = new Set<string>();

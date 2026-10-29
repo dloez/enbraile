@@ -183,6 +183,13 @@
       "when": 1793268691850,
       "tag": "0025_league_cup",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793270759124,
+      "tag": "0026_team_free_pool",
+      "breakpoints": true
     }
   ]
 }

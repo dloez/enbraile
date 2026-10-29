@@ -7,9 +7,10 @@ import { PLAYER_FILL } from "@/components/player-badge";
 import { cn } from "@/lib/utils";
 import { canLearn, currentAbility, displayName, type Mon } from "../../../shared/mon";
 import { describeItem, describeMove } from "../../../shared/describe";
-import { MOVE_RULE_LABELS, type MoveRule } from "../../../shared/pool";
+import { freePoolLabel, MOVE_RULE_LABELS, type FreePool, type MoveRule } from "../../../shared/pool";
+import { freeMoveAllowed, freeMoves, inFreePool } from "@/teams/dex";
+import { useLearnset } from "@/teams/components/move-picker";
 import { setasLabel } from "@/teams/components/editors";
-import { moveGen } from "@/teams/dex";
 import type { Member } from "@/teams/team";
 import { messages } from "../../../shared/i18n";
 
@@ -37,8 +38,9 @@ const t = messages({
     natureTitle: (nature: string) => `${nature} Nature`,
     nature: "Nature: ",
     noNature: "No nature",
-    late: (move: string, gen: number, movesGen: number) => `${move} is from Gen ${gen}, past the pool's moves up to Gen ${movesGen}`,
     unlearnable: (name: string, move: string) => `${name} can't learn ${move} in this save`,
+    outside: (name: string, filter: string) => `${name} is outside the Any Pokémon filter: ${filter}`,
+    notInTms: (move: string, filter: string) => `${move} is not a level-up move or a TM the Any Pokémon filter allows: ${filter}`,
     ruled: (move: string, rule: string) => `${move} is outside the team's moves (${rule})`,
     empty: "Empty",
     add: "Add a Pokémon",
@@ -66,8 +68,9 @@ const t = messages({
     natureTitle: (nature: string) => `Naturaleza ${nature}`,
     nature: "Naturaleza: ",
     noNature: "Sin naturaleza",
-    late: (move: string, gen: number, movesGen: number) => `${move} es de la Gen ${gen}, posterior a los movimientos de la reserva (hasta la Gen ${movesGen})`,
     unlearnable: (name: string, move: string) => `${name} no puede aprender ${move} en esta partida`,
+    outside: (name: string, filter: string) => `${name} está fuera del filtro de Cualquier Pokémon: ${filter}`,
+    notInTms: (move: string, filter: string) => `${move} no es un movimiento por nivel ni una MT que permita el filtro de Cualquier Pokémon: ${filter}`,
     ruled: (move: string, rule: string) => `${move} queda fuera de los movimientos del equipo (${rule})`,
     empty: "Vacío",
     add: "Añadir un Pokémon",
@@ -88,7 +91,7 @@ export interface PickToggle {
   onToggle: () => void;
 }
 
-export function MemberCard({ member, mon, from, focus, glow, editable, pick, natureFrom, setaCost, movesGen, moveRule, onLook, onItem, onAbility, onNature, onMove, onSet, onRemove }: {
+export function MemberCard({ member, mon, from, focus, glow, editable, pick, natureFrom, setaCost, moveRule, freePool, onLook, onItem, onAbility, onNature, onMove, onSet, onRemove }: {
   member: Member;
   mon: Mon;
   from: { owner: string; colour: number } | null;
@@ -98,8 +101,8 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
   pick?: PickToggle;
   natureFrom: "mint" | "money" | null;
   setaCost: number;
-  movesGen: number;
   moveRule: MoveRule;
+  freePool: FreePool;
   onLook: () => void;
   onItem: () => void;
   onAbility: () => void;
@@ -117,6 +120,9 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
   const mintTitle = natureFrom === "mint" ? t.mintBag : t.mintMoney;
   const looking = focus === "look";
   const lit = focus !== null && !looking;
+  const outside = mon.free === true && !inFreePool(mon.species.id, freePool);
+  const learned = useLearnset(mon.free && freePool.tms !== "any" ? mon.species.id : null);
+  const allowed = learned ? freeMoves(learned, freePool) : null;
   return (
     <article
       aria-label={name}
@@ -176,7 +182,13 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           {from ? (
             <span className={cn("flex-none rounded-sm px-1.75 font-heading text-[1.0625rem] text-ink", PLAYER_FILL[from.colour % PLAYER_FILL.length])}>{t.pc(from.owner)}</span>
           ) : (
-            <span className="flex-none rounded-sm border-2 border-dashed border-faint px-1.5 font-heading text-[1.0625rem] text-subtle">{t.free}</span>
+            <span
+              title={outside ? t.outside(name, freePoolLabel(freePool)) : undefined}
+              className={cn("flex-none rounded-sm border-2 border-dashed px-1.5 font-heading text-[1.0625rem]", outside ? "border-warning text-warning" : "border-faint text-subtle")}
+            >
+              {t.free}
+              {outside && <span className="sr-only">: {t.outside(name, freePoolLabel(freePool))}</span>}
+            </span>
           )}
           <ChevronRight className={cn("size-5 flex-none", looking ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
         </button>
@@ -260,11 +272,10 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
       <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-2 short:gap-1">
         {member.moves.map((id, at) => {
           const move = id ? describeMove(id) : null;
-          const introduced = id !== null && mon.free ? moveGen(id) : null;
-          const late = introduced !== null && introduced > movesGen;
           const unlearnable = id !== null && canLearn(mon, id, "any") === "no";
           const ruled = id !== null && !unlearnable && canLearn(mon, id, moveRule) === "no";
-          const wrong = late || unlearnable || ruled;
+          const barred = id !== null && mon.free === true && !freeMoveAllowed(allowed, id);
+          const wrong = unlearnable || ruled || barred;
           const on = typeof focus === "object" && focus !== null && focus.move === at;
           return (
             <button
@@ -273,7 +284,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
               aria-pressed={on}
               disabled={!editable}
               onClick={() => onMove(at)}
-              title={late ? t.late(move?.name ?? "", introduced, movesGen) : unlearnable ? t.unlearnable(name, move?.name ?? "") : ruled ? t.ruled(move?.name ?? "", MOVE_RULE_LABELS[moveRule]) : move?.desc}
+              title={barred ? t.notInTms(move?.name ?? "", freePoolLabel(freePool)) : unlearnable ? t.unlearnable(name, move?.name ?? "") : ruled ? t.ruled(move?.name ?? "", MOVE_RULE_LABELS[moveRule]) : move?.desc}
               className={cn(
                 field(on),
                 "grid min-h-9 grid-cols-[52px_minmax(0,1fr)_24px_23px] gap-x-1.5 pr-2 pl-1.25 short:min-h-7.5 lg:grid-cols-[20px_minmax(0,1fr)_24px]",

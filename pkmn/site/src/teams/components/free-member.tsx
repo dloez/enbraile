@@ -1,16 +1,18 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { Search } from "lucide-react";
+import { useDeferredValue, useState, type ReactNode } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import type { StatID } from "@pkmn/dex";
 import { SelectField } from "@/components/select-field";
+import { Toggle } from "@/components/controls";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import { SummaryHead, tint } from "@/components/pc/summary";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet as BottomSheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { buildPool, type PoolFilters } from "@/analysis/pool";
 import { cn } from "@/lib/utils";
 import { EditorHead, editorScroll } from "@/teams/components/editors";
 import { displayName, type Mon, STAT_LABELS, STATS, TYPES } from "../../../shared/mon";
-import { freeMon, NATURES, speciesAbilities } from "@/teams/dex";
+import { freeMon, freeSpecies, NATURES, speciesAbilities } from "@/teams/dex";
+import { FreePoolBar } from "@/components/pool-bar";
+import { freePoolLabel, type FreePool } from "../../../shared/pool";
 import { freeSet, newFreeMember, type FreeMember, type FreeSet } from "@/teams/team";
 import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL } from "../../../shared/team";
 import { typeLabel } from "../../../shared/dex-text";
@@ -30,13 +32,14 @@ const t = messages({
     putIn: (slot: number) => `Put in slot ${slot}`,
     species: "Species",
     count: (n: number) => `${n} species`,
-    scope: "Gen 9 data · species up to Gen 5 · fully evolved",
+    scope: (filter: string) => `Gen 9 data · ${filter}`,
     searchSpecies: "Search species",
     search: "Search",
     type: "Type",
     allTypes: "All types",
     nothingMatches: "Nothing matches",
     newFree: "New free member",
+    filter: "Filter",
   },
   es: {
     level: "Nivel",
@@ -51,25 +54,16 @@ const t = messages({
     putIn: (slot: number) => `Poner en el hueco ${slot}`,
     species: "Especies",
     count: (n: number) => (n === 1 ? "1 especie" : `${n} especies`),
-    scope: "Datos de Gen 9 · especies hasta Gen 5 · evolución final",
+    scope: (filter: string) => `Datos de Gen 9 · ${filter}`,
     searchSpecies: "Buscar especies",
     search: "Buscar",
     type: "Tipo",
     allTypes: "Todos los tipos",
     nothingMatches: "No hay coincidencias",
     newFree: "Nuevo miembro libre",
+    filter: "Filtro",
   },
 });
-
-export function poolSpecies(filters: PoolFilters): { id: string; name: string; types: string[] }[] {
-  return buildPool(filters)
-    .members.map((m) => ({ id: m.id, name: m.name, types: m.types }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-export function poolIds(filters: PoolFilters): Set<string> {
-  return new Set(poolSpecies(filters).map((s) => s.id));
-}
 
 const SIGNS = (mon: Mon, stat: StatID) => {
   const n = mon.nature;
@@ -181,6 +175,17 @@ function draftOf(species: string, set: FreeSet): FreeMember {
   return newFreeMember(species, abilities.base[0] ?? abilities.hidden[0] ?? null, set);
 }
 
+const sprites = new Map<string, Mon>();
+
+function spriteMon(species: string): Mon {
+  let mon = sprites.get(species);
+  if (!mon) {
+    mon = freeMon(draftOf(species, freeSet()));
+    sprites.set(species, mon);
+  }
+  return mon;
+}
+
 function Aside({ member, onChange, footer }: { member: FreeMember; onChange: (set: Partial<FreeSet>) => void; footer: ReactNode }) {
   const mon = freeMon(member);
   return (
@@ -195,17 +200,17 @@ function Aside({ member, onChange, footer }: { member: FreeMember; onChange: (se
   );
 }
 
-export function FreePicker({ slot, wide, pool, onPut }: { slot: number; wide: boolean; pool: PoolFilters; onPut: (member: FreeMember) => void }) {
-  const species = useMemo(() => poolSpecies(pool), [pool]);
+export function FreePicker({ slot, wide, freePool, onFreePool, onPut }: { slot: number; wide: boolean; freePool: FreePool; onFreePool: (freePool: FreePool) => void; onPut: (member: FreeMember) => void }) {
+  const species = freeSpecies(freePool);
   const [query, setQuery] = useState("");
   const [type, setType] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
   const [set, setSet] = useState<FreeSet>(() => freeSet());
-  const q = query.trim().toLowerCase();
+  const [filtering, setFiltering] = useState(false);
+  const q = useDeferredValue(query).trim().toLowerCase();
   const shown = species.filter((s) => (!q || s.name.toLowerCase().includes(q)) && (!type || s.types.includes(type)));
   const chosen = picked ?? (wide ? (shown[0] ?? species[0])?.id ?? null : null);
   const draft = chosen ? draftOf(chosen, set) : null;
-  const sprites = useMemo(() => new Map(species.map((s) => [s.id, freeMon(draftOf(s.id, freeSet()))])), [species]);
   const change = (next: Partial<FreeSet>) => setSet({ ...set, ...next });
 
   const footer = draft && (
@@ -229,20 +234,27 @@ export function FreePicker({ slot, wide, pool, onPut }: { slot: number; wide: bo
       <section aria-label={t.species} className="flex min-w-0 flex-1 flex-col gap-3 rounded-[18px] border-3 bg-card p-3.5 text-foreground lg:min-h-0">
         <div className="flex min-h-12 flex-none flex-wrap items-center gap-3">
           <span className="pl-1 font-heading text-[1.875rem] leading-none">{t.count(shown.length)}</span>
-          <span className="font-heading text-xl text-muted-foreground max-sm:hidden">{t.scope}</span>
-          <div className="flex-1" />
+          <span title={t.scope(freePoolLabel(freePool))} className="min-w-0 flex-1 truncate font-heading text-xl text-muted-foreground max-sm:hidden">
+            {t.scope(freePoolLabel(freePool))}
+          </span>
+          <div className="flex-1 sm:hidden" />
           <label className="flex h-12 flex-[1_1_100%] items-center gap-2 rounded-[10px] border-3 bg-ink px-3 focus-within:border-primary sm:max-w-55 sm:flex-[1_1_160px]">
             <Search className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
             <span className="sr-only">{t.searchSpecies}</span>
             <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} className="min-w-0 flex-1 bg-transparent outline-none" />
           </label>
           <SelectField label={t.type} value={type} onChange={setType} all={t.allTypes} options={TYPES.map((value) => ({ value, label: typeLabel(value) }))} />
+          <Toggle pressed={filtering} onChange={setFiltering}>
+            <SlidersHorizontal aria-hidden="true" />
+            {t.filter}
+          </Toggle>
         </div>
+        {filtering && <FreePoolBar filters={freePool} onChange={onFreePool} />}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl bg-box px-3 py-3.5 [scrollbar-color:var(--cell-hi)_transparent] [scrollbar-width:thin]">
           <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(106px,1fr))]">
             {shown.map((s) => {
               const on = s.id === chosen;
-              const mon = sprites.get(s.id);
+              const mon = spriteMon(s.id);
               return (
                 <button
                   key={s.id}
@@ -256,7 +268,7 @@ export function FreePicker({ slot, wide, pool, onPut }: { slot: number; wide: bo
                     on ? "bg-pc-cell-on shadow-[inset_0_0_0_3px_var(--cyan)]" : "bg-pc-cell",
                   )}
                 >
-                  {mon && <MonSprite mon={mon} className="pointer-events-none w-[92%] sm:size-24" />}
+                  <MonSprite mon={mon} className="pointer-events-none w-[92%] sm:size-24" />
                 </button>
               );
             })}

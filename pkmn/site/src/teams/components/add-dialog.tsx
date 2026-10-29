@@ -9,6 +9,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { segButton, segTrack } from "@/teams/components/editors";
 import type { PoolFilters } from "@/analysis/pool";
+import type { FreePool } from "../../../shared/pool";
 import { FreePicker } from "@/teams/components/free-member";
 import { allowedMoves, displayName, type BagTm, type Mon } from "../../../shared/mon";
 import { memberMon } from "@/teams/dex";
@@ -52,13 +53,15 @@ export interface AddSource {
 
 export const ANY = "any";
 
-export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onClose, onPut, onPutFree }: {
+export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, freePool, onFreePool, onClose, onPut, onPutFree }: {
   slot: number | null;
   slots: Slots;
   stocks: Stocks;
   sources: readonly AddSource[];
   anyPokemon: boolean;
   pool: PoolFilters;
+  freePool: FreePool;
+  onFreePool: (freePool: FreePool) => void;
   onClose: () => void;
   onPut: (slot: number, mon: Mon, source: string) => void;
   onPutFree: (slot: number, member: FreeMember) => void;
@@ -164,7 +167,7 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
         </div>
         <div className="flex min-h-0 flex-1 gap-6 px-4 pt-5 pb-4 sm:px-10 sm:pb-8">
           {free && slot !== null ? (
-            <FreePicker slot={slot} wide={wide} pool={pool} onPut={(member) => onPutFree(slot, member)} />
+            <FreePicker slot={slot} wide={wide} freePool={freePool} onFreePool={onFreePool} onPut={(member) => onPutFree(slot, member)} />
           ) : (
             <>
               <PcBox key={source?.id} mons={mons} selected={selected} onPick={setPicked} taken={taken} />

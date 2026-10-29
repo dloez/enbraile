@@ -14,7 +14,7 @@ import { GameIconsProvider } from "@/lib/item-icons";
 import { cn } from "@/lib/utils";
 import { TeamFrame, TeamsBackLink } from "@/components/page-frames";
 import { AddDialog, type AddSource } from "@/teams/components/add-dialog";
-import { poolIds, SetEditor } from "@/teams/components/free-member";
+import { SetEditor } from "@/teams/components/free-member";
 import { AbilityEditor, ItemEditor, NatureEditor, segButton, segTrack } from "@/teams/components/editors";
 import { EmptyCard, MemberCard, type Focus } from "@/teams/components/member-card";
 import { MoveEditor } from "@/teams/components/move-picker";
@@ -26,9 +26,9 @@ import { defensesOf, describeMove, describeTm } from "../../shared/describe";
 import { liveSlots, memberMon } from "@/teams/dex";
 import { EMPTY_SHEET, formatMoney, freeCount, giveItem, isFree, lastFilled, moneyLeft, natureFrom, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, setNature, spreadShown, stockOf, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
-import { showdownTeam } from "@/teams/showdown";
+import { ANY_POKEMON, showdownTeam } from "@/teams/showdown";
 import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
-import { MOVE_RULE_LABELS, MOVE_RULES, type MoveRule, type TeamPool } from "../../shared/pool";
+import { MOVE_RULE_LABELS, MOVE_RULES, type FreePool, type MoveRule, type TeamPool } from "../../shared/pool";
 import { SelectField } from "@/components/select-field";
 import { messages } from "../../shared/i18n";
 
@@ -225,6 +225,7 @@ function Builder({ page }: { page: TeamPage }) {
   const [sources, setSources] = useState<readonly TeamSource[]>(page.sources);
   const [anyPokemon, setAnyPokemon] = useState(page.anyPokemon);
   const [pool, setPool] = useState<TeamPool>(page.pool);
+  const [freePool, setFreePool] = useState<FreePool>(page.freePool);
   const [hidden, setHidden] = useState(page.private);
   const movesGen = Math.min(pool.gen, pool.movesGen);
   const held = useMemo(() => holding(sources), [sources]);
@@ -254,7 +255,7 @@ function Builder({ page }: { page: TeamPage }) {
     savePick(page.id, next);
   }
 
-  function write(body: { slots?: Slots; name?: string; sources?: string[]; anyPokemon?: boolean; pool?: TeamPool; private?: boolean }, after?: () => Promise<void>) {
+  function write(body: { slots?: Slots; name?: string; sources?: string[]; anyPokemon?: boolean; pool?: TeamPool; freePool?: FreePool; private?: boolean }, after?: () => Promise<void>) {
     writes.current = writes.current
       .then(async () => {
         await api(`/teams/${encodeURIComponent(page.id)}`, teamDone, { method: "PUT", body });
@@ -302,6 +303,11 @@ function Builder({ page }: { page: TeamPage }) {
     write({ pool: next });
   }
 
+  function chooseFreePool(next: FreePool) {
+    setFreePool(next);
+    write({ freePool: next });
+  }
+
   function save(next: Slots | null) {
     if (!next) return;
     setStored(next);
@@ -325,7 +331,7 @@ function Builder({ page }: { page: TeamPage }) {
   };
 
   async function pasted(next: Slots): Promise<string> {
-    const made = await api("/teams", teamMade, { body: { sources: sources.map((s) => s.id), anyPokemon, slots: next, pool } });
+    const made = await api("/teams", teamMade, { body: { sources: sources.map((s) => s.id), anyPokemon, slots: next, pool, freePool } });
     return made.id;
   }
 
@@ -368,8 +374,8 @@ function Builder({ page }: { page: TeamPage }) {
                 onNature={() => show({ t: "nature", slot, back: backOf(slot) })}
                 natureFrom={natureFrom(slots, stocks, slot)}
                 setaCost={own?.costs.abilitySetas ?? 0}
-                movesGen={movesGen}
                 moveRule={pool.moves}
+                freePool={freePool}
                 onMove={(at) => show({ t: "move", slot, at, back: backOf(slot) })}
                 onSet={() => show({ t: "set", slot, back: backOf(slot) })}
                 onRemove={() => {
@@ -487,6 +493,7 @@ function Builder({ page }: { page: TeamPage }) {
         mon={mon}
         movesGen={movesGen}
         rule={pool.moves}
+        freePool={freePool}
         moves={member.moves}
         at={panel.at}
         back={backLabel(panel)}
@@ -615,6 +622,8 @@ function Builder({ page }: { page: TeamPage }) {
           sources={held}
           anyPokemon={anyPokemon}
           pool={pool}
+          freePool={freePool}
+          onFreePool={chooseFreePool}
           onClose={() => setAdding(null)}
           onPut={(slot, mon, source) => {
             save(putMember(slots, slot, mon, source));
@@ -633,7 +642,7 @@ function Builder({ page }: { page: TeamPage }) {
       {editable && (
         <PasteDialog
           stocks={stocks}
-          any={anyPokemon ? { species: poolIds(pool) } : null}
+          any={anyPokemon ? ANY_POKEMON : null}
           open={pasting}
           onOpenChange={setPasting}
           onImport={pasted}

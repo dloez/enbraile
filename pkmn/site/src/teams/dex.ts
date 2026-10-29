@@ -1,4 +1,7 @@
-import { Dex } from "@pkmn/dex";
+import { Dex, type Species } from "@pkmn/dex";
+import { selectable } from "@/analysis/pool";
+import { available, GENS } from "../../shared/dex";
+import { MAX_BST, type FreePool } from "../../shared/pool";
 import { describeAbility, describeItem, describeMove, describeNature, describePokemon, statAt } from "../../shared/describe";
 import { STATS, type Ability, type BagItem, type Mon, type MoveInfo, type Nature } from "../../shared/mon";
 import { isFree, spreadShown, type ShownFreeMember } from "../../shared/team";
@@ -7,6 +10,53 @@ import { ownMon, type Member, type Slots, type Stocks } from "@/teams/team";
 const gen = Dex.forGen(9);
 
 const MINI_SETA_ID = "tinymushroom";
+
+const LAST_GEN = GENS[GENS.length - 1];
+
+export interface AnySpecies {
+  id: string;
+  name: string;
+  types: string[];
+}
+
+function fits(entry: Species, pool: FreePool): boolean {
+  return (
+    entry.gen <= pool.speciesGen &&
+    !(pool.fullyEvolved && entry.nfe) &&
+    !(pool.noLegendary && (entry.tags.includes("Restricted Legendary") || entry.tags.includes("Sub-Legendary"))) &&
+    !(pool.noMythical && entry.tags.includes("Mythical")) &&
+    (pool.maxBst >= MAX_BST || entry.bst <= pool.maxBst)
+  );
+}
+
+const PICKABLE = gen.species
+  .all()
+  .filter((entry) => selectable(LAST_GEN, LAST_GEN, entry))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const picked = new Map<string, readonly AnySpecies[]>();
+
+export function freeSpecies(pool: FreePool): readonly AnySpecies[] {
+  const key = JSON.stringify([pool.speciesGen, pool.fullyEvolved, pool.noLegendary, pool.noMythical, pool.maxBst]);
+  let species = picked.get(key);
+  if (!species) {
+    species = PICKABLE.filter((entry) => fits(entry, pool)).map((entry) => ({ id: entry.id, name: entry.name, types: [...entry.types] }));
+    picked.set(key, species);
+  }
+  return species;
+}
+
+export function inFreePool(species: string, pool: FreePool): boolean {
+  const entry = gen.species.get(species);
+  return entry.exists && fits(entry, pool);
+}
+
+export const ANY_SPECIES_IDS: ReadonlySet<string> = new Set(
+  gen.species
+    .all()
+    .filter((entry) => available(entry))
+    .map((entry) => entry.id),
+);
 
 export const NATURES: readonly Nature[] = gen.natures
   .all()
@@ -127,28 +177,44 @@ export function movesUpTo(upTo: number): readonly MoveInfo[] {
   return moves;
 }
 
-export function moveGen(id: string): number | null {
-  const move = gen.moves.get(id);
-  return move.exists ? move.gen : null;
+export function anyMoves(): readonly MoveInfo[] {
+  return movesUpTo(LAST_GEN);
 }
 
-const learnsets = new Map<string, Promise<ReadonlySet<string>>>();
+const oldGen = Dex.forGen(2);
 
-async function learnsetOf(species: string): Promise<ReadonlySet<string>> {
-  const moves = new Set<string>();
+export type Learnset = ReadonlyMap<string, ReadonlySet<string>>;
+
+const learnsets = new Map<string, Promise<Learnset>>();
+
+function addSources(into: Map<string, Set<string>>, learnset: Record<string, string[]> | undefined, keep: (source: string) => boolean) {
+  for (const [move, sources] of Object.entries(learnset ?? {})) {
+    const kept = sources.filter(keep);
+    if (kept.length === 0) continue;
+    const now = into.get(move) ?? new Set<string>();
+    for (const source of kept) now.add(source);
+    into.set(move, now);
+  }
+}
+
+const early = (source: string) => source.startsWith("1") || source.startsWith("2");
+
+async function learnsetOf(species: string): Promise<Learnset> {
+  const moves = new Map<string, Set<string>>();
   const seen = new Set<string>();
   let entry = gen.species.get(species);
   while (entry.exists && !seen.has(entry.id)) {
     seen.add(entry.id);
     const own = (await gen.learnsets.get(entry.id))?.learnset;
     const base = !own && entry.baseSpecies !== entry.name ? (await gen.learnsets.get(entry.baseSpecies))?.learnset : undefined;
-    for (const move of Object.keys(own ?? base ?? {})) moves.add(move);
+    addSources(moves, own ?? base, (source) => !early(source));
+    if (entry.gen <= 2) addSources(moves, (await oldGen.learnsets.get(entry.id))?.learnset, early);
     entry = gen.species.get(entry.prevo || (entry.changesFrom ?? ""));
   }
   return moves;
 }
 
-export function learnset(species: string): Promise<ReadonlySet<string>> {
+export function learnset(species: string): Promise<Learnset> {
   const id = gen.species.get(species).id;
   let moves = learnsets.get(id);
   if (!moves) {
@@ -156,4 +222,27 @@ export function learnset(species: string): Promise<ReadonlySet<string>> {
     learnsets.set(id, moves);
   }
   return moves;
+}
+
+export interface FreeMoves {
+  gens: readonly number[];
+  levelUp: ReadonlySet<string>;
+  tms: ReadonlySet<string>;
+}
+
+export function freeMoves(learned: Learnset, pool: FreePool): FreeMoves | null {
+  if (pool.tms === "any") return null;
+  const machines = new Set(pool.tms.map((g) => `${g}M`));
+  const levelUp = new Set<string>();
+  const tms = new Set<string>();
+  for (const [move, sources] of learned) {
+    const codes = [...sources].map((source) => source.slice(0, 2));
+    if (codes.some((code) => code[1] === "L")) levelUp.add(move);
+    else if (codes.some((code) => machines.has(code))) tms.add(move);
+  }
+  return { gens: pool.tms, levelUp, tms };
+}
+
+export function freeMoveAllowed(moves: FreeMoves | null, move: string): boolean {
+  return moves === null || moves.levelUp.has(move) || moves.tms.has(move);
 }
