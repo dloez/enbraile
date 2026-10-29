@@ -319,7 +319,7 @@ function FallenCard({ mon }: { mon: FallenMon }) {
   return (
     <div className="flex items-center gap-3.5 rounded-[18px] border-3 bg-card py-2.5 pr-3.5 pl-2.5 sm:gap-4 sm:py-3 sm:pr-4.5 sm:pl-3">
       <span className="grid size-16 flex-none place-items-center overflow-hidden rounded-xl bg-box sm:size-18">
-        <MonSprite mon={mon} className="size-18 opacity-60 grayscale sm:size-20" />
+        <MonSprite mon={mon} className="size-full object-contain opacity-60 grayscale" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="truncate font-heading text-[1.75rem] leading-[0.9] sm:text-3xl">{mon.nickname ?? mon.name}</span>

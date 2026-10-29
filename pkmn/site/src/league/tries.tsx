@@ -202,7 +202,7 @@ function TryCard({ one, name, canEdit, onEdit }: { one: LeagueTry; name: string;
                 alt={member.fell ? t.fellIn(member.name, member.fell) : member.name}
                 width={68}
                 height={68}
-                className={cn("-mt-1.5 -mb-0.5 block size-13 flex-none [image-rendering:pixelated] sm:size-17", member.fell && "opacity-45 grayscale")}
+                className={cn("block size-full object-contain [image-rendering:pixelated]", member.fell && "opacity-45 grayscale")}
               />
             ) : (
               <span className="px-1 text-center text-xs font-bold text-muted-foreground">{member.fell ? t.fellIn(member.name, member.fell) : member.name}</span>

@@ -198,7 +198,7 @@ export function ItemEditor({ sheet, slots, stocks, slot, owner, back, onBack, on
               <span className="flex flex-none">
                 {holders.map((h) => (
                   <span key={h.at} title={t.heldBy(displayName(h.mon))} className="flex size-7 items-center justify-center overflow-hidden">
-                    <MonSprite mon={h.mon} className="-m-1.5 size-10 flex-none" />
+                    <MonSprite mon={h.mon} className="size-full object-contain" />
                     <span className="sr-only">{t.heldBy(displayName(h.mon))}</span>
                   </span>
                 ))}

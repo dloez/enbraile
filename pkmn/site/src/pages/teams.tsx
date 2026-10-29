@@ -578,7 +578,7 @@ function RowBody({ team, showOwner, mine, filled }: { team: TeamRow; showOwner: 
                 species ? "border-solid bg-box" : "border-dashed",
               )}
             >
-              {sprite && <img src={sprite} alt="" className={cn("-mt-1.5 -mb-0.5 flex-none [image-rendering:pixelated] sm:size-20", size > 6 ? "size-12" : "size-14")} />}
+              {sprite && <img src={sprite} alt="" className="block size-full object-contain [image-rendering:pixelated]" />}
             </span>
           );
         })}

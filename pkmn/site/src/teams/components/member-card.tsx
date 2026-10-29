@@ -160,7 +160,7 @@ export function MemberCard({ member, mon, from, focus, glow, editable, pick, nat
           )}
         >
           <span className="flex h-21 w-18 flex-none items-center justify-center overflow-hidden short:h-13 short:w-14">
-            <MonSprite mon={mon} className="-mx-1.5 size-21 flex-none short:size-16" />
+            <MonSprite mon={mon} className="size-full object-contain" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-0.75">
             <span className="min-w-0 truncate font-heading text-[1.75rem] leading-[0.9]">{name}</span>

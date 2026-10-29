@@ -150,7 +150,7 @@ export function AddDialog({ slot, slots, stocks, sources, anyPokemon, pool, onCl
                     target ? "border-yellow bg-yellow/14" : m ? "border-solid bg-card" : "border-dashed",
                   )}
                 >
-                  {held ? <MonSprite mon={held} className="-mx-1 -mt-1.5 -mb-0.5 size-13 flex-none" /> : target && at + 1}
+                  {held ? <MonSprite mon={held} className="size-full object-contain" /> : target && at + 1}
                 </span>
               );
             })}

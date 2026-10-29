@@ -385,7 +385,7 @@ function HeadToHead({ teams, gen, wide, calc, onCalc }: { teams: readonly Compar
         <span className="font-heading text-[1.1875rem] text-muted-foreground">{label}</span>
         <div className="flex items-center gap-2.5">
           <span className={cn("flex flex-none items-center justify-center overflow-hidden", wide ? "h-14 w-16" : "h-13 w-14")}>
-            <img src={spriteOf(m)} alt="" className={cn("flex-none [image-rendering:pixelated]", wide ? "-mx-1.5 -mt-2.5 -mb-2 size-19" : "-mx-1.5 -mt-2 -mb-1.5 size-17")} />
+            <img src={spriteOf(m)} alt="" className="block size-full object-contain [image-rendering:pixelated]" />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <SelectField
