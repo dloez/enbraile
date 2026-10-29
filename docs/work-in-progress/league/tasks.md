@@ -42,6 +42,24 @@ A player sees another's snapshots only from their own round or older; someone ou
 **Attempted once:** 2026-10-29, the work kept on branch `wq/saves-up-to-own-round`; its validator failed round two: the PC's "Add to team" (`src/teams/components/add-to-team.tsx`) `PUT`s a team whose hidden source `GET /api/teams/<id>` cut down, and `PUT /api/teams/<id>` refuses only new hidden `sources`, not `slots`, so the write repoints members; the fix left is refusing `slots` on a team holding a source the writer may not see, and leaving such teams out of "Add to team".
 **Needs the author:** a player's round counts only their snapshots at round milestones (`savesSeen` on the branch), so a player who uploaded no round milestone, only their Tournament save, is at round 0 and sees no one's Tournament snapshot, while the rulebook's open sheet has each cup player know the other's full sheet ([Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament)). Does a snapshot at a later milestone (the Tournament included) count as reaching every round before it, or does the open cup's sheet override the save rule, or does it stand as written?
 
+## A Pokémon League try's team and members follow the save rule
+
+A try's team is never private but follows the save rule as a milestone's PC does: a player sees another's try team, and on the league page its members and the combat each fell in, only once they have reached the Pokémon League themselves; someone outside the series once every player has; admins always ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). Today a try's team is made public when its try locks it (`lockTryTeam` in `api/_lib/teams.ts`, The Team Builder → Decisions, "The locked teams' visibility build choices"), and the Pokémon League view lists every try's members to every reader (`src/league/tries.tsx`, fed by `leagueOf` in `api/_lib/league.ts`).
+
+**Do:**
+- [ ] A try's team, by `GET /api/teams` and `GET /api/teams/<id>`, and a try's members and falls in the league read, held back from a reader the save rule does not yet let see the Pokémon League, its combats won and pips still shown; the try's team never marked private.
+- [ ] The Team Builder's and The pkmn Site's visibility decisions rewritten to say so.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, with Red's try logged and Blue short of the Pokémon League, Blue sees Red's combats won but not the try's members or its team, by page or route, and does once Blue reaches it; an admin always sees them; the try's team shows no Private tag.
+- Human-run: none.
+- Reuse: the save rule of [Players see others' saves only up to their own round](#players-see-others-saves-only-up-to-their-own-round); `lockTryTeam` (`api/_lib/teams.ts`); `leagueOf` (`api/_lib/league.ts`).
+- Neighbors: the profile's league record, which shows the best try's pips.
+- Forbidden: hiding in the browser only; a try's team marked private.
+
+**Touches:** `pkmn/site/api/_lib/teams.ts`, `pkmn/site/api/_lib/league.ts`, `pkmn/site/shared/`, `pkmn/site/src/league/tries.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
+**After:** Players see others' saves only up to their own round
+
 ## Do a closed round's standings hide the matches its pairs hide?
 
 A closed round hides a match's pair from a player who has not locked, and from everyone else until both its players have locked or it has a result (`pairsHidden` in `shared/league.ts`, The pkmn Site → Decisions, "The closed round's pairs, build choices"). The standings are still worked out from every match (`standings(…)` in `leagueOf`, `api/_lib/league.ts`), so a hidden match that already has a result moves its players' W–L and points, and a tie's note ("Beat <name>") can name its other side ([discovery → Team Locking](discovery.md#team-locking)).
