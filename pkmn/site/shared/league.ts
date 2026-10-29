@@ -82,10 +82,13 @@ export function pairsHidden(reader: string, round: PairedRound): { matches: Set<
 
 export type SavedRound = PairedRound & { milestoneId: string };
 
+export type SavedCup = { mode: LeagueMode; seeds: readonly string[]; played: ReadonlyMap<string, CupMatch> };
+
 export type SeriesSaves = {
   milestones: readonly { id: string; mark: MilestoneMark }[];
   taken: ReadonlyMap<string, readonly string[]>;
   rounds: readonly SavedRound[];
+  cup: SavedCup | null;
 };
 
 function reach(reader: string, saves: SeriesSaves): { rounds: Map<string, number>; league: number; upTo: number } {
@@ -118,10 +121,18 @@ function roundHolds(reader: string, round: SavedRound, order: ReadonlyMap<string
   };
 }
 
+function cupHolds(saves: SeriesSaves, order: ReadonlyMap<string, number>): ((owner: string, milestoneId: string) => boolean) | undefined {
+  if (saves.cup?.mode !== "closed") return undefined;
+  const from = saves.milestones.findLastIndex((at) => at.mark === "tournament");
+  const running = cupRunning(saves.cup.seeds, saves.cup.played);
+  if (from < 0 || running.size === 0) return undefined;
+  return (owner, milestoneId) => running.has(owner) && (order.get(milestoneId) ?? -1) >= from;
+}
+
 export function savesSeen(reader: string, saves: SeriesSaves): (owner: string, milestoneId: string) => boolean {
   const { rounds, upTo } = reach(reader, saves);
   const order = new Map(saves.milestones.map((at, index) => [at.id, index]));
-  const holds = saves.rounds.flatMap((round) => roundHolds(reader, round, order) ?? []);
+  const holds = [...saves.rounds.map((round) => roundHolds(reader, round, order)), cupHolds(saves, order)].filter((held) => held !== undefined);
   return (owner, milestoneId) => owner === reader || (!holds.some((held) => held(owner, milestoneId)) && (rounds.get(milestoneId) ?? 0) <= upTo);
 }
 
@@ -754,4 +765,17 @@ export function cupDraw(seeds: readonly string[], played: ReadonlyMap<string, Cu
   }
   const all = [...drawn.values()];
   return { slots: all, group, champion: all.at(-1)?.winner ?? null };
+}
+
+export function cupRunning(seeds: readonly string[], played: ReadonlyMap<string, CupMatch>): Set<string> {
+  const draw = cupDraw(seeds, played);
+  if (draw.champion) return new Set();
+  const { plain } = cupShape(seeds.length);
+  const out = new Set<string>();
+  for (const slot of draw.slots) {
+    const loser = slot.winner === null ? null : slot.winner === slot.a ? slot.b : slot.a;
+    if (loser && (slot.kind === "bracket" || (slot.kind === "first" && plain))) out.add(loser);
+  }
+  if (draw.group.some((row) => row.through)) for (const row of draw.group) if (!row.through) out.add(row.player);
+  return new Set(seeds.filter((player) => !out.has(player)));
 }

@@ -1,10 +1,10 @@
 import { and, asc, count, eq, inArray, isNotNull, isNull, ne, notExists, or, type SQL, sql } from "drizzle-orm";
 import { alias, type AnyPgTable } from "drizzle-orm/pg-core";
-import { leagueSeen, pairsHidden, type SeriesSaves, savesSeen } from "../../shared/league.js";
+import { type CupMatch, leagueSeen, pairsHidden, type SavedCup, type SeriesSaves, savesSeen } from "../../shared/league.js";
 import { type AdminSeries, CHECKLIST_TEXT, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
-import { cup, game, leagueMatch, leagueRound, leagueTry, milestone, save, series, seriesPlayer, snapshot, team, user } from "./schema.js";
+import { cup, cupEntrant, game, leagueMatch, leagueRound, leagueTry, milestone, save, series, seriesPlayer, snapshot, team, user } from "./schema.js";
 
 export type SeriesRow = typeof series.$inferSelect;
 
@@ -114,6 +114,35 @@ async function seriesSaves(ids: readonly string[]): Promise<Map<string, SeriesSa
         .from(team)
         .where(and(inArray(team.matchId, matches.map((match) => match.id)), isNotNull(team.lockedAt)))
     : [];
+  const cups = await db.select({ id: cup.id, seriesId: cup.seriesId, mode: cup.mode }).from(cup).where(inArray(cup.seriesId, ids));
+  const closed = cups.filter((one) => one.mode === "closed").map((one) => one.id);
+  const entrants = closed.length
+    ? await db.select({ cupId: cupEntrant.cupId, player: cupEntrant.playerId }).from(cupEntrant).where(inArray(cupEntrant.cupId, closed)).orderBy(asc(cupEntrant.seed))
+    : [];
+  const cupMatches = closed.length
+    ? await db
+        .select({
+          cupId: leagueMatch.cupId,
+          slot: leagueMatch.slot,
+          a: leagueMatch.playerA,
+          b: leagueMatch.playerB,
+          gamesA: leagueMatch.gamesA,
+          gamesB: leagueMatch.gamesB,
+          faintedA: leagueMatch.faintedA,
+          faintedB: leagueMatch.faintedB,
+        })
+        .from(leagueMatch)
+        .where(inArray(leagueMatch.cupId, closed))
+    : [];
+  const savedCup = (seriesId: string): SavedCup | null => {
+    const held = cups.find((one) => one.seriesId === seriesId);
+    if (!held) return null;
+    return {
+      mode: held.mode,
+      seeds: entrants.filter((one) => one.cupId === held.id).map((one) => one.player),
+      played: new Map(cupMatches.filter((one) => one.cupId === held.id && one.slot !== null).map(({ cupId: _cup, slot, ...match }) => [slot!, match satisfies CupMatch])),
+    };
+  };
   return new Map(
     ids.map((id) => [
       id,
@@ -140,6 +169,7 @@ async function seriesSaves(ids: readonly string[]): Promise<Map<string, SeriesSa
                 locked: locked.filter((held) => held.matchId === match.id).map((held) => held.ownerId),
               })),
           })),
+        cup: savedCup(id),
       },
     ]),
   );
