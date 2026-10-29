@@ -1,4 +1,5 @@
 import * as z from "zod";
+import type { MilestoneMark } from "./series.js";
 import { teamSlots } from "./team.js";
 
 export const POINTS_PER_WIN = 1;
@@ -77,6 +78,20 @@ export function pairsHidden(reader: string, round: PairedRound): { matches: Set<
     round.matches.filter((match) => match !== mine && !match.decided && !(match.locked.includes(match.a) && match.locked.includes(match.b))).map((match) => match.id),
   );
   return { matches, bye: round.bye !== null && round.bye !== reader && matches.size > 0, yours: false };
+}
+
+type SeriesSaves = { milestones: readonly { id: string; mark: MilestoneMark }[]; taken: ReadonlyMap<string, readonly string[]> };
+
+export function savesSeen(reader: string, saves: SeriesSaves): (owner: string, milestoneId: string) => boolean {
+  const rounds = new Map<string, number>();
+  let round = 0;
+  for (const at of saves.milestones) {
+    if (at.mark === "round") round += 1;
+    rounds.set(at.id, round);
+  }
+  const reached = (player: string) => Math.max(0, ...(saves.taken.get(player) ?? []).map((id) => rounds.get(id) ?? 0));
+  const upTo = saves.taken.has(reader) ? reached(reader) : Math.min(...[...saves.taken.keys()].map(reached));
+  return (owner, milestoneId) => owner === reader || (rounds.get(milestoneId) ?? 0) <= upTo;
 }
 
 export const CUP_KINDS = ["first", "group", "bracket"] as const;

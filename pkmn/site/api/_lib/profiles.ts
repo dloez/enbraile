@@ -7,7 +7,7 @@ import { db } from "./db.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
 import { says } from "./i18n.js";
 import { leagueOf } from "./league.js";
-import { teamsSeenBy, type Viewer, viewer } from "./series-data.js";
+import { savesSeenBy, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 
 const t = says({
   en: {
@@ -45,10 +45,12 @@ profiles.get("/:player", async (c) => {
         .where(inArray(milestone.seriesId, ids))
         .orderBy(asc(milestone.position))
     : [];
-  const taken = ids.length
+  const seen = await savesSeenBy(reader, ids);
+  const stored = ids.length
     ? await db
         .select({
           seriesId: save.seriesId,
+          milestoneId: snapshot.milestoneId,
           milestone: milestone.name,
           playTime: sql<Snapshot["playTime"]>`${snapshot.data}->'playTime'`,
           trainer: sql<Snapshot["trainer"]>`${snapshot.data}->'trainer'`,
@@ -62,6 +64,7 @@ profiles.get("/:player", async (c) => {
         .where(and(eq(save.userId, player.id), inArray(save.seriesId, ids)))
         .orderBy(asc(milestone.position))
     : [];
+  const taken = stored.filter((one) => seen(one.seriesId, player.id, one.milestoneId));
   const progress = ids.length
     ? await db
         .select({ seriesId: save.seriesId, milestone: milestone.name })

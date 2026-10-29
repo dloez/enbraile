@@ -1,9 +1,11 @@
 import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { lockNeeds } from "../../shared/league.js";
+import type { Snapshot } from "../../shared/snapshot.js";
 import {
   backedBy,
   emptySlots,
+  isFree,
   newTeamInput,
   nextTeamName,
   teamInput,
@@ -23,7 +25,7 @@ import { body } from "./body.js";
 import { db } from "./db.js";
 import { requireAdmin } from "./admin.js";
 import { cup, cupEntrant, game, gameSide, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
-import { hiddenPairs, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
+import { hiddenPairs, savesSeenBy, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 import { seesSpreads, slotsWithoutSpreads, withoutSpreads } from "./spreads.js";
 import { says } from "./i18n.js";
 
@@ -103,6 +105,8 @@ export async function insertTeam(tx: Tx, made: NewTeam) {
 const sourceColumns = {
   teamId: teamSource.teamId,
   id: snapshot.id,
+  seriesId: series.id,
+  milestoneId: snapshot.milestoneId,
   playerId: user.id,
   playerName: user.name,
   seriesNumber: series.number,
@@ -202,20 +206,32 @@ async function seriesPool(sources: readonly string[]): Promise<TeamPool> {
   return row?.pool ?? DEFAULT_POOL;
 }
 
-async function shownSnapshots(ids: readonly string[]): Promise<boolean> {
+async function shownSnapshots(reader: Viewer, ids: readonly string[]): Promise<boolean> {
   if (ids.length === 0) return true;
   const rows = await db
-    .select({ id: snapshot.id })
+    .select({ seriesId: save.seriesId, owner: save.userId, milestoneId: snapshot.milestoneId })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .innerJoin(series, eq(series.id, save.seriesId))
     .where(and(inArray(snapshot.id, [...ids]), ne(series.state, "draft")));
-  return rows.length === ids.length;
+  const seen = await savesSeenBy(reader, rows.map((row) => row.seriesId));
+  return rows.length === ids.length && rows.every((row) => seen(row.seriesId, row.owner, row.milestoneId));
 }
 
 teams.get("/snapshots", async (c) => {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const rows = await db
-    .select({ id: snapshot.id, playerId: user.id, playerName: user.name, seriesNumber: series.number, seriesName: series.name, milestone: milestone.name })
+    .select({
+      id: snapshot.id,
+      seriesId: series.id,
+      milestoneId: snapshot.milestoneId,
+      playerId: user.id,
+      playerName: user.name,
+      seriesNumber: series.number,
+      seriesName: series.name,
+      milestone: milestone.name,
+    })
     .from(snapshot)
     .innerJoin(save, eq(save.id, snapshot.saveId))
     .innerJoin(user, eq(user.id, save.userId))
@@ -223,7 +239,8 @@ teams.get("/snapshots", async (c) => {
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
     .where(ne(series.state, "draft"))
     .orderBy(desc(series.number), asc(user.name), desc(milestone.position));
-  const list: TeamSourceRow[] = rows.map(sourceOf);
+  const seen = await savesSeenBy(reader, rows.map((row) => row.seriesId));
+  const list: TeamSourceRow[] = rows.filter((row) => seen(row.seriesId, row.playerId, row.milestoneId)).map(sourceOf);
   return c.json(list);
 });
 
@@ -337,8 +354,10 @@ teams.get("/", async (c) => {
   const ids = rows.map((row) => row.id);
   const sources = ids.length ? await sourcesQuery().where(inArray(teamSource.teamId, ids)).orderBy(asc(teamSource.position)) : [];
   const leagues = await leaguesOf(ids, reader);
+  const seen = await savesSeenBy(reader, sources.map((s) => s.seriesId));
   const list: TeamRow[] = rows.map((row) => {
-    const own = sources.filter((s) => s.teamId === row.id).map(sourceOf);
+    const held = sources.filter((s) => s.teamId === row.id);
+    const own = held.map(sourceOf);
     const league = leagues.get(row.id) ?? null;
     return {
       id: row.id,
@@ -349,6 +368,7 @@ teams.get("/", async (c) => {
       state: teamState(teamKind({ league }), row.lockedAt !== null),
       lockedAt: row.lockedAt?.toISOString() ?? null,
       sources: own,
+      sourceHidden: held.some((s) => !seen(s.seriesId, s.playerId, s.milestoneId)),
       anyPokemon: row.anyPokemon,
       private: row.private,
       members: row.slots.map((member) => member?.species ?? null),
@@ -421,7 +441,14 @@ teams.get("/:id", async (c) => {
     .where(and(eq(team.id, c.req.param("id")), teamsSeenBy(reader)));
   if (!row) return c.json({ error: t(c).noTeam }, 404);
   const sources = await db
-    .select({ ...sourceColumns, gameId: series.gameId, data: snapshot.data, missing: snapshot.missing, abilitySetas: game.abilitySetas, mintPrice: game.mintPrice })
+    .select({
+      ...sourceColumns,
+      gameId: series.gameId,
+      data: snapshot.data,
+      missing: snapshot.missing,
+      abilitySetas: game.abilitySetas,
+      mintPrice: game.mintPrice,
+    })
     .from(teamSource)
     .innerJoin(snapshot, eq(snapshot.id, teamSource.snapshotId))
     .innerJoin(save, eq(save.id, snapshot.saveId))
@@ -431,9 +458,12 @@ teams.get("/:id", async (c) => {
     .leftJoin(game, eq(game.id, series.gameId))
     .where(eq(teamSource.teamId, row.id))
     .orderBy(asc(teamSource.position));
+  const seen = await savesSeenBy(reader, sources.map((s) => s.seriesId));
   const league = (await leaguesOf([row.id], reader)).get(row.id) ?? null;
   const mine = reader.id === row.ownerId;
   const locked = row.lockedAt !== null;
+  const cut = new Map(sources.filter((s) => !seen(s.seriesId, s.playerId, s.milestoneId)).map((s) => [s.id, membersOf(row.slots, s.id, s.data)] as const));
+  const slots = cut.size === 0 ? row.slots : row.slots.map((member) => (member && !isFree(member) && cut.has(member.source) ? renumbered(member, cut.get(member.source)?.at) : member));
   const page: TeamPage = {
     id: row.id,
     name: row.name,
@@ -441,16 +471,17 @@ teams.get("/:id", async (c) => {
     mine,
     league,
     lockedAt: row.lockedAt?.toISOString() ?? null,
-    canEdit: mine && !locked,
+    canEdit: mine && !locked && cut.size === 0,
     canLock: mine && !locked && (league?.kind === "cup" || league?.kind === "round"),
     canUnlock: !!reader.admin && locked,
     canClone: locked && (mine || !!reader.admin),
     sources: sources.map((s) => {
       const shown = seesSpreads(reader, s.playerId);
+      const data = cut.get(s.id)?.data ?? s.data;
       return {
         ...sourceOf(s),
         gameId: s.gameId,
-        snapshot: shown ? s.data : withoutSpreads(s.data),
+        snapshot: shown ? data : withoutSpreads(data),
         missing: s.missing,
         costs: s.abilitySetas === null || s.mintPrice === null ? DEFAULT_COSTS : { abilitySetas: s.abilitySetas, mintPrice: s.mintPrice },
         spreadHidden: !shown,
@@ -458,13 +489,41 @@ teams.get("/:id", async (c) => {
     }),
     anyPokemon: row.anyPokemon,
     private: row.private,
-    slots: seesSpreads(reader, row.ownerId) ? row.slots : slotsWithoutSpreads(row.slots),
+    slots: seesSpreads(reader, row.ownerId) ? slots : slotsWithoutSpreads(slots),
     pool: row.pool,
     freePool: row.freePool,
     updatedAt: row.updatedAt.toISOString(),
   };
   return c.json(page);
 });
+
+function renumbered<M extends { index: number }>(member: M, at: ReadonlyMap<number, number> | undefined): M | null {
+  const index = at?.get(member.index);
+  return index === undefined ? null : { ...member, index };
+}
+
+function membersOf(slots: TeamSlots, source: string, data: Snapshot): { data: Snapshot; at: Map<number, number> } {
+  const kept = [...new Set(slots.flatMap((member) => (member && !isFree(member) && member.source === source && data.pokemon[member.index] ? [member.index] : [])))].sort((a, b) => a - b);
+  return {
+    data: {
+      pokemon: kept.flatMap((index) => data.pokemon[index] ?? []),
+      items: [],
+      tms: [],
+      fainted: [],
+      bag: [],
+      trainer: { name: null, id: null, publicId: null, money: null, badges: [] },
+      playTime: null,
+      pokedex: { seen: null, owned: null },
+      records: { trainerBattlesWon: null, trainerBattlesLost: null, wildBattlesWon: null, wildBattlesLost: null, blackouts: null },
+      hallOfFame: null,
+      usedEncounters: [],
+      saveSlot: null,
+      randomlockeVersion: null,
+      notices: [],
+    },
+    at: new Map(kept.map((index, position) => [index, position])),
+  };
+}
 
 teams.post("/", async (c) => {
   const reader = await viewer(c.req.raw);
@@ -476,7 +535,7 @@ teams.post("/", async (c) => {
   const latest = input.sources || anyPokemon ? undefined : await latestSnapshot(reader.id);
   const sources = input.sources ?? (latest ? [latest] : []);
   if (sources.length === 0 && !anyPokemon) return c.json({ error: input.sources ? t(c).needSource : t(c).uploadFirst }, 400);
-  if (!(await shownSnapshots(sources))) return c.json({ error: t(c).noSnapshot }, 400);
+  if (!(await shownSnapshots(reader, sources))) return c.json({ error: t(c).noSnapshot }, 400);
   const slots = input.slots ?? emptySlots();
   if (!backedBy(slots, sources, anyPokemon)) return c.json({ error: t(c).outsideSources }, 400);
   const names = await db.select({ name: team.name }).from(team).where(eq(team.ownerId, reader.id));
@@ -503,7 +562,7 @@ teams.put("/:id", async (c) => {
   const sources = input.sources ?? (await sourceIds(id));
   const anyPokemon = input.anyPokemon ?? now?.anyPokemon ?? false;
   if (resourcing && sources.length === 0 && !anyPokemon) return c.json({ error: t(c).needSource }, 400);
-  if (input.sources && !(await shownSnapshots(input.sources))) return c.json({ error: t(c).noSnapshot }, 400);
+  if ((input.sources || input.slots) && !(await shownSnapshots(reader, sources))) return c.json({ error: t(c).noSnapshot }, 400);
   const slots = input.slots ?? (resourcing ? now?.slots : undefined);
   if (slots && !backedBy(slots, sources, anyPokemon)) return c.json({ error: t(c).outsideSources }, 400);
   const written = await db.transaction(async (tx) => {

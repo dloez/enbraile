@@ -38,7 +38,7 @@ export function useOwnTeams(owner: string | null, snapshot: string | null): Team
     if (owner === null || snapshot === null) return;
     let live = true;
     api(`/teams?owner=${encodeURIComponent(owner)}`, teamList).then(
-      (list) => live && setTeams(list.filter((team) => team.state !== "locked" && team.sources.some((s) => s.id === snapshot))),
+      (list) => live && setTeams(list.filter((team) => team.state !== "locked" && !team.sourceHidden && team.sources.some((s) => s.id === snapshot))),
       () => undefined,
     );
     return () => {

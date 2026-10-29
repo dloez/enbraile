@@ -117,6 +117,7 @@ export const teamRow = z.object({
   state: z.enum(TEAM_STATES),
   lockedAt: z.string().nullable(),
   sources: z.array(teamSourceRow),
+  sourceHidden: z.boolean(),
   anyPokemon: z.boolean(),
   private: z.boolean(),
   members: z.array(id.nullable()),

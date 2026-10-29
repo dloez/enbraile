@@ -1,6 +1,6 @@
 import { and, asc, count, eq, inArray, isNotNull, isNull, ne, or, type SQL, sql } from "drizzle-orm";
 import { alias, type AnyPgTable } from "drizzle-orm/pg-core";
-import { pairsHidden } from "../../shared/league.js";
+import { pairsHidden, savesSeen } from "../../shared/league.js";
 import { type AdminSeries, CHECKLIST_TEXT, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
@@ -72,6 +72,38 @@ export async function hiddenPairs(reader: Viewer, matchIds: readonly string[]): 
   );
 }
 
+export type SeenSave = (seriesId: string, owner: string, milestoneId: string) => boolean;
+
+export async function savesSeenBy(reader: Viewer, seriesIds: readonly string[]): Promise<SeenSave> {
+  const ids = [...new Set(seriesIds)];
+  if (reader.admin || ids.length === 0) return () => true;
+  const marks = await db
+    .select({ seriesId: milestone.seriesId, id: milestone.id, mark: milestone.mark })
+    .from(milestone)
+    .where(inArray(milestone.seriesId, ids))
+    .orderBy(asc(milestone.position));
+  const players = await db.select({ seriesId: seriesPlayer.seriesId, id: seriesPlayer.userId }).from(seriesPlayer).where(inArray(seriesPlayer.seriesId, ids));
+  const taken = await db
+    .select({ seriesId: save.seriesId, owner: save.userId, milestoneId: snapshot.milestoneId })
+    .from(snapshot)
+    .innerJoin(save, eq(save.id, snapshot.saveId))
+    .where(inArray(save.seriesId, ids));
+  const rules = new Map(
+    ids.map((id) => [
+      id,
+      savesSeen(reader.id, {
+        milestones: marks.filter((at) => at.seriesId === id),
+        taken: new Map(
+          players
+            .filter((player) => player.seriesId === id)
+            .map((player) => [player.id, taken.filter((one) => one.seriesId === id && one.owner === player.id).map((one) => one.milestoneId)]),
+        ),
+      }),
+    ]),
+  );
+  return (seriesId, owner, milestoneId) => rules.get(seriesId)?.(owner, milestoneId) ?? false;
+}
+
 export async function viewer(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   return session?.user;
@@ -114,6 +146,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
   const taken = await db
     .select({
       userId: save.userId,
+      milestoneId: snapshot.milestoneId,
       milestone: milestone.name,
       pokemon: snapshot.pokemon,
       fainted: snapshot.fainted,
@@ -131,6 +164,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
     .where(eq(save.seriesId, seriesId))
     .orderBy(asc(milestone.position));
+  const seen = await savesSeenBy(reader, [seriesId]);
   const teamCounts = players.length
     ? await db
         .select({ ownerId: team.ownerId, teams: count() })
@@ -145,7 +179,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
   return players.map((player) => {
     const own = saves.find((s) => s.userId === player.id);
     const snapshots = taken
-      .filter((row) => row.userId === player.id)
+      .filter((row) => row.userId === player.id && seen(seriesId, row.userId, row.milestoneId))
       .map((row) => ({
         milestone: row.milestone,
         pokemon: row.pokemon,

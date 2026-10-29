@@ -8,7 +8,7 @@ import type { OwedSeries, SeriesBanner, SeriesPage } from "../../shared/series.j
 import { db } from "./db.js";
 import { downloadUrl } from "./files.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
-import { findShown, gameOf, mayUpload, milestonesOf, plays, trainersOf, viewer } from "./series-data.js";
+import { findShown, gameOf, mayUpload, milestonesOf, plays, savesSeenBy, trainersOf, viewer } from "./series-data.js";
 import { seesSpreads, withoutSpreads } from "./spreads.js";
 import { says } from "./i18n.js";
 
@@ -97,13 +97,15 @@ seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
   const player = await playerOf(row.id, c.req.param("player"));
   if (!player) return c.json({ error: t(c).notPlayer }, 404);
   const playerId = player.id;
-  const taken = await db
-    .select({ milestone: milestone.name, snapshotId: snapshot.id })
+  const seen = await savesSeenBy(reader, [row.id]);
+  const stored = await db
+    .select({ milestoneId: milestone.id, milestone: milestone.name, snapshotId: snapshot.id })
     .from(milestone)
     .leftJoin(save, and(eq(save.seriesId, milestone.seriesId), eq(save.userId, playerId)))
     .leftJoin(snapshot, and(eq(snapshot.saveId, save.id), eq(snapshot.milestoneId, milestone.id)))
     .where(eq(milestone.seriesId, row.id))
     .orderBy(asc(milestone.position));
+  const taken = stored.map((m) => ({ milestone: m.milestone, snapshotId: m.snapshotId !== null && seen(row.id, playerId, m.milestoneId) ? m.snapshotId : null }));
   const asked = c.req.query("snapshot");
   const chosen = asked === undefined ? taken.findLast((m) => m.snapshotId !== null) : taken.find((m) => m.milestone === asked);
   if (asked !== undefined && !chosen?.snapshotId) return c.json({ error: t(c).noSnapshotAt(asked) }, 404);
@@ -129,6 +131,7 @@ seriesRoutes.get("/:number/abilities", async (c) => {
   const taken = await db
     .select({
       player: { id: user.id, name: user.name },
+      milestoneId: snapshot.milestoneId,
       milestone: milestone.name,
       pokemon: sql<Snapshot["pokemon"]>`${snapshot.data}->'pokemon'`,
     })
@@ -139,7 +142,8 @@ seriesRoutes.get("/:number/abilities", async (c) => {
     .innerJoin(user, eq(user.id, save.userId))
     .where(eq(save.seriesId, row.id))
     .orderBy(asc(user.name), asc(milestone.position));
-  const latest = new Map(taken.map((t) => [t.player.id, t]));
+  const seen = await savesSeenBy(reader, [row.id]);
+  const latest = new Map(taken.filter((t) => seen(row.id, t.player.id, t.milestoneId)).map((t) => [t.player.id, t]));
   const { describeHolders } = await import("../../shared/describe.js");
   const page: AbilitiesPage = {
     series: { number: row.number, name: row.name, gameId: row.gameId },
@@ -161,8 +165,10 @@ seriesRoutes.get("/:number/trainers/:player/journey", async (c) => {
   if (!row) return c.json({ error: t(c).noSeries }, 404);
   const player = await playerOf(row.id, c.req.param("player"));
   if (!player) return c.json({ error: t(c).notPlayer }, 404);
-  const taken = await db
+  const seen = await savesSeenBy(reader, [row.id]);
+  const stored = await db
     .select({
+      milestoneId: snapshot.milestoneId,
       milestone: milestone.name,
       playTime: sql<Snapshot["playTime"]>`${snapshot.data}->'playTime'`,
       trainer: sql<Snapshot["trainer"]>`${snapshot.data}->'trainer'`,
@@ -176,6 +182,7 @@ seriesRoutes.get("/:number/trainers/:player/journey", async (c) => {
     .innerJoin(milestone, eq(milestone.id, snapshot.milestoneId))
     .where(and(eq(save.seriesId, row.id), eq(save.userId, player.id)))
     .orderBy(asc(milestone.position));
+  const taken = stored.filter((s) => seen(row.id, player.id, s.milestoneId));
   const page: JourneyPage = {
     player,
     series: { number: row.number, name: row.name },

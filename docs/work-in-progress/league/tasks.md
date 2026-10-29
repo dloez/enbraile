@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Players see others' saves only up to their own round
-
-A player sees another's snapshots only from their own round or older; someone outside the series only once every player has reached the snapshot's round; admins all ([discovery → Team Locking](discovery.md#team-locking)). Enforced wherever a snapshot is handed out: the PC, the player's series page and its journey, the abilities search and team sources.
-
-**Do:**
-- [ ] A player's and a snapshot's round from the round milestones: a player's round is the round of their latest snapshot at any milestone, not only at a round milestone, so a Tournament save alone reaches every round ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). The kept branch `wq/saves-up-to-own-round` reads only round-milestone snapshots in `savesSeen`; change that, and refuse `slots` on a `PUT` of a team holding a source the writer may not see, as its **Attempted once:** line says.
-- [ ] The rule on every snapshot route: the PC (`GET …/trainers/<player>/pc`), the journey (`GET …/trainers/<player>/journey`) and the abilities search (`GET …/abilities`) in `api/_lib/series.ts`, the series page's trainer rows (`api/_lib/series-data.ts`), and the snapshots a team starts from and its sources (`GET /api/teams/snapshots`, `GET /api/teams/<id>` in `api/_lib/teams.ts`).
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with Red at Gym 3 and Blue at Gym 2, Blue cannot open Red's Gym 3 or Gym 4 PC, find it in the abilities search or add it as a source, by page or route, and can once Blue uploads Gym 3; a player of another series sees it only once every player is at Gym 3; a series without round milestones hides nothing.
-- Human-run: the owner checks it on the preview as two of series 1's players.
-- Reuse: `MILESTONE_MARKS` (`shared/series.ts`); `findShown`, `plays` and `viewer` (`api/_lib/series-data.ts`). `api/_lib/access.ts` is only the signed-in and allowed gate on every route, not a per-snapshot check.
-- Neighbors: the PC and abilities routes.
-- Forbidden: hiding in the browser only.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**Attempted once:** 2026-10-29, the work kept on branch `wq/saves-up-to-own-round`; its validator failed round two: the PC's "Add to team" (`src/teams/components/add-to-team.tsx`) `PUT`s a team whose hidden source `GET /api/teams/<id>` cut down, and `PUT /api/teams/<id>` refuses only new hidden `sources`, not `slots`, so the write repoints members; the fix left is refusing `slots` on a team holding a source the writer may not see, and leaving such teams out of "Add to team".
-
 ## A Pokémon League try's team and members follow the save rule
 
 A try's team is never private but follows the save rule as a milestone's PC does: a player sees another's try team, and on the league page its members and the combat each fell in, only once they have reached the Pokémon League themselves; someone outside the series once every player has; admins always ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). Today a try's team is made public when its try locks it (`lockTryTeam` in `api/_lib/teams.ts`, The Team Builder → Decisions, "The locked teams' visibility build choices"), and the Pokémon League view lists every try's members to every reader (`src/league/tries.tsx`, fed by `leagueOf` in `api/_lib/league.ts`).
@@ -31,12 +13,11 @@ A try's team is never private but follows the save rule as a milestone's PC does
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, with Red's try logged and Blue short of the Pokémon League, Blue sees Red's combats won but not the try's members or its team, by page or route, and does once Blue reaches it; an admin always sees them; the try's team shows no Private tag.
 - Human-run: none.
-- Reuse: the save rule of [Players see others' saves only up to their own round](#players-see-others-saves-only-up-to-their-own-round); `lockTryTeam` (`api/_lib/teams.ts`); `leagueOf` (`api/_lib/league.ts`).
+- Reuse: the save rule (`savesSeen` in `shared/league.ts`, `savesSeenBy` in `api/_lib/series-data.ts`; [The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots), "Whose saves a reader sees"); `lockTryTeam` (`api/_lib/teams.ts`); `leagueOf` (`api/_lib/league.ts`).
 - Neighbors: the profile's league record, which shows the best try's pips.
 - Forbidden: hiding in the browser only; a try's team marked private.
 
 **Touches:** `pkmn/site/api/_lib/teams.ts`, `pkmn/site/api/_lib/league.ts`, `pkmn/site/shared/`, `pkmn/site/src/league/tries.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
-**After:** Players see others' saves only up to their own round
 
 ## A closed round hides its snapshots until the match has a result
 
@@ -48,12 +29,11 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, in a closed round, a second test player cannot open the first's round snapshot, find its Pokémon in the abilities search, or add it as a team source, by page or route, until the match has a result, nor the first's later saves once both have moved on; in an open round they can.
 - Human-run: none until a series uses it.
-- Reuse: the save rule of [Players see others' saves only up to their own round](#players-see-others-saves-only-up-to-their-own-round); the reveal of the league teams' reveal (`revealed()` in `api/_lib/series-data.ts`).
+- Reuse: the save rule (`savesSeen` in `shared/league.ts`, `savesSeenBy` in `api/_lib/series-data.ts`; [The pkmn Site → Snapshots](../../pkmn/site/explanation/site.md#snapshots), "Whose saves a reader sees"); the reveal of the league teams' reveal (`revealed()` in `api/_lib/series-data.ts`).
 - Neighbors: the PC and abilities routes.
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** Players see others' saves only up to their own round
 
 ## A league team whose snapshot an admin moves off its milestone is copied and starts over
 
