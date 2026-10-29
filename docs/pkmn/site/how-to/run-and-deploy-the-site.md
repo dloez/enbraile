@@ -152,7 +152,7 @@ For production, the import runs a single time, after `league` has merged into `m
    }
    ```
 
-2. From `pkmn/site/`, with the production branch's direct connection string (Neon's `main`, the one without `-pooler`) and `LEAGUE_TARGET=production` set in the shell:
+2. From `pkmn/site/`, with the production branch's direct connection string (Neon's `main`, the one without `-pooler`, printed by `npx neonctl connection-string main --project-id wandering-pine-85287086`; [Inspect deployments and the database from the shell](#inspect-deployments-and-the-database-from-the-shell)) and `LEAGUE_TARGET=production` set in the shell:
 
    ```sh
    DATABASE_URL='<production direct connection string>' LEAGUE_TARGET=production npm run league-import
@@ -177,7 +177,7 @@ Neither CLI is installed: run both through `npx` from `pkmn/site/`, where `.verc
 | Print a branch's connection string | `npx neonctl connection-string dev --project-id wandering-pine-85287086 --pooled` (drop `--pooled` for the direct one) |
 | Run SQL on a branch | `npx neonctl connection-string dev --project-id wandering-pine-85287086 --psql -- -c "<sql>"` |
 
-`vercel env ls` names the variables and never shows their values, since they are sensitive. A branch's connection string carries its password: keep it out of commits and logs. The number of rows in `drizzle.__drizzle_migrations` is how many migrations a branch has applied, so `select count(*) from drizzle.__drizzle_migrations` on `dev` and on `main` shows how far each one has been migrated. Without `psql` on the `PATH`, `neonctl` runs its own.
+`vercel env ls` names the variables and never shows their values, since they are sensitive, and `vercel env pull` writes each sensitive variable as the same placeholder rather than its value, in Production as in Preview, so neither hands over a connection string or a secret: a branch's connection string comes from `neonctl`. A branch's connection string carries its password: keep it out of commits and logs. The number of rows in `drizzle.__drizzle_migrations` is how many migrations a branch has applied, so `select count(*) from drizzle.__drizzle_migrations` on `dev` and on `main` shows how far each one has been migrated. Without `psql` on the `PATH`, `neonctl` runs its own.
 
 ### Rebuild a game's item icons
 
