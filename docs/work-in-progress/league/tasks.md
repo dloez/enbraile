@@ -25,7 +25,7 @@ A ban is stored as a place in the other player's locked team of eight, and a six
 A player sees another's snapshots only from their own round or older; someone outside the series only once every player has reached the snapshot's round; admins all ([discovery → Team Locking](discovery.md#team-locking)). Enforced wherever a snapshot is handed out: the PC, the player's series page and its journey, the abilities search and team sources.
 
 **Do:**
-- [ ] A player's and a snapshot's round from the round milestones.
+- [ ] A player's and a snapshot's round from the round milestones: a player's round is the round of their latest snapshot at any milestone, not only at a round milestone, so a Tournament save alone reaches every round ([discovery → Team Locking](discovery.md#team-locking), owner 2026-10-29). The kept branch `wq/saves-up-to-own-round` reads only round-milestone snapshots in `savesSeen`; change that, and refuse `slots` on a `PUT` of a team holding a source the writer may not see, as its **Attempted once:** line says.
 - [ ] The rule on every snapshot route: the PC (`GET …/trainers/<player>/pc`), the journey (`GET …/trainers/<player>/journey`) and the abilities search (`GET …/abilities`) in `api/_lib/series.ts`, the series page's trainer rows (`api/_lib/series-data.ts`), and the snapshots a team starts from and its sources (`GET /api/teams/snapshots`, `GET /api/teams/<id>` in `api/_lib/teams.ts`).
 
 **Acceptance:**
@@ -37,7 +37,6 @@ A player sees another's snapshots only from their own round or older; someone ou
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
 **Attempted once:** 2026-10-29, the work kept on branch `wq/saves-up-to-own-round`; its validator failed round two: the PC's "Add to team" (`src/teams/components/add-to-team.tsx`) `PUT`s a team whose hidden source `GET /api/teams/<id>` cut down, and `PUT /api/teams/<id>` refuses only new hidden `sources`, not `slots`, so the write repoints members; the fix left is refusing `slots` on a team holding a source the writer may not see, and leaving such teams out of "Add to team".
-**Needs the author:** a player's round counts only their snapshots at round milestones (`savesSeen` on the branch), so a player who uploaded no round milestone, only their Tournament save, is at round 0 and sees no one's Tournament snapshot, while the rulebook's open sheet has each cup player know the other's full sheet ([Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament)). Does a snapshot at a later milestone (the Tournament included) count as reaching every round before it, or does the open cup's sheet override the save rule, or does it stand as written?
 
 ## A Pokémon League try's team and members follow the save rule
 
