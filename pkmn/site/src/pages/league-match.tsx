@@ -381,7 +381,7 @@ export function LeagueMatchPage() {
         <Side side={match.b} you={match.b.id === me} end />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:grid-rows-[auto_1fr] lg:gap-x-5 lg:gap-y-3 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:grid-rows-[auto_1fr] lg:gap-x-5 lg:gap-y-3 2xl:flex-1 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_minmax(0,1fr)]">
         <section aria-label={t.games} className="order-1 lg:col-start-2 lg:row-start-1">
           <GameSlots match={match} decided={decided} phase={phase} editing={editing} onEdit={setEditing} nameOf={nameOf} />
         </section>
@@ -468,7 +468,7 @@ function TeamColumn({
       <h2 className="m-0 px-0.5 font-heading text-[1.625rem] leading-none font-normal lg:sr-only">{t.team(name)}</h2>
       {team.state === "shown" ? (
         <>
-          <ol aria-label={team.name} className="m-0 grid list-none grid-cols-2 gap-2 p-0 @min-[54rem]:grid-cols-3">
+          <ol aria-label={team.name} className="m-0 grid list-none grid-cols-2 gap-2 p-0 2xl:flex-1 @min-[54rem]:grid-cols-3">
             {team.members.map((member, at) => (
               <li key={at} className="flex min-w-0">
                 {member ? (
@@ -554,16 +554,16 @@ function MemberTile({ member, mark }: { member: MatchMember; mark?: Mark }) {
         </span>
       )}
       {member.sprite ? (
-        <img src={member.sprite} alt="" className={cn("size-14 flex-none [image-rendering:pixelated] sm:size-19 @min-[54rem]:size-32", tone === "banned" && "grayscale")} />
+        <img src={member.sprite} alt="" className={cn("size-14 flex-none [image-rendering:pixelated] sm:size-19 @min-[36rem]:size-24 upright:size-48", tone === "banned" && "grayscale")} />
       ) : (
-        <span aria-hidden="true" className="size-14 flex-none sm:size-19 @min-[54rem]:size-32" />
+        <span aria-hidden="true" className="size-14 flex-none sm:size-19 @min-[36rem]:size-24 upright:size-48" />
       )}
-      <span className="flex min-w-0 flex-1 flex-col gap-0.75 @min-[54rem]:w-full @min-[54rem]:flex-none @min-[54rem]:items-center @min-[54rem]:gap-1.5">
-        <span className="max-w-full truncate font-heading text-2xl leading-none @min-[54rem]:text-[1.75rem]">{member.nickname ?? member.species}</span>
-        <span className="max-w-full truncate text-[0.8125rem] font-bold text-muted-foreground @min-[54rem]:text-sm">{[member.nickname ? member.species : null, item].filter(Boolean).join(" · ")}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.75 upright:w-full upright:flex-none upright:items-center upright:gap-2.5">
+        <span className="max-w-full truncate font-heading text-2xl leading-none @min-[36rem]:text-[1.75rem] upright:text-4xl">{member.nickname ?? member.species}</span>
+        <span className="max-w-full truncate text-[0.8125rem] font-bold text-muted-foreground @min-[36rem]:text-sm upright:min-h-6 upright:text-base">{[member.nickname ? member.species : null, item].filter(Boolean).join(" · ")}</span>
         <span className="flex flex-wrap gap-1">
           {member.types.map((type) => (
-            <TypeTag key={type} type={type} className="px-1.5 text-[0.9375rem] leading-[19px]" />
+            <TypeTag key={type} type={type} className="px-1.5 text-[0.9375rem] leading-[19px] upright:px-2.5 upright:text-xl upright:leading-7" />
           ))}
         </span>
       </span>
@@ -572,7 +572,7 @@ function MemberTile({ member, mark }: { member: MatchMember; mark?: Mark }) {
       )}
     </>
   );
-  const frame = cn("relative flex min-h-22 min-w-0 flex-1 items-center gap-2 rounded-[14px] border-3 py-1.5 pr-2.5 pl-1 text-left @min-[54rem]:flex-col @min-[54rem]:justify-start @min-[54rem]:gap-1 @min-[54rem]:px-3 @min-[54rem]:pt-3 @min-[54rem]:pb-4 @min-[54rem]:text-center", TONES[tone]);
+  const frame = cn("relative flex min-h-22 min-w-0 flex-1 items-center gap-2 rounded-[14px] border-3 py-1.5 pr-2.5 pl-1 text-left @min-[36rem]:gap-3 @min-[36rem]:px-4 upright:flex-col upright:justify-center upright:gap-1 upright:px-3 upright:pt-3 upright:pb-4 upright:text-center", TONES[tone]);
   if (!mark?.onClick) return <span className={frame}>{body}</span>;
   return (
     <button
