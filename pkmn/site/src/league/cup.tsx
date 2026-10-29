@@ -7,7 +7,7 @@ import { modeName } from "@/league/round-admin";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
-import { CUP_MAX, type CupKind, type CupSlotView, cupProblem, cupShape, cupSlots, firstRound, type GroupRow, type LeagueCup, type LeagueMode, type LeaguePage as League, leaguePage, played, winnerOf } from "../../shared/league";
+import { CUP_MAX, type CupKind, type CupSlotView, cupProblem, cupShape, cupSlots, firstRound, type GroupRow, type LeagueCup, type LeagueMode, type LeaguePage as League, leaguePage, MATCH_GAMES, played, winnerOf } from "../../shared/league";
 
 const t = messages({
   en: {
@@ -25,8 +25,8 @@ const t = messages({
     bracket: "Cup bracket",
     cup: "Cup",
     toBeDecided: "To be decided",
-    bo3: "Bo3",
-    seeds: (a: number, b: number) => `${a} vs ${b} · Bo3`,
+    bo3: `Bo${MATCH_GAMES}`,
+    seeds: (a: number, b: number) => `${a} vs ${b} · Bo${MATCH_GAMES}`,
     trainer: "Trainer",
     w: "W",
     games: "Games",
@@ -60,8 +60,8 @@ const t = messages({
     bracket: "Cuadro de la copa",
     cup: "Copa",
     toBeDecided: "Por decidir",
-    bo3: "Bo3",
-    seeds: (a: number, b: number) => `${a} contra ${b} · Bo3`,
+    bo3: `Bo${MATCH_GAMES}`,
+    seeds: (a: number, b: number) => `${a} contra ${b} · Bo${MATCH_GAMES}`,
     trainer: "Entrenador",
     w: "V",
     games: "Partidas",

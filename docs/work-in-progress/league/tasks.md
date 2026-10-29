@@ -76,22 +76,6 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
 **After:** Players see others' saves only up to their own round
 
-## The league's labels read their numbers from `shared/league.ts`
-
-The match page's draft labels write the cup's brought count as a word ("Your six", "Picking six", "Six in", "Confirm these six", "Copy my six for Showdown"; "Tus seis", "Eligiendo seis", "Seis elegidos", "Confirmar estos seis", "Copiar mis seis" in `src/pages/league-match.tsx`), and the Cup view writes "Bo3" (`bo3` and `seeds` in `src/league/cup.tsx`), while discovery keeps every rule in `shared/league.ts` ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)); a changed rule would leave them wrong. The refusals already read theirs, as digits ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)). Found by the refusal entry's validator, 2026-10-29.
-
-**Do:**
-- [ ] Build those labels from `CUP_BROUGHT` and `MATCH_GAMES`, in English and Spanish, as the refusals do.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `grep` finds no "six"/"seis" or "Bo3" literal in those labels; through `verify-site`, a cup match's pick panel and the Cup view's bracket read their labels in English and Spanish.
-- Human-run: none.
-- Reuse: the constants in `shared/league.ts`.
-- Neighbors: the refusals in `api/_lib/league.ts`.
-- Forbidden: a rule number written into a label.
-
-**Touches:** `pkmn/site/src/pages/league-match.tsx`, `pkmn/site/src/league/cup.tsx`, `docs/pkmn/site/explanation/site.md`
-
 ## What becomes of a league team whose snapshot an admin moves off its milestone?
 
 A round team is sourced from its player's snapshot at the round's milestone, and a cup team from their Tournament snapshot ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). The passes that make them (`giveRoundTeams` in `api/_lib/rounds.ts`, `giveCupTeams` in `api/_lib/cup.ts`) give a source only to a team that has none. So when an admin moves that snapshot to another milestone (`POST …/trainers/<player>/snapshots/<milestone>/move`, `api/_lib/overrides.ts`), the team keeps the moved snapshot as its source, and a snapshot uploaded at the right milestone afterwards never becomes it. Found by the round teams' validator, 2026-10-29.
