@@ -93,6 +93,22 @@ A round team may lock with fewer than six when its snapshot holds fewer living P
 
 **Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/teams.ts`, `pkmn/site/src/pages/team.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/explanation/team-builder.md`
 
+## The league's labels read their numbers from `shared/league.ts`
+
+The match page's draft labels write the cup's brought count as a word ("Your six", "Picking six", "Six in", "Confirm these six", "Copy my six for Showdown"; "Tus seis", "Eligiendo seis", "Seis elegidos", "Confirmar estos seis", "Copiar mis seis" in `src/pages/league-match.tsx`), and the Cup view writes "Bo3" (`bo3` and `seeds` in `src/league/cup.tsx`), while discovery keeps every rule in `shared/league.ts` ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)); a changed rule would leave them wrong. The refusals already read theirs, as digits ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)). Found by the refusal entry's validator, 2026-10-29.
+
+**Do:**
+- [ ] Build those labels from `CUP_BROUGHT` and `MATCH_GAMES`, in English and Spanish, as the refusals do.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `grep` finds no "six"/"seis" or "Bo3" literal in those labels; through `verify-site`, a cup match's pick panel and the Cup view's bracket read their labels in English and Spanish.
+- Human-run: none.
+- Reuse: the constants in `shared/league.ts`.
+- Neighbors: the refusals in `api/_lib/league.ts`.
+- Forbidden: a rule number written into a label.
+
+**Touches:** `pkmn/site/src/pages/league-match.tsx`, `pkmn/site/src/league/cup.tsx`, `docs/pkmn/site/explanation/site.md`
+
 ## What becomes of a league team whose snapshot an admin moves off its milestone?
 
 A round team is sourced from its player's snapshot at the round's milestone, and a cup team from their Tournament snapshot ([discovery → Team Locking](discovery.md#team-locking), [The Cup](discovery.md#the-cup)). The passes that make them (`giveRoundTeams` in `api/_lib/rounds.ts`, `giveCupTeams` in `api/_lib/cup.ts`) give a source only to a team that has none. So when an admin moves that snapshot to another milestone (`POST …/trainers/<player>/snapshots/<milestone>/move`, `api/_lib/overrides.ts`), the team keeps the moved snapshot as its source, and a snapshot uploaded at the right milestone afterwards never becomes it. Found by the round teams' validator, 2026-10-29.
@@ -109,20 +125,3 @@ A round team is sourced from its player's snapshot at the round's milestone, and
 
 **Touches:** `pkmn/site/api/_lib/rounds.ts`, `pkmn/site/api/_lib/cup.ts`, `docs/pkmn/site/explanation/site.md`
 **Needs the author:** when an admin moves a round or cup team's snapshot off its milestone, does the team keep it, move to whichever snapshot is now at the milestone (dropping the members picked from the old one), or go back to waiting on the save until one is there?
-
-## League refusal messages read their numbers from `shared/league.ts`
-
-The league's refusal messages write the rules' numbers as text ("fainted from 0 to 6", "1, 2, 3", "from 0 to 5", "one to six" in `api/_lib/league.ts`, in English and Spanish, and "Bo3" in `src/pages/league-match.tsx`), while discovery keeps every rule in `shared/league.ts` ([discovery → Rules, Data and Build](discovery.md#rules-data-and-build)); a changed rule would leave them wrong. Found by the mid-run review, 2026-10-29.
-
-**Do:**
-- [ ] Build those messages from `FAINTED_PER_GAME`, `MATCH_GAMES`, `LEAGUE_COMBATS`, `PARTY_SIZE` and `GAMES_TO_WIN`.
-- [ ] The cup's ban and pick refusals that landed since (84ac5ff) too: "one of the other's eight" / "uno de los ocho del otro" (`badBan`) from `CUP_TEAM_SIZE`, and "Your six for this game are in" / "Tus seis para esta partida ya están" (`picked`) from `CUP_BROUGHT`, in `api/_lib/league.ts`. Found by the gardener, 2026-10-29.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `grep` finds none of those literals in the messages, the cup's "eight" and "six" included; through `verify-site`, an admin's bad game and a bad try still show their refusals in English and Spanish, and so do a cup ban sent twice and a six sent twice.
-- Human-run: none.
-- Reuse: the constants in `shared/league.ts`.
-- Neighbors: the round routes' messages (`api/_lib/rounds.ts`).
-- Forbidden: a rule number written into a message.
-
-**Touches:** `pkmn/site/api/_lib/league.ts`, `pkmn/site/src/pages/league-match.tsx`
