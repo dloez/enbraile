@@ -51,6 +51,8 @@ export const leagueMatch = z.object({
   teamB: roundTeamState,
 });
 
+export const HELD_BACK = ["upload", "lock"] as const;
+
 export const leagueRound = z.object({
   number: z.int(),
   milestone: z.string(),
@@ -58,7 +60,7 @@ export const leagueRound = z.object({
   bye: z.string().nullable(),
   started: z.boolean(),
   matches: z.array(leagueMatch),
-  hidden: z.object({ pairs: z.int(), toPlay: z.int(), yours: z.boolean() }).nullable(),
+  hidden: z.object({ pairs: z.int(), toPlay: z.int(), yours: z.enum(HELD_BACK).nullable() }).nullable(),
 });
 
 export type PairedRound = {

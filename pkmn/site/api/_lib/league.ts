@@ -305,6 +305,8 @@ export async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePa
             })),
           });
       const unseen = own.filter((match) => hidden?.matches.has(match.id));
+      const mine = own.find((match) => match.playerA === reader.id || match.playerB === reader.id);
+      const heldBack = hidden?.yours && mine ? (teamState(mine.id, reader.id) === "save" ? "upload" : "lock") : null;
       return {
         number,
         milestone: m.name,
@@ -324,7 +326,7 @@ export async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePa
             teamA: teamState(match.id, match.playerA),
             teamB: teamState(match.id, match.playerB),
           })),
-        hidden: hidden && unseen.length > 0 ? { pairs: unseen.length, toPlay: unseen.filter((match) => match.gamesA === null).length, yours: hidden.yours } : null,
+        hidden: hidden && unseen.length > 0 ? { pairs: unseen.length, toPlay: unseen.filter((match) => match.gamesA === null).length, yours: heldBack } : null,
       };
     }),
     next: next ? { number: next.number, milestone: next.milestone.name } : null,

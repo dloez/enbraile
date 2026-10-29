@@ -64,6 +64,7 @@ const t = messages({
     toPlay: (n: number) => `${n} to play`,
     bye: (name: string) => `${name} rests`,
     lockToSee: "Lock your round team to see who you meet",
+    waiting: (milestone: string) => `Reach ${milestone} and upload its snapshot to get your team`,
     lockToSeeAll: "Lock your round team to see this round's pairs",
     hiddenPairs: (n: number) => (n === 1 ? "1 pair shows once both its players lock" : `${n} pairs show once both their players lock`),
     won: "W",
@@ -115,6 +116,7 @@ const t = messages({
     toPlay: (n: number) => `${n} por jugar`,
     bye: (name: string) => `${name} descansa`,
     lockToSee: "Bloquea tu equipo de ronda para ver contra quién juegas",
+    waiting: (milestone: string) => `Llega a ${milestone} y sube su captura para tener tu equipo`,
     lockToSeeAll: "Bloquea tu equipo de ronda para ver las parejas de esta ronda",
     hiddenPairs: (n: number) => (n === 1 ? "1 pareja se ve cuando sus dos jugadores bloqueen" : `${n} parejas se ven cuando sus dos jugadores bloqueen`),
     won: "V",
@@ -385,13 +387,13 @@ function hiddenPlayed(league: League): number {
 function Mine({ league, me, nameOf }: Named & { me: string }) {
   const mine = league.rounds.flatMap((round) => round.matches.filter((m) => m.a === me || m.b === me).map((match) => ({ round, match })));
   const next = mine.find(({ match }) => !played(match));
-  const locking = league.rounds.find((round) => round.hidden?.yours);
+  const held = league.rounds.find((round) => round.hidden?.yours);
   return (
     <aside aria-label={t.youInLeague} className="flex flex-col gap-3.5">
       {next ? (
         <NextMatch number={league.number} round={next.round} match={next.match} me={me} nameOf={nameOf} />
       ) : (
-        locking && <LockToSee round={locking} />
+        held && <HeldBack number={league.number} round={held} />
       )}
       <section aria-labelledby="yours" className="flex flex-col gap-2 rounded-[18px] border-3 bg-card px-3.5 pt-3.5 pb-4 sm:px-4.5 sm:pt-4 sm:pb-4.5">
         <h2 id="yours" className="m-0 mb-1 font-heading text-[1.625rem] font-normal">
@@ -456,10 +458,12 @@ function NextMatch({ number, round, match, me, nameOf }: { number: number; round
   );
 }
 
-function LockToSee({ round }: { round: LeagueRound }) {
+function HeldBack({ number, round }: { number: number; round: LeagueRound }) {
+  const upload = round.hidden?.yours === "upload";
   return (
     <Link
-      to="/teams"
+      to={upload ? "/series/$number" : "/teams"}
+      params={upload ? { number: String(number) } : undefined}
       aria-labelledby="next"
       aria-describedby="next-match"
       className={cn("flex flex-col gap-3 rounded-[18px] border-3 border-primary bg-card px-3.5 pt-3.5 pb-4 text-foreground sm:px-4.5 sm:pt-4 sm:pb-4.5", matchRow)}
@@ -468,7 +472,7 @@ function LockToSee({ round }: { round: LeagueRound }) {
         {t.next}
       </span>
       <span id="next-match" className="flex min-w-0 flex-col leading-[1.1]">
-        <span className="font-heading text-[1.75rem] sm:text-3xl">{t.lockToSee}</span>
+        <span className="font-heading text-[1.75rem] sm:text-3xl">{upload ? t.waiting(round.milestone) : t.lockToSee}</span>
         <span className="text-[0.8125rem] font-bold text-muted-foreground sm:text-sm">{t.stage(round.number, round.milestone)}</span>
       </span>
     </Link>
@@ -564,7 +568,7 @@ function RoundCard({ number, round, current, me, nameOf }: { number: number; rou
       ))}
       {round.hidden && (
         <p className="m-0 rounded-xl border-3 border-dashed bg-box px-3 py-2.5 font-heading text-lg text-subtle">
-          {round.hidden.yours ? t.lockToSeeAll : t.hiddenPairs(round.hidden.pairs)}
+          {round.hidden.yours === "upload" ? t.waiting(round.milestone) : round.hidden.yours === "lock" ? t.lockToSeeAll : t.hiddenPairs(round.hidden.pairs)}
         </p>
       )}
       {round.bye && <span className="px-0.5 font-heading text-lg text-muted-foreground">{t.bye(nameOf(round.bye))}</span>}

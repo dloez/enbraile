@@ -56,6 +56,7 @@ const t = messages({
     allPlayed: "All played",
     vs: "vs",
     lockToSeeAll: "Lock your round team to see this round's pairs",
+    waiting: (milestone: string) => `Reach ${milestone} and upload its snapshot to get your team`,
     hiddenPairs: (n: number) => (n === 1 ? "1 pair shows once both its players lock" : `${n} pairs show once both their players lock`),
     matchLabel: (a: string, b: string, score: string | null) => `${a} vs ${b}, ${score ?? "to play"}`,
     finalStandings: "Final standings",
@@ -100,6 +101,7 @@ const t = messages({
     allPlayed: "Todo jugado",
     vs: "vs",
     lockToSeeAll: "Bloquea tu equipo de ronda para ver las parejas de esta ronda",
+    waiting: (milestone: string) => `Llega a ${milestone} y sube su captura para tener tu equipo`,
     hiddenPairs: (n: number) => (n === 1 ? "1 pareja se ve cuando sus dos jugadores bloqueen" : `${n} parejas se ven cuando sus dos jugadores bloqueen`),
     matchLabel: (a: string, b: string, score: string | null) => `${a} contra ${b}, ${score ?? "por jugar"}`,
     finalStandings: "Clasificación final",
@@ -369,7 +371,7 @@ function CurrentRound({ round, me, nameOf }: { round: LeagueRound; me: string | 
       })}
       {round.hidden && (
         <p className="m-0 rounded-xl border-3 border-dashed bg-box px-3 py-2.5 font-heading text-lg text-subtle">
-          {round.hidden.yours ? t.lockToSeeAll : t.hiddenPairs(round.hidden.pairs)}
+          {round.hidden.yours === "upload" ? t.waiting(round.milestone) : round.hidden.yours === "lock" ? t.lockToSeeAll : t.hiddenPairs(round.hidden.pairs)}
         </p>
       )}
     </div>
