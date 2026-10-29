@@ -1,40 +1,23 @@
 # The League Tasks
 
-Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
+Decisions are in [discovery.md](discovery.md). The entries waiting on a board sign-off sit last, since the owner signs those boards off once everything else is done (owner, 2026-10-29). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Sign off the Teams list's league marks and filters
+## "Any Pokémon" members hold any ability and any move
 
-The frozen teams-list boards flag a round team and filter nothing; league teams need their kind, series and state shown, and the list filters by series, kind, state and owner ([discovery → Surfaces](discovery.md#surfaces)). Drawn on the Site v2 Screens canvas, desktop and phone, then frozen into `pkmn/site/design/`.
-
-**Do:**
-- [ ] Draw the boards on the canvas; freeze them once signed off.
-
-**Acceptance:**
-- Claude-run: none.
-- Human-run: the owner signs off the boards.
-- Reuse: the frozen `teams-list.dc.html` and `teams-list-phone.dc.html`.
-- Neighbors: the league boards' filters, if any.
-- Forbidden: building before sign-off.
-
-**Touches:** `pkmn/site/design/`
-**Needs the author:** the sign-off.
-
-## The Teams list marks league teams and filters them
-
-Each team shows its kind and, for a league team, its series, round or cup match and state; the list filters by series, kind, state and owner, as the signed-off boards draw them ([discovery → Surfaces](discovery.md#surfaces)). A league team files under its league's series, "Any Pokémon" or not.
+An "Any Pokémon" member takes any ability and any move, not only its species' own, in the editor and in a Showdown paste ([discovery → Team Locking](discovery.md#team-locking)); a member from a snapshot stays held to what its snapshot allows. The import is rerun so series 1's pasted tries keep their randomized abilities and moves.
 
 **Do:**
-- [ ] The kind, series and state on each team; the filters, kept in the URL as `?player=` is.
+- [ ] The free member's ability and move pickers open to every one in the dex; the paste reader no longer refuses an "Any Pokémon" member's ability or move.
+- [ ] The import's tries keep their pasted abilities and moves, and stop reporting the fallback.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with imported tries and a free team, filter by each of series, kind, state and owner and see only the matching teams; reload and keep the filters.
-- Human-run: the owner finds a player's league teams on the preview.
-- Reuse: the team list (`src/pages/teams.tsx`, `sourceLine`), `GET /api/teams`.
-- Neighbors: the owner filter (`?player=`).
-- Forbidden: a league team without its series.
+- Claude-run: `npm run gate`; through `verify-site`, an "Any Pokémon" member takes an ability and a move its species cannot have, by the editor and by paste; a snapshot member still cannot; the imported tries' teams show the dump's abilities.
+- Human-run: the owner reads an imported try's team on the preview.
+- Reuse: the paste reader (`src/teams/showdown.ts`), the free member (`src/teams/components/free-member.tsx`).
+- Neighbors: the team builder's snapshot members.
+- Forbidden: a second Showdown parser; loosening a snapshot member.
 
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** Sign off the Teams list's league marks and filters
+**Touches:** `pkmn/site/src/teams/`, `pkmn/site/shared/`, `pkmn/site/api/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
 
 ## Players make their free teams public or private
 
@@ -46,68 +29,28 @@ Every team that is not a round or cup team gets a public/private toggle, private
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, a new team is private, a second test player cannot see it in the list, by page or route, until it is made public; a round team shows no toggle.
 - Human-run: the owner flips a team on the preview.
-- Reuse: the team routes (`api/_lib/teams.ts`), the Teams list's filters.
+- Reuse: the team routes (`api/_lib/teams.ts`).
 - Neighbors: the team page's read-only view of another's team.
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** The Teams list marks league teams and filters them
-
-## Are stats worked out from hidden EVs and IVs hidden too?
-
-**Needs the author:** others' EVs and IVs are hidden on teams and in the PC ([discovery → Team Locking](discovery.md#team-locking)), but the stats worked out from them (the team analysis's Speed Tiers, Compare's damage calc) let a viewer read them back. Are others' stats worked out without their EVs and IVs, or hidden?
 
 ## Others' EVs and IVs are hidden
 
-A team's EVs and IVs reach only its owner and admins, on every team, league or free, and so do a PC summary's, by page and route; everyone else gets the rest of the build, and Showdown copy without them. Worked-out stats as the author answers above.
+A team's EVs and IVs reach only its owner and admins, on every team, league or free, and so do a PC summary's, by page and route; everyone else gets the rest of the build, and Showdown copy without them. A team whose EVs and IVs the viewer may not see has its analysis and Compare's damage calc worked out from its base stats ([discovery → Team Locking](discovery.md#team-locking)).
 
 **Do:**
-- [ ] EVs and IVs left out of every team and PC summary the API hands to someone else, and wherever the answer above reaches.
+- [ ] EVs and IVs left out of every team and PC summary the API hands to someone else.
+- [ ] Others' teams' analysis and Compare's damage calc from base stats.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, a second test player opening the first's team sees no EVs or IVs on the page, in the route's JSON or in Copy for Showdown, nor in the first's PC summaries; the owner and an admin see them.
+- Claude-run: `npm run gate`; through `verify-site`, a second test player opening the first's team sees no EVs or IVs on the page, in the route's JSON or in Copy for Showdown, nor in the first's PC summaries, and Compare's damage calc against the first's team matches the base-stats figures; the owner and an admin see them.
 - Human-run: the owner checks a team as two players on the preview.
 - Reuse: the team routes (`api/_lib/teams.ts`), Showdown copy (`src/teams/showdown.ts`).
 - Neighbors: the free teams' public/private toggle.
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-**After:** Players make their free teams public or private; Are stats worked out from hidden EVs and IVs hidden too?
-
-## Sign off the hatched eggs override
-
-The frozen league boards show eggs won and hatched on the desktop standings, eggs won alone on the phone, and no way to set a hatched count ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)). The admin's in-place override on the Eggs cell, showing who set it and when, is drawn on the Site v2 Screens canvas, desktop and phone, then frozen into `pkmn/site/design/`.
-
-**Do:**
-- [ ] Draw the override on the league boards; freeze them once signed off.
-
-**Acceptance:**
-- Claude-run: none.
-- Human-run: the owner signs off the boards.
-- Reuse: the frozen `league.dc.html` and `league-phone.dc.html`; the series page's admin overrides (`series.dc.html`).
-- Neighbors: none.
-- Forbidden: building before sign-off.
-
-**Touches:** `pkmn/site/design/`
-**Needs the author:** the sign-off.
-
-## The standings count eggs won and hatched
-
-Eggs won from the rulebook (league wins, the best try's combats), hatched counted from each player's latest snapshot, with an admin override that keeps who set it and when; the import brings the app's hatched counts as overrides ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)).
-
-**Do:**
-- [ ] Count hatched Pokémon from the snapshot (`obtained.hatchedAt`, living and fainted).
-- [ ] The override, its in-place editor on the Eggs cell, and the eggs columns, as the signed-off boards draw them.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, a seeded snapshot with hatched Pokémon gives its count, an admin override wins over it and shows its source.
-- Human-run: the owner reads series 1's eggs against the app.
-- Reuse: the site's admin overrides (`api/_lib/`, The pkmn Site → Admin overrides).
-- Neighbors: the snapshot fainted count's override.
-- Forbidden: eggs for cup wins.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** Sign off the hatched eggs override
 
 ## An admin runs the cup from its bracket to its champion
 
@@ -118,14 +61,13 @@ An admin starts the cup and picks who enters; the bracket is drawn from the stan
 - [ ] The Cup view, starting it, and results in place.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, start series 1's cup with six and see 1–6, 2–5, 3–4, the triangular and the rulebook's semifinals; a 1–1–1 triangular broken by its tie-breaks; also a four-player cup as a plain knockout.
+- Claude-run: `npm run gate`; through `verify-site`, start series 1's cup with six and see 1–6, 2–5, 3–4, the triangular and the rulebook's semifinals; a 1–1–1 triangular broken by its tie-breaks; also a four-player cup as a plain knockout; a cup of five cannot start.
 - Human-run: the owner starts series 1's real cup.
 - Reuse: the match page (`src/pages/league-match.tsx`) and its moves (`api/_lib/match.ts`); the app's `buildBracket`, `losersTable` and `settleBracket` as reference only.
 - Neighbors: the series page's tournament milestone.
 - Forbidden: the app's semifinal pairing (1–6 with the triangular).
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**Needs the author:** a cup with an odd number of entrants (5 or 7): how its first round pairs, since the rulebook's pattern leaves one player without an opponent; the start-the-cup board keeps Start off for an odd count (raised in the design, 2026-10-28).
 
 ## Each cup match gives its players a locked team to build
 
@@ -250,10 +192,6 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
 **After:** Each open round gives a player their team once their snapshot exists; Players see others' saves only up to their own round
 
-## Do pasted "Any Pokémon" teams keep a randomized ability?
-
-**Needs the author:** series 1 randomizes abilities, but an "Any Pokémon" member may only hold one of its species' own (the paste reader's `notItsAbility`, `src/teams/showdown.ts`), so every pasted Pokémon League try, the six imported ones included, falls back to its species' first ability, and so would series 1's game teams built from the replays and pastes. Does an "Any Pokémon" member accept any ability, only a pasted or imported team does, or is the fallback fine?
-
 ## Series 1's game teams come across from their replays, locked to their rounds
 
 Each imported game with a replay gets each side's team built from the replay: the six brought with the moves, items and abilities it revealed, sourced "Any Pokémon" and locked to the player's round; a game with no replay shows the player's matchday paste instead, the hidden one included ([discovery → Results](discovery.md#results)).
@@ -269,7 +207,7 @@ Each imported game with a replay gets each side's team built from the replay: th
 - Forbidden: a second Showdown paste parser; a paste overriding a replay.
 
 **Touches:** `pkmn/site/scripts/`, `pkmn/site/api/`, `docs/pkmn/site/`
-**After:** Each open round gives a player their team once their snapshot exists; Do pasted "Any Pokémon" teams keep a randomized ability?
+**After:** Each open round gives a player their team once their snapshot exists; "Any Pokémon" members hold any ability and any move
 
 ## The player profile shows each series' league record
 
@@ -287,6 +225,75 @@ The profile's league placeholder becomes, per series, the player's place, points
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/src/pages/player-profile.tsx`, `docs/pkmn/site/`
 **After:** An admin runs the cup from its bracket to its champion
+
+## Sign off the Teams list's league marks and filters
+
+The frozen teams-list boards flag a round team and filter nothing; league teams need their kind, series and state shown, and the list filters by series, kind, state and owner ([discovery → Surfaces](discovery.md#surfaces)). Drawn on the Site v2 Screens canvas, desktop and phone, then frozen into `pkmn/site/design/`.
+
+**Do:**
+- [ ] Draw the boards on the canvas; freeze them once signed off.
+
+**Acceptance:**
+- Claude-run: none.
+- Human-run: the owner signs off the boards.
+- Reuse: the frozen `teams-list.dc.html` and `teams-list-phone.dc.html`.
+- Neighbors: the league boards' filters, if any.
+- Forbidden: building before sign-off.
+
+**Touches:** `pkmn/site/design/`
+**Needs the author:** the sign-off.
+
+## The Teams list marks league teams and filters them
+
+Each team shows its kind and, for a league team, its series, round or cup match and state; the list filters by series, kind, state and owner, as the signed-off boards draw them ([discovery → Surfaces](discovery.md#surfaces)). A league team files under its league's series, "Any Pokémon" or not.
+
+**Do:**
+- [ ] The kind, series and state on each team; the filters, kept in the URL as `?player=` is.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, with imported tries and a free team, filter by each of series, kind, state and owner and see only the matching teams; reload and keep the filters.
+- Human-run: the owner finds a player's league teams on the preview.
+- Reuse: the team list (`src/pages/teams.tsx`, `sourceLine`), `GET /api/teams`.
+- Neighbors: the owner filter (`?player=`).
+- Forbidden: a league team without its series.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
+**After:** Sign off the Teams list's league marks and filters
+
+## Sign off the hatched eggs override
+
+The frozen league boards show eggs won and hatched on the desktop standings, eggs won alone on the phone, and no way to set a hatched count ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)). The admin's in-place override on the Eggs cell, showing who set it and when, is drawn on the Site v2 Screens canvas, desktop and phone, then frozen into `pkmn/site/design/`.
+
+**Do:**
+- [ ] Draw the override on the league boards; freeze them once signed off.
+
+**Acceptance:**
+- Claude-run: none.
+- Human-run: the owner signs off the boards.
+- Reuse: the frozen `league.dc.html` and `league-phone.dc.html`; the series page's admin overrides (`series.dc.html`).
+- Neighbors: none.
+- Forbidden: building before sign-off.
+
+**Touches:** `pkmn/site/design/`
+**Needs the author:** the sign-off.
+
+## The standings count eggs won and hatched
+
+Eggs won from the rulebook (league wins, the best try's combats), hatched counted from each player's latest snapshot, with an admin override that keeps who set it and when; the import brings the app's hatched counts as overrides ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)).
+
+**Do:**
+- [ ] Count hatched Pokémon from the snapshot (`obtained.hatchedAt`, living and fainted).
+- [ ] The override, its in-place editor on the Eggs cell, and the eggs columns, as the signed-off boards draw them.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, a seeded snapshot with hatched Pokémon gives its count, an admin override wins over it and shows its source.
+- Human-run: the owner reads series 1's eggs against the app.
+- Reuse: the site's admin overrides (`api/_lib/`, The pkmn Site → Admin overrides).
+- Neighbors: the snapshot fainted count's override.
+- Forbidden: eggs for cup wins.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
+**After:** Sign off the hatched eggs override
 
 ## Retire the Trainer League app
 
