@@ -1,11 +1,12 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { BallSplit, ballTitleClass } from "@/components/ball-split";
 import { authClient } from "@/lib/auth-client";
 import { messages } from "../../shared/i18n";
 
 const t = messages({
-  en: { signIn: "Sign in with Discord", failed: "Sign-in failed" },
-  es: { signIn: "Iniciar sesión con Discord", failed: "No se pudo iniciar sesión" },
+  en: { signIn: "Sign in with Discord", failed: "Sign-in failed", admin: "Admin? Sign in here" },
+  es: { signIn: "Iniciar sesión con Discord", failed: "No se pudo iniciar sesión", admin: "¿Admin? Entra aquí" },
 });
 
 function DiscordIcon() {
@@ -62,6 +63,12 @@ export function SignInPage() {
           </p>
         )}
       </div>
+      <Link
+        to="/admin"
+        className="mt-5.5 text-[0.9375rem] font-bold text-primary decoration-2 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        {t.admin}
+      </Link>
     </BallSplit>
   );
 }
