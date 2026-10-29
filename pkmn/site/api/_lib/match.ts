@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, gt, sql } from "drizzle-orm";
 import {
   barredBan,
   covers,
@@ -74,6 +74,7 @@ async function move(matchId: string, input: GameInput, by: string | null, place:
     const held = games.find((g) => g.number === number);
     if (held) await tx.update(leagueGame).set(written).where(eq(leagueGame.id, held.id));
     else await tx.insert(leagueGame).values({ id: crypto.randomUUID(), matchId, number, ...written });
+    if (held && held.winnerId !== input.winner) await tx.delete(gameSide).where(and(eq(gameSide.matchId, matchId), gt(gameSide.number, after.length)));
     if (whole) {
       const sum = tally(sides, after.map(played));
       const result = decided(sum.gamesA, sum.gamesB) ? sum : { gamesA: null, gamesB: null, faintedA: null, faintedB: null };

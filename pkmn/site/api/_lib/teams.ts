@@ -22,7 +22,7 @@ import { DEFAULT_POOL, type FreePool, type TeamPool } from "../../shared/pool.js
 import { body } from "./body.js";
 import { db } from "./db.js";
 import { requireAdmin } from "./admin.js";
-import { cup, cupEntrant, game, leagueMatch, leagueRound, leagueTry, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
+import { cup, cupEntrant, game, gameSide, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
 import { hiddenPairs, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 import { seesSpreads, slotsWithoutSpreads, withoutSpreads } from "./spreads.js";
 import { says } from "./i18n.js";
@@ -48,6 +48,7 @@ const t = says({
     notLeague: "Only a league team is locked in",
     fillFirst: (need: number, size: number) => (need === size ? `Fill all ${size} slots before locking in` : `Fill ${need} slots before locking in`),
     ownerClones: "Only the team's owner or an admin clones it",
+    drafting: "A game of this team's match without a result has bans or picks in",
     copy: "(copy)",
   },
   es: {
@@ -70,6 +71,7 @@ const t = says({
     notLeague: "Solo se bloquea un equipo de liga",
     fillFirst: (need: number, size: number) => (need === size ? `Llena los ${size} huecos antes de bloquearlo` : `Llena ${need} huecos antes de bloquearlo`),
     ownerClones: "Solo el dueño del equipo o un administrador lo clona",
+    drafting: "Una partida sin resultado del combate de este equipo ya tiene vetos o elecciones",
     copy: "(copia)",
   },
 });
@@ -581,9 +583,31 @@ teams.post("/:id/clone", async (c) => {
 
 teams.post("/:id/unlock", requireAdmin, async (c) => {
   const id = c.req.param("id");
-  const [held] = await db.select({ lockedAt: team.lockedAt }).from(team).where(eq(team.id, id));
-  if (!held) return c.json({ error: t(c).noTeam }, 404);
-  if (!held.lockedAt) return c.json({ error: t(c).notLocked }, 409);
-  await db.update(team).set({ lockedAt: null, lockedBy: null }).where(eq(team.id, id));
+  const refused = await db.transaction(async (tx) => {
+    const [home] = await tx.select({ matchId: team.matchId }).from(team).where(eq(team.id, id));
+    if (!home) return "noTeam" as const;
+    if (home.matchId) await tx.select({ id: leagueMatch.id }).from(leagueMatch).where(eq(leagueMatch.id, home.matchId)).for("update");
+    const [held] = await tx.select({ lockedAt: team.lockedAt }).from(team).where(eq(team.id, id)).for("update");
+    if (!held) return "noTeam" as const;
+    if (!held.lockedAt) return "notLocked" as const;
+    if (home.matchId) {
+      const [drafted] = await tx
+        .select({ number: gameSide.number })
+        .from(gameSide)
+        .where(
+          and(
+            eq(gameSide.matchId, home.matchId),
+            or(isNotNull(gameSide.ban), isNotNull(gameSide.picks)),
+            sql`not exists (select 1 from ${leagueGame} where ${leagueGame.matchId} = ${gameSide.matchId} and ${leagueGame.number} = ${gameSide.number})`,
+          ),
+        )
+        .limit(1);
+      if (drafted) return "drafting" as const;
+    }
+    await tx.update(team).set({ lockedAt: null, lockedBy: null }).where(eq(team.id, id));
+    return null;
+  });
+  if (refused === "noTeam") return c.json({ error: t(c).noTeam }, 404);
+  if (refused) return c.json({ error: t(c)[refused] }, 409);
   return c.json({});
 });
