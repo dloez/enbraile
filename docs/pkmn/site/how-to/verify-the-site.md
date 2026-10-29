@@ -1,6 +1,6 @@
 # How to Verify the Site
 
-Check a change to `pkmn/site/` end to end on the local stack: drive the real site in a browser through the Playwright MCP server, signed in as a test player or an admin, then read what landed in Postgres and in the MinIO bucket. This is a driver, not a test runner: nothing it does is saved as a test or runs in the gate. Why the site is checked this way is in [The pkmn Site → Decisions](../explanation/site.md#decisions); the `verify-site` skill (`.claude/skills/verify-site/SKILL.md`) points an agent here.
+Check a change to `pkmn/site/` end to end on the local stack: drive the real site in a browser through the Playwright MCP server, signed in as a test player or an admin, then read what landed in Postgres and in the MinIO bucket. A change to the API, the schema or shared logic alone skips the browser: call its routes with `curl` as a test player (the test sign-in's cookie) or an admin, then read Postgres and the bucket the same way. This is a driver, not a test runner: nothing it does is saved as a test or runs in the gate. Why the site is checked this way is in [The pkmn Site → Decisions](../explanation/site.md#decisions); the `verify-site` skill (`.claude/skills/verify-site/SKILL.md`) points an agent here.
 
 ## Prerequisites
 
