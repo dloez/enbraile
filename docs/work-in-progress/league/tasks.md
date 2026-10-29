@@ -153,9 +153,21 @@ The rulebook draws the cup for six and a plain knockout for four or two, and not
 
 **Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/cup.ts`, `pkmn/site/src/`, `docs/pkmn/site/explanation/site.md`
 
-## Should rerunning the league import keep an admin's hatched count?
+## Rerunning the league import leaves an admin's hatched count alone
 
-**Needs the author:** each run of `npm run league-import` re-stamps every player's hatched count with the app's, an admin's own setting included, and its new time puts the app's count back ahead of snapshots uploaded before the rerun. It matters for reruns on the preview or before production. Keep it, or leave an admin's count and a count a later snapshot replaced alone?
+Each run of `npm run league-import` writes every player's hatched count from the app's dump, an admin's own setting included (`scripts/league-import.ts`, the `save` upsert); a rerun leaves an admin's setting alone, and a count still from the app takes the dump's again, timed by the rerun ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs), owner 2026-10-29).
+
+**Do:**
+- [ ] The import's hatched upsert skips a player whose count an admin set.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, run the import, set one player's count as the admin, rerun it: that player keeps the admin's count and who set it, and the others read the app's.
+- Human-run: none.
+- Reuse: the import's `save` upsert; `hatched_set_by` (`api/_lib/schema.ts`).
+- Neighbors: the admin's Eggs override (`api/_lib/overrides.ts`).
+- Forbidden: none.
+
+**Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
 
 ## Is the Eggs cell's "from the app" label signed off?
 
