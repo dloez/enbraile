@@ -73,6 +73,22 @@ A locked round or cup team spends Mini Setas, mints and held items that the play
 **Touches:** `pkmn/site/src/teams/`, `pkmn/site/api/`, `docs/pkmn/site/`
 **Needs the author:** deduct, warn, or both, and for which spends.
 
+### pkmn/site: fix The pkmn Site's dead link to the admin pages
+
+The Accounts section of [The pkmn Site](../pkmn/site/explanation/site.md#accounts) links `[Admin pages](#admin-pages)` from its paragraph on the admin boards, but `#admin-pages` is no heading: "**Admin pages.**" is a bold lead-in in that same section, so the anchor goes nowhere. Belongs to no idea; found by the league's mid-run gardener, 2026-10-29.
+
+**Do:**
+- [ ] Point the link at `#accounts`, the section holding the paragraph, or drop it, since it points into its own section.
+
+**Acceptance:**
+- Claude-run: `grep -n '#admin-pages' docs/` finds nothing; every `#…` link in `site.md` names one of its headings.
+- Human-run: none.
+- Reuse: none.
+- Neighbors: the doc's other in-page links, such as `(#league)`.
+- Forbidden: a heading added only to give the link a target.
+
+**Touches:** `docs/pkmn/site/explanation/site.md`
+
 ## Ideas
 
 ### pkmn/site: a private Showdown tied to the site
@@ -85,7 +101,7 @@ A series' rules are Markdown the site only shows ([The pkmn Site → Series](../
 
 ### pkmn/site: show only what a series' rules allow of others' PCs
 
-Every PC at every snapshot is open to every player, for now ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). A series' rules may limit what a player sees of others' boxes (the league's box sheet), and the site could show only that. Left out of site v2. _(owner, 2026-10-22)_ The league already limits it: a player sees others' saves only up to their own round, and a closed round hides its snapshots until the match has a result ([league](league/discovery.md#team-locking)); this idea is what a series' rules allow beyond that.
+Every PC at every snapshot was open to every player at first ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). A series' rules may limit what a player sees of others' boxes (the league's box sheet), and the site could show only that. Left out of site v2. _(owner, 2026-10-22)_ The league already limits it: a player sees others' saves only up to their own round, and a closed round hides its snapshots until the match has a result ([league](league/discovery.md#team-locking)); this idea is what a series' rules allow beyond that.
 
 ### pkmn/site: read saves of games other than Añil
 
