@@ -57,6 +57,24 @@ A cup match gives each of its players a team of eight sourced from their Tournam
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
 **After:** An admin runs the cup from its bracket to its champion
 
+## A Pokémon League try locks its team, and a locked team can be cloned
+
+Logging a try locks the team it uses, picked or pasted, and editing a try leaves it locked; series 1's imported try teams are locked too. A locked team, a try's or a round or cup team, shows Clone on its page, which copies it into a new editable team of the reader's own: a player clones only their own, an admin any ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)). The lock, its admin unlock and the frozen editor come with [Each cup match gives its players a locked team to build](#each-cup-match-gives-its-players-a-locked-team-to-build).
+
+**Do:**
+- [ ] Lock a try's team when the try is logged, and on the import's try teams.
+- [ ] Clone on a locked team's page, a new editable team with its members, sources and size, named "<name> (copy)".
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, a try logged by pasting and one by picking a team both leave their team locked, its editors refusing, the Teams list reading Locked; Clone on it makes an editable team of the reader's with the same members; a player gets no Clone on another's locked team, by page or route; after `npm run league-import` every try team is locked.
+- Human-run: the owner clones a try's team on the preview.
+- Reuse: the lock of the cup teams entry; team creation (`insertTeam`, `api/_lib/teams.ts`); the try routes (`api/_lib/league.ts`).
+- Neighbors: the team page's locked state (`team-locked.dc.html`).
+- Forbidden: a clone carrying EVs or IVs the reader may not see.
+
+**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/`
+**After:** Each cup match gives its players a locked team to build
+
 ## League teams stay hidden until their mode reveals them
 
 The cup gets its mode when an admin starts it. A round or cup team is seen only by its owner and admins until its reveal: in an open cup, once every cup player has locked; in a closed one, once its match has a result. The API enforces it on every route that hands out a team: the team list, the team page, the match page and Compare ([discovery → Team Locking](discovery.md#team-locking)). The modes already exist: `LEAGUE_MODES` and `leagueMode` in `shared/league.ts`, stored on each round as `league_round.mode` (`api/_lib/schema.ts`).
