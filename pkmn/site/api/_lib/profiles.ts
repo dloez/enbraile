@@ -5,19 +5,24 @@ import type { Snapshot } from "../../shared/snapshot.js";
 import { db } from "./db.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
 import { says } from "./i18n.js";
+import { teamsSeenBy, viewer } from "./series-data.js";
 
 const t = says({
   en: {
     noPlayer: "No such player",
+    signIn: "Sign in first",
   },
   es: {
     noPlayer: "Ese jugador no existe",
+    signIn: "Inicia sesión primero",
   },
 });
 
 export const profiles = new Hono();
 
 profiles.get("/:player", async (c) => {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const [player] = await db
     .select({ id: user.id, name: user.name })
     .from(user)
@@ -69,7 +74,7 @@ profiles.get("/:player", async (c) => {
         .innerJoin(teamSource, eq(teamSource.teamId, team.id))
         .innerJoin(snapshot, eq(snapshot.id, teamSource.snapshotId))
         .innerJoin(save, eq(save.id, snapshot.saveId))
-        .where(and(eq(team.ownerId, player.id), inArray(save.seriesId, ids)))
+        .where(and(eq(team.ownerId, player.id), inArray(save.seriesId, ids), teamsSeenBy(reader)))
         .groupBy(save.seriesId)
     : [];
   const rows = played.map((s) => {

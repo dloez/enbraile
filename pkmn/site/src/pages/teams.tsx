@@ -69,6 +69,8 @@ const t = messages({
     kinds: { free: "Free", round: "Round", cup: "Cup", try: "League try" } satisfies Record<TeamKind, string>,
     states: { todo: "To build", locked: "Locked", edit: "Editable" } satisfies Record<TeamState, string>,
     leagueTry: (n: number) => `League try ${n}`,
+    private: "Private",
+    privateTitle: "Only you and admins see it",
     shown: (n: number) => (n === 1 ? "1 team" : `${n} teams`),
     clearFilters: "Clear filters",
     clear: "Clear",
@@ -112,6 +114,8 @@ const t = messages({
     kinds: { free: "Libre", round: "Ronda", cup: "Copa", try: "Intento de liga" } satisfies Record<TeamKind, string>,
     states: { todo: "Por montar", locked: "Bloqueado", edit: "Editable" } satisfies Record<TeamState, string>,
     leagueTry: (n: number) => `Intento de liga ${n}`,
+    private: "Privado",
+    privateTitle: "Solo tú y los administradores lo veis",
     shown: (n: number) => (n === 1 ? "1 equipo" : `${n} equipos`),
     clearFilters: "Quitar filtros",
     clear: "Quitar",
@@ -389,7 +393,7 @@ export function TeamsPage() {
       {!list && !error && <TwoBlocks className="h-32 rounded-2xl" />}
       {list && (
         <div className="flex flex-col gap-3.5">
-          {player && (!filter || filter === player.id) && <Group id="teams-yours" title={t.yours} rows={yours} pick={pick} empty={filtered ? t.noMatch : t.empty} />}
+          {player && (!filter || filter === player.id) && <Group id="teams-yours" title={t.yours} rows={yours} pick={pick} empty={filtered ? t.noMatch : t.empty} mine />}
           {(!filter || filter !== player?.id) && (
             <Group id="teams-others" title={player ? t.others : t.every} rows={others} pick={pick} empty={filtered ? t.noMatch : t.empty} showOwner />
           )}
@@ -465,6 +469,7 @@ function Group({
   pick,
   empty,
   showOwner = false,
+  mine = false,
 }: {
   id: string;
   title: string;
@@ -472,6 +477,7 @@ function Group({
   pick: Picking | null;
   empty: string;
   showOwner?: boolean;
+  mine?: boolean;
 }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2">
@@ -484,7 +490,7 @@ function Group({
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {rows.map((team) => (
             <li key={team.id}>
-              <TeamLink team={team} showOwner={showOwner} pick={pick} />
+              <TeamLink team={team} showOwner={showOwner} mine={mine} pick={pick} />
             </li>
           ))}
         </ul>
@@ -496,12 +502,12 @@ function Group({
 const rowClass =
   "flex min-h-23 w-full flex-wrap items-center gap-x-5 gap-y-2 rounded-[14px] border-3 bg-card py-3 pr-6 pl-4 text-left text-foreground no-underline outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-nowrap sm:py-0";
 
-function TeamLink({ team, showOwner, pick }: { team: TeamRow; showOwner: boolean; pick: Picking | null }) {
+function TeamLink({ team, showOwner, mine, pick }: { team: TeamRow; showOwner: boolean; mine: boolean; pick: Picking | null }) {
   const filled = team.members.filter((m) => m !== null).length;
   if (!pick) {
     return (
       <Link to="/teams/$id" params={{ id: team.id }} className={cn(rowClass, "hover:border-primary")}>
-        <RowBody team={team} showOwner={showOwner} filled={filled} />
+        <RowBody team={team} showOwner={showOwner} mine={mine} filled={filled} />
       </Link>
     );
   }
@@ -521,12 +527,12 @@ function TeamLink({ team, showOwner, pick }: { team: TeamRow; showOwner: boolean
       >
         {on && <Check className="size-4.5" strokeWidth={3.5} />}
       </span>
-      <RowBody team={team} showOwner={showOwner} filled={filled} />
+      <RowBody team={team} showOwner={showOwner} mine={mine} filled={filled} />
     </button>
   );
 }
 
-function RowBody({ team, showOwner, filled }: { team: TeamRow; showOwner: boolean; filled: number }) {
+function RowBody({ team, showOwner, mine, filled }: { team: TeamRow; showOwner: boolean; mine: boolean; filled: number }) {
   const size = team.members.length;
   return (
     <>
@@ -540,6 +546,12 @@ function RowBody({ team, showOwner, filled }: { team: TeamRow; showOwner: boolea
             <Chip className="border-2 border-cell-hi bg-ink text-subtle">
               <PixelIcon name="lock" className="size-3" />
               {t.states.locked}
+            </Chip>
+          )}
+          {mine && team.private && (
+            <Chip className="border-2 border-dashed border-cell-hi text-muted-foreground" title={t.privateTitle}>
+              <PixelIcon name="hidden" className="size-3" />
+              {t.private}
             </Chip>
           )}
           <span className="text-[0.8125rem] leading-[1.3] font-bold text-muted-foreground sm:truncate sm:text-sm sm:leading-normal">
@@ -575,9 +587,9 @@ function RowBody({ team, showOwner, filled }: { team: TeamRow; showOwner: boolea
   );
 }
 
-function Chip({ className, children }: { className: string; children: ReactNode }) {
+function Chip({ className, title, children }: { className: string; title?: string; children: ReactNode }) {
   return (
-    <span className={cn("flex h-5 flex-none items-center gap-1.25 rounded-[5px] px-2 font-heading text-base leading-none sm:h-5.5 sm:text-[1.0625rem]", className)}>
+    <span title={title} className={cn("flex h-5 flex-none items-center gap-1.25 rounded-[5px] px-2 font-heading text-base leading-none sm:h-5.5 sm:text-[1.0625rem]", className)}>
       {children}
     </span>
   );

@@ -59,6 +59,11 @@ const t = messages({
     source: "Source",
     addSource: "Add a source",
     memberCount: (n: number) => `${n} members`,
+    seenBy: "Seen by",
+    private: "Private",
+    public: "Public",
+    privateTitle: "Only you and admins see it",
+    publicTitle: "Every player sees it",
     moves: "Moves",
     analyse: "Analyse",
     all: (n: number) => `All ${n}`,
@@ -99,6 +104,11 @@ const t = messages({
     source: "Fuente",
     addSource: "Añadir una fuente",
     memberCount: (n: number) => `${n} miembros`,
+    seenBy: "Lo ve",
+    private: "Privado",
+    public: "Público",
+    privateTitle: "Solo tú y los administradores lo veis",
+    publicTitle: "Lo ven todos los jugadores",
     moves: "Movimientos",
     analyse: "Analizar",
     all: (n: number) => `Los ${n}`,
@@ -215,6 +225,7 @@ function Builder({ page }: { page: TeamPage }) {
   const [sources, setSources] = useState<readonly TeamSource[]>(page.sources);
   const [anyPokemon, setAnyPokemon] = useState(page.anyPokemon);
   const [pool, setPool] = useState<TeamPool>(page.pool);
+  const [hidden, setHidden] = useState(page.private);
   const movesGen = Math.min(pool.gen, pool.movesGen);
   const held = useMemo(() => holding(sources), [sources]);
   const stocks = useMemo(() => new Map(held.map((h) => [h.id, h])), [held]);
@@ -243,7 +254,7 @@ function Builder({ page }: { page: TeamPage }) {
     savePick(page.id, next);
   }
 
-  function write(body: { slots?: Slots; name?: string; sources?: string[]; anyPokemon?: boolean; pool?: TeamPool }, after?: () => Promise<void>) {
+  function write(body: { slots?: Slots; name?: string; sources?: string[]; anyPokemon?: boolean; pool?: TeamPool; private?: boolean }, after?: () => Promise<void>) {
     writes.current = writes.current
       .then(async () => {
         await api(`/teams/${encodeURIComponent(page.id)}`, teamDone, { method: "PUT", body });
@@ -279,6 +290,11 @@ function Builder({ page }: { page: TeamPage }) {
         setJoining(false);
       }
     });
+  }
+
+  function chooseHidden(next: boolean) {
+    setHidden(next);
+    write({ private: next });
   }
 
   function choosePool(next: TeamPool) {
@@ -519,6 +535,7 @@ function Builder({ page }: { page: TeamPage }) {
         </div>
         <div className="flex-1" />
         <div className="flex flex-wrap items-center gap-3">
+          {editable && <SeenSwitch hidden={hidden} onHidden={chooseHidden} />}
           {editable && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
           {editable && <MovesSwitch rule={pool.moves} onRule={(moves) => choosePool({ ...pool, moves })} />}
           {editable && (
@@ -695,6 +712,37 @@ function SourceMenu({ taken, busy, onPick, onAny }: { taken: readonly string[]; 
       </button>
       {open && <SnapshotMenu label={t.addSource} taken={taken} onClose={() => setOpen(false)} onPick={onPick} onAny={onAny} className="top-10 left-0" />}
     </span>
+  );
+}
+
+function SeenSwitch({ hidden, onHidden }: { hidden: boolean; onHidden: (hidden: boolean) => void }) {
+  return (
+    <div role="radiogroup" aria-label={t.seenBy} className="flex items-center gap-1 rounded-xl border-3 bg-ink p-1">
+      <span aria-hidden="true" className="pr-1.5 pl-2 font-heading text-xl text-muted-foreground">
+        {t.seenBy}
+      </span>
+      {(
+        [
+          [true, t.private, t.privateTitle],
+          [false, t.public, t.publicTitle],
+        ] as const
+      ).map(([value, label, title]) => (
+        <button
+          key={label}
+          type="button"
+          role="radio"
+          aria-checked={hidden === value}
+          title={title}
+          onClick={() => hidden !== value && onHidden(value)}
+          className={cn(
+            "min-h-9 cursor-pointer rounded-lg border-none px-3 font-heading text-[1.375rem] outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+            hidden === value ? "bg-border text-white" : "bg-transparent text-muted-foreground hover:bg-cell hover:text-white",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }
 

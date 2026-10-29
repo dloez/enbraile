@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, ne, or, type SQL, sql } from "drizzle-orm";
 import { type AdminSeries, CHECKLIST_TEXT, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
@@ -7,6 +7,10 @@ import { game, milestone, save, series, seriesPlayer, snapshot, team, user } fro
 export type SeriesRow = typeof series.$inferSelect;
 
 export type Viewer = { id: string; admin?: boolean | null };
+
+export function teamsSeenBy(reader: Viewer): SQL | undefined {
+  return reader.admin ? undefined : or(eq(team.private, false), eq(team.ownerId, reader.id));
+}
 
 export async function viewer(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -71,7 +75,7 @@ export async function trainersOf(seriesId: string, reader: Viewer) {
     ? await db
         .select({ ownerId: team.ownerId, teams: count() })
         .from(team)
-        .where(inArray(team.ownerId, players.map((p) => p.id)))
+        .where(and(inArray(team.ownerId, players.map((p) => p.id)), teamsSeenBy(reader)))
         .groupBy(team.ownerId)
     : [];
   const names = reader.admin

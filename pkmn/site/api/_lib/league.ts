@@ -27,7 +27,7 @@ import { says } from "./i18n.js";
 import { fixGame, type Move, recordGame, type Refusal } from "./match.js";
 import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
 import { leagueGame, leagueMatch, leagueRound, leagueTry, milestone, seriesPlayer, team, user } from "./schema.js";
-import { findShown, type SeriesRow, viewer } from "./series-data.js";
+import { findShown, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 import { insertTeam } from "./teams.js";
 
 const t = says({
@@ -103,7 +103,7 @@ const t = says({
 
 export const league = new Hono();
 
-async function leagueOf(row: SeriesRow, admin: boolean): Promise<LeaguePage> {
+async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
   const roundMilestones = await db
     .select({ id: milestone.id, name: milestone.name })
     .from(milestone)
@@ -130,6 +130,8 @@ async function leagueOf(row: SeriesRow, admin: boolean): Promise<LeaguePage> {
   players.sort((x, y) => x.name.localeCompare(y.name));
   const known = new Set(players.map((p) => p.id));
   const logged = await db.select().from(leagueTry).where(eq(leagueTry.seriesId, row.id)).orderBy(asc(leagueTry.loggedAt), asc(leagueTry.id));
+  const linked = logged.flatMap((one) => (one.teamId ? [one.teamId] : []));
+  const seen = new Set(linked.length ? (await db.select({ id: team.id }).from(team).where(and(inArray(team.id, linked), teamsSeenBy(reader)))).map((r) => r.id) : []);
   const counted = new Map<string, number>();
   const tries = logged
     .filter((one) => known.has(one.playerId))
@@ -137,7 +139,7 @@ async function leagueOf(row: SeriesRow, admin: boolean): Promise<LeaguePage> {
       const number = (counted.get(one.playerId) ?? 0) + 1;
       counted.set(one.playerId, number);
       const members = one.members.map((member) => ({ ...member, ...describeMember(member.species, member.species) }));
-      return { id: one.id, player: one.playerId, number, combatsWon: one.combatsWon, members, team: one.teamId, at: one.loggedAt.toISOString() };
+      return { id: one.id, player: one.playerId, number, combatsWon: one.combatsWon, members, team: one.teamId !== null && seen.has(one.teamId) ? one.teamId : null, at: one.loggedAt.toISOString() };
     });
   const best = bestTries(tries);
   const listed: LeagueTry[] = tries.map((one) => ({ ...one, best: best.get(one.player)?.id === one.id }));
@@ -175,7 +177,7 @@ async function leagueOf(row: SeriesRow, admin: boolean): Promise<LeaguePage> {
       row.id,
     ),
     tries: listed,
-    admin,
+    admin: !!reader.admin,
   };
 }
 
@@ -184,11 +186,11 @@ league.get("/:number/league", async (c) => {
   if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!reader.admin);
   if (!row) return c.json({ error: t(c).noSeries }, 404);
-  return c.json(await leagueOf(row, !!reader.admin));
+  return c.json(await leagueOf(row, reader));
 });
 
-async function matchOf(row: SeriesRow, matchId: string, admin: boolean): Promise<MatchPage | null> {
-  const page = await leagueOf(row, admin);
+async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise<MatchPage | null> {
+  const page = await leagueOf(row, reader);
   const round = page.rounds.find((r) => r.matches.some((m) => m.id === matchId));
   const match = round?.matches.find((m) => m.id === matchId);
   if (!round || !match) return null;
@@ -214,7 +216,7 @@ async function matchOf(row: SeriesRow, matchId: string, admin: boolean): Promise
     games: played,
     unrecorded: whole ? { a: 0, b: 0 } : { a: (match.gamesA ?? 0) - won.gamesA, b: (match.gamesB ?? 0) - won.gamesB },
     next: nextGame(match, played),
-    admin,
+    admin: !!reader.admin,
   };
 }
 
@@ -223,7 +225,7 @@ league.get("/:number/league/matches/:id", async (c) => {
   if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!reader.admin);
   if (!row) return c.json({ error: t(c).noSeries }, 404);
-  const page = await matchOf(row, c.req.param("id"), !!reader.admin);
+  const page = await matchOf(row, c.req.param("id"), reader);
   if (!page) return c.json({ error: t(c).noMatch }, 404);
   return c.json(page);
 });
@@ -236,12 +238,12 @@ async function moveOn(c: Context, make: (matchId: string, input: GameInput, by: 
   const row = await findShown(c.req.param("number") ?? "", true);
   if (!row) return c.json({ error: t(c).noSeries }, 404);
   const matchId = c.req.param("id") ?? "";
-  if (!(await matchOf(row, matchId, true))) return c.json({ error: t(c).noMatch }, 404);
+  if (!(await matchOf(row, matchId, reader))) return c.json({ error: t(c).noMatch }, 404);
   const input = await body(c.req.raw, gameInput);
   if (!input) return c.json({ error: t(c).badGame }, 400);
   const moved = await make(matchId, input, reader.id);
   if (!moved.done) return c.json({ error: t(c)[moved.refused] }, refusalStatus[moved.refused]);
-  return c.json(await matchOf(row, matchId, true));
+  return c.json(await matchOf(row, matchId, reader));
 }
 
 league.post("/:number/league/matches/:id/games", requireAdmin, (c) => moveOn(c, recordGame));
@@ -267,12 +269,14 @@ const roundStatus: Record<RoundRefusal, 400 | 404 | 409> = {
 };
 
 async function roundMove(c: Context, make: (seriesId: string) => Promise<RoundMove | null>) {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number") ?? "", true);
   if (!row) return c.json({ error: t(c).noSeries }, 404);
   const moved = await make(row.id);
   if (!moved) return c.json({ error: t(c).badPairs }, 400);
   if (!moved.done) return c.json({ error: t(c)[moved.refused] }, roundStatus[moved.refused]);
-  return c.json(await leagueOf(row, true));
+  return c.json(await leagueOf(row, reader));
 }
 
 league.post("/:number/league/rounds", requireAdmin, async (c) => {
@@ -299,7 +303,7 @@ league.post("/:number/league/tries", async (c) => {
   if (!reader) return c.json({ error: t(c).signIn }, 401);
   const row = await findShown(c.req.param("number"), !!reader.admin);
   if (!row) return c.json({ error: t(c).noSeries }, 404);
-  const page = await leagueOf(row, !!reader.admin);
+  const page = await leagueOf(row, reader);
   if (reader.admin || !page.players.some((p) => p.id === reader.id)) return c.json({ error: t(c).notPlayer }, 403);
   const input = await body(c.req.raw, tryInput);
   if (!input) return c.json({ error: t(c).badTry }, 400);
@@ -334,7 +338,7 @@ league.post("/:number/league/tries", async (c) => {
       loggedBy: reader.id,
     });
   });
-  return c.json(await leagueOf(row, false));
+  return c.json(await leagueOf(row, reader));
 });
 
 async function changeTry(c: Context, change: (id: string, by: string) => Promise<Response | null>) {
@@ -347,7 +351,7 @@ async function changeTry(c: Context, change: (id: string, by: string) => Promise
   if (!held) return c.json({ error: t(c).noTry }, 404);
   if (!reader.admin && held.playerId !== reader.id) return c.json({ error: t(c).notYours }, 403);
   const refused = await change(id, reader.id);
-  return refused ?? c.json(await leagueOf(row, !!reader.admin));
+  return refused ?? c.json(await leagueOf(row, reader));
 }
 
 league.put("/:number/league/tries/:id", (c) =>

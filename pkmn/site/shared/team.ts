@@ -80,6 +80,7 @@ export const teamInput = z.object({
   sources: teamSourceIds.optional(),
   anyPokemon: z.boolean().optional(),
   pool: teamPool.optional(),
+  private: z.boolean().optional(),
 });
 
 const person = z.object({ id: z.string(), name: z.string() });
@@ -102,6 +103,7 @@ export const teamRow = z.object({
   state: z.enum(TEAM_STATES),
   sources: z.array(teamSourceRow),
   anyPokemon: z.boolean(),
+  private: z.boolean(),
   members: z.array(id.nullable()),
   updatedAt: z.string(),
 });
@@ -124,6 +126,7 @@ export const teamPage = z.object({
   canEdit: z.boolean(),
   sources: z.array(teamSource),
   anyPokemon: z.boolean(),
+  private: z.boolean(),
   slots: teamSlots,
   pool: teamPool,
   updatedAt: z.string(),

@@ -225,6 +225,7 @@ export const team = pgTable(
     name: text("name").notNull(),
     size: integer("size").notNull().default(6),
     anyPokemon: boolean("any_pokemon").notNull().default(false),
+    private: boolean("private").notNull().default(true),
     slots: jsonb("slots").$type<TeamSlots>().notNull(),
     pool: jsonb("pool").$type<TeamPool>().notNull().default(DEFAULT_POOL),
     createdAt: timestamp("created_at").notNull().defaultNow(),

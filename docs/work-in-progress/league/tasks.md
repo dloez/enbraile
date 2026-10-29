@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Players make their free teams public or private
-
-Every team that is not a round or cup team gets a public/private toggle, private by default, the site's existing teams included, the Pokémon League tries' teams among them; a private team is seen only by its owner and admins, by page and route ([discovery → Team Locking](discovery.md#team-locking)). Lands with the league's branch, so production's teams turn private only when the league ships. Round and cup teams do not exist yet; their entries bring them without a toggle.
-
-**Do:**
-- [ ] The toggle on the team page, its column with private as the default, and every team route honouring it (`GET /api/teams`, `GET /api/teams/<id>`, Compare's reads).
-- [ ] The team list's dashed Private tag on the owner's private free teams, as `teams-list.dc.html` and `teams-list-phone.dc.html` draw it (`r.private`), beside the marks `src/pages/teams.tsx` already draws.
-- [ ] The Pokémon League view's Team link (`src/league/tries.tsx`) shown only to a reader who may see the team, and the team counts on the series page's trainer rows (`api/_lib/series-data.ts`) and the profile (`api/_lib/profiles.ts`) counting only the teams the reader may see, so each agrees with the list its tile opens.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, a new team is private, a second test player cannot see it in the list, by page or route, until it is made public; its owner sees the Private tag on it; after `npm run league-import`, a second player sees no Team link on another's try while that try's team is private.
-- Human-run: the owner flips a team on the preview.
-- Reuse: the team routes (`api/_lib/teams.ts`); the team list's `Chip` (`src/pages/teams.tsx`).
-- Neighbors: the team page's read-only view of another's team (`canEdit` in `src/pages/team.tsx`).
-- Forbidden: hiding in the browser only.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## Others' EVs and IVs are hidden
 
 A team's EVs and IVs reach only its owner and admins, on every team, league or free, and so do a PC summary's, by page and route; everyone else gets the rest of the build, and Showdown copy without them. A team whose EVs and IVs the viewer may not see has its analysis and Compare's damage calc worked out from its base stats ([discovery → Team Locking](discovery.md#team-locking)).

@@ -17,7 +17,7 @@ import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
 import { game, leagueTry, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
-import { viewer } from "./series-data.js";
+import { teamsSeenBy, viewer } from "./series-data.js";
 import { says } from "./i18n.js";
 
 const t = says({
@@ -180,12 +180,14 @@ async function tryTeams(ids: readonly string[]): Promise<Map<string, TeamLeague>
 }
 
 teams.get("/", async (c) => {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
   const owner = c.req.query("owner");
   const rows = await db
-    .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, slots: team.slots, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
+    .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, private: team.private, slots: team.slots, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
     .from(team)
     .innerJoin(user, eq(user.id, team.ownerId))
-    .where(owner ? eq(team.ownerId, owner) : undefined)
+    .where(and(owner ? eq(team.ownerId, owner) : undefined, teamsSeenBy(reader)))
     .orderBy(desc(team.updatedAt));
   const ids = rows.map((row) => row.id);
   const sources = ids.length ? await sourcesQuery().where(inArray(teamSource.teamId, ids)).orderBy(asc(teamSource.position)) : [];
@@ -202,6 +204,7 @@ teams.get("/", async (c) => {
       state: "edit",
       sources: own,
       anyPokemon: row.anyPokemon,
+      private: row.private,
       members: row.slots.map((member) => member?.species ?? null),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -213,10 +216,10 @@ teams.get("/:id", async (c) => {
   const reader = await viewer(c.req.raw);
   if (!reader) return c.json({ error: t(c).signIn }, 401);
   const [row] = await db
-    .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, slots: team.slots, pool: team.pool, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
+    .select({ id: team.id, name: team.name, anyPokemon: team.anyPokemon, private: team.private, slots: team.slots, pool: team.pool, updatedAt: team.updatedAt, ownerId: user.id, ownerName: user.name })
     .from(team)
     .innerJoin(user, eq(user.id, team.ownerId))
-    .where(eq(team.id, c.req.param("id")));
+    .where(and(eq(team.id, c.req.param("id")), teamsSeenBy(reader)));
   if (!row) return c.json({ error: t(c).noTeam }, 404);
   const sources = await db
     .select({ ...sourceColumns, gameId: series.gameId, data: snapshot.data, missing: snapshot.missing, abilitySetas: game.abilitySetas, mintPrice: game.mintPrice })
@@ -242,6 +245,7 @@ teams.get("/:id", async (c) => {
       costs: s.abilitySetas === null || s.mintPrice === null ? DEFAULT_COSTS : { abilitySetas: s.abilitySetas, mintPrice: s.mintPrice },
     })),
     anyPokemon: row.anyPokemon,
+    private: row.private,
     slots: row.slots,
     pool: row.pool,
     updatedAt: row.updatedAt.toISOString(),
@@ -292,6 +296,7 @@ teams.put("/:id", async (c) => {
         ...(input.slots ? { size: input.slots.length, slots: input.slots } : {}),
         ...(input.anyPokemon !== undefined ? { anyPokemon: input.anyPokemon } : {}),
         ...(input.pool ? { pool: input.pool } : {}),
+        ...(input.private !== undefined ? { private: input.private } : {}),
         updatedAt: new Date(),
       })
       .where(eq(team.id, id));

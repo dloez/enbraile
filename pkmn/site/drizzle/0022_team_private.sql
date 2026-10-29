@@ -1,0 +1,1 @@
+ALTER TABLE "team" ADD COLUMN "private" boolean DEFAULT true NOT NULL;
