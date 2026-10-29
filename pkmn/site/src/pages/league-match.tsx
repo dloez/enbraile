@@ -6,6 +6,7 @@ import { MatchFrame } from "@/components/page-frames";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { stageName } from "@/league/cup";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
 import { FAINTED_PER_GAME, type GameInput, MATCH_GAMES, type MatchPage, matchPage, POINTS_PER_WIN, tally } from "../../shared/league";
@@ -18,6 +19,11 @@ const t = messages({
     league: "League",
     round: (n: number) => `Round ${n}`,
     stage: (n: number) => `Round ${n} · Bo3`,
+    cup: (stage: string) => `Cup · ${stage}`,
+    cupStage: (stage: string) => `${stage} · Bo3`,
+    seed: (n: number) => `Seed ${n}`,
+    onward: (stage: string, name: string | null) => (name ? `Into the ${stage.toLowerCase()} against ${name}` : `Into the ${stage.toLowerCase()}`),
+    champion: "Champion of the cup",
     standing: (place: number | null, points: number) => `${place === null ? "Unranked" : ordinal(place, "en")} · ${points} ${points === 1 ? "point" : "points"}`,
     you: "You",
     team: (name: string) => `${name}'s team`,
@@ -54,6 +60,11 @@ const t = messages({
     league: "Liga",
     round: (n: number) => `Ronda ${n}`,
     stage: (n: number) => `Ronda ${n} · Bo3`,
+    cup: (stage: string) => `Copa · ${stage}`,
+    cupStage: (stage: string) => `${stage} · Bo3`,
+    seed: (n: number) => `Cabeza de serie ${n}`,
+    onward: (stage: string, name: string | null) => (name ? `Siguiente: ${stage.toLowerCase()} contra ${name}` : `Siguiente: ${stage.toLowerCase()}`),
+    champion: "Campeón de la copa",
     standing: (place: number | null, points: number) => `${place === null ? "Sin puesto" : ordinal(place, "es")} · ${points} ${points === 1 ? "punto" : "puntos"}`,
     you: "Tú",
     team: (name: string) => `Equipo de ${name}`,
@@ -96,6 +107,13 @@ const FROM = "/series/$number/league/matches/$id";
 
 function numbered(match: MatchPage, n: number): number | null {
   return match.unrecorded.a + match.unrecorded.b === 0 ? n : null;
+}
+
+function afterWin(match: MatchPage): string {
+  if (match.round) return `${t.round(match.round.number)} · ${t.point(POINTS_PER_WIN)}`;
+  if (!match.cup) return "";
+  if (match.cup.onward) return t.onward(stageName({ kind: "bracket", left: match.cup.onward.left, group: match.cup.group }, true), match.cup.onward.opponent);
+  return match.cup.kind === "group" ? stageName(match.cup) : t.champion;
 }
 
 function message(error: unknown): string {
@@ -145,17 +163,22 @@ export function LeagueMatchPage() {
           {t.series(match.number)}
         </Link>
         <Chevron />
-        <Link to="/series/$number/league" params={{ number: String(match.number) }} className="text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50">
+        <Link
+          to="/series/$number/league"
+          params={{ number: String(match.number) }}
+          search={match.cup ? { view: "cup" } : {}}
+          className="text-primary outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
           {t.league}
         </Link>
         <Chevron />
-        <span>{t.round(match.round.number)}</span>
+        <span>{match.round ? t.round(match.round.number) : match.cup ? t.cup(stageName(match.cup, true)) : null}</span>
       </nav>
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6">
         <Side side={match.a} you={match.a.id === me} />
         <h1 className="m-0 flex flex-col items-center gap-0.5 font-heading font-normal">
-          <span className="text-[0.9375rem] whitespace-nowrap text-muted-foreground sm:text-xl">{t.stage(match.round.number)}</span>
+          <span className="text-[0.9375rem] whitespace-nowrap text-muted-foreground sm:text-xl">{match.round ? t.stage(match.round.number) : match.cup ? t.cupStage(stageName(match.cup, true)) : null}</span>
           <span className="text-5xl leading-[0.85] whitespace-nowrap text-white sm:text-[4.75rem]">
             {scoreA} – {scoreB}
           </span>
@@ -192,7 +215,7 @@ function Side({ side, you, end = false }: { side: MatchPage["a"]; you: boolean; 
           <span className="truncate font-heading text-[1.75rem] leading-[0.95] sm:text-5xl">{side.name}</span>
           {you && <span className="rounded-sm bg-yellow px-1.5 font-heading text-[0.9375rem] text-ink sm:text-base">{t.you}</span>}
         </span>
-        <span className="font-heading text-[1.0625rem] leading-[1.1] text-muted-foreground sm:text-xl">{t.standing(side.place, side.points)}</span>
+        <span className="font-heading text-[1.0625rem] leading-[1.1] text-muted-foreground sm:text-xl">{side.seed === null ? t.standing(side.place, side.points) : t.seed(side.seed)}</span>
       </span>
     </div>
   );
@@ -364,7 +387,7 @@ function ResultPanel({
             <span className="flex flex-col leading-[1.1]">
               <span className="font-heading text-3xl text-yellow">{t.wins(winner.name, Math.max(match.gamesA!, match.gamesB!), Math.min(match.gamesA!, match.gamesB!))}</span>
               <span className="font-heading text-xl text-subtle">
-                {t.round(match.round.number)} · {t.point(POINTS_PER_WIN)}
+                {afterWin(match)}
               </span>
             </span>
           </div>

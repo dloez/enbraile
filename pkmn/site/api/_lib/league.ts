@@ -4,6 +4,11 @@ import { type Context, Hono } from "hono";
 import {
   bestTries,
   covers,
+  cupInput,
+  cupShape,
+  cupSlots,
+  type LeagueCup,
+  type MatchCup,
   fellProblem,
   type GameInput,
   gameInput,
@@ -24,11 +29,12 @@ import { describeMember } from "../../shared/species.js";
 import { backedBy, nextTeamName, type TeamSlots } from "../../shared/team.js";
 import { requireAdmin } from "./admin.js";
 import { body } from "./body.js";
+import { type CupRefusal, cupState, startCup } from "./cup.js";
 import { db } from "./db.js";
 import { says } from "./i18n.js";
 import { fixGame, type Move, recordGame, type Refusal } from "./match.js";
 import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
-import { leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, user } from "./schema.js";
+import { cup, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, user } from "./schema.js";
 import { findShown, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
 import { insertTeam } from "./teams.js";
 
@@ -66,6 +72,10 @@ const t = says({
     missing: "Every player of the league needs a pair or the rest",
     bye: "One player rests when the league has an odd number, and none otherwise",
     met: "Two of them have already met",
+    later: "A later cup match already has a game; fix that one first",
+    cupStarted: "The cup has already started",
+    cupSize: "The cup needs an even number of players, two or more",
+    badCup: "The players who enter the cup",
   },
   es: {
     signIn: "Inicia sesión primero",
@@ -100,6 +110,10 @@ const t = says({
     missing: "Cada jugador de la liga necesita pareja o descanso",
     bye: "Descansa un jugador cuando la liga es impar, y ninguno si no",
     met: "Dos de ellos ya se han enfrentado",
+    later: "Un combate posterior de la copa ya tiene una partida; corrige ese antes",
+    cupStarted: "La copa ya ha empezado",
+    cupSize: "La copa necesita un número par de jugadores, dos o más",
+    badCup: "Los jugadores que entran en la copa",
   },
 });
 
@@ -139,6 +153,33 @@ async function hatchedOf(seriesId: string, players: string[]): Promise<HatchedEg
       set: hand ? { by: hand.imported ? null : hand.by, at: hand.at!.toISOString() } : null,
     };
   });
+}
+
+async function cupOf(seriesId: string): Promise<LeagueCup | null> {
+  const [held] = await db.select().from(cup).where(eq(cup.seriesId, seriesId));
+  if (!held) return null;
+  const { seeds, rows, draw } = await cupState(db, held.id);
+  return {
+    seeds,
+    slots: draw.slots.map((slot) => {
+      const row = rows.find((r) => r.slot === slot.key && r.playerA === slot.a && r.playerB === slot.b);
+      return {
+        key: slot.key,
+        kind: slot.kind,
+        left: slot.left,
+        match: row?.id ?? null,
+        a: slot.a,
+        b: slot.b,
+        gamesA: row?.gamesA ?? null,
+        gamesB: row?.gamesB ?? null,
+        faintedA: row?.faintedA ?? null,
+        faintedB: row?.faintedB ?? null,
+      };
+    }),
+    group: draw.group,
+    champion: draw.champion,
+    at: held.startedAt.toISOString(),
+  };
 }
 
 async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
@@ -216,6 +257,7 @@ async function leagueOf(row: SeriesRow, reader: Viewer): Promise<LeaguePage> {
     ),
     tries: listed,
     hatched: await hatchedOf(row.id, players.map((p) => p.id)),
+    cup: await cupOf(row.id),
     admin: !!reader.admin,
   };
 }
@@ -228,24 +270,40 @@ league.get("/:number/league", async (c) => {
   return c.json(await leagueOf(row, reader));
 });
 
+function cupPlace(page: LeaguePage, matchId: string): MatchCup | null {
+  const held = page.cup;
+  const at = held?.slots.find((slot) => slot.match === matchId);
+  if (!held || !at) return null;
+  const next = cupSlots(held.seeds.length).find((slot) => [slot.a, slot.b].some((feed) => "winner" in feed && feed.winner === at.key));
+  const drawn = next && held.slots.find((slot) => slot.key === next.key);
+  const winner = at.gamesA !== null && at.gamesB !== null ? (at.gamesA > at.gamesB ? at.a : at.b) : null;
+  const other = drawn && winner ? (drawn.a === winner ? drawn.b : drawn.b === winner ? drawn.a : null) : null;
+  const opponent = other ? (page.players.find((p) => p.id === other)?.name ?? null) : null;
+  return { kind: at.kind, left: at.left, group: cupShape(held.seeds.length).half, onward: next ? { left: next.left ?? 0, opponent } : null };
+}
+
 async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise<MatchPage | null> {
   const page = await leagueOf(row, reader);
   const round = page.rounds.find((r) => r.matches.some((m) => m.id === matchId));
-  const match = round?.matches.find((m) => m.id === matchId);
-  if (!round || !match) return null;
+  const slot = page.cup?.slots.find((s) => s.match === matchId);
+  const match = round?.matches.find((m) => m.id === matchId) ?? (slot?.a && slot.b ? { ...slot, id: matchId, a: slot.a, b: slot.b } : undefined);
+  if (!match) return null;
   const games = await db.select().from(leagueGame).where(eq(leagueGame.matchId, matchId)).orderBy(asc(leagueGame.number));
   const played = games.map((g) => ({ number: g.number, winner: g.winnerId, faintedA: g.faintedA, faintedB: g.faintedB, replay: g.replay }));
   const won = wins(match, played);
+  const seeds = round ? [] : (page.cup?.seeds ?? []);
   const side = (id: string) => {
     const standing = page.standings.find((s) => s.player === id);
-    return { id, name: page.players.find((p) => p.id === id)?.name ?? "?", place: standing?.place ?? null, points: standing?.points ?? 0 };
+    const seed = seeds.indexOf(id);
+    return { id, name: page.players.find((p) => p.id === id)?.name ?? "?", place: standing?.place ?? null, points: standing?.points ?? 0, seed: seed < 0 ? null : seed + 1 };
   };
   const whole = covers(match, played);
   return {
     id: match.id,
     number: page.number,
     name: page.name,
-    round: { number: round.number, milestone: round.milestone },
+    round: round ? { number: round.number, milestone: round.milestone } : null,
+    cup: round ? null : cupPlace(page, matchId),
     a: side(match.a),
     b: side(match.b),
     gamesA: match.gamesA,
@@ -269,7 +327,7 @@ league.get("/:number/league/matches/:id", async (c) => {
   return c.json(page);
 });
 
-const refusalStatus: Record<Refusal, 400 | 404 | 409> = { noMatch: 404, winner: 400, order: 409, closed: 409, noGame: 404, past: 409, score: 409 };
+const refusalStatus: Record<Refusal, 400 | 404 | 409> = { noMatch: 404, winner: 400, order: 409, closed: 409, noGame: 404, past: 409, score: 409, later: 409 };
 
 async function moveOn(c: Context, make: (matchId: string, input: GameInput, by: string) => Promise<Move>) {
   const reader = await viewer(c.req.raw);
@@ -334,6 +392,26 @@ league.put("/:number/league/rounds/:round/pairs", requireAdmin, (c) =>
     return input ? setPairs(seriesId, roundNumber(c), input) : null;
   }),
 );
+
+const cupRefusal: Record<CupRefusal, { status: 400 | 409; say: "cupStarted" | "cupSize" | "player" | "twice" }> = {
+  started: { status: 409, say: "cupStarted" },
+  size: { status: 400, say: "cupSize" },
+  player: { status: 400, say: "player" },
+  twice: { status: 400, say: "twice" },
+};
+
+league.post("/:number/league/cup", requireAdmin, async (c) => {
+  const reader = await viewer(c.req.raw);
+  if (!reader) return c.json({ error: t(c).signIn }, 401);
+  const row = await findShown(c.req.param("number"), true);
+  if (!row) return c.json({ error: t(c).noSeries }, 404);
+  const input = await body(c.req.raw, cupInput);
+  if (!input) return c.json({ error: t(c).badCup }, 400);
+  const page = await leagueOf(row, reader);
+  const moved = await startCup(row.id, page.standings.map((s) => s.player), input.players, reader.id);
+  if (!moved.done) return c.json({ error: t(c)[cupRefusal[moved.refused].say] }, cupRefusal[moved.refused].status);
+  return c.json(await leagueOf(row, reader));
+});
 
 const filled = (slots: TeamSlots) => slots.filter((member) => member !== null);
 

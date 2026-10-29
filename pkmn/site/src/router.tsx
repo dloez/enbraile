@@ -40,7 +40,8 @@ export type LeagueSearch = { view?: Exclude<LeagueView, "overview"> };
 const leagueRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/series/$number/league",
-  validateSearch: (search: Record<string, unknown>): LeagueSearch => (search.view === "rounds" || search.view === "tries" ? { view: search.view } : {}),
+  validateSearch: (search: Record<string, unknown>): LeagueSearch =>
+    search.view === "rounds" || search.view === "tries" || search.view === "cup" ? { view: search.view } : {},
   loader: ({ params }) => {
     leaguePage.load();
     prefetch(`/series/${encodeURIComponent(params.number)}/league`);

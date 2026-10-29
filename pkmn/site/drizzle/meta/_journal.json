@@ -176,6 +176,13 @@
       "when": 1793267452440,
       "tag": "0024_hatched_imported",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793268691850,
+      "tag": "0025_league_cup",
+      "breakpoints": true
     }
   ]
 }

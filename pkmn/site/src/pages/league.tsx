@@ -4,6 +4,7 @@ import { listPage } from "@/components/page";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { LeagueFrame } from "@/components/page-frames";
 import { modeName, PairsCard, RoundAdmin, UnopenedCard } from "@/league/round-admin";
+import { CupView, cupStatus } from "@/league/cup";
 import { EggsCell, EggsEditor, EggsLine, EggsPen } from "@/league/eggs";
 import { combatsLabel, Pips, Tries } from "@/league/tries";
 import { api } from "@/lib/api";
@@ -32,6 +33,7 @@ const t = messages({
     overview: "Overview",
     rounds: "Rounds",
     tries: "Pokémon League",
+    cup: "Cup",
     status: (open: number, all: number, done: number, total: number) => `${open} of ${all} rounds · ${done} of ${total} played`,
     standings: "Standings",
     place: "#",
@@ -76,6 +78,7 @@ const t = messages({
     overview: "Resumen",
     rounds: "Rondas",
     tries: "Liga Pokémon",
+    cup: "Copa",
     status: (open: number, all: number, done: number, total: number) => `${open} de ${all} rondas · ${done} de ${total} jugados`,
     standings: "Clasificación",
     place: "#",
@@ -115,7 +118,7 @@ const t = messages({
 
 const FROM = "/series/$number/league";
 
-export type LeagueView = "overview" | "rounds" | "tries";
+export type LeagueView = "overview" | "rounds" | "tries" | "cup";
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : t.failed;
@@ -159,6 +162,7 @@ export function LeaguePage() {
     { value: "overview", label: t.overview },
     { value: "rounds", label: t.rounds },
     { value: "tries", label: t.tries },
+    { value: "cup", label: t.cup },
   ];
 
   return (
@@ -179,7 +183,7 @@ export function LeaguePage() {
         <div className="flex flex-wrap items-end gap-3 sm:gap-6">
           <h1 className="m-0 font-heading text-[3.25rem] leading-[0.85] font-normal sm:text-6xl">{t.title}</h1>
           <span className="ml-auto flex min-h-9 items-center rounded-lg border-3 bg-ink px-2.5 font-heading text-lg whitespace-nowrap text-subtle sm:order-last sm:min-h-11 sm:rounded-[10px] sm:px-3.5 sm:text-[1.375rem]">
-            {t.status(league.rounds.length, league.roundMilestones.length, matches.filter(played).length, matches.length)}
+            {view === "cup" && league.cup ? cupStatus(league.cup) : t.status(league.rounds.length, league.roundMilestones.length, matches.filter(played).length, matches.length)}
           </span>
           <div role="radiogroup" aria-label={t.view} className="grid w-full grid-cols-2 gap-1 rounded-xl border-3 bg-ink p-1 sm:flex sm:w-auto">
             {views.map((v) => (
@@ -204,6 +208,8 @@ export function LeaguePage() {
         <Rounds league={league} me={me} nameOf={nameOf} onChange={setLeague} />
       ) : view === "tries" ? (
         <Tries league={league} me={me} nameOf={nameOf} onChange={setLeague} />
+      ) : view === "cup" ? (
+        <CupView league={league} nameOf={nameOf} onChange={setLeague} />
       ) : (
         <Overview league={league} me={me} nameOf={nameOf} onChange={setLeague} />
       )}

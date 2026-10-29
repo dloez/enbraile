@@ -2,23 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## An admin runs the cup from its bracket to its champion
-
-An admin starts the cup and picks who enters; the bracket is drawn from the standings in the rulebook's pattern for any size, the losers' group with its own tie-breaks; the admin enters each cup match's result as a league match's; winners move on to the champion ([discovery → The Cup](discovery.md#the-cup)). Teams join in the next entry.
-
-**Do:**
-- [ ] Schema for the cup and its matches; the bracket, group and seeding in `shared/league.ts`.
-- [ ] The Cup view (`?view=cup`, after `league-cup.dc.html`, `league-cup-phone.dc.html` and `league-cup-start.dc.html`), starting it, and results in place.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, start series 1's cup with six and see 1–6, 2–5, 3–4, the triangular and the rulebook's semifinals; a 1–1–1 triangular broken by its tie-breaks; also a four-player cup as a plain knockout; a cup of five cannot start; the league's standings are unchanged by a cup result.
-- Human-run: the owner starts series 1's real cup.
-- Reuse: the match page (`src/pages/league-match.tsx`) and its moves (`api/_lib/match.ts`); the league page's view switch (`src/pages/league.tsx`); the app's `buildBracket`, `losersTable` and `settleBracket` as reference only.
-- Neighbors: the series page's tournament milestone.
-- Forbidden: the app's semifinal pairing (1–6 with the triangular); a cup match counted in the league's standings or eggs.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
-
 ## The series page's League summary shows the cup once it starts
 
 Discovery's series page summary holds "the standings' top, the current round, the cup once it starts" ([discovery → Surfaces](discovery.md#surfaces)); the landed `LeagueSummary` (`src/pages/series.tsx`) shows the first two, and no signed-off board draws the third: `series.dc.html` and `series-phone.dc.html` hold no cup.
@@ -34,7 +17,6 @@ Discovery's series page summary holds "the standings' top, the current round, th
 - Forbidden: none.
 
 **Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/api/`, `pkmn/site/design/`, `docs/pkmn/site/`
-**After:** An admin runs the cup from its bracket to its champion
 **Needs the author:** the sign-off of the summary's cup, which Claude draws on the Site v2 Screens canvas (owner, 2026-10-29).
 
 ## Each cup match gives its players a locked team to build
@@ -55,7 +37,6 @@ A cup match gives each of its players a team of eight sourced from their Tournam
 - Forbidden: an "Any Pokémon" source on a cup team.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
-**After:** An admin runs the cup from its bracket to its champion
 
 ## A Pokémon League try locks its team, and a locked team can be cloned
 
@@ -213,7 +194,6 @@ The profile's league placeholder becomes, per series, the player's place, points
 - Forbidden: working the standings out a second way.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/profile.ts`, `pkmn/site/src/pages/player-profile.tsx`, `docs/pkmn/site/`
-**After:** An admin runs the cup from its bracket to its champion
 
 ## League refusal messages read their numbers from `shared/league.ts`
 

@@ -280,13 +280,42 @@ export const leagueRound = pgTable(
   (table) => [unique("league_round_milestone_unique").on(table.milestoneId), index("league_round_series_id_idx").on(table.seriesId)],
 );
 
+export const cup = pgTable("league_cup", {
+  id: text("id").primaryKey(),
+  seriesId: text("series_id")
+    .notNull()
+    .unique("league_cup_series_unique")
+    .references(() => series.id, { onDelete: "cascade" }),
+  startedBy: text("started_by").references(() => user.id, { onDelete: "set null" }),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+});
+
+export const cupEntrant = pgTable(
+  "league_cup_entrant",
+  {
+    cupId: text("cup_id")
+      .notNull()
+      .references(() => cup.id, { onDelete: "cascade" }),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    seed: integer("seed").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.cupId, table.playerId] }),
+    unique("league_cup_entrant_seed_unique").on(table.cupId, table.seed),
+    index("league_cup_entrant_player_id_idx").on(table.playerId),
+    check("league_cup_entrant_seed", sql`${table.seed} >= 1`),
+  ],
+);
+
 export const leagueMatch = pgTable(
   "league_match",
   {
     id: text("id").primaryKey(),
-    roundId: text("round_id")
-      .notNull()
-      .references(() => leagueRound.id, { onDelete: "cascade" }),
+    roundId: text("round_id").references(() => leagueRound.id, { onDelete: "cascade" }),
+    cupId: text("cup_id").references(() => cup.id, { onDelete: "cascade" }),
+    slot: text("slot"),
     position: integer("position").notNull(),
     playerA: text("player_a")
       .notNull()
@@ -301,6 +330,8 @@ export const leagueMatch = pgTable(
   },
   (table) => [
     unique("league_match_round_position_unique").on(table.roundId, table.position),
+    unique("league_match_cup_slot_unique").on(table.cupId, table.slot),
+    check("league_match_home", sql`(${table.roundId} IS NULL) <> (${table.cupId} IS NULL) AND (${table.cupId} IS NULL) = (${table.slot} IS NULL)`),
     index("league_match_player_a_idx").on(table.playerA),
     index("league_match_player_b_idx").on(table.playerB),
     check("league_match_two_players", sql`${table.playerA} <> ${table.playerB}`),

@@ -11,8 +11,10 @@ import { readEntry, zipEntries } from "../api/_lib/export/zip.js";
 import { abortUpload, completeUpload, partUrl, startUpload } from "../api/_lib/files.js";
 import { ingest, savePrefix } from "../api/_lib/ingest.js";
 import { refreshItemIcons } from "../api/_lib/item-icons.js";
+import { startCup } from "../api/_lib/cup.js";
 import { recordGame } from "../api/_lib/match.js";
-import { game, leagueMatch, leagueRound, leagueTry, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
+import { cup, game, leagueMatch, leagueRound, leagueTry, milestone, save, series, seriesPlayer, snapshot, team, teamSource, user } from "../api/_lib/schema.js";
+import { standings } from "../shared/league.js";
 import { DEFAULT_POOL } from "../shared/pool.js";
 import { suggestMilestone } from "../shared/save-upload.js";
 import type { MilestoneMark } from "../shared/series.js";
@@ -385,6 +387,18 @@ async function seedTheFinishedSeries(): Promise<string | null> {
   return latest ? `${finishedSeries.name} finished, on the night sky, with ${seedSnapshot.player}'s ${chosen.name} snapshot copied from their latest in ${seedSeries.name}, two hours longer` : `${finishedSeries.name} finished, on the night sky`;
 }
 
+async function seedTheCup(): Promise<string | null> {
+  const [row] = await db.select({ id: series.id }).from(series).where(eq(series.number, finishedSeries.number));
+  if (!row) throw new Error(`${finishedSeries.name} is missing`);
+  const [held] = await db.select({ id: cup.id }).from(cup).where(eq(cup.seriesId, row.id));
+  if (held) return null;
+  const players = await db.select({ id: seriesPlayer.userId }).from(seriesPlayer).where(eq(seriesPlayer.seriesId, row.id));
+  const order = standings(players.map((p) => p.id), [], new Map(), row.id).map((s) => s.player);
+  const started = await startCup(row.id, order, order, null);
+  if (!started.done) throw new Error(`The seed's cup was refused: ${started.refused}`);
+  return `its cup started with ${finishedSeries.players.join(" and ")}, their final to play`;
+}
+
 async function main() {
   const preview = localOrPreview("SEED_TARGET", "seed");
   const adminPassword = preview ? requireEnv("SEED_ADMIN_PASSWORD") : admin.password;
@@ -400,8 +414,9 @@ async function main() {
   const seededLeague = await seedTheLeague();
   const seededTry = await seedTheTry();
   const seededFinished = await seedTheFinishedSeries();
+  const seededCup = await seedTheCup();
   console.log(
-    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededTry ? `, and ${seededTry}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}`,
+    `Seeded admin ${admin.name} (password ${preview ? "SEED_ADMIN_PASSWORD" : admin.password}), test players ${testPlayers.map(({ name, allowed }) => (allowed ? name : `${name} (waiting)`)).join(", ")}, the game ${seedGame.name} with a stand-in zip, and ${seedSeries.name} running on it with ${seedSeries.players.join(" and ")}${seededLeague ? ` and ${seededLeague}` : ""}${seededSnapshot ? `, with ${seededSnapshot}` : ""}${seededTeam ? `, and ${seededTeam}` : ""}${seededTry ? `, and ${seededTry}` : ""}${seededFinished ? `; and ${seededFinished}` : ""}${seededCup ? (seededFinished ? `, with ${seededCup}` : `; and ${finishedSeries.name} with ${seededCup}`) : ""}`,
   );
 }
 

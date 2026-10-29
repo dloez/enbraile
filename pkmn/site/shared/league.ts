@@ -44,6 +44,40 @@ export const leagueRound = z.object({
   matches: z.array(leagueMatch),
 });
 
+export const CUP_KINDS = ["first", "group", "bracket"] as const;
+
+export const cupKind = z.enum(CUP_KINDS);
+
+export const cupSlot = z.object({
+  key: z.string(),
+  kind: cupKind,
+  left: z.int().nullable(),
+  match: z.string().nullable(),
+  a: z.string().nullable(),
+  b: z.string().nullable(),
+  gamesA: z.int().nullable(),
+  gamesB: z.int().nullable(),
+  faintedA: z.int().nullable(),
+  faintedB: z.int().nullable(),
+});
+
+export const groupRow = z.object({
+  player: z.string(),
+  wins: z.int(),
+  losses: z.int(),
+  gameDiff: z.int(),
+  monDiff: z.int(),
+  through: z.boolean(),
+});
+
+export const leagueCup = z.object({
+  seeds: z.array(z.string()),
+  slots: z.array(cupSlot),
+  group: z.array(groupRow),
+  champion: z.string().nullable(),
+  at: z.string(),
+});
+
 export const standing = z.object({
   player: z.string(),
   place: z.int(),
@@ -90,6 +124,7 @@ export const leaguePage = z.object({
   standings: z.array(standing),
   tries: z.array(leagueTry),
   hatched: z.array(hatchedEggs),
+  cup: leagueCup.nullable(),
   admin: z.boolean(),
 });
 
@@ -116,13 +151,21 @@ export const gameInput = z.object({
   replay: z.url({ protocol: /^https?$/ }).max(500).nullable(),
 });
 
-const matchSide = z.object({ id: z.string(), name: z.string(), place: z.int().nullable(), points: z.int() });
+const matchSide = z.object({ id: z.string(), name: z.string(), place: z.int().nullable(), points: z.int(), seed: z.int().nullable() });
+
+export const matchCup = z.object({
+  kind: cupKind,
+  left: z.int().nullable(),
+  group: z.int(),
+  onward: z.object({ left: z.int(), opponent: z.string().nullable() }).nullable(),
+});
 
 export const matchPage = z.object({
   id: z.string(),
   number: z.int(),
   name: z.string(),
-  round: z.object({ number: z.int(), milestone: z.string() }),
+  round: z.object({ number: z.int(), milestone: z.string() }).nullable(),
+  cup: matchCup.nullable(),
   a: matchSide,
   b: matchSide,
   gamesA: z.int().nullable(),
@@ -137,6 +180,8 @@ export const matchPage = z.object({
 
 export const openInput = z.object({ mode: leagueMode });
 
+export const cupInput = z.object({ players: z.array(z.string().min(1)).max(64) });
+
 export const pairsInput = z.object({
   pairs: z.array(z.tuple([z.string().min(1), z.string().min(1)])).max(64),
   bye: z.string().min(1).nullable(),
@@ -144,6 +189,12 @@ export const pairsInput = z.object({
 
 export type LeagueMode = z.infer<typeof leagueMode>;
 export type PairsInput = z.infer<typeof pairsInput>;
+export type CupKind = z.infer<typeof cupKind>;
+export type CupSlotView = z.infer<typeof cupSlot>;
+export type GroupRow = z.infer<typeof groupRow>;
+export type LeagueCup = z.infer<typeof leagueCup>;
+export type MatchCup = z.infer<typeof matchCup>;
+export type CupInput = z.infer<typeof cupInput>;
 export type LeaguePlayer = z.infer<typeof leaguePlayer>;
 export type LeagueMatch = z.infer<typeof leagueMatch>;
 export type LeagueRound = z.infer<typeof leagueRound>;
@@ -382,4 +433,145 @@ export function drawRound(
     };
   }
   return null;
+}
+
+export const CUP_MIN = 2;
+
+export type CupFeed = { seed: number } | { winner: string } | { loser: string } | { group: number };
+
+export type CupSlot = { key: string; kind: CupKind; left: number | null; a: CupFeed; b: CupFeed };
+
+export type CupProblem = "size" | "player" | "twice";
+
+export function cupProblem(players: readonly string[], entrants: readonly string[]): CupProblem | null {
+  const known = new Set(players);
+  if (entrants.some((player) => !known.has(player))) return "player";
+  if (new Set(entrants).size !== entrants.length) return "twice";
+  return entrants.length < CUP_MIN || entrants.length % 2 === 1 ? "size" : null;
+}
+
+export function seedOrder(size: number): number[] {
+  let order = [1];
+  while (order.length < size) {
+    const next = order.length * 2;
+    order = order.flatMap((seed) => [seed, next + 1 - seed]);
+  }
+  return order;
+}
+
+export function cupShape(entrants: number) {
+  const half = entrants / 2;
+  const plain = (entrants & (entrants - 1)) === 0;
+  let size = 1;
+  while (size < half) size *= 2;
+  return { half, plain, size, rounds: Math.log2(size), qualifiers: plain ? 0 : size - half };
+}
+
+export function firstRound(entrants: number): [number, number][] {
+  return Array.from({ length: Math.floor(entrants / 2) }, (_, at) => [at + 1, entrants - at]);
+}
+
+const firstKey = (k: number) => `f${k}`;
+
+export function cupSlots(entrants: number): CupSlot[] {
+  if (entrants < CUP_MIN || entrants % 2 === 1) return [];
+  const { half, plain, size, rounds, qualifiers } = cupShape(entrants);
+  const winner = (k: number): CupFeed => ({ winner: firstKey(k) });
+  let leaves: CupFeed[];
+  if (plain) {
+    leaves = seedOrder(half).map(winner);
+  } else {
+    const pairs: [number, CupFeed, CupFeed][] = [];
+    for (let k = 1; k <= qualifiers; k++) pairs.push([k + 1, winner(k + 1), { group: k }]);
+    const rest = [1, ...Array.from({ length: half - qualifiers - 1 }, (_, at) => qualifiers + 2 + at)];
+    for (let at = 0; at < rest.length / 2; at++) pairs.push([rest[at]!, winner(rest[at]!), winner(rest[rest.length - 1 - at]!)]);
+    pairs.sort((x, y) => x[0] - y[0]);
+    leaves = seedOrder(size / 2).flatMap((place) => [pairs[place - 1]![1], pairs[place - 1]![2]]);
+  }
+  const first: CupSlot[] = leaves.flatMap((feed) => {
+    if (!("winner" in feed)) return [];
+    const k = Number(feed.winner.slice(1));
+    const [a, b] = firstRound(entrants)[k - 1]!;
+    return [{ key: feed.winner, kind: "first" as const, left: plain ? rounds : null, a: { seed: a }, b: { seed: b } }];
+  });
+  const group: CupSlot[] = [];
+  for (let i = 1; i <= (plain ? 0 : half); i++) {
+    for (let j = i + 1; j <= half; j++) group.push({ key: `g${i}-${j}`, kind: "group", left: null, a: { loser: firstKey(i) }, b: { loser: firstKey(j) } });
+  }
+  const bracket: CupSlot[] = [];
+  for (let round = 1; round <= rounds; round++) {
+    for (let at = 1; at <= size / 2 ** round; at++) {
+      const [a, b]: [CupFeed, CupFeed] = round === 1 ? [leaves[2 * at - 2]!, leaves[2 * at - 1]!] : [{ winner: `b${round - 1}-${2 * at - 1}` }, { winner: `b${round - 1}-${2 * at}` }];
+      bracket.push({ key: `b${round}-${at}`, kind: "bracket", left: rounds - round, a, b });
+    }
+  }
+  return [...first, ...group, ...bracket];
+}
+
+export type CupMatch = { a: string; b: string } & Pick<Result, "gamesA" | "gamesB" | "faintedA" | "faintedB">;
+
+export function groupTable(seeds: readonly string[], players: readonly string[], matches: readonly CupMatch[], qualifiers: number): GroupRow[] {
+  const rows = new Map(players.map((player) => [player, { player, wins: 0, losses: 0, gameDiff: 0, monDiff: 0, beat: new Set<string>() }]));
+  let decided = 0;
+  for (const match of matches) {
+    const winner = winnerOf(match);
+    const a = rows.get(match.a);
+    const b = rows.get(match.b);
+    if (!winner || !a || !b) continue;
+    decided++;
+    const [won, lost] = winner === match.a ? [a, b] : [b, a];
+    won.wins++;
+    lost.losses++;
+    won.beat.add(lost.player);
+    a.gameDiff += match.gamesA! - match.gamesB!;
+    b.gameDiff += match.gamesB! - match.gamesA!;
+    a.monDiff += (match.faintedB ?? 0) - (match.faintedA ?? 0);
+    b.monDiff += (match.faintedA ?? 0) - (match.faintedB ?? 0);
+  }
+  const list = [...rows.values()];
+  const headToHead = (row: (typeof list)[number]) => list.filter((other) => other.wins === row.wins && row.beat.has(other.player)).length;
+  list.sort(
+    (x, y) => y.wins - x.wins || headToHead(y) - headToHead(x) || y.gameDiff - x.gameDiff || y.monDiff - x.monDiff || seeds.indexOf(x.player) - seeds.indexOf(y.player),
+  );
+  const settled = decided === (players.length * (players.length - 1)) / 2;
+  return list.map(({ beat: _beat, ...row }, index) => ({ ...row, through: settled && index < qualifiers }));
+}
+
+export type DrawnSlot = Omit<CupSlot, "a" | "b"> & { a: string | null; b: string | null; winner: string | null };
+
+export type CupDraw = { slots: DrawnSlot[]; group: GroupRow[]; champion: string | null };
+
+export function cupDraw(seeds: readonly string[], played: ReadonlyMap<string, CupMatch>): CupDraw {
+  const { qualifiers } = cupShape(seeds.length);
+  const drawn = new Map<string, DrawnSlot>();
+  const loserOf = (key: string) => {
+    const at = drawn.get(key);
+    return at?.winner ? (at.winner === at.a ? at.b : at.a) : null;
+  };
+  let group: GroupRow[] = [];
+  const feed = (from: CupFeed): string | null => {
+    if ("seed" in from) return seeds[from.seed - 1] ?? null;
+    if ("winner" in from) return drawn.get(from.winner)?.winner ?? null;
+    if ("loser" in from) return loserOf(from.loser);
+    const row = group[from.group - 1];
+    return row?.through ? row.player : null;
+  };
+  const slots = cupSlots(seeds.length);
+  for (const slot of slots) {
+    if (slot.kind === "bracket" && qualifiers > 0 && group.length === 0) {
+      const losers = slots.filter((s) => s.kind === "first").map((s) => loserOf(s.key));
+      if (losers.every((player) => player !== null)) {
+        const results = [...drawn.values()].flatMap((s) => (s.kind === "group" && s.winner ? [played.get(s.key)!] : []));
+        group = groupTable(seeds, losers as string[], results, qualifiers);
+      }
+    }
+    const a = feed(slot.a);
+    const b = feed(slot.b);
+    const result = played.get(slot.key);
+    const winner = a && b && result && result.a === a && result.b === b ? winnerOf(result) : null;
+    const one = { ...slot, a, b, winner };
+    drawn.set(slot.key, one);
+  }
+  const all = [...drawn.values()];
+  return { slots: all, group, champion: all.at(-1)?.winner ?? null };
 }

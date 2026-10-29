@@ -1,9 +1,10 @@
 import { asc, eq } from "drizzle-orm";
 import { covers, decided, fits, type GameInput, gamesProblem, nextGame, tally } from "../../shared/league.js";
+import { CupConflict, lockCup, settleCup } from "./cup.js";
 import { db } from "./db.js";
 import { leagueGame, leagueMatch } from "./schema.js";
 
-export type Refusal = "noMatch" | "winner" | "order" | "closed" | "noGame" | "past" | "score";
+export type Refusal = "noMatch" | "winner" | "order" | "closed" | "noGame" | "past" | "score" | "later";
 
 export type Move = { done: true } | { done: false; refused: Refusal };
 
@@ -15,7 +16,7 @@ type GameRow = Pick<typeof leagueGame.$inferSelect, "number" | "winnerId" | "fai
 
 const played = (g: GameRow) => ({ number: g.number, winner: g.winnerId, faintedA: g.faintedA, faintedB: g.faintedB });
 
-function refusalOf(match: MatchRow, games: GameRow[]): Refusal | null {
+function refusalOf(match: Pick<MatchRow, "playerA" | "playerB" | "gamesA" | "gamesB">, games: GameRow[]): Refusal | null {
   const sides = { a: match.playerA, b: match.playerB };
   const problem = gamesProblem(sides, games.map(played));
   if (problem) return problem;
@@ -23,7 +24,9 @@ function refusalOf(match: MatchRow, games: GameRow[]): Refusal | null {
 }
 
 async function move(matchId: string, input: GameInput, by: string | null, place: (match: MatchRow, games: GameRow[]) => number | Refusal): Promise<Move> {
-  return db.transaction(async (tx) => {
+  return db.transaction(async (tx): Promise<Move> => {
+    const [home] = await tx.select({ cupId: leagueMatch.cupId }).from(leagueMatch).where(eq(leagueMatch.id, matchId));
+    if (home?.cupId) await lockCup(tx, home.cupId);
     const [match] = await tx.select().from(leagueMatch).where(eq(leagueMatch.id, matchId)).for("update");
     if (!match) return { done: false, refused: "noMatch" };
     if (input.winner !== match.playerA && input.winner !== match.playerB) return { done: false, refused: "winner" };
@@ -44,8 +47,14 @@ async function move(matchId: string, input: GameInput, by: string | null, place:
       const result = decided(sum.gamesA, sum.gamesB) ? sum : { gamesA: null, gamesB: null, faintedA: null, faintedB: null };
       await tx.update(leagueMatch).set(result).where(eq(leagueMatch.id, matchId));
     }
+    if (match.cupId) await settleCup(tx, match.cupId);
     return { done: true };
-  });
+  }).catch(cupRefusal);
+}
+
+function cupRefusal(error: unknown): Move {
+  if (error instanceof CupConflict) return { done: false, refused: "later" };
+  throw error;
 }
 
 export function recordGame(matchId: string, input: GameInput, by: string | null): Promise<Move> {
