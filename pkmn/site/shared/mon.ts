@@ -101,6 +101,7 @@ const monFields = {
   sprite: z.string().nullable(),
   free: z.boolean(),
   fainted: z.boolean(),
+  spreadHidden: z.boolean(),
 };
 
 export const mon = z.object({ ...monFields, learnable: learnable.nullable() });

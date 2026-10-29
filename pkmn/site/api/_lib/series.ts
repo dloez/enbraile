@@ -9,6 +9,7 @@ import { db } from "./db.js";
 import { downloadUrl } from "./files.js";
 import { game, milestone, save, series, seriesPlayer, snapshot, user } from "./schema.js";
 import { findShown, gameOf, mayUpload, milestonesOf, plays, trainersOf, viewer } from "./series-data.js";
+import { seesSpreads, withoutSpreads } from "./spreads.js";
 import { says } from "./i18n.js";
 
 const t = says({
@@ -107,13 +108,14 @@ seriesRoutes.get("/:number/trainers/:player/pc", async (c) => {
   const chosen = asked === undefined ? taken.findLast((m) => m.snapshotId !== null) : taken.find((m) => m.milestone === asked);
   if (asked !== undefined && !chosen?.snapshotId) return c.json({ error: t(c).noSnapshotAt(asked) }, 404);
   const [held] = chosen?.snapshotId ? await db.select({ data: snapshot.data, missing: snapshot.missing }).from(snapshot).where(eq(snapshot.id, chosen.snapshotId)) : [];
+  const shown = seesSpreads(reader, playerId);
   const page: PcPage = {
     player,
     series: { number: row.number, name: row.name, gameId: row.gameId },
     milestones: taken.map((m) => ({ name: m.milestone, taken: m.snapshotId !== null })),
     milestone: held ? (chosen?.milestone ?? null) : null,
     snapshotId: held ? (chosen?.snapshotId ?? null) : null,
-    pc: held ? (await import("../../shared/describe.js")).describePc(held.data) : null,
+    pc: held ? (await import("../../shared/describe.js")).describePc(shown ? held.data : withoutSpreads(held.data), !shown) : null,
     missing: held?.missing ?? null,
   };
   return c.json(page);

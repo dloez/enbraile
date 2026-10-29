@@ -24,7 +24,7 @@ import { preloadGraph, SheetAnalysis } from "@/teams/components/sheet-analysis";
 import { allowedMoves, currentAbility, type Mon } from "../../shared/mon";
 import { defensesOf, describeMove, describeTm } from "../../shared/describe";
 import { liveSlots, memberMon } from "@/teams/dex";
-import { EMPTY_SHEET, formatMoney, freeCount, giveItem, isFree, lastFilled, moneyLeft, natureFrom, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, setNature, stockOf, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
+import { EMPTY_SHEET, formatMoney, freeCount, giveItem, isFree, lastFilled, moneyLeft, natureFrom, ownOf, putFree, putMember, removeMember, resized, setAbility, setasLeft, setFree, setMove, setNature, spreadShown, stockOf, takeItem, usedBy, PICK_SIZE, TEAM_SIZE, TEAM_SIZES, type Member, type Slots, type Stock, type Stocks } from "@/teams/team";
 import { analysedSlots, filledAt, loadPick, pickedOf, savePick, togglePicked, type Pick, type Scope } from "@/teams/pick";
 import { showdownTeam } from "@/teams/showdown";
 import { teamDone, teamMade, teamPage, teamName, type TeamPage, type TeamSource, type TeamSourceRow } from "../../shared/team";
@@ -423,7 +423,7 @@ function Builder({ page }: { page: TeamPage }) {
     }
     const back = () => show(done(panel));
     if (panel.t === "set") {
-      if (!isFree(member)) return null;
+      if (!isFree(member) || !spreadShown(member)) return null;
       return <SetEditor key={panel.slot} member={member} back={backLabel(panel)} onBack={back} onChange={(set) => save(setFree(slots, panel.slot, set))} />;
     }
     if (panel.t === "item") {

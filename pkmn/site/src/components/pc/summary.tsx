@@ -29,6 +29,7 @@ const t = messages({
       const names = lacks.map((l) => (l === "ivs" ? "IVs" : l === "evs" ? "EVs" : "stats"));
       return `No ${names.join(", ").replace(/, ([^,]*)$/, " or $1")} in this export${range ? ": Lv 50 shows the range over IVs 0–31" : ""}`;
     },
+    spreadHidden: (range: boolean) => `Only its trainer and admins see its IVs, EVs and stats${range ? ": Lv 50 shows the range over IVs 0–31" : ""}`,
     statsShown: "Stats shown",
     stat: "Stat",
     total: "Total",
@@ -70,6 +71,7 @@ const t = messages({
       const names = lacks.map((l) => (l === "ivs" ? "IVs" : l === "evs" ? "EVs" : "estadísticas"));
       return `No hay ${names.join(", ").replace(/, ([^,]*)$/, " ni $1")} en esta exportación${range ? ": Nv 50 muestra el rango con IVs de 0 a 31" : ""}`;
     },
+    spreadHidden: (range: boolean) => `Solo su entrenador y los administradores ven sus IVs, EVs y estadísticas${range ? ": Nv 50 muestra el rango con IVs de 0 a 31" : ""}`,
     statsShown: "Estadísticas mostradas",
     stat: "Est.",
     total: "Total",
@@ -333,7 +335,9 @@ function Stats({ mon }: { mon: Mon }) {
     <>
       {lacks.length > 0 && (
         <GapWarning>
-          {t.lacking(lacks, mode === "fifty" && stats.some((s) => s.iv === null))}
+          {mon.spreadHidden
+            ? t.spreadHidden(mode === "fifty")
+            : t.lacking(lacks, mode === "fifty" && stats.some((s) => s.iv === null))}
         </GapWarning>
       )}
       <div role="radiogroup" aria-label={t.statsShown} className={trackClass}>

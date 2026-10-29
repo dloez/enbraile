@@ -107,7 +107,7 @@ export function defensesOf(types: readonly string[], abilities: readonly Ability
   return Object.fromEntries(TYPES.map((attack) => [attack, damageTaken(9, attack, types, current?.id ?? null)]));
 }
 
-export function describePokemon(p: SheetPokemon, index: number, fainted = false): Mon {
+export function describePokemon(p: SheetPokemon, index: number, fainted = false, spreadHidden = false): Mon {
   const entry = gen.species.get(p.species);
   const types = p.types.map(typeName);
   const showdownTypes = entry.exists ? [...entry.types] : null;
@@ -150,6 +150,7 @@ export function describePokemon(p: SheetPokemon, index: number, fainted = false)
     learnable: learnable(p),
     free: false,
     fainted,
+    spreadHidden,
   };
 }
 
@@ -213,14 +214,14 @@ export function describeMove(id: string): MoveInfo {
   };
 }
 
-function describeFainted(list: readonly FaintedPokemon[], from: number): Mon[] {
-  return list.flatMap((p, at) => (p.species === null ? [] : [describePokemon({ ...p, species: p.species }, from + at, true)]));
+function describeFainted(list: readonly FaintedPokemon[], from: number, spreadHidden: boolean): Mon[] {
+  return list.flatMap((p, at) => (p.species === null ? [] : [describePokemon({ ...p, species: p.species }, from + at, true, spreadHidden)]));
 }
 
-export function describePc(sheet: Sheet & { fainted?: readonly FaintedPokemon[]; trainer?: Snapshot["trainer"] }): PcView {
-  const living = sheet.pokemon.map((p, index) => describePokemon(p, index));
+export function describePc(sheet: Sheet & { fainted?: readonly FaintedPokemon[]; trainer?: Snapshot["trainer"] }, spreadHidden = false): PcView {
+  const living = sheet.pokemon.map((p, index) => describePokemon(p, index, false, spreadHidden));
   return packPc(
-    [...living, ...describeFainted(sheet.fainted ?? [], living.length)],
+    [...living, ...describeFainted(sheet.fainted ?? [], living.length, spreadHidden)],
     fightItems(sheet.items).map(describeItem),
     sheet.tms.map(describeTm),
     setasOf(sheet.items),

@@ -62,6 +62,12 @@ export const teamMember = z.union([freeMember, ownMember]);
 
 export const teamSlots = z.array(teamMember.nullable()).min(TEAM_SIZE).max(MAX_TEAM_SIZE);
 
+export const shownFreeMember = freeMember.extend({ evs: statTable(MAX_EV).nullable(), ivs: statTable(MAX_IV).nullable() });
+
+export const shownMember = z.union([shownFreeMember, ownMember]);
+
+export const shownSlots = z.array(shownMember.nullable()).min(TEAM_SIZE).max(MAX_TEAM_SIZE);
+
 export const teamName = z.string().trim().min(1).max(60);
 
 export const teamSourceIds = z.array(id).refine((ids) => new Set(ids).size === ids.length);
@@ -117,6 +123,7 @@ export const teamSource = teamSourceRow.extend({
   snapshot: snapshotSchema,
   missing: exportReport.nullable(),
   costs: gameCosts,
+  spreadHidden: z.boolean(),
 });
 
 export const teamPage = z.object({
@@ -127,7 +134,7 @@ export const teamPage = z.object({
   sources: z.array(teamSource),
   anyPokemon: z.boolean(),
   private: z.boolean(),
-  slots: teamSlots,
+  slots: shownSlots,
   pool: teamPool,
   updatedAt: z.string(),
 });
@@ -143,6 +150,12 @@ export type OwnMember = z.infer<typeof ownMember>;
 export type FreeMember = z.infer<typeof freeMember>;
 
 export type TeamSlots = z.infer<typeof teamSlots>;
+
+export type ShownMember = z.infer<typeof shownMember>;
+
+export type ShownFreeMember = z.infer<typeof shownFreeMember>;
+
+export type ShownSlots = z.infer<typeof shownSlots>;
 
 export type TeamRow = z.infer<typeof teamRow>;
 
@@ -162,8 +175,12 @@ export type TeamSource = z.infer<typeof teamSource>;
 
 export type TeamPage = z.infer<typeof teamPage>;
 
-export function isFree(member: TeamMember): member is FreeMember {
+export function isFree<M extends ShownMember>(member: M): member is Extract<M, { free: true }> {
   return "free" in member;
+}
+
+export function spreadShown(member: ShownFreeMember): member is FreeMember {
+  return member.evs !== null && member.ivs !== null;
 }
 
 export function backedBy(slots: TeamSlots, sources: readonly string[], anyPokemon: boolean): boolean {
@@ -174,13 +191,13 @@ export function emptySlots(size: number = TEAM_SIZE): TeamSlots {
   return Array.from({ length: size }, () => null);
 }
 
-export function lastFilled(slots: TeamSlots): number {
-  return slots.reduce((n, member, at) => (member ? at + 1 : n), 0);
+export function lastFilled(slots: readonly unknown[]): number {
+  return slots.reduce<number>((n, member, at) => (member ? at + 1 : n), 0);
 }
 
-export function resized(slots: TeamSlots, size: number): TeamSlots | null {
+export function resized<S>(slots: (S | null)[], size: number): (S | null)[] | null {
   if (size < TEAM_SIZE || size > MAX_TEAM_SIZE || size < lastFilled(slots)) return null;
-  return slots.length >= size ? slots.slice(0, size) : [...slots, ...emptySlots(size - slots.length)];
+  return slots.length >= size ? slots.slice(0, size) : [...slots, ...Array.from({ length: size - slots.length }, () => null)];
 }
 
 export function nextTeamName(names: readonly string[], base = "Team"): string {

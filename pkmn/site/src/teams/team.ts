@@ -4,15 +4,15 @@ import { describePokemon } from "../../shared/describe";
 import { DEFAULT_COSTS, type GameCosts } from "../../shared/games";
 import { fightItems, setasOf } from "../../shared/items";
 import type { Sheet } from "@/teams/schema";
-import { isFree, MAX_IV, MOVE_SLOTS, type FreeMember, type OwnMember, type TeamMember, type TeamSlots, type TeamSource } from "../../shared/team";
+import { isFree, MAX_IV, MOVE_SLOTS, type FreeMember, type OwnMember, type ShownMember, type ShownSlots, type TeamSource } from "../../shared/team";
 
-export { emptySlots, isFree, lastFilled, MAX_TEAM_SIZE, MOVE_SLOTS, nextTeamName, PICK_SIZE, resized, TEAM_SIZE, TEAM_SIZES } from "../../shared/team";
+export { emptySlots, isFree, lastFilled, spreadShown, MAX_TEAM_SIZE, MOVE_SLOTS, nextTeamName, PICK_SIZE, resized, TEAM_SIZE, TEAM_SIZES } from "../../shared/team";
 
-export type { FreeMember, OwnMember } from "../../shared/team";
+export type { FreeMember, OwnMember, ShownFreeMember } from "../../shared/team";
 
-export type Member = TeamMember;
+export type Member = ShownMember;
 
-export type Slots = TeamSlots;
+export type Slots = ShownSlots;
 
 export interface Stock {
   sheet: Sheet;
@@ -40,7 +40,7 @@ function mintsOf(source: TeamSource): Map<string, number> {
 export function stockOf(source: TeamSource): Stock {
   return {
     sheet: source.snapshot,
-    mons: source.snapshot.pokemon.map((p, index) => describePokemon(p, index)),
+    mons: source.snapshot.pokemon.map((p, index) => describePokemon(p, index, false, source.spreadHidden)),
     money: source.snapshot.trainer.money,
     mints: mintsOf(source),
     costs: source.costs ?? DEFAULT_COSTS,
@@ -93,7 +93,7 @@ export function setFree(slots: Slots, slot: number, set: Partial<FreeSet>): Slot
   return next;
 }
 
-export function newMember(mon: Mon, source: string): Member {
+export function newMember(mon: Mon, source: string): OwnMember {
   return {
     source,
     index: mon.index,

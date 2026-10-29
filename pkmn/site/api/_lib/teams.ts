@@ -18,6 +18,7 @@ import { body } from "./body.js";
 import { db } from "./db.js";
 import { game, leagueTry, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
 import { teamsSeenBy, viewer } from "./series-data.js";
+import { seesSpreads, slotsWithoutSpreads, withoutSpreads } from "./spreads.js";
 import { says } from "./i18n.js";
 
 const t = says({
@@ -237,16 +238,20 @@ teams.get("/:id", async (c) => {
     name: row.name,
     owner: { id: row.ownerId, name: row.ownerName },
     canEdit: reader.id === row.ownerId,
-    sources: sources.map((s) => ({
-      ...sourceOf(s),
-      gameId: s.gameId,
-      snapshot: s.data,
-      missing: s.missing,
-      costs: s.abilitySetas === null || s.mintPrice === null ? DEFAULT_COSTS : { abilitySetas: s.abilitySetas, mintPrice: s.mintPrice },
-    })),
+    sources: sources.map((s) => {
+      const shown = seesSpreads(reader, s.playerId);
+      return {
+        ...sourceOf(s),
+        gameId: s.gameId,
+        snapshot: shown ? s.data : withoutSpreads(s.data),
+        missing: s.missing,
+        costs: s.abilitySetas === null || s.mintPrice === null ? DEFAULT_COSTS : { abilitySetas: s.abilitySetas, mintPrice: s.mintPrice },
+        spreadHidden: !shown,
+      };
+    }),
     anyPokemon: row.anyPokemon,
     private: row.private,
-    slots: row.slots,
+    slots: seesSpreads(reader, row.ownerId) ? row.slots : slotsWithoutSpreads(row.slots),
     pool: row.pool,
     updatedAt: row.updatedAt.toISOString(),
   };

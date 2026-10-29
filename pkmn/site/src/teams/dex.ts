@@ -1,7 +1,7 @@
 import { Dex } from "@pkmn/dex";
 import { describeAbility, describeItem, describeMove, describeNature, describePokemon, statAt } from "../../shared/describe";
 import { STATS, type Ability, type BagItem, type Mon, type MoveInfo, type Nature } from "../../shared/mon";
-import { isFree, type FreeMember } from "../../shared/team";
+import { isFree, spreadShown, type ShownFreeMember } from "../../shared/team";
 import { ownMon, type Member, type Slots, type Stocks } from "@/teams/team";
 
 const gen = Dex.forGen(9);
@@ -22,8 +22,9 @@ export function speciesAbilities(species: string): { base: string[]; hidden: str
   return { base, hidden };
 }
 
-export function freeMon(member: FreeMember): Mon {
+export function freeMon(member: ShownFreeMember): Mon {
   const entry = gen.species.get(member.species);
+  const shown = spreadShown(member);
   const mon = describePokemon(
     {
       species: member.species,
@@ -41,7 +42,10 @@ export function freeMon(member: FreeMember): Mon {
       moves: undefined,
     },
     -1,
+    false,
+    !shown,
   );
+  if (!shown) return { ...mon, free: true };
   const nat = mon.nature;
   return {
     ...mon,

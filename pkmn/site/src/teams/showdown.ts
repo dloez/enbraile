@@ -5,7 +5,7 @@ import { describeItem, describeMove } from "../../shared/describe";
 import { ANY_ABILITIES, memberMon, NATURES, speciesAbilities } from "@/teams/dex";
 import { emptySlots, freeSet, isFree, itemsLeft, MAX_TEAM_SIZE, naturePrice, TEAM_SIZE, MOVE_SLOTS, type FreeMember, type Member, type OwnMember, type Slots, type Stocks } from "@/teams/team";
 import { describeMember } from "../../shared/species";
-import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL } from "../../shared/team";
+import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL, type TeamSlots } from "../../shared/team";
 import type { StatsTable } from "@pkmn/dex";
 import { messages } from "../../shared/i18n";
 
@@ -52,7 +52,8 @@ function ivLine(ivs: StatsTable | null): string | null {
   return below.length ? `IVs: ${below.join(" / ")}` : null;
 }
 
-function evLine(evs: StatsTable): string | null {
+function evLine(evs: StatsTable | null): string | null {
+  if (!evs) return null;
   const some = STATS.filter((stat) => evs[stat] > 0).map((stat) => `${evs[stat]} ${STAT_LABELS[stat]}`);
   return some.length ? `EVs: ${some.join(" / ")}` : null;
 }
@@ -103,7 +104,7 @@ function moveId(name: string): string {
 }
 
 export interface ReadTeam {
-  slots: Slots;
+  slots: TeamSlots;
   added: number;
   free: string[];
   left: string[];

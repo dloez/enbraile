@@ -2,23 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Others' EVs and IVs are hidden
-
-A team's EVs and IVs reach only its owner and admins, on every team, league or free, and so do a PC summary's, by page and route; everyone else gets the rest of the build, and Showdown copy without them. A team whose EVs and IVs the viewer may not see has its analysis and Compare's damage calc worked out from its base stats ([discovery → Team Locking](discovery.md#team-locking)).
-
-**Do:**
-- [ ] EVs and IVs left out of every team and PC summary the API hands to someone else.
-- [ ] Others' teams' analysis and Compare's damage calc from base stats.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, a second test player opening the first's team sees no EVs or IVs on the page, in the route's JSON or in Copy for Showdown, nor in the first's PC summaries, and Compare's damage calc against the first's team matches the base-stats figures; the owner and an admin see them.
-- Human-run: the owner checks a team as two players on the preview.
-- Reuse: the team routes (`api/_lib/teams.ts`), Showdown copy (`src/teams/showdown.ts`).
-- Neighbors: the free teams' public/private toggle.
-- Forbidden: hiding in the browser only.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-
 ## The standings count eggs won and hatched
 
 Eggs won from the rulebook (league wins, the best try's combats), hatched counted from each player's latest snapshot, with an admin override that keeps who set it and when ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs)). The app's hatched counts come across in [their own entry](#series-1s-hatched-counts-come-across-from-the-app).
