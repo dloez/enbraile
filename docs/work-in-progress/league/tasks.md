@@ -2,22 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## Rerunning the league import leaves an admin's hatched count alone
-
-Each run of `npm run league-import` writes every player's hatched count from the app's dump, an admin's own setting included (`scripts/league-import.ts`, the `save` upsert); a rerun leaves an admin's setting alone, and a count still from the app takes the dump's again, timed by the rerun ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs), owner 2026-10-29).
-
-**Do:**
-- [ ] The import's hatched upsert skips a player whose count an admin set.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, run the import, set one player's count as the admin, rerun it: that player keeps the admin's count and who set it, and the others read the app's.
-- Human-run: none.
-- Reuse: the import's `save` upsert; `hatched_set_by` (`api/_lib/schema.ts`).
-- Neighbors: the admin's Eggs override (`api/_lib/overrides.ts`).
-- Forbidden: none.
-
-**Touches:** `pkmn/site/scripts/league-import.ts`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
-
 ## The Teams tab counts the reader's league teams still to build
 
 The signed-off boards draw the header's Teams tab with a yellow count, titled "1 team to build" (`series.dc.html`, `series-phone.dc.html`, `teams-list.dc.html`, `teams-list-phone.dc.html`, `player-profile.dc.html`, `player-profile-phone.dc.html`, `match-phone.dc.html`). Discovery says a round or cup team is flagged in the Teams tab until it is done ([discovery → Team Locking](discovery.md#team-locking), [Surfaces](discovery.md#surfaces)). The header's `TEAMS_TAB` (`src/components/site-header.tsx`) has no count, and no entry has aimed at it since the mid-run review moved "the Teams tab's flag" onto the team list's To build mark (99c3302). Series 1's players will need it to notice their cup teams. Found by the gardener, 2026-10-29.
