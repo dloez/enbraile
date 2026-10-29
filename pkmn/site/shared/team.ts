@@ -184,8 +184,8 @@ export function teamKind(row: Pick<TeamRow, "league">): TeamKind {
   return row.league?.kind ?? "free";
 }
 
-export function hasToggle(kind: TeamKind): boolean {
-  return kind === "free" || kind === "try";
+export function hasToggle(kind: TeamKind, locked: boolean): boolean {
+  return !locked && (kind === "free" || kind === "try");
 }
 
 export function teamState(kind: TeamKind, locked: boolean): TeamState {

@@ -292,6 +292,7 @@ export const cup = pgTable("league_cup", {
     .notNull()
     .unique("league_cup_series_unique")
     .references(() => series.id, { onDelete: "cascade" }),
+  mode: leagueModeEnum("mode").notNull(),
   startedBy: text("started_by").references(() => user.id, { onDelete: "set null" }),
   startedAt: timestamp("started_at").notNull().defaultNow(),
 });
@@ -333,6 +334,7 @@ export const leagueMatch = pgTable(
     gamesB: integer("games_b"),
     faintedA: integer("fainted_a"),
     faintedB: integer("fainted_b"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
     unique("league_match_round_position_unique").on(table.roundId, table.position),

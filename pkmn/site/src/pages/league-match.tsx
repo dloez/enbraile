@@ -34,8 +34,9 @@ const t = messages({
     uploadFor: (milestone: string) => `Upload your ${milestone} snapshot to get your cup team`,
     toSeries: "Upload it on the series page",
     waitingFor: (name: string, milestone: string) => `Waiting for ${name}'s ${milestone} snapshot`,
-    hiddenLocked: (name: string) => `${name} has locked their team; it shows once the cup reveals it`,
-    hiddenBuilding: (name: string) => `${name} is building their team; it shows once the cup reveals it`,
+    hiddenLocked: (name: string) => `${name} has locked their team`,
+    hiddenBuilding: (name: string) => `${name} is building their team`,
+    reveal: { all: "It shows once every cup player has locked theirs", both: "It shows once both players have locked theirs", result: "It shows once the match has its result" },
     openTeam: (team: string) => `Open ${team}`,
     locked: "Locked",
     toBuild: "To build",
@@ -84,8 +85,13 @@ const t = messages({
     uploadFor: (milestone: string) => `Sube tu captura de ${milestone} para tener tu equipo de copa`,
     toSeries: "Súbela en la página de la serie",
     waitingFor: (name: string, milestone: string) => `Esperando la captura de ${milestone} de ${name}`,
-    hiddenLocked: (name: string) => `${name} ha bloqueado su equipo; se verá cuando la copa lo muestre`,
-    hiddenBuilding: (name: string) => `${name} está montando su equipo; se verá cuando la copa lo muestre`,
+    hiddenLocked: (name: string) => `${name} ha bloqueado su equipo`,
+    hiddenBuilding: (name: string) => `${name} está montando su equipo`,
+    reveal: {
+      all: "Se verá cuando todos los jugadores de la copa hayan bloqueado el suyo",
+      both: "Se verá cuando los dos jugadores hayan bloqueado el suyo",
+      result: "Se verá cuando el enfrentamiento tenga su resultado",
+    },
     openTeam: (team: string) => `Abrir ${team}`,
     locked: "Bloqueado",
     toBuild: "Por montar",
@@ -293,7 +299,12 @@ function TeamColumn({ number, name, team, you, className }: { number: number; na
             </>
           )}
           {team.state === "waiting" && !you && <p className="m-0">{t.waitingFor(name, team.milestone)}</p>}
-          {team.state === "hidden" && <p className="m-0">{team.locked ? t.hiddenLocked(name) : t.hiddenBuilding(name)}</p>}
+          {team.state === "hidden" && (
+            <>
+              <p className="m-0 text-subtle">{team.locked ? t.hiddenLocked(name) : t.hiddenBuilding(name)}</p>
+              <p className="m-0">{t.reveal[team.reveal]}</p>
+            </>
+          )}
         </div>
       )}
     </section>

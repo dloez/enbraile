@@ -1,11 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { type CSSProperties, useState } from "react";
+import { Segmented } from "@/components/controls";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { Button } from "@/components/ui/button";
+import { modeName } from "@/league/round-admin";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
-import { type CupKind, type CupSlotView, cupProblem, cupShape, cupSlots, firstRound, type GroupRow, type LeagueCup, type LeaguePage as League, leaguePage, played, winnerOf } from "../../shared/league";
+import { type CupKind, type CupSlotView, cupProblem, cupShape, cupSlots, firstRound, type GroupRow, type LeagueCup, type LeagueMode, type LeaguePage as League, leaguePage, played, winnerOf } from "../../shared/league";
 
 const t = messages({
   en: {
@@ -39,6 +41,8 @@ const t = messages({
     firstRound: "The cup's first round",
     vs: "vs",
     start: "Start the cup",
+    mode: "Mode",
+    modeLabel: "The cup's mode",
     matchLabel: (a: string, b: string, score: string | null) => `${a} vs ${b}, ${score ?? "to play"}`,
   },
   es: {
@@ -72,6 +76,8 @@ const t = messages({
     firstRound: "Primera ronda de la copa",
     vs: "vs",
     start: "Empezar la copa",
+    mode: "Modo",
+    modeLabel: "Modo de la copa",
     matchLabel: (a: string, b: string, score: string | null) => `${a} contra ${b}, ${score ?? "por jugar"}`,
   },
 });
@@ -462,6 +468,7 @@ function Bracket({ league, cup, geometry, nameOf }: Named & { cup: LeagueCup; ge
 
 function CupStart({ league, nameOf, onChange }: Named & { onChange: (league: League) => void }) {
   const [out, setOut] = useState<string[]>([]);
+  const [mode, setMode] = useState<LeagueMode | "">(league.rounds.at(-1)?.mode ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const order = league.standings.map((row) => row.player);
@@ -474,7 +481,7 @@ function CupStart({ league, nameOf, onChange }: Named & { onChange: (league: Lea
     setBusy(true);
     setError(null);
     try {
-      onChange(await api(`/series/${league.number}/league/cup`, leaguePage, { method: "POST", body: { players: entrants } }));
+      onChange(await api(`/series/${league.number}/league/cup`, leaguePage, { method: "POST", body: { players: entrants, mode } }));
     } catch (caught) {
       setError(message(caught));
     }
@@ -545,12 +552,29 @@ function CupStart({ league, nameOf, onChange }: Named & { onChange: (league: Lea
             <Seeded at={b} end />
           </div>
         ))}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span id="cup-mode" className="sr-only">
+            {t.modeLabel}
+          </span>
+          <span aria-hidden="true" className="font-heading text-xl text-muted-foreground">
+            {t.mode}
+          </span>
+          <Segmented<LeagueMode | "">
+            labelledBy="cup-mode"
+            options={[
+              { value: "open", label: modeName("open") },
+              { value: "closed", label: modeName("closed") },
+            ]}
+            value={mode}
+            onChange={setMode}
+          />
+        </div>
         {error && (
           <p role="alert" className="m-0 text-sm font-bold text-destructive">
             {error}
           </p>
         )}
-        <Button type="button" variant="go" disabled={busy || !startable} onClick={() => void start()} className="min-h-14 text-[1.625rem]">
+        <Button type="button" variant="go" disabled={busy || !startable || mode === ""} onClick={() => void start()} className="min-h-14 text-[1.625rem]">
           {t.start}
         </Button>
       </aside>

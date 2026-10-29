@@ -19,23 +19,6 @@ Discovery's series page summary holds "the standings' top, the current round, th
 **Touches:** `pkmn/site/src/pages/series.tsx`, `pkmn/site/api/`, `pkmn/site/design/`, `docs/pkmn/site/`
 **Needs the author:** the sign-off of the summary's cup, which Claude draws on the Site v2 Screens canvas (owner, 2026-10-29).
 
-## League teams stay hidden until their mode reveals them
-
-The cup gets its mode when an admin starts it. A round or cup team is seen only by its owner and admins until its reveal: in an open cup, once every cup player has locked; in a closed one, once its match has a result. The API enforces it on every route that hands out a team: the team list, the team page, the match page and Compare ([discovery → Team Locking](discovery.md#team-locking)). The modes already exist: `LEAGUE_MODES` and `leagueMode` in `shared/league.ts`, stored on each round as `league_round.mode` (`api/_lib/schema.ts`).
-
-**Do:**
-- [ ] The cup's mode, stored on the cup as a round's is, picked by the admin on starting it and prefilled with the newest round's.
-- [ ] The reveal enforced by the team routes and the match page.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, in an open cup, a second test player gets neither page nor route for the first's locked cup team until every cup player has locked, then sees it; in a closed cup, sees it only once the match has a result; the owner and an admin always see it.
-- Human-run: the owner starts series 1's cup open on the preview and checks a team's reveal.
-- Reuse: `leagueMode` and `league_mode` (`shared/league.ts`, `api/_lib/schema.ts`); the team routes (`api/_lib/teams.ts`) and the match read (`matchOf` in `api/_lib/league.ts`); the lock of the entry above.
-- Neighbors: the round opening's Mode picker (`src/league/round-admin.tsx`); the start-the-cup board (`design/league-cup-start.dc.html`).
-- Forbidden: hiding in the browser only; a mode hard-coded rather than read from the round or cup.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-
 ## Players ban blind and pick their six on a cup match's page
 
 An open cup has bans and a closed one none; in an open cup, each cup game opens with both players' bans once the game before it has its result: each bans one of the other's eight, sees only whether the opponent has banned, and both bans show once both are in; the winner of the last game cannot repeat their ban; each then picks six of their seven left, kept with the game and copied for Showdown; the admin's result opens the next game ([discovery → The Cup](discovery.md#the-cup), [The Match Page](discovery.md#the-match-page)). The page refreshes itself while it waits on the other side.
@@ -52,7 +35,6 @@ An open cup has bans and a closed one none; in an open cup, each cup game opens 
 - Forbidden: showing a ban before both are in, to anyone; a ban or pick written outside the match module.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
-**After:** League teams stay hidden until their mode reveals them
 
 ## An opened round gives each player their team once their snapshot exists
 
@@ -71,7 +53,6 @@ A round, once an admin opens it, in either mode, gives each player a team source
 - Forbidden: a team sourced from a snapshot that does not exist.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `docs/pkmn/site/`
-**After:** League teams stay hidden until their mode reveals them
 
 ## Series 1's game teams come across from their replays, locked to their rounds
 
@@ -134,7 +115,7 @@ In a closed round, each player's snapshot at the round's milestone is seen only 
 **Acceptance:**
 - Claude-run: `npm run gate`; through `verify-site`, in a closed round, a second test player cannot open the first's round snapshot, find its Pokémon in the abilities search, or add it as a team source, by page or route, until the match has a result, nor the first's later saves once both have moved on; in an open round they can.
 - Human-run: none until a series uses it.
-- Reuse: the save rule of [Players see others' saves only up to their own round](#players-see-others-saves-only-up-to-their-own-round); the reveal of [League teams stay hidden until their mode reveals them](#league-teams-stay-hidden-until-their-mode-reveals-them).
+- Reuse: the save rule of [Players see others' saves only up to their own round](#players-see-others-saves-only-up-to-their-own-round); the reveal of the league teams' reveal (`revealed()` in `api/_lib/series-data.ts`).
 - Neighbors: the PC and abilities routes.
 - Forbidden: hiding in the browser only.
 

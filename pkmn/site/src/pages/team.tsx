@@ -572,7 +572,7 @@ function Builder({ page, onReload }: { page: TeamPage; onReload: () => void }) {
         </div>
         <div className="flex-1" />
         <div className="flex flex-wrap items-center gap-3">
-          {page.mine && hasToggle(teamKind(page)) && <SeenSwitch hidden={hidden} onHidden={chooseHidden} />}
+          {page.mine && hasToggle(teamKind(page), page.lockedAt !== null) && <SeenSwitch hidden={hidden} onHidden={chooseHidden} />}
           {editable && !fixed && <SizeSwitch size={size} least={lastFilled(slots)} onSize={(next) => save(resized(slots, next))} />}
           {editable && <MovesSwitch rule={pool.moves} onRule={(moves) => choosePool({ ...pool, moves })} />}
           {editable && !fixed && (

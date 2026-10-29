@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
-import { CUP_TEAM_SIZE, type CupMatch, cupDraw, type CupProblem, cupProblem } from "../../shared/league.js";
+import { CUP_TEAM_SIZE, type CupMatch, cupDraw, type CupProblem, cupProblem, type LeagueMode } from "../../shared/league.js";
 import { emptySlots } from "../../shared/team.js";
 import { db } from "./db.js";
 import { cup, cupEntrant, leagueGame, leagueMatch, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
@@ -114,7 +114,7 @@ export async function lockCup(tx: Tx, cupId: string): Promise<void> {
   await tx.select({ id: cup.id }).from(cup).where(eq(cup.id, cupId)).for("update");
 }
 
-export function startCup(seriesId: string, standings: readonly string[], entrants: readonly string[], by: string | null): Promise<CupMove> {
+export function startCup(seriesId: string, standings: readonly string[], entrants: readonly string[], mode: LeagueMode, by: string | null): Promise<CupMove> {
   return db.transaction(async (tx) => {
     await tx.select({ id: series.id }).from(series).where(eq(series.id, seriesId)).for("update");
     const [held] = await tx.select({ id: cup.id }).from(cup).where(eq(cup.seriesId, seriesId));
@@ -123,7 +123,7 @@ export function startCup(seriesId: string, standings: readonly string[], entrant
     if (problem) return { done: false, refused: problem };
     const seeds = standings.filter((player) => entrants.includes(player));
     const id = crypto.randomUUID();
-    await tx.insert(cup).values({ id, seriesId, startedBy: by });
+    await tx.insert(cup).values({ id, seriesId, mode, startedBy: by });
     await tx.insert(cupEntrant).values(seeds.map((playerId, at) => ({ cupId: id, playerId, seed: at + 1 })));
     await settleCup(tx, id);
     return { done: true };

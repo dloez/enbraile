@@ -17,6 +17,7 @@ import {
   type LeagueTry,
   type MatchMember,
   type MatchPage,
+  type LeagueMode,
   type MatchTeam,
   nextGame,
   openInput,
@@ -39,7 +40,7 @@ import { fixGame, type Move, recordGame, type Refusal } from "./match.js";
 import { openRound, redrawRound, type RoundMove, type RoundRefusal, setPairs } from "./rounds.js";
 import { cup, leagueGame, leagueMatch, leagueRound, leagueTry, milestone, save, seriesPlayer, snapshot, team, teamSource, user } from "./schema.js";
 import { findShown, type SeriesRow, teamsSeenBy, type Viewer, viewer } from "./series-data.js";
-import { insertTeam, lockTeam } from "./teams.js";
+import { insertTeam, lockTryTeam } from "./teams.js";
 
 const t = says({
   en: {
@@ -78,7 +79,7 @@ const t = says({
     later: "A later cup match already has a game; fix that one first",
     cupStarted: "The cup has already started",
     cupSize: "The cup needs an even number of players, two or more",
-    badCup: "The players who enter the cup",
+    badCup: "The players who enter the cup and its mode, open or closed",
   },
   es: {
     signIn: "Inicia sesión primero",
@@ -116,7 +117,7 @@ const t = says({
     later: "Un combate posterior de la copa ya tiene una partida; corrige ese antes",
     cupStarted: "La copa ya ha empezado",
     cupSize: "La copa necesita un número par de jugadores, dos o más",
-    badCup: "Los jugadores que entran en la copa",
+    badCup: "Los jugadores que entran en la copa y su modo, abierta o cerrada",
   },
 });
 
@@ -163,6 +164,7 @@ async function cupOf(seriesId: string): Promise<LeagueCup | null> {
   if (!held) return null;
   const { seeds, rows, draw } = await cupState(db, held.id);
   return {
+    mode: held.mode,
     seeds,
     slots: draw.slots.map((slot) => {
       const row = rows.find((r) => r.slot === slot.key && r.playerA === slot.a && r.playerB === slot.b);
@@ -304,7 +306,7 @@ function matchMember(member: TeamMember | null, sheets: ReadonlyMap<string, Snap
   };
 }
 
-async function matchTeams(row: SeriesRow, matchId: string, players: { a: string; b: string }, inCup: boolean, reader: Viewer): Promise<{ a: MatchTeam; b: MatchTeam }> {
+async function matchTeams(row: SeriesRow, matchId: string, players: { a: string; b: string }, inCup: boolean, mode: LeagueMode, reader: Viewer): Promise<{ a: MatchTeam; b: MatchTeam }> {
   const seen = teamsSeenBy(reader);
   const held = await db
     .select({ id: team.id, name: team.name, ownerId: team.ownerId, slots: team.slots, lockedAt: team.lockedAt, seen: seen ? sql<boolean>`(${seen})` : sql<boolean>`true` })
@@ -330,7 +332,7 @@ async function matchTeams(row: SeriesRow, matchId: string, players: { a: string;
   const side = (player: string): MatchTeam => {
     const one = held.find((h) => h.ownerId === player);
     if (!one) return tournament ? { state: "waiting", milestone: tournament.name } : { state: "none" };
-    if (!one.seen) return { state: "hidden", locked: one.lockedAt !== null };
+    if (!one.seen) return { state: "hidden", locked: one.lockedAt !== null, reveal: mode === "closed" ? "result" : inCup ? "all" : "both" };
     return { state: "shown", id: one.id, name: one.name, locked: one.lockedAt !== null, members: one.slots.map((member) => matchMember(member, sheets)) };
   };
   return { a: side(players.a), b: side(players.b) };
@@ -341,7 +343,8 @@ async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise
   const round = page.rounds.find((r) => r.matches.some((m) => m.id === matchId));
   const slot = page.cup?.slots.find((s) => s.match === matchId);
   const match = round?.matches.find((m) => m.id === matchId) ?? (slot?.a && slot.b ? { ...slot, id: matchId, a: slot.a, b: slot.b } : undefined);
-  if (!match) return null;
+  const mode = round?.mode ?? page.cup?.mode;
+  if (!match || !mode) return null;
   const games = await db.select().from(leagueGame).where(eq(leagueGame.matchId, matchId)).orderBy(asc(leagueGame.number));
   const played = games.map((g) => ({ number: g.number, winner: g.winnerId, faintedA: g.faintedA, faintedB: g.faintedB, replay: g.replay }));
   const won = wins(match, played);
@@ -360,7 +363,7 @@ async function matchOf(row: SeriesRow, matchId: string, reader: Viewer): Promise
     cup: round ? null : cupPlace(page, matchId),
     a: side(match.a),
     b: side(match.b),
-    teams: await matchTeams(row, matchId, match, !round, reader),
+    teams: await matchTeams(row, matchId, match, !round, mode, reader),
     gamesA: match.gamesA,
     gamesB: match.gamesB,
     faintedA: match.faintedA,
@@ -463,7 +466,7 @@ league.post("/:number/league/cup", requireAdmin, async (c) => {
   const input = await body(c.req.raw, cupInput);
   if (!input) return c.json({ error: t(c).badCup }, 400);
   const page = await leagueOf(row, reader);
-  const moved = await startCup(row.id, page.standings.map((s) => s.player), input.players, reader.id);
+  const moved = await startCup(row.id, page.standings.map((s) => s.player), input.players, input.mode, reader.id);
   if (!moved.done) return c.json({ error: t(c)[cupRefusal[moved.refused].say] }, cupRefusal[moved.refused].status);
   return c.json(await leagueOf(row, reader));
 });
@@ -507,9 +510,10 @@ league.post("/:number/league/tries", async (c) => {
         pool: row.pool,
         sources: [],
         locked: { at: new Date(), by: reader.id },
+        private: false,
       });
     } else if (teamId) {
-      await lockTeam(tx, teamId, reader.id);
+      await lockTryTeam(tx, teamId, reader.id);
     }
     await tx.insert(leagueTry).values({
       id: crypto.randomUUID(),

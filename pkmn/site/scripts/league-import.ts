@@ -242,6 +242,7 @@ async function main() {
           pool: target.pool,
           sources: [],
           locked: { at: new Date(one.at), by: null },
+          private: false,
         },
         row: {
           id: one.id,

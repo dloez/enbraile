@@ -394,7 +394,7 @@ async function seedTheCup(): Promise<string | null> {
   if (held) return null;
   const players = await db.select({ id: seriesPlayer.userId }).from(seriesPlayer).where(eq(seriesPlayer.seriesId, row.id));
   const order = standings(players.map((p) => p.id), [], new Map(), row.id).map((s) => s.player);
-  const started = await startCup(row.id, order, order, null);
+  const started = await startCup(row.id, order, order, "open", null);
   if (!started.done) throw new Error(`The seed's cup was refused: ${started.refused}`);
   return `its cup started with ${finishedSeries.players.join(" and ")}, their final to play`;
 }

@@ -73,6 +73,7 @@ export const groupRow = z.object({
 });
 
 export const leagueCup = z.object({
+  mode: leagueMode,
   seeds: z.array(z.string()),
   slots: z.array(cupSlot),
   group: z.array(groupRow),
@@ -170,10 +171,14 @@ export const matchMember = z.object({
   sprite: z.string().nullable(),
 });
 
+export const TEAM_REVEALS = ["all", "both", "result"] as const;
+
+export const teamReveal = z.enum(TEAM_REVEALS);
+
 export const matchTeam = z.discriminatedUnion("state", [
   z.object({ state: z.literal("none") }),
   z.object({ state: z.literal("waiting"), milestone: z.string() }),
-  z.object({ state: z.literal("hidden"), locked: z.boolean() }),
+  z.object({ state: z.literal("hidden"), locked: z.boolean(), reveal: teamReveal }),
   z.object({ state: z.literal("shown"), id: z.string(), name: z.string(), locked: z.boolean(), members: z.array(matchMember.nullable()) }),
 ]);
 
@@ -198,7 +203,7 @@ export const matchPage = z.object({
 
 export const openInput = z.object({ mode: leagueMode });
 
-export const cupInput = z.object({ players: z.array(z.string().min(1)).max(64) });
+export const cupInput = z.object({ players: z.array(z.string().min(1)).max(64), mode: leagueMode });
 
 export const pairsInput = z.object({
   pairs: z.array(z.tuple([z.string().min(1), z.string().min(1)])).max(64),
@@ -222,6 +227,7 @@ export type LeagueGame = z.infer<typeof leagueGame>;
 export type GameInput = z.infer<typeof gameInput>;
 export type MatchPage = z.infer<typeof matchPage>;
 export type MatchTeam = z.infer<typeof matchTeam>;
+export type TeamReveal = z.infer<typeof teamReveal>;
 export type MatchMember = z.infer<typeof matchMember>;
 export type TryMember = z.infer<typeof tryMember>;
 export type LeagueTry = z.infer<typeof leagueTry>;

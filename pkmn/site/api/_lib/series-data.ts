@@ -1,15 +1,41 @@
-import { and, asc, count, eq, inArray, ne, or, type SQL, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNull, ne, or, type SQL, sql } from "drizzle-orm";
+import { alias, type AnyPgTable } from "drizzle-orm/pg-core";
 import { type AdminSeries, CHECKLIST_TEXT, startChecklist } from "../../shared/series.js";
 import { auth } from "./auth.js";
 import { db } from "./db.js";
-import { game, milestone, save, series, seriesPlayer, snapshot, team, user } from "./schema.js";
+import { cup, game, leagueMatch, leagueRound, milestone, save, series, seriesPlayer, snapshot, team, user } from "./schema.js";
 
 export type SeriesRow = typeof series.$inferSelect;
 
 export type Viewer = { id: string; admin?: boolean | null };
 
+const aliased = <T extends AnyPgTable>(table: T, name: string) => ({ as: sql`${table} ${sql.identifier(name)}`, columns: alias(table, name) });
+
+const shownMatch = aliased(leagueMatch, "shown_match");
+const shownCup = aliased(cup, "shown_cup");
+const shownRound = aliased(leagueRound, "shown_round");
+const fellowMatch = aliased(leagueMatch, "fellow_match");
+const lockedTeam = aliased(team, "locked_team");
+
+function lockedOn(match: typeof shownMatch.columns): SQL {
+  const locked = lockedTeam.columns;
+  return sql`(select count(*) from ${lockedTeam.as} where ${locked.matchId} = ${match.id} and ${locked.lockedAt} is not null)`;
+}
+
+function revealed(): SQL {
+  const [m, c, r, f] = [shownMatch.columns, shownCup.columns, shownRound.columns, fellowMatch.columns];
+  return sql`exists (select 1 from ${shownMatch.as}
+    left join ${shownCup.as} on ${c.id} = ${m.cupId}
+    left join ${shownRound.as} on ${r.id} = ${m.roundId}
+    where ${m.id} = ${team.matchId} and (
+      ${m.gamesA} is not null
+      or (${r.mode} = 'open' and ${lockedOn(m)} = 2)
+      or (${c.mode} = 'open' and not exists (select 1 from ${fellowMatch.as}
+        where ${f.cupId} = ${m.cupId} and ${f.createdAt} <= ${m.createdAt} and ${f.gamesA} is null and ${lockedOn(f)} < 2))))`;
+}
+
 export function teamsSeenBy(reader: Viewer): SQL | undefined {
-  return reader.admin ? undefined : or(eq(team.private, false), eq(team.ownerId, reader.id));
+  return reader.admin ? undefined : or(eq(team.ownerId, reader.id), and(isNull(team.matchId), eq(team.private, false)), revealed());
 }
 
 export async function viewer(request: Request) {

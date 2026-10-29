@@ -77,7 +77,7 @@ export const teams = new Hono();
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export type NewTeam = { id: string; ownerId: string; name: string; anyPokemon: boolean; slots: TeamSlots; pool: TeamPool; freePool?: FreePool; sources: readonly string[]; matchId?: string; locked?: { at: Date; by: string | null } };
+export type NewTeam = { id: string; ownerId: string; name: string; anyPokemon: boolean; slots: TeamSlots; pool: TeamPool; freePool?: FreePool; sources: readonly string[]; matchId?: string; locked?: { at: Date; by: string | null }; private?: boolean };
 
 export async function insertTeam(tx: Tx, made: NewTeam) {
   await tx.insert(team).values({
@@ -89,6 +89,7 @@ export async function insertTeam(tx: Tx, made: NewTeam) {
     slots: made.slots,
     pool: made.pool,
     ...(made.freePool ? { freePool: made.freePool } : {}),
+    ...(made.private !== undefined ? { private: made.private } : {}),
     matchId: made.matchId ?? null,
     lockedAt: made.locked?.at ?? null,
     lockedBy: made.locked?.by ?? null,
@@ -133,11 +134,12 @@ async function owned(id: string, ownerId: string) {
   return row;
 }
 
-export async function lockTeam(tx: Tx, id: string, by: string) {
+export async function lockTryTeam(tx: Tx, id: string, by: string) {
   await tx
     .update(team)
     .set({ lockedAt: new Date(), lockedBy: by })
     .where(and(eq(team.id, id), isNull(team.lockedAt)));
+  await tx.update(team).set({ private: false }).where(eq(team.id, id));
 }
 
 function copyName(name: string, suffix: string): string {
@@ -398,12 +400,7 @@ teams.put("/:id", async (c) => {
   if (!held) return c.json({ error: t(c).ownerChanges }, 403);
   const input = await body(c.req.raw, teamInput);
   if (!input) return c.json({ error: t(c).notTeam }, 400);
-  if (held.lockedAt) {
-    const onlySeen = !held.matchId && input.private !== undefined && Object.keys(input).every((key) => key === "private");
-    if (!onlySeen) return c.json({ error: t(c).locked }, 409);
-    await db.update(team).set({ private: input.private, updatedAt: new Date() }).where(eq(team.id, id));
-    return c.json({});
-  }
+  if (held.lockedAt) return c.json({ error: t(c).locked }, 409);
   if (held.matchId && (input.sources !== undefined || input.anyPokemon !== undefined || input.private !== undefined || (input.slots && input.slots.length !== CUP_TEAM_SIZE))) {
     return c.json({ error: t(c).leagueSet }, 400);
   }

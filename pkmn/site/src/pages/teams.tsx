@@ -556,7 +556,7 @@ function RowBody({ team, showOwner, mine, filled }: { team: TeamRow; showOwner: 
               {t.states.locked}
             </Chip>
           )}
-          {mine && team.private && hasToggle(teamKind(team)) && (
+          {mine && team.private && hasToggle(teamKind(team), team.lockedAt !== null) && (
             <Chip className="border-2 border-dashed border-cell-hi text-muted-foreground" title={t.privateTitle}>
               <PixelIcon name="hidden" className="size-3" />
               {t.private}
