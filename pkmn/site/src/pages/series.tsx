@@ -478,7 +478,7 @@ function Trainers({ series, onChanged }: { series: Series; onChanged: () => void
                   <div key={m.name} className={cn("flex flex-col items-center gap-1 px-1 pt-3.5 pb-3", m.round > 0 && "bg-round/10")}>
                     <span
                       className={cn(
-                        "font-heading text-xl whitespace-nowrap",
+                        "text-center font-heading text-xl leading-[0.9] text-balance",
                         m.mark === "tournament" ? "text-yellow" : m.round > 0 ? "text-round-ink" : "text-subtle",
                       )}
                     >

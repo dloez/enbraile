@@ -18,23 +18,6 @@ The "Add to team" menu in a PC summary shows each team as a strip of sprites tha
 
 ## Tasks
 
-### pkmn/site: the series page's milestone names never run together
-
-On the series page, the head of the Trainers' milestone track writes each milestone's full name over its column (`src/pages/series.tsx`), and series 1's names since 2026-10-29, Gym 8, Victory Road, Hall of Fame and Tournament, are too long for their columns: at 1440 wide and every width above it they run together as "Victory RoadHall of FameTournament", on production too. The phone already writes each as a short label (`shortName`). Found while checking the site's scale-up, 2026-10-29.
-
-**Do:**
-- [ ] The track's head fitting eleven milestones with names as long as series 1's at 1440 wide and above, every name readable and none touching the next, in the layout `series.dc.html` draws.
-- [ ] The series page's description in [The pkmn Site](../pkmn/site/explanation/site.md#series) if what the head shows changes.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, in the browser: series 1 of the seed at 1440×900 and 2560×1440, every milestone name in the track's head readable with space between them, the track's nodes still under their names; at 390 wide unchanged.
-- Human-run: the owner opens series 1 on production.
-- Reuse: `Track` and `shortName` (`src/pages/series.tsx`).
-- Neighbors: the phone's short labels.
-- Forbidden: renaming a milestone; editing a board in `pkmn/site/design/`.
-
-**Touches:** `pkmn/site/src/pages/series.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
-
 ### pkmn/site: the team page writes its pick of six as a digit
 
 The team page's member cards say "Leave out of the six" and "Put in the six" ("Dejar fuera de los seis", "Meter en los seis"; `src/teams/components/member-card.tsx`), as the frozen `team.dc.html` and `team-phone.dc.html` spell it, while the same page's switch and count read `PICK_SIZE` (`shared/team.ts`) as a digit. The owner settled it on 2026-10-29: the digit, from `PICK_SIZE`, as the league's labels write theirs (The pkmn Site → Decisions, "The league's labels write its rules' numbers as digits too").
@@ -50,6 +33,38 @@ The team page's member cards say "Leave out of the six" and "Put in the six" ("D
 - Forbidden: a pick size written into a label.
 
 **Touches:** `pkmn/site/src/teams/components/member-card.tsx`, `docs/pkmn/site/explanation/team-builder.md`
+
+### pkmn/site: the series page's milestone names fit below 1440 wide too
+
+From `sm` up to 1440 wide the series page's Trainers head (`src/pages/series.tsx`) gives each of series 1's eleven milestones a column under 84px wide, and its names still run together there: at 1024×768 the columns are 51.8px, Tournament overlaps Hall of Fame by 11.9px and Victory Road sits 5.2px from Hall of Fame. From 1440 they wrap between their words with 20px or more between them ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions), "The Trainers head's milestone names wrap between their words"). Found while validating that entry, 2026-10-29.
+
+**Do:**
+- [ ] The head's names readable and apart from `sm` (640) to 1440 wide, in the layout `series.dc.html` draws, with any build choice recorded as a dated decision in [The pkmn Site](../pkmn/site/explanation/site.md#decisions).
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through `verify-site`, series 1 of the seed at 1024×768 and 800 wide, every milestone name in the track's head readable with space between them, the nodes under their names; 1440×900 and 390×844 unchanged.
+- Human-run: none.
+- Reuse: `Track` and `shortName` (`src/pages/series.tsx`).
+- Neighbors: the phone's short labels below `sm`.
+- Forbidden: renaming a milestone; editing a board in `pkmn/site/design/`.
+
+**Touches:** `pkmn/site/src/pages/series.tsx`, `docs/pkmn/site/explanation/site.md`, `docs/pkmn/site/how-to/verify-the-site.md`
+
+### pkmn/site: the design system names the series page's phone labels as they read
+
+[Site Design System](../pkmn/site/reference/design-system.md)'s series page entry gives the phone strip's milestone labels as ("1"–"8", "L"), but series 1's milestones since 2026-10-29 end in Victory Road and Hall of Fame, and the strip reads 1–8, R, F and the cup ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions), "The series pages' phone build choices"). Found while validating the series page's milestone names, 2026-10-29.
+
+**Do:**
+- [ ] Correct the example labels in the design system's series page entry to what `shortName` (`src/pages/series.tsx`) gives series 1's milestones.
+
+**Acceptance:**
+- Claude-run: docs-only, no gate run; `grep` finds no `"L")` in the series page entry of `design-system.md`; the labels named match what `shortName` gives series 1's milestones.
+- Human-run: none.
+- Reuse: none.
+- Neighbors: The pkmn Site → Decisions, "The series pages' phone build choices".
+- Forbidden: changing `shortName`.
+
+**Touches:** `docs/pkmn/site/reference/design-system.md`
 
 ### pkmn/site: several series run at once
 
