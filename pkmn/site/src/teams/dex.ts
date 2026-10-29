@@ -1,6 +1,6 @@
 import { Dex } from "@pkmn/dex";
-import { describeItem, describeMove, describeNature, describePokemon, statAt } from "../../shared/describe";
-import { STATS, type BagItem, type Mon, type MoveInfo, type Nature } from "../../shared/mon";
+import { describeAbility, describeItem, describeMove, describeNature, describePokemon, statAt } from "../../shared/describe";
+import { STATS, type Ability, type BagItem, type Mon, type MoveInfo, type Nature } from "../../shared/mon";
 import { isFree, type FreeMember } from "../../shared/team";
 import { ownMon, type Member, type Slots, type Stocks } from "@/teams/team";
 
@@ -99,6 +99,12 @@ export const ANY_ITEMS: readonly BagItem[] = gen.items
   .all()
   .filter((entry) => entry.exists && !entry.isNonstandard && entry.id !== MINI_SETA_ID)
   .map((entry) => describeItem({ item: entry.id, quantity: 1 }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+export const ANY_ABILITIES: readonly Ability[] = gen.abilities
+  .all()
+  .filter((entry) => entry.exists && entry.num > 0 && !entry.isNonstandard)
+  .map((entry) => describeAbility(entry.id))
   .sort((a, b) => a.name.localeCompare(b.name));
 
 const ALL_MOVES = gen.moves

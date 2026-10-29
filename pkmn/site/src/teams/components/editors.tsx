@@ -5,10 +5,10 @@ import { ItemIcon } from "@/components/pc/bag";
 import { MonSprite } from "@/components/pc/mon-sprite";
 import { UnknownMark } from "@/components/marks";
 import { cn } from "@/lib/utils";
-import { currentAbility, displayName, STAT_LABELS, type Mon } from "../../../shared/mon";
-import { describeItem } from "../../../shared/describe";
+import { currentAbility, displayName, STAT_LABELS, type Ability, type Mon } from "../../../shared/mon";
+import { describeAbility, describeItem } from "../../../shared/describe";
 import { fightItems } from "../../../shared/items";
-import { ANY_ITEMS, memberMon, NATURES } from "@/teams/dex";
+import { ANY_ABILITIES, ANY_ITEMS, memberMon, NATURES, speciesAbilities } from "@/teams/dex";
 import { formatMoney, heldCount, mintsLeft, moneyLeft, naturePrice, ownMon, ownOf, setasLeft, type Member, type Slots, type Stocks } from "@/teams/team";
 import type { Sheet } from "@/teams/schema";
 import { messages } from "../../../shared/i18n";
@@ -37,6 +37,9 @@ const t = messages({
     takeItem: "Take its item",
     setasLeft: (n: number) => `${setasLabel(n)} left`,
     noAbilities: "No abilities in this export",
+    searchAbilities: "Search abilities",
+    canHave: "Can have",
+    otherAbilities: "Other abilities",
     hidden: "Hidden",
     inGame: "In game",
     free: "Free",
@@ -71,6 +74,9 @@ const t = messages({
     takeItem: "Quitarle el objeto",
     setasLeft: (n: number) => `${n === 1 ? "Queda" : "Quedan"} ${setasLabel(n)}`,
     noAbilities: "No hay habilidades en esta exportación",
+    searchAbilities: "Buscar habilidades",
+    canHave: "Puede tener",
+    otherAbilities: "Otras habilidades",
     hidden: "Oculta",
     inGame: "En el juego",
     free: "Gratis",
@@ -243,6 +249,72 @@ export function setasLabel(count: number): string {
   return `${count} Mini Seta${count === 1 ? "" : "s"}`;
 }
 
+function AbilityCard({ ability, on, off, tag, onPick }: { ability: Ability; on: boolean; off: boolean; tag: ReactNode; onPick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      disabled={off}
+      onClick={onPick}
+      className={cn(
+        "flex flex-none cursor-pointer flex-col gap-1.5 rounded-xl border-3 px-3.5 py-3 text-left text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-45",
+        on ? "border-primary bg-cell" : "border-cell bg-box enabled:hover:border-cell-hi",
+      )}
+    >
+      <span className="flex w-full items-center gap-2">
+        <span className="min-w-0 flex-1 text-[1.0625rem] font-extrabold">
+          {ability.name}
+          {ability.marked && <UnknownMark />}
+        </span>
+        {ability.hidden && <span className="rounded-sm border-2 border-cell-hi px-1.5 font-heading text-[1.0625rem] text-subtle">{t.hidden}</span>}
+        {tag}
+      </span>
+      <span className="text-sm leading-[1.45] text-prose">{ability.desc || "—"}</span>
+    </button>
+  );
+}
+
+function FreeAbilities({ mon, using, back, onBack, onPick }: { mon: Mon; using: string | null; back: string; onBack: () => void; onPick: (ability: string) => void }) {
+  const [query, setQuery] = useState("");
+  const groups = useMemo(() => {
+    const own = speciesAbilities(mon.species.id);
+    const its = [...own.base.map((id) => describeAbility(id)), ...own.hidden.map((id) => describeAbility(id, true))];
+    const ids = new Set(its.map((a) => a.id));
+    return [
+      { name: t.canHave, abilities: its },
+      { name: t.otherAbilities, abilities: ANY_ABILITIES.filter((a) => !ids.has(a.id)) },
+    ];
+  }, [mon.species.id]);
+  const q = query.trim().toLowerCase();
+  return (
+    <>
+      <EditorHead who={displayName(mon)} what={t.ability} back={back} onBack={onBack} />
+      <label className="flex min-h-11 flex-none items-center gap-2 rounded-[10px] border-3 bg-ink px-2.5 focus-within:border-primary">
+        <Search className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
+        <span className="sr-only">{t.searchAbilities}</span>
+        <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} className="min-w-0 flex-1 bg-transparent text-[0.9375rem] outline-none" />
+      </label>
+      <div className={cn(editorScroll, "gap-2")}>
+        {groups.map((group) => {
+          const shown = group.abilities.filter((a) => !q || a.name.toLowerCase().includes(q));
+          if (shown.length === 0) return null;
+          return (
+            <section key={group.name} aria-label={group.name} className="flex flex-col gap-2">
+              <h3 className="m-0 px-1 pt-1 font-heading text-[1.125rem] leading-none font-normal text-muted-foreground">{group.name}</h3>
+              {shown.map((a) => (
+                <AbilityCard key={a.id} ability={a} on={a.id === using} off={false} tag={null} onPick={() => onPick(a.id)} />
+              ))}
+            </section>
+          );
+        })}
+        {groups.every((group) => !group.abilities.some((a) => !q || a.name.toLowerCase().includes(q))) && (
+          <p className="my-6 text-center font-heading text-2xl text-muted-foreground">{t.nothingMatches}</p>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function AbilityEditor({ slots, stocks, slot, back, onBack, onPick }: {
   slots: Slots;
   stocks: Stocks;
@@ -254,11 +326,10 @@ export function AbilityEditor({ slots, stocks, slot, back, onBack, onPick }: {
   const member = slots[slot] as Member;
   const mon = memberMon(member, stocks) as Mon;
   const own = ownOf(member);
-  const free = own === null;
-  const cost = own ? (stocks.get(own.source)?.costs.abilitySetas ?? 0) : 0;
-  const left = own ? setasLeft(slots, stocks, own.source, slot) : 0;
-  const current = currentAbility(mon);
-  const using = member.ability ?? current;
+  const using = member.ability ?? currentAbility(mon);
+  if (!own) return <FreeAbilities mon={mon} using={using} back={back} onBack={onBack} onPick={onPick} />;
+  const cost = stocks.get(own.source)?.costs.abilitySetas ?? 0;
+  const left = setasLeft(slots, stocks, own.source, slot);
   return (
     <>
       <EditorHead
@@ -266,39 +337,27 @@ export function AbilityEditor({ slots, stocks, slot, back, onBack, onPick }: {
         what={t.ability}
         back={back}
         onBack={onBack}
-        aside={!free && <span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{t.setasLeft(left)}</span>}
+        aside={<span className="flex-none font-heading text-[1.1875rem] text-muted-foreground">{t.setasLeft(left)}</span>}
       />
       <div className={cn(editorScroll, "gap-2")}>
         {mon.abilities.length === 0 && <p className="my-6 text-center font-heading text-2xl text-muted-foreground">{t.noAbilities}</p>}
         {mon.abilities.map((a) => {
           const on = a.id === using;
-          const off = !free && !a.current && !on && left < cost;
           return (
-            <button
+            <AbilityCard
               key={a.id}
-              type="button"
-              aria-pressed={on}
-              disabled={off}
-              onClick={() => onPick(a.id)}
-              className={cn(
-                "flex flex-none cursor-pointer flex-col gap-1.5 rounded-xl border-3 px-3.5 py-3 text-left text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-45",
-                on ? "border-primary bg-cell" : "border-cell bg-box enabled:hover:border-cell-hi",
-              )}
-            >
-              <span className="flex w-full items-center gap-2">
-                <span className="min-w-0 flex-1 text-[1.0625rem] font-extrabold">
-                  {a.name}
-                  {a.marked && <UnknownMark />}
-                </span>
-                {a.hidden && <span className="rounded-sm border-2 border-cell-hi px-1.5 font-heading text-[1.0625rem] text-subtle">{t.hidden}</span>}
-                {free ? null : a.current ? (
+              ability={a}
+              on={on}
+              off={!a.current && !on && left < cost}
+              onPick={() => onPick(a.id)}
+              tag={
+                a.current ? (
                   <span className="rounded-sm bg-cyan px-1.75 font-heading text-[1.0625rem] text-ink">{t.inGame}</span>
                 ) : (
                   <span className="rounded-sm bg-warning px-1.5 font-heading text-[1.0625rem] text-ink">{cost === 0 ? t.free : setasLabel(cost)}</span>
-                )}
-              </span>
-              <span className="text-sm leading-[1.45] text-prose">{a.desc || "—"}</span>
-            </button>
+                )
+              }
+            />
           );
         })}
       </div>

@@ -2,7 +2,7 @@ import { Dex, toID } from "@pkmn/dex";
 import { parsePaste, type PokemonSet } from "@/analysis/paste";
 import { currentAbility, displayName, type Mon, STATS, type StatID } from "../../shared/mon";
 import { describeItem, describeMove } from "../../shared/describe";
-import { memberMon, NATURES, speciesAbilities } from "@/teams/dex";
+import { ANY_ABILITIES, memberMon, NATURES, speciesAbilities } from "@/teams/dex";
 import { emptySlots, freeSet, isFree, itemsLeft, MAX_TEAM_SIZE, naturePrice, TEAM_SIZE, MOVE_SLOTS, type FreeMember, type Member, type OwnMember, type Slots, type Stocks } from "@/teams/team";
 import { describeMember } from "../../shared/species";
 import { EV_TOTAL, MAX_EV, MAX_IV, MAX_LEVEL } from "../../shared/team";
@@ -14,6 +14,7 @@ const t = messages({
     unknownNature: (name: string, nature: string) => `${name}'s ${nature} Nature: not a nature Showdown knows`,
     unknownItem: (name: string, item: string) => `${name}'s ${item}: not an item the site can give`,
     notItsAbility: (name: string, ability: string) => `${name}'s ${ability}: not one of its abilities`,
+    unknownAbility: (name: string, ability: string) => `${name}'s ${ability}: not an ability the site can give`,
     unknownMove: (name: string, move: string) => `${name}'s ${move}: not a move Showdown knows`,
     notInPool: (species: string) => `${species}: not in the team's pool`,
     allOnTeam: (species: string) => `${species}: every one in the team's sources is already on the team`,
@@ -25,6 +26,7 @@ const t = messages({
     unknownNature: (name: string, nature: string) => `Naturaleza ${nature} de ${name}: Showdown no conoce esa naturaleza`,
     unknownItem: (name: string, item: string) => `${item} de ${name}: la web no puede dar ese objeto`,
     notItsAbility: (name: string, ability: string) => `${ability} de ${name}: no es una de sus habilidades`,
+    unknownAbility: (name: string, ability: string) => `${ability} de ${name}: la web no puede dar esa habilidad`,
     unknownMove: (name: string, move: string) => `${move} de ${name}: Showdown no conoce ese movimiento`,
     notInPool: (species: string) => `${species}: no está en la reserva del equipo`,
     allOnTeam: (species: string) => `${species}: todos los de las fuentes del equipo ya están en el equipo`,
@@ -149,9 +151,9 @@ function freeFromSet(set: PokemonSet, species: string, name: string, left: strin
     else member.item = item.id;
   }
   if (set.ability) {
-    const ability = toID(set.ability);
-    if (all.includes(ability)) member.ability = ability;
-    else left.push(t.notItsAbility(name, set.ability));
+    const ability = ANY_ABILITIES.find((a) => a.id === toID(set.ability));
+    if (ability) member.ability = ability.id;
+    else left.push(t.unknownAbility(name, set.ability));
   }
   readMoves(set, member, name, left);
   return member;

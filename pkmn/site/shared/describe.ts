@@ -73,7 +73,7 @@ export function describeNature(id: string | null): Nature | null {
   };
 }
 
-function ability(id: string, hidden: boolean, current: string | null): Ability {
+export function describeAbility(id: string, hidden = false, current: string | null = null): Ability {
   const entry = gen.abilities.get(id);
   return {
     ...named("abilities", id, entry),
@@ -85,10 +85,10 @@ function ability(id: string, hidden: boolean, current: string | null): Ability {
 
 function abilities(p: SheetPokemon): Ability[] {
   const list = [
-    ...(p.abilities?.base ?? []).map((id) => ability(id, false, p.ability)),
-    ...(p.abilities?.hidden ?? []).map((id) => ability(id, true, p.ability)),
+    ...(p.abilities?.base ?? []).map((id) => describeAbility(id, false, p.ability)),
+    ...(p.abilities?.hidden ?? []).map((id) => describeAbility(id, true, p.ability)),
   ];
-  if (p.ability !== null && !list.some((a) => a.id === p.ability)) list.unshift(ability(p.ability, false, p.ability));
+  if (p.ability !== null && !list.some((a) => a.id === p.ability)) list.unshift(describeAbility(p.ability, false, p.ability));
   return list;
 }
 

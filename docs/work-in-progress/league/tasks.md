@@ -2,23 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## "Any Pokémon" members hold any ability and any move
-
-An "Any Pokémon" member takes any ability and any move, not only its species' own, in the editor and in a Showdown paste ([discovery → Team Locking](discovery.md#team-locking)); a member from a snapshot stays held to what its snapshot allows. The import is rerun so series 1's pasted tries keep their randomized abilities and moves.
-
-**Do:**
-- [ ] The free member's ability and move pickers open to every one in the dex; the paste reader no longer refuses an "Any Pokémon" member's ability or move.
-- [ ] The import's tries keep their pasted abilities and moves, and stop reporting the fallback.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, an "Any Pokémon" member takes an ability and a move its species cannot have, by the editor and by paste; a snapshot member still cannot; the imported tries' teams show the dump's abilities.
-- Human-run: the owner reads an imported try's team on the preview.
-- Reuse: the paste reader (`src/teams/showdown.ts`), the free member (`src/teams/components/free-member.tsx`).
-- Neighbors: the team builder's snapshot members.
-- Forbidden: a second Showdown parser; loosening a snapshot member.
-
-**Touches:** `pkmn/site/src/teams/`, `pkmn/site/shared/`, `pkmn/site/api/`, `pkmn/site/scripts/`, `docs/pkmn/site/`
-
 ## The Teams list marks league teams and filters them
 
 Each team shows its kind and, for a league team, its series, round or cup match and state; the list filters by series, kind, state and owner, as the signed-off boards draw them ([discovery → Surfaces](discovery.md#surfaces)). A league team files under its league's series, "Any Pokémon" or not.
@@ -240,7 +223,7 @@ Each imported game with a replay gets each side's team built from the replay: th
 - Forbidden: a second Showdown paste parser; a paste overriding a replay.
 
 **Touches:** `pkmn/site/scripts/`, `pkmn/site/api/`, `docs/pkmn/site/`
-**After:** Each open round gives a player their team once their snapshot exists; "Any Pokémon" members hold any ability and any move
+**After:** Each open round gives a player their team once their snapshot exists
 
 ## The player profile shows each series' league record
 
