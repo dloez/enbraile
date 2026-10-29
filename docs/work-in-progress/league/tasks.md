@@ -39,6 +39,8 @@ A player sees another's snapshots only from their own round or older; someone ou
 - Forbidden: hiding in the browser only.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
+**Attempted once:** 2026-10-29, the work kept on branch `wq/saves-up-to-own-round`; its validator failed round two: the PC's "Add to team" (`src/teams/components/add-to-team.tsx`) `PUT`s a team whose hidden source `GET /api/teams/<id>` cut down, and `PUT /api/teams/<id>` refuses only new hidden `sources`, not `slots`, so the write repoints members; the fix left is refusing `slots` on a team holding a source the writer may not see, and leaving such teams out of "Add to team".
+**Needs the author:** a player's round counts only their snapshots at round milestones (`savesSeen` on the branch), so a player who uploaded no round milestone, only their Tournament save, is at round 0 and sees no one's Tournament snapshot, while the rulebook's open sheet has each cup player know the other's full sheet ([Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament)). Does a snapshot at a later milestone (the Tournament included) count as reaching every round before it, or does the open cup's sheet override the save rule, or does it stand as written?
 
 ## Do a closed round's standings hide the matches its pairs hide?
 
