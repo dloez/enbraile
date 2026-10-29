@@ -90,3 +90,7 @@ Every PC at every snapshot is open to every player, for now ([The pkmn Site → 
 ### pkmn/site: read saves of games other than Añil
 
 Any game can be created and downloaded, but the save upload reads Añil saves only ([Save Export](../pkmn/site/explanation/save-export.md)). A series played on another game needs an export for that game's saves. Left out of site v2 until such a series is planned. _(owner, 2026-10-22)_
+
+### pkmn/site: an MCP server that acts as a site admin
+
+An MCP server, signed in with easy auth, through which Claude acts as an administrator of the site: running the admin moves (players, games, series, the league's results and overrides) without driving the `/admin` pages in a browser. Today an admin is a username-and-password account made by `npm run admin:create` or the seed, the local test sign-in (`DEV_SIGN_IN`) signs in players only, and admin work by an agent goes through the Playwright MCP browser ([The pkmn Site → Accounts](../pkmn/site/explanation/site.md#accounts)). Unscoped: which environments it reaches (local, preview, production), what "easy auth" is and how it stays out of reach of anyone else, and which admin moves it exposes. _(owner, 2026-10-29)_
