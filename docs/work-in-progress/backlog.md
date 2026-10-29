@@ -16,11 +16,23 @@ A running series takes new players, and the [league](league/discovery.md) draws 
 
 The "Add to team" menu in a PC summary shows each team as a strip of sprites that overlap and are trimmed about 4px top and bottom, with about three of six shown, as the frozen `pc.dc.html` draws it (`margin: -4px -9px 0 0` in a 76×24 strip). Every other sprite tile was fitted whole on 2026-10-29 at the owner's request, this one left as the exception ([Site Design System → Patterns](../pkmn/site/reference/design-system.md#patterns)). Fit it too, which changes its look, or keep the board's? _(raised 2026-10-29)_
 
-### pkmn/site: write the team page's pick of six as a digit?
-
-The team page's member cards say "Leave out of the six" and "Put in the six" ("Dejar fuera de los seis", "Meter en los seis"; `src/teams/components/member-card.tsx`), as the frozen `team.dc.html` and `team-phone.dc.html` spell it, while the same page's switch and count read `PICK_SIZE` (`shared/team.ts`) as a digit ("Pick 6", "<n> of 6 in"). The pick of six is the team builder's analysis scope ([Team Builder → Decisions](../pkmn/site/explanation/team-builder.md#decisions)), not a league rule, so the league's decision to write its rules' numbers as digits ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)) does not reach it. Write the cards' six from `PICK_SIZE` too, as the league's labels left their boards' "six", or keep the board's word? _(raised by the league's end-of-run review, 2026-10-29)_
-
 ## Tasks
+
+### pkmn/site: the team page writes its pick of six as a digit
+
+The team page's member cards say "Leave out of the six" and "Put in the six" ("Dejar fuera de los seis", "Meter en los seis"; `src/teams/components/member-card.tsx`), as the frozen `team.dc.html` and `team-phone.dc.html` spell it, while the same page's switch and count read `PICK_SIZE` (`shared/team.ts`) as a digit. The owner settled it on 2026-10-29: the digit, from `PICK_SIZE`, as the league's labels write theirs (The pkmn Site → Decisions, "The league's labels write its rules' numbers as digits too").
+
+**Do:**
+- [ ] Build those labels from `PICK_SIZE`, in English and Spanish, with a dated decision in [Team Builder](../pkmn/site/explanation/team-builder.md) noting the frozen boards still say "six".
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `grep` finds no "the six"/"los seis" in `member-card.tsx`; through `verify-site`, a team of eight's member card reads "Leave <name> out of the 6" and "Put in the 6", in English and Spanish.
+- Human-run: none.
+- Reuse: `PICK_SIZE` (`shared/team.ts`).
+- Neighbors: the league's labels (`src/pages/league-match.tsx`).
+- Forbidden: a pick size written into a label.
+
+**Touches:** `pkmn/site/src/teams/components/member-card.tsx`, `docs/pkmn/site/explanation/team-builder.md`
 
 ### pkmn/site: several series run at once
 
