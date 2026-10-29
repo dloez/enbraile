@@ -10,7 +10,7 @@ The series page's trainer panel wants a trainer's lives, for a series that plays
 
 ### pkmn/site: what does the league do with a player who joins mid-league?
 
-A running series takes new players, and the [league](league/discovery.md) draws each round among the series' players. Open: whether a player added mid-league joins the draw from the next round, gets catch-up matches against those they missed, or stays out until the next series; and how the standings and the cup treat them. A player added to a running manual series now uploads their save before they reach the site, so they arrive with their snapshot ([The pkmn Site → Series](../pkmn/site/explanation/site.md#series)); the league still has to place them. Left open while scoping the league. _(owner, 2026-10-27)_
+A running series takes new players, and the [league](../pkmn/site/explanation/site.md#league) draws each round among the series' players. Open: whether a player added mid-league joins the draw from the next round, gets catch-up matches against those they missed, or stays out until the next series; and how the standings and the cup treat them. A player added to a running manual series now uploads their save before they reach the site, so they arrive with their snapshot ([The pkmn Site → Series](../pkmn/site/explanation/site.md#series)); the league still has to place them. Left open while scoping the league. _(owner, 2026-10-27)_
 
 ### pkmn/site: fit the PC summary's "Add to team" strip?
 
@@ -45,7 +45,7 @@ The owner wants more than one series running at a time (2026-10-27). A partial u
 - Claude-run: `npm run gate`; through `verify-site`, start a second series beside the seeded Series 1, add Leaf to both mid-way, and see the waiting page offer both uploads; read `/`, the PC tab, New team and the admin overview with both running.
 - Human-run: none.
 - Reuse: `owedSeries` and the waiting page's per-series buttons; the series list's banners (`src/pages/series-list.tsx`).
-- Neighbors: the league ([league](league/discovery.md)), which draws its rounds per series.
+- Neighbors: the league ([The pkmn Site → League](../pkmn/site/explanation/site.md#league)), which draws its rounds per series.
 - Forbidden: none yet.
 
 **Touches:** `pkmn/site/api/`, `pkmn/site/shared/series.ts`, `pkmn/site/src/`, `pkmn/site/drizzle/`, `pkmn/site/scripts/seed.ts`, `docs/pkmn/site/`
@@ -58,7 +58,7 @@ The owner wants more than one series running at a time (2026-10-27). A partial u
 
 ### pkmn/site: track what a locked league team spends in a manual series
 
-A locked round or cup team spends Mini Setas, mints and held items that the player must spend in the game too, and the site only sees that at the next snapshot. Series 1 does nothing about it ([league → Team Locking](league/discovery.md#team-locking)). A later series may deduct a locked team's spending from the bag the player's other teams see, or flag a next snapshot that does not show it spent, within manual series' trust stance ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). _(owner, 2026-10-27)_
+A locked round or cup team spends Mini Setas, mints and held items that the player must spend in the game too, and the site only sees that at the next snapshot. Series 1 does nothing about it ([Team Builder → Decisions](../pkmn/site/explanation/team-builder.md#decisions)). A later series may deduct a locked team's spending from the bag the player's other teams see, or flag a next snapshot that does not show it spent, within manual series' trust stance ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). _(owner, 2026-10-27)_
 
 **Do:**
 - [ ] Per the author's answers.
@@ -109,7 +109,7 @@ The Accounts section of [The pkmn Site](../pkmn/site/explanation/site.md#account
 
 ### pkmn/site: a private Showdown tied to the site
 
-A Pokémon Showdown server and client of the group's own, so a league or cup match needs no challenge sent: the site gives a link, both players sign in with their site account, see their site teams there with edits synced both ways in real time, and play a battle the site set up with their locked teams; the finished log is kept by the site, permanently, and the result recorded with it. Only worth it if replays stay as permanent as Showdown's saved replays. Showdown is open source; a server needs an always-on host (Vercel cannot hold its websockets). The [league](league/discovery.md#results) builds no stand-in for it: admins enter each game's result until this lands, and its [match page](league/discovery.md#the-match-page) is built so this can set up each game from the players' picks of six and report its finish. _(owner, 2026-10-27; the match page 2026-10-28)_
+A Pokémon Showdown server and client of the group's own, so a league or cup match needs no challenge sent: the site gives a link, both players sign in with their site account, see their site teams there with edits synced both ways in real time, and play a battle the site set up with their locked teams; the finished log is kept by the site, permanently, and the result recorded with it. Only worth it if replays stay as permanent as Showdown's saved replays. Showdown is open source; a server needs an always-on host (Vercel cannot hold its websockets). The [league](../pkmn/site/explanation/site.md#league) builds no stand-in for it: admins enter each game's result until this lands, and its [match page](../pkmn/site/explanation/site.md#league) is built so this can set up each game from the players' picks of six and report its finish. _(owner, 2026-10-27; the match page 2026-10-28)_
 
 ### pkmn/site: enforce a series' rules in team building
 
@@ -117,7 +117,7 @@ A series' rules are Markdown the site only shows ([The pkmn Site → Series](../
 
 ### pkmn/site: show only what a series' rules allow of others' PCs
 
-Every PC at every snapshot was open to every player at first ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). A series' rules may limit what a player sees of others' boxes (the league's box sheet), and the site could show only that. Left out of site v2. _(owner, 2026-10-22)_ The league already limits it: a player sees others' saves only up to their own round, and a closed round hides its snapshots until the match has a result ([league](league/discovery.md#team-locking)); this idea is what a series' rules allow beyond that.
+Every PC at every snapshot was open to every player at first ([The pkmn Site → Decisions](../pkmn/site/explanation/site.md#decisions)). A series' rules may limit what a player sees of others' boxes (the league's box sheet), and the site could show only that. Left out of site v2. _(owner, 2026-10-22)_ The league already limits it: a player sees others' saves only up to their own round, and a closed round hides its snapshots until the match has a result ([The pkmn Site → Snapshots](../pkmn/site/explanation/site.md#snapshots), "Whose saves a reader sees"); this idea is what a series' rules allow beyond that.
 
 ### pkmn/site: read saves of games other than Añil
 
