@@ -524,6 +524,10 @@ export function drawRound(
 
 export const CUP_MIN = 2;
 
+export const CUP_MAX = 6;
+
+export const cupStarts = (entrants: number) => entrants >= CUP_MIN && entrants <= CUP_MAX && entrants % 2 === 0;
+
 export type CupFeed = { seed: number } | { winner: string } | { loser: string } | { group: number };
 
 export type CupSlot = { key: string; kind: CupKind; left: number | null; a: CupFeed; b: CupFeed };
@@ -534,7 +538,7 @@ export function cupProblem(players: readonly string[], entrants: readonly string
   const known = new Set(players);
   if (entrants.some((player) => !known.has(player))) return "player";
   if (new Set(entrants).size !== entrants.length) return "twice";
-  return entrants.length < CUP_MIN || entrants.length % 2 === 1 ? "size" : null;
+  return cupStarts(entrants.length) ? null : "size";
 }
 
 export function seedOrder(size: number): number[] {
@@ -561,7 +565,7 @@ export function firstRound(entrants: number): [number, number][] {
 const firstKey = (k: number) => `f${k}`;
 
 export function cupSlots(entrants: number): CupSlot[] {
-  if (entrants < CUP_MIN || entrants % 2 === 1) return [];
+  if (!cupStarts(entrants)) return [];
   const { half, plain, size, rounds, qualifiers } = cupShape(entrants);
   const winner = (k: number): CupFeed => ({ winner: firstKey(k) });
   let leaves: CupFeed[];

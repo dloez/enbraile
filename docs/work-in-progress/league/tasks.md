@@ -2,24 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` until the owner says so, so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## The cup starts only with two, four or six entrants
-
-The rulebook draws the cup for six and a plain knockout for four or two, and nothing bigger ([Series 1 Rules → Final Tournament](../../pkmn/series/1/reference/rules.md#final-tournament), owner 2026-10-29). The cup's code starts any even size: powers of two as a plain knockout and every other size through the pattern "The cup's build choices" worked out ([The pkmn Site → Decisions](../../pkmn/site/explanation/site.md#decisions)).
-
-**Do:**
-- [ ] The largest cup named in `shared/league.ts` beside `CUP_MIN`; `startCup` and the start panel refuse more entrants, the refusal in English and Spanish.
-- [ ] "The cup's build choices" rewritten to drop the pattern for ten, twelve and fourteen.
-- [ ] The League section's own cup paragraphs in `docs/pkmn/site/explanation/site.md` rewritten to the sizes that start: **The cup** ("an even number of two or more", "A power of two of entrants (2, 4, 8, …)") and the Cup view's ("ten, twelve or fourteen entrants"). Found by the gardener, 2026-10-29.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, an admin starting a cup with eight entrants is refused, by page and route; six, four and two still start.
-- Human-run: none.
-- Reuse: `CUP_MIN`, `cupShape` and `startCup` (`shared/league.ts`, `api/_lib/cup.ts`); the start panel's refusals.
-- Neighbors: the cup's bracket (`cupSlots`).
-- Forbidden: a cup size written as a number outside `shared/league.ts`.
-
-**Touches:** `pkmn/site/shared/league.ts`, `pkmn/site/api/_lib/cup.ts`, `pkmn/site/api/_lib/league.ts`, `pkmn/site/src/`, `docs/pkmn/site/explanation/site.md`
-
 ## Rerunning the league import leaves an admin's hatched count alone
 
 Each run of `npm run league-import` writes every player's hatched count from the app's dump, an admin's own setting included (`scripts/league-import.ts`, the `save` upsert); a rerun leaves an admin's setting alone, and a count still from the app takes the dump's again, timed by the rerun ([discovery → Standings, the Pokémon League and Eggs](discovery.md#standings-the-pokémon-league-and-eggs), owner 2026-10-29).

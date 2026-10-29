@@ -7,7 +7,7 @@ import { modeName } from "@/league/round-admin";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { messages } from "../../shared/i18n";
-import { type CupKind, type CupSlotView, cupProblem, cupShape, cupSlots, firstRound, type GroupRow, type LeagueCup, type LeagueMode, type LeaguePage as League, leaguePage, played, winnerOf } from "../../shared/league";
+import { CUP_MAX, type CupKind, type CupSlotView, cupProblem, cupShape, cupSlots, firstRound, type GroupRow, type LeagueCup, type LeagueMode, type LeaguePage as League, leaguePage, played, winnerOf } from "../../shared/league";
 
 const t = messages({
   en: {
@@ -37,7 +37,7 @@ const t = messages({
     pts: (n: number) => `${n} ${n === 1 ? "pt" : "pts"}`,
     finished: "Finished the story",
     out: "Stays out",
-    count: (n: number, ready: boolean) => (ready ? `${n} enter · first round` : `${n} enter · no bracket yet`),
+    count: (n: number, ready: boolean) => (ready ? `${n} enter · first round` : n > CUP_MAX ? `${n} enter · ${CUP_MAX} at most` : `${n} enter · no bracket yet`),
     firstRound: "The cup's first round",
     vs: "vs",
     start: "Start the cup",
@@ -72,7 +72,7 @@ const t = messages({
     pts: (n: number) => `${n} ${n === 1 ? "pt" : "pts"}`,
     finished: "Terminó la historia",
     out: "Se queda fuera",
-    count: (n: number, ready: boolean) => (ready ? `Entran ${n} · primera ronda` : `Entran ${n} · aún sin cuadro`),
+    count: (n: number, ready: boolean) => (ready ? `Entran ${n} · primera ronda` : n > CUP_MAX ? `Entran ${n} · ${CUP_MAX} como máximo` : `Entran ${n} · aún sin cuadro`),
     firstRound: "Primera ronda de la copa",
     vs: "vs",
     start: "Empezar la copa",
@@ -118,12 +118,10 @@ export function CupView({ league, nameOf, onChange }: Named & { onChange: (leagu
   const geometry = bracketGeometry(cup);
   return (
     <>
-      {geometry && (
-        <div className="hidden overflow-x-auto pb-2 lg:-mx-6 lg:block">
-          <Bracket league={league} cup={cup} geometry={geometry} nameOf={nameOf} />
-        </div>
-      )}
-      <div className={cn("flex flex-col gap-5", geometry && "lg:hidden")}>
+      <div className="hidden overflow-x-auto pb-2 lg:-mx-6 lg:block">
+        <Bracket league={league} cup={cup} geometry={geometry} nameOf={nameOf} />
+      </div>
+      <div className="flex flex-col gap-5 lg:hidden">
         <Flow league={league} cup={cup} nameOf={nameOf} />
       </div>
     </>
@@ -401,11 +399,10 @@ function leafKeys(entrants: number): (string | null)[] {
     .flatMap((slot) => [slot.a, slot.b].map((feed) => ("winner" in feed ? feed.winner : null)));
 }
 
-function bracketGeometry(cup: LeagueCup): Geometry | null {
-  const { half, plain, rounds, qualifiers } = cupShape(cup.seeds.length);
+function bracketGeometry(cup: LeagueCup): Geometry {
+  const { half, plain, rounds } = cupShape(cup.seeds.length);
   const keys = leafKeys(cup.seeds.length);
   const fromGroup = keys.flatMap((key, at) => (key === null ? [at] : []));
-  if (fromGroup.some((at, i) => at !== keys.length - qualifiers + i)) return null;
   const leafY = (at: number) => TOP + at * STEP + (keys.length > 1 && at >= keys.length / 2 ? HALF_GAP : 0);
   const columnX = (depth: number) => (depth === 0 ? 0 : plain ? depth * (BOX_W + 70) : GROUP_X + GROUP_W + 60 + (depth - 1) * COLUMN);
   const byKey = new Map(cup.slots.map((slot) => [slot.key, slot]));
@@ -492,7 +489,7 @@ function CupStart({ league, nameOf, onChange }: Named & { onChange: (league: Lea
   const entrants = order.filter((player) => !out.includes(player));
   const n = entrants.length;
   const startable = cupProblem(order, entrants) === null;
-  const pairs = firstRound(n).map(([a, b]) => [a - 1, b - 1] as const);
+  const pairs = n > CUP_MAX ? [] : firstRound(n).map(([a, b]) => [a - 1, b - 1] as const);
 
   const start = async () => {
     setBusy(true);
