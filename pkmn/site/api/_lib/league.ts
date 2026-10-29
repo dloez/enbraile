@@ -756,7 +756,7 @@ league.put("/:number/league/tries/:id", (c) =>
             .from(leagueTry)
             .where(and(eq(leagueTry.teamId, held.teamId), ne(leagueTry.id, id)))
             .limit(1);
-          if (!other) await tx.update(team).set({ lockedAt: null, lockedBy: null }).where(eq(team.id, held.teamId));
+          if (!other) await tx.update(team).set({ lockedAt: null, lockedBy: null, private: true }).where(eq(team.id, held.teamId));
         }
       }
       await tx
