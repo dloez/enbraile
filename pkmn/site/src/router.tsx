@@ -4,6 +4,7 @@ import { prefetch } from "@/lib/api";
 import { abilitiesPage, adminGamesPage, adminHomePage, adminPlayersPage, adminSeriesListPage, adminSeriesPage, leagueMatchPage, leaguePage, pcPage, playerSeriesPage, profilePage, seriesListPage, seriesPage, teamPage, teamsPage } from "@/lib/lazy-pages";
 import { HomePage } from "@/pages/home";
 import type { LeagueView } from "@/pages/league";
+import type { TeamKind, TeamState } from "../shared/team";
 
 const rootRoute = createRootRoute({ component: SiteShell });
 
@@ -108,17 +109,31 @@ const abilitiesRoute = createRoute({
   component: abilitiesPage.Page,
 });
 
-export type TeamsSearch = { player?: string };
+export type TeamsSearch = { player?: string; series?: number; kind?: TeamKind; state?: TeamState };
+
+const oneOf = <T extends string>(options: readonly T[], value: unknown): T | undefined => options.find((option) => option === value);
+
+const TEAM_KINDS: readonly TeamKind[] = ["free", "round", "cup", "try"];
+
+const TEAM_STATES: readonly TeamState[] = ["todo", "locked", "edit"];
 
 const teamsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/teams",
-  validateSearch: (search: Record<string, unknown>): TeamsSearch =>
-    typeof search.player === "string" && search.player !== "" ? { player: search.player } : {},
-  loaderDeps: ({ search }) => search,
-  loader: ({ deps }) => {
+  validateSearch: (search: Record<string, unknown>): TeamsSearch => {
+    const series = Number(search.series);
+    const kind = oneOf(TEAM_KINDS, search.kind);
+    const state = oneOf(TEAM_STATES, search.state);
+    return {
+      ...(typeof search.player === "string" && search.player !== "" ? { player: search.player } : {}),
+      ...(Number.isInteger(series) && series > 0 ? { series } : {}),
+      ...(kind ? { kind } : {}),
+      ...(state ? { state } : {}),
+    };
+  },
+  loader: () => {
     teamsPage.load();
-    prefetch(deps.player ? `/teams?owner=${encodeURIComponent(deps.player)}` : "/teams");
+    prefetch("/teams");
   },
   component: teamsPage.Page,
 });

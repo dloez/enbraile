@@ -41,6 +41,12 @@ const ICONS = {
       ["fill-current", "M4 1h1v1H4zM5 2h1v1H5zM4 3h1v1H4zM5 4h1v1H5zM4 5h2v2H4z"],
     ],
   },
+  lock: { size: 10, paths: [["fill-current", "M3 0h4v1H3zM2 1h1v3H2zM7 1h1v3H7zM1 4h8v6H1z"]] },
+  league: {
+    size: 10,
+    paths: [["fill-current", "M4 0h2v1H4zM2 1h2v1H2zM6 1h2v1H6zM1 2h1v2H1zM8 2h1v2H8zM0 4h10v2H0zM1 6h1v2H1zM8 6h1v2H8zM2 8h2v1H2zM6 8h2v1H6zM4 9h2v1H4z"]],
+  },
+  filter: { size: 10, paths: [["fill-current", "M0 1h10v1H0zM2 4h6v1H2zM4 7h2v1H4z"]] },
   download: { size: 10, paths: [["fill-current", "M4 1h2v4H4zM2 5h6v1H2zM3 6h4v1H3zM4 7h2v1H4zM1 9h8v1H1z"]] },
   cartridge: {
     size: 10,

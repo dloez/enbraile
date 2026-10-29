@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import {
   backedBy,
@@ -6,6 +6,7 @@ import {
   newTeamInput,
   nextTeamName,
   teamInput,
+  type TeamLeague,
   type TeamPage,
   type TeamRow,
   type TeamSlots,
@@ -15,7 +16,7 @@ import { DEFAULT_COSTS } from "../../shared/games.js";
 import { DEFAULT_POOL, type TeamPool } from "../../shared/pool.js";
 import { body } from "./body.js";
 import { db } from "./db.js";
-import { game, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
+import { game, leagueTry, milestone, save, series, snapshot, team, teamSource, user } from "./schema.js";
 import { viewer } from "./series-data.js";
 import { says } from "./i18n.js";
 
@@ -157,6 +158,27 @@ teams.get("/snapshots", async (c) => {
   return c.json(list);
 });
 
+async function tryTeams(ids: readonly string[]): Promise<Map<string, TeamLeague>> {
+  if (ids.length === 0) return new Map();
+  const numbered = db
+    .select({
+      id: leagueTry.id,
+      teamId: leagueTry.teamId,
+      seriesNumber: series.number,
+      loggedAt: leagueTry.loggedAt,
+      number: sql<number>`row_number() over (partition by ${leagueTry.seriesId}, ${leagueTry.playerId} order by ${leagueTry.loggedAt}, ${leagueTry.id})`.mapWith(Number).as("try_number"),
+    })
+    .from(leagueTry)
+    .innerJoin(series, eq(series.id, leagueTry.seriesId))
+    .as("numbered");
+  const rows = await db
+    .select()
+    .from(numbered)
+    .where(and(isNotNull(numbered.teamId), inArray(numbered.teamId, [...ids])))
+    .orderBy(asc(numbered.loggedAt), asc(numbered.id));
+  return new Map(rows.map((row) => [row.teamId ?? "", { kind: "try", series: row.seriesNumber, number: row.number, at: row.loggedAt.toISOString() }]));
+}
+
 teams.get("/", async (c) => {
   const owner = c.req.query("owner");
   const rows = await db
@@ -167,15 +189,23 @@ teams.get("/", async (c) => {
     .orderBy(desc(team.updatedAt));
   const ids = rows.map((row) => row.id);
   const sources = ids.length ? await sourcesQuery().where(inArray(teamSource.teamId, ids)).orderBy(asc(teamSource.position)) : [];
-  const list: TeamRow[] = rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    owner: { id: row.ownerId, name: row.ownerName },
-    sources: sources.filter((s) => s.teamId === row.id).map(sourceOf),
-    anyPokemon: row.anyPokemon,
-    members: row.slots.map((member) => member?.species ?? null),
-    updatedAt: row.updatedAt.toISOString(),
-  }));
+  const leagues = await tryTeams(ids);
+  const list: TeamRow[] = rows.map((row) => {
+    const own = sources.filter((s) => s.teamId === row.id).map(sourceOf);
+    const league = leagues.get(row.id) ?? null;
+    return {
+      id: row.id,
+      name: row.name,
+      owner: { id: row.ownerId, name: row.ownerName },
+      series: league ? [league.series] : [...new Set(own.map((s) => s.series.number))].sort((a, b) => a - b),
+      league,
+      state: "edit",
+      sources: own,
+      anyPokemon: row.anyPokemon,
+      members: row.slots.map((member) => member?.species ?? null),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  });
   return c.json(list);
 });
 

@@ -2,22 +2,6 @@
 
 Decisions are in [discovery.md](discovery.md). Every code entry is built on the league's own git branch and never pushed to `main` before [Retire the Trainer League app](#retire-the-trainer-league-app), so nothing of the league reaches production; every code entry runs `npm run gate` from `pkmn/site/`, drives its flow through the `verify-site` skill, builds from the frozen league boards in `pkmn/site/design/`, reads the league's rules only from `shared/league.ts`, extends `npm run seed` for any table it adds, and updates the site docs it changes (`docs/pkmn/site/`), recording its decisions there as it lands. Series 1's cup is close, so the entries that bring its league across and run its cup come before the rounds a later series needs.
 
-## The Teams list marks league teams and filters them
-
-Each team shows its kind and, for a league team, its series, round or cup match and state; the list filters by series, kind, state and owner, as the signed-off boards draw them ([discovery → Surfaces](discovery.md#surfaces)). A league team files under its league's series, "Any Pokémon" or not.
-
-**Do:**
-- [ ] The kind, series and state on each team; the filters, kept in the URL as `?player=` is.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through `verify-site`, with imported tries and a free team, filter by each of series, kind, state and owner and see only the matching teams; reload and keep the filters.
-- Human-run: the owner finds a player's league teams on the preview.
-- Reuse: the team list (`src/pages/teams.tsx`, `sourceLine`), `GET /api/teams`.
-- Neighbors: the owner filter (`?player=`).
-- Forbidden: a league team without its series.
-
-**Touches:** `pkmn/site/api/`, `pkmn/site/shared/`, `pkmn/site/src/`, `docs/pkmn/site/`
-
 ## Players make their free teams public or private
 
 Every team that is not a round or cup team gets a public/private toggle, private by default, the site's existing teams included; a private team is seen only by its owner and admins, by page and route ([discovery → Team Locking](discovery.md#team-locking)). Lands with the league's branch, so production's teams turn private only when the league ships.

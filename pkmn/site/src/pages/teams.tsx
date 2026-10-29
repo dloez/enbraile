@@ -1,8 +1,10 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { Check, Plus, X } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Check, Plus } from "lucide-react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { toolPage } from "@/components/page";
+import type { TeamsSearch } from "@/router";
+import { PixelIcon, type PixelIconName } from "@/components/pixel-icon";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
 import { api, ApiError } from "@/lib/api";
 import { teamPage } from "@/lib/lazy-pages";
@@ -12,16 +14,30 @@ import { TwoBlocks } from "@/components/page-frames";
 import { spriteOfName } from "@/analysis/sprite";
 import { SnapshotMenu } from "@/teams/components/snapshot-menu";
 import { profilePage } from "../../shared/profile";
-import { MAX_COMPARED, MIN_COMPARED, teamList, teamMade, type TeamRow } from "../../shared/team";
+import {
+  MAX_COMPARED,
+  MIN_COMPARED,
+  TEAM_KINDS,
+  TEAM_STATES,
+  teamKind,
+  teamList,
+  teamMade,
+  type TeamKind,
+  type TeamLeague,
+  type TeamRow,
+  type TeamState,
+} from "../../shared/team";
 import { locale, messages } from "../../shared/i18n";
 
 const t = messages({
   en: {
     failed: "Something went wrong",
-    today: "Changed today",
-    yesterday: "Changed yesterday",
-    daysAgo: (days: number) => `Changed ${days} days ago`,
-    inMonth: (month: string) => `Changed in ${month}`,
+    changedOn: (when: string) => `Changed ${when}`,
+    loggedOn: (when: string) => `Logged ${when}`,
+    today: "today",
+    yesterday: "yesterday",
+    daysAgo: (days: number) => `${days} days ago`,
+    inMonth: (month: string) => `in ${month}`,
     any: "Any Pokémon",
     noSource: "No source",
     series: (n: number) => `Series ${n}`,
@@ -37,15 +53,34 @@ const t = messages({
     yours: "Yours",
     others: "Other trainers",
     every: "Every team",
-    showEvery: (player: string) => `Show every team, not only ${player}'s`,
     empty: "No teams yet",
+    noMatch: "No teams match these filters",
+    filters: "Filters",
+    filterTeams: "Filter teams",
+    seriesFilter: "Series",
+    kindFilter: "Kind",
+    stateFilter: "State",
+    ownerFilter: "Owner",
+    allSeries: "All",
+    allKinds: "All",
+    allStates: "All",
+    everyone: "Everyone",
+    you: (name: string) => `${name} (you)`,
+    kinds: { free: "Free", round: "Round", cup: "Cup", try: "League try" } satisfies Record<TeamKind, string>,
+    states: { todo: "To build", locked: "Locked", edit: "Editable" } satisfies Record<TeamState, string>,
+    leagueTry: (n: number) => `League try ${n}`,
+    shown: (n: number) => (n === 1 ? "1 team" : `${n} teams`),
+    clearFilters: "Clear filters",
+    clear: "Clear",
   },
   es: {
     failed: "Algo ha fallado",
-    today: "Cambiado hoy",
-    yesterday: "Cambiado ayer",
-    daysAgo: (days: number) => `Cambiado hace ${days} días`,
-    inMonth: (month: string) => `Cambiado en ${month}`,
+    changedOn: (when: string) => `Cambiado ${when}`,
+    loggedOn: (when: string) => `Anotado ${when}`,
+    today: "hoy",
+    yesterday: "ayer",
+    daysAgo: (days: number) => `hace ${days} días`,
+    inMonth: (month: string) => `en ${month}`,
     any: "Cualquier Pokémon",
     noSource: "Sin fuente",
     series: (n: number) => `Serie ${n}`,
@@ -61,8 +96,25 @@ const t = messages({
     yours: "Tuyos",
     others: "Otros entrenadores",
     every: "Todos los equipos",
-    showEvery: (player: string) => `Ver todos los equipos, no solo los de ${player}`,
     empty: "Aún no hay equipos",
+    noMatch: "Ningún equipo coincide con estos filtros",
+    filters: "Filtros",
+    filterTeams: "Filtrar equipos",
+    seriesFilter: "Serie",
+    kindFilter: "Tipo",
+    stateFilter: "Estado",
+    ownerFilter: "Dueño",
+    allSeries: "Todas",
+    allKinds: "Todos",
+    allStates: "Todos",
+    everyone: "Todos",
+    you: (name: string) => `${name} (tú)`,
+    kinds: { free: "Libre", round: "Ronda", cup: "Copa", try: "Intento de liga" } satisfies Record<TeamKind, string>,
+    states: { todo: "Por montar", locked: "Bloqueado", edit: "Editable" } satisfies Record<TeamState, string>,
+    leagueTry: (n: number) => `Intento de liga ${n}`,
+    shown: (n: number) => (n === 1 ? "1 equipo" : `${n} equipos`),
+    clearFilters: "Quitar filtros",
+    clear: "Quitar",
   },
 });
 
@@ -74,7 +126,7 @@ function message(error: unknown): string {
 
 const DAY = 86_400_000;
 
-export function changed(iso: string, now = Date.now()): string {
+function ago(iso: string, now = Date.now()): string {
   const at = new Date(iso);
   const days = Math.floor((new Date(now).setHours(0, 0, 0, 0) - new Date(at).setHours(0, 0, 0, 0)) / DAY);
   if (days <= 0) return t.today;
@@ -83,19 +135,35 @@ export function changed(iso: string, now = Date.now()): string {
   return t.inMonth(at.toLocaleString(locale, { month: "long" }));
 }
 
-export function sourceLine(team: Pick<TeamRow, "owner" | "sources" | "anyPokemon">): string {
-  const any = team.anyPokemon ? [t.any] : [];
-  if (team.sources.length === 0) return any[0] ?? t.noSource;
-  const series = [...new Set(team.sources.map((s) => s.series.number))].map((n) => t.series(n)).join(", ");
+function when(team: Pick<TeamRow, "league" | "updatedAt">): string {
+  return team.league ? t.loggedOn(ago(team.league.at)) : t.changedOn(ago(team.updatedAt));
+}
+
+export function sourceLine(team: Pick<TeamRow, "owner" | "series" | "sources" | "anyPokemon">): string {
   const from = team.sources.map((s) => (s.player.id === team.owner.id ? s.milestone : t.theirs(s.player.name, s.milestone)));
-  return `${series} · ${[...from, ...any].join(" · ")}`;
+  if (team.anyPokemon) from.push(t.any);
+  if (team.series.length === 0) return from.join(" + ") || t.noSource;
+  const series = team.series.map((n) => t.series(n)).join(", ");
+  return from.length ? `${series} · ${from.join(" + ")}` : series;
+}
+
+type Search = TeamsSearch;
+
+function kept(team: TeamRow, search: Search): boolean {
+  return (
+    (search.series === undefined || team.series.includes(search.series)) &&
+    (search.kind === undefined || teamKind(team) === search.kind) &&
+    (search.state === undefined || team.state === search.state) &&
+    (search.player === undefined || team.owner.id === search.player)
+  );
 }
 
 export function TeamsPage() {
   const { data } = authClient.useSession();
   const me = data?.user;
   const navigate = useNavigate();
-  const { player: filter } = useSearch({ from: "/teams" });
+  const search = useSearch({ from: "/teams" });
+  const filter = search.player;
   const [list, setList] = useState<TeamRow[] | null>(null);
   const [named, setNamed] = useState<{ id: string; name: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +173,7 @@ export function TeamsPage() {
   const [picked, setPicked] = useState<string[]>([]);
   const [comparing, setComparing] = useState<string[] | null>(null);
   const [compareOpened, setCompareOpened] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const listed = list !== null && list.length > 0;
 
   useEffect(() => {
@@ -113,22 +182,28 @@ export function TeamsPage() {
 
   useEffect(() => {
     let live = true;
-    setList(null);
-    setNamed(null);
-    setError(null);
-    const load = async () => {
-      const next = await api(filter ? `/teams?owner=${encodeURIComponent(filter)}` : "/teams", teamList);
-      if (!live) return;
-      setList(next);
-      if (!filter) return;
-      const owner = next[0]?.owner ?? (await api(`/profiles/${encodeURIComponent(filter)}`, profilePage)).player;
-      if (live) setNamed(owner);
-    };
-    load().catch((caught: unknown) => live && setError(message(caught)));
+    api("/teams", teamList).then(
+      (next) => live && setList(next),
+      (caught: unknown) => live && setError(message(caught)),
+    );
     return () => {
       live = false;
     };
-  }, [filter]);
+  }, []);
+
+  const unlisted = filter !== undefined && list !== null && filter !== me?.id && !list.some((team) => team.owner.id === filter) ? filter : null;
+
+  useEffect(() => {
+    if (!unlisted) return;
+    let live = true;
+    api(`/profiles/${encodeURIComponent(unlisted)}`, profilePage).then(
+      (page) => live && setNamed(page.player),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [unlisted]);
 
   async function newTeam(sources?: string[], anyPokemon?: boolean) {
     setMaking(true);
@@ -145,8 +220,24 @@ export function TeamsPage() {
   }
 
   const player = me && !me.admin ? me : null;
-  const yours = player ? (list ?? []).filter((team) => team.owner.id === player.id) : [];
-  const others = (list ?? []).filter((team) => team.owner.id !== player?.id);
+  const shown = (list ?? []).filter((team) => kept(team, search));
+  const yours = player ? shown.filter((team) => team.owner.id === player.id) : [];
+  const others = shown.filter((team) => team.owner.id !== player?.id);
+  const filtered = Object.values(search).some((value) => value !== undefined);
+  const active = Object.values(search).filter((value) => value !== undefined).length;
+  const owners = new Map((list ?? []).map((team) => [team.owner.id, team.owner.name]));
+  if (named && named.id === unlisted) owners.set(named.id, named.name);
+  if (player) owners.delete(player.id);
+  const ownerOptions = [
+    { value: "", label: t.everyone },
+    ...(player ? [{ value: player.id, label: t.you(player.name) }] : []),
+    ...[...owners].sort(([, a], [, b]) => a.localeCompare(b)).map(([value, label]) => ({ value, label })),
+  ];
+  const seriesNumbers = [...new Set([...(list ?? []).flatMap((team) => team.series), ...(search.series === undefined ? [] : [search.series])])].sort((a, b) => a - b);
+
+  function refine(next: Search) {
+    void navigate({ to: "/teams", search: (now) => ({ ...now, ...next }), replace: true });
+  }
   const pick: Picking | null = picking
     ? {
         picked,
@@ -219,12 +310,89 @@ export function TeamsPage() {
           {error}
         </p>
       )}
-      {named && <OwnerChip owner={named} />}
+      {list && (
+        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            aria-controls="team-filters"
+            onClick={() => setFiltersOpen((open) => !open)}
+            className={buttonVariants({ className: cn("min-h-12 gap-2 px-3.5 text-2xl sm:hidden", filtersOpen && "bg-border hover:bg-border") })}
+          >
+            <PixelIcon name="filter" className="size-3.5" />
+            {t.filters}
+            {active > 0 && <span className="min-w-6 rounded-full bg-primary px-1.5 text-center text-lg leading-6 text-primary-foreground">{active}</span>}
+          </button>
+          <div
+            id="team-filters"
+            role="group"
+            aria-label={t.filterTeams}
+            className={cn(
+              "flex-col gap-3 rounded-[14px] border-3 bg-ink p-3 max-sm:order-last max-sm:w-full sm:flex sm:min-w-0 sm:flex-1 sm:flex-row sm:flex-wrap sm:items-center sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0",
+              filtersOpen ? "flex" : "hidden",
+            )}
+          >
+            <FilterGroup
+              id="team-filter-series"
+              label={t.seriesFilter}
+              options={[{ value: "", label: t.allSeries }, ...seriesNumbers.map((n) => ({ value: String(n), label: String(n) }))]}
+              value={search.series === undefined ? "" : String(search.series)}
+              onPick={(value) => refine({ series: value ? Number(value) : undefined })}
+            />
+            <FilterGroup
+              id="team-filter-kind"
+              label={t.kindFilter}
+              options={[{ value: "", label: t.allKinds }, ...TEAM_KINDS.map((kind) => ({ value: kind, label: t.kinds[kind] }))]}
+              value={search.kind ?? ""}
+              onPick={(value) => refine({ kind: value === "" ? undefined : (value as TeamKind) })}
+            />
+            <FilterGroup
+              id="team-filter-state"
+              label={t.stateFilter}
+              options={[{ value: "", label: t.allStates }, ...TEAM_STATES.map((state) => ({ value: state, label: t.states[state] }))]}
+              value={search.state ?? ""}
+              onPick={(value) => refine({ state: value === "" ? undefined : (value as TeamState) })}
+            />
+            <label className="flex flex-col gap-1.5 sm:min-h-13.5 sm:flex-row sm:items-center sm:gap-2.5 sm:rounded-xl sm:border-3 sm:bg-ink sm:pr-1.5 sm:pl-3.5">
+              <span className="font-heading text-xl text-muted-foreground">{t.ownerFilter}</span>
+              <select
+                value={filter ?? ""}
+                onChange={(event) => refine({ player: event.target.value || undefined })}
+                className={cn(
+                  "min-h-12 cursor-pointer rounded-lg border-2 bg-card px-2.5 font-heading text-[1.375rem] text-white outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:min-h-10 sm:border-0",
+                  filter ? "sm:bg-border" : "sm:bg-transparent",
+                )}
+              >
+                {ownerOptions.map((option) => (
+                  <option key={option.value} value={option.value} className="bg-ink">
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <span role="status" className="font-heading text-[1.375rem] text-muted-foreground max-sm:flex-1 sm:flex-none">
+            {t.shown(shown.length)}
+          </span>
+          {filtered && (
+            <button
+              type="button"
+              onClick={() => void navigate({ to: "/teams", search: {}, replace: true })}
+              className={buttonVariants({ className: "min-h-12 px-3 text-[1.375rem] sm:min-h-11 sm:flex-none sm:px-3.5" })}
+            >
+              <span className="sm:hidden">{t.clear}</span>
+              <span className="max-sm:hidden">{t.clearFilters}</span>
+            </button>
+          )}
+        </div>
+      )}
       {!list && !error && <TwoBlocks className="h-32 rounded-2xl" />}
       {list && (
         <div className="flex flex-col gap-3.5">
-          {player && (!filter || filter === player.id) && <Group id="teams-yours" title={t.yours} rows={yours} pick={pick} />}
-          {(!filter || filter !== player?.id) && <Group id="teams-others" title={player ? t.others : t.every} rows={others} pick={pick} showOwner />}
+          {player && (!filter || filter === player.id) && <Group id="teams-yours" title={t.yours} rows={yours} pick={pick} empty={filtered ? t.noMatch : t.empty} />}
+          {(!filter || filter !== player?.id) && (
+            <Group id="teams-others" title={player ? t.others : t.every} rows={others} pick={pick} empty={filtered ? t.noMatch : t.empty} showOwner />
+          )}
         </div>
       )}
       {compareOpened && (
@@ -242,20 +410,44 @@ export function TeamsPage() {
   );
 }
 
-function OwnerChip({ owner }: { owner: { id: string; name: string } }) {
+function FilterGroup({
+  id,
+  label,
+  options,
+  value,
+  onPick,
+}: {
+  id: string;
+  label: string;
+  options: readonly { value: string; label: string }[];
+  value: string;
+  onPick: (value: string) => void;
+}) {
   return (
-    <div className="flex">
-      <span className="flex min-h-12 items-center gap-2.5 rounded-full border-3 bg-card py-1 pr-1 pl-1.5">
-        <PlayerBadge name={owner.name} colour={playerColour(owner.name)} size="xs" />
-        <span className="font-heading text-2xl leading-none">{owner.name}</span>
-        <Link
-          to="/teams"
-          aria-label={t.showEvery(owner.name)}
-          className="grid size-9 place-items-center rounded-full text-muted-foreground outline-none hover:bg-cell hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <X className="size-5" aria-hidden="true" />
-        </Link>
+    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-1 sm:rounded-xl sm:border-3 sm:bg-ink sm:py-1 sm:pr-1 sm:pl-3.5">
+      <span id={id} className="font-heading text-xl text-muted-foreground sm:mr-1.5">
+        {label}
       </span>
+      <div role="radiogroup" aria-labelledby={id} className="flex flex-wrap gap-1.5 sm:flex-nowrap sm:gap-0.5">
+        {options.map((option) => {
+          const on = option.value === value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => onPick(option.value)}
+              className={cn(
+                "min-h-11 cursor-pointer rounded-lg border-2 px-3.5 pb-0.5 font-heading text-[1.375rem] whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:min-h-10 sm:border-0 sm:px-3",
+                on ? "border-primary bg-border text-white" : "bg-card text-subtle hover:bg-cell hover:text-white sm:bg-transparent sm:text-muted-foreground",
+              )}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -266,14 +458,28 @@ interface Picking {
   onToggle: (id: string) => void;
 }
 
-function Group({ id, title, rows, pick, showOwner = false }: { id: string; title: string; rows: TeamRow[]; pick: Picking | null; showOwner?: boolean }) {
+function Group({
+  id,
+  title,
+  rows,
+  pick,
+  empty,
+  showOwner = false,
+}: {
+  id: string;
+  title: string;
+  rows: TeamRow[];
+  pick: Picking | null;
+  empty: string;
+  showOwner?: boolean;
+}) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2">
       <h2 id={id} className="m-0 px-1 font-heading text-[1.75rem] leading-none font-normal text-subtle">
         {title}
       </h2>
       {rows.length === 0 ? (
-        <p className="m-0 flex min-h-23 items-center rounded-[14px] border-3 border-dashed px-6 font-heading text-[1.75rem] text-muted-foreground">{t.empty}</p>
+        <p className="m-0 flex min-h-23 items-center rounded-[14px] border-3 border-dashed px-6 font-heading text-[1.75rem] text-muted-foreground">{empty}</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {rows.map((team) => (
@@ -327,16 +533,26 @@ function RowBody({ team, showOwner, filled }: { team: TeamRow; showOwner: boolea
       <PlayerBadge name={team.owner.name} colour={playerColour(team.owner.name)} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:w-75 sm:flex-none">
         <span className="truncate font-heading text-[2.125rem] leading-[0.9]">{team.name}</span>
-        <span className="truncate text-sm font-bold text-muted-foreground">
-          {showOwner && `${team.owner.name} · `}
-          {sourceLine(team)}
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 sm:flex-nowrap">
+          {team.league && <KindChip league={team.league} />}
+          {team.state === "todo" && <Chip className="bg-round text-white">{t.states.todo}</Chip>}
+          {team.state === "locked" && (
+            <Chip className="border-2 border-cell-hi bg-ink text-subtle">
+              <PixelIcon name="lock" className="size-3" />
+              {t.states.locked}
+            </Chip>
+          )}
+          <span className="text-[0.8125rem] leading-[1.3] font-bold text-muted-foreground sm:truncate sm:text-sm sm:leading-normal">
+            {showOwner && `${team.owner.name} · `}
+            {sourceLine(team)}
+          </span>
         </span>
       </span>
       <span className="flex flex-none flex-col items-end gap-0.5 sm:order-last">
         <span className={cn("font-heading text-[1.375rem]", filled === size ? "text-green" : "text-warning")}>
           {filled}/{size}
         </span>
-        <span className="text-[0.8125rem] whitespace-nowrap text-muted-foreground">{changed(team.updatedAt)}</span>
+        <span className="text-[0.8125rem] whitespace-nowrap text-muted-foreground">{when(team)}</span>
       </span>
       <span className="flex w-full min-w-0 gap-1 sm:w-auto sm:flex-1">
         {team.members.map((species, at) => {
@@ -356,5 +572,27 @@ function RowBody({ team, showOwner, filled }: { team: TeamRow; showOwner: boolea
         })}
       </span>
     </>
+  );
+}
+
+function Chip({ className, children }: { className: string; children: ReactNode }) {
+  return (
+    <span className={cn("flex h-5 flex-none items-center gap-1.25 rounded-[5px] px-2 font-heading text-base leading-none sm:h-5.5 sm:text-[1.0625rem]", className)}>
+      {children}
+    </span>
+  );
+}
+
+const KIND_CHIP: Record<TeamLeague["kind"], { className: string; icon: PixelIconName; label: (league: TeamLeague) => string }> = {
+  try: { className: "border-2 border-try-rim bg-try-fill text-try", icon: "league", label: (league) => t.leagueTry(league.number) },
+};
+
+function KindChip({ league }: { league: TeamLeague }) {
+  const chip = KIND_CHIP[league.kind];
+  return (
+    <Chip className={chip.className}>
+      <PixelIcon name={chip.icon} className="size-2.5 sm:size-2.75" />
+      {chip.label(league)}
+    </Chip>
   );
 }

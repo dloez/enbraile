@@ -11,6 +11,10 @@ export const TEAM_SIZES = [6, 7, 8] as const;
 
 export const PICK_SIZE = 6;
 
+export const TEAM_KINDS = ["free", "round", "cup", "try"] as const;
+
+export const TEAM_STATES = ["todo", "locked", "edit"] as const;
+
 export const MIN_COMPARED = 2;
 
 export const MAX_COMPARED = 4;
@@ -87,10 +91,15 @@ export const teamSourceRow = z.object({
   milestone: z.string(),
 });
 
+export const teamLeague = z.object({ kind: z.literal("try"), series: z.int(), number: z.int(), at: z.string() });
+
 export const teamRow = z.object({
   id: z.string(),
   name: z.string(),
   owner: person,
+  series: z.array(z.int()),
+  league: teamLeague.nullable(),
+  state: z.enum(TEAM_STATES),
   sources: z.array(teamSourceRow),
   anyPokemon: z.boolean(),
   members: z.array(id.nullable()),
@@ -133,6 +142,16 @@ export type FreeMember = z.infer<typeof freeMember>;
 export type TeamSlots = z.infer<typeof teamSlots>;
 
 export type TeamRow = z.infer<typeof teamRow>;
+
+export type TeamLeague = z.infer<typeof teamLeague>;
+
+export type TeamKind = (typeof TEAM_KINDS)[number];
+
+export type TeamState = (typeof TEAM_STATES)[number];
+
+export function teamKind(row: Pick<TeamRow, "league">): TeamKind {
+  return row.league?.kind ?? "free";
+}
 
 export type TeamSourceRow = z.infer<typeof teamSourceRow>;
 

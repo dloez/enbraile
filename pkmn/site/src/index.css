@@ -64,6 +64,9 @@
     --color-round: var(--round);
     --color-round-ink: var(--round-ink);
     --color-round-dim: var(--round-dim);
+    --color-try: var(--try);
+    --color-try-rim: var(--try-rim);
+    --color-try-fill: var(--try-fill);
     --color-trophy: var(--trophy);
     --color-trophy-rim: var(--trophy-rim);
     --color-scene-night-sky-1: var(--scene-night-sky-1);
@@ -216,6 +219,9 @@
     --round: #c12d24;
     --round-ink: #ffb0a8;
     --round-dim: #7a3a36;
+    --try: #c39bff;
+    --try-rim: #5b4785;
+    --try-fill: #211a33;
     --trophy: #2a2416;
     --trophy-rim: #8a7330;
     --scene-night-sky-1: #0d1430;
