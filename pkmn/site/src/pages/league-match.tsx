@@ -882,6 +882,7 @@ function ResultPanel({
         {title}
       </h2>
       <GameSlots match={match} decided={decided} phase={phase} editing={editing} onEdit={onEdit} nameOf={nameOf} />
+      <hr className="m-0 border-0 border-t-3 border-cell" />
       <div className="flex flex-col gap-2">
         {rows.map((row) => (
           <div key={row.id} className={cn("flex min-h-13 items-center gap-3 rounded-xl border-3 bg-box px-3 sm:min-h-14 sm:px-3.5", row.line)}>
