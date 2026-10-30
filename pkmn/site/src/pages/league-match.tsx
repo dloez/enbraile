@@ -78,14 +78,12 @@ const t = messages({
     gameSub: (name: string, a: number, b: number) => `${name} won · ${a}–${b} fainted`,
     noReplay: "No replay",
     toPlay: "To play",
-    ifNeeded: "If needed",
-    notNeeded: "Not needed",
     replay: "Replay",
     edit: "Edit",
     editGame: (n: number | null) => (n === null ? "Edit game" : `Edit game ${n}`),
     result: "Result",
-    sideState: (games: number, fainted: number) => `${games} ${games === 1 ? "game" : "games"} · ${fainted} fainted`,
-    wins: (name: string, a: number, b: number) => `${name} wins ${a}–${b}`,
+    faintedTotal: (n: number) => `${n} fainted`,
+    wins: (name: string) => `${name} wins`,
     point: (n: number) => `${n} ${n === 1 ? "point" : "points"}`,
     recordTitle: (n: number) => `Game ${n} result`,
     winner: "Winner",
@@ -160,14 +158,12 @@ const t = messages({
     gameSub: (name: string, a: number, b: number) => `Ganó ${name} · ${a}–${b} debilitados`,
     noReplay: "Sin repetición",
     toPlay: "Por jugar",
-    ifNeeded: "Si hace falta",
-    notNeeded: "No hizo falta",
     replay: "Repetición",
     edit: "Editar",
     editGame: (n: number | null) => (n === null ? "Editar la partida" : `Editar la partida ${n}`),
     result: "Resultado",
-    sideState: (games: number, fainted: number) => `${games} ${games === 1 ? "partida" : "partidas"} · ${fainted} debilitados`,
-    wins: (name: string, a: number, b: number) => `${name} gana ${a}–${b}`,
+    faintedTotal: (n: number) => `${n} debilitados`,
+    wins: (name: string) => `${name} gana`,
     point: (n: number) => `${n} ${n === 1 ? "punto" : "puntos"}`,
     recordTitle: (n: number) => `Resultado de la partida ${n}`,
     winner: "Ganador",
@@ -396,10 +392,7 @@ export function LeagueMatchPage() {
         <Side side={match.b} you={match.b.id === me} end />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:grid-rows-[auto_1fr] lg:gap-x-5 lg:gap-y-3 2xl:flex-1 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_minmax(0,1fr)]">
-        <section aria-label={t.games} className="order-1 lg:col-start-2 lg:row-start-1">
-          <GameSlots match={match} decided={decided} phase={phase} editing={editing} onEdit={setEditing} nameOf={nameOf} />
-        </section>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,430px)_minmax(0,1fr)_minmax(0,430px)] lg:grid-rows-[1fr_auto] lg:gap-x-5 lg:gap-y-2 2xl:flex-1 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_minmax(0,1fr)]">
         <ResultPanel
           match={match}
           decided={decided}
@@ -409,11 +402,12 @@ export function LeagueMatchPage() {
           banChoice={banChoice}
           sixChoice={sixChoice}
           editing={editing}
+          onEdit={setEditing}
           onCancel={() => setEditing(null)}
           onSaved={saved}
           onMoved={setMatch}
           nameOf={nameOf}
-          className="order-3 lg:col-start-2 lg:row-start-2"
+          className="order-3 lg:col-start-2 lg:row-start-1"
         />
         <TeamColumn
           number={match.number}
@@ -480,21 +474,23 @@ function TeamColumn({
 }) {
   const [looking, setLooking] = useState<number | null>(null);
   return (
-    <section aria-label={t.team(name)} className={cn("@container flex flex-col gap-2", className)}>
+    <section aria-label={t.team(name)} className={cn("flex flex-col gap-2 lg:grid lg:grid-rows-subgrid lg:gap-y-2", className)}>
       <h2 className="m-0 px-0.5 font-heading text-[1.625rem] leading-none font-normal lg:sr-only">{t.team(name)}</h2>
       {team.state === "shown" ? (
         <>
-          <ol aria-label={team.name} className="m-0 grid list-none grid-cols-2 gap-2 p-0 2xl:flex-1 @min-[54rem]:grid-cols-3">
-            {team.members.map((member, at) => (
-              <li key={at} className="flex min-w-0">
-                {member ? (
-                  <MemberTile member={member} mark={mark?.(at)} onLook={() => setLooking(at)} />
-                ) : (
-                  <span className="grid min-h-22 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-lg text-faint">{t.empty}</span>
-                )}
-              </li>
-            ))}
-          </ol>
+          <div className="@container grid">
+            <ol aria-label={team.name} className="m-0 grid list-none grid-cols-2 gap-2 p-0 @min-[54rem]:grid-cols-3">
+              {team.members.map((member, at) => (
+                <li key={at} className="flex min-w-0">
+                  {member ? (
+                    <MemberTile member={member} mark={mark?.(at)} onLook={() => setLooking(at)} />
+                  ) : (
+                    <span className="grid min-h-22 flex-1 place-items-center rounded-[14px] border-3 border-dashed font-heading text-lg text-faint">{t.empty}</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
           <span className="flex flex-wrap items-center gap-2 px-0.5">
             <Link
               to="/teams/$id"
@@ -660,7 +656,7 @@ function MemberSummary({ teamId, slot, item, onClose }: { teamId: string; slot: 
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        className="flex max-h-[90svh] w-95 max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[18px] border-3 bg-card p-0 ring-0 sm:max-w-95"
+        className="flex max-h-[90svh] w-160 max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[18px] border-3 bg-card p-0 ring-0 sm:max-w-160"
       >
         {shown && page ? (
           <GameIconsProvider game={page.sources.find((source) => source.gameId !== null)?.gameId ?? null}>
@@ -696,7 +692,7 @@ function MemberSummary({ teamId, slot, item, onClose }: { teamId: string; slot: 
   );
 }
 
-type Slot = { key: string; title: string; sub: string; kind: "played" | "unrecorded" | "next" | "later"; game?: MatchPage["games"][number] };
+type Slot = { key: string; title: string; sub: string; kind: "played" | "unrecorded" | "next"; game?: MatchPage["games"][number] };
 
 const NOW_SUB: Record<"ban" | "pick" | "play", string> = { ban: t.bansSub, pick: t.pickingSub, play: t.playingSub };
 
@@ -714,12 +710,8 @@ function slotsOf(match: MatchPage, decided: boolean, phase: Phase | null, nameOf
   ] as const) {
     for (let i = 0; i < count; i++) slots.push({ key: `u${player}${i}`, title: t.noReplay, sub: t.won(nameOf(player)), kind: "unrecorded" });
   }
-  for (let n = slots.length + 1; n <= MATCH_GAMES; n++) {
-    slots.push(
-      n === match.next
-        ? { key: `n${n}`, title: t.game(n), sub: phase && phase !== "done" ? NOW_SUB[phase] : t.toPlay, kind: "next" }
-        : { key: `n${n}`, title: t.game(n), sub: decided ? t.notNeeded : t.ifNeeded, kind: "later" },
-    );
+  if (!decided && match.next !== null) {
+    slots.push({ key: `n${match.next}`, title: t.game(match.next), sub: phase && phase !== "done" ? NOW_SUB[phase] : t.toPlay, kind: "next" });
   }
   return slots;
 }
@@ -740,51 +732,48 @@ function GameSlots({
   nameOf: (id: string) => string;
 }) {
   return (
-    <ol className="m-0 grid list-none grid-cols-3 gap-2 p-0">
+    <ol aria-label={t.games} className="m-0 flex list-none flex-col gap-2 p-0">
       {slotsOf(match, decided, phase, nameOf).map((slot) => {
         const open = slot.game !== undefined && slot.game.number === editing;
         return (
           <li
             key={slot.key}
             className={cn(
-              "flex min-h-18 flex-col gap-0.5 rounded-xl border-3 px-2 pt-1.5 pb-2 sm:px-3 sm:pt-2 2xl:min-h-28 2xl:gap-1.5 2xl:px-4 2xl:pt-3 2xl:pb-3.5",
-              slot.kind === "played" && (open ? "border-primary bg-primary/10" : "bg-card"),
-              slot.kind === "unrecorded" && "border-dashed bg-card",
+              "flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border-3 px-3 py-1.5 sm:px-3.5 2xl:min-h-15 2xl:gap-x-4 2xl:px-4",
+              slot.kind === "played" && (open ? "border-primary bg-primary/10" : "bg-box"),
+              slot.kind === "unrecorded" && "border-dashed bg-box",
               slot.kind === "next" && "border-primary bg-primary/10",
-              slot.kind === "later" && "border-dashed bg-transparent",
             )}
           >
-            <span className="flex items-center gap-2">
-              <span className={cn("flex-1 font-heading text-xl sm:text-[1.375rem] 2xl:text-[2rem]", slot.kind === "later" || slot.kind === "unrecorded" ? "text-faint" : "text-white")}>{slot.title}</span>
-              {match.admin && slot.game && !open && (
-                <button
-                  type="button"
-                  aria-label={t.editGame(numbered(match, slot.game.number))}
-                  onClick={() => onEdit(slot.game!.number)}
-                  className="min-h-6.5 cursor-pointer rounded-md bg-cell px-2 font-heading text-base text-subtle outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 2xl:min-h-8 2xl:px-2.5 2xl:text-lg"
-                >
-                  {t.edit}
-                </button>
-              )}
-            </span>
+            <span className={cn("font-heading text-xl whitespace-nowrap sm:text-[1.375rem] 2xl:text-[1.75rem]", slot.kind === "unrecorded" ? "text-faint" : "text-white")}>{slot.title}</span>
             <span
               className={cn(
-                "flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs leading-[1.35] font-bold sm:gap-2 sm:text-sm 2xl:text-base",
-                slot.kind === "next" ? "text-primary" : slot.kind === "later" ? "text-faint" : "text-subtle",
+                "min-w-0 flex-1 text-sm leading-[1.35] font-bold sm:text-[0.9375rem] 2xl:text-base",
+                slot.kind === "next" ? "text-primary" : "text-subtle",
               )}
             >
               {slot.sub}
-              {slot.game?.replay && (
-                <a
-                  href={slot.game.replay}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-md bg-cell px-1.75 font-heading text-base font-normal text-subtle no-underline outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 2xl:px-2.5 2xl:text-lg"
-                >
-                  {t.replay}
-                </a>
-              )}
             </span>
+            {slot.game?.replay && (
+              <a
+                href={slot.game.replay}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md bg-cell px-2 font-heading text-base font-normal text-subtle no-underline outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 2xl:px-2.5 2xl:text-lg"
+              >
+                {t.replay}
+              </a>
+            )}
+            {match.admin && slot.game && !open && (
+              <button
+                type="button"
+                aria-label={t.editGame(numbered(match, slot.game.number))}
+                onClick={() => onEdit(slot.game!.number)}
+                className="min-h-6.5 cursor-pointer rounded-md bg-cell px-2 font-heading text-base text-subtle outline-none hover:bg-primary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 2xl:min-h-8 2xl:px-2.5 2xl:text-lg"
+              >
+                {t.edit}
+              </button>
+            )}
           </li>
         );
       })}
@@ -822,6 +811,7 @@ function ResultPanel({
   banChoice,
   sixChoice,
   editing,
+  onEdit,
   onCancel,
   onSaved,
   onMoved,
@@ -836,6 +826,7 @@ function ResultPanel({
   banChoice: number | null;
   sixChoice: number[];
   editing: number | null;
+  onEdit: (n: number) => void;
   onCancel: () => void;
   onSaved: (next: MatchPage) => void;
   onMoved: (next: MatchPage) => void;
@@ -851,14 +842,14 @@ function ResultPanel({
     drafting && draft && !editGame
       ? draftRows(match, draft, drafting)
       : [
-          { side: match.a, games: decided ? match.gamesA! : sum.gamesA, fainted: decided ? (match.faintedA ?? sum.faintedA) : sum.faintedA },
-          { side: match.b, games: decided ? match.gamesB! : sum.gamesB, fainted: decided ? (match.faintedB ?? sum.faintedB) : sum.faintedB },
-        ].map(({ side, games, fainted }) => {
+          { side: match.a, fainted: decided ? (match.faintedA ?? sum.faintedA) : sum.faintedA },
+          { side: match.b, fainted: decided ? (match.faintedB ?? sum.faintedB) : sum.faintedB },
+        ].map(({ side, fainted }) => {
           const won = winner?.id === side.id;
           return {
             id: side.id,
             name: side.name,
-            state: t.sideState(games, fainted),
+            state: t.faintedTotal(fainted),
             ink: won ? "text-yellow" : "text-muted-foreground",
             line: won ? "border-trophy-rim" : "border-border",
             icon: won ? "check" : null,
@@ -876,7 +867,7 @@ function ResultPanel({
           : t.playTitle(draft.number)
       : decided || match.next === null
         ? t.result
-        : t.game(match.next);
+        : t.games;
   const other = mine ? match[otherSide(mine)] : null;
   return (
     <section
@@ -890,6 +881,7 @@ function ResultPanel({
       <h2 id="result-title" className="m-0 font-heading text-[1.75rem] leading-none font-normal sm:text-[2.125rem]">
         {title}
       </h2>
+      <GameSlots match={match} decided={decided} phase={phase} editing={editing} onEdit={onEdit} nameOf={nameOf} />
       <div className="flex flex-col gap-2">
         {rows.map((row) => (
           <div key={row.id} className={cn("flex min-h-13 items-center gap-3 rounded-xl border-3 bg-box px-3 sm:min-h-14 sm:px-3.5", row.line)}>
@@ -923,7 +915,7 @@ function ResultPanel({
               <path d="M10 13h4v4h3v4H7v-4h3z" />
             </svg>
             <span className="flex flex-col leading-[1.1]">
-              <span className="font-heading text-3xl text-yellow">{t.wins(winner.name, Math.max(match.gamesA!, match.gamesB!), Math.min(match.gamesA!, match.gamesB!))}</span>
+              <span className="font-heading text-3xl text-yellow">{t.wins(winner.name)}</span>
               <span className="font-heading text-xl text-subtle">{afterWin(match)}</span>
             </span>
           </div>
