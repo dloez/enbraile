@@ -31,6 +31,7 @@ About $5.60 a month at 3 hours a day and $7.50 at 8 hours, including the $5 Work
 
 ## Decisions
 
+- **Deployed by Workers Builds on pushes to `main` touching `dj/bot/`,** like the panel on Vercel, and like the pkmn site when it was on Workers: no Cloudflare token in GitHub, and Workers Builds builds the Container's Dockerfile. _(owner asked for deploy on push, 2026-11-07)_
 - **Cloudflare, on Workers Paid:** the owner accepts about $5 a month to keep the bot in one place. Oracle Always Free and a home machine stay as fallbacks. _(owner, 2026-11-06)_
 - **`@discordjs/voice` with yt-dlp and ffmpeg, not Lavalink:** a single TypeScript process rather than a Java server in a TypeScript repo. _(2026-11-06)_
 - **No outbound gateway connection in the Durable Object:** outgoing WebSockets do not hibernate, and HTTP interactions need none. _(2026-11-06)_
