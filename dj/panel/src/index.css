@@ -104,14 +104,10 @@ a:hover { color: var(--accent); }
 .art img[src*="i.ytimg.com"] { transform: scale(1.34); }
 .art-hero { width: 100%; height: 100%; border-radius: 1.5rem; box-shadow: 0 2.5rem 5rem -2rem rgb(0 0 0 / .8); transition: transform .8s var(--ease), box-shadow .8s var(--ease); }
 .art-hero > svg { width: 26%; height: 26%; }
-.art-hero .paused-badge svg { width: 1.6rem; height: 1.6rem; }
 .art-hero img { position: absolute; inset: 0; opacity: 0; transition: opacity .7s var(--ease), filter .5s var(--ease); }
 .art-hero img.ready { opacity: 1; }
 .cover-glow { animation: fade-in .9s var(--ease) backwards; }
-.paused-badge { position: absolute; left: 50%; top: 50%; width: 4.5rem; height: 4.5rem; margin: -2.25rem 0 0 -2.25rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .15); opacity: 0; transform: scale(.85); transition: opacity .35s var(--ease), transform .35s var(--ease); pointer-events: none; }
-.paused-badge svg { width: 1.6rem; height: 1.6rem; }
 .now[data-stage="paused"] .art-hero img { filter: saturate(.5) brightness(.62); }
-.now[data-stage="paused"] .paused-badge { opacity: 1; transform: none; }
 .now { --title-size: clamp(1.45rem, 1rem + 1.1vw, 2.5rem); }
 .now .swap { min-height: calc(var(--title-size) * 2.24 + 1.05rem * 1.5 + .3rem); }
 .swap { display: flex; flex-direction: column; gap: .3rem; animation: swap-in .5s var(--ease) backwards; }
@@ -161,7 +157,7 @@ a:hover { color: var(--accent); }
 @keyframes ping { 70%, 100% { box-shadow: 0 0 0 .45rem transparent; } }
 .fine { margin: 0; color: var(--faint); font-size: .8rem; }
 
-.slider { -webkit-appearance: none; appearance: none; width: 100%; height: 1.75rem; margin: 0; background: none; cursor: pointer; --fill: 0%; --h: .3rem; }
+.slider { -webkit-appearance: none; appearance: none; box-sizing: border-box; width: calc(100% + 1.4rem); height: 1.75rem; margin: 0 -.7rem; padding: 0 .7rem; background: none; cursor: pointer; --fill: 0%; --h: .3rem; }
 .slider::-webkit-slider-runnable-track { height: var(--h); border-radius: 999px; background: linear-gradient(to right, var(--accent) var(--fill), var(--track) var(--fill)); transition: height .15s; }
 .slider::-moz-range-track { height: var(--h); border-radius: 999px; background: linear-gradient(to right, var(--accent) var(--fill), var(--track) var(--fill)); }
 .slider::-webkit-slider-thumb { -webkit-appearance: none; width: .9rem; height: .9rem; margin-top: calc((var(--h) - .9rem) / 2); border-radius: 999px; background: #fff; border: 0; box-shadow: 0 0 0 .3rem var(--accent-soft), 0 .2rem .6rem rgb(0 0 0 / .5); transform: scale(.6); transition: transform .15s var(--ease); }
@@ -233,7 +229,7 @@ a:hover { color: var(--accent); }
 @media (min-width: 861px) {
   .page { height: 100vh; height: 100dvh; min-height: 0; padding-bottom: 0; }
   .main { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 1.5rem; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
-  .main:has(> .player) { overflow: hidden; padding-bottom: 0; }
+  .main:has(> .player) { overflow: hidden; padding: 0 .75rem; margin-inline: -.75rem; }
   .player { flex: 1; min-height: 0; height: 100%; align-items: stretch; }
   .now-col { min-height: 0; overflow-y: auto; padding: .5rem .75rem 1.5rem; margin-inline: -.75rem; scrollbar-width: none; }
   .now, .listeners { --stage: min(100%, max(15rem, calc(100dvh - 36rem))); }
@@ -353,6 +349,6 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
   .eq i, .live-dot, .skeleton { animation: none; }
   .play.busy::after { animation: none; border-color: var(--accent); }
   .progress.loading .slider::-webkit-slider-runnable-track, .progress.loading .track-line, .progress.loading .slider::-moz-range-track { animation: none; }
-  .art-hero, .art-hero img, .cover-glow, .dock, .paused-badge, .play-icon svg { transition: none; }
+  .art-hero, .art-hero img, .cover-glow, .dock, .play-icon svg { transition: none; }
   .swap, .cover-glow { animation: none; }
 }

@@ -135,6 +135,8 @@ export async function join(nextChannel: string): Promise<void> {
 async function start(query: string, startMs: number, volume: number, id: number): Promise<void> {
   generation = id;
   killStream();
+  player?.stop(true);
+  resource = undefined;
   const started = Date.now();
   const track = await resolveTrack(query);
   if (generation !== id || !player) return;

@@ -487,7 +487,6 @@ function Cover({ src }: { src: string | null }) {
       <div className="art art-hero">
         <Icon.Note size={64} />
         {layers.map((layer) => !layer.broken && <img key={layer.src} className={layer.ready ? "ready" : ""} src={layer.src} alt="" referrerPolicy="no-referrer" onLoad={() => mark(layer.src, false)} onError={() => mark(layer.src, true)} />)}
-        <span className="paused-badge" aria-hidden="true"><Icon.Pause /></span>
       </div>
     </div>
   );
