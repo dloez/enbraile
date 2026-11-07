@@ -8,6 +8,7 @@ export type PlayerEvent = { type: "started"; generation: number; title: string; 
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
 const RESOLVE_TTL_MS = 30 * 60 * 1000;
+const PLUGINS = new URL("../yt-dlp-plugins", import.meta.url).pathname;
 const MAX_WARMING = 2;
 
 const cache = new Map<string, Promise<Resolved>>();
@@ -36,7 +37,7 @@ function resolveTrack(query: string): Promise<Resolved> {
   const pending = new Promise<Resolved>((resolve, reject) => {
     execFile(
       "yt-dlp",
-      ["--js-runtimes", "node", "--no-playlist", "--playlist-items", "1", "--no-warnings", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,track,artist,uploader,thumbnail,duration,webpage_url,url,http_headers})j", query],
+      ["--plugin-dirs", PLUGINS, "--js-runtimes", "node", "--no-playlist", "--playlist-items", "1", "--no-warnings", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,track,artist,uploader,thumbnail,duration,webpage_url,url,http_headers})j", query],
       { timeout: 60000, maxBuffer: 8 * 1024 * 1024 },
       (error, stdout, stderr) => {
         if (error) return reject(new Error((stderr || error.message).trim().slice(-300)));
@@ -58,7 +59,7 @@ function flatList(url: string, limit: number): Promise<{ title: string; url: str
   return new Promise((resolve, reject) => {
     execFile(
       "yt-dlp",
-      ["--js-runtimes", "node", "--flat-playlist", "--no-warnings", "--playlist-end", String(limit), "--print", "%(.{title,url,webpage_url})j", url],
+      ["--plugin-dirs", PLUGINS, "--js-runtimes", "node", "--flat-playlist", "--no-warnings", "--playlist-end", String(limit), "--print", "%(.{title,url,webpage_url})j", url],
       { timeout: 90000, maxBuffer: 8 * 1024 * 1024 },
       (error, stdout, stderr) => {
         if (error) return reject(new Error((stderr || error.message).trim().slice(-300)));

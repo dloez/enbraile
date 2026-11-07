@@ -9,6 +9,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY src ./src
+COPY yt-dlp-plugins ./yt-dlp-plugins
 ENV NODE_ENV=production DATA_PATH=/data/dj.db PORT=8080
 USER node
 EXPOSE 8080
