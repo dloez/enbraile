@@ -256,7 +256,7 @@ function SongSearch({ placeholder, onPick, onLink, warmUp }: { placeholder: stri
     <div className="search">
       <form role="search" onSubmit={(event) => void submit(event)} className="search-box">
         <Icon.Search />
-        <input value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") clear(); }} placeholder={placeholder} aria-label={placeholder} enterKeyHint={isLink(text) ? "go" : "search"} />
+        <input value={text} data-search aria-keyshortcuts="/" onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") clear(); }} placeholder={placeholder} aria-label={placeholder} enterKeyHint={isLink(text) ? "go" : "search"} />
         {isLink(text) && <button className="pill primary" disabled={busy === "link"}>{busy === "link" ? t.adding : t.addLink}</button>}
         {text && <button type="button" className="icon-btn small" aria-label={t.clearSearch} onClick={clear}><Icon.Close /></button>}
       </form>
@@ -333,9 +333,9 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
         <span className="transport-side start">
           <button className="icon-btn" aria-label={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
         </span>
-        <button className={`play ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={view.loading} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
+        <button className={`play ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={view.loading} aria-keyshortcuts="Space K" title={`${view.paused ? t.resume : t.pause} (K)`} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
         <span className="transport-side">
-        <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
+        <button className="icon-btn" aria-label={t.skip} aria-keyshortcuts="N" title={`${t.skip} (N)`} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
         <button className={`icon-btn ${view.loop !== "off" ? "on" : ""}`} aria-label={`${t.loop}: ${loopNames[view.loop]}`} title={`${t.loop}: ${loopNames[view.loop]}`} onClick={() => void command({ action: "loop", loop: LOOP_ORDER[(loopIndex + 1) % LOOP_ORDER.length] })}>
           <Icon.Repeat />
           {view.loop === "track" && <span className="badge">1</span>}
@@ -373,6 +373,30 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
       refresh();
     }
   }
+  const latest = useRef({ view, command });
+  latest.current = { view, command };
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) return;
+      const target = event.target as HTMLElement;
+      if (target.closest("input, textarea, select, [contenteditable]")) return;
+      const { view: current, command: send } = latest.current;
+      const playing = current?.active && current.current >= 0 && current.current < current.tracks.length;
+      const key = event.key.toLowerCase();
+      if (key === "/") {
+        event.preventDefault();
+        document.querySelector<HTMLInputElement>("input[data-search]")?.focus();
+      } else if (playing && (key === "k" || (key === " " && !target.closest("button, a")))) {
+        event.preventDefault();
+        void send({ action: current.paused ? "resume" : "pause" });
+      } else if (playing && key === "n") {
+        event.preventDefault();
+        void send({ action: "skip" });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   async function add(item: QueueItem) {
     if (view) setView(predictAdd(view, item));
     try {
