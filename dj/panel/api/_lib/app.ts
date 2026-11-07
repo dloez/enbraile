@@ -40,7 +40,8 @@ app.get("/me", async (c) => {
     const response = await worker(`${path}?userId=${viewer.discordId}`);
     return response.ok ? ((await response.json()) as Record<string, unknown>) : null;
   };
-  const [access, state, live] = await Promise.all([read("access"), read("state"), read("ticket")]);
+  const [access, state, live] = await Promise.all([read("access"), read("state"), read("ticket")]).catch(() => [null, null, null]);
+  if (!access) return c.json({ error: "botUnavailable" }, 502, { "cache-control": "private, no-store" });
   return c.json({ user: { name: viewer.name, image: viewer.image }, discordId: viewer.discordId, ...access, state, live }, 200, { "cache-control": "private, no-store" });
 });
 

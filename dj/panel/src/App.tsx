@@ -1,5 +1,5 @@
 import { type CSSProperties, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, get, handleReply, type HistoryEntry, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, signIn, type Song, type Track, attachSocket, type View } from "./api";
+import { ApiError, get, handleReply, type HistoryEntry, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
 
@@ -750,27 +750,34 @@ export function App() {
   }, [tabTitle]);
   useEffect(() => {
     document.documentElement.lang = lang;
-    get<Me>("me").then((next) => {
-      setOwnerName(next.user.name);
-      setMe(next);
-    }, (error: unknown) => {
-      if ((error as Error).message !== "signedOut") setFailed(true);
-    });
+    let attempt = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let stopped = false;
+    const load = () => {
+      get<Me>("me").then((next) => {
+        if (stopped) return;
+        setOwnerName(next.user.name);
+        setFailed(false);
+        setMe(next);
+      }, (error: unknown) => {
+        if (stopped || (error as Error).message === "signedOut") return;
+        setFailed(true);
+        timer = setTimeout(load, RETRY_MS[Math.min(attempt++, RETRY_MS.length - 1)]);
+      });
+    };
+    load();
+    return () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+    };
   }, []);
-  if (failed) {
-    return (
-      <main className="page">
-        <p className="error" role="alert">{t.errors.failed}</p>
-        <div><button className="btn" onClick={signIn}>{t.retry}</button></div>
-      </main>
-    );
-  }
   if (!me) {
     return (
       <div className="page" aria-busy="true">
         <header className="top">
           <div className="brand"><span className="mark"><Icon.Note size={18} /></span>DJ</div>
         </header>
+        {failed && <p className="notice" role="status">{t.reconnecting}</p>}
         <main className="main">
           <div className="player">
             <div className="now-col">
