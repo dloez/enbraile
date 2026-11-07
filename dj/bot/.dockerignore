@@ -1,0 +1,7 @@
+node_modules
+container/node_modules
+.wrangler
+.env.local
+.secrets.json
+src
+scripts

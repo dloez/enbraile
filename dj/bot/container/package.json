@@ -1,0 +1,1 @@
+{"name":"dj-bot-container","private":true,"type":"module","scripts":{"start":"node src/server.ts"},"dependencies":{"@discordjs/voice":"0.19.2","@snazzah/davey":"0.2.0","discord.js":"14.28.1"},"devDependencies":{"@types/node":"26.6.6","typescript":"7.0.2"}}

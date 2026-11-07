@@ -1,0 +1,28 @@
+export type Track = { id: string; query: string; title: string; durationMs: number; url: string | null; requestedBy: string };
+export type Loop = "off" | "track" | "queue";
+export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayEndsAt: number | null; positionMs: number; listeners: number; active: boolean; hoursThisMonth: number; hourLimit: number };
+export type Me = { user: { name: string; image: string | null }; discordId: string; member: boolean; canManage: boolean; canPlay: boolean };
+export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; playedAt: number };
+export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; trackCount: number };
+export type PlaylistTrack = { id: string; query: string; title: string };
+export type SettingsData = { djRoleId: string | null; hourLimit: number; roles: { id: string; name: string }[] };
+
+export class ApiError extends Error {}
+
+export function signIn(): void {
+  location.href = `https://enbraile.vip/?return=${encodeURIComponent(location.href)}`;
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`/api/${path}`, { ...init, headers: { "content-type": "application/json" } });
+  if (response.status === 401) {
+    signIn();
+    throw new ApiError("signedOut");
+  }
+  const body = (await response.json().catch(() => ({}))) as T & { error?: string };
+  if (!response.ok) throw new ApiError(body.error ?? "failed");
+  return body;
+}
+
+export const get = <T,>(path: string) => request<T>(path);
+export const post = <T,>(path: string, body: unknown = {}) => request<T>(path, { method: "POST", body: JSON.stringify(body) });
