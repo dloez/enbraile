@@ -431,13 +431,41 @@ function Equalizer() {
 type Stage = "idle" | "loading" | "paused" | "playing";
 const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : view.loading ? "loading" : view.paused ? "paused" : "playing");
 
+function Cover({ src }: { src: string | null }) {
+  const [layers, setLayers] = useState<{ src: string; ready: boolean; broken: boolean }[]>([]);
+  useEffect(() => {
+    if (!src) return setLayers([]);
+    setLayers((previous) => {
+      const known = previous.find((layer) => layer.src === src);
+      const settled = previous.filter((layer) => layer.ready && !layer.broken && layer.src !== src).slice(-1);
+      return [...settled, known ?? { src, ready: false, broken: false }];
+    });
+  }, [src]);
+  const mark = (target: string, broken: boolean) => setLayers((previous) => previous.map((layer) => (layer.src === target ? { ...layer, ready: true, broken } : layer)));
+  const shown = [...layers].reverse().find((layer) => layer.ready && !layer.broken);
+  return (
+    <div className="cover">
+      {shown && <img key={shown.src} className="cover-glow" src={shown.src} alt="" aria-hidden="true" referrerPolicy="no-referrer" />}
+      <div className="art art-hero">
+        <Icon.Note size={64} />
+        {layers.map((layer) => !layer.broken && <img key={layer.src} className={layer.ready ? "ready" : ""} src={layer.src} alt="" referrerPolicy="no-referrer" onLoad={() => mark(layer.src, false)} onError={() => mark(layer.src, true)} />)}
+        <span className="paused-badge" aria-hidden="true"><Icon.Pause /></span>
+      </div>
+    </div>
+  );
+}
+
+function PlayIcon({ paused }: { paused: boolean }) {
+  return <span className="play-icon" data-paused={paused}><Icon.Play /><Icon.Pause /></span>;
+}
+
 function NowPlaying({ view, track, command }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void> }) {
   const now = useNow(stageOf(view, track) === "playing");
   const [seek, setSeek] = useState<number | null>(null);
   if (!track || !view) {
     return (
       <section className="now" data-stage="idle" aria-label={t.tabs.player}>
-        <div className="cover"><Art src={null} className="art-hero" /></div>
+        <Cover src={null} />
         <div className="now-text">
           <h1 className="title">{t.nothing}</h1>
           <p className="artist">{t.nothingHint}</p>
@@ -452,14 +480,13 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
   const cover = artwork(track, 544);
   return (
     <section className="now" data-stage={stageOf(view, track)} aria-label={t.tabs.player}>
-      <div className="cover">
-        {cover && <img className="cover-glow" src={cover} alt="" aria-hidden="true" referrerPolicy="no-referrer" />}
-        <Art src={cover} className="art-hero" />
-      </div>
+      <Cover src={cover} />
       <div className="now-text">
-        <p className="eyebrow"><Equalizer />{view.loading ? t.starting : t.nowPlaying}</p>
-        <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
-        {track.artist && <p className="artist">{track.artist}</p>}
+        <p className="eyebrow"><Equalizer />{view.loading ? t.starting : view.paused ? t.paused : t.nowPlaying}</p>
+        <div className="swap" key={track.query}>
+          <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
+          <p className="artist">{track.artist || "\u00a0"}</p>
+        </div>
       </div>
       <div className={`progress ${view.loading ? "loading" : ""}`}>
         {duration > 0 ? (
@@ -472,7 +499,7 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
           <button className="icon-btn" aria-label={t.shuffle} title={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
           <button className="icon-btn" aria-label={t.previous} aria-keyshortcuts="P" title={`${t.previous} (P)`} onClick={() => void command({ action: "previous" })}><Icon.Previous /></button>
         </span>
-        <button className={`play ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={view.loading} aria-keyshortcuts="Space K" title={`${view.paused ? t.resume : t.pause} (K)`} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
+        <button className={`play ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={view.loading} aria-keyshortcuts="Space K" title={`${view.paused ? t.resume : t.pause} (K)`} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}><PlayIcon paused={view.paused} /></button>
         <span className="transport-side">
           <button className="icon-btn" aria-label={t.skip} aria-keyshortcuts="N" title={`${t.skip} (N)`} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
           <button className={`icon-btn ${view.loop !== "off" ? "on" : ""}`} aria-label={`${t.loop}: ${loopNames[view.loop]}`} title={`${t.loop}: ${loopNames[view.loop]}`} onClick={() => void command({ action: "loop", loop: LOOP_ORDER[(loopIndex + 1) % LOOP_ORDER.length] })}>
@@ -510,7 +537,7 @@ function Dock({ view, track, command, shown }: { view: Synced; track: Track; com
         <div className="name">{track.title}</div>
         <div className="sub">{view.loading ? t.starting : track.artist}</div>
       </div>
-      <button className={`play small ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
+      <button className={`play small ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}><PlayIcon paused={view.paused} /></button>
       <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
     </div>
   );

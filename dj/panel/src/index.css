@@ -103,9 +103,24 @@ a:hover { color: var(--accent); }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .art img[src*="i.ytimg.com"] { transform: scale(1.34); }
 .art-hero { width: 100%; height: 100%; border-radius: 1.5rem; box-shadow: 0 2.5rem 5rem -2rem rgb(0 0 0 / .8); transition: transform .8s var(--ease), box-shadow .8s var(--ease); }
-.art-hero svg { width: 26%; height: 26%; }
-.now[data-stage="paused"] .art-hero { transform: scale(.92); box-shadow: 0 1.5rem 3rem -1.5rem rgb(0 0 0 / .7); }
-.now[data-stage="paused"] .cover-glow { opacity: .3; transform: translateY(2%) scale(.9); }
+.art-hero > svg { width: 26%; height: 26%; }
+.art-hero .paused-badge svg { width: 1.6rem; height: 1.6rem; }
+.art-hero img { position: absolute; inset: 0; opacity: 0; transition: opacity .7s var(--ease), filter .5s var(--ease); }
+.art-hero img.ready { opacity: 1; }
+.cover-glow { animation: fade-in .9s var(--ease) backwards; }
+.paused-badge { position: absolute; left: 50%; top: 50%; width: 4.5rem; height: 4.5rem; margin: -2.25rem 0 0 -2.25rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; background: rgb(0 0 0 / .35); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .15); opacity: 0; transform: scale(.85); transition: opacity .35s var(--ease), transform .35s var(--ease); pointer-events: none; }
+.paused-badge svg { width: 1.6rem; height: 1.6rem; }
+.now[data-stage="paused"] .art-hero img { filter: saturate(.5) brightness(.62); }
+.now[data-stage="paused"] .paused-badge { opacity: 1; transform: none; }
+.now { --title-size: clamp(1.45rem, 1rem + 1.1vw, 2.5rem); }
+.now .swap { min-height: calc(var(--title-size) * 2.24 + 1.05rem * 1.5 + .3rem); }
+.swap { display: flex; flex-direction: column; gap: .3rem; animation: swap-in .5s var(--ease) backwards; }
+@keyframes swap-in { from { opacity: 0; transform: translateY(.5rem); } }
+.play-icon { position: relative; width: 1.75rem; height: 1.75rem; display: block; }
+.play-icon svg { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity .2s var(--ease), transform .3s var(--ease); }
+.play-icon[data-paused="true"] svg:last-child, .play-icon[data-paused="false"] svg:first-child { opacity: 0; transform: scale(.5) rotate(-30deg); }
+.play.small .play-icon { width: 1.2rem; height: 1.2rem; }
+.now[data-stage="paused"] .cover-glow { opacity: .25; }
 .art-md { width: 3.2rem; height: 3.2rem; border-radius: .6rem; }
 .art-sm { width: 2.75rem; height: 2.75rem; border-radius: .5rem; }
 .art-md svg, .art-sm svg { width: 40%; height: 40%; }
@@ -117,9 +132,11 @@ a:hover { color: var(--accent); }
 .eq i:nth-child(2) { animation-duration: .7s; animation-delay: -.3s; }
 .eq i:nth-child(3) { animation-duration: 1.2s; animation-delay: -.6s; }
 .eq i:nth-child(4) { animation-duration: .85s; animation-delay: -.15s; }
-.now:not([data-stage="playing"]) .eq i, .dock:not([data-stage="playing"]) .eq i { animation-play-state: paused; }
+.eq i { transition: transform .4s var(--ease); }
+.now:not([data-stage="playing"]) .eq i { animation: none; transform: scaleY(.25); }
+.now[data-stage="loading"] .eq i { animation: eq .5s ease-in-out infinite alternate; }
 @keyframes eq { 0% { transform: scaleY(.2); } 50% { transform: scaleY(1); } 100% { transform: scaleY(.45); } }
-.title { margin: 0; font-size: clamp(1.45rem, 1rem + 1.1vw, 2.5rem); font-weight: 800; line-height: 1.12; letter-spacing: -.035em; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }
+.title { margin: 0; font-size: var(--title-size, clamp(1.45rem, 1rem + 1.1vw, 2.5rem)); font-weight: 800; line-height: 1.12; letter-spacing: -.035em; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }
 .artist { margin: 0; color: var(--soft); font-size: 1.05rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .now[data-stage="idle"] .artist { white-space: normal; color: var(--dim); }
 .sub { margin: 0; color: var(--dim); font-size: .85rem; }
@@ -130,11 +147,11 @@ a:hover { color: var(--accent); }
 .transport-side { display: flex; align-items: center; gap: .75rem; }
 .transport-side.start { justify-content: flex-end; }
 .play { position: relative; width: 4.6rem; height: 4.6rem; flex: none; border-radius: 999px; border: 0; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1rem 2.5rem -.75rem var(--accent-glow), inset 0 1px 0 rgb(255 255 255 / .3); transition: transform .2s var(--ease), box-shadow .3s; }
-.play svg { width: 1.75rem; height: 1.75rem; }
+
 .play:hover { transform: scale(1.05); box-shadow: 0 1.2rem 3rem -.6rem var(--accent-glow), inset 0 1px 0 rgb(255 255 255 / .3); }
 .play:active { transform: scale(.95); }
 .play.small { width: 2.9rem; height: 2.9rem; box-shadow: 0 .5rem 1.2rem -.4rem var(--accent-glow); }
-.play.small svg { width: 1.2rem; height: 1.2rem; }
+
 .play.busy::after { content: ""; position: absolute; inset: -.35rem; border-radius: 999px; border: 2px solid transparent; border-top-color: var(--accent); animation: spin .9s linear infinite; }
 .now-foot { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .autoplay-note { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; padding: .75rem .9rem; border-radius: 1rem; background: var(--accent-soft); border: 1px solid var(--accent-line); }
@@ -217,7 +234,7 @@ a:hover { color: var(--accent); }
   .main { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 1.5rem; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
   .main:has(> .player) { overflow: hidden; padding-bottom: 0; }
   .player { flex: 1; min-height: 0; height: 100%; align-items: stretch; }
-  .now-col { min-height: 0; overflow-y: auto; padding: .5rem .75rem 1.5rem; margin-inline: -.75rem; justify-content: safe center; scrollbar-width: none; }
+  .now-col { min-height: 0; overflow-y: auto; padding: .5rem .75rem 1.5rem; margin-inline: -.75rem; scrollbar-width: none; }
   .now, .listeners { --stage: min(100%, max(15rem, calc(100dvh - 36rem))); }
   .side { min-height: 0; overflow-y: auto; margin-bottom: 1.5rem; scrollbar-width: none; }
   .now-col::-webkit-scrollbar, .side::-webkit-scrollbar, .discover-col::-webkit-scrollbar, .queue-col::-webkit-scrollbar { display: none; }
@@ -227,8 +244,7 @@ a:hover { color: var(--accent); }
   .now { display: grid; grid-template-columns: 8rem minmax(0, 1fr); column-gap: 1.1rem; row-gap: 1.1rem; align-items: center; }
   .now > :not(.cover):not(.now-text) { grid-column: 1 / -1; }
   .art-hero { border-radius: 1.1rem; }
-  .title { font-size: 1.4rem; }
-  .now[data-stage="paused"] .art-hero { transform: scale(.94); }
+  .now { --title-size: 1.4rem; }
 }
 @media (min-width: 1440px) {
   .side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1rem, 1.4vw, 2rem); padding: 0; background: none; border: 0; box-shadow: none; overflow: hidden; }
@@ -258,8 +274,7 @@ a:hover { color: var(--accent); }
   .now > .progress { grid-column: 1 / -1; }
   .art-hero { border-radius: 1rem; box-shadow: 0 1rem 2rem -1rem rgb(0 0 0 / .8); }
   .cover-glow { filter: blur(1.5rem) saturate(1.8); }
-  .now[data-stage="paused"] .art-hero { transform: scale(.94); }
-  .title { font-size: 1.3rem; }
+  .now { --title-size: 1.3rem; }
   .artist { font-size: .95rem; }
   .side { padding: .6rem; border-radius: 1.4rem; gap: 1.6rem; }
   .search-box { min-height: 3.2rem; }
@@ -337,5 +352,6 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
   .eq i, .live-dot, .skeleton { animation: none; }
   .play.busy::after { animation: none; border-color: var(--accent); }
   .progress.loading .slider::-webkit-slider-runnable-track, .progress.loading .track-line, .progress.loading .slider::-moz-range-track { animation: none; }
-  .art-hero, .cover-glow, .dock { transition: none; }
+  .art-hero, .art-hero img, .cover-glow, .dock, .paused-badge, .play-icon svg { transition: none; }
+  .swap, .cover-glow { animation: none; }
 }
