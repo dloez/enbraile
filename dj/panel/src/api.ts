@@ -1,10 +1,12 @@
-export type Track = { id: string; query: string; title: string; artist?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string };
+export type Requester = { name: string; avatar: string | null };
+export type AutoplayMode = "session" | "explore";
+export type Track = { id: string; query: string; title: string; artist?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode };
 export type Loop = "off" | "track" | "queue";
-export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; loading: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayEndsAt: number | null; autoplayUpcoming: Track[]; positionMs: number; listeners: number; active: boolean; skipped: { id: string; title: string } | null };
+export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; loading: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayMode: AutoplayMode; autoplayEndsAt: number | null; autoplayUpcoming: Track[]; positionMs: number; listeners: number; active: boolean; skipped: { id: string; title: string } | null };
 export type Song = { videoId: string; url: string; title: string; artist: string; album: string | null; durationMs: number; artwork: string | null; plays: string | null };
 export type Ticket = { ticket: string; url: string };
 export type Me = { user: { name: string; image: string | null }; discordId: string; member: boolean; canManage: boolean; canPlay: boolean; state: View | null; live: Ticket | null };
-export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; playedAt: number; artist: string | null; artwork: string | null; durationMs: number };
+export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; requester: Requester | null; playedAt: number; artist: string | null; artwork: string | null; durationMs: number };
 export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; trackCount: number };
 export type PlaylistTrack = { id: string; query: string; title: string };
 export type SettingsData = { djRoleId: string | null; roles: { id: string; name: string }[] };

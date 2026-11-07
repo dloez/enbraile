@@ -1,8 +1,10 @@
 import { db, getValue, setValue } from "./db.ts";
 import { artistNames, type Seed, sessionRadio, type Song } from "./music.ts";
+import { type Requester, requester } from "./client.ts";
 import * as player from "./player.ts";
 
-export type Track = { id: string; query: string; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string };
+export type Track = { id: string; query: string; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode };
+export type AutoplayMode = "session" | "explore";
 export type Loop = "off" | "track" | "queue";
 
 type State = {
@@ -14,6 +16,7 @@ type State = {
   volume: number;
   loop: Loop;
   autoplay: boolean;
+  autoplayMode: AutoplayMode;
   autoplayUpcoming: Track[];
   positionMs: number;
   generation: number;
@@ -36,6 +39,7 @@ export type View = {
   volume: number;
   loop: Loop;
   autoplay: boolean;
+  autoplayMode: AutoplayMode;
   autoplayEndsAt: number | null;
   autoplayUpcoming: Track[];
   positionMs: number;
@@ -47,7 +51,7 @@ export type View = {
 export type Skipped = { id: string; title: string };
 
 export type Settings = { djRoleId: string | null };
-export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; playedAt: number; artist: string | null; artwork: string | null; durationMs: number };
+export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; requester: Requester | null; playedAt: number; artist: string | null; artwork: string | null; durationMs: number };
 export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; trackCount: number };
 export type PlaylistTrack = { id: string; query: string; title: string };
 export type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
@@ -59,6 +63,8 @@ export type Command =
   | { action: "volume"; volume: number }
   | { action: "loop"; loop: Loop }
   | { action: "autoplay"; on: boolean }
+  | { action: "autoplayMode"; mode: AutoplayMode }
+  | { action: "swapPick"; id: string }
   | { action: "remove"; id: string }
   | { action: "move"; id: string; to: number };
 
@@ -69,13 +75,15 @@ const IDLE_LEAVE_MS = 5 * 60_000;
 const PAUSED_LEAVE_MS = 15 * 60_000;
 const AUTOPLAY_LIMIT_MS = 60 * 60_000;
 const MAX_FAILURES_IN_A_ROW = 5;
-const HISTORY_KEPT = 200;
+const HISTORY_KEPT = 20_000;
 const PREPARED_AHEAD = 3;
 const HUMAN_SEEDS = 5;
 const AUTOPLAY_SEEDS = 2;
 const ARTIST_COOLDOWN = 3;
 const AUTOPLAY_AHEAD = 3;
 const AUTOPLAY_SEED_WEIGHT = 0.3;
+const EXPLORE_SEEDS = 12;
+const EXPLORE_SEEDS_PER_LISTENER = 3;
 const SUGGESTIONS = 20;
 const SUGGESTIONS_KEPT_MS = 10 * 60_000;
 
@@ -88,6 +96,7 @@ const blank = (): State => ({
   volume: 1,
   loop: "off",
   autoplay: false,
+  autoplayMode: "session",
   autoplayUpcoming: [],
   positionMs: 0,
   generation: 0,
@@ -157,6 +166,7 @@ export function view(): View {
     volume: state.volume,
     loop: state.loop,
     autoplay: state.autoplay,
+    autoplayMode: state.autoplayMode,
     autoplayEndsAt: state.autoplay ? state.lastHumanAt + AUTOPLAY_LIMIT_MS : null,
     autoplayUpcoming: state.autoplay ? state.autoplayUpcoming : [],
     positionMs: livePosition(),
@@ -194,6 +204,37 @@ function radioSeeds(): Seed[] {
   return seeds;
 }
 
+function sample<T extends { plays: number }>(pool: T[], count: number): T[] {
+  const left = [...pool];
+  const chosen: T[] = [];
+  while (chosen.length < count && left.length) {
+    let roll = Math.random() * left.reduce((total, entry) => total + entry.plays, 0);
+    const index = Math.max(0, left.findIndex((entry) => (roll -= entry.plays) < 0));
+    chosen.push(...left.splice(index, 1));
+  }
+  return chosen;
+}
+
+function exploreSeeds(): Seed[] {
+  const listeners = player.listenerIds().sort(() => Math.random() - 0.5);
+  const each = Math.max(1, Math.min(EXPLORE_SEEDS_PER_LISTENER, Math.floor(EXPLORE_SEEDS / Math.max(1, listeners.length))));
+  const asked = db.prepare("SELECT url, COUNT(*) AS plays FROM history WHERE requested_by = ? AND url IS NOT NULL GROUP BY url");
+  const weights = new Map<string, number>();
+  let tasted = 0;
+  for (const listener of listeners) {
+    if (weights.size >= EXPLORE_SEEDS) break;
+    const songs = (asked.all(listener) as { url: string; plays: number }[]).flatMap((row) => {
+      const id = videoId(row.url);
+      return id ? [{ id, plays: row.plays }] : [];
+    });
+    const chosen = sample(songs, each);
+    if (chosen.length) tasted += 1;
+    for (const song of chosen) weights.set(song.id, (weights.get(song.id) ?? 0) + 1 / chosen.length);
+  }
+  console.log("explore seeds", JSON.stringify({ listeners: listeners.length, tasted, seeds: weights.size }));
+  return [...weights].map(([id, weight]) => ({ videoId: id, weight }));
+}
+
 function playedIds(): Set<string> {
   const played = new Set<string>();
   for (const track of state.tracks) played.add(videoId(track.url) ?? videoId(track.query) ?? "");
@@ -229,25 +270,37 @@ async function filterSuggestions(songs: Promise<Song[]>): Promise<Song[]> {
 }
 
 const unplayable = new Set<string>();
+const declined = new Set<string>();
 let planToken = 0;
 let planning: { token: number; done: Promise<void> } | null = null;
-let replacing = false;
+let refillAt: number | null = null;
 
 async function verify(pick: Track): Promise<void> {
   if (await player.playable(pick.query)) return;
   unplayable.add(videoId(pick.url) ?? pick.query);
-  const before = state.autoplayUpcoming.length;
-  state.autoplayUpcoming = state.autoplayUpcoming.filter((entry) => entry.id !== pick.id);
-  if (state.autoplayUpcoming.length === before) return;
+  dropPick(pick.id);
+}
+
+function dropPick(id: string): void {
+  const index = state.autoplayUpcoming.findIndex((entry) => entry.id === id);
+  if (index < 0) return;
+  state.autoplayUpcoming.splice(index, 1);
+  refillAt = Math.min(refillAt ?? index, index);
   save();
-  plan();
+  restartPlan();
 }
 
 async function radioPicks(count: number, kept: Track[]): Promise<Track[]> {
-  const seeds = radioSeeds();
-  if (!seeds.length || count <= 0) return [];
+  if (count <= 0) return [];
+  const mode = state.autoplayMode;
+  const explored = mode === "explore" ? exploreSeeds() : [];
+  const pickedBy: AutoplayMode = explored.length ? "explore" : "session";
+  const seeds = explored.length ? explored : radioSeeds();
+  if (!seeds.length) return [];
   const exclude = playedIds();
+  for (const seed of explored) exclude.add(seed.videoId);
   for (const id of unplayable) exclude.add(id);
+  for (const id of declined) exclude.add(id);
   for (const track of kept) exclude.add(videoId(track.url) ?? "");
   const recent = [...state.tracks, ...kept].slice(-ARTIST_COOLDOWN).flatMap((track) => artistNames(track.artist));
   const ranked = await sessionRadio(seeds, exclude, recent);
@@ -257,7 +310,7 @@ async function radioPicks(count: number, kept: Track[]): Promise<Track[]> {
     const window = new Set([...recent, ...picks.flatMap((track) => artistNames(track.artist))].slice(-ARTIST_COOLDOWN * 2));
     const index = Math.max(0, pool.findIndex((song) => !artistNames(song.artist).some((name) => window.has(name))));
     const [song] = pool.splice(index, 1);
-    picks.push({ id: crypto.randomUUID(), query: song!.url, title: song!.title, artist: song!.artist || null, artwork: song!.artwork, durationMs: song!.durationMs, url: song!.url, requestedBy: "autoplay" });
+    picks.push({ id: crypto.randomUUID(), query: song!.url, title: song!.title, artist: song!.artist || null, artwork: song!.artwork, durationMs: song!.durationMs, url: song!.url, requestedBy: "autoplay", pickedBy });
   }
   return picks;
 }
@@ -267,15 +320,16 @@ function planAutoplay(): Promise<void> {
   const token = planToken;
   const done = (async () => {
     if (!state.active || !state.autoplay || !state.tracks.length) return;
-    const fresh = replacing;
-    const kept = fresh ? [] : state.autoplayUpcoming;
+    const kept = state.autoplayUpcoming;
     const picks = await radioPicks(AUTOPLAY_AHEAD - kept.length, kept).catch((error: Error) => (console.error("related", error.message), []));
     if (token !== planToken || !state.active || !state.autoplay) return;
     const played = playedIds();
-    const usable = picks.filter((pick) => !played.has(videoId(pick.url) ?? ""));
+    const usable = picks.filter((pick) => !played.has(videoId(pick.url) ?? "") && !state.autoplayUpcoming.some((entry) => entry.url === pick.url));
     if (!usable.length) return;
-    replacing = false;
-    state.autoplayUpcoming = fresh ? usable : [...state.autoplayUpcoming, ...usable].slice(0, AUTOPLAY_AHEAD);
+    const next = [...state.autoplayUpcoming];
+    if (refillAt !== null) next.splice(Math.min(refillAt, next.length), 0, usable.shift()!);
+    refillAt = null;
+    state.autoplayUpcoming = [...next, ...usable].slice(0, AUTOPLAY_AHEAD);
     save();
     prepareAhead();
   })().finally(() => {
@@ -285,9 +339,8 @@ function planAutoplay(): Promise<void> {
   return done;
 }
 
-function replan(): void {
+function restartPlan(): void {
   planToken += 1;
-  replacing = true;
   plan();
 }
 
@@ -319,7 +372,7 @@ function end(): void {
   if (state.active) player.leave();
   if (ticker) clearInterval(ticker);
   ticker = undefined;
-  Object.assign(state, { ...blank(), volume: state.volume, loop: state.loop, generation: state.generation, lastHumanAt: state.lastHumanAt });
+  Object.assign(state, { ...blank(), volume: state.volume, loop: state.loop, autoplayMode: state.autoplayMode, generation: state.generation, lastHumanAt: state.lastHumanAt });
   save();
 }
 
@@ -332,10 +385,11 @@ export async function expand(url: string): Promise<{ title: string; url: string 
 }
 
 export async function enqueue(channelId: string, items: QueueItem[], requestedBy: string): Promise<EnqueueResult> {
+  const who = await requester(requestedBy);
   const before = state.tracks.length;
   const position = before - Math.max(state.current, 0);
   const wasPlaying = state.active && state.current >= 0 && state.current < before;
-  state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy })));
+  state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy, requester: who })));
   state.lastHumanAt = Date.now();
   if (!state.active || state.channelId !== channelId) {
     await player.join(channelId);
@@ -350,7 +404,7 @@ export async function enqueue(channelId: string, items: QueueItem[], requestedBy
     state.current = before;
     startCurrent();
   }
-  replan();
+  plan();
   return { ok: true, added: items.length, position };
 }
 
@@ -392,7 +446,6 @@ export async function command(command: Command): Promise<void> {
       return;
     case "clear":
       state.tracks = state.tracks.slice(0, state.current + 1);
-      replan();
       break;
     case "shuffle": {
       const upcoming = state.tracks.slice(state.current + 1);
@@ -416,8 +469,21 @@ export async function command(command: Command): Promise<void> {
     case "autoplay":
       state.autoplay = command.on;
       state.autoplayUpcoming = [];
-      if (command.on) replan();
+      refillAt = null;
+      if (command.on) restartPlan();
       break;
+    case "autoplayMode":
+      if (command.mode !== "session" && command.mode !== "explore") return;
+      state.autoplayMode = command.mode;
+      restartPlan();
+      break;
+    case "swapPick": {
+      const pick = state.autoplayUpcoming.find((entry) => entry.id === command.id);
+      if (!pick) return;
+      declined.add(videoId(pick.url) ?? pick.query);
+      dropPick(pick.id);
+      return;
+    }
     case "remove": {
       const index = state.tracks.findIndex((track) => track.id === command.id);
       if (index > state.current) state.tracks.splice(index, 1);
@@ -453,7 +519,7 @@ player.onPlayerEvent((event) => {
       const firstStart = track.url === null || track.requestedBy === "autoplay";
       Object.assign(track, { title: event.title, artist: track.artist ?? event.artist, artwork: track.artwork ?? event.artwork, durationMs: event.durationMs || track.durationMs, url: event.url });
       if (firstStart) {
-        db.prepare("INSERT INTO history (query, title, url, requested_by, played_at, artist, artwork, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(track.query, track.title, track.url, track.requestedBy, Date.now(), track.artist, track.artwork, track.durationMs);
+        db.prepare("INSERT INTO history (query, title, url, requested_by, played_at, artist, artwork, duration_ms, requester_name, requester_avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(track.query, track.title, track.url, track.requestedBy, Date.now(), track.artist, track.artwork, track.durationMs, track.requester?.name ?? null, track.requester?.avatar ?? null);
         db.prepare("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY id DESC LIMIT ?)").run(HISTORY_KEPT);
       }
     }
@@ -508,7 +574,7 @@ export async function resumeAfterRestart(): Promise<void> {
 }
 
 export function history(): HistoryEntry[] {
-  return (db.prepare("SELECT * FROM history ORDER BY id DESC LIMIT 50").all() as { id: number; query: string; title: string; url: string | null; requested_by: string; played_at: number; artist: string | null; artwork: string | null; duration_ms: number }[]).map((row) => ({ id: row.id, query: row.query, title: row.title, url: row.url, requestedBy: row.requested_by, playedAt: row.played_at, artist: row.artist, artwork: row.artwork, durationMs: row.duration_ms }));
+  return (db.prepare("SELECT * FROM history ORDER BY id DESC LIMIT 50").all() as { id: number; query: string; title: string; url: string | null; requested_by: string; played_at: number; artist: string | null; artwork: string | null; duration_ms: number; requester_name: string | null; requester_avatar: string | null }[]).map((row) => ({ id: row.id, query: row.query, title: row.title, url: row.url, requestedBy: row.requested_by, requester: row.requester_name ? { name: row.requester_name, avatar: row.requester_avatar } : null, playedAt: row.played_at, artist: row.artist, artwork: row.artwork, durationMs: row.duration_ms }));
 }
 
 export function playlists(): Playlist[] {

@@ -215,7 +215,21 @@ a:hover { color: var(--accent); }
 .reorder { display: flex; }
 .auto-row { opacity: .62; transition: opacity .2s, background .2s; }
 .auto-row:hover { opacity: .9; }
-.auto-row .len { margin-right: 9rem; }
+.auto-row .len { margin-right: 4.8rem; }
+.auto-row .grip { cursor: default; color: var(--accent); }
+.auto-row .grip svg { display: block; color: inherit; }
+.auto-row .swap { transition: color .2s, background .2s, transform .3s var(--ease); }
+.auto-row .swap:hover { color: var(--text); background: var(--hover); transform: rotate(90deg); }
+.who { display: inline-flex; align-items: center; gap: .3rem; vertical-align: bottom; max-width: 100%; }
+.who img, .who-initial { width: 1rem; height: 1rem; flex: none; border-radius: 999px; object-fit: cover; background: var(--press); }
+.who-initial { display: inline-flex; align-items: center; justify-content: center; font-size: .6rem; font-weight: 700; }
+.who-name { overflow: hidden; text-overflow: ellipsis; }
+.autoplay-controls { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .4rem .75rem; }
+.segmented { display: inline-flex; padding: 2px; border-radius: 999px; border: 1px solid var(--line-strong); }
+.segmented button { display: inline-flex; align-items: center; gap: .3rem; min-height: 1.9rem; padding: 0 .7rem; border: 0; border-radius: 999px; background: none; color: var(--dim); font-size: .8rem; font-weight: 600; transition: color .2s, background .2s; }
+.segmented button:hover { color: var(--text); }
+.segmented button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .auto-group { margin-top: .4rem; animation: fade-in .45s var(--ease) backwards; }
 .auto-label { margin: .4rem .65rem .35rem; display: flex; align-items: center; gap: .75rem; color: var(--accent); font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .auto-label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, var(--accent-line), transparent); }
@@ -284,7 +298,7 @@ a:hover { color: var(--accent); }
   .artist { font-size: .95rem; }
   .side { padding: .6rem; border-radius: 1.4rem; gap: 1.6rem; }
   .search-box { min-height: 3.2rem; }
-  .plays, .queue-row .len, .auto-row .grip, .auto-row .len { display: none; }
+  .plays, .queue-row .len, .auto-row .len { display: none; }
   .grip { width: 1.9rem; margin-left: -.35rem; }
   .song { padding: .4rem .35rem; gap: .75rem; }
   .label { margin-left: .35rem; }

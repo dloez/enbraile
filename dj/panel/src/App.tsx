@@ -1,5 +1,5 @@
 import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type FocusEvent as ReactFocusEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, get, handleReply, type HistoryEntry, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
+import { ApiError, type AutoplayMode, get, handleReply, type HistoryEntry, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
 import { Ambient, useAccent } from "./ambient";
@@ -7,7 +7,7 @@ import { Ambient, useAccent } from "./ambient";
 type Tab = "player" | "playlists" | "history" | "settings";
 type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
 type Synced = View & { at: number };
-type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number };
+type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number; mode?: AutoplayMode };
 
 const message = (error: unknown) => t.errors[error instanceof ApiError ? error.message : "failed"] ?? t.errors.failed!;
 const isLink = (text: string) => /^https?:\/\//.test(text.trim());
@@ -63,6 +63,8 @@ function predict(view: Synced, command: Command): Synced {
       return { ...next, loop: command.loop ?? "off" };
     case "autoplay":
       return { ...next, autoplay: Boolean(command.on), autoplayUpcoming: [] };
+    case "autoplayMode":
+      return { ...next, autoplayMode: command.mode ?? view.autoplayMode };
     case "clear":
       return { ...next, tracks: view.tracks.slice(0, view.current + 1) };
     case "remove":
@@ -91,6 +93,29 @@ function artwork(source: { artwork?: string | null; url?: string | null; query?:
   if (source.artwork) return source.artwork.replace(/=w\d+-h\d+/, `=w${size}-h${size}`);
   const id = (source.url ?? source.query ?? "").match(/[?&]v=([\w-]{11})/)?.[1];
   return id ? `https://i.ytimg.com/vi/${id}/${size > 200 ? "hqdefault" : "mqdefault"}.jpg` : null;
+}
+
+function Who({ requester }: { requester: Requester | null | undefined }) {
+  const [broken, setBroken] = useState(false);
+  if (!requester) return null;
+  return (
+    <span className="who" title={t.askedBy(requester.name)}>
+      {requester.avatar && !broken ? <img src={requester.avatar} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} /> : <span className="who-initial" aria-hidden="true">{requester.name.slice(0, 1).toUpperCase()}</span>}
+      <span className="who-name">{requester.name}</span>
+    </span>
+  );
+}
+
+function SongSub({ artist, requester, extra }: { artist?: string | null; requester?: Requester | null; extra?: string }) {
+  const text = [artist, extra].filter(Boolean).join(" · ");
+  if (!text && !requester) return null;
+  return (
+    <div className="sub">
+      {text}
+      {text && requester && <span aria-hidden="true"> · </span>}
+      <Who requester={requester} />
+    </div>
+  );
 }
 
 function Art({ src, className }: { src: string | null; className: string }) {
@@ -548,11 +573,21 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
         </span>
       </div>
       <div className="now-foot">
-        <label className="switch">
-          <input type="checkbox" role="switch" checked={view.autoplay} onChange={(event) => void command({ action: "autoplay", on: event.target.checked })} />
-          <span className="knob" aria-hidden="true" />
-          {t.autoplay}
-        </label>
+        <span className="autoplay-controls">
+          <label className="switch">
+            <input type="checkbox" role="switch" checked={view.autoplay} onChange={(event) => void command({ action: "autoplay", on: event.target.checked })} />
+            <span className="knob" aria-hidden="true" />
+            {t.autoplay}
+          </label>
+          <span className="segmented" role="group" aria-label={t.autoplayMode}>
+            {(["session", "explore"] as const).map((mode) => (
+              <button key={mode} aria-pressed={view.autoplayMode === mode} title={t.autoplayModeHelp[mode]} onClick={() => void command({ action: "autoplayMode", mode })}>
+                {mode === "session" ? <Icon.Radio size={14} /> : <Icon.Compass size={14} />}
+                {t.autoplayModes[mode]}
+              </button>
+            ))}
+          </span>
+        </span>
         <button className="pill danger" onClick={() => void command({ action: "stop" })}>{t.stop}</button>
       </div>
       <p className="listeners"><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(view.listeners)}</p>
@@ -679,7 +714,7 @@ function QueueList({ upcoming, offset, command }: { upcoming: Track[]; offset: n
             <Art src={artwork(item, 96)} className="art-sm" />
             <div className="meta">
               <div className="name">{item.title}</div>
-              {item.artist && <div className="sub">{item.artist}</div>}
+              <SongSub artist={item.artist} requester={item.requester} />
             </div>
             {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
             <span className="reorder">
@@ -812,13 +847,14 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                     <ol className="rows">
                       {autoplays.map((pick) => (
                         <li key={pick.id} className="song auto-row">
-                          <span className="grip" />
+                          <span className="grip" title={t.autoplayModeHelp[pick.pickedBy ?? "session"]}>{pick.pickedBy === "explore" ? <Icon.Compass /> : <Icon.Radio />}</span>
                           <Art src={artwork(pick, 96)} className="art-sm" />
                           <div className="meta">
                             <div className="name">{pick.title}</div>
                             {pick.artist && <div className="sub">{pick.artist}</div>}
                           </div>
                           {pick.durationMs > 0 && <span className="len">{clock(pick.durationMs)}</span>}
+                          <button className="icon-btn small swap" aria-label={t.swapPick(pick.title)} title={t.swapPick(pick.title)} onClick={() => void command({ action: "swapPick", id: pick.id })}><Icon.Swap /></button>
                         </li>
                       ))}
                     </ol>
@@ -983,7 +1019,7 @@ function HistoryTab() {
                 <Art src={artwork(entry, 96)} className="art-md" />
                 <div className="meta">
                   <div className="name">{entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.title}</a> : entry.title}</div>
-                  <div className="sub">{[entry.artist, new Date(entry.playedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })].filter(Boolean).join(" · ")}</div>
+                  <SongSub artist={entry.artist} extra={new Date(entry.playedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })} requester={entry.requester} />
                 </div>
                 <QueueButton className="pill" label={t.requeue} run={async () => {
                   setError(null);

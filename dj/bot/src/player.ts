@@ -112,11 +112,11 @@ export function leave(): void {
   channelId = "";
 }
 
-function listeners(): number {
-  if (!channelId) return 0;
+export function listenerIds(): string[] {
+  if (!channelId) return [];
   const server = client.guilds.cache.first();
   const states = server?.voiceStates.cache.filter((state) => state.channelId === channelId);
-  return states ? [...states.values()].filter((state) => !state.member?.user.bot && state.id !== client.user?.id).length : 0;
+  return states ? [...states.values()].filter((state) => !state.member?.user.bot && state.id !== client.user?.id).map((state) => state.id) : [];
 }
 
 export async function join(nextChannel: string): Promise<void> {
@@ -199,7 +199,7 @@ export function halt(): void {
 export function status(): Status {
   return {
     connected: connection?.state.status === VoiceConnectionStatus.Ready,
-    listeners: listeners(),
+    listeners: listenerIds().length,
     positionMs: resource ? offsetMs + resource.playbackDuration : 0,
   };
 }

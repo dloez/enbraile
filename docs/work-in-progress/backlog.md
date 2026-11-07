@@ -158,3 +158,7 @@ Any game can be created and downloaded, but the save upload reads Añil saves on
 ### pkmn/site: an MCP server that acts as a site admin
 
 An MCP server, signed in with easy auth, through which Claude acts as an administrator of the site: running the admin moves (players, games, series, the league's results and overrides) without driving the `/admin` pages in a browser. Today an admin is a username-and-password account made by `npm run admin:create` or the seed, the local test sign-in (`DEV_SIGN_IN`) signs in players only, and admin work by an agent goes through the Playwright MCP browser ([The pkmn Site → Accounts](../pkmn/site/explanation/site.md#accounts)). Unscoped: which environments it reaches (local, preview, production), what "easy auth" is and how it stays out of reach of anyone else, and which admin moves it exposes. _(owner, 2026-10-29)_
+
+### dj: count skips against a song in autoplay
+
+Explore seeds autoplay from the songs each listener asked for, weighted by how often ([The DJ Bot → Decisions](../dj/bot/explanation/bot.md#decisions)), and history saves a song when it starts, with no record of a skip. A song its requester, or the call, skipped quickly could weigh less as a seed, or be kept out of picks. Unscoped: what counts as a quick skip, whose skip counts, and whether it applies to Session too. Left out when Explore was built. _(owner, 2026-11-07)_
