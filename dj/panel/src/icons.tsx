@@ -16,7 +16,9 @@ export const Check = () => <Stroke size={18}><path d="m5 12 5 5 9-10" /></Stroke
 export const Shuffle = () => <Stroke><path d="M16 3h5v5" /><path d="M4 20 21 3" /><path d="M21 16v5h-5" /><path d="m15 15 6 6" /><path d="M4 4l5 5" /></Stroke>;
 export const Repeat = () => <Stroke><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></Stroke>;
 export const Up = () => <Stroke size={16}><path d="m6 15 6-6 6 6" /></Stroke>;
-export const Down = () => <Stroke size={16}><path d="m6 9 6 6 6-6" /></Stroke>;
+export const Headphones = () => <Stroke size={14}><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z" /></Stroke>;
+export const Back = () => <Stroke size={18}><path d="M19 12H5M12 19l-7-7 7-7" /></Stroke>;
+export const Down =() => <Stroke size={16}><path d="m6 9 6 6 6-6" /></Stroke>;
 
 export const Play = () => (
   <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z" /></svg>

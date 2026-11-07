@@ -2,6 +2,7 @@ import { type CSSProperties, type FormEvent, useCallback, useEffect, useRef, use
 import { ApiError, get, handleReply, type HistoryEntry, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
+import { Ambient, useAccent } from "./ambient";
 
 type Tab = "player" | "playlists" | "history" | "settings";
 type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
@@ -394,20 +395,32 @@ function Slider({ label, value, max, step, onChange, onCommit, className }: { la
   return <input type="range" className={`slider ${className ?? ""}`} aria-label={label} min={0} max={max} step={step} value={value} style={{ "--fill": fill } as CSSProperties} onChange={(event) => onChange(Number(event.target.value))} onPointerUp={onCommit} onKeyUp={onCommit} />;
 }
 
-function NowPlaying({ view, track, command }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void> }) {
+function useNow(): number {
   const [now, setNow] = useState(performance.now());
-  const [seek, setSeek] = useState<number | null>(null);
   useEffect(() => {
     const timer = setInterval(() => setNow(performance.now()), 250);
     return () => clearInterval(timer);
   }, []);
+  return now;
+}
+
+function Equalizer() {
+  return <span className="eq" aria-hidden="true"><i /><i /><i /><i /></span>;
+}
+
+type Stage = "idle" | "loading" | "paused" | "playing";
+const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : view.loading ? "loading" : view.paused ? "paused" : "playing");
+
+function NowPlaying({ view, track, command }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void> }) {
+  const now = useNow();
+  const [seek, setSeek] = useState<number | null>(null);
   if (!track || !view) {
     return (
-      <section className="now" aria-label={t.tabs.player}>
-        <Art src={null} className="art-hero" />
-        <div>
+      <section className="now" data-stage="idle" aria-label={t.tabs.player}>
+        <div className="cover"><Art src={null} className="art-hero" /></div>
+        <div className="now-text">
           <h1 className="title">{t.nothing}</h1>
-          <p className="sub">{t.nothingHint}</p>
+          <p className="artist">{t.nothingHint}</p>
         </div>
       </section>
     );
@@ -416,30 +429,35 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
   const position = seek ?? estimate(view, now);
   const loopIndex = LOOP_ORDER.indexOf(view.loop);
   const loopNames: Record<Loop, string> = { off: t.loopOff, track: t.loopTrack, queue: t.loopQueue };
+  const cover = artwork(track, 544);
   return (
-    <section className="now" aria-label={t.tabs.player}>
-      <Art src={artwork(track, 544)} className="art-hero" />
-      <div>
-        <h1 className="title">{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
-        {track.artist && <p className="sub">{track.artist}</p>}
+    <section className="now" data-stage={stageOf(view, track)} aria-label={t.tabs.player}>
+      <div className="cover">
+        {cover && <img className="cover-glow" src={cover} alt="" aria-hidden="true" referrerPolicy="no-referrer" />}
+        <Art src={cover} className="art-hero" />
+      </div>
+      <div className="now-text">
+        <p className="eyebrow"><Equalizer />{view.loading ? t.starting : t.nowPlaying}</p>
+        <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
+        {track.artist && <p className="artist">{track.artist}</p>}
       </div>
       <div className={`progress ${view.loading ? "loading" : ""}`}>
         {duration > 0 ? (
-          <Slider label={t.position} value={position} max={duration} step={1000} onChange={setSeek} onCommit={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} className="bright" />
+          <Slider label={t.position} value={position} max={duration} step={1000} onChange={setSeek} onCommit={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} />
         ) : <div className="track-line" />}
         <div className="time"><span>{view.loading ? t.starting : clock(position)}</span><span>{duration > 0 ? clock(duration) : "–:––"}</span></div>
       </div>
       <div className="transport">
         <span className="transport-side start">
-          <button className="icon-btn" aria-label={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
+          <button className="icon-btn" aria-label={t.shuffle} title={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
         </span>
         <button className={`play ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={view.loading} aria-keyshortcuts="Space K" title={`${view.paused ? t.resume : t.pause} (K)`} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
         <span className="transport-side">
-        <button className="icon-btn" aria-label={t.skip} aria-keyshortcuts="N" title={`${t.skip} (N)`} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
-        <button className={`icon-btn ${view.loop !== "off" ? "on" : ""}`} aria-label={`${t.loop}: ${loopNames[view.loop]}`} title={`${t.loop}: ${loopNames[view.loop]}`} onClick={() => void command({ action: "loop", loop: LOOP_ORDER[(loopIndex + 1) % LOOP_ORDER.length] })}>
-          <Icon.Repeat />
-          {view.loop === "track" && <span className="badge">1</span>}
-        </button>
+          <button className="icon-btn" aria-label={t.skip} aria-keyshortcuts="N" title={`${t.skip} (N)`} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
+          <button className={`icon-btn ${view.loop !== "off" ? "on" : ""}`} aria-label={`${t.loop}: ${loopNames[view.loop]}`} title={`${t.loop}: ${loopNames[view.loop]}`} onClick={() => void command({ action: "loop", loop: LOOP_ORDER[(loopIndex + 1) % LOOP_ORDER.length] })}>
+            <Icon.Repeat />
+            {view.loop === "track" && <span className="badge">1</span>}
+          </button>
         </span>
       </div>
       <div className="now-foot">
@@ -458,6 +476,35 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
       )}
     </section>
   );
+}
+
+function Dock({ view, track, command, shown }: { view: Synced; track: Track; command: (body: Command) => Promise<void>; shown: boolean }) {
+  const now = useNow();
+  const fill = track.durationMs > 0 ? Math.min(100, (estimate(view, now) / track.durationMs) * 100) : 0;
+  return (
+    <div className="dock" data-shown={shown} data-stage={stageOf(view, track)} inert={!shown} role="region" aria-label={t.nowPlaying}>
+      <span className="dock-line" style={{ "--fill": `${fill}%` } as CSSProperties} />
+      <Art src={artwork(track, 96)} className="art-sm" />
+      <div className="meta">
+        <div className="name">{track.title}</div>
+        <div className="sub">{view.loading ? t.starting : track.artist}</div>
+      </div>
+      <button className={`play small ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
+      <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
+    </div>
+  );
+}
+
+function useOffscreen(target: () => Element | null | undefined, watch: unknown): boolean {
+  const [offscreen, setOffscreen] = useState(false);
+  useEffect(() => {
+    const element = target();
+    if (!element) return setOffscreen(false);
+    const observer = new IntersectionObserver(([entry]) => setOffscreen(!entry!.isIntersecting && entry!.boundingClientRect.top < 0));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [watch]);
+  return offscreen;
 }
 
 function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setView: (view: Synced) => void; refresh: () => void; live: boolean }) {
@@ -525,66 +572,81 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
   const upcoming = view?.active ? view.tracks.slice(view.current + 1) : [];
   const offset = (view?.current ?? 0) + 1;
   const auto = view?.active ? (view.autoplayNext ?? null) : null;
+  const nowRef = useRef<HTMLDivElement>(null);
+  const docked = useOffscreen(() => nowRef.current?.querySelector(".transport"), track?.id ?? null);
   return (
     <>
       {!live && <p className="notice" role="status">{t.offline}</p>}
       <div className="player">
-        <div className="now-col">
+        <div className="now-col" ref={nowRef}>
           <NowPlaying view={view} track={track} command={command} />
           {error && <p className="error" role="alert">{error}</p>}
           {skipped && <p className="notice" role="status">{t.skippedFailed(skipped)}</p>}
-          {track && view && <p className="fine">{t.listeners(view.listeners)}</p>}
+          {track && view && <p className="listeners"><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(view.listeners)}</p>}
         </div>
         <div className="side">
-          <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} onActive={setSearching} />
-          <div className="queue-col">
-          {track && (
-            <section className="queue-area" aria-label={t.queue}>
-              <div className="label-row">
-                <h2 className="label">{upcoming.length ? `${t.queue} · ${upcoming.length}` : t.queue}</h2>
-                {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
-              </div>
-              {upcoming.length === 0 && !auto && <p className="hint">{view?.autoplay ? t.autoplayPicking : t.queueEmpty}</p>}
-              {upcoming.length > 0 && (
-                <ol className="rows">
-                  {upcoming.map((item, index) => (
-                    <li key={item.id} className={`song queue-row ${dragging === item.id ? "dragging" : ""}`} draggable onDragStart={() => setDragging(item.id)} onDragEnd={() => setDragging(null)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragging && dragging !== item.id) void command({ action: "move", id: dragging, to: offset + index }); setDragging(null); }}>
-                      <span className="grip"><Icon.Grip /></span>
-                      <Art src={artwork(item, 96)} className="art-sm" />
-                      <div className="meta">
-                        <div className="name">{item.title}</div>
-                        {item.artist && <div className="sub">{item.artist}</div>}
-                      </div>
-                      {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
-                      <span className="reorder">
-                        <button className="icon-btn small" aria-label={`${t.up}: ${item.title}`} disabled={index === 0} onClick={() => void command({ action: "move", id: item.id, to: offset + index - 1 })}><Icon.Up /></button>
-                        <button className="icon-btn small" aria-label={`${t.down}: ${item.title}`} disabled={index === upcoming.length - 1} onClick={() => void command({ action: "move", id: item.id, to: offset + index + 1 })}><Icon.Down /></button>
-                      </span>
-                      <button className="icon-btn small" aria-label={`${t.remove}: ${item.title}`} onClick={() => void command({ action: "remove", id: item.id })}><Icon.Close /></button>
-                    </li>
-                  ))}
-                </ol>
-              )}
-              {auto && (
-                <div className="song auto-row">
-                  <span className="grip" />
-                  <Art src={artwork(auto, 96)} className="art-sm" />
-                  <div className="meta">
-                    <div className="name">{auto.title}</div>
-                    {auto.artist && <div className="sub">{auto.artist}</div>}
-                  </div>
-                  <span className="tag">{t.autoplay}</span>
-                </div>
-              )}
-            </section>
-          )}
-          {seedKey && <RecentlyPlayed seedKey={seedKey} current={track?.url ?? null} onPick={add} />}
+          <div className="discover-col">
+            <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} onActive={setSearching} />
+            {seedKey && <Suggestions seedKey={seedKey} onPick={add} hidden={searching} />}
           </div>
-          {seedKey && <Suggestions seedKey={seedKey} onPick={add} hidden={searching} />}
+          <div className="queue-col">
+            {track && (
+              <section className="queue-area" aria-label={t.queue}>
+                <div className="label-row">
+                  <h2 className="label">{t.queue}{upcoming.length > 0 && <span className="count">{upcoming.length}</span>}</h2>
+                  {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
+                </div>
+                {upcoming.length === 0 && !auto && <p className="hint">{view?.autoplay ? t.autoplayPicking : t.queueEmpty}</p>}
+                {upcoming.length > 0 && (
+                  <ol className="rows">
+                    {upcoming.map((item, index) => (
+                      <li key={item.id} className={`song queue-row ${dragging === item.id ? "dragging" : ""}`} draggable onDragStart={() => setDragging(item.id)} onDragEnd={() => setDragging(null)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragging && dragging !== item.id) void command({ action: "move", id: dragging, to: offset + index }); setDragging(null); }}>
+                        <span className="grip"><span className="pos">{index + 1}</span><Icon.Grip /></span>
+                        <Art src={artwork(item, 96)} className="art-sm" />
+                        <div className="meta">
+                          <div className="name">{item.title}</div>
+                          {item.artist && <div className="sub">{item.artist}</div>}
+                        </div>
+                        {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
+                        <span className="reorder">
+                          <button className="icon-btn small" aria-label={`${t.up}: ${item.title}`} disabled={index === 0} onClick={() => void command({ action: "move", id: item.id, to: offset + index - 1 })}><Icon.Up /></button>
+                          <button className="icon-btn small" aria-label={`${t.down}: ${item.title}`} disabled={index === upcoming.length - 1} onClick={() => void command({ action: "move", id: item.id, to: offset + index + 1 })}><Icon.Down /></button>
+                        </span>
+                        <button className="icon-btn small" aria-label={`${t.remove}: ${item.title}`} onClick={() => void command({ action: "remove", id: item.id })}><Icon.Close /></button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                {auto && (
+                  <div className="song auto-row">
+                    <span className="grip" />
+                    <Art src={artwork(auto, 96)} className="art-sm" />
+                    <div className="meta">
+                      <div className="name">{auto.title}</div>
+                      {auto.artist && <div className="sub">{auto.artist}</div>}
+                    </div>
+                    <span className="tag">{t.autoplay}</span>
+                  </div>
+                )}
+              </section>
+            )}
+            {seedKey && <RecentlyPlayed seedKey={seedKey} current={track?.url ?? null} onPick={add} />}
+          </div>
         </div>
       </div>
+      {track && view && <Dock view={view} track={track} command={command} shown={docked} />}
     </>
   );
+}
+
+function hueOf(text: string): number {
+  let hash = 0;
+  for (const char of text) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  return Math.abs(hash) % 360;
+}
+
+function Tile({ seed, className }: { seed: string; className?: string }) {
+  return <div className={`tile ${className ?? ""}`} style={{ "--h": hueOf(seed) } as CSSProperties}><Icon.Note size={28} /></div>;
 }
 
 function PlaylistsTab({ me }: { me: Me }) {
@@ -622,48 +684,58 @@ function PlaylistsTab({ me }: { me: Me }) {
   };
   if (list) {
     return (
-      <section className="card" aria-label={list.name}>
-        <div><button className="linkish" style={{ paddingLeft: 0 }} onClick={() => setOpen(null)}>← {t.back}</button></div>
-        <div>
-          <h2 className="title">{list.name}</h2>
-          <p className="dim">{t.by(list.ownerName)} · {t.tracks(tracks.length)}</p>
+      <section className="sheet" aria-label={list.name}>
+        <button className="pill ghost back" onClick={() => setOpen(null)}><Icon.Back />{t.back}</button>
+        <div className="list-hero">
+          <Tile seed={list.id} className="tile-hero" />
+          <div className="list-hero-text">
+            <h2 className="title">{list.name}</h2>
+            <p className="sub">{t.by(list.ownerName)} · {t.tracks(tracks.length)}</p>
+            <div className="row">
+              <QueueButton className="btn primary" label={t.play} disabled={!tracks.length} run={() => play(tracks)} />
+              {owned && <button className="btn" onClick={() => { const next = prompt(t.rename, list.name); if (next?.trim()) void act(() => post("playlist/rename", { id: list.id, name: next })); }}>{t.rename}</button>}
+              {owned && <button className="btn danger" onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); setOpen(null); }); }}>{t.delete}</button>}
+            </div>
+          </div>
         </div>
-        <div className="row">
-          <QueueButton className="btn primary" label={t.play} disabled={!tracks.length} run={() => play(tracks)} />
-          {owned && <button className="btn" onClick={() => { const next = prompt(t.rename, list.name); if (next?.trim()) void act(() => post("playlist/rename", { id: list.id, name: next })); }}>{t.rename}</button>}
-          {owned && <button className="btn danger" onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); setOpen(null); }); }}>{t.delete}</button>}
+        <div className="panel">
+          {owned && <SongSearch placeholder={t.addToList} onPick={async (item) => { await post("playlist/add", { id: list.id, items: [item] }); await reload(); await reloadTracks(list.id); }} onLink={async (input) => { await post("playlist/add", { id: list.id, input }); await reload(); await reloadTracks(list.id); }} />}
+          {error && <p className="error" role="alert">{error}</p>}
+          {tracks.length === 0 ? <p className="hint">{t.emptyList}</p> : (
+            <ol className="rows">
+              {tracks.map((track, index) => (
+                <li key={track.id} className="song">
+                  <span className="num">{index + 1}</span>
+                  <Art src={artwork(track, 96)} className="art-sm" />
+                  <div className="meta"><div className="name">{track.title}</div></div>
+                  {owned && <button className="icon-btn small" aria-label={`${t.up}: ${track.title}`} disabled={index === 0} onClick={() => void act(() => post("playlist/move", { id: list.id, trackId: track.id, to: index - 1 }))}><Icon.Up /></button>}
+                  {owned && <button className="icon-btn small" aria-label={`${t.down}: ${track.title}`} disabled={index === tracks.length - 1} onClick={() => void act(() => post("playlist/move", { id: list.id, trackId: track.id, to: index + 1 }))}><Icon.Down /></button>}
+                  {owned && <button className="icon-btn small" aria-label={`${t.remove}: ${track.title}`} onClick={() => void act(() => post("playlist/remove", { id: list.id, trackId: track.id }))}><Icon.Close /></button>}
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
-        {owned && <SongSearch placeholder={t.addToList} onPick={async (item) => { await post("playlist/add", { id: list.id, items: [item] }); await reload(); await reloadTracks(list.id); }} onLink={async (input) => { await post("playlist/add", { id: list.id, input }); await reload(); await reloadTracks(list.id); }} />}
-        {error && <p className="error" role="alert">{error}</p>}
-        {tracks.length === 0 ? <p className="dim">{t.emptyList}</p> : (
-          <ol className="list">
-            {tracks.map((track, index) => (
-              <li key={track.id} className="item">
-                <span className="num">{index + 1}</span>
-                <span className="name">{track.title}</span>
-                {owned && <button className="btn small" aria-label={`${t.up}: ${track.title}`} disabled={index === 0} onClick={() => void act(() => post("playlist/move", { id: list.id, trackId: track.id, to: index - 1 }))}>↑</button>}
-                {owned && <button className="btn small" aria-label={`${t.down}: ${track.title}`} disabled={index === tracks.length - 1} onClick={() => void act(() => post("playlist/move", { id: list.id, trackId: track.id, to: index + 1 }))}>↓</button>}
-                {owned && <button className="btn small" aria-label={`${t.remove}: ${track.title}`} onClick={() => void act(() => post("playlist/remove", { id: list.id, trackId: track.id }))}>✕</button>}
-              </li>
-            ))}
-          </ol>
-        )}
       </section>
     );
   }
   return (
-    <section className="card" aria-label={t.tabs.playlists}>
-      <form className="row" onSubmit={(event) => { event.preventDefault(); if (name.trim()) void act(async () => { const { id } = await post<{ id: string }>("playlists", { name }); setName(""); setOpen(id); }); }}>
-        <input className="field grow" value={name} onChange={(event) => setName(event.target.value)} placeholder={t.newPlaylist} aria-label={t.newPlaylist} />
-        <button className="btn primary">{t.create}</button>
+    <section className="sheet" aria-label={t.tabs.playlists}>
+      <form className="create" onSubmit={(event) => { event.preventDefault(); if (name.trim()) void act(async () => { const { id } = await post<{ id: string }>("playlists", { name }); setName(""); setOpen(id); }); }}>
+        <span className="create-icon" aria-hidden="true"><Icon.Plus /></span>
+        <input value={name} onChange={(event) => setName(event.target.value)} placeholder={t.newPlaylist} aria-label={t.newPlaylist} />
+        <button className="pill primary" disabled={!name.trim()}>{t.create}</button>
       </form>
       {error && <p className="error" role="alert">{error}</p>}
-      {lists?.length === 0 && <p className="dim">{t.noPlaylists}</p>}
-      <ul className="list">
+      {lists?.length === 0 && <p className="hint">{t.noPlaylists}</p>}
+      <ul className="tiles">
         {lists?.map((entry) => (
-          <li key={entry.id} className="item">
-            <button className="linkish name" style={{ textAlign: "left", color: "var(--text)", paddingLeft: 0 }} onClick={() => setOpen(entry.id)}>{entry.name}</button>
-            <span className="dim">{t.by(entry.ownerName)} · {t.tracks(entry.trackCount)}</span>
+          <li key={entry.id}>
+            <button className="tile-card" onClick={() => setOpen(entry.id)}>
+              <Tile seed={entry.id} />
+              <span className="name">{entry.name}</span>
+              <span className="sub">{t.by(entry.ownerName)} · {t.tracks(entry.trackCount)}</span>
+            </button>
           </li>
         ))}
       </ul>
@@ -685,31 +757,52 @@ function QueueButton({ className, label, disabled, run }: { className: string; l
   return <button className={`${className} ${state === "done" ? "done" : ""}`} disabled={disabled || state === "busy"} aria-live="polite" onClick={click}>{state === "busy" ? t.adding : state === "done" ? t.queued : label}</button>;
 }
 
+function dayLabel(time: number): string {
+  const day = new Date(time).toDateString();
+  if (day === new Date().toDateString()) return t.today;
+  if (day === new Date(Date.now() - 86_400_000).toDateString()) return t.yesterday;
+  return new Date(time).toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" });
+}
+
 function HistoryTab() {
   const [entries, setEntries] = useState<HistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => void get<HistoryEntry[]>("history").then(setEntries, () => setEntries([])), []);
+  const days: { label: string; entries: HistoryEntry[] }[] = [];
+  for (const entry of entries ?? []) {
+    const label = dayLabel(entry.playedAt);
+    if (days.at(-1)?.label === label) days.at(-1)!.entries.push(entry);
+    else days.push({ label, entries: [entry] });
+  }
   return (
-    <section className="card" aria-label={t.tabs.history}>
+    <section className="sheet" aria-label={t.tabs.history}>
       {error && <p className="error" role="alert">{error}</p>}
-      {entries?.length === 0 && <p className="dim">{t.noHistory}</p>}
-      <ul className="list">
-        {entries?.map((entry) => (
-          <li key={entry.id} className="item">
-            <span className="name">{entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.title}</a> : entry.title}</span>
-            <span className="dim">{new Date(entry.playedAt).toLocaleString()}</span>
-            <QueueButton className="btn small" label={t.requeue} run={async () => {
-              setError(null);
-              try {
-                await enqueue({ items: [{ query: entry.url ?? entry.query, title: entry.title }] });
-              } catch (failure) {
-                setError(message(failure));
-                throw failure;
-              }
-            }} />
-          </li>
-        ))}
-      </ul>
+      {entries?.length === 0 && <p className="hint">{t.noHistory}</p>}
+      {days.map((day) => (
+        <section key={day.label} className="day" aria-label={day.label}>
+          <h2 className="label">{day.label}</h2>
+          <ul className="rows history-rows">
+            {day.entries.map((entry) => (
+              <li key={entry.id} className="song">
+                <Art src={artwork(entry, 96)} className="art-md" />
+                <div className="meta">
+                  <div className="name">{entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.title}</a> : entry.title}</div>
+                  <div className="sub">{[entry.artist, new Date(entry.playedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })].filter(Boolean).join(" · ")}</div>
+                </div>
+                <QueueButton className="pill" label={t.requeue} run={async () => {
+                  setError(null);
+                  try {
+                    await enqueue({ items: [{ query: entry.url ?? entry.query, title: entry.title, artist: entry.artist, artwork: entry.artwork, durationMs: entry.durationMs }] });
+                  } catch (failure) {
+                    setError(message(failure));
+                    throw failure;
+                  }
+                }} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
     </section>
   );
 }
@@ -721,21 +814,25 @@ function SettingsTab() {
   useEffect(() => void get<SettingsData>("settings").then(setData, (failure: unknown) => setError(message(failure))), []);
   if (!data) return error ? <p className="error" role="alert">{error}</p> : null;
   return (
-    <form className="card" aria-label={t.tabs.settings} onSubmit={(event) => { event.preventDefault(); setSaved(false); setError(null); post<SettingsData>("settings", { djRoleId: data.djRoleId }).then((next) => { setData(next); setSaved(true); }, (failure: unknown) => setError(message(failure))); }}>
+    <form className="panel narrow" aria-label={t.tabs.settings} onSubmit={(event) => { event.preventDefault(); setSaved(false); setError(null); post<SettingsData>("settings", { djRoleId: data.djRoleId }).then((next) => { setData(next); setSaved(true); }, (failure: unknown) => setError(message(failure))); }}>
       <label className="stack">{t.djRole}
         <select className="field" value={data.djRoleId ?? ""} onChange={(event) => setData({ ...data, djRoleId: event.target.value || null })}>
           <option value="">{t.noRole}</option>
           {data.roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
         </select>
       </label>
-      <p className="dim">{t.djRoleHelp}</p>
+      <p className="hint">{t.djRoleHelp}</p>
       <div className="row">
         <button className="btn primary">{t.save}</button>
-        {saved && <span className="dim" role="status">{t.saved}</span>}
+        {saved && <span className="hint" role="status">{t.saved}</span>}
         {error && <p className="error" role="alert">{error}</p>}
       </div>
     </form>
   );
+}
+
+function Brand() {
+  return <div className="brand"><span className="mark"><Icon.Note size={18} /></span><span>DJ</span></div>;
 }
 
 export function App() {
@@ -745,6 +842,8 @@ export function App() {
   const { view, live, setView, refresh } = useView(me);
   const playingNow = view?.active ? view.tracks[view.current] : undefined;
   const tabTitle = playingNow ? `${view?.loading ? "…" : view?.paused ? "❚❚" : "▶"} ${[playingNow.title, playingNow.artist].filter(Boolean).join(" · ")} · DJ` : BASE_TITLE;
+  const backdrop = playingNow ? artwork(playingNow, 226) : null;
+  useAccent(backdrop);
   useEffect(() => {
     document.title = tabTitle;
   }, [tabTitle]);
@@ -773,50 +872,58 @@ export function App() {
   }, []);
   if (!me) {
     return (
-      <div className="page" aria-busy="true">
-        <header className="top">
-          <div className="brand"><span className="mark"><Icon.Note size={18} /></span>DJ</div>
-        </header>
-        {failed && <p className="notice" role="status">{t.reconnecting}</p>}
-        <main className="main">
-          <div className="player">
-            <div className="now-col">
-              <div className="art art-hero skeleton" />
-              <div className="skeleton line wide" />
-              <div className="skeleton line" />
+      <>
+        <Ambient src={null} paused />
+        <div className="page" aria-busy="true">
+          <header className="top"><Brand /></header>
+          {failed && <p className="notice" role="status">{t.reconnecting}</p>}
+          <main className="main">
+            <div className="player">
+              <div className="now-col">
+                <section className="now" data-stage="idle">
+                  <div className="cover"><div className="art art-hero skeleton" /></div>
+                  <div className="now-text">
+                    <div className="skeleton line wide" />
+                    <div className="skeleton line" />
+                  </div>
+                </section>
+              </div>
+              <div className="side">
+                <div className="discover-col"><div className="skeleton search-line" /></div>
+              </div>
             </div>
-            <div className="side">
-              <div className="skeleton search-line" />
-            </div>
-          </div>
-        </main>
-      </div>
+          </main>
+        </div>
+      </>
     );
   }
   const tabs: Tab[] = me.canPlay ? ["player", "playlists", "history", ...(me.canManage ? (["settings"] as const) : [])] : me.canManage ? ["settings"] : [];
   const active = tabs.includes(tab) ? tab : tabs[0];
   return (
-    <div className="page">
-      <header className="top">
-        <div className="brand"><span className="mark"><Icon.Note size={18} /></span>DJ</div>
-        {tabs.length > 0 && (
-          <nav className="tabs" role="tablist">
-            {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => setTab(entry)}>{t.tabs[entry]}</button>)}
-          </nav>
-        )}
-        <div className="who">
-          <button className="pill ghost lang" aria-label={t.language} title={t.language} onClick={switchLang}>{lang === "es" ? "EN" : "ES"}</button>
-          {me.user.image ? <img className="avatar" src={me.user.image} alt={me.user.name} title={me.user.name} referrerPolicy="no-referrer" /> : <span className="avatar" title={me.user.name}>{me.user.name.slice(0, 1).toUpperCase()}</span>}
-        </div>
-      </header>
-      {!me.member && <p className="notice">{t.notMember}</p>}
-      {me.member && !me.canPlay && <p className="notice">{t.denied}</p>}
-      <main className="main">
-        {active === "player" && <PlayerTab view={view} setView={setView} refresh={refresh} live={live} />}
-        {active === "playlists" && <PlaylistsTab me={me} />}
-        {active === "history" && <HistoryTab />}
-        {active === "settings" && <SettingsTab />}
-      </main>
-    </div>
+    <>
+      <Ambient src={backdrop} paused={!playingNow || Boolean(view?.paused)} />
+      <div className="page" data-tab={active}>
+        <header className="top">
+          <Brand />
+          {tabs.length > 0 && (
+            <nav className="tabs" role="tablist">
+              {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => setTab(entry)}>{t.tabs[entry]}</button>)}
+            </nav>
+          )}
+          <div className="who">
+            <button className="pill ghost lang" aria-label={t.language} title={t.language} onClick={switchLang}>{lang === "es" ? "EN" : "ES"}</button>
+            {me.user.image ? <img className="avatar" src={me.user.image} alt={me.user.name} title={me.user.name} referrerPolicy="no-referrer" /> : <span className="avatar" title={me.user.name}>{me.user.name.slice(0, 1).toUpperCase()}</span>}
+          </div>
+        </header>
+        {!me.member && <p className="notice">{t.notMember}</p>}
+        {me.member && !me.canPlay && <p className="notice">{t.denied}</p>}
+        <main className="main">
+          {active === "player" && <PlayerTab view={view} setView={setView} refresh={refresh} live={live} />}
+          {active === "playlists" && <PlaylistsTab me={me} />}
+          {active === "history" && <HistoryTab />}
+          {active === "settings" && <SettingsTab />}
+        </main>
+      </div>
+    </>
   );
 }
