@@ -19,6 +19,6 @@ const headers = { authorization: `Bot ${token}`, "content-type": "application/js
 const put = await fetch(`https://discord.com/api/v10/applications/${app}/guilds/${guild}/commands`, { method: "PUT", headers, body: JSON.stringify(commands) });
 const result = await put.json();
 console.log("commands", put.status, Array.isArray(result) ? result.map((command) => command.name).join(" ") : JSON.stringify(result).slice(0, 400));
-const patch = await fetch("https://discord.com/api/v10/applications/@me", { method: "PATCH", headers, body: JSON.stringify({ interactions_endpoint_url: "https://dj-bot.dloez.workers.dev/interactions" }) });
+const patch = await fetch("https://discord.com/api/v10/applications/@me", { method: "PATCH", headers, body: JSON.stringify({ interactions_endpoint_url: null }) });
 const body = await patch.json();
-console.log("endpoint", patch.status, body.interactions_endpoint_url ?? JSON.stringify(body).slice(0, 400));
+console.log("endpoint", patch.status, patch.ok ? "cleared, so interactions arrive over the gateway" : JSON.stringify(body).slice(0, 400));

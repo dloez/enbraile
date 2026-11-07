@@ -284,7 +284,7 @@ function PlayerTab({ view, setView, live }: { view: View | null; setView: (view:
         <div className="now-col">
           <NowPlaying view={view} track={track} command={command} />
           {error && <p className="error" role="alert">{error}</p>}
-          {view && <p className="fine">{[track ? t.listeners(view.listeners) : null, t.usage(view.hoursThisMonth, view.hourLimit)].filter(Boolean).join(" · ")}</p>}
+          {track && view && <p className="fine">{t.listeners(view.listeners)}</p>}
         </div>
         <div className="side">
           <SongSearch placeholder={t.searchPlaceholder} onPick={(item) => enqueue({ items: [item] })} onLink={(input) => enqueue({ input })} />
@@ -438,7 +438,7 @@ function SettingsTab() {
   useEffect(() => void get<SettingsData>("settings").then(setData, (failure: unknown) => setError(message(failure))), []);
   if (!data) return error ? <p className="error" role="alert">{error}</p> : null;
   return (
-    <form className="card" aria-label={t.tabs.settings} onSubmit={(event) => { event.preventDefault(); setSaved(false); setError(null); post<SettingsData>("settings", { djRoleId: data.djRoleId, hourLimit: data.hourLimit }).then((next) => { setData(next); setSaved(true); }, (failure: unknown) => setError(message(failure))); }}>
+    <form className="card" aria-label={t.tabs.settings} onSubmit={(event) => { event.preventDefault(); setSaved(false); setError(null); post<SettingsData>("settings", { djRoleId: data.djRoleId }).then((next) => { setData(next); setSaved(true); }, (failure: unknown) => setError(message(failure))); }}>
       <label className="stack">{t.djRole}
         <select className="field" value={data.djRoleId ?? ""} onChange={(event) => setData({ ...data, djRoleId: event.target.value || null })}>
           <option value="">{t.noRole}</option>
@@ -446,10 +446,6 @@ function SettingsTab() {
         </select>
       </label>
       <p className="dim">{t.djRoleHelp}</p>
-      <label className="stack">{t.hourLimit}
-        <input className="field" type="number" min={0} max={744} value={data.hourLimit} onChange={(event) => setData({ ...data, hourLimit: Number(event.target.value) })} />
-      </label>
-      <p className="dim">{t.hourLimitHelp}</p>
       <div className="row">
         <button className="btn primary">{t.save}</button>
         {saved && <span className="dim" role="status">{t.saved}</span>}

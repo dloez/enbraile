@@ -6,5 +6,5 @@ The group's Discord music bot and its web panel. Code lives in `dj/`; its docs l
 
 | Project | Status | Description |
 |---------|--------|-------------|
-| Bot | Deployed | The Worker, Durable Object and Container that take slash commands and play audio, at `dj-bot.dloez.workers.dev`: [explanation](bot/explanation/bot.md), [how to run and deploy it](bot/how-to/run-and-deploy-the-bot.md) |
+| Bot | Deployed | The Node process on the owner's home cluster that takes slash commands and plays audio, its API at `dj-api.enbraile.vip`: [explanation](bot/explanation/bot.md), [how to run and deploy it](bot/how-to/run-and-deploy-the-bot.md) |
 | Panel | Deployed | The web panel for `dj.enbraile.vip`, on Vercel: [explanation](panel/explanation/panel.md) |

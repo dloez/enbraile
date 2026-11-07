@@ -1,12 +1,12 @@
 export type Track = { id: string; query: string; title: string; artist?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string };
 export type Loop = "off" | "track" | "queue";
-export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayEndsAt: number | null; autoplayNext: Track | null; positionMs: number; listeners: number; active: boolean; hoursThisMonth: number; hourLimit: number };
+export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayEndsAt: number | null; autoplayNext: Track | null; positionMs: number; listeners: number; active: boolean };
 export type Song = { videoId: string; url: string; title: string; artist: string; album: string | null; durationMs: number; artwork: string | null; plays: string | null };
 export type Me = { user: { name: string; image: string | null }; discordId: string; member: boolean; canManage: boolean; canPlay: boolean };
 export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; playedAt: number };
 export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; trackCount: number };
 export type PlaylistTrack = { id: string; query: string; title: string };
-export type SettingsData = { djRoleId: string | null; hourLimit: number; roles: { id: string; name: string }[] };
+export type SettingsData = { djRoleId: string | null; roles: { id: string; name: string }[] };
 
 export class ApiError extends Error {}
 

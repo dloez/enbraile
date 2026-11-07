@@ -2,27 +2,34 @@
 
 ## Prerequisites
 
-- Docker running, and Wrangler signed in to the owner's Cloudflare account (`npx wrangler whoami`).
 - `dj/bot/.env.local` (gitignored) holding `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY`, `DISCORD_BOT_TOKEN` and `INTERNAL_SECRET`.
+- For the cluster steps, `kubectl` and `flux` pointed at `tom`, and the owner's `dloez` repository.
 
-## Steps
+## Run It Locally
 
-1. Install, from `dj/bot/`: `npm ci`, and `npm ci` in `container/`.
-2. Check types: `npm run gate`.
-3. Push to `main`. Workers Builds deploys every push that touches `dj/bot/` (see [Deploy on Push](#deploy-on-push)), and its log is under the Worker's Deployments in the dashboard. A deploy replaces the running Container, which cuts the song that is playing.
-4. To deploy by hand instead, write `.secrets.json` (gitignored), a JSON object of `DISCORD_BOT_TOKEN` and `INTERNAL_SECRET` from `.env.local`, then run `npm run deploy`.
-5. After changing a command, register commands and the interactions endpoint: `npm run commands`.
-6. Check it by running `/play` in a voice channel and listening. `npx wrangler tail dj-bot` shows the Worker's logs.
+1. From `dj/bot/`: `npm ci`, then `npm run gate`.
+2. `npm run dev`. It logs in with the real bot token and serves the API on port 8080, with its database in `data/` (gitignored). Only one copy of the bot should join voice at a time, so don't play anything locally while the cluster's bot is in a call.
+3. Point the panel at it with `BOT_URL=http://localhost:8080` in `dj/panel/.env.local`.
 
-To roll back, `npx wrangler rollback`, or revert the commit and push.
+## Deploy
 
-## Deploy on Push
+Push to `main`. The `dj bot image` workflow builds and pushes the image, and within a few minutes Flux commits the new tag to `dloez` and rolls the pod. A rollout restarts the bot, which rejoins the call and resumes the song from its last saved position. Check it by running `/play` in a voice channel and listening.
 
-Set up once, in the Cloudflare dashboard (the GitHub app is approved there, so it can't be done from the CLI):
+Follow a deploy with `flux get images policy dj` (the tag it picked) and `kubectl -n dj rollout status deploy/dj`. Read the logs with `kubectl -n dj logs deploy/dj`.
 
-1. Workers & Pages → `dj-bot` → Settings → Builds → Connect, and pick the `enbraile` GitHub repository.
-2. Production branch `main`. Root directory `dj/bot`. Build command `npm ci && npm ci --prefix container && npm run gate`. Deploy command `npx wrangler deploy`.
-3. Build watch paths: include `dj/bot/*`, so pushes that touch only other projects don't deploy it. Cloudflare's docs don't say whether these paths are relative to the repository or to the root directory: if a push touching `dj/bot/` doesn't build, use `*` instead.
-4. Under Settings → Build → Branch control, untick Enable Preview Builds: their default command uploads Worker code only, and pointing it at a full deploy would roll the live Container.
+To roll back, revert the commit in `enbraile` and push, which builds a newer image of the older code.
 
-The Worker's secrets stay on it between deploys, so the build needs none, and its own build token covers the deploy.
+## Set It Up Once
+
+1. In Cloudflare Zero Trust → Networks → Tunnels, create a cloudflared tunnel named `dj`, and copy its token. Add a public hostname `dj-api.enbraile.vip` with service `http://dj.dj.svc.cluster.local:8080`.
+2. In 1Password, vault `Homelab - Tom`, create an item `dj` with the fields `bot-token` (the bot token), `internal-secret` (the same `INTERNAL_SECRET` as the panel's) and `tunnel-token`.
+3. Push `enbraile` so the workflow publishes the first image. In GitHub → Packages → `enbraile-dj-bot` → Package settings, make the package public, so the cluster can pull it without credentials.
+4. Put that first tag in `homelab/apps/tom/dj.yaml` in `dloez` and push. Flux creates the namespace, the secret, the volume and both pods, and then keeps the tag current.
+5. From `dj/bot/`, run `npm run commands`. It registers the slash commands and clears the application's interactions endpoint URL, so Discord sends commands over the gateway.
+6. In Vercel, set the panel's `BOT_URL` to `https://dj-api.enbraile.vip` for Production, and redeploy.
+
+## Verification
+
+- `curl -s https://dj-api.enbraile.vip/healthz` prints `{"ok":true}`, and `curl -s -o /dev/null -w '%{http_code}' https://dj-api.enbraile.vip/internal/state` prints `404`.
+- The panel at `dj.enbraile.vip` loads the player, and a search lists songs.
+- `/play` in a voice channel plays.

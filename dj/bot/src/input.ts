@@ -1,4 +1,4 @@
-import { musicSearchUrl, searchSongs } from "./music.js";
+import { musicSearchUrl, searchSongs } from "./music.ts";
 
 export type Item = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
 

@@ -18,7 +18,7 @@ async function viewerOf(cookie: string | undefined): Promise<Viewer | null> {
   return user?.discordId ? { name: user.name, image: user.image, discordId: user.discordId } : null;
 }
 
-const worker = (path: string, init?: RequestInit) => fetch(`${env("WORKER_URL")}/internal/${path}`, { ...init, headers: { authorization: `Bearer ${env("INTERNAL_SECRET")}`, "content-type": "application/json" } });
+const worker = (path: string, init?: RequestInit) => fetch(`${env("BOT_URL")}/internal/${path}`, { ...init, headers: { authorization: `Bearer ${env("INTERNAL_SECRET")}`, "content-type": "application/json" } });
 
 const relay = async (response: Response) => new Response(await response.text(), { status: response.status, headers: { "content-type": "application/json", "cache-control": "private, no-store" } });
 
