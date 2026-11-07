@@ -194,7 +194,7 @@ function Slider({ label, value, max, step, onChange, onCommit, className }: { la
 function NowPlaying({ view, track, command }: { view: View | null; track: Track | undefined; command: (body: Record<string, unknown>) => Promise<void> }) {
   const [now, setNow] = useState(Date.now());
   const [seek, setSeek] = useState<number | null>(null);
-  const seen = useRef({ position: 0, at: Date.now() });
+  const seen = useRef({ position: view?.positionMs ?? 0, at: Date.now() });
   useEffect(() => {
     seen.current = { position: view?.positionMs ?? 0, at: Date.now() };
   }, [view?.positionMs]);
@@ -232,13 +232,17 @@ function NowPlaying({ view, track, command }: { view: View | null; track: Track 
         <div className="time"><span>{clock(position)}</span><span>{duration > 0 ? clock(duration) : "–:––"}</span></div>
       </div>
       <div className="transport">
-        <button className="icon-btn" aria-label={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
+        <span className="transport-side start">
+          <button className="icon-btn" aria-label={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
+        </span>
         <button className="play" aria-label={view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
+        <span className="transport-side">
         <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
         <button className={`icon-btn ${view.loop !== "off" ? "on" : ""}`} aria-label={`${t.loop}: ${loopNames[view.loop]}`} title={`${t.loop}: ${loopNames[view.loop]}`} onClick={() => void command({ action: "loop", loop: LOOP_ORDER[(loopIndex + 1) % LOOP_ORDER.length] })}>
           <Icon.Repeat />
           {view.loop === "track" && <span className="badge">1</span>}
         </button>
+        </span>
       </div>
       <div className="now-foot">
         <label className="switch">
