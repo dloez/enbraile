@@ -1029,6 +1029,23 @@ function SettingsTab() {
   );
 }
 
+function SkeletonRows({ count }: { count: number }) {
+  return (
+    <div className="skeleton-rows" aria-hidden="true">
+      <div className="skeleton line label-line" />
+      {Array.from({ length: count }, (_, index) => (
+        <div key={index} className="skeleton-row">
+          <div className="skeleton art-md" />
+          <div className="skeleton-text">
+            <div className="skeleton line" style={{ width: `${70 - (index % 3) * 12}%` }} />
+            <div className="skeleton line short" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Brand() {
   return <div className="brand"><span className="mark"><Icon.Note size={18} /></span><span>DJ</span></div>;
 }
@@ -1089,7 +1106,13 @@ export function App() {
                 </div>
               </div>
               <div className="side">
-                <div className="discover-col"><div className="skeleton search-line" /></div>
+                <div className="discover-col">
+                  <div className="skeleton search-line" />
+                  <SkeletonRows count={6} />
+                </div>
+                <div className="queue-col">
+                  <SkeletonRows count={5} />
+                </div>
               </div>
             </div>
           </main>
