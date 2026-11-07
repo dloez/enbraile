@@ -484,10 +484,8 @@ function Cover({ src }: { src: string | null }) {
     });
   }, [src]);
   const mark = (target: string, broken: boolean) => setLayers((previous) => previous.map((layer) => (layer.src === target ? { ...layer, ready: true, broken } : layer)));
-  const shown = [...layers].reverse().find((layer) => layer.ready && !layer.broken);
   return (
     <div className="cover">
-      {shown && <img key={shown.src} className="cover-glow" src={shown.src} alt="" aria-hidden="true" referrerPolicy="no-referrer" />}
       <div className="art art-hero">
         <Icon.Note size={64} />
         {layers.map((layer) => !layer.broken && <img key={layer.src} className={layer.ready ? "ready" : ""} src={layer.src} alt="" referrerPolicy="no-referrer" onLoad={() => mark(layer.src, false)} onError={() => mark(layer.src, true)} />)}
