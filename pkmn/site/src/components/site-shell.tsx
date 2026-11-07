@@ -35,6 +35,15 @@ function useOwed(playerId: string | null) {
   return { owed: owed?.playerId === playerId ? owed.list : undefined, refresh };
 }
 
+const ROOT_URL = import.meta.env.VITE_ROOT_URL as string | undefined;
+
+function RootRedirect() {
+  useEffect(() => {
+    location.replace(`${ROOT_URL}/?return=${encodeURIComponent(location.href)}`);
+  }, []);
+  return <LoadingBar label={t.loading} className="fixed top-0" />;
+}
+
 export function SiteShell() {
   const { data, isPending } = authClient.useSession();
   const onAdmin = useRouterState({ select: (state) => state.location.pathname.startsWith("/admin") });
@@ -45,7 +54,7 @@ export function SiteShell() {
   if (onAdmin) {
     if (!data?.user.admin) return <AdminSignInPage />;
   } else {
-    if (!data) return <SignInPage />;
+    if (!data) return ROOT_URL ? <RootRedirect /> : <SignInPage />;
     if (!data.user.admin && !data.user.allowed) return <WaitingPage player={data.user} />;
     if (owed && owed.length > 0) return <WaitingPage player={data.user} owed={owed} onUploaded={refresh} />;
   }

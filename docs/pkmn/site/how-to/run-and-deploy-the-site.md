@@ -97,6 +97,7 @@ Set the project's environment variables:
 | `S3_BUCKET` | `pkmn-site-enbraile` | `pkmn-site-preview-enbraile` |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | the production bucket's key ID and key | the preview bucket's |
 | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET` | the Discord application's client ID and secret | unset |
+| `AUTH_COOKIE_DOMAIN`, `VITE_ROOT_URL` | `enbraile.vip` and `https://enbraile.vip`, with `BETTER_AUTH_SECRET` the [root site](../../../home/site/how-to/deploy-the-site.md)'s | unset |
 | `CRON_SECRET` | a random secret of at least 16 characters, e.g. from `openssl rand -hex 32` | unset |
 
 Neon's connection strings carry `sslmode=require`, which `pg` already treats as `verify-full` and warns about on every connection; write `sslmode=verify-full` in every Neon string, in Vercel and in the shell, which keeps the same certificate checks and silences the warning.

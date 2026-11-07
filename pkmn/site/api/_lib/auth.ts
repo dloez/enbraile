@@ -10,6 +10,7 @@ import * as schema from "./schema.js";
 
 const discordId = process.env.DISCORD_CLIENT_ID;
 const discordSecret = process.env.DISCORD_CLIENT_SECRET;
+const cookieDomain = process.env.AUTH_COOKIE_DOMAIN;
 
 export const auth = betterAuth({
   basePath: "/api/auth",
@@ -19,6 +20,7 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true, disableSignUp: true },
   socialProviders: discordId && discordSecret ? { discord: { clientId: discordId, clientSecret: discordSecret, overrideUserInfoOnSignIn: true } } : {},
   account: { accountLinking: { enabled: false } },
+  advanced: cookieDomain ? { cookiePrefix: "enbraile", crossSubDomainCookies: { enabled: true, domain: cookieDomain } } : {},
   user: {
     additionalFields: {
       admin: { type: "boolean", required: false, defaultValue: false, input: false },

@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { allowedChange, invite, type Player } from "../../shared/players.js";
 import { requireAdmin } from "./admin.js";
@@ -50,7 +50,7 @@ export const players = new Hono();
 players.use(requireAdmin);
 
 players.get("/", async (c) => {
-  const rows = await withDiscord().where(eq(user.admin, false)).orderBy(asc(user.allowed), asc(user.createdAt));
+  const rows = await withDiscord().where(and(eq(user.admin, false), or(eq(user.allowed, true), isNotNull(user.pkmnRequestedAt)))).orderBy(asc(user.allowed), asc(user.createdAt));
   return c.json(rows.map(view));
 });
 

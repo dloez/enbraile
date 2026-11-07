@@ -225,6 +225,13 @@
       "when": 1793305413290,
       "tag": "0031_milestone_league",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794011815504,
+      "tag": "0032_user_pkmn_requested",
+      "breakpoints": true
     }
   ]
 }

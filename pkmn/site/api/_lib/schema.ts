@@ -19,6 +19,7 @@ export const user = pgTable("user", {
   displayUsername: text("display_username"),
   admin: boolean("admin").notNull().default(false),
   allowed: boolean("allowed").notNull().default(false),
+  pkmnRequestedAt: timestamp("pkmn_requested_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()

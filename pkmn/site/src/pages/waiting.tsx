@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BallSplit, ballTitleClass } from "@/components/ball-split";
 import { buttonClass } from "@/components/controls";
 import { PlayerBadge, playerColour } from "@/components/player-badge";
@@ -35,6 +35,9 @@ export function WaitingPage({ player, owed = [], onUploaded }: { player: { id: s
   const { signingOut, signOut } = useSignOut();
   const [uploading, setUploading] = useState<OwedSeries | null>(null);
   const held = owed.length > 0;
+  useEffect(() => {
+    if (!held) void fetch("/api/join", { method: "POST" });
+  }, [held]);
   return (
     <BallSplit title={<span className={ballTitleClass}>pkmn</span>} className="px-6 pb-9 sm:pb-12">
       <div className="flex flex-col items-center gap-4 sm:gap-5">
