@@ -11,6 +11,7 @@ type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean;
 const message = (error: unknown) => t.errors[error instanceof ApiError ? error.message : "failed"] ?? t.errors.failed!;
 const isLink = (text: string) => /^https?:\/\//.test(text.trim());
 const LOOP_ORDER: Loop[] = ["off", "queue", "track"];
+const BASE_TITLE = document.title;
 const RETRY_MS = [1_000, 3_000, 10_000, 30_000];
 
 const stamp = (view: View): Synced => ({ ...view, at: performance.now() });
@@ -593,6 +594,11 @@ export function App() {
   const [failed, setFailed] = useState(false);
   const [tab, setTab] = useState<Tab>("player");
   const { view, live, setView, refresh } = useView(me);
+  const playingNow = view?.active ? view.tracks[view.current] : undefined;
+  const tabTitle = playingNow ? `${view?.loading ? "…" : view?.paused ? "❚❚" : "▶"} ${[playingNow.title, playingNow.artist].filter(Boolean).join(" · ")} · DJ` : BASE_TITLE;
+  useEffect(() => {
+    document.title = tabTitle;
+  }, [tabTitle]);
   useEffect(() => {
     document.documentElement.lang = lang;
     get<Me>("me").then((next) => {
