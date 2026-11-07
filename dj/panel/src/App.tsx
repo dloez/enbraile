@@ -382,7 +382,6 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive }: { placeho
         {text && <button type="button" className="icon-btn small" aria-label={t.clearSearch} onClick={clear}><Icon.Close /></button>}
       </form>
       {error && <p className="error" role="alert">{error}</p>}
-      {results === null && !loading && !error && <p className="hint">{t.searchHint}</p>}
       {(loading || results) && (
         <section aria-label={t.songs} aria-busy={loading}>
           <h2 className="label">{loading && !results ? t.searching : t.songs}</h2>
