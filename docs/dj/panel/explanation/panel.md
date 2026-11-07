@@ -4,7 +4,7 @@ The web panel for the [DJ bot](../../bot/explanation/bot.md), in `dj/panel/`, fo
 
 A signed-out reader is sent to the [root site](../../../home/site/explanation/site.md) and back. A Vercel function (`api/_lib/app.ts`) reads the session from the root's `/api/me` and forwards calls to the Worker with `INTERNAL_SECRET`, so the Discord user ID comes from the session, never the browser. Locally, `DEV_USER_ID` stands in for a session.
 
-Live updates arrive by a WebSocket straight to the Durable Object, authorised by a ticket that lasts a minute. Spanish ISPs block Cloudflare's IPs during LaLiga matches ([The pkmn Site → Decisions](../../../pkmn/site/explanation/site.md#decisions)), so the page itself is on Vercel, and when the socket fails it polls through the function every 10 seconds and says so.
+Live updates arrive by a WebSocket straight to the Durable Object, authorised by a ticket that lasts a minute. Spanish ISPs block Cloudflare's IPs during LaLiga matches ([The pkmn Site → Decisions](../../../pkmn/site/explanation/site.md#decisions)), so the page itself is on Vercel, and when the socket fails it polls through the function every 10 seconds and says so. Vercel project `enbraile-dj`, root directory `dj/panel`, deploys every push to `main` that touches `dj/panel/`, set up as the [root site's](../../../home/site/how-to/deploy-the-site.md) is; its Production variables are `ROOT_URL`, `WORKER_URL` and `INTERNAL_SECRET`.
 
 ## Decisions
 
