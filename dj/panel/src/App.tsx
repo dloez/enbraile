@@ -1,4 +1,4 @@
-import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type FocusEvent as ReactFocusEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type FocusEvent as ReactFocusEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, get, handleReply, type HistoryEntry, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
@@ -692,6 +692,16 @@ function QueueList({ upcoming, offset, command }: { upcoming: Track[]; offset: n
   );
 }
 
+function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
+  const last = useRef(children);
+  if (open) last.current = children;
+  return (
+    <div className="reveal" data-open={open} inert={!open}>
+      <div><div className="reveal-body">{open ? children : last.current}</div></div>
+    </div>
+  );
+}
+
 function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setView: (view: Synced) => void; refresh: () => void; live: boolean }) {
   const [error, setError] = useState<string | null>(null);
   async function command(body: Command) {
@@ -769,14 +779,14 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
           <div className="now-stage">
             <NowPlaying view={view} track={track} command={command} />
             <div className="now-extras">
-              {track && view?.autoplay && view.autoplayEndsAt && (
+              <Reveal open={Boolean(track && view?.autoplay && view.autoplayEndsAt)}>
                 <div className="autoplay-note">
-                  <span className="sub">{t.autoplayEnds(Math.max(0, Math.ceil((view.autoplayEndsAt - Date.now()) / 60000)))}</span>
+                  <span className="sub">{t.autoplayEnds(Math.max(0, Math.ceil(((view?.autoplayEndsAt ?? 0) - Date.now()) / 60000)))}</span>
                   <button className="pill" onClick={() => void command({ action: "keepGoing" })}>{t.keepGoing}</button>
                 </div>
-              )}
-              {error && <p className="error" role="alert">{error}</p>}
-              {skipped && <p className="notice" role="status">{t.skippedFailed(skipped)}</p>}
+              </Reveal>
+              <Reveal open={Boolean(error)}><p className="error" role="alert">{error}</p></Reveal>
+              <Reveal open={Boolean(skipped)}><p className="notice" role="status">{skipped && t.skippedFailed(skipped)}</p></Reveal>
             </div>
           </div>
         </div>
