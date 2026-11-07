@@ -67,6 +67,13 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
       if (/^https:\/\/www\.youtube\.com\/watch\?v=[\w-]{11}$/.test(query)) warm(query);
       return [{ ok: true }];
     }
+    case "/internal/suggestions":
+      try {
+        return [await session.suggestions()];
+      } catch (error) {
+        console.error("suggestions", (error as Error).message);
+        return [[]];
+      }
     case "/internal/history":
       return [session.history()];
     case "/internal/playlists":

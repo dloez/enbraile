@@ -71,6 +71,7 @@ type NextResponse = { contents?: { singleColumnMusicWatchNextResultsRenderer?: {
 export type Seed = { videoId: string; weight: number };
 
 const RADIO_LENGTH = 50;
+const SHORTEST_SONG_MS = 90_000;
 
 function panelSong(video: PanelVideo): Song | null {
   const title = video.title?.runs?.map((run) => run.text).join("");
@@ -117,7 +118,7 @@ export async function sessionRadio(seeds: Seed[], played: Set<string>, avoidArti
   radios.forEach((radio, index) => {
     const weight = seeds[index]!.weight;
     radio.forEach((song, rank) => {
-      if (played.has(song.videoId)) return;
+      if (played.has(song.videoId) || (song.durationMs > 0 && song.durationMs < SHORTEST_SONG_MS)) return;
       const entry = scored.get(song.videoId) ?? { song, score: 0 };
       entry.score += weight * (1 - rank / RADIO_LENGTH) ** 2;
       scored.set(song.videoId, entry);

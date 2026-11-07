@@ -168,7 +168,76 @@ async function enqueue(body: { items: QueueItem[] } | { input: string }): Promis
 
 const WARM_TOP_AFTER_MS = 600;
 
-function SongSearch({ placeholder, onPick, onLink, warmUp }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void>; warmUp?: boolean }) {
+function useWarm(enabled: boolean): (song: Song) => void {
+  const warmed = useRef(new Set<string>());
+  return useCallback((song: Song) => {
+    if (!enabled || warmed.current.has(song.videoId)) return;
+    warmed.current.add(song.videoId);
+    post("warm", { query: song.url }).catch(() => undefined);
+  }, [enabled]);
+}
+
+const asItem = (song: Song): QueueItem => ({ query: song.url, title: song.title, artist: song.artist, artwork: song.artwork, durationMs: song.durationMs });
+
+function SongRow({ song, done, disabled, onAdd, warm }: { song: Song; done: boolean; disabled: boolean; onAdd: () => void; warm: (song: Song) => void }) {
+  return (
+    <li className="song" onPointerEnter={() => warm(song)} onPointerDown={() => warm(song)} onFocus={() => warm(song)}>
+      <Art src={artwork(song, 96)} className="art-md" />
+      <div className="meta">
+        <div className="name">{song.title}</div>
+        <div className="sub">{[song.artist, song.album].filter(Boolean).join(" · ")}</div>
+      </div>
+      {song.plays && <span className="plays">{song.plays}</span>}
+      {song.durationMs > 0 && <span className="len">{clock(song.durationMs)}</span>}
+      <button className={`icon-btn ring ${done ? "done" : ""}`} aria-label={done ? `${t.added}: ${song.title}` : t.addToQueue(song.title)} disabled={disabled} onClick={onAdd}>{done ? <Icon.Check /> : <Icon.Plus />}</button>
+    </li>
+  );
+}
+
+function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean }) {
+  const [songs, setSongs] = useState<Song[] | null>(null);
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const warm = useWarm(true);
+  useEffect(() => {
+    let current = true;
+    const timer = setTimeout(() => {
+      get<Song[]>("suggestions").then((next) => {
+        if (current) setSongs(next);
+      }, () => undefined);
+    }, 300);
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
+  }, [seedKey]);
+  if (!songs?.length) return null;
+  async function pick(song: Song) {
+    setError(null);
+    setAdded((previous) => new Set(previous).add(song.videoId));
+    try {
+      await onPick(asItem(song));
+    } catch (failure) {
+      setError(message(failure));
+      setAdded((previous) => {
+        const next = new Set(previous);
+        next.delete(song.videoId);
+        return next;
+      });
+    }
+  }
+  return (
+    <section className="suggest-area" aria-label={t.suggested} hidden={hidden}>
+      <h2 className="label">{t.suggested}</h2>
+      {error && <p className="error" role="alert">{error}</p>}
+      <ul className="rows">
+        {songs.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} onAdd={() => void pick(song)} warm={warm} />)}
+      </ul>
+    </section>
+  );
+}
+
+function SongSearch({ placeholder, onPick, onLink, warmUp, onActive }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void>; warmUp?: boolean; onActive?: (active: boolean) => void }) {
   const [text, setText] = useState("");
   const [results, setResults] = useState<Song[] | null>(null);
   const [shown, setShown] = useState("");
@@ -177,12 +246,9 @@ function SongSearch({ placeholder, onPick, onLink, warmUp }: { placeholder: stri
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const sequence = useRef(0);
-  const warmed = useRef(new Set<string>());
-  const warm = useCallback((song: Song) => {
-    if (!warmUp || warmed.current.has(song.videoId)) return;
-    warmed.current.add(song.videoId);
-    post("warm", { query: song.url }).catch(() => undefined);
-  }, [warmUp]);
+  const warm = useWarm(Boolean(warmUp));
+  const active = text.trim().length > 0;
+  useEffect(() => onActive?.(active), [active, onActive]);
   const search = useCallback(async (query: string) => {
     const id = ++sequence.current;
     setLoading(true);
@@ -235,7 +301,7 @@ function SongSearch({ placeholder, onPick, onLink, warmUp }: { placeholder: stri
     setError(null);
     setAdded((previous) => new Set(previous).add(song.videoId));
     try {
-      await onPick({ query: song.url, title: song.title, artist: song.artist, artwork: song.artwork, durationMs: song.durationMs });
+      await onPick(asItem(song));
     } catch (failure) {
       setError(message(failure));
       setAdded((previous) => {
@@ -268,21 +334,7 @@ function SongSearch({ placeholder, onPick, onLink, warmUp }: { placeholder: stri
           <h2 className="label">{loading && !results ? t.searching : t.songs}</h2>
           {results?.length === 0 && <p className="hint">{t.noSongs}</p>}
           <ul className={`rows ${stale ? "stale" : ""}`}>
-            {results?.map((song) => {
-              const done = added.has(song.videoId);
-              return (
-                <li key={song.videoId} className="song" onPointerEnter={() => warm(song)} onPointerDown={() => warm(song)} onFocus={() => warm(song)}>
-                  <Art src={artwork(song, 96)} className="art-md" />
-                  <div className="meta">
-                    <div className="name">{song.title}</div>
-                    <div className="sub">{[song.artist, song.album].filter(Boolean).join(" · ")}</div>
-                  </div>
-                  {song.plays && <span className="plays">{song.plays}</span>}
-                  {song.durationMs > 0 && <span className="len">{clock(song.durationMs)}</span>}
-                  <button className={`icon-btn ring ${done ? "done" : ""}`} aria-label={done ? `${t.added}: ${song.title}` : t.addToQueue(song.title)} disabled={stale || busy === song.videoId} onClick={() => void pick(song)}>{done ? <Icon.Check /> : <Icon.Plus />}</button>
-                </li>
-              );
-            })}
+            {results?.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={stale || busy === song.videoId} onAdd={() => void pick(song)} warm={warm} />)}
           </ul>
         </section>
       )}
@@ -398,6 +450,8 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+  const [searching, setSearching] = useState(false);
+  const seedKey = view?.active ? view.tracks.map((entry) => entry.id).join(",") : "";
   async function add(item: QueueItem) {
     if (view) setView(predictAdd(view, item));
     try {
@@ -435,9 +489,9 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
           {track && view && <p className="fine">{t.listeners(view.listeners)}</p>}
         </div>
         <div className="side">
-          <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} />
+          <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} onActive={setSearching} />
           {track && (
-            <section aria-label={t.queue}>
+            <section className="queue-area" aria-label={t.queue}>
               <div className="label-row">
                 <h2 className="label">{upcoming.length ? `${t.queue} · ${upcoming.length}` : t.queue}</h2>
                 {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
@@ -476,6 +530,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
               )}
             </section>
           )}
+          {seedKey && <Suggestions seedKey={seedKey} onPick={add} hidden={searching} />}
         </div>
       </div>
     </>
