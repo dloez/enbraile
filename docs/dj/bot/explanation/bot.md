@@ -36,6 +36,7 @@ From throwaway probes on 2026-11-06 and 2026-11-07, one run each.
 | YouTube Music radio for one song, from home (2026-11-07) | 50 songs in 0.5–0.9 s, 30–37 artists, 14 of them by the seed's artist |
 | Eight autoplay picks after Radiohead, Khruangbin, Bonobo and Portishead (simulated, 2026-11-07) | Last song's radio: 3 artists, five picks in a row by one. Session radio: 7 artists (The xx, Moby, Massive Attack, Portishead, Air…), about 1 s a pick |
 | yt-dlp's JS challenge solve, x86, without and with the preprocessed player cache (2026-11-07) | 620 ms vs 165 ms |
+| Resolving a song on `tom` with the onedir build and the player cache, once filled (2026-11-07) | 3.9–5.1 s, against 9.5–13.6 s with the single-file build and no cache |
 | Other player clients (`android_vr`, `tv`, `tv_simply`, `web_safari`, `mweb`) from a home connection | None returned a playable audio format; only the default did |
 
 ## Decisions
