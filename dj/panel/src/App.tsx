@@ -21,6 +21,14 @@ function estimate(view: Synced, now: number): number {
   return duration > 0 ? Math.min(position, duration) : position;
 }
 
+function predictAdd(view: Synced, item: QueueItem): Synced {
+  const track: Track = { id: `pending-${crypto.randomUUID()}`, query: item.query, title: item.title ?? item.query, artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy: "" };
+  const now = performance.now();
+  const tracks = [...view.tracks, track];
+  if (view.active && view.current >= 0 && view.current < view.tracks.length) return { ...view, positionMs: estimate(view, now), at: now, tracks, autoplayNext: null };
+  return { ...view, at: now, active: true, tracks, current: view.tracks.length, positionMs: 0, paused: false, loading: true, autoplayNext: null };
+}
+
 function predict(view: Synced, command: Command): Synced {
   const now = performance.now();
   const next: Synced = { ...view, positionMs: estimate(view, now), at: now };
@@ -224,11 +232,16 @@ function SongSearch({ placeholder, onPick, onLink, warmUp }: { placeholder: stri
   async function pick(song: Song) {
     setBusy(song.videoId);
     setError(null);
+    setAdded((previous) => new Set(previous).add(song.videoId));
     try {
       await onPick({ query: song.url, title: song.title, artist: song.artist, artwork: song.artwork, durationMs: song.durationMs });
-      setAdded((previous) => new Set(previous).add(song.videoId));
     } catch (failure) {
       setError(message(failure));
+      setAdded((previous) => {
+        const next = new Set(previous);
+        next.delete(song.videoId);
+        return next;
+      });
     }
     setBusy(null);
   }
@@ -360,6 +373,15 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
       refresh();
     }
   }
+  async function add(item: QueueItem) {
+    if (view) setView(predictAdd(view, item));
+    try {
+      await enqueue({ items: [item] });
+    } catch (failure) {
+      refresh();
+      throw failure;
+    }
+  }
   const track = view && view.active ? view.tracks[view.current] : undefined;
   const upcoming = view?.active ? view.tracks.slice(view.current + 1) : [];
   const offset = (view?.current ?? 0) + 1;
@@ -374,7 +396,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
           {track && view && <p className="fine">{t.listeners(view.listeners)}</p>}
         </div>
         <div className="side">
-          <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={(item) => enqueue({ items: [item] })} onLink={(input) => enqueue({ input })} />
+          <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} />
           {track && (
             <section aria-label={t.queue}>
               <div className="label-row">
