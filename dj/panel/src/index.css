@@ -22,7 +22,7 @@ a { color: inherit; text-decoration: none; }
 a:hover { color: var(--accent); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.page { width: min(100%, 1200px); margin: 0 auto; padding: 20px 24px 48px; display: flex; flex-direction: column; gap: 24px; }
+.page { width: 100%; min-height: 100vh; margin: 0 auto; padding: 20px clamp(16px, 3vw, 56px) 48px; display: flex; flex-direction: column; gap: 24px; }
 .top { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -.02em; }
 .mark { width: 32px; height: 32px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; }
@@ -49,9 +49,16 @@ a:hover { color: var(--accent); }
 .icon-btn.on { color: var(--accent); }
 .badge { position: absolute; top: 9px; right: 7px; min-width: 14px; height: 14px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 10px; font-weight: 700; line-height: 14px; }
 
-.player { display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; }
-.now-col { flex: 1 1 320px; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
-.side { flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.player { display: grid; grid-template-columns: clamp(300px, 30vw, 560px) minmax(0, 1fr); gap: clamp(28px, 4vw, 72px); align-items: start; }
+.now-col { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 12px; }
+.side { min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+@media (min-width: 1440px) {
+  .side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: clamp(28px, 3vw, 56px); }
+}
+@media (max-width: 860px) {
+  .player { grid-template-columns: minmax(0, 1fr); }
+  .now-col { position: static; max-width: 560px; }
+}
 .now { display: flex; flex-direction: column; gap: 20px; }
 .art { flex: none; overflow: hidden; background: var(--surface-2); color: var(--line-strong); display: flex; align-items: center; justify-content: center; }
 .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
