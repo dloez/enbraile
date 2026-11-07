@@ -553,12 +553,7 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
         </label>
         <button className="pill danger" onClick={() => void command({ action: "stop" })}>{t.stop}</button>
       </div>
-      {view.autoplay && view.autoplayEndsAt && (
-        <div className="autoplay-note">
-          <span className="sub">{t.autoplayEnds(Math.max(0, Math.ceil((view.autoplayEndsAt - Date.now()) / 60000)))}</span>
-          <button className="pill" onClick={() => void command({ action: "keepGoing" })}>{t.keepGoing}</button>
-        </div>
-      )}
+      <p className="listeners"><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(view.listeners)}</p>
     </section>
   );
 }
@@ -771,10 +766,19 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
       {!live && <p className="notice" role="status">{t.offline}</p>}
       <div className="player">
         <div className="now-col" ref={nowRef}>
-          <NowPlaying view={view} track={track} command={command} />
-          {error && <p className="error" role="alert">{error}</p>}
-          {skipped && <p className="notice" role="status">{t.skippedFailed(skipped)}</p>}
-          {track && view && <p className="listeners"><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(view.listeners)}</p>}
+          <div className="now-stage">
+            <NowPlaying view={view} track={track} command={command} />
+            <div className="now-extras">
+              {track && view?.autoplay && view.autoplayEndsAt && (
+                <div className="autoplay-note">
+                  <span className="sub">{t.autoplayEnds(Math.max(0, Math.ceil((view.autoplayEndsAt - Date.now()) / 60000)))}</span>
+                  <button className="pill" onClick={() => void command({ action: "keepGoing" })}>{t.keepGoing}</button>
+                </div>
+              )}
+              {error && <p className="error" role="alert">{error}</p>}
+              {skipped && <p className="notice" role="status">{t.skippedFailed(skipped)}</p>}
+            </div>
+          </div>
         </div>
         <div className="side">
           <div className="discover-col">
@@ -1053,13 +1057,15 @@ export function App() {
           <main className="main">
             <div className="player">
               <div className="now-col">
-                <section className="now" data-stage="idle">
-                  <div className="cover"><div className="art art-hero skeleton" /></div>
-                  <div className="now-text">
-                    <div className="skeleton line wide" />
-                    <div className="skeleton line" />
-                  </div>
-                </section>
+                <div className="now-stage">
+                  <section className="now" data-stage="idle">
+                    <div className="cover"><div className="art art-hero skeleton" /></div>
+                    <div className="now-text">
+                      <div className="skeleton line wide" />
+                      <div className="skeleton line" />
+                    </div>
+                  </section>
+                </div>
               </div>
               <div className="side">
                 <div className="discover-col"><div className="skeleton search-line" /></div>
