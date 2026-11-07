@@ -237,6 +237,53 @@ function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (it
   );
 }
 
+const RECENT_SHOWN = 20;
+
+function RecentlyPlayed({ seedKey, current, onPick }: { seedKey: string; current: string | null; onPick: (item: QueueItem) => Promise<void> }) {
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  const warm = useWarm(true);
+  useEffect(() => {
+    let live = true;
+    const timer = setTimeout(() => {
+      get<HistoryEntry[]>("history").then((next) => {
+        if (live) setEntries(next);
+      }, () => undefined);
+    }, 300);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [seedKey]);
+  const seen = new Set<string>(current ? [current] : []);
+  const songs: Song[] = [];
+  for (const entry of entries) {
+    const url = entry.url ?? entry.query;
+    const id = url.match(/[?&]v=([\w-]{11})/)?.[1];
+    if (!id || seen.has(url)) continue;
+    seen.add(url);
+    songs.push({ videoId: id, url, title: entry.title, artist: "", album: null, durationMs: 0, artwork: null, plays: null });
+    if (songs.length === RECENT_SHOWN) break;
+  }
+  if (!songs.length) return null;
+  async function pick(song: Song) {
+    setAdded((previous) => new Set(previous).add(song.videoId));
+    await onPick(asItem(song)).catch(() => setAdded((previous) => {
+      const next = new Set(previous);
+      next.delete(song.videoId);
+      return next;
+    }));
+  }
+  return (
+    <section className="recent-area" aria-label={t.playedBefore}>
+      <h2 className="label">{t.playedBefore}</h2>
+      <ul className="rows">
+        {songs.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} onAdd={() => void pick(song)} warm={warm} />)}
+      </ul>
+    </section>
+  );
+}
+
 function SongSearch({ placeholder, onPick, onLink, warmUp, onActive }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void>; warmUp?: boolean; onActive?: (active: boolean) => void }) {
   const [text, setText] = useState("");
   const [results, setResults] = useState<Song[] | null>(null);
@@ -487,6 +534,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
           {error && <p className="error" role="alert">{error}</p>}
           {skipped && <p className="notice" role="status">{t.skippedFailed(skipped)}</p>}
           {track && view && <p className="fine">{t.listeners(view.listeners)}</p>}
+          {seedKey && <RecentlyPlayed seedKey={seedKey} current={track?.url ?? null} onPick={add} />}
         </div>
         <div className="side">
           <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} onActive={setSearching} />

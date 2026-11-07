@@ -49,7 +49,16 @@ a:hover { color: var(--accent); }
 .icon-btn.on { color: var(--accent); }
 .badge { position: absolute; top: 9px; right: 7px; min-width: 14px; height: 14px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 10px; font-weight: 700; line-height: 14px; }
 
-.player { display: grid; grid-template-columns: clamp(300px, 30vw, 560px) minmax(0, 1fr); gap: clamp(28px, 4vw, 72px); align-items: start; }
+.player { display: grid; grid-template-columns: clamp(300px, 30vw, 640px) minmax(0, 1fr); gap: clamp(28px, 4vw, 72px); align-items: start; }
+.recent-area { padding-top: 8px; }
+@media (min-width: 861px) {
+  .page { height: 100vh; height: 100dvh; min-height: 0; padding-bottom: 0; }
+  .main { flex: 1; min-height: 0; overflow-y: auto; }
+  .main:has(> .player) { overflow: hidden; }
+  .player { flex: 1; min-height: 0; height: 100%; align-items: stretch; }
+  .now-col, .side { min-height: 0; overflow-y: auto; padding-bottom: 32px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  .now-col .art-hero { width: min(100%, max(220px, calc(100dvh - 500px))); margin-inline: auto; }
+}
 .now-col { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 12px; }
 .side { min-width: 0; display: flex; flex-direction: column; gap: 28px; }
 @media (min-width: 1440px) {
@@ -61,6 +70,7 @@ a:hover { color: var(--accent); }
 @media (max-width: 860px) {
   .player { grid-template-columns: minmax(0, 1fr); }
   .now-col { position: static; max-width: 560px; }
+  .recent-area { display: none; }
 }
 .now { display: flex; flex-direction: column; gap: 20px; }
 .art { flex: none; overflow: hidden; background: var(--surface-2); color: var(--line-strong); display: flex; align-items: center; justify-content: center; }
