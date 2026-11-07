@@ -194,7 +194,6 @@ function Slider({ label, value, max, step, onChange, onCommit, className }: { la
 function NowPlaying({ view, track, command }: { view: View | null; track: Track | undefined; command: (body: Record<string, unknown>) => Promise<void> }) {
   const [now, setNow] = useState(Date.now());
   const [seek, setSeek] = useState<number | null>(null);
-  const [volume, setVolume] = useState<number | null>(null);
   const seen = useRef({ position: 0, at: Date.now() });
   useEffect(() => {
     seen.current = { position: view?.positionMs ?? 0, at: Date.now() };
@@ -219,7 +218,6 @@ function NowPlaying({ view, track, command }: { view: View | null; track: Track 
   const position = seek ?? Math.min(estimated, duration || estimated);
   const loopIndex = LOOP_ORDER.indexOf(view.loop);
   const loopNames: Record<Loop, string> = { off: t.loopOff, track: t.loopTrack, queue: t.loopQueue };
-  const volumeValue = volume ?? Math.round(view.volume * 100);
   return (
     <section className="now" aria-label={t.tabs.player}>
       <Art src={artwork(track, 544)} className="art-hero" />
@@ -241,11 +239,6 @@ function NowPlaying({ view, track, command }: { view: View | null; track: Track 
           <Icon.Repeat />
           {view.loop === "track" && <span className="badge">1</span>}
         </button>
-      </div>
-      <div className="volume">
-        <Icon.Volume />
-        <Slider label={t.volume} value={volumeValue} max={200} step={5} onChange={setVolume} onCommit={() => { if (volume !== null) { void command({ action: "volume", volume: volume / 100 }); setVolume(null); } }} />
-        <span className="len">{volumeValue}%</span>
       </div>
       <div className="now-foot">
         <label className="switch">

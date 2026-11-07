@@ -68,8 +68,6 @@ a:hover { color: var(--accent); }
 .play { width: 64px; height: 64px; border-radius: 999px; border: 0; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; transition: transform .1s; }
 .play:hover { transform: scale(1.04); }
 .play:active { transform: scale(.97); }
-.volume { display: flex; align-items: center; gap: 12px; color: var(--dim); }
-.volume .len { min-width: 40px; text-align: right; }
 .now-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 16px; border-top: 1px solid var(--surface-2); }
 .autoplay-note { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .fine { margin: 0; color: var(--faint); font-size: 12px; }

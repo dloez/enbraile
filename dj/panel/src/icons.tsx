@@ -15,7 +15,6 @@ export const Plus = () => <Stroke size={18}><path d="M12 5v14M5 12h14" /></Strok
 export const Check = () => <Stroke size={18}><path d="m5 12 5 5 9-10" /></Stroke>;
 export const Shuffle = () => <Stroke><path d="M16 3h5v5" /><path d="M4 20 21 3" /><path d="M21 16v5h-5" /><path d="m15 15 6 6" /><path d="M4 4l5 5" /></Stroke>;
 export const Repeat = () => <Stroke><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></Stroke>;
-export const Volume = () => <Stroke size={18}><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /></Stroke>;
 export const Up = () => <Stroke size={16}><path d="m6 15 6-6 6 6" /></Stroke>;
 export const Down = () => <Stroke size={16}><path d="m6 9 6 6 6-6" /></Stroke>;
 

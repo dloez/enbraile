@@ -14,6 +14,7 @@ Live updates arrive by a WebSocket straight to the Durable Object, authorised by
 
 - **On Vercel with `dj` as a DNS-only record:** the page and its controls stay reachable during a block. Polling is not the normal path because pkmn shares Vercel Hobby's 1M calls and 4 CPU-hours a month. _(2026-11-06)_
 - **Redesigned in Claude Design, without review:** the owner asked for a minimalist modern player and did not want to review the design. This replaces the first plain page, which had no Claude Design boards. It stays plain CSS rather than shadcn, since the panel has few controls. _(owner, 2026-11-07; the look the agent's choice)_
+- **No volume control on the panel:** each listener sets the bot's volume in Discord, and changing it on the bot restarts the stream. The bot's `/volume` command remains. _(owner, 2026-11-07)_
 - **Search, then pick:** typed text lists matching songs to choose from, never adds the top hit blindly; links still add directly. _(owner, 2026-11-07)_
 - **Starting needs the caller in voice:** the bot joins their channel; if a session is running, anything added goes to its queue. _(owner, 2026-11-07)_
 - **Playlists:** one owner edits each, and anyone allowed can browse and play it. _(owner, 2026-11-07)_
