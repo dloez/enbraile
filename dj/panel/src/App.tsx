@@ -150,7 +150,9 @@ async function enqueue(body: { items: QueueItem[] } | { input: string }): Promis
   if (!result.ok) throw new ApiError(result.reason ?? "failed");
 }
 
-function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void> }) {
+const WARM_TOP_AFTER_MS = 600;
+
+function SongSearch({ placeholder, onPick, onLink, warmUp }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void>; warmUp?: boolean }) {
   const [text, setText] = useState("");
   const [results, setResults] = useState<Song[] | null>(null);
   const [shown, setShown] = useState("");
@@ -159,6 +161,12 @@ function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPi
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const sequence = useRef(0);
+  const warmed = useRef(new Set<string>());
+  const warm = useCallback((song: Song) => {
+    if (!warmUp || warmed.current.has(song.videoId)) return;
+    warmed.current.add(song.videoId);
+    post("warm", { query: song.url }).catch(() => undefined);
+  }, [warmUp]);
   const search = useCallback(async (query: string) => {
     const id = ++sequence.current;
     setLoading(true);
@@ -218,6 +226,12 @@ function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPi
     setBusy(null);
   }
   const stale = results !== null && shown !== text.trim();
+  const top = stale ? undefined : results?.[0];
+  useEffect(() => {
+    if (!top) return;
+    const timer = setTimeout(() => warm(top), WARM_TOP_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [top, warm]);
   return (
     <div className="search">
       <form role="search" onSubmit={(event) => void submit(event)} className="search-box">
@@ -236,7 +250,7 @@ function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPi
             {results?.map((song) => {
               const done = added.has(song.videoId);
               return (
-                <li key={song.videoId} className="song">
+                <li key={song.videoId} className="song" onPointerEnter={() => warm(song)} onPointerDown={() => warm(song)} onFocus={() => warm(song)}>
                   <Art src={artwork(song, 96)} className="art-md" />
                   <div className="meta">
                     <div className="name">{song.title}</div>
@@ -353,7 +367,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
           {track && view && <p className="fine">{t.listeners(view.listeners)}</p>}
         </div>
         <div className="side">
-          <SongSearch placeholder={t.searchPlaceholder} onPick={(item) => enqueue({ items: [item] })} onLink={(input) => enqueue({ input })} />
+          <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={(item) => enqueue({ items: [item] })} onLink={(input) => enqueue({ input })} />
           {track && (
             <section aria-label={t.queue}>
               <div className="label-row">

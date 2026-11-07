@@ -8,6 +8,7 @@ export type PlayerEvent = { type: "started"; generation: number; title: string; 
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
 const RESOLVE_TTL_MS = 30 * 60 * 1000;
+const MAX_WARMING = 2;
 
 const cache = new Map<string, Promise<Resolved>>();
 let connection: VoiceConnection | undefined;
@@ -18,6 +19,7 @@ let channelId = "";
 let generation = 0;
 let offsetMs = 0;
 let listener: (event: PlayerEvent) => void = () => undefined;
+let warming = 0;
 
 export function onPlayerEvent(callback: (event: PlayerEvent) => void): void {
   listener = callback;
@@ -79,6 +81,12 @@ export const related = (videoId: string) => flatList(`https://www.youtube.com/wa
 
 export function prepare(query: string): void {
   resolveTrack(query).catch((error: Error) => console.error("prepare", error.message));
+}
+
+export function warm(query: string): void {
+  if (cache.has(query) || warming >= MAX_WARMING) return;
+  warming += 1;
+  resolveTrack(query).catch(() => undefined).finally(() => (warming -= 1));
 }
 
 function killStream(): void {

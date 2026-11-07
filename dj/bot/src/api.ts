@@ -4,6 +4,7 @@ import { guild } from "./client.ts";
 import { accessOf, enqueueInput, voiceChannel } from "./discord.ts";
 import { resolveInput, signTicket, verifyTicket } from "./input.ts";
 import { searchSongs } from "./music.ts";
+import { warm } from "./player.ts";
 import * as session from "./session.ts";
 
 const secret = process.env.INTERNAL_SECRET ?? "";
@@ -60,6 +61,11 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
         console.error("music search", (error as Error).message);
         return [{ error: "searchFailed" }, 502];
       }
+    }
+    case "/internal/warm": {
+      const query = String(input.query ?? "");
+      if (/^https:\/\/www\.youtube\.com\/watch\?v=[\w-]{11}$/.test(query)) warm(query);
+      return [{ ok: true }];
     }
     case "/internal/history":
       return [session.history()];
