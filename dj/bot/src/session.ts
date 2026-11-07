@@ -70,7 +70,7 @@ const PAUSED_LEAVE_MS = 15 * 60_000;
 const AUTOPLAY_LIMIT_MS = 60 * 60_000;
 const MAX_FAILURES_IN_A_ROW = 5;
 const HISTORY_KEPT = 200;
-const PREPARED_AHEAD = 2;
+const PREPARED_AHEAD = 3;
 const HUMAN_SEEDS = 5;
 const AUTOPLAY_SEEDS = 2;
 const ARTIST_COOLDOWN = 3;
@@ -141,7 +141,7 @@ function livePosition(): number {
 
 function prepareAhead(): void {
   if (!playing() || state.loading) return;
-  for (const track of state.tracks.slice(state.current + 1, state.current + 1 + PREPARED_AHEAD)) player.prepare(track.query);
+  for (const track of state.tracks.slice(Math.max(0, state.current - 1), state.current + 1 + PREPARED_AHEAD)) player.prepare(track.query);
 }
 
 export function view(): View {

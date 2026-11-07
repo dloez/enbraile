@@ -7,7 +7,7 @@ type Resolved = { title: string; artist: string | null; artwork: string | null; 
 export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "ended" | "failed"; generation: number; error?: string };
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
-const RESOLVE_TTL_MS = 30 * 60 * 1000;
+const RESOLVE_TTL_MS = 2 * 60 * 60 * 1000;
 const PLUGINS = new URL("../yt-dlp-plugins", import.meta.url).pathname;
 const MAX_WARMING = 2;
 
