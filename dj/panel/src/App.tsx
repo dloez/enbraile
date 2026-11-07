@@ -1,5 +1,5 @@
 import { type CSSProperties, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, get, handleReply, type HistoryEntry, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, signIn, type Song, type Track, attachSocket, type View } from "./api";
+import { ApiError, get, handleReply, type HistoryEntry, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, signIn, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
 
@@ -83,14 +83,19 @@ function Art({ src, className }: { src: string | null; className: string }) {
   );
 }
 
-function useView(enabled: boolean): { view: Synced | null; live: boolean; refresh: () => void; setView: (view: Synced) => void } {
+function useView(boot: Me | null): { view: Synced | null; live: boolean; refresh: () => void; setView: (view: Synced) => void } {
+  const enabled = Boolean(boot?.canPlay);
   const [view, setView] = useState<Synced | null>(null);
+  const handoff = useRef(boot);
+  handoff.current = boot;
   const [live, setLive] = useState(true);
   const refresh = useCallback(() => {
     get<View>("state").then((next) => setView(stamp(next)), () => undefined);
   }, []);
   useEffect(() => {
     if (!enabled) return;
+    const first = { current: handoff.current?.live ?? null };
+    if (handoff.current?.state) setView(stamp(handoff.current.state));
     let closed = false;
     let socket: WebSocket | undefined;
     let poll: ReturnType<typeof setInterval> | undefined;
@@ -105,7 +110,9 @@ function useView(enabled: boolean): { view: Synced | null; live: boolean; refres
     };
     const connect = async () => {
       try {
-        const { ticket, url } = await get<{ ticket: string; url: string }>("ticket");
+        const handed = first.current;
+        first.current = null;
+        const { ticket, url } = handed ?? (await get<Ticket>("ticket"));
         if (closed) return;
         const live = new WebSocket(`${url}?ticket=${encodeURIComponent(ticket)}`);
         socket = live;
@@ -132,7 +139,7 @@ function useView(enabled: boolean): { view: Synced | null; live: boolean; refres
         if (!closed) later();
       }
     };
-    refresh();
+    if (!first.current) refresh();
     void connect();
     return () => {
       closed = true;
@@ -539,7 +546,7 @@ export function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [failed, setFailed] = useState(false);
   const [tab, setTab] = useState<Tab>("player");
-  const { view, live, setView, refresh } = useView(Boolean(me?.canPlay));
+  const { view, live, setView, refresh } = useView(me);
   useEffect(() => {
     document.documentElement.lang = lang;
     get<Me>("me").then((next) => {

@@ -36,8 +36,12 @@ app.use(async (c, next) => {
 
 app.get("/me", async (c) => {
   const viewer = c.get("viewer" as never) as Viewer;
-  const access = (await (await worker(`access?userId=${viewer.discordId}`)).json()) as Record<string, boolean>;
-  return c.json({ user: { name: viewer.name, image: viewer.image }, discordId: viewer.discordId, ...access });
+  const read = async (path: string) => {
+    const response = await worker(`${path}?userId=${viewer.discordId}`);
+    return response.ok ? ((await response.json()) as Record<string, unknown>) : null;
+  };
+  const [access, state, live] = await Promise.all([read("access"), read("state"), read("ticket")]);
+  return c.json({ user: { name: viewer.name, image: viewer.image }, discordId: viewer.discordId, ...access, state, live }, 200, { "cache-control": "private, no-store" });
 });
 
 app.get("/*", async (c) => {
