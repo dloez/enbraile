@@ -74,7 +74,7 @@ const HUMAN_SEEDS = 5;
 const AUTOPLAY_SEEDS = 2;
 const ARTIST_COOLDOWN = 3;
 const AUTOPLAY_SEED_WEIGHT = 0.3;
-const SUGGESTIONS = 8;
+const SUGGESTIONS = 20;
 const SUGGESTIONS_KEPT_MS = 10 * 60_000;
 
 const blank = (): State => ({

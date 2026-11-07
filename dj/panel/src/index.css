@@ -50,7 +50,11 @@ a:hover { color: var(--accent); }
 .badge { position: absolute; top: 9px; right: 7px; min-width: 14px; height: 14px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 10px; font-weight: 700; line-height: 14px; }
 
 .player { display: grid; grid-template-columns: clamp(300px, 30vw, 640px) minmax(0, 1fr); gap: clamp(28px, 4vw, 72px); align-items: start; }
-.recent-area { padding-top: 8px; }
+.queue-col { display: contents; }
+.side > .search { order: 1; }
+.queue-area { order: 2; }
+.suggest-area { order: 3; }
+.recent-area { order: 4; }
 @media (min-width: 861px) {
   .page { height: 100vh; height: 100dvh; min-height: 0; padding-bottom: 0; }
   .main { flex: 1; min-height: 0; overflow-y: auto; }
@@ -64,13 +68,12 @@ a:hover { color: var(--accent); }
 @media (min-width: 1440px) {
   .side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "search queue" "suggest queue"; align-items: start; gap: 28px clamp(28px, 3vw, 56px); }
   .side > .search { grid-area: search; }
-  .side > .queue-area { grid-area: queue; }
+  .side > .queue-col { grid-area: queue; display: flex; flex-direction: column; gap: 28px; min-width: 0; }
   .side > .suggest-area { grid-area: suggest; }
 }
 @media (max-width: 860px) {
   .player { grid-template-columns: minmax(0, 1fr); }
   .now-col { position: static; max-width: 560px; }
-  .recent-area { display: none; }
 }
 .now { display: flex; flex-direction: column; gap: 20px; }
 .art { flex: none; overflow: hidden; background: var(--surface-2); color: var(--line-strong); display: flex; align-items: center; justify-content: center; }

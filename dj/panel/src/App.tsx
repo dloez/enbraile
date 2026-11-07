@@ -534,10 +534,10 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
           {error && <p className="error" role="alert">{error}</p>}
           {skipped && <p className="notice" role="status">{t.skippedFailed(skipped)}</p>}
           {track && view && <p className="fine">{t.listeners(view.listeners)}</p>}
-          {seedKey && <RecentlyPlayed seedKey={seedKey} current={track?.url ?? null} onPick={add} />}
         </div>
         <div className="side">
           <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} onActive={setSearching} />
+          <div className="queue-col">
           {track && (
             <section className="queue-area" aria-label={t.queue}>
               <div className="label-row">
@@ -578,6 +578,8 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
               )}
             </section>
           )}
+          {seedKey && <RecentlyPlayed seedKey={seedKey} current={track?.url ?? null} onPick={add} />}
+          </div>
           {seedKey && <Suggestions seedKey={seedKey} onPick={add} hidden={searching} />}
         </div>
       </div>
