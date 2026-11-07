@@ -68,7 +68,10 @@ a:hover { color: var(--accent); }
 .pill.danger:hover:not(:disabled) { background: rgb(255 143 143 / .1); border-color: rgb(255 143 143 / .35); }
 .pill.ghost { border-color: transparent; background: none; color: var(--dim); }
 .pill.ghost:hover:not(:disabled) { color: var(--text); background: var(--hover); border-color: transparent; }
-.pill.lang { font-size: .82rem; letter-spacing: .04em; }
+.lang-switch { display: inline-flex; gap: .15rem; padding: .2rem; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.lang-switch button { min-width: 2.6rem; min-height: 2.1rem; padding: 0 .55rem; border: 0; border-radius: 999px; background: none; color: var(--dim); font-size: .78rem; font-weight: 700; letter-spacing: .05em; transition: color .2s, background .2s; }
+.lang-switch button:hover { color: var(--text); }
+.lang-switch button[aria-pressed="true"] { background: rgb(255 255 255 / .1); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); cursor: default; }
 .pill.done { color: var(--accent); border-color: var(--accent-line); }
 .icon-btn { position: relative; width: 2.9rem; height: 2.9rem; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; border: 0; background: none; color: var(--dim); transition: color .2s, background .2s, transform .15s; }
 .icon-btn:hover:not(:disabled) { color: var(--text); background: var(--hover); }

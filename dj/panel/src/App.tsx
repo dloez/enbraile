@@ -15,6 +15,7 @@ const LOOP_ORDER: Loop[] = ["off", "queue", "track"];
 const BASE_TITLE = document.title;
 const RETRY_MS = [1_000, 3_000, 10_000, 30_000];
 const RESTART_WITHIN_MS = 3_000;
+const LANGS = [{ code: "en", name: "English" }, { code: "es", name: "Español" }] as const;
 
 const stamp = (view: View): Synced => ({ ...view, at: performance.now() });
 
@@ -1020,7 +1021,9 @@ export function App() {
             </nav>
           )}
           <div className="who">
-            <button className="pill ghost lang" aria-label={t.language} title={t.language} onClick={switchLang}>{lang === "es" ? "EN" : "ES"}</button>
+            <div className="lang-switch" role="group" aria-label={t.language}>
+              {LANGS.map((entry) => <button key={entry.code} lang={entry.code} aria-label={entry.name} title={entry.name} aria-pressed={lang === entry.code} onClick={() => { if (lang !== entry.code) switchLang(); }}>{entry.code.toUpperCase()}</button>)}
+            </div>
             {me.user.image ? <img className="avatar" src={me.user.image} alt={me.user.name} title={me.user.name} referrerPolicy="no-referrer" /> : <span className="avatar" title={me.user.name}>{me.user.name.slice(0, 1).toUpperCase()}</span>}
           </div>
         </header>

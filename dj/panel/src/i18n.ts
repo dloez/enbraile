@@ -78,7 +78,7 @@ const en = {
   save: "Save",
   saved: "Saved",
   signOut: "Sign out",
-  language: "Cambiar a español",
+  language: "Language",
 };
 
 const es: typeof en = {
@@ -150,7 +150,7 @@ const es: typeof en = {
   save: "Guardar",
   saved: "Guardado",
   signOut: "Cerrar sesión",
-  language: "Switch to English",
+  language: "Idioma",
 };
 
 export const t = lang === "es" ? es : en;
