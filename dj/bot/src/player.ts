@@ -10,6 +10,7 @@ export type Status = { connected: boolean; listeners: number; positionMs: number
 const RESOLVE_TTL_MS = 2 * 60 * 60 * 1000;
 const PLUGINS = new URL("../yt-dlp-plugins", import.meta.url).pathname;
 const MAX_WARMING = 2;
+const CUT_SHORT_MS = 5_000;
 
 const cache = new Map<string, Promise<Resolved>>();
 let connection: VoiceConnection | undefined;
@@ -21,6 +22,7 @@ let generation = 0;
 let offsetMs = 0;
 let listener: (event: PlayerEvent) => void = () => undefined;
 let warming = 0;
+let playing: { query: string; volume: number; durationMs: number; retried: boolean; error: string } | undefined;
 
 export function onPlayerEvent(callback: (event: PlayerEvent) => void): void {
   listener = callback;
@@ -124,15 +126,21 @@ export async function join(nextChannel: string): Promise<void> {
   connection.subscribe(player);
   player.on("error", (error) => console.error("player", error.message));
   player.on(AudioPlayerStatus.Idle, () => {
-    if (resource?.ended && ffmpeg) {
-      const finished = generation;
-      killStream();
-      emit({ type: "ended", generation: finished });
-    }
+    if (!resource?.ended || !ffmpeg) return;
+    const finished = generation;
+    const reached = offsetMs + resource.playbackDuration;
+    const song = playing;
+    killStream();
+    const cut = song !== undefined && song.durationMs > 0 && reached < song.durationMs - CUT_SHORT_MS;
+    if (!cut) return emit({ type: "ended", generation: finished });
+    console.error("stream cut", song.query, reached, "of", song.durationMs, "ms", song.error);
+    cache.delete(song.query);
+    if (!song.retried) return play(song.query, reached, song.volume, finished, true);
+    emit({ type: "failed", generation: finished, error: song.error || "stream cut short" });
   });
 }
 
-async function start(query: string, startMs: number, volume: number, id: number): Promise<void> {
+async function start(query: string, startMs: number, volume: number, id: number, retried: boolean): Promise<void> {
   generation = id;
   killStream();
   player?.stop(true);
@@ -149,7 +157,12 @@ async function start(query: string, startMs: number, volume: number, id: number)
     "-vn", "-af", `volume=${volume}`, "-ac", "2", "-ar", "48000",
     "-c:a", "libopus", "-b:a", "128k", "-page_duration", "200000", "-f", "ogg", "pipe:1",
   ]);
-  stream.stderr.on("data", (data: Buffer) => console.error("ffmpeg", String(data).slice(0, 200)));
+  const song = { query, volume, durationMs: track.durationMs, retried, error: "" };
+  playing = song;
+  stream.stderr.on("data", (data: Buffer) => {
+    song.error = String(data).replace(/https?:\/\/\S+/g, "<stream>").trim().slice(-300);
+    console.error("ffmpeg", query, song.error);
+  });
   ffmpeg = stream;
   offsetMs = startMs;
   resource = createAudioResource(stream.stdout, { inputType: StreamType.OggOpus });
@@ -161,8 +174,8 @@ async function start(query: string, startMs: number, volume: number, id: number)
   emit({ type: "started", generation: id, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs, url: track.pageUrl });
 }
 
-export function play(query: string, startMs: number, volume: number, id: number): void {
-  start(query, startMs, volume, id).catch((error: Error) => {
+export function play(query: string, startMs: number, volume: number, id: number, retried = false): void {
+  start(query, startMs, volume, id, retried).catch((error: Error) => {
     console.error("play", query, error.message);
     if (generation === id) emit({ type: "failed", generation: id, error: error.message.slice(0, 300) });
   });
