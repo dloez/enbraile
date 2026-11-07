@@ -1,4 +1,5 @@
 import { db, getValue, setValue } from "./db.ts";
+import { artistNames, sessionRadio } from "./music.ts";
 import * as player from "./player.ts";
 
 export type Track = { id: string; query: string; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string };
@@ -69,6 +70,10 @@ const AUTOPLAY_LIMIT_MS = 60 * 60_000;
 const MAX_FAILURES_IN_A_ROW = 5;
 const HISTORY_KEPT = 200;
 const PREPARED_AHEAD = 2;
+const HUMAN_SEEDS = 5;
+const AUTOPLAY_SEEDS = 2;
+const ARTIST_COOLDOWN = 3;
+const AUTOPLAY_SEED_WEIGHT = 0.3;
 
 const blank = (): State => ({
   channelId: null,
@@ -169,14 +174,24 @@ function startCurrent(offsetMs = 0): void {
 }
 
 async function related(): Promise<Track | null> {
-  const last = [...state.tracks].reverse().find((track) => videoId(track.url));
-  const id = videoId(last?.url ?? null);
-  if (!id) return null;
-  const tracks = await player.related(id);
-  const played = new Set(state.tracks.map((track) => videoId(track.url)));
-  for (const row of db.prepare("SELECT url FROM history ORDER BY id DESC LIMIT 100").all() as { url: string | null }[]) played.add(videoId(row.url));
-  const pick = tracks.find((track) => videoId(track.url) && !played.has(videoId(track.url)));
-  return pick ? { id: crypto.randomUUID(), query: pick.url, title: pick.title, artist: null, artwork: null, durationMs: 0, url: pick.url, requestedBy: "autoplay" } : null;
+  const seeds: { videoId: string; weight: number }[] = [];
+  let humans = 0;
+  let autoplays = 0;
+  for (const track of [...state.tracks].reverse()) {
+    const id = videoId(track.url);
+    if (!id || seeds.some((seed) => seed.videoId === id)) continue;
+    if (track.requestedBy === "autoplay") {
+      if (autoplays < AUTOPLAY_SEEDS) seeds.push({ videoId: id, weight: AUTOPLAY_SEED_WEIGHT / ++autoplays });
+    } else if (humans < HUMAN_SEEDS) seeds.push({ videoId: id, weight: 1 / ++humans });
+    if (humans === HUMAN_SEEDS && autoplays === AUTOPLAY_SEEDS) break;
+  }
+  if (!seeds.length) return null;
+  const played = new Set<string>();
+  for (const track of state.tracks) played.add(videoId(track.url) ?? "");
+  for (const row of db.prepare("SELECT url FROM history ORDER BY id DESC LIMIT 100").all() as { url: string | null }[]) played.add(videoId(row.url) ?? "");
+  const avoid = state.tracks.slice(-ARTIST_COOLDOWN).flatMap((track) => artistNames(track.artist));
+  const [pick] = await sessionRadio(seeds, played, avoid);
+  return pick ? { id: crypto.randomUUID(), query: pick.url, title: pick.title, artist: pick.artist || null, artwork: pick.artwork, durationMs: pick.durationMs, url: pick.url, requestedBy: "autoplay" } : null;
 }
 
 async function planAutoplay(): Promise<void> {

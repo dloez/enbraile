@@ -64,3 +64,67 @@ export async function searchSongs(query: string, limit = 10): Promise<Song[]> {
     .filter((entry): entry is Song => entry !== null)
     .slice(0, limit);
 }
+
+type PanelVideo = { videoId?: string; title?: { runs?: Run[] }; longBylineText?: { runs?: Run[] }; lengthText?: { runs?: Run[] }; thumbnail?: { thumbnails?: { url: string }[] } };
+type NextResponse = { contents?: { singleColumnMusicWatchNextResultsRenderer?: { tabbedRenderer?: { watchNextTabbedResultsRenderer?: { tabs?: { tabRenderer?: { content?: { musicQueueRenderer?: { content?: { playlistPanelRenderer?: { contents?: { playlistPanelVideoRenderer?: PanelVideo }[] } } } } } }[] } } } } };
+
+export type Seed = { videoId: string; weight: number };
+
+const RADIO_LENGTH = 50;
+
+function panelSong(video: PanelVideo): Song | null {
+  const title = video.title?.runs?.map((run) => run.text).join("");
+  if (!video.videoId || !title) return null;
+  const byline = (video.longBylineText?.runs ?? []).map((run) => run.text).join("").split(SEPARATOR);
+  const length = video.lengthText?.runs?.[0]?.text;
+  const artwork = video.thumbnail?.thumbnails?.at(-1)?.url ?? null;
+  return {
+    videoId: video.videoId,
+    url: `https://www.youtube.com/watch?v=${video.videoId}`,
+    title,
+    artist: byline[0] ?? "",
+    album: byline.length > 2 ? (byline[1] ?? null) : null,
+    durationMs: length && /^\d+(:\d{2})+$/.test(length) ? clockToMs(length) : 0,
+    artwork: artwork ? artwork.replace(/=w\d+-h\d+/, "=w544-h544") : null,
+    plays: null,
+  };
+}
+
+export async function songRadio(videoId: string): Promise<Song[]> {
+  const response = await fetch("https://music.youtube.com/youtubei/v1/next?prettyPrint=false", {
+    method: "POST",
+    headers: { "content-type": "application/json", "user-agent": "Mozilla/5.0", origin: "https://music.youtube.com" },
+    body: JSON.stringify({ context: { client: CLIENT }, videoId, playlistId: `RDAMVM${videoId}`, isAudioOnly: true }),
+  });
+  if (!response.ok) throw new Error(`music radio ${response.status}`);
+  const data = (await response.json()) as NextResponse;
+  const tabs = data.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs ?? [];
+  const items = tabs[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents ?? [];
+  return items.map((item) => (item.playlistPanelVideoRenderer ? panelSong(item.playlistPanelVideoRenderer) : null)).filter((entry): entry is Song => entry !== null);
+}
+
+export function artistNames(artist: string | null | undefined): string[] {
+  return (artist ?? "")
+    .toLowerCase()
+    .split(/\s*(?:,|&|\band\b|\bx\b|\bfeat\.?|\bft\.?|\bwith\b)\s*/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+export async function sessionRadio(seeds: Seed[], played: Set<string>, avoidArtists: string[]): Promise<Song[]> {
+  const radios = await Promise.all(seeds.map((seed) => songRadio(seed.videoId).catch((error: Error) => (console.error("radio", seed.videoId, error.message), []))));
+  const scored = new Map<string, { song: Song; score: number }>();
+  radios.forEach((radio, index) => {
+    const weight = seeds[index]!.weight;
+    radio.forEach((song, rank) => {
+      if (played.has(song.videoId)) return;
+      const entry = scored.get(song.videoId) ?? { song, score: 0 };
+      entry.score += weight * (1 - rank / RADIO_LENGTH) ** 2;
+      scored.set(song.videoId, entry);
+    });
+  });
+  const avoid = new Set(avoidArtists);
+  const ranked = [...scored.values()].sort((a, b) => b.score - a.score).map((entry) => entry.song);
+  const fresh = ranked.filter((song) => !artistNames(song.artist).some((name) => avoid.has(name)));
+  return fresh.length ? fresh : ranked;
+}

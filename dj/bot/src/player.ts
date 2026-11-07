@@ -77,7 +77,6 @@ function flatList(url: string, limit: number): Promise<{ title: string; url: str
 }
 
 export const expand = (url: string) => flatList(url, 200);
-export const related = (videoId: string) => flatList(`https://www.youtube.com/watch?v=${videoId}&list=RD${videoId}`, 25);
 
 export function prepare(query: string): void {
   resolveTrack(query).catch((error: Error) => console.error("prepare", error.message));
