@@ -115,6 +115,9 @@ a:hover { color: var(--accent); }
 .len { color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; min-width: 36px; text-align: right; }
 .grip { color: var(--line-strong); display: flex; cursor: grab; }
 .reorder { display: flex; }
+.grip:empty { width: 16px; }
+.auto-row { opacity: .75; }
+.tag { flex: none; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); font-size: 12px; font-weight: 600; }
 @media (hover: hover) {
   .queue-row .reorder { opacity: 0; }
   .queue-row:hover .reorder, .queue-row:focus-within .reorder { opacity: 1; }

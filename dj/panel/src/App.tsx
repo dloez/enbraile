@@ -276,6 +276,7 @@ function PlayerTab({ view, setView, live }: { view: View | null; setView: (view:
   const track = view && view.active ? view.tracks[view.current] : undefined;
   const upcoming = view?.active ? view.tracks.slice(view.current + 1) : [];
   const offset = (view?.current ?? 0) + 1;
+  const auto = view?.active ? (view.autoplayNext ?? null) : null;
   return (
     <>
       {!live && <p className="notice" role="status">{t.offline}</p>}
@@ -293,7 +294,8 @@ function PlayerTab({ view, setView, live }: { view: View | null; setView: (view:
                 <h2 className="label">{upcoming.length ? `${t.queue} · ${upcoming.length}` : t.queue}</h2>
                 {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
               </div>
-              {upcoming.length === 0 ? <p className="hint">{t.queueEmpty}</p> : (
+              {upcoming.length === 0 && !auto && <p className="hint">{view?.autoplay ? t.autoplayPicking : t.queueEmpty}</p>}
+              {upcoming.length > 0 && (
                 <ol className="rows">
                   {upcoming.map((item, index) => (
                     <li key={item.id} className={`song queue-row ${dragging === item.id ? "dragging" : ""}`} draggable onDragStart={() => setDragging(item.id)} onDragEnd={() => setDragging(null)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragging && dragging !== item.id) void command({ action: "move", id: dragging, to: offset + index }); setDragging(null); }}>
@@ -312,6 +314,17 @@ function PlayerTab({ view, setView, live }: { view: View | null; setView: (view:
                     </li>
                   ))}
                 </ol>
+              )}
+              {auto && (
+                <div className="song auto-row">
+                  <span className="grip" />
+                  <Art src={artwork(auto, 96)} className="art-sm" />
+                  <div className="meta">
+                    <div className="name">{auto.title}</div>
+                    {auto.artist && <div className="sub">{auto.artist}</div>}
+                  </div>
+                  <span className="tag">{t.autoplay}</span>
+                </div>
               )}
             </section>
           )}

@@ -13,6 +13,7 @@ export type SessionState = {
   volume: number;
   loop: Loop;
   autoplay: boolean;
+  autoplayNext: Track | null;
   positionMs: number;
   generation: number;
   listeners: number;
@@ -34,6 +35,7 @@ export type View = {
   loop: Loop;
   autoplay: boolean;
   autoplayEndsAt: number | null;
+  autoplayNext: Track | null;
   positionMs: number;
   listeners: number;
   active: boolean;
@@ -79,6 +81,7 @@ const blank = (guildId: string): SessionState => ({
   volume: 1,
   loop: "off",
   autoplay: false,
+  autoplayNext: null,
   positionMs: 0,
   generation: 0,
   listeners: 0,
@@ -199,12 +202,27 @@ export class Session extends Container<Env> {
     return pick ? { id: crypto.randomUUID(), query: pick.url, title: pick.title, artist: null, artwork: null, durationMs: 0, url: pick.url, requestedBy: "autoplay" } : null;
   }
 
+  private async planAutoplay(): Promise<void> {
+    const before = await this.load();
+    const last = before.tracks.at(-1);
+    if (!before.active || !before.autoplay || !last || before.current !== before.tracks.length - 1 || before.autoplayNext) return;
+    const pick = await this.related(before).catch((error: Error) => (console.error("related", error.message), null));
+    if (!pick) return;
+    const state = await this.load();
+    if (!state.active || !state.autoplay || state.autoplayNext || state.tracks.at(-1)?.id !== last.id) return;
+    state.autoplayNext = pick;
+    await this.save(state);
+    await this.call("/prepare", { query: pick.query }).catch(() => undefined);
+  }
+
   private async advance(state: SessionState): Promise<void> {
     if (state.loop !== "track") state.current += 1;
     if (state.current >= state.tracks.length) {
       if (state.loop === "queue" && state.tracks.length) state.current = 0;
       else {
-        const next = state.autoplay ? await this.related(state).catch((error: Error) => (console.error("related", error.message), null)) : null;
+        const planned = state.autoplayNext;
+        state.autoplayNext = null;
+        const next = state.autoplay ? (planned ?? (await this.related(state).catch((error: Error) => (console.error("related", error.message), null)))) : null;
         if (next) {
           state.tracks.push(next);
           state.current = state.tracks.length - 1;
@@ -229,6 +247,7 @@ export class Session extends Container<Env> {
     state.positionMs = 0;
     state.paused = false;
     state.autoplay = false;
+    state.autoplayNext = null;
     state.emptySince = state.idleSince = state.pausedSince = state.lastTick = null;
     await this.save(state);
   }
@@ -244,6 +263,7 @@ export class Session extends Container<Env> {
       loop: state.loop,
       autoplay: state.autoplay,
       autoplayEndsAt: state.autoplay ? state.lastHumanAt + AUTOPLAY_LIMIT_MS : null,
+      autoplayNext: state.autoplay && state.current === state.tracks.length - 1 ? (state.autoplayNext ?? null) : null,
       positionMs: state.positionMs,
       listeners: state.listeners,
       active: state.active,
@@ -269,6 +289,7 @@ export class Session extends Container<Env> {
     const wasPlaying = state.active && state.current >= 0 && state.current < before;
     state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy })));
     state.lastHumanAt = Date.now();
+    state.autoplayNext = null;
     if (!state.active || state.channelId !== channelId) {
       await this.call("/join", { guildId: state.guildId, channelId });
       state.channelId = channelId;
@@ -338,7 +359,10 @@ export class Session extends Container<Env> {
         break;
       case "autoplay":
         state.autoplay = command.on;
-        break;
+        if (!command.on) state.autoplayNext = null;
+        await this.save(state);
+        if (command.on) this.ctx.waitUntil(this.planAutoplay());
+        return;
       case "remove": {
         const index = state.tracks.findIndex((track) => track.id === command.id);
         if (index > state.current) state.tracks.splice(index, 1);
@@ -355,6 +379,7 @@ export class Session extends Container<Env> {
       }
     }
     await this.save(state);
+    this.ctx.waitUntil(this.planAutoplay());
   }
 
   private async skip(state: SessionState): Promise<void> {
@@ -396,6 +421,7 @@ export class Session extends Container<Env> {
       }
       state.failures = 0;
       await this.save(state);
+      this.ctx.waitUntil(this.planAutoplay());
       return;
     }
     if (event.type === "failed") {
