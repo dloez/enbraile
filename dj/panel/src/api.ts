@@ -1,6 +1,6 @@
 export type Track = { id: string; query: string; title: string; artist?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string };
 export type Loop = "off" | "track" | "queue";
-export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; loading: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayEndsAt: number | null; autoplayNext: Track | null; positionMs: number; listeners: number; active: boolean };
+export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; loading: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayEndsAt: number | null; autoplayNext: Track | null; positionMs: number; listeners: number; active: boolean; skipped: { id: string; title: string } | null };
 export type Song = { videoId: string; url: string; title: string; artist: string; album: string | null; durationMs: number; artwork: string | null; plays: string | null };
 export type Ticket = { ticket: string; url: string };
 export type Me = { user: { name: string; image: string | null }; discordId: string; member: boolean; canManage: boolean; canPlay: boolean; state: View | null; live: Ticket | null };

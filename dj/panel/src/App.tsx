@@ -407,6 +407,19 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
       throw failure;
     }
   }
+  const [skipped, setSkipped] = useState<string | null>(null);
+  const lastSkipped = useRef(view?.skipped?.id ?? null);
+  const skippedNow = view?.skipped ?? null;
+  useEffect(() => {
+    if (!skippedNow || skippedNow.id === lastSkipped.current) return;
+    lastSkipped.current = skippedNow.id;
+    setSkipped(skippedNow.title);
+  }, [skippedNow?.id]);
+  useEffect(() => {
+    if (!skipped) return;
+    const timer = setTimeout(() => setSkipped(null), 8000);
+    return () => clearTimeout(timer);
+  }, [skipped]);
   const track = view && view.active ? view.tracks[view.current] : undefined;
   const upcoming = view?.active ? view.tracks.slice(view.current + 1) : [];
   const offset = (view?.current ?? 0) + 1;
@@ -418,6 +431,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
         <div className="now-col">
           <NowPlaying view={view} track={track} command={command} />
           {error && <p className="error" role="alert">{error}</p>}
+          {skipped && <p className="notice" role="status">{t.skippedFailed(skipped)}</p>}
           {track && view && <p className="fine">{t.listeners(view.listeners)}</p>}
         </div>
         <div className="side">

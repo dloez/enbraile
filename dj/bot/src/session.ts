@@ -23,6 +23,7 @@ type State = {
   lastHumanAt: number;
   active: boolean;
   failures: number;
+  skipped: Skipped | null;
 };
 
 export type View = {
@@ -39,7 +40,10 @@ export type View = {
   positionMs: number;
   listeners: number;
   active: boolean;
+  skipped: Skipped | null;
 };
+
+export type Skipped = { id: string; title: string };
 
 export type Settings = { djRoleId: string | null };
 export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; playedAt: number };
@@ -85,6 +89,7 @@ const blank = (): State => ({
   lastHumanAt: 0,
   active: false,
   failures: 0,
+  skipped: null,
 });
 
 export function displayName(query: string): string {
@@ -146,6 +151,7 @@ export function view(): View {
     positionMs: livePosition(),
     listeners: state.listeners,
     active: state.active,
+    skipped: state.skipped,
   };
 }
 
@@ -327,6 +333,7 @@ player.onPlayerEvent((event) => {
   if (!state.active || event.generation !== state.generation) return;
   if (event.type === "playing") {
     state.loading = false;
+    state.skipped = null;
     save();
     prepareAhead();
     return;
@@ -348,7 +355,9 @@ player.onPlayerEvent((event) => {
   }
   if (event.type === "failed") {
     state.failures += 1;
-    console.error("track failed", state.tracks[state.current]?.query, event.error);
+    const failed = state.tracks[state.current];
+    if (failed) state.skipped = { id: crypto.randomUUID(), title: failed.title };
+    console.error("track failed", failed?.query, event.error);
     if (state.failures >= MAX_FAILURES_IN_A_ROW) return end();
   }
   void advance();
