@@ -1,4 +1,4 @@
-import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type FocusEvent as ReactFocusEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, get, handleReply, type HistoryEntry, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
@@ -201,23 +201,73 @@ function SongRow({ song, done, disabled, onAdd, warm }: { song: Song; done: bool
   );
 }
 
-function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean }) {
-  const [songs, setSongs] = useState<Song[] | null>(null);
-  const [added, setAdded] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<string | null>(null);
-  const warm = useWarm(true);
+const SETTLE_AFTER_TOUCH_MS = 4_000;
+
+function useSteady<T>(path: string, seed: string) {
+  const [items, setItems] = useState<T | null>(null);
+  const [version, setVersion] = useState(0);
+  const pending = useRef<T | null>(null);
+  const inside = useRef(false);
+  const touched = useRef(0);
+  const loaded = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const release = useCallback(() => {
+    clearTimeout(timer.current);
+    if (pending.current === null || inside.current) return;
+    const wait = touched.current + SETTLE_AFTER_TOUCH_MS - Date.now();
+    if (wait > 0) {
+      timer.current = setTimeout(release, wait);
+      return;
+    }
+    const next = pending.current;
+    pending.current = null;
+    if (loaded.current) setVersion((count) => count + 1);
+    loaded.current = true;
+    setItems(next);
+  }, []);
   useEffect(() => {
     let current = true;
-    const timer = setTimeout(() => {
-      get<Song[]>("suggestions").then((next) => {
-        if (current) setSongs(next);
+    const fetch = setTimeout(() => {
+      get<T>(path).then((next) => {
+        if (!current) return;
+        pending.current = next;
+        release();
       }, () => undefined);
     }, 300);
     return () => {
       current = false;
-      clearTimeout(timer);
+      clearTimeout(fetch);
     };
-  }, [seedKey]);
+  }, [path, seed, release]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const hold = {
+    onPointerEnter: (event: ReactPointerEvent) => {
+      if (event.pointerType === "mouse") inside.current = true;
+    },
+    onPointerLeave: () => {
+      inside.current = false;
+      release();
+    },
+    onPointerDown: () => {
+      touched.current = Date.now();
+    },
+    onFocus: () => {
+      inside.current = true;
+    },
+    onBlur: (event: ReactFocusEvent) => {
+      if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+      inside.current = false;
+      release();
+    },
+  };
+  return { items, version, hold };
+}
+
+function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean }) {
+  const { items: songs, version, hold } = useSteady<Song[]>("suggestions", seedKey);
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const warm = useWarm(true);
   if (!songs?.length) return null;
   async function pick(song: Song) {
     setError(null);
@@ -234,10 +284,10 @@ function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (it
     }
   }
   return (
-    <section className="suggest-area" aria-label={t.suggested} hidden={hidden}>
+    <section className="suggest-area" aria-label={t.suggested} hidden={hidden} {...hold}>
       <h2 className="label">{t.suggested}</h2>
       {error && <p className="error" role="alert">{error}</p>}
-      <ul className="rows">
+      <ul className={`rows ${version ? "refreshed" : ""}`} key={version}>
         {songs.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} onAdd={() => void pick(song)} warm={warm} />)}
       </ul>
     </section>
@@ -247,24 +297,12 @@ function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (it
 const RECENT_SHOWN = 20;
 
 function RecentlyPlayed({ seedKey, current, onPick }: { seedKey: string; current: string | null; onPick: (item: QueueItem) => Promise<void> }) {
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const { items: entries, version, hold } = useSteady<HistoryEntry[]>("history", seedKey);
   const [added, setAdded] = useState<Set<string>>(new Set());
   const warm = useWarm(true);
-  useEffect(() => {
-    let live = true;
-    const timer = setTimeout(() => {
-      get<HistoryEntry[]>("history").then((next) => {
-        if (live) setEntries(next);
-      }, () => undefined);
-    }, 300);
-    return () => {
-      live = false;
-      clearTimeout(timer);
-    };
-  }, [seedKey]);
   const seen = new Set<string>(current ? [current] : []);
   const songs: Song[] = [];
-  for (const entry of entries) {
+  for (const entry of entries ?? []) {
     const url = entry.url ?? entry.query;
     const id = url.match(/[?&]v=([\w-]{11})/)?.[1];
     if (!id || seen.has(url)) continue;
@@ -282,9 +320,9 @@ function RecentlyPlayed({ seedKey, current, onPick }: { seedKey: string; current
     }));
   }
   return (
-    <section className="recent-area" aria-label={t.playedBefore}>
+    <section className="recent-area" aria-label={t.playedBefore} {...hold}>
       <h2 className="label">{t.playedBefore}</h2>
-      <ul className="rows">
+      <ul className={`rows ${version ? "refreshed" : ""}`} key={version}>
         {songs.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} onAdd={() => void pick(song)} warm={warm} />)}
       </ul>
     </section>
@@ -700,7 +738,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   const [searching, setSearching] = useState(false);
-  const seedKey = view?.active ? view.tracks.map((entry) => entry.id).join(",") : "";
+  const seedKey = view?.active ? (view.tracks[view.current]?.query ?? "end") : "";
   async function add(item: QueueItem) {
     if (view) setView(predictAdd(view, item));
     try {

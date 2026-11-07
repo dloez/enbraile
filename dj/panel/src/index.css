@@ -228,6 +228,7 @@ a:hover { color: var(--accent); }
   .queue-row:hover .grip svg { display: block; }
 }
 .rows.stale { opacity: .4; transition: opacity .15s; }
+.rows.refreshed { animation: fade-in .45s var(--ease) backwards; }
 
 @media (min-width: 861px) {
   .page { height: 100vh; height: 100dvh; min-height: 0; padding-bottom: 0; }
