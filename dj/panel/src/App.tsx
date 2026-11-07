@@ -29,8 +29,8 @@ function predictAdd(view: Synced, item: QueueItem): Synced {
   const track: Track = { id: `pending-${crypto.randomUUID()}`, query: item.query, title: item.title ?? item.query, artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy: "" };
   const now = performance.now();
   const tracks = [...view.tracks, track];
-  if (view.active && view.current >= 0 && view.current < view.tracks.length) return { ...view, positionMs: estimate(view, now), at: now, tracks, autoplayNext: null };
-  return { ...view, at: now, active: true, tracks, current: view.tracks.length, positionMs: 0, paused: false, loading: true, autoplayNext: null };
+  if (view.active && view.current >= 0 && view.current < view.tracks.length) return { ...view, positionMs: estimate(view, now), at: now, tracks };
+  return { ...view, at: now, active: true, tracks, current: view.tracks.length, positionMs: 0, paused: false, loading: true };
 }
 
 function predict(view: Synced, command: Command): Synced {
@@ -47,9 +47,13 @@ function predict(view: Synced, command: Command): Synced {
     case "skip": {
       let current = view.current + 1;
       let tracks = view.tracks;
+      let autoplayUpcoming = view.autoplayUpcoming;
       if (current >= tracks.length && view.loop === "queue") current = 0;
-      else if (current >= tracks.length && view.autoplayNext) tracks = [...tracks, view.autoplayNext];
-      return { ...next, tracks, current, positionMs: 0, paused: false, loading: current < tracks.length, autoplayNext: null };
+      else if (current >= tracks.length && autoplayUpcoming[0]) {
+        tracks = [...tracks, autoplayUpcoming[0]];
+        autoplayUpcoming = autoplayUpcoming.slice(1);
+      }
+      return { ...next, tracks, current, positionMs: 0, paused: false, loading: current < tracks.length, autoplayUpcoming };
     }
     case "previous": {
       const current = next.positionMs <= RESTART_WITHIN_MS && view.current > 0 ? Math.min(view.current, view.tracks.length) - 1 : view.current;
@@ -58,7 +62,7 @@ function predict(view: Synced, command: Command): Synced {
     case "loop":
       return { ...next, loop: command.loop ?? "off" };
     case "autoplay":
-      return { ...next, autoplay: Boolean(command.on), autoplayNext: command.on ? view.autoplayNext : null };
+      return { ...next, autoplay: Boolean(command.on), autoplayUpcoming: [] };
     case "clear":
       return { ...next, tracks: view.tracks.slice(0, view.current + 1) };
     case "remove":
@@ -768,7 +772,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
   const track = view && view.active ? view.tracks[view.current] : undefined;
   const upcoming = view?.active ? view.tracks.slice(view.current + 1) : [];
   const offset = (view?.current ?? 0) + 1;
-  const auto = view?.active ? (view.autoplayNext ?? null) : null;
+  const autoplays = view?.active && view.autoplay ? view.autoplayUpcoming : [];
   const nowRef = useRef<HTMLDivElement>(null);
   const docked = useOffscreen(() => nowRef.current?.querySelector(".transport"), track?.id ?? null);
   return (
@@ -802,17 +806,24 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                   <h2 className="label">{t.queue}{upcoming.length > 0 && <span className="count">{upcoming.length}</span>}</h2>
                   {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
                 </div>
-                {upcoming.length === 0 && !auto && <p className="hint">{view?.autoplay ? t.autoplayPicking : t.queueEmpty}</p>}
+                {upcoming.length === 0 && !autoplays.length && <p className="hint">{view?.autoplay ? t.autoplayPicking : t.queueEmpty}</p>}
                 {upcoming.length > 0 && <QueueList upcoming={upcoming} offset={offset} command={command} />}
-                {auto && (
-                  <div className="song auto-row">
-                    <span className="grip" />
-                    <Art src={artwork(auto, 96)} className="art-sm" />
-                    <div className="meta">
-                      <div className="name">{auto.title}</div>
-                      {auto.artist && <div className="sub">{auto.artist}</div>}
-                    </div>
-                    <span className="tag">{t.autoplay}</span>
+                {autoplays.length > 0 && (
+                  <div className="auto-group">
+                    <p className="auto-label"><span>{upcoming.length ? t.thenAutoplay : t.autoplay}</span></p>
+                    <ol className="rows">
+                      {autoplays.map((pick) => (
+                        <li key={pick.id} className="song auto-row">
+                          <span className="grip" />
+                          <Art src={artwork(pick, 96)} className="art-sm" />
+                          <div className="meta">
+                            <div className="name">{pick.title}</div>
+                            {pick.artist && <div className="sub">{pick.artist}</div>}
+                          </div>
+                          {pick.durationMs > 0 && <span className="len">{clock(pick.durationMs)}</span>}
+                        </li>
+                      ))}
+                    </ol>
                   </div>
                 )}
               </section>

@@ -216,7 +216,12 @@ a:hover { color: var(--accent); }
 .queue-row.lifted .grip svg { display: block; color: var(--accent); }
 .grip svg { display: none; color: var(--dim); }
 .reorder { display: flex; }
-.auto-row { opacity: .7; }
+.auto-row { opacity: .62; transition: opacity .2s, background .2s; }
+.auto-row:hover { opacity: .9; }
+.auto-row .len { margin-right: 9rem; }
+.auto-group { margin-top: .4rem; animation: fade-in .45s var(--ease) backwards; }
+.auto-label { margin: .4rem .65rem .35rem; display: flex; align-items: center; gap: .75rem; color: var(--accent); font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.auto-label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, var(--accent-line), transparent); }
 .tag { flex: none; padding: .15rem .65rem; border-radius: 999px; border: 1px solid var(--accent-line); color: var(--accent); font-size: .75rem; font-weight: 600; }
 .num { width: 1.6rem; flex: none; color: var(--faint); font-variant-numeric: tabular-nums; text-align: right; font-size: .85rem; }
 @media (hover: none) {
@@ -283,7 +288,7 @@ a:hover { color: var(--accent); }
   .artist { font-size: .95rem; }
   .side { padding: .6rem; border-radius: 1.4rem; gap: 1.6rem; }
   .search-box { min-height: 3.2rem; }
-  .plays, .queue-row .len, .auto-row .grip { display: none; }
+  .plays, .queue-row .len, .auto-row .grip, .auto-row .len { display: none; }
   .grip { width: 1.9rem; margin-left: -.35rem; }
   .song { padding: .4rem .35rem; gap: .75rem; }
   .label { margin-left: .35rem; }

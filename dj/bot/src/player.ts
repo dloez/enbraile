@@ -85,6 +85,10 @@ export function prepare(query: string): void {
   resolveTrack(query).catch((error: Error) => console.error("prepare", error.message));
 }
 
+export function playable(query: string): Promise<boolean> {
+  return resolveTrack(query).then(() => true, (error: Error) => (console.error("unplayable", query, error.message), false));
+}
+
 export function warm(query: string): void {
   if (cache.has(query) || warming >= MAX_WARMING) return;
   warming += 1;

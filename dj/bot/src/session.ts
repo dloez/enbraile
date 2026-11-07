@@ -14,7 +14,7 @@ type State = {
   volume: number;
   loop: Loop;
   autoplay: boolean;
-  autoplayNext: Track | null;
+  autoplayUpcoming: Track[];
   positionMs: number;
   generation: number;
   listeners: number;
@@ -37,7 +37,7 @@ export type View = {
   loop: Loop;
   autoplay: boolean;
   autoplayEndsAt: number | null;
-  autoplayNext: Track | null;
+  autoplayUpcoming: Track[];
   positionMs: number;
   listeners: number;
   active: boolean;
@@ -74,6 +74,7 @@ const PREPARED_AHEAD = 3;
 const HUMAN_SEEDS = 5;
 const AUTOPLAY_SEEDS = 2;
 const ARTIST_COOLDOWN = 3;
+const AUTOPLAY_AHEAD = 3;
 const AUTOPLAY_SEED_WEIGHT = 0.3;
 const SUGGESTIONS = 20;
 const SUGGESTIONS_KEPT_MS = 10 * 60_000;
@@ -87,7 +88,7 @@ const blank = (): State => ({
   volume: 1,
   loop: "off",
   autoplay: false,
-  autoplayNext: null,
+  autoplayUpcoming: [],
   positionMs: 0,
   generation: 0,
   listeners: 0,
@@ -142,6 +143,8 @@ function livePosition(): number {
 function prepareAhead(): void {
   if (!playing() || state.loading) return;
   for (const track of state.tracks.slice(Math.max(0, state.current - 1), state.current + 1 + PREPARED_AHEAD)) player.prepare(track.query);
+  const room = state.current + 1 + PREPARED_AHEAD - state.tracks.length;
+  if (state.autoplay && room > 0) for (const pick of state.autoplayUpcoming.slice(0, room)) void verify(pick);
 }
 
 export function view(): View {
@@ -155,7 +158,7 @@ export function view(): View {
     loop: state.loop,
     autoplay: state.autoplay,
     autoplayEndsAt: state.autoplay ? state.lastHumanAt + AUTOPLAY_LIMIT_MS : null,
-    autoplayNext: state.autoplay && state.current === state.tracks.length - 1 ? state.autoplayNext : null,
+    autoplayUpcoming: state.autoplay ? state.autoplayUpcoming : [],
     positionMs: livePosition(),
     listeners: state.listeners,
     active: state.active,
@@ -225,22 +228,67 @@ async function filterSuggestions(songs: Promise<Song[]>): Promise<Song[]> {
   return picked;
 }
 
-async function related(): Promise<Track | null> {
-  const seeds = radioSeeds();
-  if (!seeds.length) return null;
-  const avoid = state.tracks.slice(-ARTIST_COOLDOWN).flatMap((track) => artistNames(track.artist));
-  const [pick] = await sessionRadio(seeds, playedIds(), avoid);
-  return pick ? { id: crypto.randomUUID(), query: pick.url, title: pick.title, artist: pick.artist || null, artwork: pick.artwork, durationMs: pick.durationMs, url: pick.url, requestedBy: "autoplay" } : null;
+const unplayable = new Set<string>();
+let planToken = 0;
+let planning: { token: number; done: Promise<void> } | null = null;
+let replacing = false;
+
+async function verify(pick: Track): Promise<void> {
+  if (await player.playable(pick.query)) return;
+  unplayable.add(videoId(pick.url) ?? pick.query);
+  const before = state.autoplayUpcoming.length;
+  state.autoplayUpcoming = state.autoplayUpcoming.filter((entry) => entry.id !== pick.id);
+  if (state.autoplayUpcoming.length === before) return;
+  save();
+  plan();
 }
 
-async function planAutoplay(): Promise<void> {
-  const last = state.tracks.at(-1);
-  if (!state.active || !state.autoplay || !last || state.current !== state.tracks.length - 1 || state.autoplayNext) return;
-  const pick = await related().catch((error: Error) => (console.error("related", error.message), null));
-  if (!pick || !state.active || !state.autoplay || state.autoplayNext || state.tracks.at(-1)?.id !== last.id) return;
-  state.autoplayNext = pick;
-  save();
-  player.prepare(pick.query);
+async function radioPicks(count: number, kept: Track[]): Promise<Track[]> {
+  const seeds = radioSeeds();
+  if (!seeds.length || count <= 0) return [];
+  const exclude = playedIds();
+  for (const id of unplayable) exclude.add(id);
+  for (const track of kept) exclude.add(videoId(track.url) ?? "");
+  const recent = [...state.tracks, ...kept].slice(-ARTIST_COOLDOWN).flatMap((track) => artistNames(track.artist));
+  const ranked = await sessionRadio(seeds, exclude, recent);
+  const picks: Track[] = [];
+  const pool = [...ranked];
+  while (picks.length < count && pool.length) {
+    const window = new Set([...recent, ...picks.flatMap((track) => artistNames(track.artist))].slice(-ARTIST_COOLDOWN * 2));
+    const index = Math.max(0, pool.findIndex((song) => !artistNames(song.artist).some((name) => window.has(name))));
+    const [song] = pool.splice(index, 1);
+    picks.push({ id: crypto.randomUUID(), query: song!.url, title: song!.title, artist: song!.artist || null, artwork: song!.artwork, durationMs: song!.durationMs, url: song!.url, requestedBy: "autoplay" });
+  }
+  return picks;
+}
+
+function planAutoplay(): Promise<void> {
+  if (planning?.token === planToken) return planning.done;
+  const token = planToken;
+  const done = (async () => {
+    if (!state.active || !state.autoplay || !state.tracks.length) return;
+    const fresh = replacing;
+    const kept = fresh ? [] : state.autoplayUpcoming;
+    const picks = await radioPicks(AUTOPLAY_AHEAD - kept.length, kept).catch((error: Error) => (console.error("related", error.message), []));
+    if (token !== planToken || !state.active || !state.autoplay) return;
+    const played = playedIds();
+    const usable = picks.filter((pick) => !played.has(videoId(pick.url) ?? ""));
+    if (!usable.length) return;
+    replacing = false;
+    state.autoplayUpcoming = fresh ? usable : [...state.autoplayUpcoming, ...usable].slice(0, AUTOPLAY_AHEAD);
+    save();
+    prepareAhead();
+  })().finally(() => {
+    if (planning?.token === token) planning = null;
+  });
+  planning = { token, done };
+  return done;
+}
+
+function replan(): void {
+  planToken += 1;
+  replacing = true;
+  plan();
 }
 
 const plan = () => void planAutoplay();
@@ -250,9 +298,8 @@ async function advance(): Promise<void> {
   if (state.current >= state.tracks.length) {
     if (state.loop === "queue" && state.tracks.length) state.current = 0;
     else {
-      const planned = state.autoplayNext;
-      state.autoplayNext = null;
-      const next = state.autoplay ? (planned ?? (await related().catch((error: Error) => (console.error("related", error.message), null)))) : null;
+      if (state.autoplay && !state.autoplayUpcoming.length) await planAutoplay();
+      const next = state.autoplay ? (state.autoplayUpcoming.shift() ?? null) : null;
       if (next) {
         state.tracks.push(next);
         state.current = state.tracks.length - 1;
@@ -290,7 +337,6 @@ export async function enqueue(channelId: string, items: QueueItem[], requestedBy
   const wasPlaying = state.active && state.current >= 0 && state.current < before;
   state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy })));
   state.lastHumanAt = Date.now();
-  state.autoplayNext = null;
   if (!state.active || state.channelId !== channelId) {
     await player.join(channelId);
     state.channelId = channelId;
@@ -304,6 +350,7 @@ export async function enqueue(channelId: string, items: QueueItem[], requestedBy
     state.current = before;
     startCurrent();
   }
+  replan();
   return { ok: true, added: items.length, position };
 }
 
@@ -345,6 +392,7 @@ export async function command(command: Command): Promise<void> {
       return;
     case "clear":
       state.tracks = state.tracks.slice(0, state.current + 1);
+      replan();
       break;
     case "shuffle": {
       const upcoming = state.tracks.slice(state.current + 1);
@@ -367,7 +415,8 @@ export async function command(command: Command): Promise<void> {
       break;
     case "autoplay":
       state.autoplay = command.on;
-      if (!command.on) state.autoplayNext = null;
+      state.autoplayUpcoming = [];
+      if (command.on) replan();
       break;
     case "remove": {
       const index = state.tracks.findIndex((track) => track.id === command.id);
