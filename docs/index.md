@@ -18,6 +18,7 @@ Decisions live, dated, in the `## Decisions` section of the owning explanation d
 |----------|------|-------------|
 | [Repository Layout](general/explanation/repository-layout.md) | Explanation | Categories, projects, and where their code and docs live |
 | [Write Documentation](general/how-to/write-documentation.md) | How-to | How to maintain this documentation system |
+| [Deploy the Vercel Projects](general/how-to/deploy-vercel-projects.md) | How-to | How the dj panel, pkmn site and root site deploy from GitHub Actions |
 
 ## Categories
 

@@ -1,0 +1,31 @@
+name: home site deploy
+
+on:
+  push:
+    paths:
+      - home/site/**
+      - .github/workflows/home-site.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: home-site-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: team_EkfgysYGBTjvtgAarbJ8H6JU
+  VERCEL_PROJECT_ID: prj_WkywRj4qpvinKB7UWeFaSB4iC7Eh
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - run: npx --yes vercel@65.12.1 deploy --yes ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

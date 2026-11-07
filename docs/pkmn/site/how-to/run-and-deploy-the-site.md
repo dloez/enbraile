@@ -113,7 +113,7 @@ unset DATABASE_URL BETTER_AUTH_SECRET
 
 ### 7. Deploy
 
-Push to `main`. Vercel's build runs `npm run build` and then `npm run db:migrate` (`buildCommand` in `vercel.json`) against that environment's `DATABASE_URL`, so a deploy migrates its own branch, production or `dev`, before it goes live, and a build that fails migrates nothing. A migration that drops or renames something the live code still reads goes out in two deploys: first the code that no longer reads it, then the migration. Vercel builds and deploys every push that touches `pkmn/site/` to production, and a branch push gets a public preview URL, shown on the commit's GitHub status and in the Vercel dashboard. There is no manual deploy command.
+Push to `main`. Vercel's build runs `npm run build` and then `npm run db:migrate` (`buildCommand` in `vercel.json`) against that environment's `DATABASE_URL`, so a deploy migrates its own branch, production or `dev`, before it goes live, and a build that fails migrates nothing. A migration that drops or renames something the live code still reads goes out in two deploys: first the code that no longer reads it, then the migration. The `pkmn-site.yml` workflow deploys every push to `main` that touches `pkmn/site/` to production, and another branch's push gets a preview URL, shown at the end of the workflow's run and in the Vercel dashboard; it can also be run by hand from the Actions tab ([How to Deploy the Vercel Projects](../../../general/how-to/deploy-vercel-projects.md)).
 
 ### Seed the preview
 
