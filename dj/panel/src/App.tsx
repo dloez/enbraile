@@ -492,7 +492,15 @@ function PlaylistsTab({ me }: { me: Me }) {
       setError(message(failure));
     }
   };
-  const play = (items: PlaylistTrack[]) => act(() => enqueue({ items: items.map(({ query, title }) => ({ query, title })) }));
+  const play = async (items: PlaylistTrack[]) => {
+    setError(null);
+    try {
+      await enqueue({ items: items.map(({ query, title }) => ({ query, title })) });
+    } catch (failure) {
+      setError(message(failure));
+      throw failure;
+    }
+  };
   if (list) {
     return (
       <section className="card" aria-label={list.name}>
@@ -502,7 +510,7 @@ function PlaylistsTab({ me }: { me: Me }) {
           <p className="dim">{t.by(list.ownerName)} · {t.tracks(tracks.length)}</p>
         </div>
         <div className="row">
-          <button className="btn primary" disabled={!tracks.length} onClick={() => void play(tracks)}>{t.play}</button>
+          <QueueButton className="btn primary" label={t.play} disabled={!tracks.length} run={() => play(tracks)} />
           {owned && <button className="btn" onClick={() => { const next = prompt(t.rename, list.name); if (next?.trim()) void act(() => post("playlist/rename", { id: list.id, name: next })); }}>{t.rename}</button>}
           {owned && <button className="btn danger" onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); setOpen(null); }); }}>{t.delete}</button>}
         </div>
@@ -544,6 +552,20 @@ function PlaylistsTab({ me }: { me: Me }) {
   );
 }
 
+function QueueButton({ className, label, disabled, run }: { className: string; label: string; disabled?: boolean; run: () => Promise<void> }) {
+  const [state, setState] = useState<"idle" | "busy" | "done">("idle");
+  useEffect(() => {
+    if (state !== "done") return;
+    const timer = setTimeout(() => setState("idle"), 2500);
+    return () => clearTimeout(timer);
+  }, [state]);
+  function click() {
+    setState("busy");
+    run().then(() => setState("done"), () => setState("idle"));
+  }
+  return <button className={`${className} ${state === "done" ? "done" : ""}`} disabled={disabled || state === "busy"} aria-live="polite" onClick={click}>{state === "busy" ? t.adding : state === "done" ? t.queued : label}</button>;
+}
+
 function HistoryTab() {
   const [entries, setEntries] = useState<HistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -557,7 +579,15 @@ function HistoryTab() {
           <li key={entry.id} className="item">
             <span className="name">{entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.title}</a> : entry.title}</span>
             <span className="dim">{new Date(entry.playedAt).toLocaleString()}</span>
-            <button className="btn small" onClick={() => { setError(null); enqueue({ items: [{ query: entry.url ?? entry.query, title: entry.title }] }).catch((failure: unknown) => setError(message(failure))); }}>{t.requeue}</button>
+            <QueueButton className="btn small" label={t.requeue} run={async () => {
+              setError(null);
+              try {
+                await enqueue({ items: [{ query: entry.url ?? entry.query, title: entry.title }] });
+              } catch (failure) {
+                setError(message(failure));
+                throw failure;
+              }
+            }} />
           </li>
         ))}
       </ul>

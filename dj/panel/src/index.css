@@ -176,3 +176,4 @@ label.stack { display: flex; flex-direction: column; gap: 6px; font-weight: 600;
 .skeleton.search-line { height: 52px; border-radius: 999px; }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 @media (max-width: 560px) { .now-col .art-hero.skeleton { width: 96px; border-radius: 14px; } }
+.btn.small.done { color: var(--accent); }
