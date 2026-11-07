@@ -1,11 +1,13 @@
-export type Item = { query: string; title?: string };
+import { musicSearchUrl, searchSongs } from "./music.js";
+
+export type Item = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
 
 const TICKET_LIFETIME_MS = 60_000;
 const MAX_TRACKS = 200;
 
 type SpotifyEntity = { title?: string; name?: string; subtitle?: string; artists?: { name: string }[]; trackList?: { title: string; subtitle: string }[] };
 
-const search = (artist: string, title: string): Item => ({ query: `ytsearch1:${artist} ${title} audio`, title: `${artist} - ${title}` });
+const search = (artist: string, title: string): Item => ({ query: musicSearchUrl(`${artist} ${title}`), title, artist });
 
 async function spotify(kind: string, id: string): Promise<Item[]> {
   const page = await fetch(`https://open.spotify.com/embed/${kind}/${id}`, { headers: { "user-agent": "Mozilla/5.0", "accept-language": "en" } });
@@ -23,7 +25,11 @@ export async function resolveInput(input: string, expand: (url: string) => Promi
   const text = input.trim();
   const spotifyMatch = text.match(/open\.spotify\.com\/(?:intl-\w+\/)?(track|album|playlist)\/([A-Za-z0-9]+)/);
   if (spotifyMatch) return spotify(spotifyMatch[1]!, spotifyMatch[2]!);
-  if (!/^https?:\/\//.test(text)) return text ? [{ query: `ytsearch1:${text}`, title: text }] : [];
+  if (!/^https?:\/\//.test(text)) {
+    if (!text) return [];
+    const top = (await searchSongs(text, 1).catch((error: Error) => (console.error("music search", error.message), [])))[0];
+    return [top ? { query: top.url, title: top.title, artist: top.artist, artwork: top.artwork, durationMs: top.durationMs } : { query: musicSearchUrl(text), title: text }];
+  }
   if (/[?&]list=/.test(text) && !/[?&]list=RD/.test(text)) {
     const tracks = await expand(text);
     return tracks.slice(0, MAX_TRACKS).map((track) => ({ query: track.url, title: track.title }));

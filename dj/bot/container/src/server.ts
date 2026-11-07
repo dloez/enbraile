@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage } from "node:http";
 import { AudioPlayerStatus, type AudioPlayer, type AudioResource, createAudioPlayer, createAudioResource, entersState, joinVoiceChannel, StreamType, type VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
 import { Client, GatewayIntentBits } from "discord.js";
 
-type Resolved = { title: string; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string; at: number };
+type Resolved = { title: string; artist: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string; at: number };
 
 const RESOLVE_TTL_MS = 30 * 60 * 1000;
 const token = process.env.DISCORD_BOT_TOKEN ?? "";
@@ -41,15 +41,15 @@ function resolveTrack(query: string): Promise<Resolved> {
   const pending = new Promise<Resolved>((resolve, reject) => {
     execFile(
       "yt-dlp",
-      ["--js-runtimes", "node", "--no-playlist", "--no-warnings", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,duration,webpage_url,url,http_headers})j", query],
+      ["--js-runtimes", "node", "--no-playlist", "--playlist-items", "1", "--no-warnings", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,track,artist,uploader,thumbnail,duration,webpage_url,url,http_headers})j", query],
       { timeout: 60000, maxBuffer: 8 * 1024 * 1024 },
       (error, stdout, stderr) => {
         if (error) return reject(new Error((stderr || error.message).trim().slice(-300)));
         const line = stdout.trim().split("\n").at(-1);
         if (!line) return reject(new Error("no result"));
-        const info = JSON.parse(line) as { title: string; duration?: number; webpage_url: string; url: string; http_headers?: Record<string, string> };
+        const info = JSON.parse(line) as { title: string; track?: string; artist?: string; uploader?: string; thumbnail?: string; duration?: number; webpage_url: string; url: string; http_headers?: Record<string, string> };
         console.log("resolved", query, Date.now() - started, "ms");
-        resolve({ title: info.title, durationMs: (info.duration ?? 0) * 1000, pageUrl: info.webpage_url, streamUrl: info.url, userAgent: info.http_headers?.["User-Agent"] ?? "Mozilla/5.0", at: Date.now() });
+        resolve({ title: info.track ?? info.title, artist: info.artist ?? info.uploader?.replace(/ - Topic$/, "") ?? null, artwork: info.thumbnail ?? null, durationMs: (info.duration ?? 0) * 1000, pageUrl: info.webpage_url, streamUrl: info.url, userAgent: info.http_headers?.["User-Agent"] ?? "Mozilla/5.0", at: Date.now() });
       },
     );
   });
@@ -149,7 +149,7 @@ async function play(query: string, startMs: number, volume: number, id: number):
   resource = createAudioResource(stream.stdout, { inputType: StreamType.OggOpus });
   player.play(resource);
   player.once(AudioPlayerStatus.Playing, () => console.log("first audio", query, Date.now() - started, "ms"));
-  send({ type: "started", generation: id, title: track.title, durationMs: track.durationMs, url: track.pageUrl });
+  send({ type: "started", generation: id, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs, url: track.pageUrl });
 }
 
 function status(): Record<string, unknown> {

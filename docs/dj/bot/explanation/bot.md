@@ -21,6 +21,7 @@ From throwaway probes on 2026-11-06 and 2026-11-07, one run each.
 | Memory | 110–123 MB |
 | CPU while streaming | 0.135–0.228 busy fraction of `/proc/stat`, not established whether of the 1/4 vCPU or the host |
 | SoundCloud search | HTTP 403 from yt-dlp |
+| YouTube Music song search from the deployed Worker (2026-11-07) | The official track first for five popular songs, with artist, album, length, cover and play count; one failure in the first request after deploying, then 11 of 11 succeeded |
 
 YouTube may block the Cloudflare range later. The fallbacks are cookies from a throwaway account, then running the Container's workload at home, which needs only outbound connections.
 
@@ -36,7 +37,8 @@ About $5.60 a month at 3 hours a day and $7.50 at 8 hours, including the $5 Work
 - **State in the Durable Object's SQLite, not D1:** one guild, one object, and nothing else reads it. _(2026-11-07)_
 - **One shared Discord application,** renamed `Enbraile`, for login and bot; private, server installs only, with View Channels, Connect and Speak. _(owner, 2026-11-06)_
 - **Access:** members of one DJ role, picked on the panel by a user with Manage Server; until one is picked, only Manage Server users. No votes to skip. _(owner, 2026-11-07)_
-- **Sources:** YouTube search, videos and playlists; Spotify links matched to YouTube by title, read from Spotify's embed page so no credentials are needed. _(owner, 2026-11-07)_
+- **Sources:** YouTube Music song search, YouTube videos and playlists, and Spotify links, matched to YouTube by title from Spotify's embed page so no credentials are needed. _(owner, 2026-11-07)_
+- **YouTube Music songs, not YouTube videos, for text:** plain YouTube search returned music videos, covers and other versions. `src/music.ts` asks YouTube Music's web API for songs only, which needs no key. The panel lists its results; `/play` with text takes the top song. Spotify tracks resolve lazily, as a `music.youtube.com/search?…#songs` URL that yt-dlp plays the first song of. If that API changes, `/play` falls back to the lazy search URL, and the panel reports that search failed and asks for a link. _(owner asked for better results, 2026-11-07; the mechanism the agent's choice)_
 - **Leaving:** 1 minute after the channel empties, 5 after the queue ends, 15 while paused. _(owner, 2026-11-07)_
 - **200-hour monthly limit:** about $7–8 by the estimate above; Cloudflare's `usage_block` spend policy names only `workers` and `durable_objects`. _(owner, 2026-11-07)_
 - **Autoplay:** off by default, stopping after an hour without human action and as soon as nobody is in the call. Keeping it going is a button on the panel; the bot posts nothing to Discord, since that would need Send Messages. _(owner's rule, 2026-11-07; the panel-only prompt chosen by the agent when told not to ask, so open to change)_

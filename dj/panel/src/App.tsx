@@ -1,15 +1,35 @@
-import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, get, type HistoryEntry, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SettingsData, signIn, type View } from "./api";
+import { type CSSProperties, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ApiError, get, type HistoryEntry, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SettingsData, signIn, type Song, type Track, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
+import * as Icon from "./icons";
 
 type Tab = "player" | "playlists" | "history" | "settings";
+type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
 
 const message = (error: unknown) => t.errors[error instanceof ApiError ? error.message : "failed"] ?? t.errors.failed!;
+const isLink = (text: string) => /^https?:\/\//.test(text.trim());
+const LOOP_ORDER: Loop[] = ["off", "queue", "track"];
 
 function clock(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(total / 60);
   return `${minutes}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function artwork(source: { artwork?: string | null; url?: string | null; query?: string }, size: number): string | null {
+  if (source.artwork) return source.artwork.replace(/=w\d+-h\d+/, `=w${size}-h${size}`);
+  const id = (source.url ?? source.query ?? "").match(/[?&]v=([\w-]{11})/)?.[1];
+  return id ? `https://i.ytimg.com/vi/${id}/${size > 200 ? "hqdefault" : "mqdefault"}.jpg` : null;
+}
+
+function Art({ src, className }: { src: string | null; className: string }) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [src]);
+  return (
+    <div className={`art ${className}`}>
+      {src && !broken ? <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} /> : <Icon.Note size={className === "art-hero" ? 64 : 18} />}
+    </div>
+  );
 }
 
 function useView(enabled: boolean): { view: View | null; live: boolean; refresh: () => void; setView: (view: View) => void } {
@@ -61,38 +81,120 @@ function useView(enabled: boolean): { view: View | null; live: boolean; refresh:
   return { view, live, refresh, setView };
 }
 
-function AddForm({ placeholder, label, onAdd }: { placeholder: string; label: string; onAdd: (input: string) => Promise<void> }) {
-  const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
+async function enqueue(body: { items: QueueItem[] } | { input: string }): Promise<void> {
+  const result = await post<{ ok: boolean; reason?: string }>("enqueue", body);
+  if (!result.ok) throw new ApiError(result.reason ?? "failed");
+}
+
+function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void> }) {
+  const [text, setText] = useState("");
+  const [results, setResults] = useState<Song[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [added, setAdded] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!input.trim()) return;
-    setBusy(true);
+  const sequence = useRef(0);
+  const search = useCallback(async (query: string) => {
+    const id = ++sequence.current;
+    setLoading(true);
     setError(null);
     try {
-      await onAdd(input.trim());
-      setInput("");
+      const songs = await get<Song[]>(`search?q=${encodeURIComponent(query)}`);
+      if (id === sequence.current) setResults(songs);
+    } catch (failure) {
+      if (id === sequence.current) setError(message(failure));
+    }
+    if (id === sequence.current) setLoading(false);
+  }, []);
+  useEffect(() => {
+    const query = text.trim();
+    if (isLink(query) || query.length < 2) {
+      sequence.current++;
+      setResults(null);
+      setLoading(false);
+      return;
+    }
+    const timer = setTimeout(() => void search(query), 450);
+    return () => clearTimeout(timer);
+  }, [text, search]);
+  function clear() {
+    setText("");
+    setResults(null);
+    setAdded(new Set());
+    setError(null);
+  }
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const query = text.trim();
+    if (!query) return;
+    if (!isLink(query)) return void search(query);
+    setBusy("link");
+    setError(null);
+    try {
+      await onLink(query);
+      clear();
     } catch (failure) {
       setError(message(failure));
     }
-    setBusy(false);
+    setBusy(null);
+  }
+  async function pick(song: Song) {
+    setBusy(song.videoId);
+    setError(null);
+    try {
+      await onPick({ query: song.url, title: song.title, artist: song.artist, artwork: song.artwork, durationMs: song.durationMs });
+      setAdded((previous) => new Set(previous).add(song.videoId));
+    } catch (failure) {
+      setError(message(failure));
+    }
+    setBusy(null);
   }
   return (
-    <form onSubmit={(event) => void submit(event)} className="row" aria-label={placeholder}>
-      <input className="field grow" value={input} onChange={(event) => setInput(event.target.value)} placeholder={placeholder} aria-label={placeholder} />
-      <button className="btn primary" disabled={busy}>{busy ? t.adding : label}</button>
-      {error && <p className="error" role="alert" style={{ flexBasis: "100%" }}>{error}</p>}
-    </form>
+    <div className="search">
+      <form role="search" onSubmit={(event) => void submit(event)} className="search-box">
+        <Icon.Search />
+        <input value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") clear(); }} placeholder={placeholder} aria-label={placeholder} enterKeyHint={isLink(text) ? "go" : "search"} />
+        {isLink(text) && <button className="pill primary" disabled={busy === "link"}>{busy === "link" ? t.adding : t.addLink}</button>}
+        {text && <button type="button" className="icon-btn small" aria-label={t.clearSearch} onClick={clear}><Icon.Close /></button>}
+      </form>
+      {error && <p className="error" role="alert">{error}</p>}
+      {results === null && !loading && !error && <p className="hint">{t.searchHint}</p>}
+      {(loading || results) && (
+        <section aria-label={t.songs} aria-busy={loading}>
+          <h2 className="label">{loading && !results ? t.searching : t.songs}</h2>
+          {results?.length === 0 && <p className="hint">{t.noSongs}</p>}
+          <ul className="rows">
+            {results?.map((song) => {
+              const done = added.has(song.videoId);
+              return (
+                <li key={song.videoId} className="song">
+                  <Art src={artwork(song, 96)} className="art-md" />
+                  <div className="meta">
+                    <div className="name">{song.title}</div>
+                    <div className="sub">{[song.artist, song.album].filter(Boolean).join(" · ")}</div>
+                  </div>
+                  {song.plays && <span className="plays">{song.plays}</span>}
+                  {song.durationMs > 0 && <span className="len">{clock(song.durationMs)}</span>}
+                  <button className={`icon-btn ring ${done ? "done" : ""}`} aria-label={done ? `${t.added}: ${song.title}` : t.addToQueue(song.title)} disabled={busy === song.videoId} onClick={() => void pick(song)}>{done ? <Icon.Check /> : <Icon.Plus />}</button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+    </div>
   );
 }
 
-function PlayerTab({ view, setView, live }: { view: View | null; setView: (view: View) => void; live: boolean }) {
+function Slider({ label, value, max, step, onChange, onCommit, className }: { label: string; value: number; max: number; step: number; onChange: (value: number) => void; onCommit: () => void; className?: string }) {
+  const fill = max > 0 ? `${Math.min(100, (value / max) * 100)}%` : "0%";
+  return <input type="range" className={`slider ${className ?? ""}`} aria-label={label} min={0} max={max} step={step} value={value} style={{ "--fill": fill } as CSSProperties} onChange={(event) => onChange(Number(event.target.value))} onPointerUp={onCommit} onKeyUp={onCommit} />;
+}
+
+function NowPlaying({ view, track, command }: { view: View | null; track: Track | undefined; command: (body: Record<string, unknown>) => Promise<void> }) {
   const [now, setNow] = useState(Date.now());
   const [seek, setSeek] = useState<number | null>(null);
   const [volume, setVolume] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [dragging, setDragging] = useState<string | null>(null);
   const seen = useRef({ position: 0, at: Date.now() });
   useEffect(() => {
     seen.current = { position: view?.positionMs ?? 0, at: Date.now() };
@@ -101,6 +203,71 @@ function PlayerTab({ view, setView, live }: { view: View | null; setView: (view:
     const timer = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(timer);
   }, []);
+  if (!track || !view) {
+    return (
+      <section className="now" aria-label={t.tabs.player}>
+        <Art src={null} className="art-hero" />
+        <div>
+          <h1 className="title">{t.nothing}</h1>
+          <p className="sub">{t.nothingHint}</p>
+        </div>
+      </section>
+    );
+  }
+  const estimated = view.paused ? view.positionMs : seen.current.position + (now - seen.current.at);
+  const duration = track.durationMs;
+  const position = seek ?? Math.min(estimated, duration || estimated);
+  const loopIndex = LOOP_ORDER.indexOf(view.loop);
+  const loopNames: Record<Loop, string> = { off: t.loopOff, track: t.loopTrack, queue: t.loopQueue };
+  const volumeValue = volume ?? Math.round(view.volume * 100);
+  return (
+    <section className="now" aria-label={t.tabs.player}>
+      <Art src={artwork(track, 544)} className="art-hero" />
+      <div>
+        <h1 className="title">{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
+        {track.artist && <p className="sub">{track.artist}</p>}
+      </div>
+      <div className="progress">
+        {duration > 0 ? (
+          <Slider label={t.position} value={position} max={duration} step={1000} onChange={setSeek} onCommit={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} className="bright" />
+        ) : <div className="track-line" />}
+        <div className="time"><span>{clock(position)}</span><span>{duration > 0 ? clock(duration) : "–:––"}</span></div>
+      </div>
+      <div className="transport">
+        <button className="icon-btn" aria-label={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
+        <button className="play" aria-label={view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
+        <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
+        <button className={`icon-btn ${view.loop !== "off" ? "on" : ""}`} aria-label={`${t.loop}: ${loopNames[view.loop]}`} title={`${t.loop}: ${loopNames[view.loop]}`} onClick={() => void command({ action: "loop", loop: LOOP_ORDER[(loopIndex + 1) % LOOP_ORDER.length] })}>
+          <Icon.Repeat />
+          {view.loop === "track" && <span className="badge">1</span>}
+        </button>
+      </div>
+      <div className="volume">
+        <Icon.Volume />
+        <Slider label={t.volume} value={volumeValue} max={200} step={5} onChange={setVolume} onCommit={() => { if (volume !== null) { void command({ action: "volume", volume: volume / 100 }); setVolume(null); } }} />
+        <span className="len">{volumeValue}%</span>
+      </div>
+      <div className="now-foot">
+        <label className="switch">
+          <input type="checkbox" role="switch" checked={view.autoplay} onChange={(event) => void command({ action: "autoplay", on: event.target.checked })} />
+          <span className="knob" aria-hidden="true" />
+          {t.autoplay}
+        </label>
+        <button className="pill danger" onClick={() => void command({ action: "stop" })}>{t.stop}</button>
+      </div>
+      {view.autoplay && view.autoplayEndsAt && (
+        <div className="autoplay-note">
+          <span className="sub">{t.autoplayEnds(Math.max(0, Math.ceil((view.autoplayEndsAt - now) / 60000)))}</span>
+          <button className="pill" onClick={() => void command({ action: "keepGoing" })}>{t.keepGoing}</button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PlayerTab({ view, setView, live }: { view: View | null; setView: (view: View) => void; live: boolean }) {
+  const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
   async function command(body: Record<string, unknown>) {
     setError(null);
     try {
@@ -111,85 +278,48 @@ function PlayerTab({ view, setView, live }: { view: View | null; setView: (view:
   }
   const track = view && view.active ? view.tracks[view.current] : undefined;
   const upcoming = view?.active ? view.tracks.slice(view.current + 1) : [];
-  const estimated = view && !view.paused ? seen.current.position + (now - seen.current.at) : (view?.positionMs ?? 0);
-  const duration = track?.durationMs ?? 0;
-  const position = seek ?? Math.min(estimated, duration || estimated);
   const offset = (view?.current ?? 0) + 1;
   return (
     <>
       {!live && <p className="notice" role="status">{t.offline}</p>}
-      <section className="card" aria-label={t.tabs.player}>
-        {track ? (
-          <>
-            <div>
-              <h2 className="title">{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h2>
-              <p className="dim">{t.listeners(view?.listeners ?? 0)}</p>
-            </div>
-            {duration > 0 && (
-              <div>
-                <input type="range" aria-label={t.position} min={0} max={duration} step={1000} value={position} onChange={(event) => setSeek(Number(event.target.value))} onPointerUp={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} onKeyUp={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} />
-                <div className="time"><span>{clock(position)}</span><span>{clock(duration)}</span></div>
+      <div className="player">
+        <div className="now-col">
+          <NowPlaying view={view} track={track} command={command} />
+          {error && <p className="error" role="alert">{error}</p>}
+          {view && <p className="fine">{[track ? t.listeners(view.listeners) : null, t.usage(view.hoursThisMonth, view.hourLimit)].filter(Boolean).join(" · ")}</p>}
+        </div>
+        <div className="side">
+          <SongSearch placeholder={t.searchPlaceholder} onPick={(item) => enqueue({ items: [item] })} onLink={(input) => enqueue({ input })} />
+          {track && (
+            <section aria-label={t.queue}>
+              <div className="label-row">
+                <h2 className="label">{upcoming.length ? `${t.queue} · ${upcoming.length}` : t.queue}</h2>
+                {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
               </div>
-            )}
-            <div className="controls">
-              <button className="btn primary" onClick={() => void command({ action: view?.paused ? "resume" : "pause" })}>{view?.paused ? t.resume : t.pause}</button>
-              <button className="btn" onClick={() => void command({ action: "skip" })}>{t.skip}</button>
-              <button className="btn" onClick={() => void command({ action: "shuffle" })}>{t.shuffle}</button>
-              <button className="btn danger" onClick={() => void command({ action: "stop" })}>{t.stop}</button>
-            </div>
-            <div className="split">
-              <label className="stack">{t.volume}
-                <input type="range" min={0} max={200} step={5} value={volume ?? Math.round((view?.volume ?? 1) * 100)} onChange={(event) => setVolume(Number(event.target.value))} onPointerUp={() => { if (volume !== null) { void command({ action: "volume", volume: volume / 100 }); setVolume(null); } }} onKeyUp={() => { if (volume !== null) { void command({ action: "volume", volume: volume / 100 }); setVolume(null); } }} />
-              </label>
-              <label className="stack">{t.loop}
-                <select className="field" value={view?.loop ?? "off"} onChange={(event) => void command({ action: "loop", loop: event.target.value as Loop })}>
-                  <option value="off">{t.loopOff}</option>
-                  <option value="track">{t.loopTrack}</option>
-                  <option value="queue">{t.loopQueue}</option>
-                </select>
-              </label>
-            </div>
-            <div className="row">
-              <label className="row grow"><input type="checkbox" checked={view?.autoplay ?? false} onChange={(event) => void command({ action: "autoplay", on: event.target.checked })} /> {t.autoplay}</label>
-              {view?.autoplay && view.autoplayEndsAt && (
-                <>
-                  <span className="dim">{t.autoplayEnds(Math.max(0, Math.ceil((view.autoplayEndsAt - now) / 60000)))}</span>
-                  <button className="btn" onClick={() => void command({ action: "keepGoing" })}>{t.keepGoing}</button>
-                </>
+              {upcoming.length === 0 ? <p className="hint">{t.queueEmpty}</p> : (
+                <ol className="rows">
+                  {upcoming.map((item, index) => (
+                    <li key={item.id} className={`song queue-row ${dragging === item.id ? "dragging" : ""}`} draggable onDragStart={() => setDragging(item.id)} onDragEnd={() => setDragging(null)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragging && dragging !== item.id) void command({ action: "move", id: dragging, to: offset + index }); setDragging(null); }}>
+                      <span className="grip"><Icon.Grip /></span>
+                      <Art src={artwork(item, 96)} className="art-sm" />
+                      <div className="meta">
+                        <div className="name">{item.title}</div>
+                        {item.artist && <div className="sub">{item.artist}</div>}
+                      </div>
+                      {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
+                      <span className="reorder">
+                        <button className="icon-btn small" aria-label={`${t.up}: ${item.title}`} disabled={index === 0} onClick={() => void command({ action: "move", id: item.id, to: offset + index - 1 })}><Icon.Up /></button>
+                        <button className="icon-btn small" aria-label={`${t.down}: ${item.title}`} disabled={index === upcoming.length - 1} onClick={() => void command({ action: "move", id: item.id, to: offset + index + 1 })}><Icon.Down /></button>
+                      </span>
+                      <button className="icon-btn small" aria-label={`${t.remove}: ${item.title}`} onClick={() => void command({ action: "remove", id: item.id })}><Icon.Close /></button>
+                    </li>
+                  ))}
+                </ol>
               )}
-            </div>
-          </>
-        ) : (
-          <div>
-            <h2 className="title">{t.nothing}</h2>
-            <p className="dim">{t.nothingHint}</p>
-          </div>
-        )}
-        <AddForm placeholder={t.addPlaceholder} label={t.add} onAdd={async (input) => { const result = await post<{ ok: boolean; reason?: string }>("enqueue", { input }); if (!result.ok) throw new ApiError(result.reason ?? "failed"); }} />
-        {error && <p className="error" role="alert">{error}</p>}
-      </section>
-      {track && (
-        <section className="card" aria-label={t.queue}>
-          <div className="row">
-            <h2 className="section grow">{t.queue}</h2>
-            {upcoming.length > 0 && <button className="btn small" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
-          </div>
-          {upcoming.length === 0 ? <p className="dim">{t.queueEmpty}</p> : (
-            <ol className="list">
-              {upcoming.map((item, index) => (
-                <li key={item.id} className={`item ${dragging === item.id ? "dragging" : ""}`} draggable onDragStart={() => setDragging(item.id)} onDragEnd={() => setDragging(null)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragging && dragging !== item.id) void command({ action: "move", id: dragging, to: offset + index }); setDragging(null); }}>
-                  <span className="num">{index + 1}</span>
-                  <span className="name">{item.title}</span>
-                  <button className="btn small" aria-label={`${t.up}: ${item.title}`} disabled={index === 0} onClick={() => void command({ action: "move", id: item.id, to: offset + index - 1 })}>↑</button>
-                  <button className="btn small" aria-label={`${t.down}: ${item.title}`} disabled={index === upcoming.length - 1} onClick={() => void command({ action: "move", id: item.id, to: offset + index + 1 })}>↓</button>
-                  <button className="btn small" aria-label={`${t.remove}: ${item.title}`} onClick={() => void command({ action: "remove", id: item.id })}>✕</button>
-                </li>
-              ))}
-            </ol>
+            </section>
           )}
-        </section>
-      )}
-      {view && <p className="dim">{t.usage(view.hoursThisMonth, view.hourLimit)}</p>}
+        </div>
+      </div>
     </>
   );
 }
@@ -218,10 +348,7 @@ function PlaylistsTab({ me }: { me: Me }) {
       setError(message(failure));
     }
   };
-  const play = (items: PlaylistTrack[]) => act(async () => {
-    const result = await post<{ ok: boolean; reason?: string }>("enqueue", { items: items.map(({ query, title }) => ({ query, title })) });
-    if (!result.ok) throw new ApiError(result.reason ?? "failed");
-  });
+  const play = (items: PlaylistTrack[]) => act(() => enqueue({ items: items.map(({ query, title }) => ({ query, title })) }));
   if (list) {
     return (
       <section className="card" aria-label={list.name}>
@@ -235,7 +362,7 @@ function PlaylistsTab({ me }: { me: Me }) {
           {owned && <button className="btn" onClick={() => { const next = prompt(t.rename, list.name); if (next?.trim()) void act(() => post("playlist/rename", { id: list.id, name: next })); }}>{t.rename}</button>}
           {owned && <button className="btn danger" onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); setOpen(null); }); }}>{t.delete}</button>}
         </div>
-        {owned && <AddForm placeholder={t.addToList} label={t.add} onAdd={async (input) => { await post("playlist/add", { id: list.id, input }); await reload(); await reloadTracks(list.id); }} />}
+        {owned && <SongSearch placeholder={t.addToList} onPick={async (item) => { await post("playlist/add", { id: list.id, items: [item] }); await reload(); await reloadTracks(list.id); }} onLink={async (input) => { await post("playlist/add", { id: list.id, input }); await reload(); await reloadTracks(list.id); }} />}
         {error && <p className="error" role="alert">{error}</p>}
         {tracks.length === 0 ? <p className="dim">{t.emptyList}</p> : (
           <ol className="list">
@@ -286,7 +413,7 @@ function HistoryTab() {
           <li key={entry.id} className="item">
             <span className="name">{entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.title}</a> : entry.title}</span>
             <span className="dim">{new Date(entry.playedAt).toLocaleString()}</span>
-            <button className="btn small" onClick={() => { setError(null); post<{ ok: boolean; reason?: string }>("enqueue", { items: [{ query: entry.url ?? entry.query, title: entry.title }] }).then((result) => { if (!result.ok) throw new ApiError(result.reason ?? "failed"); }).catch((failure: unknown) => setError(message(failure))); }}>{t.requeue}</button>
+            <button className="btn small" onClick={() => { setError(null); enqueue({ items: [{ query: entry.url ?? entry.query, title: entry.title }] }).catch((failure: unknown) => setError(message(failure))); }}>{t.requeue}</button>
           </li>
         ))}
       </ul>
@@ -347,18 +474,20 @@ export function App() {
   return (
     <div className="page">
       <header className="top">
-        <h1 className="brand">DJ</h1>
-        <span className="dim">{me.user.name}</span>
-        <button className="linkish" onClick={switchLang}>{t.language}</button>
+        <div className="brand"><span className="mark"><Icon.Note size={18} /></span>DJ</div>
+        {tabs.length > 0 && (
+          <nav className="tabs" role="tablist">
+            {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => setTab(entry)}>{t.tabs[entry]}</button>)}
+          </nav>
+        )}
+        <div className="who">
+          <button className="pill ghost lang" aria-label={t.language} title={t.language} onClick={switchLang}>{lang === "es" ? "EN" : "ES"}</button>
+          {me.user.image ? <img className="avatar" src={me.user.image} alt={me.user.name} title={me.user.name} referrerPolicy="no-referrer" /> : <span className="avatar" title={me.user.name}>{me.user.name.slice(0, 1).toUpperCase()}</span>}
+        </div>
       </header>
       {!me.member && <p className="notice">{t.notMember}</p>}
       {me.member && !me.canPlay && <p className="notice">{t.denied}</p>}
-      {tabs.length > 0 && (
-        <nav className="tabs" role="tablist">
-          {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => setTab(entry)}>{t.tabs[entry]}</button>)}
-        </nav>
-      )}
-      <main style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <main className="main">
         {active === "player" && <PlayerTab view={view} setView={setView} live={live} />}
         {active === "playlists" && <PlaylistsTab me={me} />}
         {active === "history" && <HistoryTab />}

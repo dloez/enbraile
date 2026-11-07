@@ -1,7 +1,7 @@
 import { Container } from "@cloudflare/containers";
 import type { Env } from "./env.js";
 
-export type Track = { id: string; query: string; title: string; durationMs: number; url: string | null; requestedBy: string };
+export type Track = { id: string; query: string; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string };
 export type Loop = "off" | "track" | "queue";
 
 export type SessionState = {
@@ -55,7 +55,9 @@ export type Command =
   | { action: "remove"; id: string }
   | { action: "move"; id: string; to: number };
 
-export type ContainerEvent = { type: "started"; generation: number; title: string; durationMs: number; url: string } | { type: "ended" | "failed"; generation: number; error?: string } | { type: "stopping"; positionMs: number };
+export type ContainerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "ended" | "failed"; generation: number; error?: string } | { type: "stopping"; positionMs: number };
+
+export type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
 
 export type EnqueueResult = { ok: true; added: number; position: number } | { ok: false; reason: "limit" };
 
@@ -92,7 +94,8 @@ const blank = (guildId: string): SessionState => ({
 const monthKey = () => `hours:${new Date().toISOString().slice(0, 7)}`;
 
 export function displayName(query: string): string {
-  return query.replace(/^ytsearch\d*:/, "").replace(/\s+audio$/, "");
+  const search = query.match(/^https:\/\/music\.youtube\.com\/search\?q=([^#]+)/)?.[1];
+  return search ? decodeURIComponent(search) : query;
 }
 
 function videoId(url: string | null): string | null {
@@ -193,7 +196,7 @@ export class Session extends Container<Env> {
     const recent = this.ctx.storage.sql.exec<{ url: string | null }>("SELECT url FROM history ORDER BY id DESC LIMIT 100").toArray();
     for (const row of recent) played.add(videoId(row.url));
     const pick = tracks.find((track) => videoId(track.url) && !played.has(videoId(track.url)));
-    return pick ? { id: crypto.randomUUID(), query: pick.url, title: pick.title, durationMs: 0, url: pick.url, requestedBy: "autoplay" } : null;
+    return pick ? { id: crypto.randomUUID(), query: pick.url, title: pick.title, artist: null, artwork: null, durationMs: 0, url: pick.url, requestedBy: "autoplay" } : null;
   }
 
   private async advance(state: SessionState): Promise<void> {
@@ -258,13 +261,13 @@ export class Session extends Container<Env> {
     return tracks;
   }
 
-  async enqueue(channelId: string, items: { query: string; title?: string }[], requestedBy: string): Promise<EnqueueResult> {
+  async enqueue(channelId: string, items: QueueItem[], requestedBy: string): Promise<EnqueueResult> {
     const state = await this.load();
     if (!state.active && (await this.hours()) >= (await this.settings()).hourLimit) return { ok: false, reason: "limit" };
     const before = state.tracks.length;
     const position = before - Math.max(state.current, 0);
     const wasPlaying = state.active && state.current >= 0 && state.current < before;
-    state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), durationMs: 0, url: null, requestedBy })));
+    state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy })));
     state.lastHumanAt = Date.now();
     if (!state.active || state.channelId !== channelId) {
       await this.call("/join", { guildId: state.guildId, channelId });
@@ -385,7 +388,7 @@ export class Session extends Container<Env> {
       const track = state.tracks[state.current];
       if (track) {
         const firstStart = track.url === null || track.requestedBy === "autoplay";
-        Object.assign(track, { title: event.title, durationMs: event.durationMs, url: event.url });
+        Object.assign(track, { title: event.title, artist: track.artist ?? event.artist, artwork: track.artwork ?? event.artwork, durationMs: event.durationMs || track.durationMs, url: event.url });
         if (firstStart) {
           this.ctx.storage.sql.exec("INSERT INTO history (query, title, url, requested_by, played_at) VALUES (?, ?, ?, ?, ?)", track.query, track.title, track.url, track.requestedBy, Date.now());
           this.ctx.storage.sql.exec("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY id DESC LIMIT ?)", HISTORY_KEPT);

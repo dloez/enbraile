@@ -1,6 +1,7 @@
 import type { Env } from "./env.js";
 import { resolveInput, signTicket, verifyTicket } from "./input.js";
-import { type Command, type ContainerEvent, type Loop, Session } from "./session.js";
+import { searchSongs } from "./music.js";
+import { type Command, type ContainerEvent, type Loop, type QueueItem, Session, displayName } from "./session.js";
 
 export { Session };
 
@@ -210,10 +211,20 @@ async function internal(request: Request, env: Env, path: string): Promise<Respo
       const view = await session.view();
       const channelId = needsVoice ? view.channelId : voice.channelId;
       if (!channelId) return json(needsVoice ? voice : { error: "notInVoice" }, 409);
-      const items = input.items as { query: string; title?: string }[] | undefined;
+      const items = input.items as QueueItem[] | undefined;
       if (items) return json(await session.enqueue(channelId, items, userId));
       const outcome = await enqueueInput(env, String(input.input), channelId, userId);
       return outcome ? json(outcome.result) : json({ error: "noResults" }, 422);
+    }
+    case "/internal/search": {
+      const query = (new URL(request.url).searchParams.get("q") ?? "").trim().slice(0, 200);
+      if (!query) return json([]);
+      try {
+        return json(await searchSongs(query));
+      } catch (error) {
+        console.error("music search", (error as Error).message);
+        return json({ error: "searchFailed" }, 502);
+      }
     }
     case "/internal/history":
       return json(await session.history());
@@ -227,8 +238,8 @@ async function internal(request: Request, env: Env, path: string): Promise<Respo
     case "/internal/playlist/delete":
       return (await session.deletePlaylist(id, userId)) ? json({ ok: true }) : denied();
     case "/internal/playlist/add": {
-      const items = await resolveInput(String(input.input), (url) => session.expand(url));
-      const named = items.map((item) => ({ query: item.query, title: item.title ?? item.query.replace(/^ytsearch\d*:/, "") }));
+      const items = (input.items as QueueItem[] | undefined) ?? (await resolveInput(String(input.input), (url) => session.expand(url)));
+      const named = items.map((item) => ({ query: item.query, title: [item.artist, item.title ?? displayName(item.query)].filter(Boolean).join(" - ") }));
       return (await session.addToPlaylist(id, userId, named)) ? json({ added: named.length }) : denied();
     }
     case "/internal/playlist/remove":
