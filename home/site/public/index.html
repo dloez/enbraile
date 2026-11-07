@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enbraile</title>
+<style>
+:root { color-scheme: dark; --bg: #101114; --card: #1a1c21; --line: #2c2f37; --text: #f1f2f4; --dim: #a3a7b1; --accent: #5865f2; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; }
+main { width: min(100%, 420px); display: flex; flex-direction: column; gap: 20px; }
+h1 { margin: 0; font-size: 2rem; letter-spacing: -.02em; }
+p { margin: 0; color: var(--dim); }
+a, button { display: flex; align-items: center; justify-content: center; min-height: 52px; width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+a:hover, button:hover { border-color: var(--dim); }
+button.primary { background: var(--accent); border-color: var(--accent); }
+button.link { min-height: 44px; background: none; border: 0; color: var(--dim); font-weight: 400; }
+nav { display: flex; flex-direction: column; gap: 10px; }
+[hidden] { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Enbraile</h1>
+  <p id="message"></p>
+  <button id="sign-in" class="primary" hidden></button>
+  <nav id="apps" hidden>
+    <a href="https://pkmn.enbraile.vip">pkmn</a>
+    <a href="https://dj.enbraile.vip">DJ</a>
+    <button id="sign-out" class="link"></button>
+  </nav>
+</main>
+<script>
+const es = navigator.language.toLowerCase().startsWith("es");
+const t = es
+  ? { signIn: "Iniciar sesión con Discord", welcome: "Entra para usar las apps del grupo.", hello: (n) => `Hola, ${n}.`, signOut: "Cerrar sesión", failed: "No se pudo iniciar sesión." }
+  : { signIn: "Sign in with Discord", welcome: "Sign in to use the group's apps.", hello: (n) => `Hello, ${n}.`, signOut: "Sign out", failed: "Sign-in failed." };
+document.documentElement.lang = es ? "es" : "en";
+const message = document.getElementById("message");
+const signIn = document.getElementById("sign-in");
+const signOut = document.getElementById("sign-out");
+const apps = document.getElementById("apps");
+signIn.textContent = t.signIn;
+signOut.textContent = t.signOut;
+
+function safeReturn() {
+  const value = new URLSearchParams(location.search).get("return");
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && (url.hostname === "enbraile.vip" || url.hostname.endsWith(".enbraile.vip")) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+const back = safeReturn();
+const params = new URLSearchParams(location.search);
+
+signIn.onclick = async () => {
+  signIn.disabled = true;
+  const here = location.origin + "/";
+  const response = await fetch("/api/auth/sign-in/social", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ provider: "discord", callbackURL: back ?? here, errorCallbackURL: here + "?error=1" + (back ? "&return=" + encodeURIComponent(back) : "") }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (body.url) location.href = body.url;
+  else { message.textContent = t.failed; signIn.disabled = false; }
+};
+signOut.onclick = async () => {
+  await fetch("/api/auth/sign-out", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+  location.replace("/");
+};
+
+(async () => {
+  const response = await fetch("/api/me");
+  const body = response.ok ? await response.json() : { user: null };
+  if (body.user) {
+    let recent = false;
+    try {
+      recent = Date.now() - Number(sessionStorage.getItem("returned") ?? 0) < 5000;
+      sessionStorage.setItem("returned", String(Date.now()));
+    } catch {}
+    if (back && !recent) return location.replace(back);
+    message.textContent = t.hello(body.user.name);
+    apps.hidden = false;
+  } else {
+    message.textContent = params.has("error") ? t.failed : t.welcome;
+    signIn.hidden = false;
+  }
+})();
+</script>
+</body>
+</html>

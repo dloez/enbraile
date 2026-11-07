@@ -24,6 +24,8 @@ Decisions live, dated, in the `## Decisions` section of the owning explanation d
 | Category | Description |
 |----------|-------------|
 | [pkmn](pkmn/index.md) | Pokémon: the group's Randomlocke and the tools around it |
+| [dj](dj/index.md) | The group's Discord music bot and its web panel |
+| [home](home/index.md) | `enbraile.vip`: the Discord sign-in every app shares |
 
 ## Work in Progress
 
