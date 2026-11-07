@@ -32,21 +32,22 @@ function emit(event: PlayerEvent): void {
   queueMicrotask(() => listener(event));
 }
 
-function resolveTrack(query: string): Promise<Resolved> {
+function resolveTrack(query: string, uncached = false): Promise<Resolved> {
   const cached = cache.get(query);
-  if (cached) return cached;
+  if (cached && !uncached) return cached;
   const started = Date.now();
   const pending = new Promise<Resolved>((resolve, reject) => {
     execFile(
       "yt-dlp",
-      ["--plugin-dirs", PLUGINS, "--js-runtimes", "node", "--no-playlist", "--playlist-items", "1", "--no-warnings", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,track,artist,uploader,thumbnail,duration,webpage_url,url,http_headers})j", query],
+      ["--plugin-dirs", PLUGINS, "--js-runtimes", "node", ...(uncached ? ["--no-cache-dir"] : []), "--no-playlist", "--playlist-items", "1", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,track,artist,uploader,thumbnail,duration,webpage_url,url,http_headers})j", query],
       { timeout: 60000, maxBuffer: 8 * 1024 * 1024 },
       (error, stdout, stderr) => {
         if (error) return reject(new Error((stderr || error.message).trim().slice(-300)));
         const line = stdout.trim().split("\n").at(-1);
         if (!line) return reject(new Error("no result"));
+        if (stderr.trim()) console.error("yt-dlp", query, uncached ? "uncached" : "cached", stderr.trim().slice(-400));
         const info = JSON.parse(line) as { title: string; track?: string; artist?: string; uploader?: string; thumbnail?: string; duration?: number; webpage_url: string; url: string; http_headers?: Record<string, string> };
-        console.log("resolved", query, Date.now() - started, "ms");
+        console.log("resolved", query, Date.now() - started, "ms", uncached ? "without cache" : "");
         resolve({ title: info.track ?? info.title, artist: info.artist ?? info.uploader?.replace(/ - Topic$/, "") ?? null, artwork: info.thumbnail ?? null, durationMs: (info.duration ?? 0) * 1000, pageUrl: info.webpage_url, streamUrl: info.url, userAgent: info.http_headers?.["User-Agent"] ?? "Mozilla/5.0" });
       },
     );
@@ -150,7 +151,7 @@ async function start(query: string, startMs: number, volume: number, id: number,
   player?.stop(true);
   resource = undefined;
   const started = Date.now();
-  const track = await resolveTrack(query);
+  const track = await resolveTrack(query, retried);
   if (generation !== id || !player) return;
   const stream = spawn("ffmpeg", [
     "-hide_banner", "-loglevel", "error",
