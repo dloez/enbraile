@@ -54,7 +54,7 @@ export type QueueItem = { query: string; title?: string; artist?: string | null;
 export type EnqueueResult = { ok: true; added: number; position: number };
 
 export type Command =
-  | { action: "skip" | "pause" | "resume" | "stop" | "shuffle" | "clear" | "keepGoing" }
+  | { action: "skip" | "previous" | "pause" | "resume" | "stop" | "shuffle" | "clear" | "keepGoing" }
   | { action: "seek"; positionMs: number }
   | { action: "volume"; volume: number }
   | { action: "loop"; loop: Loop }
@@ -63,6 +63,7 @@ export type Command =
   | { action: "move"; id: string; to: number };
 
 const TICK_MS = 15_000;
+const RESTART_WITHIN_MS = 3_000;
 const EMPTY_LEAVE_MS = 60_000;
 const IDLE_LEAVE_MS = 5 * 60_000;
 const PAUSED_LEAVE_MS = 15 * 60_000;
@@ -322,6 +323,12 @@ export async function command(command: Command): Promise<void> {
       plan();
       return;
     }
+    case "previous":
+      if (livePosition() <= RESTART_WITHIN_MS && state.current > 0) state.current -= 1;
+      startCurrent(0);
+      prepareAhead();
+      plan();
+      return;
     case "pause":
       state.positionMs = livePosition();
       player.pause();

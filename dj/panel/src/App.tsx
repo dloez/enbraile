@@ -1,4 +1,4 @@
-import { type CSSProperties, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, get, handleReply, type HistoryEntry, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
@@ -14,6 +14,7 @@ const isLink = (text: string) => /^https?:\/\//.test(text.trim());
 const LOOP_ORDER: Loop[] = ["off", "queue", "track"];
 const BASE_TITLE = document.title;
 const RETRY_MS = [1_000, 3_000, 10_000, 30_000];
+const RESTART_WITHIN_MS = 3_000;
 
 const stamp = (view: View): Synced => ({ ...view, at: performance.now() });
 
@@ -48,6 +49,10 @@ function predict(view: Synced, command: Command): Synced {
       if (current >= tracks.length && view.loop === "queue") current = 0;
       else if (current >= tracks.length && view.autoplayNext) tracks = [...tracks, view.autoplayNext];
       return { ...next, tracks, current, positionMs: 0, paused: false, loading: current < tracks.length, autoplayNext: null };
+    }
+    case "previous": {
+      const current = next.positionMs <= RESTART_WITHIN_MS && view.current > 0 ? Math.min(view.current, view.tracks.length) - 1 : view.current;
+      return { ...next, current, positionMs: 0, paused: false, loading: true };
     }
     case "loop":
       return { ...next, loop: command.loop ?? "off" };
@@ -390,17 +395,32 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive }: { placeho
   );
 }
 
-function Slider({ label, value, max, step, onChange, onCommit, className }: { label: string; value: number; max: number; step: number; onChange: (value: number) => void; onCommit: () => void; className?: string }) {
+const SLIDER_KEYS: Record<string, number> = { ArrowLeft: -5_000, ArrowDown: -5_000, ArrowRight: 5_000, ArrowUp: 5_000, PageDown: -30_000, PageUp: 30_000 };
+
+function Slider({ label, value, max, onChange, onCommit }: { label: string; value: number; max: number; onChange: (value: number) => void; onCommit: () => void }) {
   const fill = max > 0 ? `${Math.min(100, (value / max) * 100)}%` : "0%";
-  return <input type="range" className={`slider ${className ?? ""}`} aria-label={label} min={0} max={max} step={step} value={value} style={{ "--fill": fill } as CSSProperties} onChange={(event) => onChange(Number(event.target.value))} onPointerUp={onCommit} onKeyUp={onCommit} />;
+  function key(event: ReactKeyboardEvent<HTMLInputElement>) {
+    const jump = SLIDER_KEYS[event.key];
+    if (jump === undefined) return;
+    event.preventDefault();
+    onChange(Math.min(max, Math.max(0, value + jump)));
+  }
+  return <input type="range" className="slider" aria-label={label} aria-valuetext={`${clock(value)} / ${clock(max)}`} min={0} max={max} step={1} value={value} style={{ "--fill": fill } as CSSProperties} onChange={(event) => onChange(Number(event.target.value))} onKeyDown={key} onPointerUp={onCommit} onKeyUp={onCommit} />;
 }
 
-function useNow(): number {
+function useNow(smooth: boolean): number {
   const [now, setNow] = useState(performance.now());
   useEffect(() => {
-    const timer = setInterval(() => setNow(performance.now()), 250);
-    return () => clearInterval(timer);
-  }, []);
+    if (!smooth) {
+      const timer = setInterval(() => setNow(performance.now()), 1000);
+      return () => clearInterval(timer);
+    }
+    let frame = requestAnimationFrame(function tick(time) {
+      setNow(time);
+      frame = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [smooth]);
   return now;
 }
 
@@ -412,7 +432,7 @@ type Stage = "idle" | "loading" | "paused" | "playing";
 const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : view.loading ? "loading" : view.paused ? "paused" : "playing");
 
 function NowPlaying({ view, track, command }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void> }) {
-  const now = useNow();
+  const now = useNow(stageOf(view, track) === "playing");
   const [seek, setSeek] = useState<number | null>(null);
   if (!track || !view) {
     return (
@@ -443,13 +463,14 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
       </div>
       <div className={`progress ${view.loading ? "loading" : ""}`}>
         {duration > 0 ? (
-          <Slider label={t.position} value={position} max={duration} step={1000} onChange={setSeek} onCommit={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} />
+          <Slider label={t.position} value={position} max={duration} onChange={setSeek} onCommit={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} />
         ) : <div className="track-line" />}
         <div className="time"><span>{view.loading ? t.starting : clock(position)}</span><span>{duration > 0 ? clock(duration) : "–:––"}</span></div>
       </div>
       <div className="transport">
         <span className="transport-side start">
           <button className="icon-btn" aria-label={t.shuffle} title={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
+          <button className="icon-btn" aria-label={t.previous} aria-keyshortcuts="P" title={`${t.previous} (P)`} onClick={() => void command({ action: "previous" })}><Icon.Previous /></button>
         </span>
         <button className={`play ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={view.loading} aria-keyshortcuts="Space K" title={`${view.paused ? t.resume : t.pause} (K)`} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
         <span className="transport-side">
@@ -479,7 +500,7 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
 }
 
 function Dock({ view, track, command, shown }: { view: Synced; track: Track; command: (body: Command) => Promise<void>; shown: boolean }) {
-  const now = useNow();
+  const now = useNow(shown && stageOf(view, track) === "playing");
   const fill = track.durationMs > 0 ? Math.min(100, (estimate(view, now) / track.durationMs) * 100) : 0;
   return (
     <div className="dock" data-shown={shown} data-stage={stageOf(view, track)} inert={!shown} role="region" aria-label={t.nowPlaying}>
@@ -507,9 +528,113 @@ function useOffscreen(target: () => Element | null | undefined, watch: unknown):
   return offscreen;
 }
 
+type Drag = { id: string; from: number; over: number; dy: number; active: boolean; startY: number; pointerY: number; startScroll: number; step: number; scroller: Element };
+
+const DRAG_THRESHOLD_PX = 5;
+const EDGE_PX = 64;
+
+function scrollParent(element: Element): Element {
+  for (let node = element.parentElement; node; node = node.parentElement) {
+    const overflow = getComputedStyle(node).overflowY;
+    if ((overflow === "auto" || overflow === "scroll") && node.scrollHeight > node.clientHeight) return node;
+  }
+  return document.scrollingElement ?? document.documentElement;
+}
+
+function QueueList({ upcoming, offset, command }: { upcoming: Track[]; offset: number; command: (body: Command) => Promise<void> }) {
+  const [drag, setDrag] = useState<Drag | null>(null);
+  const [settling, setSettling] = useState(false);
+  const current = useRef<Drag | null>(null);
+  const update = (next: Drag | null) => {
+    current.current = next;
+    setDrag(next);
+  };
+  const place = (state: Drag, pointerY: number): Drag => {
+    const dy = pointerY - state.startY + (state.scroller.scrollTop - state.startScroll);
+    const active = state.active || Math.abs(dy) > DRAG_THRESHOLD_PX;
+    return { ...state, pointerY, dy, active, over: Math.min(upcoming.length - 1, Math.max(0, state.from + Math.round(dy / state.step))) };
+  };
+  useEffect(() => {
+    if (!drag?.active) return;
+    let frame = requestAnimationFrame(function tick() {
+      const state = current.current;
+      if (!state) return;
+      const box = state.scroller === document.scrollingElement ? { top: 0, bottom: innerHeight } : state.scroller.getBoundingClientRect();
+      const speed = state.pointerY < box.top + EDGE_PX ? -(box.top + EDGE_PX - state.pointerY) / 4 : state.pointerY > box.bottom - EDGE_PX ? (state.pointerY - box.bottom + EDGE_PX) / 4 : 0;
+      if (speed) {
+        state.scroller.scrollTop += speed;
+        update(place(state, state.pointerY));
+      }
+      frame = requestAnimationFrame(tick);
+    });
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key === "Escape") update(null);
+    };
+    window.addEventListener("keydown", cancel);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", cancel);
+    };
+  }, [drag?.active]);
+  function down(event: ReactPointerEvent<HTMLLIElement>, index: number, id: string) {
+    const target = event.target as Element;
+    if (event.button !== 0 || target.closest("button, a")) return;
+    const handle = Boolean(target.closest(".grip"));
+    if (event.pointerType !== "mouse" && !handle) return;
+    const row = event.currentTarget;
+    const scroller = scrollParent(row);
+    row.setPointerCapture(event.pointerId);
+    if (handle) event.preventDefault();
+    update({ id, from: index, over: index, dy: 0, active: handle && event.pointerType !== "mouse", startY: event.clientY, pointerY: event.clientY, startScroll: scroller.scrollTop, step: row.offsetHeight + 2, scroller });
+  }
+  function move(event: ReactPointerEvent<HTMLLIElement>) {
+    const state = current.current;
+    if (state) update(place(state, event.clientY));
+  }
+  function up() {
+    const state = current.current;
+    if (!state) return;
+    if (state.active && state.over !== state.from) {
+      setSettling(true);
+      requestAnimationFrame(() => requestAnimationFrame(() => setSettling(false)));
+      void command({ action: "move", id: state.id, to: offset + state.over });
+    }
+    update(null);
+  }
+  const shift = (index: number): number => {
+    if (!drag?.active) return 0;
+    if (index === drag.from) return drag.dy;
+    if (drag.from < drag.over && index > drag.from && index <= drag.over) return -drag.step;
+    if (drag.over < drag.from && index >= drag.over && index < drag.from) return drag.step;
+    return 0;
+  };
+  return (
+    <ol className={`rows queue-list ${drag?.active ? "sorting" : ""} ${settling ? "settling" : ""}`}>
+      {upcoming.map((item, index) => {
+        const lifted = drag?.active && drag.from === index;
+        return (
+          <li key={item.id} className={`song queue-row ${lifted ? "lifted" : ""}`} style={shift(index) ? { transform: `translateY(${shift(index)}px)${lifted ? " scale(1.02)" : ""}` } : undefined} onPointerDown={(event) => down(event, index, item.id)} onPointerMove={move} onPointerUp={up} onPointerCancel={() => update(null)} onLostPointerCapture={() => { if (current.current) up(); }}>
+            <span className="grip" aria-hidden="true"><span className="pos">{index + 1 + Math.sign(shift(index))}</span><Icon.Grip /></span>
+            <Art src={artwork(item, 96)} className="art-sm" />
+            <div className="meta">
+              <div className="name">{item.title}</div>
+              {item.artist && <div className="sub">{item.artist}</div>}
+            </div>
+            {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
+            <span className="reorder">
+              <button className="icon-btn small" aria-label={`${t.up}: ${item.title}`} disabled={index === 0} onClick={() => void command({ action: "move", id: item.id, to: offset + index - 1 })}><Icon.Up /></button>
+              <button className="icon-btn small" aria-label={`${t.down}: ${item.title}`} disabled={index === upcoming.length - 1} onClick={() => void command({ action: "move", id: item.id, to: offset + index + 1 })}><Icon.Down /></button>
+            </span>
+            <button className="icon-btn small" aria-label={`${t.remove}: ${item.title}`} onClick={() => void command({ action: "remove", id: item.id })}><Icon.Close /></button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setView: (view: Synced) => void; refresh: () => void; live: boolean }) {
   const [error, setError] = useState<string | null>(null);
-  const [dragging, setDragging] = useState<string | null>(null);
   async function command(body: Command) {
     setError(null);
     if (view) setView(predict(view, body));
@@ -539,6 +664,9 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
       } else if (playing && key === "n") {
         event.preventDefault();
         void send({ action: "skip" });
+      } else if (current?.active && key === "p") {
+        event.preventDefault();
+        void send({ action: "previous" });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -597,26 +725,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                   {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
                 </div>
                 {upcoming.length === 0 && !auto && <p className="hint">{view?.autoplay ? t.autoplayPicking : t.queueEmpty}</p>}
-                {upcoming.length > 0 && (
-                  <ol className="rows">
-                    {upcoming.map((item, index) => (
-                      <li key={item.id} className={`song queue-row ${dragging === item.id ? "dragging" : ""}`} draggable onDragStart={() => setDragging(item.id)} onDragEnd={() => setDragging(null)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragging && dragging !== item.id) void command({ action: "move", id: dragging, to: offset + index }); setDragging(null); }}>
-                        <span className="grip"><span className="pos">{index + 1}</span><Icon.Grip /></span>
-                        <Art src={artwork(item, 96)} className="art-sm" />
-                        <div className="meta">
-                          <div className="name">{item.title}</div>
-                          {item.artist && <div className="sub">{item.artist}</div>}
-                        </div>
-                        {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
-                        <span className="reorder">
-                          <button className="icon-btn small" aria-label={`${t.up}: ${item.title}`} disabled={index === 0} onClick={() => void command({ action: "move", id: item.id, to: offset + index - 1 })}><Icon.Up /></button>
-                          <button className="icon-btn small" aria-label={`${t.down}: ${item.title}`} disabled={index === upcoming.length - 1} onClick={() => void command({ action: "move", id: item.id, to: offset + index + 1 })}><Icon.Down /></button>
-                        </span>
-                        <button className="icon-btn small" aria-label={`${t.remove}: ${item.title}`} onClick={() => void command({ action: "remove", id: item.id })}><Icon.Close /></button>
-                      </li>
-                    ))}
-                  </ol>
-                )}
+                {upcoming.length > 0 && <QueueList upcoming={upcoming} offset={offset} command={command} />}
                 {auto && (
                   <div className="song auto-row">
                     <span className="grip" />
