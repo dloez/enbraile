@@ -14,6 +14,7 @@ const isLink = (text: string) => /^https?:\/\//.test(text.trim());
 const LOOP_ORDER: Loop[] = ["off", "queue", "track"];
 const BASE_TITLE = document.title;
 const RETRY_MS = [1_000, 3_000, 10_000, 30_000];
+const SILENT_SOCKET_MS = 25_000;
 const RESTART_WITHIN_MS = 3_000;
 const LANGS = [{ code: "en", name: "English" }, { code: "es", name: "Español" }] as const;
 
@@ -21,7 +22,7 @@ const stamp = (view: View): Synced => ({ ...view, at: performance.now() });
 
 function estimate(view: Synced, now: number): number {
   const duration = view.tracks[view.current]?.durationMs ?? 0;
-  const position = view.paused || view.loading ? view.positionMs : view.positionMs + (now - view.at);
+  const position = view.paused || view.loading || view.stalled ? view.positionMs : view.positionMs + (now - view.at);
   return duration > 0 ? Math.min(position, duration) : position;
 }
 
@@ -146,6 +147,24 @@ function useView(boot: Me | null): { view: Synced | null; live: boolean; refresh
     let poll: ReturnType<typeof setInterval> | undefined;
     let retry: ReturnType<typeof setTimeout> | undefined;
     let failures = 0;
+    let heardAt = 0;
+    const lost = () => {
+      attachSocket(null);
+      if (closed) return;
+      if (failures > 0) setLive(false);
+      refresh();
+      if (!poll) poll = setInterval(refresh, 10_000);
+      later();
+    };
+    const watchdog = setInterval(() => {
+      if (socket?.readyState !== WebSocket.OPEN || performance.now() - heardAt < SILENT_SOCKET_MS) return;
+      const dead = socket;
+      socket = undefined;
+      dead.onclose = null;
+      dead.onmessage = null;
+      dead.close();
+      lost();
+    }, 5_000);
     const later = () => {
       retry = setTimeout(() => void connect(), RETRY_MS[Math.min(failures++, RETRY_MS.length - 1)]);
     };
@@ -162,24 +181,19 @@ function useView(boot: Me | null): { view: Synced | null; live: boolean; refresh
         const live = new WebSocket(`${url}?ticket=${encodeURIComponent(ticket)}`);
         socket = live;
         live.onopen = () => {
+          heardAt = performance.now();
           failures = 0;
           attachSocket(live);
           setLive(true);
           stopPolling();
         };
         live.onmessage = (event) => {
-          const message = JSON.parse(String(event.data)) as { type: "view"; view: View } | { type: "reply"; id: number; status: number; body: unknown };
+          heardAt = performance.now();
+          const message = JSON.parse(String(event.data)) as { type: "view"; view: View } | { type: "reply"; id: number; status: number; body: unknown } | { type: "beat" };
           if (message.type === "view") setView(stamp(message.view));
-          else handleReply(message);
+          else if (message.type === "reply") handleReply(message);
         };
-        live.onclose = () => {
-          attachSocket(null);
-          if (closed) return;
-          if (failures > 0) setLive(false);
-          refresh();
-          if (!poll) poll = setInterval(refresh, 10_000);
-          later();
-        };
+        live.onclose = lost;
       } catch {
         if (!closed) later();
       }
@@ -188,6 +202,7 @@ function useView(boot: Me | null): { view: Synced | null; live: boolean; refresh
     void connect();
     return () => {
       closed = true;
+      clearInterval(watchdog);
       attachSocket(null);
       socket?.close();
       stopPolling();
@@ -496,7 +511,7 @@ function Equalizer() {
 }
 
 type Stage = "idle" | "loading" | "paused" | "playing";
-const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : view.loading ? "loading" : view.paused ? "paused" : "playing");
+const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : view.loading || view.stalled ? "loading" : view.paused ? "paused" : "playing");
 
 function Cover({ src }: { src: string | null }) {
   const [layers, setLayers] = useState<{ src: string; ready: boolean; broken: boolean }[]>([]);
@@ -546,7 +561,7 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
     <section className="now" data-stage={stageOf(view, track)} aria-label={t.tabs.player}>
       <Cover src={cover} />
       <div className="now-text">
-        <p className="eyebrow"><Equalizer />{view.loading ? t.starting : view.paused ? t.paused : t.nowPlaying}</p>
+        <p className="eyebrow"><Equalizer />{view.loading ? t.starting : view.stalled ? t.buffering : view.paused ? t.paused : t.nowPlaying}</p>
         <div className="swap" key={track.query}>
           <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
           <p className="artist">{track.artist || "\u00a0"}</p>
@@ -604,7 +619,7 @@ function Dock({ view, track, command, shown }: { view: Synced; track: Track; com
       <Art src={artwork(track, 96)} className="art-sm" />
       <div className="meta">
         <div className="name">{track.title}</div>
-        <div className="sub">{view.loading ? t.starting : track.artist}</div>
+        <div className="sub">{view.loading ? t.starting : view.stalled ? t.buffering : track.artist}</div>
       </div>
       <button className={`play small ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}><PlayIcon paused={view.paused} /></button>
       <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>

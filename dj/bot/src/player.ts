@@ -4,13 +4,16 @@ import { client, guild } from "./client.ts";
 
 type Resolved = { title: string; artist: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string };
 
-export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "ended" | "failed"; generation: number; error?: string };
+export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed"; generation: number; error?: string };
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
 const RESOLVE_TTL_MS = 2 * 60 * 60 * 1000;
 const PLUGINS = new URL("../yt-dlp-plugins", import.meta.url).pathname;
 const MAX_WARMING = 2;
 const CUT_SHORT_MS = 5_000;
+const STALL_MS = 1_000;
+const STALL_LIMIT_MS = 10_000;
+const WATCH_MS = 250;
 
 const cache = new Map<string, Promise<Resolved>>();
 let connection: VoiceConnection | undefined;
@@ -23,6 +26,30 @@ let offsetMs = 0;
 let listener: (event: PlayerEvent) => void = () => undefined;
 let warming = 0;
 let playing: { query: string; volume: number; durationMs: number; retried: boolean; error: string } | undefined;
+let flowing = false;
+let stalled = false;
+let progress = { durationMs: -1, at: 0 };
+
+setInterval(() => {
+  const status = player?.state.status;
+  const now = Date.now();
+  if (!resource || !flowing || (status !== AudioPlayerStatus.Playing && status !== AudioPlayerStatus.AutoPaused)) {
+    progress.at = now;
+    return;
+  }
+  if (resource.playbackDuration !== progress.durationMs) {
+    progress = { durationMs: resource.playbackDuration, at: now };
+    if (stalled) {
+      stalled = false;
+      console.log("audio flowing again", playing?.query);
+      emit({ type: "playing", generation });
+    }
+  } else if (!stalled && now - progress.at >= STALL_MS) {
+    stalled = true;
+    console.error("audio stalled", playing?.query, status);
+    emit({ type: "stalled", generation });
+  }
+}, WATCH_MS).unref();
 
 export function onPlayerEvent(callback: (event: PlayerEvent) => void): void {
   listener = callback;
@@ -127,7 +154,7 @@ export async function join(nextChannel: string): Promise<void> {
   connection = joinVoiceChannel({ guildId: server.id, channelId, adapterCreator: server.voiceAdapterCreator, selfDeaf: true });
   connection.on("error", (error) => console.error("voice", error.message));
   await entersState(connection, VoiceConnectionStatus.Ready, 30000);
-  player = createAudioPlayer();
+  player = createAudioPlayer({ behaviors: { maxMissedFrames: STALL_LIMIT_MS / 20 } });
   connection.subscribe(player);
   player.on("error", (error) => console.error("player", error.message));
   player.on(AudioPlayerStatus.Idle, () => {
@@ -140,7 +167,10 @@ export async function join(nextChannel: string): Promise<void> {
     if (!cut) return emit({ type: "ended", generation: finished });
     console.error("stream cut", song.query, reached, "of", song.durationMs, "ms", song.error);
     cache.delete(song.query);
-    if (!song.retried) return play(song.query, reached, song.volume, finished, true);
+    if (!song.retried) {
+      emit({ type: "stalled", generation: finished });
+      return play(song.query, reached, song.volume, finished, true);
+    }
     emit({ type: "failed", generation: finished, error: song.error || "stream cut short" });
   });
 }
@@ -150,6 +180,9 @@ async function start(query: string, startMs: number, volume: number, id: number,
   killStream();
   player?.stop(true);
   resource = undefined;
+  flowing = false;
+  stalled = false;
+  progress = { durationMs: -1, at: 0 };
   const started = Date.now();
   const track = await resolveTrack(query, retried);
   if (generation !== id || !player) return;
@@ -174,7 +207,9 @@ async function start(query: string, startMs: number, volume: number, id: number,
   player.play(resource);
   player.once(AudioPlayerStatus.Playing, () => {
     console.log("first audio", query, Date.now() - started, "ms");
-    if (generation === id) emit({ type: "playing", generation: id });
+    if (generation !== id) return;
+    flowing = true;
+    emit({ type: "playing", generation: id });
   });
   emit({ type: "started", generation: id, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs, url: track.pageUrl });
 }

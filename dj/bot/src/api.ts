@@ -9,6 +9,7 @@ import * as session from "./session.ts";
 
 const secret = process.env.INTERNAL_SECRET ?? "";
 const publicUrl = process.env.PUBLIC_URL ?? "http://localhost:8080";
+const BEAT_MS = 10_000;
 
 function reply(response: ServerResponse, value: unknown, status = 200): void {
   response.writeHead(status, { "content-type": "application/json" });
@@ -126,7 +127,19 @@ server.on("upgrade", async (request, socket, head) => {
     const send = (message: unknown) => {
       if (live.readyState === live.OPEN) live.send(JSON.stringify(message));
     };
-    const stop = session.watch((view) => send({ type: "view", view }));
+    const unwatch = session.watch((view) => send({ type: "view", view }));
+    let alive = true;
+    live.on("pong", () => (alive = true));
+    const beat = setInterval(() => {
+      if (!alive) return live.terminate();
+      alive = false;
+      live.ping();
+      send({ type: "beat" });
+    }, BEAT_MS);
+    const stop = () => {
+      clearInterval(beat);
+      unwatch();
+    };
     live.on("close", stop);
     live.on("error", stop);
     live.on("message", async (data) => {

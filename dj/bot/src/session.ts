@@ -13,6 +13,7 @@ type State = {
   current: number;
   paused: boolean;
   loading: boolean;
+  stalled: boolean;
   volume: number;
   loop: Loop;
   autoplay: boolean;
@@ -36,6 +37,7 @@ export type View = {
   current: number;
   paused: boolean;
   loading: boolean;
+  stalled: boolean;
   volume: number;
   loop: Loop;
   autoplay: boolean;
@@ -93,6 +95,7 @@ const blank = (): State => ({
   current: -1,
   paused: false,
   loading: false,
+  stalled: false,
   volume: 1,
   loop: "off",
   autoplay: false,
@@ -146,7 +149,7 @@ export function setSettings(next: Settings): void {
 const playing = () => state.active && state.current >= 0 && state.current < state.tracks.length;
 
 function livePosition(): number {
-  return playing() && !state.loading ? player.status().positionMs : state.positionMs;
+  return playing() && !state.loading && !state.stalled ? player.status().positionMs : state.positionMs;
 }
 
 function prepareAhead(): void {
@@ -163,6 +166,7 @@ export function view(): View {
     current: state.current,
     paused: state.paused,
     loading: playing() && state.loading,
+    stalled: playing() && !state.loading && state.stalled,
     volume: state.volume,
     loop: state.loop,
     autoplay: state.autoplay,
@@ -183,6 +187,7 @@ function startCurrent(offsetMs = 0): void {
   state.positionMs = offsetMs;
   state.paused = false;
   state.loading = true;
+  state.stalled = false;
   state.pausedSince = null;
   state.idleSince = null;
   save();
@@ -506,8 +511,16 @@ export async function command(command: Command): Promise<void> {
 
 player.onPlayerEvent((event) => {
   if (!state.active || event.generation !== state.generation) return;
+  if (event.type === "stalled") {
+    if (state.loading || state.stalled) return;
+    state.positionMs = player.status().positionMs;
+    state.stalled = true;
+    save();
+    return;
+  }
   if (event.type === "playing") {
     state.loading = false;
+    state.stalled = false;
     state.skipped = null;
     save();
     prepareAhead();
@@ -547,7 +560,7 @@ async function tick(): Promise<void> {
     if (state.current >= 0 && state.current < state.tracks.length) startCurrent(state.positionMs);
     return;
   }
-  if (playing() && !state.loading) state.positionMs = status.positionMs;
+  if (playing() && !state.loading && !state.stalled) state.positionMs = status.positionMs;
   state.listeners = status.listeners;
   state.emptySince = state.listeners === 0 ? (state.emptySince ?? now) : null;
   const autoplayOver = state.autoplay && (state.listeners === 0 || now - state.lastHumanAt >= AUTOPLAY_LIMIT_MS);
