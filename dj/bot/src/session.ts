@@ -9,6 +9,7 @@ type State = {
   tracks: Track[];
   current: number;
   paused: boolean;
+  loading: boolean;
   volume: number;
   loop: Loop;
   autoplay: boolean;
@@ -29,6 +30,7 @@ export type View = {
   tracks: Track[];
   current: number;
   paused: boolean;
+  loading: boolean;
   volume: number;
   loop: Loop;
   autoplay: boolean;
@@ -62,12 +64,14 @@ const PAUSED_LEAVE_MS = 15 * 60_000;
 const AUTOPLAY_LIMIT_MS = 60 * 60_000;
 const MAX_FAILURES_IN_A_ROW = 5;
 const HISTORY_KEPT = 200;
+const PREPARED_AHEAD = 2;
 
 const blank = (): State => ({
   channelId: null,
   tracks: [],
   current: -1,
   paused: false,
+  loading: false,
   volume: 1,
   loop: "off",
   autoplay: false,
@@ -116,18 +120,30 @@ export function setSettings(next: Settings): void {
   save();
 }
 
+const playing = () => state.active && state.current >= 0 && state.current < state.tracks.length;
+
+function livePosition(): number {
+  return playing() && !state.loading ? player.status().positionMs : state.positionMs;
+}
+
+function prepareAhead(): void {
+  if (!playing() || state.loading) return;
+  for (const track of state.tracks.slice(state.current + 1, state.current + 1 + PREPARED_AHEAD)) player.prepare(track.query);
+}
+
 export function view(): View {
   return {
     channelId: state.channelId,
     tracks: state.tracks,
     current: state.current,
     paused: state.paused,
+    loading: playing() && state.loading,
     volume: state.volume,
     loop: state.loop,
     autoplay: state.autoplay,
     autoplayEndsAt: state.autoplay ? state.lastHumanAt + AUTOPLAY_LIMIT_MS : null,
     autoplayNext: state.autoplay && state.current === state.tracks.length - 1 ? state.autoplayNext : null,
-    positionMs: state.positionMs,
+    positionMs: livePosition(),
     listeners: state.listeners,
     active: state.active,
   };
@@ -139,12 +155,11 @@ function startCurrent(offsetMs = 0): void {
   state.generation += 1;
   state.positionMs = offsetMs;
   state.paused = false;
+  state.loading = true;
   state.pausedSince = null;
   state.idleSince = null;
   save();
   player.play(track.query, offsetMs, state.volume, state.generation);
-  const next = state.tracks[state.current + 1];
-  if (next) player.prepare(next.query);
 }
 
 async function related(): Promise<Track | null> {
@@ -224,7 +239,7 @@ export async function enqueue(channelId: string, items: QueueItem[], requestedBy
   }
   if (wasPlaying) {
     save();
-    if (state.current + 1 === before) player.prepare(state.tracks[before]!.query);
+    prepareAhead();
   } else {
     state.current = before;
     startCurrent();
@@ -249,6 +264,7 @@ export async function command(command: Command): Promise<void> {
       return;
     }
     case "pause":
+      state.positionMs = livePosition();
       player.pause();
       state.paused = true;
       state.pausedSince = Date.now();
@@ -303,11 +319,18 @@ export async function command(command: Command): Promise<void> {
     }
   }
   save();
+  prepareAhead();
   plan();
 }
 
 player.onPlayerEvent((event) => {
   if (!state.active || event.generation !== state.generation) return;
+  if (event.type === "playing") {
+    state.loading = false;
+    save();
+    prepareAhead();
+    return;
+  }
   if (event.type === "started") {
     const track = state.tracks[state.current];
     if (track) {
@@ -340,7 +363,7 @@ async function tick(): Promise<void> {
     if (state.current >= 0 && state.current < state.tracks.length) startCurrent(state.positionMs);
     return;
   }
-  if (state.current >= 0 && state.current < state.tracks.length) state.positionMs = status.positionMs;
+  if (playing() && !state.loading) state.positionMs = status.positionMs;
   state.listeners = status.listeners;
   state.emptySince = state.listeners === 0 ? (state.emptySince ?? now) : null;
   const autoplayOver = state.autoplay && (state.listeners === 0 || now - state.lastHumanAt >= AUTOPLAY_LIMIT_MS);
@@ -350,7 +373,7 @@ async function tick(): Promise<void> {
 }
 
 export function snapshot(): void {
-  if (state.active && state.current >= 0 && state.current < state.tracks.length) state.positionMs = player.status().positionMs;
+  state.positionMs = livePosition();
   setValue("state", state);
 }
 

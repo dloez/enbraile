@@ -4,7 +4,7 @@ import { client, guild } from "./client.ts";
 
 type Resolved = { title: string; artist: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string };
 
-export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "ended" | "failed"; generation: number; error?: string };
+export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "ended" | "failed"; generation: number; error?: string };
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
 const RESOLVE_TTL_MS = 30 * 60 * 1000;
@@ -144,7 +144,10 @@ async function start(query: string, startMs: number, volume: number, id: number)
   offsetMs = startMs;
   resource = createAudioResource(stream.stdout, { inputType: StreamType.OggOpus });
   player.play(resource);
-  player.once(AudioPlayerStatus.Playing, () => console.log("first audio", query, Date.now() - started, "ms"));
+  player.once(AudioPlayerStatus.Playing, () => {
+    console.log("first audio", query, Date.now() - started, "ms");
+    if (generation === id) emit({ type: "playing", generation: id });
+  });
   emit({ type: "started", generation: id, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs, url: track.pageUrl });
 }
 

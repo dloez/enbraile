@@ -43,13 +43,13 @@ const hmac = async (message: string, secret: string) => {
   return btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
 
-export async function signTicket(secret: string): Promise<string> {
-  const expires = String(Date.now() + TICKET_LIFETIME_MS);
-  return `${expires}.${await hmac(expires, secret)}`;
+export async function signTicket(secret: string, userId: string): Promise<string> {
+  const claim = `${Date.now() + TICKET_LIFETIME_MS}.${userId}`;
+  return `${claim}.${await hmac(claim, secret)}`;
 }
 
-export async function verifyTicket(ticket: string, secret: string): Promise<boolean> {
-  const [expires, signature] = ticket.split(".");
-  if (!expires || !signature || Number(expires) < Date.now()) return false;
-  return (await hmac(expires, secret)) === signature;
+export async function verifyTicket(ticket: string, secret: string): Promise<string | null> {
+  const [expires, userId, signature] = ticket.split(".");
+  if (!expires || !userId || !signature || Number(expires) < Date.now()) return null;
+  return (await hmac(`${expires}.${userId}`, secret)) === signature ? userId : null;
 }

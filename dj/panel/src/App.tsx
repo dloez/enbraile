@@ -1,14 +1,65 @@
 import { type CSSProperties, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, get, type HistoryEntry, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SettingsData, signIn, type Song, type Track, type View } from "./api";
+import { ApiError, get, handleReply, type HistoryEntry, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, signIn, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
 
 type Tab = "player" | "playlists" | "history" | "settings";
 type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
+type Synced = View & { at: number };
+type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number };
 
 const message = (error: unknown) => t.errors[error instanceof ApiError ? error.message : "failed"] ?? t.errors.failed!;
 const isLink = (text: string) => /^https?:\/\//.test(text.trim());
 const LOOP_ORDER: Loop[] = ["off", "queue", "track"];
+const RETRY_MS = [1_000, 3_000, 10_000, 30_000];
+
+const stamp = (view: View): Synced => ({ ...view, at: performance.now() });
+
+function estimate(view: Synced, now: number): number {
+  const duration = view.tracks[view.current]?.durationMs ?? 0;
+  const position = view.paused || view.loading ? view.positionMs : view.positionMs + (now - view.at);
+  return duration > 0 ? Math.min(position, duration) : position;
+}
+
+function predict(view: Synced, command: Command): Synced {
+  const now = performance.now();
+  const next: Synced = { ...view, positionMs: estimate(view, now), at: now };
+  const upcoming = (index: number) => index > view.current;
+  switch (command.action) {
+    case "pause":
+      return { ...next, paused: true };
+    case "resume":
+      return { ...next, paused: false };
+    case "seek":
+      return { ...next, positionMs: command.positionMs ?? 0, paused: false, loading: true };
+    case "skip": {
+      let current = view.current + 1;
+      let tracks = view.tracks;
+      if (current >= tracks.length && view.loop === "queue") current = 0;
+      else if (current >= tracks.length && view.autoplayNext) tracks = [...tracks, view.autoplayNext];
+      return { ...next, tracks, current, positionMs: 0, paused: false, loading: current < tracks.length, autoplayNext: null };
+    }
+    case "loop":
+      return { ...next, loop: command.loop ?? "off" };
+    case "autoplay":
+      return { ...next, autoplay: Boolean(command.on), autoplayNext: command.on ? view.autoplayNext : null };
+    case "clear":
+      return { ...next, tracks: view.tracks.slice(0, view.current + 1) };
+    case "remove":
+      return { ...next, tracks: view.tracks.filter((track, index) => !(track.id === command.id && upcoming(index))) };
+    case "move": {
+      const from = view.tracks.findIndex((track) => track.id === command.id);
+      if (!upcoming(from)) return next;
+      const tracks = [...view.tracks];
+      const [track] = tracks.splice(from, 1);
+      tracks.splice(Math.min(tracks.length, Math.max(view.current + 1, command.to ?? 0)), 0, track!);
+      return { ...next, tracks };
+    }
+    case "stop":
+      return { ...next, active: false };
+  }
+  return next;
+}
 
 function clock(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -32,11 +83,11 @@ function Art({ src, className }: { src: string | null; className: string }) {
   );
 }
 
-function useView(enabled: boolean): { view: View | null; live: boolean; refresh: () => void; setView: (view: View) => void } {
-  const [view, setView] = useState<View | null>(null);
+function useView(enabled: boolean): { view: Synced | null; live: boolean; refresh: () => void; setView: (view: Synced) => void } {
+  const [view, setView] = useState<Synced | null>(null);
   const [live, setLive] = useState(true);
   const refresh = useCallback(() => {
-    get<View>("state").then(setView, () => undefined);
+    get<View>("state").then((next) => setView(stamp(next)), () => undefined);
   }, []);
   useEffect(() => {
     if (!enabled) return;
@@ -44,6 +95,10 @@ function useView(enabled: boolean): { view: View | null; live: boolean; refresh:
     let socket: WebSocket | undefined;
     let poll: ReturnType<typeof setInterval> | undefined;
     let retry: ReturnType<typeof setTimeout> | undefined;
+    let failures = 0;
+    const later = () => {
+      retry = setTimeout(() => void connect(), RETRY_MS[Math.min(failures++, RETRY_MS.length - 1)]);
+    };
     const stopPolling = () => {
       if (poll) clearInterval(poll);
       poll = undefined;
@@ -52,27 +107,36 @@ function useView(enabled: boolean): { view: View | null; live: boolean; refresh:
       try {
         const { ticket, url } = await get<{ ticket: string; url: string }>("ticket");
         if (closed) return;
-        socket = new WebSocket(`${url}?ticket=${encodeURIComponent(ticket)}`);
-        socket.onopen = () => {
+        const live = new WebSocket(`${url}?ticket=${encodeURIComponent(ticket)}`);
+        socket = live;
+        live.onopen = () => {
+          failures = 0;
+          attachSocket(live);
           setLive(true);
           stopPolling();
         };
-        socket.onmessage = (event) => setView(JSON.parse(String(event.data)) as View);
-        socket.onclose = () => {
+        live.onmessage = (event) => {
+          const message = JSON.parse(String(event.data)) as { type: "view"; view: View } | { type: "reply"; id: number; status: number; body: unknown };
+          if (message.type === "view") setView(stamp(message.view));
+          else handleReply(message);
+        };
+        live.onclose = () => {
+          attachSocket(null);
           if (closed) return;
-          setLive(false);
+          if (failures > 0) setLive(false);
           refresh();
           if (!poll) poll = setInterval(refresh, 10_000);
-          retry = setTimeout(() => void connect(), 30_000);
+          later();
         };
       } catch {
-        if (!closed) retry = setTimeout(() => void connect(), 30_000);
+        if (!closed) later();
       }
     };
     refresh();
     void connect();
     return () => {
       closed = true;
+      attachSocket(null);
       socket?.close();
       stopPolling();
       if (retry) clearTimeout(retry);
@@ -89,6 +153,7 @@ async function enqueue(body: { items: QueueItem[] } | { input: string }): Promis
 function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void> }) {
   const [text, setText] = useState("");
   const [results, setResults] = useState<Song[] | null>(null);
+  const [shown, setShown] = useState("");
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [added, setAdded] = useState<Set<string>>(new Set());
@@ -100,7 +165,10 @@ function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPi
     setError(null);
     try {
       const songs = await get<Song[]>(`search?q=${encodeURIComponent(query)}`);
-      if (id === sequence.current) setResults(songs);
+      if (id === sequence.current) {
+        setResults(songs);
+        setShown(query);
+      }
     } catch (failure) {
       if (id === sequence.current) setError(message(failure));
     }
@@ -114,7 +182,7 @@ function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPi
       setLoading(false);
       return;
     }
-    const timer = setTimeout(() => void search(query), 450);
+    const timer = setTimeout(() => void search(query), 250);
     return () => clearTimeout(timer);
   }, [text, search]);
   function clear() {
@@ -149,6 +217,7 @@ function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPi
     }
     setBusy(null);
   }
+  const stale = results !== null && shown !== text.trim();
   return (
     <div className="search">
       <form role="search" onSubmit={(event) => void submit(event)} className="search-box">
@@ -163,7 +232,7 @@ function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPi
         <section aria-label={t.songs} aria-busy={loading}>
           <h2 className="label">{loading && !results ? t.searching : t.songs}</h2>
           {results?.length === 0 && <p className="hint">{t.noSongs}</p>}
-          <ul className="rows">
+          <ul className={`rows ${stale ? "stale" : ""}`}>
             {results?.map((song) => {
               const done = added.has(song.videoId);
               return (
@@ -175,7 +244,7 @@ function SongSearch({ placeholder, onPick, onLink }: { placeholder: string; onPi
                   </div>
                   {song.plays && <span className="plays">{song.plays}</span>}
                   {song.durationMs > 0 && <span className="len">{clock(song.durationMs)}</span>}
-                  <button className={`icon-btn ring ${done ? "done" : ""}`} aria-label={done ? `${t.added}: ${song.title}` : t.addToQueue(song.title)} disabled={busy === song.videoId} onClick={() => void pick(song)}>{done ? <Icon.Check /> : <Icon.Plus />}</button>
+                  <button className={`icon-btn ring ${done ? "done" : ""}`} aria-label={done ? `${t.added}: ${song.title}` : t.addToQueue(song.title)} disabled={stale || busy === song.videoId} onClick={() => void pick(song)}>{done ? <Icon.Check /> : <Icon.Plus />}</button>
                 </li>
               );
             })}
@@ -191,15 +260,11 @@ function Slider({ label, value, max, step, onChange, onCommit, className }: { la
   return <input type="range" className={`slider ${className ?? ""}`} aria-label={label} min={0} max={max} step={step} value={value} style={{ "--fill": fill } as CSSProperties} onChange={(event) => onChange(Number(event.target.value))} onPointerUp={onCommit} onKeyUp={onCommit} />;
 }
 
-function NowPlaying({ view, track, command }: { view: View | null; track: Track | undefined; command: (body: Record<string, unknown>) => Promise<void> }) {
-  const [now, setNow] = useState(Date.now());
+function NowPlaying({ view, track, command }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void> }) {
+  const [now, setNow] = useState(performance.now());
   const [seek, setSeek] = useState<number | null>(null);
-  const seen = useRef({ position: view?.positionMs ?? 0, at: Date.now() });
   useEffect(() => {
-    seen.current = { position: view?.positionMs ?? 0, at: Date.now() };
-  }, [view?.positionMs]);
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 500);
+    const timer = setInterval(() => setNow(performance.now()), 250);
     return () => clearInterval(timer);
   }, []);
   if (!track || !view) {
@@ -213,9 +278,8 @@ function NowPlaying({ view, track, command }: { view: View | null; track: Track 
       </section>
     );
   }
-  const estimated = view.paused ? view.positionMs : seen.current.position + (now - seen.current.at);
   const duration = track.durationMs;
-  const position = seek ?? Math.min(estimated, duration || estimated);
+  const position = seek ?? estimate(view, now);
   const loopIndex = LOOP_ORDER.indexOf(view.loop);
   const loopNames: Record<Loop, string> = { off: t.loopOff, track: t.loopTrack, queue: t.loopQueue };
   return (
@@ -225,17 +289,17 @@ function NowPlaying({ view, track, command }: { view: View | null; track: Track 
         <h1 className="title">{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
         {track.artist && <p className="sub">{track.artist}</p>}
       </div>
-      <div className="progress">
+      <div className={`progress ${view.loading ? "loading" : ""}`}>
         {duration > 0 ? (
           <Slider label={t.position} value={position} max={duration} step={1000} onChange={setSeek} onCommit={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} className="bright" />
         ) : <div className="track-line" />}
-        <div className="time"><span>{clock(position)}</span><span>{duration > 0 ? clock(duration) : "–:––"}</span></div>
+        <div className="time"><span>{view.loading ? t.starting : clock(position)}</span><span>{duration > 0 ? clock(duration) : "–:––"}</span></div>
       </div>
       <div className="transport">
         <span className="transport-side start">
           <button className="icon-btn" aria-label={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
         </span>
-        <button className="play" aria-label={view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
+        <button className={`play ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={view.loading} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}>{view.paused ? <Icon.Play /> : <Icon.Pause />}</button>
         <span className="transport-side">
         <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
         <button className={`icon-btn ${view.loop !== "off" ? "on" : ""}`} aria-label={`${t.loop}: ${loopNames[view.loop]}`} title={`${t.loop}: ${loopNames[view.loop]}`} onClick={() => void command({ action: "loop", loop: LOOP_ORDER[(loopIndex + 1) % LOOP_ORDER.length] })}>
@@ -254,7 +318,7 @@ function NowPlaying({ view, track, command }: { view: View | null; track: Track 
       </div>
       {view.autoplay && view.autoplayEndsAt && (
         <div className="autoplay-note">
-          <span className="sub">{t.autoplayEnds(Math.max(0, Math.ceil((view.autoplayEndsAt - now) / 60000)))}</span>
+          <span className="sub">{t.autoplayEnds(Math.max(0, Math.ceil((view.autoplayEndsAt - Date.now()) / 60000)))}</span>
           <button className="pill" onClick={() => void command({ action: "keepGoing" })}>{t.keepGoing}</button>
         </div>
       )}
@@ -262,15 +326,17 @@ function NowPlaying({ view, track, command }: { view: View | null; track: Track 
   );
 }
 
-function PlayerTab({ view, setView, live }: { view: View | null; setView: (view: View) => void; live: boolean }) {
+function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setView: (view: Synced) => void; refresh: () => void; live: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
-  async function command(body: Record<string, unknown>) {
+  async function command(body: Command) {
     setError(null);
+    if (view) setView(predict(view, body));
     try {
-      setView(await post<View>("command", { command: body }));
+      setView(stamp(await post<View>("command", { command: body })));
     } catch (failure) {
       setError(message(failure));
+      refresh();
     }
   }
   const track = view && view.active ? view.tracks[view.current] : undefined;
@@ -459,10 +525,13 @@ export function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [failed, setFailed] = useState(false);
   const [tab, setTab] = useState<Tab>("player");
-  const { view, live, setView } = useView(Boolean(me?.canPlay));
+  const { view, live, setView, refresh } = useView(Boolean(me?.canPlay));
   useEffect(() => {
     document.documentElement.lang = lang;
-    get<Me>("me").then(setMe, (error: unknown) => {
+    get<Me>("me").then((next) => {
+      setOwnerName(next.user.name);
+      setMe(next);
+    }, (error: unknown) => {
       if ((error as Error).message !== "signedOut") setFailed(true);
     });
   }, []);
@@ -494,7 +563,7 @@ export function App() {
       {!me.member && <p className="notice">{t.notMember}</p>}
       {me.member && !me.canPlay && <p className="notice">{t.denied}</p>}
       <main className="main">
-        {active === "player" && <PlayerTab view={view} setView={setView} live={live} />}
+        {active === "player" && <PlayerTab view={view} setView={setView} refresh={refresh} live={live} />}
         {active === "playlists" && <PlaylistsTab me={me} />}
         {active === "history" && <HistoryTab />}
         {active === "settings" && <SettingsTab />}

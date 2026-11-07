@@ -20,10 +20,8 @@ async function body(request: IncomingMessage): Promise<Record<string, unknown>> 
   return chunks.length ? (JSON.parse(Buffer.concat(chunks).toString()) as Record<string, unknown>) : {};
 }
 
-async function internal(request: IncomingMessage, url: URL): Promise<[unknown, number?]> {
+async function internal(method: string, url: URL, input: Record<string, unknown>, userId: string): Promise<[unknown, number?]> {
   const path = url.pathname;
-  const input = request.method === "POST" ? await body(request) : {};
-  const userId = String(input.userId ?? url.searchParams.get("userId") ?? "");
   const id = String(input.id ?? "");
   const denied: [unknown, number] = [{ error: "forbidden" }, 403];
   const access = await accessOf(userId);
@@ -31,7 +29,7 @@ async function internal(request: IncomingMessage, url: URL): Promise<[unknown, n
   if (!access.member) return denied;
   if (path === "/internal/settings") {
     if (!access.canManage) return denied;
-    if (request.method === "POST") session.setSettings({ djRoleId: (input.djRoleId as string | null) ?? null });
+    if (method === "POST") session.setSettings({ djRoleId: (input.djRoleId as string | null) ?? null });
     const roles = await (await guild()).roles.fetch();
     return [{ ...session.settings(), roles: [...roles.values()].filter((role) => role.id !== role.guild.id && !role.managed).sort((a, b) => b.position - a.position).map((role) => ({ id: role.id, name: role.name })) }];
   }
@@ -40,7 +38,7 @@ async function internal(request: IncomingMessage, url: URL): Promise<[unknown, n
     case "/internal/state":
       return [session.view()];
     case "/internal/ticket":
-      return [{ ticket: await signTicket(secret), url: `${publicUrl.replace(/^http/, "ws")}/live` }];
+      return [{ ticket: await signTicket(secret, userId), url: `${publicUrl.replace(/^http/, "ws")}/live` }];
     case "/internal/command":
       await session.command(input.command as session.Command);
       return [session.view()];
@@ -66,7 +64,7 @@ async function internal(request: IncomingMessage, url: URL): Promise<[unknown, n
     case "/internal/history":
       return [session.history()];
     case "/internal/playlists":
-      if (request.method === "POST") return [{ id: session.createPlaylist(String(input.name), userId, String(input.ownerName ?? "")) }];
+      if (method === "POST") return [{ id: session.createPlaylist(String(input.name), userId, String(input.ownerName ?? "")) }];
       return [session.playlists()];
     case "/internal/playlist/tracks":
       return [session.playlistTracks(url.searchParams.get("id") ?? "")];
@@ -94,7 +92,9 @@ export const server = createServer(async (request, response) => {
   if (url.pathname === "/healthz") return reply(response, { ok: true });
   if (!url.pathname.startsWith("/internal/") || request.headers.authorization !== `Bearer ${secret}`) return reply(response, { error: "notFound" }, 404);
   try {
-    const [value, status] = await internal(request, url);
+    const input = request.method === "POST" ? await body(request) : {};
+    const userId = String(input.userId ?? url.searchParams.get("userId") ?? "");
+    const [value, status] = await internal(request.method ?? "GET", url, input, userId);
     reply(response, value, status);
   } catch (error) {
     console.error("api", url.pathname, (error as Error).message);
@@ -104,14 +104,32 @@ export const server = createServer(async (request, response) => {
 
 server.on("upgrade", async (request, socket, head) => {
   const url = new URL(request.url ?? "/", "http://dj");
-  if (url.pathname !== "/live" || !(await verifyTicket(url.searchParams.get("ticket") ?? "", secret))) {
+  const userId = url.pathname === "/live" ? await verifyTicket(url.searchParams.get("ticket") ?? "", secret) : null;
+  if (!userId) {
     socket.end("HTTP/1.1 404 Not Found\r\n\r\n");
     return;
   }
   sockets.handleUpgrade(request, socket, head, (live) => {
-    const stop = session.watch((view) => live.send(JSON.stringify(view)));
+    const send = (message: unknown) => {
+      if (live.readyState === live.OPEN) live.send(JSON.stringify(message));
+    };
+    const stop = session.watch((view) => send({ type: "view", view }));
     live.on("close", stop);
     live.on("error", stop);
-    live.send(JSON.stringify(session.view()));
+    live.on("message", async (data) => {
+      let id: unknown;
+      try {
+        const message = JSON.parse(String(data)) as { id: unknown; method?: string; path?: string; body?: Record<string, unknown> };
+        id = message.id;
+        const url = new URL(`/internal/${String(message.path ?? "")}`, "http://dj");
+        if (url.pathname === "/internal/ticket") throw new Error("notFound");
+        const [value, status] = await internal(message.method === "POST" ? "POST" : "GET", url, message.body ?? {}, userId);
+        send({ type: "reply", id, status: status ?? 200, body: value });
+      } catch (error) {
+        console.error("live", (error as Error).message);
+        send({ type: "reply", id, status: 500, body: { error: "failed" } });
+      }
+    });
+    send({ type: "view", view: session.view() });
   });
 });
