@@ -11,7 +11,7 @@ One Node process (`src/main.ts`) runs in the `dj` namespace of the owner's home 
 - the queue, settings, playlists and history (`src/session.ts`), in SQLite through `node:sqlite` (`src/db.ts`), on a 1 Gi Longhorn volume at `/data`.
 - an HTTP API for the panel behind `INTERNAL_SECRET`, plus the `/live` WebSocket (`src/api.ts`).
 
-A `cloudflared` pod beside it runs a Cloudflare Tunnel, which publishes the API at `https://dj-api.enbraile.vip` without opening a port on the home network.
+A `tailscale` pod beside it publishes the API with Tailscale Funnel at `https://dj.<tailnet>.ts.net`, over an outbound connection, so no port opens on the home network.
 
 A tick every 15 seconds while a session runs saves the position, rejoins and resumes if the voice connection dropped, and applies the leave rules. On shutdown the process saves the position, and on start it rejoins and resumes a session that was running.
 
@@ -32,7 +32,7 @@ From throwaway probes on 2026-11-06 and 2026-11-07, one run each.
 ## Decisions
 
 - **On the owner's cluster `tom`, not Cloudflare:** the bot is one long-lived process holding gateway and voice connections, which Workers, a Durable Object and a Container that woke on demand only imitated, slowly and for about $5–8 a month. Supersedes running on Cloudflare Workers Paid with Containers (2026-11-06) and deploying through Workers Builds (2026-11-07). _(owner, 2026-11-07)_
-- **API published through a Cloudflare Tunnel at `dj-api.enbraile.vip`:** outbound-only, so no port forwarding and the home IP stays private. During a LaLiga block of Cloudflare's IPs the panel's socket fails and the panel polls through Vercel, which reaches the tunnel. _(owner, 2026-11-07)_
+- **API published through Tailscale Funnel, not a Cloudflare Tunnel:** both are outbound-only, so no port forwarding and the home IP stays private, but Funnel's public relays are Tailscale's own servers rather than Cloudflare's IPs, which Spanish ISPs block during LaLiga matches, so the panel's live socket should keep working then. No report of a LaLiga block hitting Tailscale was found on 2026-11-07; if one does, the panel polls through Vercel as before. The cost is a `ts.net` address instead of an `enbraile.vip` one, which only the panel sees. _(owner, 2026-11-07)_
 - **Deployed by Flux image automation pushing straight to `dloez`'s `main`,** unlike pihole's reviewed bumps, so a push to `enbraile` deploys like the panel does. _(owner asked for deploy on push, 2026-11-07)_
 - **Either node:** the pod has no node pinning. _(owner, 2026-11-07)_
 - **No monthly hour limit:** it only capped the Container bill. _(owner, 2026-11-07)_

@@ -21,15 +21,16 @@ To roll back, revert the commit in `enbraile` and push, which builds a newer ima
 
 ## Set It Up Once
 
-1. In Cloudflare Zero Trust → Networks → Tunnels, create a cloudflared tunnel named `dj`, and copy its token. Add a public hostname `dj-api.enbraile.vip` with service `http://dj.dj.svc.cluster.local:8080`.
-2. In 1Password, vault `Homelab - Tom`, create an item `dj` with the fields `bot-token` (the bot token), `internal-secret` (the same `INTERNAL_SECRET` as the panel's) and `tunnel-token`.
-3. Push `enbraile` so the workflow publishes the first image. In GitHub → Packages → `enbraile-dj-bot` → Package settings, make the package public, so the cluster can pull it without credentials.
-4. Put that first tag in `homelab/apps/tom/dj.yaml` in `dloez` and push. Flux creates the namespace, the secret, the volume and both pods, and then keeps the tag current.
-5. From `dj/bot/`, run `npm run commands`. It registers the slash commands and clears the application's interactions endpoint URL, so Discord sends commands over the gateway.
-6. In Vercel, set the panel's `BOT_URL` to `https://dj-api.enbraile.vip` for Production, and redeploy.
+1. In the Tailscale admin console → DNS, turn on MagicDNS and HTTPS Certificates, and note the tailnet's DNS name (`<tailnet>.ts.net`).
+2. In Access Controls, add `"tag:dj": ["autogroup:admin"]` to `tagOwners`, and a `nodeAttrs` entry `{"target": ["tag:dj"], "attr": ["funnel"]}`.
+3. In Settings → Keys, generate an auth key: pre-approved, tagged `tag:dj`, not ephemeral. The pod uses it only for its first login.
+4. In 1Password, vault `Homelab - Tom`, create an item `dj` with the fields `bot-token` (the bot token), `internal-secret` (the same `INTERNAL_SECRET` as the panel's) and `ts-authkey`.
+5. In `dloez`, set `PUBLIC_URL` in `homelab/apps/tom/dj.yaml` to `https://dj.<tailnet>.ts.net` and push. Flux creates the namespace, the secret, the volume and both pods, and then keeps the bot's image current.
+6. From `dj/bot/`, run `npm run commands`. It registers the slash commands and clears the application's interactions endpoint URL, so Discord sends commands over the gateway.
+7. In Vercel, set the panel's `BOT_URL` to `https://dj.<tailnet>.ts.net` for Production, and redeploy.
 
 ## Verification
 
-- `curl -s https://dj-api.enbraile.vip/healthz` prints `{"ok":true}`, and `curl -s -o /dev/null -w '%{http_code}' https://dj-api.enbraile.vip/internal/state` prints `404`.
+- `curl -s https://dj.<tailnet>.ts.net/healthz` prints `{"ok":true}`, and `curl -s -o /dev/null -w '%{http_code}' https://dj.<tailnet>.ts.net/internal/state` prints `404`. The first request after the pod starts is slow while it gets its certificate.
 - The panel at `dj.enbraile.vip` loads the player, and a search lists songs.
 - `/play` in a voice channel plays.
