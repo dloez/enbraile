@@ -262,7 +262,7 @@ function RecentlyPlayed({ seedKey, current, onPick }: { seedKey: string; current
     const id = url.match(/[?&]v=([\w-]{11})/)?.[1];
     if (!id || seen.has(url)) continue;
     seen.add(url);
-    songs.push({ videoId: id, url, title: entry.title, artist: "", album: null, durationMs: 0, artwork: null, plays: null });
+    songs.push({ videoId: id, url, title: entry.title, artist: entry.artist ?? "", album: null, durationMs: entry.durationMs, artwork: entry.artwork, plays: null });
     if (songs.length === RECENT_SHOWN) break;
   }
   if (!songs.length) return null;

@@ -13,8 +13,13 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS playlist (id TEXT PRIMARY KEY, name TEXT NOT NULL, owner_id TEXT NOT NULL, owner_name TEXT NOT NULL, created_at INTEGER NOT NULL);
   CREATE TABLE IF NOT EXISTS playlist_track (id TEXT PRIMARY KEY, playlist_id TEXT NOT NULL, position INTEGER NOT NULL, query TEXT NOT NULL, title TEXT NOT NULL);
   CREATE INDEX IF NOT EXISTS playlist_track_order ON playlist_track (playlist_id, position);
-  CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, query TEXT NOT NULL, title TEXT NOT NULL, url TEXT, requested_by TEXT NOT NULL, played_at INTEGER NOT NULL);
+  CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, query TEXT NOT NULL, title TEXT NOT NULL, url TEXT, requested_by TEXT NOT NULL, played_at INTEGER NOT NULL, artist TEXT, artwork TEXT, duration_ms INTEGER NOT NULL DEFAULT 0);
 `);
+
+const historyColumns = new Set((db.prepare("PRAGMA table_info(history)").all() as { name: string }[]).map((column) => column.name));
+for (const [name, type] of [["artist", "TEXT"], ["artwork", "TEXT"], ["duration_ms", "INTEGER NOT NULL DEFAULT 0"]] as const) {
+  if (!historyColumns.has(name)) db.exec(`ALTER TABLE history ADD COLUMN ${name} ${type}`);
+}
 
 const read = db.prepare("SELECT value FROM kv WHERE key = ?");
 const write = db.prepare("INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value");

@@ -46,6 +46,7 @@ From throwaway probes on 2026-11-06 and 2026-11-07, one run each.
 - **Either node:** the pod has no node pinning. _(owner, 2026-11-07)_
 - **No monthly hour limit:** it only capped the Container bill. _(owner, 2026-11-07)_
 - **`@discordjs/voice` with yt-dlp and ffmpeg, not Lavalink:** a single TypeScript process rather than a Java server in a TypeScript repo. _(2026-11-06)_
+- **History keeps each song's artist, cover and length,** so the panel's "Played before" shows them; `src/db.ts` adds the columns to an older database on start, and rows from before have none. _(2026-11-07)_
 - **SQLite on the pod's volume:** one guild and one process, and nothing else reads it. _(2026-11-07)_
 - **One shared Discord application,** renamed `Enbraile`, for login and bot; private, server installs only, with View Channels, Connect and Speak. _(owner, 2026-11-06)_
 - **Access:** members of one DJ role, picked on the panel by a user with Manage Server; until one is picked, only Manage Server users. No votes to skip. _(owner, 2026-11-07)_

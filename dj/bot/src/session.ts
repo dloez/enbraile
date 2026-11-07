@@ -47,7 +47,7 @@ export type View = {
 export type Skipped = { id: string; title: string };
 
 export type Settings = { djRoleId: string | null };
-export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; playedAt: number };
+export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; playedAt: number; artist: string | null; artwork: string | null; durationMs: number };
 export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; trackCount: number };
 export type PlaylistTrack = { id: string; query: string; title: string };
 export type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
@@ -397,7 +397,7 @@ player.onPlayerEvent((event) => {
       const firstStart = track.url === null || track.requestedBy === "autoplay";
       Object.assign(track, { title: event.title, artist: track.artist ?? event.artist, artwork: track.artwork ?? event.artwork, durationMs: event.durationMs || track.durationMs, url: event.url });
       if (firstStart) {
-        db.prepare("INSERT INTO history (query, title, url, requested_by, played_at) VALUES (?, ?, ?, ?, ?)").run(track.query, track.title, track.url, track.requestedBy, Date.now());
+        db.prepare("INSERT INTO history (query, title, url, requested_by, played_at, artist, artwork, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(track.query, track.title, track.url, track.requestedBy, Date.now(), track.artist, track.artwork, track.durationMs);
         db.prepare("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY id DESC LIMIT ?)").run(HISTORY_KEPT);
       }
     }
@@ -452,7 +452,7 @@ export async function resumeAfterRestart(): Promise<void> {
 }
 
 export function history(): HistoryEntry[] {
-  return (db.prepare("SELECT * FROM history ORDER BY id DESC LIMIT 50").all() as { id: number; query: string; title: string; url: string | null; requested_by: string; played_at: number }[]).map((row) => ({ id: row.id, query: row.query, title: row.title, url: row.url, requestedBy: row.requested_by, playedAt: row.played_at }));
+  return (db.prepare("SELECT * FROM history ORDER BY id DESC LIMIT 50").all() as { id: number; query: string; title: string; url: string | null; requested_by: string; played_at: number; artist: string | null; artwork: string | null; duration_ms: number }[]).map((row) => ({ id: row.id, query: row.query, title: row.title, url: row.url, requestedBy: row.requested_by, playedAt: row.played_at, artist: row.artist, artwork: row.artwork, durationMs: row.duration_ms }));
 }
 
 export function playlists(): Playlist[] {
