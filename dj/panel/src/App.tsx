@@ -564,7 +564,27 @@ export function App() {
       </main>
     );
   }
-  if (!me) return null;
+  if (!me) {
+    return (
+      <div className="page" aria-busy="true">
+        <header className="top">
+          <div className="brand"><span className="mark"><Icon.Note size={18} /></span>DJ</div>
+        </header>
+        <main className="main">
+          <div className="player">
+            <div className="now-col">
+              <div className="art art-hero skeleton" />
+              <div className="skeleton line wide" />
+              <div className="skeleton line" />
+            </div>
+            <div className="side">
+              <div className="skeleton search-line" />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
   const tabs: Tab[] = me.canPlay ? ["player", "playlists", "history", ...(me.canManage ? (["settings"] as const) : [])] : me.canManage ? ["settings"] : [];
   const active = tabs.includes(tab) ? tab : tabs[0];
   return (

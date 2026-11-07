@@ -170,3 +170,9 @@ label.stack { display: flex; flex-direction: column; gap: 6px; font-weight: 600;
   .progress.loading .slider::-webkit-slider-runnable-track, .progress.loading .track-line, .progress.loading .slider::-moz-range-track { animation: none; }
 }
 .rows.stale { opacity: .45; transition: opacity .15s; }
+.skeleton { background: var(--surface-2); animation: pulse 1.2s ease-in-out infinite; }
+.skeleton.line { height: 14px; width: 40%; border-radius: 999px; }
+.skeleton.line.wide { height: 22px; width: 70%; }
+.skeleton.search-line { height: 52px; border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+@media (max-width: 560px) { .now-col .art-hero.skeleton { width: 96px; border-radius: 14px; } }
