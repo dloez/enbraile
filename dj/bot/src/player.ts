@@ -4,7 +4,7 @@ import { client, guild } from "./client.ts";
 
 type Resolved = { title: string; artist: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string };
 
-export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed"; generation: number; error?: string };
+export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed" | "disconnected"; generation: number; error?: string } | { type: "moved"; generation: number; channelId: string };
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
 const RESOLVE_TTL_MS = 2 * 60 * 60 * 1000;
@@ -14,6 +14,7 @@ const CUT_SHORT_MS = 5_000;
 const STALL_MS = 1_000;
 const STALL_LIMIT_MS = 10_000;
 const WATCH_MS = 250;
+const RECOVER_MS = 5_000;
 
 const cache = new Map<string, Promise<Resolved>>();
 let connection: VoiceConnection | undefined;
@@ -54,6 +55,13 @@ setInterval(() => {
 export function onPlayerEvent(callback: (event: PlayerEvent) => void): void {
   listener = callback;
 }
+
+client.on("voiceStateUpdate", (_before, after) => {
+  if (after.id !== client.user?.id || !connection || !after.channelId || after.channelId === channelId) return;
+  console.log("moved", channelId, "to", after.channelId);
+  channelId = after.channelId;
+  emit({ type: "moved", generation, channelId });
+});
 
 function emit(event: PlayerEvent): void {
   queueMicrotask(() => listener(event));
@@ -152,7 +160,15 @@ export async function join(nextChannel: string): Promise<void> {
   connection?.destroy();
   channelId = nextChannel;
   connection = joinVoiceChannel({ guildId: server.id, channelId, adapterCreator: server.voiceAdapterCreator, selfDeaf: true });
-  connection.on("error", (error) => console.error("voice", error.message));
+  const joined = connection;
+  joined.on("error", (error) => console.error("voice", error.message));
+  joined.on(VoiceConnectionStatus.Disconnected, () => {
+    Promise.race([entersState(joined, VoiceConnectionStatus.Signalling, RECOVER_MS), entersState(joined, VoiceConnectionStatus.Connecting, RECOVER_MS)]).catch(() => {
+      if (connection !== joined) return;
+      console.error("voice lost", channelId);
+      emit({ type: "disconnected", generation });
+    });
+  });
   await entersState(connection, VoiceConnectionStatus.Ready, 30000);
   player = createAudioPlayer({ behaviors: { maxMissedFrames: STALL_LIMIT_MS / 20 } });
   connection.subscribe(player);

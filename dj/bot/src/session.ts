@@ -509,7 +509,31 @@ export async function command(command: Command): Promise<void> {
   plan();
 }
 
+let rejoining = false;
+
+async function rejoin(): Promise<void> {
+  if (rejoining || !state.active || !state.channelId) return;
+  rejoining = true;
+  try {
+    const position = livePosition();
+    await player.join(state.channelId);
+    if (playing()) startCurrent(position);
+  } finally {
+    rejoining = false;
+  }
+}
+
 player.onPlayerEvent((event) => {
+  if (event.type === "disconnected") {
+    void rejoin().catch((error: Error) => console.error("rejoin", error.message));
+    return;
+  }
+  if (event.type === "moved") {
+    if (!state.active) return;
+    state.channelId = event.channelId;
+    save();
+    return;
+  }
   if (!state.active || event.generation !== state.generation) return;
   if (event.type === "stalled") {
     if (state.loading || state.stalled) return;
@@ -555,11 +579,7 @@ async function tick(): Promise<void> {
   if (!state.active) return;
   const now = Date.now();
   const status = player.status();
-  if (!status.connected && state.channelId) {
-    await player.join(state.channelId);
-    if (state.current >= 0 && state.current < state.tracks.length) startCurrent(state.positionMs);
-    return;
-  }
+  if (!status.connected && state.channelId) return rejoin();
   if (playing() && !state.loading && !state.stalled) state.positionMs = status.positionMs;
   state.listeners = status.listeners;
   state.emptySince = state.listeners === 0 ? (state.emptySince ?? now) : null;

@@ -16,6 +16,10 @@ A running series takes new players, and the [league](../pkmn/site/explanation/si
 
 The "Add to team" menu in a PC summary shows each team as a strip of sprites that overlap and are trimmed about 4px top and bottom, with about three of six shown, as the frozen `pc.dc.html` draws it (`margin: -4px -9px 0 0` in a 76×24 strip). Every other sprite tile was fitted whole on 2026-10-29 at the owner's request, this one left as the exception ([Site Design System → Patterns](../pkmn/site/reference/design-system.md#patterns)). Fit it too, which changes its look, or keep the board's? _(raised 2026-10-29)_
 
+### dj/bot: should disconnecting the bot by hand end the session?
+
+When someone disconnects the bot from the call in Discord, the bot joins the same channel again within about 5 s and resumes, as it does after a network drop, since the two look alike from the voice connection ([The DJ Bot → How It Runs](../dj/bot/explanation/bot.md#how-it-runs)). A member who kicks it probably wants it gone. Telling the cases apart needs the bot's own voice state update with no channel, which a kick sends and a network drop does not. Open: stop the session on a kick, or keep rejoining. Raised by the connection-handling loop, 2026-11-08.
+
 ## Tasks
 
 ### pkmn/site: the team page writes its pick of six as a digit
