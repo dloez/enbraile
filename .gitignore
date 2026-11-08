@@ -8,3 +8,4 @@ pkmn/site/saves/
 .env.local
 __pycache__/
 pkmn/games/anil/game/
+.wrangler/
