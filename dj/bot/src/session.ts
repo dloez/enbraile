@@ -88,6 +88,7 @@ const ARTIST_COOLDOWN = 3;
 const AUTOPLAY_AHEAD = 3;
 const AUTOPLAY_SEED_WEIGHT = 0.3;
 const STALE_AFTER_NEW_SEEDS = 3;
+const LENGTH_MISMATCH_MS = 20_000;
 const EXPLORE_SEEDS = 12;
 const EXPLORE_SEEDS_PER_LISTENER = 3;
 const SUGGESTIONS = 20;
@@ -652,7 +653,9 @@ player.onPlayerEvent((event) => {
     const track = state.tracks[state.current];
     if (track) {
       const firstStart = track.url === null || track.requestedBy === "autoplay";
-      Object.assign(track, { title: event.title, artist: track.artist ?? event.artist, album: track.album ?? event.album, artwork: track.artwork ?? event.artwork, durationMs: event.durationMs || track.durationMs, url: event.url });
+      const placeholder = !track.title || track.title === track.query || track.title === displayName(track.query);
+      if (track.durationMs > 0 && event.durationMs > 0 && Math.abs(track.durationMs - event.durationMs) > LENGTH_MISMATCH_MS) console.log("resolved length differs", JSON.stringify({ query: track.query, title: track.title, resolved: event.title, queuedMs: track.durationMs, resolvedMs: event.durationMs }));
+      Object.assign(track, { title: placeholder ? event.title : track.title, artist: track.artist ?? event.artist, album: track.album ?? event.album, artwork: track.artwork ?? event.artwork, durationMs: event.durationMs || track.durationMs, url: event.url });
       if (firstStart) {
         db.prepare("INSERT INTO history (query, title, url, requested_by, played_at, artist, artwork, duration_ms, requester_name, requester_avatar, session_id, picked_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(track.query, track.title, track.url, track.requestedBy, Date.now(), track.artist, track.artwork, track.durationMs, track.requester?.name ?? null, track.requester?.avatar ?? null, state.sessionId, track.pickedBy ?? null);
         db.prepare("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY id DESC LIMIT ?)").run(HISTORY_KEPT);
