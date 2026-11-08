@@ -430,12 +430,29 @@ function SkeletonSongs({ count }: { count: number }) {
 const STAGGER_ROWS = 10;
 const staggered = (index: number) => ({ "--i": Math.min(index, STAGGER_ROWS) }) as CSSProperties;
 
-function Suggestions({ seedKey, label, onPick, hidden, onArtist, path = "suggestions", exclude, addLabel, warmUp = true, counted = false }: { seedKey: string; label: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean; onArtist?: OpenArtist; path?: string; exclude?: Set<string>; addLabel?: (title: string) => string; warmUp?: boolean; counted?: boolean }) {
-  const { items: songs, version, hold, loading, failed } = useSteady<Song[]>(path, seedKey);
+const REFILL_BELOW = 10;
+
+function Suggestions({ seedKey, label, onPick, hidden, onArtist, path = "suggestions", exclude, addLabel, warmUp = true, refill = false }: { seedKey: string; label: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean; onArtist?: OpenArtist; path?: string; exclude?: Set<string>; addLabel?: (title: string) => string; warmUp?: boolean; refill?: boolean }) {
+  const [round, setRound] = useState(0);
+  const { items: songs, version, hold, loading, failed } = useSteady<Song[]>(path, refill ? `${seedKey}:${round}` : seedKey);
   const { added, gone, error, pick, leave } = usePicked(onPick);
   const warm = useWarm(warmUp);
-  const shown = songs?.filter((song) => !gone.has(song.videoId) && !exclude?.has(song.url)) ?? [];
-  if (songs === null && !failed) {
+  const order = useRef<Song[]>([]);
+  if (refill && songs) {
+    const fresh = songs.filter((song) => !order.current.some((kept) => kept.videoId === song.videoId));
+    if (fresh.length) order.current = [...order.current, ...fresh];
+  }
+  const pool = refill ? order.current : (songs ?? []);
+  const shown = pool.filter((song) => !gone.has(song.videoId) && (added.has(song.videoId) || !exclude?.has(song.url)));
+  const left = shown.filter((song) => !added.has(song.videoId)).length;
+  const excluded = exclude?.size ?? 0;
+  const askedAt = useRef(excluded);
+  useEffect(() => {
+    if (!refill || !songs || loading || left >= REFILL_BELOW || excluded <= askedAt.current) return;
+    askedAt.current = excluded;
+    setRound((count) => count + 1);
+  }, [refill, songs, loading, left, excluded]);
+  if (songs === null && !failed && !pool.length) {
     return (
       <section className="suggest-area" aria-label={label} aria-busy="true" hidden={hidden}>
         <h2 className="label">{label}<span className="label-spinner" aria-hidden="true" /></h2>
@@ -446,9 +463,9 @@ function Suggestions({ seedKey, label, onPick, hidden, onArtist, path = "suggest
   if (!shown.length) return null;
   return (
     <section className="suggest-area" aria-label={label} aria-busy={loading} hidden={hidden} {...hold}>
-      <h2 className="label">{label}{counted && <span className="count">{shown.length}</span>}{loading && <span className="label-spinner" aria-hidden="true" />}</h2>
+      <h2 className="label">{label}{refill && <span className="count">{left}</span>}{loading && <span className="label-spinner" aria-hidden="true" />}</h2>
       {error && <p className="error" role="alert">{error}</p>}
-      <ul className={`rows ${version ? "refreshed" : ""}`} key={version}>
+      <ul className={`rows ${!refill && version ? "refreshed" : ""}`} key={refill ? "kept" : version}>
         {shown.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} leaving={added.has(song.videoId)} onLeft={() => leave(song.videoId)} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} addLabel={addLabel} />)}
       </ul>
     </section>
@@ -1775,7 +1792,7 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: (r
           <section className="panel playlist-add" aria-label={t.addSongs}>
             <h2 className="section-title">{t.addSongs}</h2>
             <SongSearch placeholder={t.addToList} exclude={have} leaveOnAdd addLabel={t.addToThisList} onActive={setSearching} onPick={addItem} onLink={async (input) => { await post("playlist/add", { id: list.id, input }); await refresh(); }} />
-            {tracks && tracks.length > 0 && <Suggestions path={`playlist/suggestions?id=${list.id}`} seedKey={list.id} label={t.likeThisList} exclude={have} addLabel={t.addToThisList} warmUp={false} counted hidden={searching} onPick={addItem} />}
+            {tracks && tracks.length > 0 && <Suggestions path={`playlist/suggestions?id=${list.id}`} seedKey={list.id} label={t.fitsThisList} exclude={have} addLabel={t.addToThisList} warmUp={false} refill hidden={searching} onPick={addItem} />}
           </section>
         </div>
       ) : songs}
