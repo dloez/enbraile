@@ -513,7 +513,8 @@ function Equalizer() {
 }
 
 type Stage = "idle" | "loading" | "paused" | "playing";
-const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : view.loading || view.stalled || view.stale ? "loading" : view.paused ? "paused" : "playing");
+const waiting = (view: Synced): boolean => Boolean(view.loading || view.stalled || view.stale);
+const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : waiting(view) ? "loading" : view.paused ? "paused" : "playing");
 
 function Cover({ src }: { src: string | null }) {
   const [layers, setLayers] = useState<{ src: string; ready: boolean; broken: boolean }[]>([]);
@@ -569,7 +570,7 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
           <p className="artist">{track.artist || "\u00a0"}</p>
         </div>
       </div>
-      <div className={`progress ${view.loading || view.stalled || view.stale ? "loading" : ""}`}>
+      <div className={`progress ${waiting(view) ? "loading" : ""}`}>
         {duration > 0 ? (
           <Slider label={t.position} value={position} max={duration} onChange={setSeek} onCommit={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} />
         ) : <div className="track-line" />}
@@ -580,7 +581,7 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
           <button className="icon-btn" aria-label={t.shuffle} title={t.shuffle} onClick={() => void command({ action: "shuffle" })}><Icon.Shuffle /></button>
           <button className="icon-btn" aria-label={t.previous} aria-keyshortcuts="P" title={`${t.previous} (P)`} onClick={() => void command({ action: "previous" })}><Icon.Previous /></button>
         </span>
-        <button className={`play ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={view.loading} aria-keyshortcuts="Space K" title={`${view.paused ? t.resume : t.pause} (K)`} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}><PlayIcon paused={view.paused} /></button>
+        <button className={`play ${waiting(view) ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} aria-busy={waiting(view)} aria-keyshortcuts="Space K" title={`${view.paused ? t.resume : t.pause} (K)`} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}><PlayIcon paused={view.paused} /></button>
         <span className="transport-side">
           <button className="icon-btn" aria-label={t.skip} aria-keyshortcuts="N" title={`${t.skip} (N)`} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
           <button className={`icon-btn ${view.loop !== "off" ? "on" : ""}`} aria-label={`${t.loop}: ${loopNames[view.loop]}`} title={`${t.loop}: ${loopNames[view.loop]}`} onClick={() => void command({ action: "loop", loop: LOOP_ORDER[(loopIndex + 1) % LOOP_ORDER.length] })}>
@@ -623,7 +624,7 @@ function Dock({ view, track, command, shown }: { view: Synced; track: Track; com
         <div className="name">{track.title}</div>
         <div className="sub">{view.stale ? t.lostBot : view.loading ? t.starting : view.stalled ? t.buffering : track.artist}</div>
       </div>
-      <button className={`play small ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}><PlayIcon paused={view.paused} /></button>
+      <button className={`play small ${waiting(view) ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}><PlayIcon paused={view.paused} /></button>
       <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
     </div>
   );
@@ -1107,7 +1108,7 @@ export function App() {
   const [tab, setTab] = useState<Tab>("player");
   const { view, live, setView, refresh } = useView(me);
   const playingNow = view?.active ? view.tracks[view.current] : undefined;
-  const tabTitle = playingNow ? `${view?.loading ? "…" : view?.paused ? "❚❚" : "▶"} ${[playingNow.title, playingNow.artist].filter(Boolean).join(" · ")} · DJ` : BASE_TITLE;
+  const tabTitle = playingNow ? `${view && waiting(view) ? "…" : view?.paused ? "❚❚" : "▶"} ${[playingNow.title, playingNow.artist].filter(Boolean).join(" · ")} · DJ` : BASE_TITLE;
   const backdrop = playingNow ? artwork(playingNow, 226) : null;
   useAccent(backdrop);
   useEffect(() => {
