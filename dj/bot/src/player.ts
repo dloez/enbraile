@@ -17,6 +17,7 @@ const STALL_MS = 1_000;
 const STALL_LIMIT_MS = 10_000;
 const WATCH_MS = 250;
 const RECOVER_MS = 5_000;
+const SILENCE_MS = 500;
 
 const cache = new Map<string, Promise<Resolved>>();
 const queued: { key: string; urgent: boolean; run: () => void }[] = [];
@@ -174,6 +175,20 @@ export function warm(query: string): void {
   resolveTrack(query).catch(() => undefined).finally(() => (warming -= 1));
 }
 
+function silence(): Promise<void> {
+  const current = player;
+  if (!current || current.state.status === AudioPlayerStatus.Idle) return Promise.resolve();
+  if (current.state.status !== AudioPlayerStatus.Playing) {
+    current.stop(true);
+    return Promise.resolve();
+  }
+  current.stop();
+  return entersState(current, AudioPlayerStatus.Idle, SILENCE_MS).then(
+    () => undefined,
+    () => void current.stop(true),
+  );
+}
+
 function killStream(): void {
   ffmpeg?.kill("SIGKILL");
   ffmpeg = undefined;
@@ -237,13 +252,14 @@ export async function join(nextChannel: string): Promise<void> {
 async function start(query: string, startMs: number, volume: number, id: number, retried: boolean): Promise<void> {
   generation = id;
   killStream();
-  player?.stop(true);
+  const quiet = silence();
   resource = undefined;
   flowing = false;
   stalled = false;
   progress = { durationMs: -1, at: 0 };
   const started = Date.now();
   const track = await resolveTrack(query, retried, true);
+  await quiet;
   if (generation !== id || !player) return;
   const stream = spawn("ffmpeg", [
     "-hide_banner", "-loglevel", "error",
@@ -286,7 +302,7 @@ export const resume = () => void player?.unpause();
 export function halt(): void {
   generation += 1;
   killStream();
-  player?.stop(true);
+  void silence();
   resource = undefined;
 }
 
