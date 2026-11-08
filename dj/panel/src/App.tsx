@@ -6,7 +6,7 @@ import { Ambient, useAccent } from "./ambient";
 
 type Tab = "player" | "playlists" | "history" | "settings";
 type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
-type Synced = View & { at: number };
+type Synced = View & { at: number; stale?: boolean };
 type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number; mode?: AutoplayMode };
 
 const message = (error: unknown) => t.errors[error instanceof ApiError ? error.message : "failed"] ?? t.errors.failed!;
@@ -22,7 +22,7 @@ const stamp = (view: View): Synced => ({ ...view, at: performance.now() });
 
 function estimate(view: Synced, now: number): number {
   const duration = view.tracks[view.current]?.durationMs ?? 0;
-  const position = view.paused || view.loading || view.stalled ? view.positionMs : view.positionMs + (now - view.at);
+  const position = view.paused || view.loading || view.stalled || view.stale ? view.positionMs : view.positionMs + (now - view.at);
   return duration > 0 ? Math.min(position, duration) : position;
 }
 
@@ -151,6 +151,8 @@ function useView(boot: Me | null): { view: Synced | null; live: boolean; refresh
     const lost = () => {
       attachSocket(null);
       if (closed) return;
+      const now = performance.now();
+      setView((current) => (current ? { ...current, positionMs: estimate(current, now), at: now, stale: true } : current));
       if (failures > 0) setLive(false);
       refresh();
       if (!poll) poll = setInterval(refresh, 10_000);
@@ -511,7 +513,7 @@ function Equalizer() {
 }
 
 type Stage = "idle" | "loading" | "paused" | "playing";
-const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : view.loading || view.stalled ? "loading" : view.paused ? "paused" : "playing");
+const stageOf = (view: Synced | null, track: Track | undefined): Stage => (!track || !view ? "idle" : view.loading || view.stalled || view.stale ? "loading" : view.paused ? "paused" : "playing");
 
 function Cover({ src }: { src: string | null }) {
   const [layers, setLayers] = useState<{ src: string; ready: boolean; broken: boolean }[]>([]);
@@ -561,13 +563,13 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
     <section className="now" data-stage={stageOf(view, track)} aria-label={t.tabs.player}>
       <Cover src={cover} />
       <div className="now-text">
-        <p className="eyebrow"><Equalizer />{view.loading ? t.starting : view.stalled ? t.buffering : view.paused ? t.paused : t.nowPlaying}</p>
+        <p className="eyebrow"><Equalizer />{view.stale ? t.lostBot : view.loading ? t.starting : view.stalled ? t.buffering : view.paused ? t.paused : t.nowPlaying}</p>
         <div className="swap" key={track.query}>
           <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
           <p className="artist">{track.artist || "\u00a0"}</p>
         </div>
       </div>
-      <div className={`progress ${view.loading ? "loading" : ""}`}>
+      <div className={`progress ${view.loading || view.stalled || view.stale ? "loading" : ""}`}>
         {duration > 0 ? (
           <Slider label={t.position} value={position} max={duration} onChange={setSeek} onCommit={() => { if (seek !== null) { void command({ action: "seek", positionMs: seek }); setSeek(null); } }} />
         ) : <div className="track-line" />}
@@ -619,7 +621,7 @@ function Dock({ view, track, command, shown }: { view: Synced; track: Track; com
       <Art src={artwork(track, 96)} className="art-sm" />
       <div className="meta">
         <div className="name">{track.title}</div>
-        <div className="sub">{view.loading ? t.starting : view.stalled ? t.buffering : track.artist}</div>
+        <div className="sub">{view.stale ? t.lostBot : view.loading ? t.starting : view.stalled ? t.buffering : track.artist}</div>
       </div>
       <button className={`play small ${view.loading ? "busy" : ""}`} aria-label={view.loading ? t.starting : view.paused ? t.resume : t.pause} onClick={() => void command({ action: view.paused ? "resume" : "pause" })}><PlayIcon paused={view.paused} /></button>
       <button className="icon-btn" aria-label={t.skip} onClick={() => void command({ action: "skip" })}><Icon.Skip /></button>
