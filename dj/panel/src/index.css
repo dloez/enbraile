@@ -516,14 +516,13 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
 .release .name { font-size: .88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .release .sub { font-size: .78rem; }
 .art-release { width: 100%; aspect-ratio: 1; border-radius: .8rem; }
-.art-release img { transform: translateZ(0); transition: transform .6s var(--ease), filter .4s var(--ease); will-change: transform; }
-.release .name { transition: color .25s var(--ease); }
+.art-release::after { transition: box-shadow .18s var(--ease); }
+.release .name { transition: color .18s var(--ease); }
 .art-release svg, .art-album svg { width: 30%; height: 30%; }
 @media (hover: hover) {
-  .release:hover .art-release img { transform: scale(1.06); filter: brightness(1.08); }
+  .release:hover .art-release::after { box-shadow: inset 0 0 0 2px var(--accent); }
   .release:hover .name { color: var(--accent); }
 }
-.release:active .art-release img { transform: scale(1.02); transition-duration: .15s; }
 .release:focus-visible { outline: none; }
 .release:focus-visible .art-release { outline: 2px solid var(--accent); outline-offset: 2px; }
 .related { list-style: none; margin: 0; padding: 0 .3rem; display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -571,5 +570,4 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
 @media (prefers-reduced-motion: reduce) {
   .song.leaving { animation-duration: .01s; animation-delay: .2s; }
   .browse-area, .people-pop, .arriving > li, .arriving-hint, .suggest-area { animation: none; }
-  .art-release img { transition: none; }
 }

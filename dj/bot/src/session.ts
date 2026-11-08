@@ -87,6 +87,7 @@ const AUTOPLAY_SEEDS = 2;
 const ARTIST_COOLDOWN = 3;
 const AUTOPLAY_AHEAD = 3;
 const AUTOPLAY_SEED_WEIGHT = 0.3;
+const STALE_AFTER_NEW_SEEDS = 3;
 const EXPLORE_SEEDS = 12;
 const EXPLORE_SEEDS_PER_LISTENER = 3;
 const SUGGESTIONS = 20;
@@ -233,6 +234,17 @@ function radioSeeds(): Seed[] {
   return seeds;
 }
 
+function humanSeedIds(): string[] {
+  const ids: string[] = [];
+  for (const track of [...state.tracks].reverse()) {
+    if (track.requestedBy === "autoplay") continue;
+    const id = videoId(track.url) ?? videoId(track.query);
+    if (id && !ids.includes(id)) ids.push(id);
+    if (ids.length === HUMAN_SEEDS) break;
+  }
+  return ids;
+}
+
 function sample<T extends { plays: number }>(pool: T[], count: number): T[] {
   const left = [...pool];
   const chosen: T[] = [];
@@ -303,6 +315,25 @@ const declined = new Set<string>();
 let planToken = 0;
 let planning: { token: number; done: Promise<void> } | null = null;
 let refillAt: number | null = null;
+const pickBasis = new Map<string, string[]>();
+
+function refreshStalePicks(): void {
+  if (!state.autoplay || state.loop !== "off") return;
+  const seeds = humanSeedIds();
+  const queued = Math.max(0, state.tracks.length - state.current - 1);
+  const stale: Track[] = [];
+  state.autoplayUpcoming.forEach((pick, index) => {
+    if (pick.replacing || queued + index < PREPARED_AHEAD) return;
+    const basis = pickBasis.get(pick.id);
+    if (!basis) return void pickBasis.set(pick.id, seeds);
+    if (seeds.filter((id) => !basis.includes(id)).length >= STALE_AFTER_NEW_SEEDS) stale.push(pick);
+  });
+  if (!stale.length) return;
+  for (const pick of stale) pick.replacing = true;
+  console.log("autoplay refresh", JSON.stringify({ stale: stale.length, queued }));
+  save();
+  restartPlan();
+}
 
 async function verify(pick: Track): Promise<void> {
   if (await player.playable(pick.query)) return;
@@ -353,17 +384,20 @@ function planAutoplay(): Promise<void> {
     const picks = await radioPicks(AUTOPLAY_AHEAD - kept.length, kept).catch((error: Error) => (console.error("related", error.message), []));
     if (token !== planToken || !state.active || !state.autoplay) return;
     const played = playedIds();
-    const usable = picks.filter((pick) => !played.has(videoId(pick.url) ?? "") && !state.autoplayUpcoming.some((entry) => entry.url === pick.url));
+    const usable = picks.filter((pick) => !played.has(videoId(pick.url) ?? "") && !state.autoplayUpcoming.some((entry) => !entry.replacing && entry.url === pick.url));
     if (!usable.length) {
       if (!state.autoplayUpcoming.some((entry) => entry.replacing)) return;
       state.autoplayUpcoming = state.autoplayUpcoming.filter((entry) => !entry.replacing);
       save();
       return;
     }
+    const seeds = humanSeedIds();
+    for (const pick of usable) pickBasis.set(pick.id, seeds);
     const next = state.autoplayUpcoming.flatMap((entry) => (entry.replacing ? (usable.length ? [usable.shift()!] : []) : [entry]));
     if (refillAt !== null && usable.length) next.splice(Math.min(refillAt, next.length), 0, usable.shift()!);
     refillAt = null;
     state.autoplayUpcoming = [...next, ...usable].slice(0, AUTOPLAY_AHEAD);
+    for (const id of pickBasis.keys()) if (!state.autoplayUpcoming.some((pick) => pick.id === id)) pickBasis.delete(id);
     save();
     prepareAhead();
   })().finally(() => {
@@ -441,6 +475,7 @@ export async function enqueue(channelId: string, items: QueueItem[], requestedBy
     state.current = before;
     startCurrent();
   }
+  refreshStalePicks();
   plan();
   return { ok: true, added: items.length, position };
 }
@@ -545,6 +580,7 @@ export async function command(command: Command): Promise<void> {
   }
   save();
   prepareAhead();
+  refreshStalePicks();
   plan();
 }
 
