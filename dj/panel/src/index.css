@@ -447,7 +447,7 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 .sleeve-shape .cover-grid { margin-bottom: .73rem; }
 .sleeve-shape .skeleton.name-bar { width: 70%; height: .85rem; margin-block: .275rem; }
 .sleeve-shape .skeleton.card-meta-bar { width: 50%; height: .7rem; margin: .5rem 0 .2rem; }
-.idle-sleeves .skeleton.label-line { margin: .2rem 0 .87rem .65rem; }
+.idle-sleeves .skeleton.label-line { margin: .2rem auto .87rem; }
 .idle-title { margin: 0; font-size: clamp(1.9rem, 2.4vw, 2.3rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.1; text-wrap: balance; }
 .idle-meta { margin: 0; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .6rem; color: var(--dim); font-size: .92rem; }
 .idle-meta .stack { padding-left: .35rem; }
@@ -455,8 +455,10 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 .idle-actions:first-of-type { margin-top: .4rem; }
 .pill.big { min-height: 3.1rem; padding: 0 1.4rem; font-size: .98rem; gap: .55rem; }
 .pill.primary.big { font-weight: 700; box-shadow: 0 .9rem 2rem -1rem var(--accent); }
-.idle-sleeves { width: 100%; text-align: left; }
-.sleeve-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .2rem; }
+.idle-sleeves { width: 100%; }
+.idle-sleeves .label { justify-content: center; margin-left: 0; }
+.sleeve-grid { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; gap: .2rem; }
+.sleeve-grid > * { flex: none; width: calc((100% - .4rem) / 3); min-width: 0; text-align: left; }
 .sleeve-grid .playlist-open { padding: .45rem .45rem .7rem; }
 .sleeve-grid .card-play { --inset: calc(.45rem + 1px); --size: 2.5rem; }
 .sleeve-grid .card-play svg { width: 1rem; height: 1rem; }
