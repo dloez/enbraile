@@ -103,9 +103,9 @@ function Who({ requester }: { requester: Requester | null | undefined }) {
   const [broken, setBroken] = useState(false);
   if (!requester) return null;
   return (
-    <span className="who" title={t.askedBy(requester.name)}>
+    <span className="asker" title={t.askedBy(requester.name)}>
       {requester.avatar && !broken ? <img src={requester.avatar} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} /> : <span className="who-initial" aria-hidden="true">{requester.name.slice(0, 1).toUpperCase()}</span>}
-      <span className="who-name">{requester.name}</span>
+      <span className="asker-name">{requester.name}</span>
     </span>
   );
 }
@@ -571,6 +571,13 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
         <div className="swap" key={track.query}>
           <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
           <p className="artist">{track.artist || "\u00a0"}</p>
+          <p className="asked-by">
+            {track.requestedBy === "autoplay" ? (
+              <span className="tag auto-tag">{track.pickedBy === "explore" ? <Icon.Compass size={13} /> : <Icon.Radio size={13} />}{t.autoplay}</span>
+            ) : track.requester ? (
+              <><span>{t.askedFor}</span><Who requester={track.requester} /></>
+            ) : "\u00a0"}
+          </p>
         </div>
       </div>
       <div className={`progress ${waiting(view) ? "loading" : ""}`}>

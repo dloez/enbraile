@@ -139,6 +139,10 @@ a:hover { color: var(--accent); }
 .title { margin: 0; font-size: var(--title-size, clamp(1.45rem, 1rem + 1.1vw, 2.5rem)); font-weight: 800; line-height: 1.12; letter-spacing: -.035em; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }
 .artist { margin: 0; color: var(--soft); font-size: 1.05rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .now[data-stage="idle"] .artist { white-space: normal; color: var(--dim); }
+.asked-by { margin: .45rem 0 0; min-height: 1.6rem; display: flex; align-items: center; gap: .45rem; color: var(--dim); font-size: .85rem; white-space: nowrap; overflow: hidden; }
+.asked-by .asker { color: var(--soft); font-weight: 600; }
+.asked-by .asker img, .asked-by .who-initial { width: 1.6rem; height: 1.6rem; }
+.asked-by .who-initial { font-size: .75rem; }
 .sub { margin: 0; color: var(--dim); font-size: .85rem; }
 .progress { display: flex; flex-direction: column; gap: .2rem; }
 .time { display: flex; justify-content: space-between; color: var(--dim); font-size: .78rem; font-variant-numeric: tabular-nums; }
@@ -230,10 +234,10 @@ a:hover { color: var(--accent); }
 .auto-row:not(.replacing) .art, .auto-row:not(.replacing) .meta { animation: fade-in .45s var(--ease) backwards; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .auto-row.replacing .swap svg, .auto-row.replacing .meta { animation: none; } }
-.who { display: inline-flex; align-items: center; gap: .3rem; vertical-align: bottom; max-width: 100%; }
-.who img, .who-initial { width: 1.35rem; height: 1.35rem; flex: none; border-radius: 999px; object-fit: cover; background: var(--press); }
+.asker { display: inline-flex; align-items: center; gap: .3rem; vertical-align: bottom; max-width: 100%; }
+.asker img, .who-initial { width: 1.35rem; height: 1.35rem; flex: none; border-radius: 999px; object-fit: cover; background: var(--press); }
 .who-initial { display: inline-flex; align-items: center; justify-content: center; font-size: .68rem; font-weight: 700; }
-.who-name { overflow: hidden; text-overflow: ellipsis; }
+.asker-name { overflow: hidden; text-overflow: ellipsis; }
 .modes { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
 .mode { display: flex; align-items: center; gap: .65rem; min-width: 0; padding: .6rem .75rem; border-radius: 1rem; border: 1px solid var(--line); background: rgb(255 255 255 / .02); color: var(--soft); text-align: left; transition: border-color .2s, background .2s, color .2s; }
 .mode:hover { border-color: var(--line-strong); background: var(--hover); }
