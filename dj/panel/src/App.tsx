@@ -1505,8 +1505,8 @@ function PlaylistCard({ list, mine, onOpen, onError }: { list: Playlist; mine: b
         <PlaylistCover list={list} />
         <span className="name">{list.name}</span>
         <span className="sub playlist-meta">
-          {mine ? <span className={`vis ${list.visibility}`}><VisibilityIcon visibility={list.visibility} />{t.visibility[list.visibility]}</span> : <span className="owner"><OwnerFace name={list.ownerName} />{list.ownerName}</span>}
-          <span aria-hidden="true">·</span>
+          {!mine && <><span className="owner"><OwnerFace name={list.ownerName} />{list.ownerName}</span><span aria-hidden="true">·</span></>}
+          {mine && list.visibility === "private" && <span className="vis private" title={t.visibility.private}><LockIcon /><span className="sr-only">{t.visibility.private}</span></span>}
           <span>{mine ? playlistMeta(list) : t.tracks(list.trackCount)}</span>
         </span>
       </button>
@@ -1536,22 +1536,10 @@ function CreatePlaylist({ onCancel, onCreated }: { onCancel: () => void; onCreat
   }
   return (
     <form className="create-card" aria-label={t.newPlaylistButton} onSubmit={(event) => void submit(event)}>
-      <label className="create-name">
-        <span className="create-label">{t.playlistName}</span>
-        <input className="field" value={name} onChange={(event) => setName(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onCancel(); }} maxLength={100} autoFocus />
-      </label>
-      <fieldset className="create-vis">
-        <legend className="create-label">{t.whoCanSee}</legend>
-        <div className="vis-choice">
-          {(["public", "private"] as const).map((entry) => (
-            <label key={entry} className={visibility === entry ? "on" : ""}>
-              <input type="radio" name="visibility" checked={visibility === entry} onChange={() => setVisibility(entry)} />
-              <VisibilityIcon visibility={entry} />
-              <span><span className="vis-name">{t.visibility[entry]}</span><span className="vis-hint">{t.visibilityShort[entry]}</span></span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <input className="field create-field" aria-label={t.playlistName} placeholder={t.playlistName} value={name} onChange={(event) => setName(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onCancel(); }} maxLength={100} autoFocus />
+      <button type="button" className={`pill vis-toggle ${visibility}`} aria-label={`${t.whoCanSee}: ${t.visibility[visibility]}`} title={t.visibilityLong[visibility]} onClick={() => setVisibility(visibility === "public" ? "private" : "public")}>
+        <VisibilityIcon visibility={visibility} />{t.visibility[visibility]}
+      </button>
       <div className="create-actions">
         <button type="button" className="pill" onClick={onCancel}>{t.cancel}</button>
         <button className="pill primary" disabled={!name.trim() || busy}>{t.create}</button>
