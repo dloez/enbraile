@@ -1,5 +1,5 @@
 import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type FocusEvent as ReactFocusEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, type AutoplayMode, get, handleReply, type HistoryEntry, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
+import { ApiError, type AutoplayMode, get, handleReply, type HistoryEntry, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SessionSummary, type SessionTrack, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
 import { Ambient, useAccent } from "./ambient";
@@ -16,6 +16,7 @@ const BASE_TITLE = document.title;
 const RETRY_MS = [1_000, 3_000, 10_000, 30_000];
 const SILENT_SOCKET_MS = 25_000;
 const RESTART_WITHIN_MS = 3_000;
+const ROLE_RECHECK_MS = 30_000;
 const LANGS = [{ code: "en", name: "English" }, { code: "es", name: "Español" }] as const;
 
 const stamp = (view: View): Synced => ({ ...view, at: performance.now() });
@@ -1057,53 +1058,198 @@ function QueueButton({ className, label, disabled, run }: { className: string; l
   return <button className={`${className} ${state === "done" ? "done" : ""}`} disabled={disabled || state === "busy"} aria-live="polite" onClick={click}>{state === "busy" ? t.adding : state === "done" ? t.queued : label}</button>;
 }
 
-function dayLabel(time: number): string {
+const SESSION_ROWS = 8;
+
+const timeOf = (time: number) => new Date(time).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+const shortDay = (time: number) => new Date(time).toLocaleDateString(lang, { weekday: "short", day: "numeric", month: "short" });
+
+function relativeDay(time: number): string {
   const day = new Date(time).toDateString();
   if (day === new Date().toDateString()) return t.today;
   if (day === new Date(Date.now() - 86_400_000).toDateString()) return t.yesterday;
-  return new Date(time).toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" });
+  return shortDay(time);
 }
 
-function HistoryTab() {
-  const [entries, setEntries] = useState<HistoryEntry[] | null>(null);
+function spanOf(ms: number): string {
+  const minutes = Math.max(1, Math.round(ms / 60000));
+  return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${minutes % 60} min` : ""}`;
+}
+
+const sessionRange = (session: SessionSummary) => `${timeOf(session.startedAt)}–${session.live ? t.liveNow.toLowerCase() : timeOf(session.endedAt ?? session.startedAt)}`;
+
+function HistoryTab({ me }: { me: Me }) {
+  const [sessions, setSessions] = useState<SessionSummary[] | null>(null);
+  const [open, setOpen] = useState<number | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => void get<HistoryEntry[]>("history").then(setEntries, () => setEntries([])), []);
-  const days: { label: string; entries: HistoryEntry[] }[] = [];
-  for (const entry of entries ?? []) {
-    const label = dayLabel(entry.playedAt);
-    if (days.at(-1)?.label === label) days.at(-1)!.entries.push(entry);
-    else days.push({ label, entries: [entry] });
-  }
+  useEffect(() => {
+    get<SessionSummary[]>("sessions").then((list) => {
+      setSessions(list);
+      setOpen(list[0]?.id ?? null);
+    }, () => setSessions([]));
+  }, []);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(timer);
+  }, [notice]);
   return (
-    <section className="sheet" aria-label={t.tabs.history}>
+    <section className="sheet history" aria-label={t.tabs.history}>
+      <p className="hint history-intro">{t.historyIntro}</p>
       {error && <p className="error" role="alert">{error}</p>}
-      {entries?.length === 0 && <p className="hint">{t.noHistory}</p>}
-      {days.map((day) => (
-        <section key={day.label} className="day" aria-label={day.label}>
-          <h2 className="label">{day.label}</h2>
-          <ul className="rows history-rows">
-            {day.entries.map((entry) => (
-              <li key={entry.id} className="song">
-                <Art src={artwork(entry, 96)} className="art-md" />
-                <div className="meta">
-                  <div className="name">{entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.title}</a> : entry.title}</div>
-                  <SongSub artist={entry.artist} extra={new Date(entry.playedAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })} requester={entry.requester} />
-                </div>
-                <QueueButton className="pill" label={t.requeue} run={async () => {
-                  setError(null);
-                  try {
-                    await enqueue({ items: [{ query: entry.url ?? entry.query, title: entry.title, artist: entry.artist, artwork: entry.artwork, durationMs: entry.durationMs }] });
-                  } catch (failure) {
-                    setError(message(failure));
-                    throw failure;
-                  }
-                }} />
-              </li>
-            ))}
-          </ul>
-        </section>
+      {notice && <p className="notice" role="status">{notice}</p>}
+      {sessions?.length === 0 && <p className="hint">{t.noHistory}</p>}
+      {sessions?.map((session) => (
+        <SessionCard key={session.id} session={session} me={me} open={open === session.id} onToggle={() => setOpen(open === session.id ? null : session.id)} onNotice={(text) => { setError(null); setNotice(text); }} onError={(text) => { setNotice(null); setError(text); }} />
       ))}
     </section>
+  );
+}
+
+function SessionCard({ session, me, open, onToggle, onNotice, onError }: { session: SessionSummary; me: Me; open: boolean; onToggle: () => void; onNotice: (text: string) => void; onError: (text: string) => void }) {
+  const [tracks, setTracks] = useState<SessionTrack[] | null>(null);
+  const [all, setAll] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const load = useCallback(async () => {
+    if (tracks) return tracks;
+    const list = await get<SessionTrack[]>(`session/tracks?id=${session.id}`);
+    setTracks(list);
+    return list;
+  }, [tracks, session.id]);
+  useEffect(() => {
+    if (open && !tracks) load().catch(() => undefined);
+  }, [open, tracks, load]);
+  const span = (session.endedAt ?? Date.now()) - session.startedAt;
+  const heading = `${relativeDay(session.startedAt)}, ${sessionRange(session)}`;
+  const rows = tracks ? [...tracks].reverse() : [];
+  const shown = all ? rows : rows.slice(0, SESSION_ROWS);
+  const fail = (failure: unknown) => {
+    onError(message(failure));
+    throw failure;
+  };
+  const queueAgain = async () => {
+    const list = await load().catch(fail);
+    await enqueue({ items: list.map((track) => ({ query: track.url ?? track.query, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs })) }).catch(fail);
+  };
+  const save = async () => {
+    const name = t.sessionPlaylist(`${shortDay(session.startedAt)} ${sessionRange(session)}`);
+    await post("playlist/from-session", { sessionId: session.id, name }).catch(fail);
+    onNotice(t.savedAs(name));
+  };
+  return (
+    <article className={`session-card ${session.live ? "live" : ""}`} aria-label={heading}>
+      <div className="session-head">
+        <button className="session-toggle" aria-expanded={open} aria-label={open ? t.hideSongs : t.showSongs} onClick={onToggle}>
+          <span className="mosaic" aria-hidden="true">
+            {[0, 1, 2, 3].map((index) => <Art key={index} src={session.artworks[index] ?? null} className="art-tile" />)}
+          </span>
+          <span className="session-text">
+            <span className="session-title">
+              {session.live && <span className="now-pill"><span className="live-dot" aria-hidden="true" />{t.liveNow}</span>}
+              {heading}
+            </span>
+            <span className="session-meta">
+              <span>{t.sessionMeta(spanOf(span), session.songs, session.live)}</span>
+              {session.requesters.length > 0 && (
+                <span className="people">
+                  <span className="stack" aria-hidden="true">
+                    {session.requesters.slice(0, 4).map((person) => (person.avatar ? <img key={person.id} src={person.avatar} alt="" referrerPolicy="no-referrer" /> : <span key={person.id} className="who-initial">{person.name.slice(0, 1).toUpperCase()}</span>))}
+                  </span>
+                  {session.requesters.map((person) => person.name).filter(Boolean).join(", ")}
+                </span>
+              )}
+              {session.autoplay > 0 && <span className="auto-count"><Icon.Radio size={13} />{t.autoplayCount(session.autoplay)}</span>}
+            </span>
+          </span>
+          <span className={`chevron ${open ? "open" : ""}`} aria-hidden="true"><Icon.Down /></span>
+        </button>
+        <div className="session-actions">
+          <QueueButton className="pill primary" label={t.requeue} run={queueAgain} />
+          <QueueButton className="pill" label={t.saveAsPlaylist} run={save} />
+          <span className="menu-anchor">
+            <button className="pill" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu(!menu)}>{t.addToPlaylist}<Icon.Down /></button>
+            {menu && <MergeMenu me={me} session={session} onClose={() => setMenu(false)} onNotice={onNotice} onError={onError} />}
+          </span>
+        </div>
+      </div>
+      {open && (
+        <div className="session-songs">
+          {!tracks && <p className="hint">…</p>}
+          <ol className="rows">
+            {shown.map((track, index) => {
+              const playing = session.live && index === 0;
+              return (
+                <li key={track.id} className={`song session-row ${playing ? "playing" : ""}`}>
+                  <span className="when">{playing ? <><Equalizer />{t.liveNow}</> : timeOf(track.playedAt)}</span>
+                  <Art src={artwork(track, 96)} className="art-sm" />
+                  <div className="meta">
+                    <div className="name">{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</div>
+                    <div className="sub">{track.artist}</div>
+                  </div>
+                  <span className="asked">{track.requestedBy === "autoplay" ? <span className="tag auto-tag">{track.pickedBy === "explore" ? <Icon.Compass size={13} /> : <Icon.Radio size={13} />}{t.autoplay}</span> : <Who requester={track.requester} />}</span>
+                  {track.durationMs > 0 && <span className="len">{clock(track.durationMs)}</span>}
+                  <QueueButton className="pill" label={t.requeue} run={() => enqueue({ items: [{ query: track.url ?? track.query, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs }] }).catch(fail)} />
+                </li>
+              );
+            })}
+          </ol>
+          {!all && rows.length > SESSION_ROWS && <button className="pill ghost show-all" onClick={() => setAll(true)}>{t.showAll(rows.length)}</button>}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function MergeMenu({ me, session, onClose, onNotice, onError }: { me: Me; session: SessionSummary; onClose: () => void; onNotice: (text: string) => void; onError: (text: string) => void }) {
+  const [lists, setLists] = useState<Playlist[] | null>(null);
+  const [filter, setFilter] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => void get<Playlist[]>("playlists").then((all) => setLists(all.filter((list) => list.ownerId === me.discordId)), () => setLists([])), [me.discordId]);
+  useEffect(() => {
+    const away = (event: PointerEvent) => {
+      if (!box.current?.parentElement?.contains(event.target as Node)) onClose();
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [onClose]);
+  const shown = (lists ?? []).filter((list) => list.name.toLowerCase().includes(filter.trim().toLowerCase()));
+  async function merge(list: Playlist) {
+    setBusy(list.id);
+    try {
+      const result = await post<{ added: number; skipped: number }>("playlist/merge-session", { id: list.id, sessionId: session.id });
+      onNotice(t.merged(list.name, result.added, result.skipped));
+      onClose();
+    } catch (failure) {
+      onError(message(failure));
+      setBusy(null);
+    }
+  }
+  return (
+    <div className="merge-menu" role="menu" ref={box}>
+      <p className="merge-title">{t.addSongsTo(session.songs)}</p>
+      <input className="merge-find" type="search" placeholder={t.findPlaylist} aria-label={t.findPlaylist} value={filter} onChange={(event) => setFilter(event.target.value)} autoFocus />
+      {lists?.length === 0 && <p className="hint">{t.noOwnPlaylists}</p>}
+      <ul className="merge-lists">
+        {shown.map((list) => (
+          <li key={list.id}>
+            <button role="menuitem" disabled={busy !== null} onClick={() => void merge(list)}>
+              <Tile seed={list.id} className="tile-sm" />
+              <span className="merge-name"><span>{list.name}</span><span className="sub">{t.tracks(list.trackCount)}</span></span>
+              {busy === list.id && <span className="sub">{t.adding}</span>}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p className="merge-note">{t.mergeNote}</p>
+    </div>
   );
 }
 
@@ -1187,6 +1333,12 @@ export function App() {
       if (timer) clearTimeout(timer);
     };
   }, []);
+  const waitingForRole = Boolean(me?.member && !me.canPlay && !me.canManage);
+  useEffect(() => {
+    if (!waitingForRole) return;
+    const timer = setInterval(() => get<Me>("me").then((next) => { if (next.canPlay || next.canManage) setMe(next); }, () => undefined), ROLE_RECHECK_MS);
+    return () => clearInterval(timer);
+  }, [waitingForRole]);
   if (!me) {
     return (
       <>
@@ -1247,7 +1399,7 @@ export function App() {
         <main className="main">
           {active === "player" && <PlayerTab view={view} setView={setView} refresh={refresh} live={live} />}
           {active === "playlists" && <PlaylistsTab me={me} />}
-          {active === "history" && <HistoryTab />}
+          {active === "history" && <HistoryTab me={me} />}
           {active === "settings" && <SettingsTab />}
         </main>
       </div>

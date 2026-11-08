@@ -39,9 +39,14 @@ const text = {
   },
 };
 
+const ACCESS_FRESH_MS = 30_000;
+const checked = new Map<string, number>();
+
 export async function accessOf(userId: string): Promise<Access> {
   const server = await guild();
-  const member = await server.members.fetch(userId).catch(() => null);
+  const stale = Date.now() - (checked.get(userId) ?? 0) > ACCESS_FRESH_MS;
+  const member = await server.members.fetch({ user: userId, force: stale }).catch(() => null);
+  if (stale && member) checked.set(userId, Date.now());
   if (!member) return { member: false, canManage: false, canPlay: false };
   const canManage = member.permissions.has(PermissionFlagsBits.ManageGuild);
   const { djRoleId } = session.settings();
