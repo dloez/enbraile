@@ -125,6 +125,7 @@ function videoId(url: string | null): string | null {
 const state: State = { ...blank(), ...getValue<State>("state") };
 const watchers = new Set<(view: View) => void>();
 let ticker: ReturnType<typeof setInterval> | undefined;
+let cold = false;
 
 function save(): void {
   setValue("state", state);
@@ -149,7 +150,7 @@ export function setSettings(next: Settings): void {
 const playing = () => state.active && state.current >= 0 && state.current < state.tracks.length;
 
 function livePosition(): number {
-  return playing() && !state.loading && !state.stalled ? player.status().positionMs : state.positionMs;
+  return playing() && !state.loading && !state.stalled && !cold ? player.status().positionMs : state.positionMs;
 }
 
 function prepareAhead(): void {
@@ -180,9 +181,20 @@ export function view(): View {
   };
 }
 
+function restartAt(offsetMs: number): void {
+  if (!state.paused) return startCurrent(offsetMs);
+  player.halt();
+  state.positionMs = offsetMs;
+  state.loading = false;
+  state.stalled = false;
+  cold = true;
+  save();
+}
+
 function startCurrent(offsetMs = 0): void {
   const track = state.tracks[state.current];
   if (!track) return;
+  cold = false;
   state.generation += 1;
   state.positionMs = offsetMs;
   state.paused = false;
@@ -442,6 +454,10 @@ export async function command(command: Command): Promise<void> {
       state.pausedSince = Date.now();
       break;
     case "resume":
+      if (cold) {
+        startCurrent(state.positionMs);
+        break;
+      }
       player.resume();
       state.paused = false;
       state.pausedSince = null;
@@ -466,7 +482,7 @@ export async function command(command: Command): Promise<void> {
       return;
     case "volume":
       state.volume = Math.min(2, Math.max(0, command.volume));
-      startCurrent(player.status().positionMs);
+      restartAt(livePosition());
       return;
     case "loop":
       state.loop = command.loop;
@@ -517,7 +533,7 @@ async function rejoin(): Promise<void> {
   try {
     const position = livePosition();
     await player.join(state.channelId);
-    if (playing()) startCurrent(position);
+    if (playing()) restartAt(position);
   } finally {
     rejoining = false;
   }
@@ -580,7 +596,7 @@ async function tick(): Promise<void> {
   const now = Date.now();
   const status = player.status();
   if (!status.connected && state.channelId) return rejoin();
-  if (playing() && !state.loading && !state.stalled) state.positionMs = status.positionMs;
+  if (playing() && !state.loading && !state.stalled && !cold) state.positionMs = status.positionMs;
   state.listeners = status.listeners;
   state.emptySince = state.listeners === 0 ? (state.emptySince ?? now) : null;
   const autoplayOver = state.autoplay && (state.listeners === 0 || now - state.lastHumanAt >= AUTOPLAY_LIMIT_MS);
@@ -599,7 +615,7 @@ export async function resumeAfterRestart(): Promise<void> {
   try {
     await player.join(state.channelId);
     startTicking();
-    if (state.current >= 0 && state.current < state.tracks.length) startCurrent(state.positionMs);
+    if (state.current >= 0 && state.current < state.tracks.length) restartAt(state.positionMs);
   } catch (error) {
     console.error("resume", (error as Error).message);
     end();
