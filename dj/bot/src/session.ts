@@ -3,7 +3,8 @@ import { type ArtistRef, artistNames, type Seed, sessionRadio, type Song } from 
 import { type Requester, requester } from "./client.ts";
 import * as player from "./player.ts";
 
-export type Track = { id: string; query: string; title: string; artist: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean };
+export type Track = { id: string; query: string; title: string; artist: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean; playlist?: PlaylistRef | null };
+export type PlaylistRef = { id: string; name: string };
 export type AutoplayMode = "session" | "explore";
 export type Loop = "off" | "track" | "queue";
 
@@ -56,9 +57,11 @@ export type Skipped = { id: string; title: string };
 
 export type Settings = { djRoleId: string | null };
 export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; requester: Requester | null; playedAt: number; artist: string | null; artwork: string | null; durationMs: number };
-export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; trackCount: number };
-export type PlaylistTrack = { id: string; query: string; title: string };
-export type QueueItem = { query: string; title?: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs?: number };
+export type Visibility = "public" | "private";
+export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; visibility: Visibility; trackCount: number; durationMs: number; covers: string[] };
+export type PlaylistTrack = { id: string; query: string; title: string; artist: string | null; artwork: string | null; durationMs: number };
+export type PlaylistItem = { query: string; title: string; artist?: string | null; artwork?: string | null; durationMs?: number };
+export type QueueItem = { query: string; title?: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs?: number; playlist?: PlaylistRef | null };
 export type EnqueueResult = { ok: true; added: number; position: number };
 
 export type Command =
@@ -463,12 +466,17 @@ function albumAndArtists(item: QueueItem): Pick<Track, "artists" | "album" | "al
   return { artists, album: typeof item.album === "string" ? item.album.slice(0, 300) : null, albumId: typeof item.albumId === "string" && ALBUM_ID.test(item.albumId) ? item.albumId : null };
 }
 
+function playlistOf(item: QueueItem): Pick<Track, "playlist"> {
+  const ref = item.playlist;
+  return ref && typeof ref.id === "string" && typeof ref.name === "string" ? { playlist: { id: ref.id, name: ref.name.slice(0, 100) } } : {};
+}
+
 export async function enqueue(channelId: string, items: QueueItem[], requestedBy: string): Promise<EnqueueResult> {
   const who = await requester(requestedBy);
   const before = state.tracks.length;
   const position = before - Math.max(state.current, 0);
   const wasPlaying = state.active && state.current >= 0 && state.current < before;
-  state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, ...albumAndArtists(item), artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy, requester: who })));
+  state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, ...albumAndArtists(item), artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy, requester: who, ...playlistOf(item) })));
   state.lastHumanAt = Date.now();
   if (!state.active || state.channelId !== channelId) {
     await player.join(channelId);
@@ -737,39 +745,63 @@ export function sessions(limit = 30): SessionSummary[] {
   });
 }
 
-const sessionItems = (id: number) => sessionTracks(id).map((track) => ({ query: track.url ?? track.query, title: [track.artist, track.title].filter(Boolean).join(" - ") }));
+const sessionItems = (id: number): PlaylistItem[] => sessionTracks(id).map((track) => ({ query: track.url ?? track.query, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs }));
 
-export function playlistFromSession(sessionId: number, name: string, ownerId: string, ownerName: string): { id: string; added: number } | null {
+export function playlistFromSession(sessionId: number, name: string, ownerId: string, ownerName: string, visibility: Visibility): { id: string; added: number } | null {
   const items = sessionItems(sessionId);
   if (!items.length) return null;
-  const id = createPlaylist(name, ownerId, ownerName);
+  const id = createPlaylist(name, ownerId, ownerName, visibility);
   addToPlaylist(id, ownerId, items);
   return { id, added: items.length };
 }
 
 export function mergeSession(playlistId: string, userId: string, sessionId: number): { added: number; skipped: number } | null {
   if (!owns(playlistId, userId)) return null;
-  const have = new Set(playlistTracks(playlistId).map((track) => track.query));
+  const have = new Set(tracksOf(playlistId).map((track) => track.query));
   const items = sessionItems(sessionId);
   const fresh = items.filter((item) => !have.has(item.query));
   addToPlaylist(playlistId, userId, fresh);
   return { added: fresh.length, skipped: items.length - fresh.length };
 }
 
-export function playlists(): Playlist[] {
-  return (db.prepare("SELECT p.id, p.name, p.owner_id, p.owner_name, COUNT(t.id) AS track_count FROM playlist p LEFT JOIN playlist_track t ON t.playlist_id = p.id GROUP BY p.id ORDER BY p.name COLLATE NOCASE").all() as { id: string; name: string; owner_id: string; owner_name: string; track_count: number }[]).map((row) => ({ id: row.id, name: row.name, ownerId: row.owner_id, ownerName: row.owner_name, trackCount: row.track_count }));
+const visibilityOf = (value: unknown): Visibility => (value === "private" ? "private" : "public");
+
+function thumbnail(query: string, artwork: string | null): string | null {
+  if (artwork) return artwork;
+  const video = query.match(/[?&]v=([\w-]{11})/)?.[1];
+  return video ? `https://i.ytimg.com/vi/${video}/mqdefault.jpg` : null;
 }
 
-export function playlistTracks(id: string): PlaylistTrack[] {
-  return db.prepare("SELECT id, query, title FROM playlist_track WHERE playlist_id = ? ORDER BY position").all(id) as PlaylistTrack[];
+export function playlists(userId: string): Playlist[] {
+  const rows = db.prepare("SELECT p.id, p.name, p.owner_id, p.owner_name, p.visibility, COUNT(t.id) AS track_count, COALESCE(SUM(t.duration_ms), 0) AS duration_ms FROM playlist p LEFT JOIN playlist_track t ON t.playlist_id = p.id WHERE p.visibility = 'public' OR p.owner_id = ? GROUP BY p.id ORDER BY p.name COLLATE NOCASE").all(userId) as { id: string; name: string; owner_id: string; owner_name: string; visibility: string; track_count: number; duration_ms: number }[];
+  const covers = new Map<string, string[]>();
+  for (const row of db.prepare("SELECT playlist_id, query, artwork FROM (SELECT t.playlist_id, t.query, t.artwork, ROW_NUMBER() OVER (PARTITION BY t.playlist_id ORDER BY t.position) AS n FROM playlist_track t JOIN playlist p ON p.id = t.playlist_id WHERE p.visibility = 'public' OR p.owner_id = ?) WHERE n <= 4").all(userId) as { playlist_id: string; query: string; artwork: string | null }[]) {
+    const cover = thumbnail(row.query, row.artwork);
+    if (cover) covers.set(row.playlist_id, [...(covers.get(row.playlist_id) ?? []), cover]);
+  }
+  return rows.map((row) => ({ id: row.id, name: row.name, ownerId: row.owner_id, ownerName: row.owner_name, visibility: visibilityOf(row.visibility), trackCount: row.track_count, durationMs: row.duration_ms, covers: covers.get(row.id) ?? [] }));
+}
+
+const visible = (id: string, userId: string) => db.prepare("SELECT 1 FROM playlist WHERE id = ? AND (visibility = 'public' OR owner_id = ?)").get(id, userId) !== undefined;
+
+const tracksOf = (id: string) => (db.prepare("SELECT id, query, title, artist, artwork, duration_ms FROM playlist_track WHERE playlist_id = ? ORDER BY position").all(id) as { id: string; query: string; title: string; artist: string | null; artwork: string | null; duration_ms: number }[]).map((row) => ({ id: row.id, query: row.query, title: row.title, artist: row.artist, artwork: row.artwork, durationMs: row.duration_ms }));
+
+export function playlistTracks(id: string, userId: string): PlaylistTrack[] | null {
+  return visible(id, userId) ? tracksOf(id) : null;
 }
 
 const owns = (id: string, userId: string) => db.prepare("SELECT 1 FROM playlist WHERE id = ? AND owner_id = ?").get(id, userId) !== undefined;
 
-export function createPlaylist(name: string, ownerId: string, ownerName: string): string {
+export function createPlaylist(name: string, ownerId: string, ownerName: string, visibility: Visibility): string {
   const id = crypto.randomUUID();
-  db.prepare("INSERT INTO playlist (id, name, owner_id, owner_name, created_at) VALUES (?, ?, ?, ?, ?)").run(id, name.trim().slice(0, 100), ownerId, ownerName, Date.now());
+  db.prepare("INSERT INTO playlist (id, name, owner_id, owner_name, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?)").run(id, name.trim().slice(0, 100), ownerId, ownerName, Date.now(), visibilityOf(visibility));
   return id;
+}
+
+export function setPlaylistVisibility(id: string, userId: string, visibility: Visibility): boolean {
+  if (!owns(id, userId)) return false;
+  db.prepare("UPDATE playlist SET visibility = ? WHERE id = ?").run(visibilityOf(visibility), id);
+  return true;
 }
 
 export function renamePlaylist(id: string, userId: string, name: string): boolean {
@@ -785,11 +817,11 @@ export function deletePlaylist(id: string, userId: string): boolean {
   return true;
 }
 
-export function addToPlaylist(id: string, userId: string, items: { query: string; title: string }[]): boolean {
+export function addToPlaylist(id: string, userId: string, items: PlaylistItem[]): boolean {
   if (!owns(id, userId)) return false;
   let position = (db.prepare("SELECT COALESCE(MAX(position), -1) AS top FROM playlist_track WHERE playlist_id = ?").get(id) as { top: number }).top;
-  const insert = db.prepare("INSERT INTO playlist_track (id, playlist_id, position, query, title) VALUES (?, ?, ?, ?, ?)");
-  for (const item of items) insert.run(crypto.randomUUID(), id, ++position, item.query, item.title);
+  const insert = db.prepare("INSERT INTO playlist_track (id, playlist_id, position, query, title, artist, artwork, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+  for (const item of items) insert.run(crypto.randomUUID(), id, ++position, item.query, item.title, item.artist ?? null, item.artwork ?? null, item.durationMs ?? 0);
   return true;
 }
 
@@ -801,7 +833,7 @@ export function removeFromPlaylist(id: string, userId: string, trackId: string):
 
 export function movePlaylistTrack(id: string, userId: string, trackId: string, to: number): boolean {
   if (!owns(id, userId)) return false;
-  const tracks = playlistTracks(id);
+  const tracks = tracksOf(id);
   const from = tracks.findIndex((track) => track.id === trackId);
   if (from < 0) return true;
   const [track] = tracks.splice(from, 1);

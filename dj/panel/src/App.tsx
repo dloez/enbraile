@@ -1,11 +1,11 @@
 import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type FocusEvent as ReactFocusEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { type Album, ApiError, type Artist, type ArtistPage, type ArtistRef, type AutoplayMode, get, type Listener, handleReply, type HistoryEntry, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SessionSummary, type SessionTrack, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
+import { type Album, ApiError, type Artist, type ArtistPage, type ArtistRef, type AutoplayMode, cached, get, type Listener, handleReply, type HistoryEntry, load, onCache, prefetch, remember, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SessionSummary, type SessionTrack, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View, type Visibility } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
 import { Ambient, useAccent } from "./ambient";
 
 type Tab = "player" | "playlists" | "history" | "settings";
-type QueueItem = { query: string; title?: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs?: number };
+type QueueItem = { query: string; title?: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs?: number; playlist?: { id: string; name: string } };
 type Synced = View & { at: number; stale?: boolean };
 type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number; mode?: AutoplayMode };
 type ArtistTarget = { id?: string; name: string };
@@ -141,13 +141,19 @@ function AlbumLink({ target, onAlbum }: { target: AlbumTarget; onAlbum: (target:
   return <a href={href} className="artist-link" title={t.openAlbum(target.name)} onClick={(event) => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return; event.preventDefault(); onAlbum(target); }}>{target.name}</a>;
 }
 
-function SongSub({ artist, requester, onArtist }: { artist?: string | null; requester?: Requester | null; onArtist?: OpenArtist }) {
-  if (!artist && !requester) return null;
+function FromPlaylist({ name }: { name: string }) {
+  return <span className="from-list" title={t.fromPlaylist(name)}><Icon.List size={13} /><span className="from-list-name">{name}</span></span>;
+}
+
+function SongSub({ artist, requester, onArtist, playlist }: { artist?: string | null; requester?: Requester | null; onArtist?: OpenArtist; playlist?: { name: string } | null }) {
+  if (!artist && !requester && !playlist) return null;
   return (
     <div className="sub">
       <ArtistLinks text={artist} onArtist={onArtist} />
       {artist && requester && <span aria-hidden="true"> · </span>}
       <Who requester={requester} />
+      {playlist && (artist || requester) && <span aria-hidden="true"> · </span>}
+      {playlist && <FromPlaylist name={playlist.name} />}
     </div>
   );
 }
@@ -265,7 +271,7 @@ function useWarm(enabled: boolean): (song: Song) => void {
 
 const asItem = (song: Song): QueueItem => ({ query: song.url, title: song.title, artist: song.artist, artists: song.artists, album: song.album, albumId: song.albumId, artwork: song.artwork, durationMs: song.durationMs });
 
-function SongRow({ song, done, disabled, onAdd, warm, onArtist, index, leaving, onLeft, withoutArtist, style }: { song: Song; done: boolean; disabled: boolean; onAdd: () => void; warm: (song: Song) => void; onArtist?: OpenArtist; index?: number; leaving?: boolean; onLeft?: () => void; withoutArtist?: boolean; style?: CSSProperties }) {
+function SongRow({ song, done, disabled, onAdd, warm, onArtist, index, leaving, onLeft, withoutArtist, style, addLabel = t.addToQueue }: { song: Song; done: boolean; disabled: boolean; onAdd: () => void; warm: (song: Song) => void; onArtist?: OpenArtist; index?: number; leaving?: boolean; onLeft?: () => void; withoutArtist?: boolean; style?: CSSProperties; addLabel?: (title: string) => string }) {
   const album = song.album && <>{!withoutArtist && song.artist && " · "}{song.album}</>;
   return (
     <li className={`song ${leaving ? "leaving" : ""}`} style={style} onPointerEnter={() => warm(song)} onPointerDown={() => warm(song)} onFocus={() => warm(song)} onAnimationEnd={(event) => { if (leaving && event.animationName === "row-out") onLeft?.(); }}>
@@ -277,7 +283,7 @@ function SongRow({ song, done, disabled, onAdd, warm, onArtist, index, leaving, 
       </div>
       {song.plays && <span className="plays">{song.plays}</span>}
       {song.durationMs > 0 && <span className="len">{clock(song.durationMs)}</span>}
-      <button className={`icon-btn ring ${done ? "done" : ""}`} aria-label={done ? `${t.added}: ${song.title}` : t.addToQueue(song.title)} disabled={disabled} onClick={onAdd}>{done ? <Icon.Check /> : <Icon.Plus />}</button>
+      <button className={`icon-btn ring ${done ? "done" : ""}`} aria-label={done ? `${t.added}: ${song.title}` : addLabel(song.title)} disabled={disabled} onClick={onAdd}>{done ? <Icon.Check /> : <Icon.Plus />}</button>
     </li>
   );
 }
@@ -458,7 +464,7 @@ function ArtistAvatar({ artist, className }: { artist: Artist; className: string
   );
 }
 
-function SongSearch({ placeholder, onPick, onLink, warmUp, onActive, onArtist, collapsed, onType }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void>; warmUp?: boolean; onActive?: (active: boolean) => void; onArtist?: OpenArtist; collapsed?: boolean; onType?: () => void }) {
+function SongSearch({ placeholder, onPick, onLink, warmUp, onActive, onArtist, collapsed, onType, exclude, leaveOnAdd, addLabel }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void>; warmUp?: boolean; onActive?: (active: boolean) => void; onArtist?: OpenArtist; collapsed?: boolean; onType?: () => void; exclude?: Set<string>; leaveOnAdd?: boolean; addLabel?: (title: string) => string }) {
   const [text, setText] = useState("");
   const [results, setResults] = useState<Song[] | null>(null);
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -466,6 +472,7 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive, onArtist, c
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [added, setAdded] = useState<Set<string>>(new Set());
+  const [gone, setGone] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const sequence = useRef(0);
   const warm = useWarm(Boolean(warmUp));
@@ -504,6 +511,7 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive, onArtist, c
     setResults(null);
     setArtists([]);
     setAdded(new Set());
+    setGone(new Set());
     setError(null);
   }
   async function submit(event: FormEvent) {
@@ -577,7 +585,7 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive, onArtist, c
           {results?.length === 0 && <p className="hint arriving-hint">{t.noSongs}</p>}
           {!results && <SkeletonSongs count={5} />}
           <ul className={`rows arriving ${stale ? "stale" : ""}`} key={shown}>
-            {results?.map((song, index) => <SongRow key={song.videoId} style={staggered(index + artists.length)} song={song} done={added.has(song.videoId)} disabled={stale || busy === song.videoId} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} />)}
+            {results?.filter((song) => !gone.has(song.videoId) && (added.has(song.videoId) || !exclude?.has(song.url))).map((song, index) => <SongRow key={song.videoId} style={staggered(index + artists.length)} song={song} done={added.has(song.videoId)} disabled={stale || busy === song.videoId || Boolean(leaveOnAdd && added.has(song.videoId))} leaving={Boolean(leaveOnAdd && added.has(song.videoId) && busy !== song.videoId)} onLeft={() => setGone((previous) => new Set(previous).add(song.videoId))} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} addLabel={addLabel} />)}
           </ul>
         </section>
       )}
@@ -999,7 +1007,7 @@ function NowPlaying({ view, track, command, onArtist, onAlbum }: { view: Synced 
             {track.requestedBy === "autoplay" ? (
               <span className="tag auto-tag">{track.pickedBy === "explore" ? <Icon.Compass size={13} /> : <Icon.Radio size={13} />}{t.autoplay}</span>
             ) : track.requester ? (
-              <><span>{t.askedFor}</span><Who requester={track.requester} /></>
+              <><span>{t.askedFor}</span><Who requester={track.requester} />{track.playlist && <><span aria-hidden="true">·</span><FromPlaylist name={track.playlist.name} /></>}</>
             ) : "\u00a0"}
           </p>
         </div>
@@ -1151,7 +1159,7 @@ function QueueList({ upcoming, offset, command, onArtist }: { upcoming: Track[];
             <Art src={artwork(item, 96)} className="art-sm" />
             <div className="meta">
               <div className="name">{item.title}</div>
-              <SongSub artist={item.artist} requester={item.requester} onArtist={onArtist} />
+              <SongSub artist={item.artist} requester={item.requester} onArtist={onArtist} playlist={item.playlist} />
             </div>
             {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
             <span className="reorder">
@@ -1387,6 +1395,17 @@ function AutoplayBlock({ view, command }: { view: Synced; command: (body: Comman
   );
 }
 
+function useCached<T>(path: string | null): { data: T | null; failed: boolean; reload: () => Promise<unknown> } {
+  const [, bump] = useState(0);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => onCache(() => bump((count) => count + 1)), []);
+  useEffect(() => {
+    if (path) load<T>(path).then(() => setFailed(false), () => setFailed(true));
+  }, [path]);
+  const reload = useCallback(() => (path ? load<T>(path) : Promise.resolve()), [path]);
+  return { data: path ? (cached<T>(path) ?? null) : null, failed, reload };
+}
+
 function hueOf(text: string): number {
   let hash = 0;
   for (const char of text) hash = (hash * 31 + char.charCodeAt(0)) | 0;
@@ -1397,96 +1416,334 @@ function Tile({ seed, className }: { seed: string; className?: string }) {
   return <div className={`tile ${className ?? ""}`} style={{ "--h": hueOf(seed) } as CSSProperties}><Icon.Note size={28} /></div>;
 }
 
-function PlaylistsTab({ me }: { me: Me }) {
-  const [lists, setLists] = useState<Playlist[] | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
-  const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const reload = useCallback(() => get<Playlist[]>("playlists").then(setLists, () => setLists([])), []);
-  const reloadTracks = useCallback((id: string) => get<PlaylistTrack[]>(`playlist/tracks?id=${id}`).then(setTracks), []);
-  useEffect(() => void reload(), [reload]);
+const coverAt = (cover: string, size: number) => (cover.includes("i.ytimg.com") ? (size > 200 ? cover.replace("mqdefault", "hqdefault") : cover) : cover.replace(/=w\d+-h\d+/, `=w${size}-h${size}`));
+
+function PlaylistCover({ list, className }: { list: Playlist; className?: string }) {
+  if (!list.covers.length) return <Tile seed={list.id} className={`cover-grid ${className ?? ""}`} />;
+  const covers = list.covers.length >= 4 ? list.covers.slice(0, 4) : list.covers.slice(0, 1);
+  return (
+    <div className={`cover-grid ${covers.length === 4 ? "four" : ""} ${className ?? ""}`} aria-hidden="true">
+      {covers.map((cover, index) => <Art key={index} src={coverAt(cover, covers.length === 4 ? 226 : 544)} className="cover-cell" />)}
+    </div>
+  );
+}
+
+function OwnerFace({ name }: { name: string }) {
+  return <span className="owner-face" style={{ "--h": hueOf(name) } as CSSProperties} aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>;
+}
+
+const LockIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>;
+const GlobeIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>;
+const PencilIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>;
+const TrashIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>;
+
+const VisibilityIcon = ({ visibility }: { visibility: Visibility }) => (visibility === "private" ? <LockIcon /> : <GlobeIcon />);
+
+const playlistMeta = (list: Playlist) => [t.tracks(list.trackCount), list.durationMs > 0 ? spanOf(list.durationMs) : null].filter(Boolean).join(" · ");
+
+async function playTracks(list: Playlist, shuffle: boolean): Promise<void> {
+  const tracks = await load<PlaylistTrack[]>(`playlist/tracks?id=${list.id}`);
+  if (!tracks.length) throw new ApiError("noResults");
+  const playlist = { id: list.id, name: list.name };
+  await enqueue({ items: (shuffle ? shuffled(tracks) : tracks).map((track) => ({ query: track.query, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs, playlist })) });
+}
+
+function PlaylistCard({ list, mine, onOpen, onError }: { list: Playlist; mine: boolean; onOpen: () => void; onError: (text: string) => void }) {
+  const [state, setState] = useState<"idle" | "busy" | "done">("idle");
   useEffect(() => {
-    if (open) void reloadTracks(open);
-  }, [open, reloadTracks]);
+    if (state !== "done") return;
+    const timer = setTimeout(() => setState("idle"), 2500);
+    return () => clearTimeout(timer);
+  }, [state]);
+  const play = () => {
+    setState("busy");
+    playTracks(list, false).then(() => setState("done"), (failure: unknown) => { setState("idle"); onError(message(failure)); });
+  };
+  return (
+    <li className="playlist-card">
+      <button className="playlist-open" onClick={onOpen} onPointerEnter={() => prefetch(`playlist/tracks?id=${list.id}`)} onFocus={() => prefetch(`playlist/tracks?id=${list.id}`)}>
+        <PlaylistCover list={list} />
+        <span className="name">{list.name}</span>
+        <span className="sub playlist-meta">
+          {mine ? <span className={`vis ${list.visibility}`}><VisibilityIcon visibility={list.visibility} />{t.visibility[list.visibility]}</span> : <span className="owner"><OwnerFace name={list.ownerName} />{list.ownerName}</span>}
+          <span aria-hidden="true">·</span>
+          <span>{mine ? playlistMeta(list) : t.tracks(list.trackCount)}</span>
+        </span>
+      </button>
+      {list.trackCount > 0 && <button className={`card-play ${state}`} aria-label={`${t.play}: ${list.name}`} disabled={state === "busy"} onClick={play}>{state === "done" ? <Icon.Check /> : <Icon.Play />}</button>}
+    </li>
+  );
+}
+
+function CreatePlaylist({ onCancel, onCreated }: { onCancel: () => void; onCreated: (id: string) => void }) {
+  const [name, setName] = useState("");
+  const [visibility, setVisibility] = useState<Visibility>("public");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!name.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { id } = await post<{ id: string }>("playlists", { name, visibility });
+      await load("playlists");
+      onCreated(id);
+    } catch (failure) {
+      setError(message(failure));
+      setBusy(false);
+    }
+  }
+  return (
+    <form className="create-card" aria-label={t.newPlaylistButton} onSubmit={(event) => void submit(event)}>
+      <label className="create-name">
+        <span className="create-label">{t.playlistName}</span>
+        <input className="field" value={name} onChange={(event) => setName(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onCancel(); }} maxLength={100} autoFocus />
+      </label>
+      <fieldset className="create-vis">
+        <legend className="create-label">{t.whoCanSee}</legend>
+        <div className="vis-choice">
+          {(["public", "private"] as const).map((entry) => (
+            <label key={entry} className={visibility === entry ? "on" : ""}>
+              <input type="radio" name="visibility" checked={visibility === entry} onChange={() => setVisibility(entry)} />
+              <VisibilityIcon visibility={entry} />
+              <span><span className="vis-name">{t.visibility[entry]}</span><span className="vis-hint">{t.visibilityShort[entry]}</span></span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className="create-actions">
+        <button type="button" className="pill" onClick={onCancel}>{t.cancel}</button>
+        <button className="pill primary" disabled={!name.trim() || busy}>{t.create}</button>
+      </div>
+      {error && <p className="error" role="alert">{error}</p>}
+    </form>
+  );
+}
+
+function PlaylistsTab({ me }: { me: Me }) {
+  const { data: lists, failed } = useCached<Playlist[]>("playlists");
+  const [open, setOpen] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [filter, setFilter] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const list = lists?.find((entry) => entry.id === open);
-  const owned = list?.ownerId === me.discordId;
+  if (open && list) return <PlaylistView list={list} me={me} onBack={() => setOpen(null)} />;
+  if (open && lists) return <PlaylistGone onBack={() => setOpen(null)} />;
+  const needle = filter.trim().toLowerCase();
+  const matching = (lists ?? []).filter((entry) => !needle || entry.name.toLowerCase().includes(needle) || entry.ownerName.toLowerCase().includes(needle));
+  const mine = matching.filter((entry) => entry.ownerId === me.discordId);
+  const group = matching.filter((entry) => entry.ownerId !== me.discordId);
+  const section = (label: string, entries: Playlist[], own: boolean) => entries.length > 0 && (
+    <section className="playlist-section" aria-label={label}>
+      <h2 className="section-title">{label} <span>{entries.length}</span></h2>
+      <ul className="playlist-grid">
+        {entries.map((entry) => <PlaylistCard key={entry.id} list={entry} mine={own} onOpen={() => setOpen(entry.id)} onError={setError} />)}
+      </ul>
+    </section>
+  );
+  return (
+    <section className="sheet playlists" aria-label={t.tabs.playlists}>
+      <div className="sheet-head">
+        <div className="sheet-heading">
+          <h1 className="sheet-title">{t.tabs.playlists}</h1>
+          <p className="sub">{t.playlistsIntro}</p>
+        </div>
+        {(lists?.length ?? 0) > 0 && (
+          <label className="find">
+            <Icon.Search />
+            <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder={t.findPlaylist} aria-label={t.findPlaylist} />
+          </label>
+        )}
+        <button className="pill primary new-playlist" aria-expanded={creating} onClick={() => setCreating(!creating)}><Icon.Plus />{t.newPlaylistButton}</button>
+      </div>
+      <Reveal open={creating}>{creating && <CreatePlaylist onCancel={() => setCreating(false)} onCreated={(id) => { setCreating(false); setOpen(id); }} />}</Reveal>
+      {error && <p className="error" role="alert">{error}</p>}
+      {!lists && !failed && <PlaylistsSkeleton />}
+      {failed && !lists && <p className="error" role="alert">{t.errors.failed}</p>}
+      {lists?.length === 0 && <p className="hint">{t.noPlaylists}</p>}
+      {lists && lists.length > 0 && !matching.length && <p className="hint">{t.noPlaylistMatch}</p>}
+      {section(t.yours, mine, true)}
+      {section(t.fromGroup, group, false)}
+    </section>
+  );
+}
+
+function PlaylistsSkeleton() {
+  return (
+    <section className="playlist-section" aria-hidden="true">
+      <div className="skeleton line section-skeleton" />
+      <ul className="playlist-grid">
+        {Array.from({ length: 5 }, (_, index) => (
+          <li key={index} className="playlist-card">
+            <div className="playlist-open">
+              <div className="cover-grid skeleton" />
+              <div className="skeleton line" style={{ width: `${75 - (index % 3) * 15}%` }} />
+              <div className="skeleton line short" />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function PlaylistGone({ onBack }: { onBack: () => void }) {
+  return (
+    <section className="sheet playlists">
+      <button className="pill ghost back" onClick={onBack}><Icon.Back />{t.back}</button>
+      <p className="hint">{t.playlistGone}</p>
+    </section>
+  );
+}
+
+function VisibilityMenu({ list, onChange }: { list: Playlist; onChange: (visibility: Visibility) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent ? event.key === "Escape" : !box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+  return (
+    <div className="vis-menu-box" ref={box}>
+      <button className={`btn vis-button ${open ? "open" : ""}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}><VisibilityIcon visibility={list.visibility} />{t.visibility[list.visibility]}<Icon.Down /></button>
+      {open && (
+        <div className="vis-menu" role="menu" aria-label={t.whoCanSee}>
+          {(["public", "private"] as const).map((entry) => (
+            <button key={entry} role="menuitemradio" aria-checked={list.visibility === entry} className={list.visibility === entry ? "on" : ""} onClick={() => { setOpen(false); if (entry !== list.visibility) void onChange(entry); }}>
+              <VisibilityIcon visibility={entry} />
+              <span className="vis-text"><span className="vis-name">{t.visibility[entry]}</span><span className="vis-hint">{t.visibilityLong[entry]}</span></span>
+              {list.visibility === entry && <Icon.Check />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlaylistTitle({ list, owned, onRename }: { list: Playlist; owned: boolean; onRename: (name: string) => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(list.name);
+  if (editing) {
+    const done = () => {
+      setEditing(false);
+      if (name.trim() && name.trim() !== list.name) void onRename(name.trim());
+      else setName(list.name);
+    };
+    return (
+      <form className="title-edit" onSubmit={(event) => { event.preventDefault(); done(); }}>
+        <input className="playlist-title" value={name} maxLength={100} aria-label={t.rename} autoFocus onChange={(event) => setName(event.target.value)} onBlur={done} onKeyDown={(event) => { if (event.key === "Escape") { setName(list.name); setEditing(false); } }} />
+      </form>
+    );
+  }
+  return (
+    <div className="title-row">
+      <h1 className="playlist-title">{list.name}</h1>
+      {owned && <button className="icon-btn small" aria-label={t.rename} title={t.rename} onClick={() => { setName(list.name); setEditing(true); }}><PencilIcon /></button>}
+    </div>
+  );
+}
+
+function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: () => void }) {
+  const path = `playlist/tracks?id=${list.id}`;
+  const { data: tracks, failed } = useCached<PlaylistTrack[]>(path);
+  const [error, setError] = useState<string | null>(null);
+  const owned = list.ownerId === me.discordId;
+  const refresh = () => Promise.all([load(path), load("playlists")]);
   const act = async (action: () => Promise<unknown>) => {
     setError(null);
     try {
       await action();
-      await reload();
-      if (open) await reloadTracks(open);
+      await refresh();
     } catch (failure) {
       setError(message(failure));
     }
   };
-  const play = async (items: PlaylistTrack[]) => {
+  const run = (shuffle: boolean) => async () => {
     setError(null);
     try {
-      await enqueue({ items: items.map(({ query, title }) => ({ query, title })) });
+      await playTracks(list, shuffle);
     } catch (failure) {
       setError(message(failure));
       throw failure;
     }
   };
-  if (list) {
-    return (
-      <section className="sheet" aria-label={list.name}>
-        <button className="pill ghost back" onClick={() => setOpen(null)}><Icon.Back />{t.back}</button>
-        <div className="list-hero">
-          <Tile seed={list.id} className="tile-hero" />
-          <div className="list-hero-text">
-            <h2 className="title">{list.name}</h2>
-            <p className="sub">{t.by(list.ownerName)} · {t.tracks(tracks.length)}</p>
-            <div className="row">
-              <QueueButton className="btn primary" label={t.play} disabled={!tracks.length} run={() => play(tracks)} />
-              {owned && <button className="btn" onClick={() => { const next = prompt(t.rename, list.name); if (next?.trim()) void act(() => post("playlist/rename", { id: list.id, name: next })); }}>{t.rename}</button>}
-              {owned && <button className="btn danger" onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); setOpen(null); }); }}>{t.delete}</button>}
-            </div>
+  const move = (track: PlaylistTrack, to: number) => {
+    if (!tracks) return;
+    const next = tracks.filter((entry) => entry.id !== track.id);
+    next.splice(to, 0, track);
+    remember(path, next);
+    void act(() => post("playlist/move", { id: list.id, trackId: track.id, to }));
+  };
+  const removeTrack = (track: PlaylistTrack) => {
+    if (tracks) remember(path, tracks.filter((entry) => entry.id !== track.id));
+    void act(() => post("playlist/remove", { id: list.id, trackId: track.id }));
+  };
+  const have = new Set(tracks?.map((track) => track.query));
+  const songs = (
+    <section className={`panel playlist-songs ${owned ? "" : "wide"}`} aria-label={t.songs}>
+      {error && <p className="error" role="alert">{error}</p>}
+      {!tracks && !failed && <SkeletonSongs count={8} />}
+      {tracks?.length === 0 && <p className="hint">{owned ? t.emptyOwnList : t.emptyList}</p>}
+      {tracks && tracks.length > 0 && (
+        <ol className="rows">
+          {tracks.map((track, index) => (
+            <li key={track.id} className="song">
+              <span className="num">{index + 1}</span>
+              <Art src={artwork(track, 96)} className="art-md" />
+              <div className="meta">
+                <div className="name">{track.title}</div>
+                {track.artist && <div className="sub">{track.artist}</div>}
+              </div>
+              {track.durationMs > 0 && <span className="len">{clock(track.durationMs)}</span>}
+              {owned && (
+                <span className="row-tools">
+                  <button className="icon-btn small" aria-label={`${t.up}: ${track.title}`} disabled={index === 0} onClick={() => move(track, index - 1)}><Icon.Up /></button>
+                  <button className="icon-btn small" aria-label={`${t.down}: ${track.title}`} disabled={index === tracks.length - 1} onClick={() => move(track, index + 1)}><Icon.Down /></button>
+                  <button className="icon-btn small" aria-label={`${t.remove}: ${track.title}`} onClick={() => removeTrack(track)}><Icon.Close /></button>
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+  return (
+    <section className="sheet playlists" aria-label={list.name}>
+      <button className="pill ghost back" onClick={onBack}><Icon.Back />{t.back}</button>
+      <div className="playlist-hero">
+        <PlaylistCover list={list} className="cover-hero" />
+        <div className="playlist-hero-text">
+          <span className="vis-badge"><VisibilityIcon visibility={list.visibility} />{t.visibilityBadge[list.visibility]}</span>
+          <PlaylistTitle key={list.name} list={list} owned={owned} onRename={(name) => act(() => post("playlist/rename", { id: list.id, name }))} />
+          <p className="sub playlist-owner"><OwnerFace name={list.ownerName} /><span className="owner-name">{list.ownerName}</span><span aria-hidden="true">·</span>{playlistMeta(list)}</p>
+          <div className="row playlist-actions">
+            <QueueButton className="btn primary play-all" label={t.play} disabled={!list.trackCount} run={run(false)} />
+            <QueueButton className="btn" label={t.shuffle} disabled={list.trackCount < 2} run={run(true)} />
+            {owned && <VisibilityMenu list={list} onChange={(visibility) => act(() => post("playlist/visibility", { id: list.id, visibility }))} />}
+            {owned && <button className="icon-btn delete-list" aria-label={t.deletePlaylist} title={t.deletePlaylist} onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); onBack(); }); }}><TrashIcon /></button>}
           </div>
         </div>
-        <div className="panel">
-          {owned && <SongSearch placeholder={t.addToList} onPick={async (item) => { await post("playlist/add", { id: list.id, items: [item] }); await reload(); await reloadTracks(list.id); }} onLink={async (input) => { await post("playlist/add", { id: list.id, input }); await reload(); await reloadTracks(list.id); }} />}
-          {error && <p className="error" role="alert">{error}</p>}
-          {tracks.length === 0 ? <p className="hint">{t.emptyList}</p> : (
-            <ol className="rows">
-              {tracks.map((track, index) => (
-                <li key={track.id} className="song">
-                  <span className="num">{index + 1}</span>
-                  <Art src={artwork(track, 96)} className="art-sm" />
-                  <div className="meta"><div className="name">{track.title}</div></div>
-                  {owned && <button className="icon-btn small" aria-label={`${t.up}: ${track.title}`} disabled={index === 0} onClick={() => void act(() => post("playlist/move", { id: list.id, trackId: track.id, to: index - 1 }))}><Icon.Up /></button>}
-                  {owned && <button className="icon-btn small" aria-label={`${t.down}: ${track.title}`} disabled={index === tracks.length - 1} onClick={() => void act(() => post("playlist/move", { id: list.id, trackId: track.id, to: index + 1 }))}><Icon.Down /></button>}
-                  {owned && <button className="icon-btn small" aria-label={`${t.remove}: ${track.title}`} onClick={() => void act(() => post("playlist/remove", { id: list.id, trackId: track.id }))}><Icon.Close /></button>}
-                </li>
-              ))}
-            </ol>
-          )}
+      </div>
+      {owned ? (
+        <div className="playlist-body">
+          {songs}
+          <section className="panel playlist-add" aria-label={t.addSongs}>
+            <h2 className="section-title">{t.addSongs}</h2>
+            <SongSearch placeholder={t.addToList} exclude={have} leaveOnAdd addLabel={t.addToThisList} onPick={async (item) => { await post("playlist/add", { id: list.id, items: [item] }); await refresh(); }} onLink={async (input) => { await post("playlist/add", { id: list.id, input }); await refresh(); }} />
+          </section>
         </div>
-      </section>
-    );
-  }
-  return (
-    <section className="sheet" aria-label={t.tabs.playlists}>
-      <form className="create" onSubmit={(event) => { event.preventDefault(); if (name.trim()) void act(async () => { const { id } = await post<{ id: string }>("playlists", { name }); setName(""); setOpen(id); }); }}>
-        <span className="create-icon" aria-hidden="true"><Icon.Plus /></span>
-        <input value={name} onChange={(event) => setName(event.target.value)} placeholder={t.newPlaylist} aria-label={t.newPlaylist} />
-        <button className="pill primary" disabled={!name.trim()}>{t.create}</button>
-      </form>
-      {error && <p className="error" role="alert">{error}</p>}
-      {lists?.length === 0 && <p className="hint">{t.noPlaylists}</p>}
-      <ul className="tiles">
-        {lists?.map((entry) => (
-          <li key={entry.id}>
-            <button className="tile-card" onClick={() => setOpen(entry.id)}>
-              <Tile seed={entry.id} />
-              <span className="name">{entry.name}</span>
-              <span className="sub">{t.by(entry.ownerName)} · {t.tracks(entry.trackCount)}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      ) : songs}
     </section>
   );
 }
@@ -1525,16 +1782,12 @@ function spanOf(ms: number): string {
 const sessionRange = (session: SessionSummary) => `${timeOf(session.startedAt)}–${session.live ? t.liveNow.toLowerCase() : timeOf(session.endedAt ?? session.startedAt)}`;
 
 function HistoryTab({ me }: { me: Me }) {
-  const [sessions, setSessions] = useState<SessionSummary[] | null>(null);
-  const [open, setOpen] = useState<number | null>(null);
+  const { data: sessions, failed } = useCached<SessionSummary[]>("sessions");
+  const [chosen, setChosen] = useState<number | null | undefined>(undefined);
+  const open = chosen === undefined ? (sessions?.[0]?.id ?? null) : chosen;
+  const setOpen = setChosen;
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    get<SessionSummary[]>("sessions").then((list) => {
-      setSessions(list);
-      setOpen(list[0]?.id ?? null);
-    }, () => setSessions([]));
-  }, []);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(null), 5000);
@@ -1545,7 +1798,7 @@ function HistoryTab({ me }: { me: Me }) {
       <p className="hint history-intro">{t.historyIntro}</p>
       {error && <p className="error" role="alert">{error}</p>}
       {notice && <p className="notice" role="status">{notice}</p>}
-      {sessions?.length === 0 && <p className="hint">{t.noHistory}</p>}
+      {(sessions?.length === 0 || (failed && !sessions)) && <p className="hint">{t.noHistory}</p>}
       {sessions?.map((session) => (
         <SessionCard key={session.id} session={session} me={me} open={open === session.id} onToggle={() => setOpen(open === session.id ? null : session.id)} onNotice={(text) => { setError(null); setNotice(text); }} onError={(text) => { setNotice(null); setError(text); }} />
       ))}
@@ -1554,18 +1807,11 @@ function HistoryTab({ me }: { me: Me }) {
 }
 
 function SessionCard({ session, me, open, onToggle, onNotice, onError }: { session: SessionSummary; me: Me; open: boolean; onToggle: () => void; onNotice: (text: string) => void; onError: (text: string) => void }) {
-  const [tracks, setTracks] = useState<SessionTrack[] | null>(null);
+  const path = `session/tracks?id=${session.id}`;
+  const { data: tracks } = useCached<SessionTrack[]>(open ? path : null);
   const [all, setAll] = useState(false);
   const [menu, setMenu] = useState(false);
-  const load = useCallback(async () => {
-    if (tracks) return tracks;
-    const list = await get<SessionTrack[]>(`session/tracks?id=${session.id}`);
-    setTracks(list);
-    return list;
-  }, [tracks, session.id]);
-  useEffect(() => {
-    if (open && !tracks) load().catch(() => undefined);
-  }, [open, tracks, load]);
+  const loadTracks = useCallback(async () => cached<SessionTrack[]>(path) ?? load<SessionTrack[]>(path), [path]);
   const span = (session.endedAt ?? Date.now()) - session.startedAt;
   const heading = `${relativeDay(session.startedAt)}, ${sessionRange(session)}`;
   const rows = tracks ? [...tracks].reverse() : [];
@@ -1575,7 +1821,7 @@ function SessionCard({ session, me, open, onToggle, onNotice, onError }: { sessi
     throw failure;
   };
   const queueAgain = async () => {
-    const list = await load().catch(fail);
+    const list = await loadTracks().catch(fail);
     await enqueue({ items: list.map((track) => ({ query: track.url ?? track.query, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs })) }).catch(fail);
   };
   const save = async () => {
@@ -1652,7 +1898,12 @@ function MergeMenu({ me, session, onClose, onNotice, onError }: { me: Me; sessio
   const [filter, setFilter] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const box = useRef<HTMLDivElement>(null);
-  useEffect(() => void get<Playlist[]>("playlists").then((all) => setLists(all.filter((list) => list.ownerId === me.discordId)), () => setLists([])), [me.discordId]);
+  useEffect(() => {
+    const own = (all: Playlist[]) => all.filter((list) => list.ownerId === me.discordId);
+    const known = cached<Playlist[]>("playlists");
+    if (known) setLists(own(known));
+    load<Playlist[]>("playlists").then((all) => setLists(own(all)), () => setLists((previous) => previous ?? []));
+  }, [me.discordId]);
   useEffect(() => {
     const away = (event: PointerEvent) => {
       if (!box.current?.parentElement?.contains(event.target as Node)) onClose();
@@ -1701,13 +1952,14 @@ function MergeMenu({ me, session, onClose, onNotice, onError }: { me: Me; sessio
 }
 
 function SettingsTab() {
-  const [data, setData] = useState<SettingsData | null>(null);
+  const { data: loaded, failed } = useCached<SettingsData>("settings");
+  const [draft, setData] = useState<SettingsData | null>(null);
+  const data = draft ?? loaded;
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => void get<SettingsData>("settings").then(setData, (failure: unknown) => setError(message(failure))), []);
-  if (!data) return error ? <p className="error" role="alert">{error}</p> : null;
+  if (!data) return failed ? <p className="error" role="alert">{t.errors.failed}</p> : <SettingsSkeleton />;
   return (
-    <form className="panel narrow" aria-label={t.tabs.settings} onSubmit={(event) => { event.preventDefault(); setSaved(false); setError(null); post<SettingsData>("settings", { djRoleId: data.djRoleId }).then((next) => { setData(next); setSaved(true); }, (failure: unknown) => setError(message(failure))); }}>
+    <form className="panel narrow" aria-label={t.tabs.settings} onSubmit={(event) => { event.preventDefault(); setSaved(false); setError(null); post<SettingsData>("settings", { djRoleId: data.djRoleId }).then((next) => { remember("settings", next); setData(null); setSaved(true); }, (failure: unknown) => setError(message(failure))); }}>
       <label className="stack">{t.djRole}
         <select className="field" value={data.djRoleId ?? ""} onChange={(event) => setData({ ...data, djRoleId: event.target.value || null })}>
           <option value="">{t.noRole}</option>
@@ -1722,6 +1974,33 @@ function SettingsTab() {
       </div>
     </form>
   );
+}
+
+function SettingsSkeleton() {
+  return (
+    <div className="panel narrow" aria-hidden="true">
+      <div className="skeleton line short" />
+      <div className="field skeleton" />
+      <div className="skeleton line" />
+    </div>
+  );
+}
+
+const TAB_DATA: Partial<Record<Tab, string>> = { playlists: "playlists", history: "sessions", settings: "settings" };
+const PREFETCH_AFTER_MS = 1_200;
+
+function usePrefetch(me: Me | null, live: boolean): void {
+  useEffect(() => {
+    if (!me || !live) return;
+    const timer = setTimeout(() => {
+      if (me.canPlay) {
+        prefetch("playlists");
+        if (!cached("sessions")) load<SessionSummary[]>("sessions").then((list) => list[0] && prefetch(`session/tracks?id=${list[0].id}`), () => undefined);
+      }
+      if (me.canManage) prefetch("settings");
+    }, PREFETCH_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [me, live]);
 }
 
 function LangSwitch() {
@@ -1758,6 +2037,7 @@ export function App() {
   const [failed, setFailed] = useState(false);
   const [tab, setTab] = useState<Tab>("player");
   const { view, live, setView, refresh } = useView(me);
+  usePrefetch(me, live);
   const playingNow = view?.active ? view.tracks[view.current] : undefined;
   const tabTitle = playingNow ? `${view && waiting(view) ? "…" : view?.paused ? "❚❚" : "▶"} ${[playingNow.title, playingNow.artist].filter(Boolean).join(" · ")} · DJ` : BASE_TITLE;
   const backdrop = playingNow ? artwork(playingNow, 226) : null;
@@ -1848,7 +2128,7 @@ export function App() {
           <Brand />
           {tabs.length > 0 && (
             <nav className="tabs" role="tablist">
-              {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => setTab(entry)}>{t.tabs[entry]}</button>)}
+              {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => setTab(entry)} onPointerEnter={() => { const path = TAB_DATA[entry]; if (path) prefetch(path); }}>{t.tabs[entry]}</button>)}
             </nav>
           )}
           <div className="who">

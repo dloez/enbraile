@@ -25,6 +25,14 @@ for (const [name, type] of [["artist", "TEXT"], ["artwork", "TEXT"], ["duration_
 
 db.exec("CREATE INDEX IF NOT EXISTS history_session ON history (session_id)");
 
+const columnsOf = (table: string) => new Set((db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((column) => column.name));
+const playlistColumns = columnsOf("playlist");
+if (!playlistColumns.has("visibility")) db.exec("ALTER TABLE playlist ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public'");
+const playlistTrackColumns = columnsOf("playlist_track");
+for (const [name, type] of [["artist", "TEXT"], ["artwork", "TEXT"], ["duration_ms", "INTEGER NOT NULL DEFAULT 0"]] as const) {
+  if (!playlistTrackColumns.has(name)) db.exec(`ALTER TABLE playlist_track ADD COLUMN ${name} ${type}`);
+}
+
 const SESSION_GAP_MS = 30 * 60_000;
 const loose = db.prepare("SELECT id, played_at, duration_ms FROM history WHERE session_id IS NULL ORDER BY played_at").all() as { id: number; played_at: number; duration_ms: number }[];
 if (loose.length) {

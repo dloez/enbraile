@@ -1,6 +1,6 @@
 export type Requester = { name: string; avatar: string | null };
 export type AutoplayMode = "session" | "explore";
-export type Track = { id: string; query: string; title: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean };
+export type Track = { id: string; query: string; title: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean; playlist?: { id: string; name: string } | null };
 export type Loop = "off" | "track" | "queue";
 export type Listener = { id: string; name: string; avatar: string | null };
 export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; loading: boolean; stalled?: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayMode: AutoplayMode; autoplayEndsAt: number | null; autoplayUpcoming: Track[]; positionMs: number; listeners: number; people?: Listener[]; active: boolean; skipped: { id: string; title: string } | null };
@@ -15,8 +15,9 @@ export type Me = { user: { name: string; image: string | null }; discordId: stri
 export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; requester: Requester | null; playedAt: number; artist: string | null; artwork: string | null; durationMs: number };
 export type SessionSummary = { id: number; startedAt: number; endedAt: number | null; live: boolean; songs: number; autoplay: number; requesters: { id: string; name: string; avatar: string | null; songs: number }[]; artworks: string[] };
 export type SessionTrack = HistoryEntry & { pickedBy: AutoplayMode | null };
-export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; trackCount: number };
-export type PlaylistTrack = { id: string; query: string; title: string };
+export type Visibility = "public" | "private";
+export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; visibility: Visibility; trackCount: number; durationMs: number; covers: string[] };
+export type PlaylistTrack = { id: string; query: string; title: string; artist: string | null; artwork: string | null; durationMs: number };
 export type SettingsData = { djRoleId: string | null; roles: { id: string; name: string }[] };
 
 export class ApiError extends Error {}
@@ -82,3 +83,35 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const get = <T,>(path: string) => request<T>(path);
 export const post = <T,>(path: string, body: unknown = {}) => request<T>(path, { method: "POST", body: JSON.stringify(body) });
+
+const store = new Map<string, unknown>();
+const inflight = new Map<string, Promise<unknown>>();
+const listeners = new Set<() => void>();
+
+export const cached = <T,>(path: string) => store.get(path) as T | undefined;
+
+export function load<T>(path: string): Promise<T> {
+  const running = inflight.get(path);
+  if (running) return running as Promise<T>;
+  const next = get<T>(path).then((value) => {
+    store.set(path, value);
+    listeners.forEach((listener) => listener());
+    return value;
+  }).finally(() => inflight.delete(path));
+  inflight.set(path, next);
+  return next;
+}
+
+export function prefetch(path: string): void {
+  if (!store.has(path)) load(path).catch(() => undefined);
+}
+
+export function remember(path: string, value: unknown): void {
+  store.set(path, value);
+  listeners.forEach((listener) => listener());
+}
+
+export function onCache(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}

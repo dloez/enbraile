@@ -22,6 +22,7 @@ export const Back = () => <Stroke size={18}><path d="M19 12H5M12 19l-7-7 7-7" />
 export const Radio = ({ size = 16 }: { size?: number }) => <Stroke size={size}><circle cx="12" cy="12" r="2" /><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14" /></Stroke>;
 export const Compass = ({ size = 16 }: { size?: number }) => <Stroke size={size}><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5z" /></Stroke>;
 export const Swap = () => <Stroke size={16}><path d="M21 12a9 9 0 0 1-15.36 6.36L3 16" /><path d="M3 12a9 9 0 0 1 15.36-6.36L21 8" /><path d="M21 3v5h-5M3 21v-5h5" /></Stroke>;
+export const List = ({ size = 14 }: { size?: number }) => <Stroke size={size}><path d="M3 6h12" /><path d="M3 12h9" /><path d="M3 18h7" /><circle cx="17.5" cy="17" r="2.5" /><path d="M20 17V7l2-1" /></Stroke>;
 export const Down =() => <Stroke size={16}><path d="m6 9 6 6 6-6" /></Stroke>;
 
 export const Play = () => (

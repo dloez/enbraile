@@ -32,7 +32,8 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
   if (path === "/internal/settings") {
     if (!access.canManage) return denied;
     if (method === "POST") session.setSettings({ djRoleId: (input.djRoleId as string | null) ?? null });
-    const roles = await (await guild()).roles.fetch();
+    const server = await guild();
+    const roles = server.roles.cache.size ? server.roles.cache : await server.roles.fetch();
     return [{ ...session.settings(), roles: [...roles.values()].filter((role) => role.id !== role.guild.id && !role.managed).sort((a, b) => b.position - a.position).map((role) => ({ id: role.id, name: role.name })) }];
   }
   if (!access.canPlay) return denied;
@@ -119,7 +120,7 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
     case "/internal/session/tracks":
       return [session.sessionTracks(Number(url.searchParams.get("id")))];
     case "/internal/playlist/from-session": {
-      const made = session.playlistFromSession(Number(input.sessionId), String(input.name ?? ""), userId, String(input.ownerName ?? ""));
+      const made = session.playlistFromSession(Number(input.sessionId), String(input.name ?? ""), userId, String(input.ownerName ?? ""), input.visibility as session.Visibility);
       return made ? [made] : [{ error: "noResults" }, 422];
     }
     case "/internal/playlist/merge-session": {
@@ -127,17 +128,21 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
       return merged ? [merged] : denied;
     }
     case "/internal/playlists":
-      if (method === "POST") return [{ id: session.createPlaylist(String(input.name), userId, String(input.ownerName ?? "")) }];
-      return [session.playlists()];
-    case "/internal/playlist/tracks":
-      return [session.playlistTracks(url.searchParams.get("id") ?? "")];
+      if (method === "POST") return [{ id: session.createPlaylist(String(input.name), userId, String(input.ownerName ?? ""), input.visibility as session.Visibility) }];
+      return [session.playlists(userId)];
+    case "/internal/playlist/tracks": {
+      const tracks = session.playlistTracks(url.searchParams.get("id") ?? "", userId);
+      return tracks ? [tracks] : [{ error: "notFound" }, 404];
+    }
+    case "/internal/playlist/visibility":
+      return session.setPlaylistVisibility(id, userId, input.visibility as session.Visibility) ? [{ ok: true }] : denied;
     case "/internal/playlist/rename":
       return session.renamePlaylist(id, userId, String(input.name)) ? [{ ok: true }] : denied;
     case "/internal/playlist/delete":
       return session.deletePlaylist(id, userId) ? [{ ok: true }] : denied;
     case "/internal/playlist/add": {
       const items = (input.items as session.QueueItem[] | undefined) ?? (await resolveInput(String(input.input), session.expand));
-      const named = items.map((item) => ({ query: item.query, title: [item.artist, item.title ?? session.displayName(item.query)].filter(Boolean).join(" - ") }));
+      const named = items.map((item) => ({ query: item.query, title: item.title ?? session.displayName(item.query), artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0 }));
       return session.addToPlaylist(id, userId, named) ? [{ added: named.length }] : denied;
     }
     case "/internal/playlist/remove":

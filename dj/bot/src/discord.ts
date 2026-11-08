@@ -83,9 +83,11 @@ async function handle(interaction: ChatInputCommandInteraction, t: (typeof text)
     const voice = await voiceChannel(userId);
     if ("error" in voice) return t[voice.error];
     if (name === "playlist") {
-      const tracks = session.playlistTracks(interaction.options.getString("name", true));
-      if (!tracks.length) return t.noPlaylist;
-      await session.enqueue(voice.channelId, tracks, userId);
+      const id = interaction.options.getString("name", true);
+      const tracks = session.playlistTracks(id, userId);
+      if (!tracks?.length) return t.noPlaylist;
+      const name = session.playlists(userId).find((list) => list.id === id)?.name ?? "";
+      await session.enqueue(voice.channelId, tracks.map((track) => ({ ...track, playlist: { id, name } })), userId);
       return t.addedMany(tracks.length);
     }
     const outcome = await enqueueInput(interaction.options.getString("query", true), voice.channelId, userId);
@@ -119,7 +121,7 @@ async function handle(interaction: ChatInputCommandInteraction, t: (typeof text)
 
 async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
   const typed = interaction.options.getFocused().toLowerCase();
-  const choices = session.playlists().filter((list) => list.name.toLowerCase().includes(typed)).slice(0, 25).map((list) => ({ name: `${list.name} (${list.ownerName})`.slice(0, 100), value: list.id }));
+  const choices = session.playlists(interaction.user.id).filter((list) => list.name.toLowerCase().includes(typed)).slice(0, 25).map((list) => ({ name: `${list.name} (${list.ownerName})`.slice(0, 100), value: list.id }));
   await interaction.respond(choices);
 }
 
