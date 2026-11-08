@@ -77,6 +77,18 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
       }
     case "/internal/history":
       return [session.history()];
+    case "/internal/sessions":
+      return [session.sessions()];
+    case "/internal/session/tracks":
+      return [session.sessionTracks(Number(url.searchParams.get("id")))];
+    case "/internal/playlist/from-session": {
+      const made = session.playlistFromSession(Number(input.sessionId), String(input.name ?? ""), userId, String(input.ownerName ?? ""));
+      return made ? [made] : [{ error: "noResults" }, 422];
+    }
+    case "/internal/playlist/merge-session": {
+      const merged = session.mergeSession(id, userId, Number(input.sessionId));
+      return merged ? [merged] : denied;
+    }
     case "/internal/playlists":
       if (method === "POST") return [{ id: session.createPlaylist(String(input.name), userId, String(input.ownerName ?? "")) }];
       return [session.playlists()];

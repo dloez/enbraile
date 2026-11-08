@@ -27,6 +27,7 @@ type State = {
   pausedSince: number | null;
   lastHumanAt: number;
   active: boolean;
+  sessionId: number | null;
   failures: number;
   skipped: Skipped | null;
 };
@@ -110,6 +111,7 @@ const blank = (): State => ({
   pausedSince: null,
   lastHumanAt: 0,
   active: false,
+  sessionId: null,
   failures: 0,
   skipped: null,
 });
@@ -124,6 +126,12 @@ function videoId(url: string | null): string | null {
 }
 
 const state: State = { ...blank(), ...getValue<State>("state") };
+
+function openSession(): void {
+  state.sessionId = Number(db.prepare("INSERT INTO listening_session (started_at) VALUES (?)").run(Date.now()).lastInsertRowid);
+}
+
+if (state.active && !state.sessionId) openSession();
 const watchers = new Set<(view: View) => void>();
 let ticker: ReturnType<typeof setInterval> | undefined;
 let cold = true;
@@ -395,6 +403,7 @@ async function advance(): Promise<void> {
 
 function end(): void {
   if (state.active) player.leave();
+  if (state.sessionId) db.prepare("UPDATE listening_session SET ended_at = ? WHERE id = ?").run(Date.now(), state.sessionId);
   if (ticker) clearInterval(ticker);
   ticker = undefined;
   Object.assign(state, { ...blank(), volume: state.volume, loop: state.loop, autoplayMode: state.autoplayMode, generation: state.generation, lastHumanAt: state.lastHumanAt });
@@ -418,6 +427,7 @@ export async function enqueue(channelId: string, items: QueueItem[], requestedBy
   state.lastHumanAt = Date.now();
   if (!state.active || state.channelId !== channelId) {
     await player.join(channelId);
+    if (!state.active) openSession();
     state.channelId = channelId;
     state.active = true;
     startTicking();
@@ -591,7 +601,7 @@ player.onPlayerEvent((event) => {
       const firstStart = track.url === null || track.requestedBy === "autoplay";
       Object.assign(track, { title: event.title, artist: track.artist ?? event.artist, artwork: track.artwork ?? event.artwork, durationMs: event.durationMs || track.durationMs, url: event.url });
       if (firstStart) {
-        db.prepare("INSERT INTO history (query, title, url, requested_by, played_at, artist, artwork, duration_ms, requester_name, requester_avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(track.query, track.title, track.url, track.requestedBy, Date.now(), track.artist, track.artwork, track.durationMs, track.requester?.name ?? null, track.requester?.avatar ?? null);
+        db.prepare("INSERT INTO history (query, title, url, requested_by, played_at, artist, artwork, duration_ms, requester_name, requester_avatar, session_id, picked_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(track.query, track.title, track.url, track.requestedBy, Date.now(), track.artist, track.artwork, track.durationMs, track.requester?.name ?? null, track.requester?.avatar ?? null, state.sessionId, track.pickedBy ?? null);
         db.prepare("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY id DESC LIMIT ?)").run(HISTORY_KEPT);
       }
     }
@@ -637,6 +647,57 @@ export async function resumeAfterRestart(): Promise<void> {
 
 export function history(): HistoryEntry[] {
   return (db.prepare("SELECT * FROM history ORDER BY id DESC LIMIT 50").all() as { id: number; query: string; title: string; url: string | null; requested_by: string; played_at: number; artist: string | null; artwork: string | null; duration_ms: number; requester_name: string | null; requester_avatar: string | null }[]).map((row) => ({ id: row.id, query: row.query, title: row.title, url: row.url, requestedBy: row.requested_by, requester: row.requester_name ? { name: row.requester_name, avatar: row.requester_avatar } : null, playedAt: row.played_at, artist: row.artist, artwork: row.artwork, durationMs: row.duration_ms }));
+}
+
+type HistoryRow = { id: number; query: string; title: string; url: string | null; requested_by: string; played_at: number; artist: string | null; artwork: string | null; duration_ms: number; requester_name: string | null; requester_avatar: string | null; picked_by: string | null };
+
+export type SessionTrack = HistoryEntry & { pickedBy: AutoplayMode | null };
+export type SessionSummary = { id: number; startedAt: number; endedAt: number | null; live: boolean; songs: number; autoplay: number; requesters: { id: string; name: string; avatar: string | null; songs: number }[]; artworks: string[] };
+
+export function sessionTracks(id: number): SessionTrack[] {
+  const seen = new Set<string>();
+  return (db.prepare("SELECT * FROM history WHERE session_id = ? ORDER BY played_at, id").all(id) as HistoryRow[]).flatMap((row) => {
+    const key = row.url ?? row.query;
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return [{ id: row.id, query: row.query, title: row.title, url: row.url, requestedBy: row.requested_by, requester: row.requester_name ? { name: row.requester_name, avatar: row.requester_avatar } : null, playedAt: row.played_at, artist: row.artist, artwork: row.artwork, durationMs: row.duration_ms, pickedBy: row.picked_by === "explore" || row.picked_by === "session" ? row.picked_by : null }];
+  });
+}
+
+export function sessions(limit = 30): SessionSummary[] {
+  const rows = db.prepare("SELECT s.id, s.started_at, s.ended_at FROM listening_session s WHERE EXISTS (SELECT 1 FROM history h WHERE h.session_id = s.id) ORDER BY s.started_at DESC LIMIT ?").all(limit) as { id: number; started_at: number; ended_at: number | null }[];
+  return rows.map((row) => {
+    const tracks = sessionTracks(row.id);
+    const requesters = new Map<string, { id: string; name: string; avatar: string | null; songs: number }>();
+    for (const track of tracks) {
+      if (track.requestedBy === "autoplay") continue;
+      const entry = requesters.get(track.requestedBy) ?? { id: track.requestedBy, name: track.requester?.name ?? "", avatar: track.requester?.avatar ?? null, songs: 0 };
+      entry.songs += 1;
+      if (!entry.name && track.requester) Object.assign(entry, track.requester);
+      requesters.set(track.requestedBy, entry);
+    }
+    const live = state.active && row.id === state.sessionId;
+    return { id: row.id, startedAt: row.started_at, endedAt: live ? null : (row.ended_at ?? tracks.at(-1)?.playedAt ?? row.started_at), live, songs: tracks.length, autoplay: tracks.filter((track) => track.requestedBy === "autoplay").length, requesters: [...requesters.values()].sort((a, b) => b.songs - a.songs), artworks: tracks.flatMap((track) => (track.artwork ? [track.artwork] : [])).slice(0, 4) };
+  });
+}
+
+const sessionItems = (id: number) => sessionTracks(id).map((track) => ({ query: track.url ?? track.query, title: [track.artist, track.title].filter(Boolean).join(" - ") }));
+
+export function playlistFromSession(sessionId: number, name: string, ownerId: string, ownerName: string): { id: string; added: number } | null {
+  const items = sessionItems(sessionId);
+  if (!items.length) return null;
+  const id = createPlaylist(name, ownerId, ownerName);
+  addToPlaylist(id, ownerId, items);
+  return { id, added: items.length };
+}
+
+export function mergeSession(playlistId: string, userId: string, sessionId: number): { added: number; skipped: number } | null {
+  if (!owns(playlistId, userId)) return null;
+  const have = new Set(playlistTracks(playlistId).map((track) => track.query));
+  const items = sessionItems(sessionId);
+  const fresh = items.filter((item) => !have.has(item.query));
+  addToPlaylist(playlistId, userId, fresh);
+  return { added: fresh.length, skipped: items.length - fresh.length };
 }
 
 export function playlists(): Playlist[] {
