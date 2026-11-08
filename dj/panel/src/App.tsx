@@ -1048,6 +1048,34 @@ function NowPlaying({ view, track, command, onArtist, onAlbum }: { view: Synced 
   );
 }
 
+function NowShape() {
+  return (
+    <section className="now" data-stage="loading" aria-busy="true">
+      <div className="cover"><div className="art art-hero skeleton" /></div>
+      <div className="now-text" aria-hidden="true">
+        <div className="skeleton line short" />
+        <div className="skeleton line wide" />
+        <div className="skeleton line" />
+      </div>
+      <div className="progress loading" aria-hidden="true">
+        <div className="track-line" />
+        <div className="time"><span>–:––</span><span>–:––</span></div>
+      </div>
+      <div className="transport" aria-hidden="true">
+        <span className="transport-side start">
+          <button className="icon-btn" tabIndex={-1} disabled><Icon.Shuffle /></button>
+          <button className="icon-btn" tabIndex={-1} disabled><Icon.Previous /></button>
+        </span>
+        <button className="play busy" tabIndex={-1} disabled><PlayIcon paused /></button>
+        <span className="transport-side">
+          <button className="icon-btn" tabIndex={-1} disabled><Icon.Skip /></button>
+          <button className="icon-btn" tabIndex={-1} disabled><Icon.Repeat /></button>
+        </span>
+      </div>
+    </section>
+  );
+}
+
 function Dock({ view, track, command, shown }: { view: Synced; track: Track; command: (body: Command) => Promise<void>; shown: boolean }) {
   const now = useNow(shown && stageOf(view, track) === "playing");
   const fill = track.durationMs > 0 ? Math.min(100, (estimate(view, now) / track.durationMs) * 100) : 0;
@@ -1274,6 +1302,10 @@ function PlayerTab({ me, view, setView, refresh, live, onOpenList }: { me: Me; v
   const upcoming = view?.active ? view.tracks.slice(view.current + 1) : [];
   const offset = (view?.current ?? 0) + 1;
   const autoplays = view?.active && view.autoplay ? view.autoplayUpcoming : [];
+  const shape: Shape | null = view ? (track ? "playing" : "idle") : null;
+  useEffect(() => {
+    if (shape) keepShape(shape);
+  }, [shape]);
   const nowRef = useRef<HTMLDivElement>(null);
   const docked = useOffscreen(() => nowRef.current?.querySelector(".transport"), track?.id ?? null);
   return (
@@ -1795,6 +1827,57 @@ async function queueSession(loadTracks: () => Promise<SessionTrack[]>): Promise<
 }
 
 const IDLE_SLEEVES = 3;
+const SHAPE_KEY = "dj.stage";
+
+type Shape = "idle" | "playing";
+
+function lastShape(): Shape {
+  try {
+    return localStorage.getItem(SHAPE_KEY) === "idle" ? "idle" : "playing";
+  } catch {
+    return "playing";
+  }
+}
+
+function keepShape(shape: Shape): void {
+  try {
+    localStorage.setItem(SHAPE_KEY, shape);
+  } catch {
+    return;
+  }
+}
+
+function IdleShape() {
+  return (
+    <section className="idle-stage waiting" aria-busy="true">
+      <div className="crate" aria-hidden="true">
+        {[0, 1, 2, 3].map((index) => <div key={index} className="art crate-card skeleton" />)}
+      </div>
+      <div className="idle-text" aria-hidden="true">
+        <div className="skeleton line short" />
+        <div className="skeleton line wide" />
+        <div className="skeleton line" />
+        <div className="idle-actions">
+          <span className="skeleton pill-shape" />
+          <span className="skeleton pill-shape small" />
+        </div>
+        <div className="skeleton line short" />
+      </div>
+      <div className="idle-sleeves" aria-hidden="true">
+        <div className="skeleton label-line" />
+        <ul className="sleeve-grid">
+          {[0, 1, 2].map((index) => (
+            <li key={index} className="sleeve-shape">
+              <div className="skeleton cover-grid" />
+              <div className="skeleton line" />
+            </li>
+          ))}
+        </ul>
+      </div>
+      <span className="skeleton pill-shape hint" />
+    </section>
+  );
+}
 
 function IdleStage({ me, command, onOpenList, onError }: { me: Me; command: (body: Command) => Promise<void>; onOpenList: (id: string) => void; onError: (text: string) => void }) {
   const { data: sessions, failed } = useCached<SessionSummary[]>("sessions");
@@ -1818,18 +1901,14 @@ function IdleStage({ me, command, onOpenList, onError }: { me: Me; command: (bod
     await enqueue({ items: [asItem(first)] });
     await command({ action: "autoplay", on: true });
   };
+  if (waiting) return <IdleShape />;
   const radioButton = (primary: boolean) => <QueueButton className={`pill ${primary ? "primary" : "ghost"} big`} icon={<Icon.Radio size={17} />} label={t.startRadio} run={() => radio().catch(report)} />;
   return (
-    <section className={`idle-stage ${waiting ? "waiting" : ""}`} aria-label={t.tabs.player} aria-busy={waiting}>
+    <section className="idle-stage" aria-label={t.tabs.player}>
       <div className="crate" aria-hidden="true">
-        {[0, 1, 2, 3].map((index) => (waiting ? <div key={index} className="art crate-card skeleton" /> : <Art key={index} src={covers[index] ?? null} className="crate-card" />))}
+        {[0, 1, 2, 3].map((index) => <Art key={index} src={covers[index] ?? null} className="crate-card" />)}
       </div>
-      {waiting ? (
-        <div className="idle-text">
-          <div className="skeleton line short" />
-          <div className="skeleton line wide" />
-        </div>
-      ) : last ? (
+      {last ? (
         <div className="idle-text">
           <p className="eyebrow">{t.lastTime(`${relativeDay(last.startedAt)}, ${sessionRange(last)}`)}</p>
           <h1 className="idle-title">{t.pickUp}</h1>
@@ -2138,6 +2217,10 @@ export function App() {
       get<Me>("me").then((next) => {
         if (stopped) return;
         setOwnerName(next.user.name);
+        if (next.idle) {
+          remember("sessions", next.idle.sessions);
+          remember("playlists", next.idle.playlists);
+        }
         setFailed(false);
         setMe(next);
       }, (error: unknown) => {
@@ -2159,6 +2242,7 @@ export function App() {
     return () => clearInterval(timer);
   }, [waitingForRole]);
   if (!me) {
+    const shape = lastShape();
     return (
       <>
         <Ambient src={null} paused />
@@ -2177,15 +2261,7 @@ export function App() {
           <main className="main">
             <div className="player">
               <div className="now-col">
-                <div className="now-stage">
-                  <section className="now" data-stage="idle">
-                    <div className="cover"><div className="art art-hero skeleton" /></div>
-                    <div className="now-text">
-                      <div className="skeleton line wide" />
-                      <div className="skeleton line" />
-                    </div>
-                  </section>
-                </div>
+                <div className="now-stage">{shape === "idle" ? <IdleShape /> : <NowShape />}</div>
               </div>
               <div className="side">
                 <div className="discover-col">

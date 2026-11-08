@@ -38,11 +38,12 @@ app.get("/me", async (c) => {
   const viewer = c.get("viewer" as never) as Viewer;
   const read = async (path: string) => {
     const response = await worker(`${path}?userId=${viewer.discordId}`);
-    return response.ok ? ((await response.json()) as Record<string, unknown>) : null;
+    return response.ok ? ((await response.json()) as unknown) : null;
   };
-  const [access, state, live] = await Promise.all([read("access"), read("state"), read("ticket")]).catch(() => [null, null, null]);
+  const [access, state, live, sessions, playlists] = await Promise.all([read("access"), read("state"), read("ticket"), read("sessions"), read("playlists")]).catch(() => [null, null, null, null, null]);
   if (!access) return c.json({ error: "botUnavailable" }, 502, { "cache-control": "private, no-store" });
-  return c.json({ user: { name: viewer.name, image: viewer.image }, discordId: viewer.discordId, ...access, state, live }, 200, { "cache-control": "private, no-store" });
+  const idle = state && !(state as { active?: boolean }).active && sessions && playlists ? { sessions, playlists } : null;
+  return c.json({ user: { name: viewer.name, image: viewer.image }, discordId: viewer.discordId, ...(access as Record<string, unknown>), state, live, idle }, 200, { "cache-control": "private, no-store" });
 });
 
 app.get("/*", async (c) => {
