@@ -17,6 +17,7 @@ export const Shuffle = () => <Stroke><path d="M16 3h5v5" /><path d="M4 20 21 3" 
 export const Repeat = () => <Stroke><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></Stroke>;
 export const Up = () => <Stroke size={16}><path d="m6 15 6-6 6 6" /></Stroke>;
 export const Headphones = () => <Stroke size={14}><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z" /></Stroke>;
+export const Chevron = () => <Stroke size={16}><path d="m15 18-6-6 6-6" /></Stroke>;
 export const Back = () => <Stroke size={18}><path d="M19 12H5M12 19l-7-7 7-7" /></Stroke>;
 export const Radio = ({ size = 16 }: { size?: number }) => <Stroke size={size}><circle cx="12" cy="12" r="2" /><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14" /></Stroke>;
 export const Compass = ({ size = 16 }: { size?: number }) => <Stroke size={size}><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5z" /></Stroke>;

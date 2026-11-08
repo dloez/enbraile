@@ -22,7 +22,7 @@ const worker = (path: string, init?: RequestInit) => fetch(`${env("BOT_URL")}/in
 
 const relay = async (response: Response) => new Response(await response.text(), { status: response.status, headers: { "content-type": "application/json", "cache-control": "private, no-store" } });
 
-const reads = new Set(["search", "suggestions", "state", "ticket", "history", "sessions", "session/tracks", "playlists", "playlist/tracks", "settings"]);
+const reads = new Set(["search", "artists", "artist", "album", "suggestions", "state", "ticket", "history", "sessions", "session/tracks", "playlists", "playlist/tracks", "settings"]);
 const writes = new Set(["command", "enqueue", "warm", "playlists", "playlist/rename", "playlist/delete", "playlist/add", "playlist/remove", "playlist/move", "playlist/from-session", "playlist/merge-session", "settings"]);
 
 export const app = new Hono().basePath("/api");

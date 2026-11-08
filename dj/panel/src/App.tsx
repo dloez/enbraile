@@ -1,5 +1,5 @@
 import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type FocusEvent as ReactFocusEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, type AutoplayMode, get, handleReply, type HistoryEntry, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SessionSummary, type SessionTrack, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
+import { type Album, ApiError, type Artist, type ArtistPage, type ArtistRef, type AutoplayMode, get, type Listener, handleReply, type HistoryEntry, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SessionSummary, type SessionTrack, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
 import { Ambient, useAccent } from "./ambient";
@@ -8,6 +8,9 @@ type Tab = "player" | "playlists" | "history" | "settings";
 type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
 type Synced = View & { at: number; stale?: boolean };
 type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number; mode?: AutoplayMode };
+type ArtistTarget = { id?: string; name: string };
+type OpenArtist = (target: ArtistTarget) => void;
+type Browse = { kind: "artist"; target: ArtistTarget } | { kind: "album"; id: string };
 
 const message = (error: unknown) => t.errors[error instanceof ApiError ? error.message : "failed"] ?? t.errors.failed!;
 const isLink = (text: string) => /^https?:\/\//.test(text.trim());
@@ -110,13 +113,34 @@ function Who({ requester }: { requester: Requester | null | undefined }) {
   );
 }
 
-function SongSub({ artist, requester, extra }: { artist?: string | null; requester?: Requester | null; extra?: string }) {
-  const text = [artist, extra].filter(Boolean).join(" · ");
-  if (!text && !requester) return null;
+function ArtistLinks({ text, refs, onArtist }: { text: string | null | undefined; refs?: ArtistRef[]; onArtist?: OpenArtist }) {
+  if (!text) return null;
+  if (!onArtist) return <>{text}</>;
+  const link = (target: ArtistTarget, key?: string) => {
+    const href = target.id ? `https://music.youtube.com/channel/${target.id}` : `https://music.youtube.com/search?q=${encodeURIComponent(target.name)}`;
+    return <a key={key} href={href} className="artist-link" title={t.openArtist(target.name)} onClick={(event) => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return; event.preventDefault(); onArtist(target); }}>{target.name}</a>;
+  };
+  if (!refs?.length) return link({ name: text });
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  for (const ref of refs) {
+    const at = text.indexOf(ref.name, cursor);
+    if (at < 0) continue;
+    if (at > cursor) parts.push(text.slice(cursor, at));
+    parts.push(link(ref, ref.id));
+    cursor = at + ref.name.length;
+  }
+  if (!parts.length) return link({ name: text });
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return <>{parts}</>;
+}
+
+function SongSub({ artist, requester, onArtist }: { artist?: string | null; requester?: Requester | null; onArtist?: OpenArtist }) {
+  if (!artist && !requester) return null;
   return (
     <div className="sub">
-      {text}
-      {text && requester && <span aria-hidden="true"> · </span>}
+      <ArtistLinks text={artist} onArtist={onArtist} />
+      {artist && requester && <span aria-hidden="true"> · </span>}
       <Who requester={requester} />
     </div>
   );
@@ -235,13 +259,15 @@ function useWarm(enabled: boolean): (song: Song) => void {
 
 const asItem = (song: Song): QueueItem => ({ query: song.url, title: song.title, artist: song.artist, artwork: song.artwork, durationMs: song.durationMs });
 
-function SongRow({ song, done, disabled, onAdd, warm }: { song: Song; done: boolean; disabled: boolean; onAdd: () => void; warm: (song: Song) => void }) {
+function SongRow({ song, done, disabled, onAdd, warm, onArtist, index, leaving, onLeft, withoutArtist }: { song: Song; done: boolean; disabled: boolean; onAdd: () => void; warm: (song: Song) => void; onArtist?: OpenArtist; index?: number; leaving?: boolean; onLeft?: () => void; withoutArtist?: boolean }) {
+  const album = song.album && <>{!withoutArtist && song.artist && " · "}{song.album}</>;
   return (
-    <li className="song" onPointerEnter={() => warm(song)} onPointerDown={() => warm(song)} onFocus={() => warm(song)}>
+    <li className={`song ${leaving ? "leaving" : ""}`} onPointerEnter={() => warm(song)} onPointerDown={() => warm(song)} onFocus={() => warm(song)} onAnimationEnd={(event) => { if (leaving && event.animationName === "row-out") onLeft?.(); }}>
+      {index !== undefined && <span className="num">{index}</span>}
       <Art src={artwork(song, 96)} className="art-md" />
       <div className="meta">
         <div className="name">{song.title}</div>
-        <div className="sub">{[song.artist, song.album].filter(Boolean).join(" · ")}</div>
+        <div className="sub">{!withoutArtist && <ArtistLinks text={song.artist} refs={song.artists} onArtist={onArtist} />}{album}</div>
       </div>
       {song.plays && <span className="plays">{song.plays}</span>}
       {song.durationMs > 0 && <span className="len">{clock(song.durationMs)}</span>}
@@ -254,6 +280,8 @@ const SETTLE_AFTER_TOUCH_MS = 4_000;
 
 function useSteady<T>(path: string, seed: string) {
   const [items, setItems] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [version, setVersion] = useState(0);
   const pending = useRef<T | null>(null);
   const inside = useRef(false);
@@ -276,12 +304,19 @@ function useSteady<T>(path: string, seed: string) {
   }, []);
   useEffect(() => {
     let current = true;
+    setLoading(true);
     const fetch = setTimeout(() => {
       get<T>(path).then((next) => {
         if (!current) return;
+        setLoading(false);
+        setFailed(false);
         pending.current = next;
         release();
-      }, () => undefined);
+      }, () => {
+        if (!current) return;
+        setLoading(false);
+        setFailed(true);
+      });
     }, 300);
     return () => {
       current = false;
@@ -309,15 +344,19 @@ function useSteady<T>(path: string, seed: string) {
       release();
     },
   };
-  return { items, version, hold };
+  return { items, version, hold, loading, failed };
 }
 
-function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean }) {
-  const { items: songs, version, hold } = useSteady<Song[]>("suggestions", seedKey);
+const without = (set: Set<string>, id: string) => {
+  const next = new Set(set);
+  next.delete(id);
+  return next;
+};
+
+function usePicked(onPick: (item: QueueItem) => Promise<void>) {
   const [added, setAdded] = useState<Set<string>>(new Set());
+  const [gone, setGone] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
-  const warm = useWarm(true);
-  if (!songs?.length) return null;
   async function pick(song: Song) {
     setError(null);
     setAdded((previous) => new Set(previous).add(song.videoId));
@@ -325,19 +364,34 @@ function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (it
       await onPick(asItem(song));
     } catch (failure) {
       setError(message(failure));
-      setAdded((previous) => {
-        const next = new Set(previous);
-        next.delete(song.videoId);
-        return next;
-      });
+      setAdded((previous) => without(previous, song.videoId));
+      setGone((previous) => without(previous, song.videoId));
     }
   }
+  const leave = (id: string) => setGone((previous) => new Set(previous).add(id));
+  return { added, gone, error, pick, leave };
+}
+
+function Suggestions({ seedKey, onPick, hidden, onArtist }: { seedKey: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean; onArtist: OpenArtist }) {
+  const { items: songs, version, hold, loading, failed } = useSteady<Song[]>("suggestions", seedKey);
+  const { added, gone, error, pick, leave } = usePicked(onPick);
+  const warm = useWarm(true);
+  const shown = songs?.filter((song) => !gone.has(song.videoId)) ?? [];
+  if (songs === null && !failed) {
+    return (
+      <section className="suggest-area" aria-label={t.suggested} aria-busy="true" hidden={hidden}>
+        <h2 className="label">{t.suggested}<span className="label-spinner" aria-hidden="true" /></h2>
+        <SkeletonRows count={5} label={false} />
+      </section>
+    );
+  }
+  if (!shown.length) return null;
   return (
-    <section className="suggest-area" aria-label={t.suggested} hidden={hidden} {...hold}>
-      <h2 className="label">{t.suggested}</h2>
+    <section className="suggest-area" aria-label={t.suggested} aria-busy={loading} hidden={hidden} {...hold}>
+      <h2 className="label">{t.suggested}{loading && <span className="label-spinner" aria-hidden="true" />}</h2>
       {error && <p className="error" role="alert">{error}</p>}
       <ul className={`rows ${version ? "refreshed" : ""}`} key={version}>
-        {songs.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} onAdd={() => void pick(song)} warm={warm} />)}
+        {shown.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} leaving={added.has(song.videoId)} onLeft={() => leave(song.videoId)} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} />)}
       </ul>
     </section>
   );
@@ -345,42 +399,44 @@ function Suggestions({ seedKey, onPick, hidden }: { seedKey: string; onPick: (it
 
 const RECENT_SHOWN = 20;
 
-function RecentlyPlayed({ seedKey, current, onPick }: { seedKey: string; current: string | null; onPick: (item: QueueItem) => Promise<void> }) {
+function RecentlyPlayed({ seedKey, current, onPick, onArtist }: { seedKey: string; current: string | null; onPick: (item: QueueItem) => Promise<void>; onArtist: OpenArtist }) {
   const { items: entries, version, hold } = useSteady<HistoryEntry[]>("history", seedKey);
-  const [added, setAdded] = useState<Set<string>>(new Set());
+  const { added, gone, pick, leave } = usePicked(onPick);
   const warm = useWarm(true);
   const seen = new Set<string>(current ? [current] : []);
   const songs: Song[] = [];
   for (const entry of entries ?? []) {
     const url = entry.url ?? entry.query;
     const id = url.match(/[?&]v=([\w-]{11})/)?.[1];
-    if (!id || seen.has(url)) continue;
+    if (!id || seen.has(url) || gone.has(id)) continue;
     seen.add(url);
     songs.push({ videoId: id, url, title: entry.title, artist: entry.artist ?? "", album: null, durationMs: entry.durationMs, artwork: entry.artwork, plays: null });
     if (songs.length === RECENT_SHOWN) break;
   }
   if (!songs.length) return null;
-  async function pick(song: Song) {
-    setAdded((previous) => new Set(previous).add(song.videoId));
-    await onPick(asItem(song)).catch(() => setAdded((previous) => {
-      const next = new Set(previous);
-      next.delete(song.videoId);
-      return next;
-    }));
-  }
   return (
     <section className="recent-area" aria-label={t.playedBefore} {...hold}>
       <h2 className="label">{t.playedBefore}</h2>
       <ul className={`rows ${version ? "refreshed" : ""}`} key={version}>
-        {songs.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} onAdd={() => void pick(song)} warm={warm} />)}
+        {songs.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} leaving={added.has(song.videoId)} onLeft={() => leave(song.videoId)} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} />)}
       </ul>
     </section>
   );
 }
 
-function SongSearch({ placeholder, onPick, onLink, warmUp, onActive }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void>; warmUp?: boolean; onActive?: (active: boolean) => void }) {
+function ArtistAvatar({ artist, className }: { artist: Artist; className: string }) {
+  const [broken, setBroken] = useState(false);
+  return (
+    <span className={`artist-avatar ${className}`} style={{ "--h": hueOf(artist.id) } as CSSProperties}>
+      {artist.avatar && !broken ? <img src={artist.avatar} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} /> : <span aria-hidden="true">{artist.name.slice(0, 1).toUpperCase()}</span>}
+    </span>
+  );
+}
+
+function SongSearch({ placeholder, onPick, onLink, warmUp, onActive, onArtist, collapsed, onType }: { placeholder: string; onPick: (item: QueueItem) => Promise<void>; onLink: (input: string) => Promise<void>; warmUp?: boolean; onActive?: (active: boolean) => void; onArtist?: OpenArtist; collapsed?: boolean; onType?: () => void }) {
   const [text, setText] = useState("");
   const [results, setResults] = useState<Song[] | null>(null);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [shown, setShown] = useState("");
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -395,21 +451,23 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive }: { placeho
     setLoading(true);
     setError(null);
     try {
-      const songs = await get<Song[]>(`search?q=${encodeURIComponent(query)}`);
+      const [songs, found] = await Promise.all([get<Song[]>(`search?q=${encodeURIComponent(query)}`), onArtist ? get<Artist[]>(`artists?q=${encodeURIComponent(query)}`).catch(() => []) : Promise.resolve([])]);
       if (id === sequence.current) {
         setResults(songs);
+        setArtists(found);
         setShown(query);
       }
     } catch (failure) {
       if (id === sequence.current) setError(message(failure));
     }
     if (id === sequence.current) setLoading(false);
-  }, []);
+  }, [onArtist]);
   useEffect(() => {
     const query = text.trim();
     if (isLink(query) || query.length < 2) {
       sequence.current++;
       setResults(null);
+      setArtists([]);
       setLoading(false);
       return;
     }
@@ -419,6 +477,7 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive }: { placeho
   function clear() {
     setText("");
     setResults(null);
+    setArtists([]);
     setAdded(new Set());
     setError(null);
   }
@@ -464,20 +523,237 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive }: { placeho
     <div className="search">
       <form role="search" onSubmit={(event) => void submit(event)} className="search-box">
         <Icon.Search />
-        <input value={text} data-search aria-keyshortcuts="/" onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") clear(); }} placeholder={placeholder} aria-label={placeholder} enterKeyHint={isLink(text) ? "go" : "search"} />
+        <input value={text} data-search aria-keyshortcuts="/" onChange={(event) => { setText(event.target.value); onType?.(); }} onKeyDown={(event) => { if (event.key === "Escape") clear(); }} placeholder={placeholder} aria-label={placeholder} enterKeyHint={isLink(text) ? "go" : "search"} />
         {isLink(text) && <button className="pill primary" disabled={busy === "link"}>{busy === "link" ? t.adding : t.addLink}</button>}
         {text && <button type="button" className="icon-btn small" aria-label={t.clearSearch} onClick={clear}><Icon.Close /></button>}
       </form>
       {error && <p className="error" role="alert">{error}</p>}
-      {(loading || results) && (
+      {!collapsed && artists.length > 0 && (
+        <section aria-label={t.artists}>
+          <h2 className="label">{t.artists}</h2>
+          <ul className={`artist-cards ${stale ? "stale" : ""}`}>
+            {artists.map((artist) => (
+              <li key={artist.id}>
+                <button className="artist-card" disabled={stale} onClick={() => onArtist?.({ id: artist.id, name: artist.name })}>
+                  <ArtistAvatar artist={artist} className="avatar-md" />
+                  <span className="artist-card-text">
+                    <span className="name">{artist.name}</span>
+                    {artist.audience && <span className="sub">{artist.audience}</span>}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {!collapsed && (loading || results) && (
         <section aria-label={t.songs} aria-busy={loading}>
           <h2 className="label">{loading && !results ? t.searching : t.songs}</h2>
           {results?.length === 0 && <p className="hint">{t.noSongs}</p>}
           <ul className={`rows ${stale ? "stale" : ""}`}>
-            {results?.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={stale || busy === song.videoId} onAdd={() => void pick(song)} warm={warm} />)}
+            {results?.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={stale || busy === song.videoId} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} />)}
           </ul>
         </section>
       )}
+    </div>
+  );
+}
+
+const TOP_SHOWN = 10;
+
+function useLoad<T>(path: string): { data: T | null; error: string | null } {
+  const [state, setState] = useState<{ path: string; data: T | null; error: string | null }>({ path, data: null, error: null });
+  useEffect(() => {
+    let current = true;
+    setState({ path, data: null, error: null });
+    get<T>(path).then((data) => current && setState({ path, data, error: null }), (failure) => current && setState({ path, data: null, error: message(failure) }));
+    return () => {
+      current = false;
+    };
+  }, [path]);
+  return state.path === path ? state : { data: null, error: null };
+}
+
+function useAddedSet(onPick: (item: QueueItem) => Promise<void>, onError: (error: string | null) => void) {
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  async function pick(song: Song) {
+    onError(null);
+    setAdded((previous) => new Set(previous).add(song.videoId));
+    try {
+      await onPick(asItem(song));
+    } catch (failure) {
+      onError(message(failure));
+      setAdded((previous) => without(previous, song.videoId));
+    }
+  }
+  return { added, pick };
+}
+
+function shuffled<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index--) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[other]] = [copy[other]!, copy[index]!];
+  }
+  return copy;
+}
+
+function BrowseSkeleton() {
+  return (
+    <div className="browse-skeleton" aria-hidden="true">
+      <div className="artist-hero skeleton" />
+      <SkeletonRows count={6} />
+    </div>
+  );
+}
+
+function ArtistView({ target, onBack, onOpen, onPick, onPickMany }: { target: ArtistTarget; onBack: () => void; onOpen: (entry: Browse) => void; onPick: (item: QueueItem) => Promise<void>; onPickMany: (items: QueueItem[]) => Promise<void> }) {
+  const { data: page, error: loadError } = useLoad<ArtistPage>(target.id ? `artist?id=${encodeURIComponent(target.id)}` : `artist?name=${encodeURIComponent(target.name)}`);
+  const [error, setError] = useState<string | null>(null);
+  const [all, setAll] = useState(false);
+  const { added, pick } = useAddedSet(onPick, setError);
+  const warm = useWarm(true);
+  const [bannerBroken, setBannerBroken] = useState(false);
+  const many = (items: Song[]) => async () => {
+    setError(null);
+    try {
+      await onPickMany(items.map(asItem));
+    } catch (failure) {
+      setError(message(failure));
+      throw failure;
+    }
+  };
+  const back = <button className="pill hero-back" onClick={onBack}><Icon.Chevron />{t.goBack}</button>;
+  if (!page) {
+    return (
+      <section className="browse" aria-label={target.name} aria-busy={!loadError}>
+        {loadError ? <><div className="browse-bar">{back}</div><p className="error" role="alert">{loadError}</p></> : <><div className="browse-bar">{back}</div><BrowseSkeleton /></>}
+      </section>
+    );
+  }
+  const top = page.songs.slice(0, TOP_SHOWN);
+  const songs = all ? page.songs : top;
+  const banner = page.banner && !bannerBroken ? page.banner.replace(/=w\d+-h\d+/, "=w1440-h600") : null;
+  return (
+    <section className="browse" aria-label={page.name}>
+      <div className="artist-hero" style={{ "--h": hueOf(page.id) } as CSSProperties}>
+        {banner && <img src={banner} alt="" referrerPolicy="no-referrer" onError={() => setBannerBroken(true)} />}
+        <div className="artist-hero-shade" />
+        {back}
+        <div className="artist-hero-body">
+          <div className="artist-hero-text">
+            <p className="eyebrow">{t.artist}</p>
+            <h2 className="artist-name">{page.name}</h2>
+            {page.audience && <p className="sub">{page.audience}</p>}
+          </div>
+          {top.length > 0 && (
+            <div className="artist-actions">
+              <QueueButton className="pill primary" label={t.queueTop(top.length)} run={many(top)} />
+              <QueueButton className="pill glass" label={t.shuffleTop(top.length)} run={() => many(shuffled(top))()} />
+            </div>
+          )}
+        </div>
+      </div>
+      {error && <p className="error" role="alert">{error}</p>}
+      {songs.length > 0 && (
+        <div>
+          <h3 className="label">{t.topSongs}</h3>
+          <ol className="rows">
+            {songs.map((song, index) => <SongRow key={song.videoId} song={song} index={index + 1} withoutArtist done={added.has(song.videoId)} disabled={added.has(song.videoId)} onAdd={() => void pick(song)} warm={warm} />)}
+          </ol>
+          {page.songs.length > TOP_SHOWN && <button className="pill show-all" onClick={() => setAll(!all)}>{all ? t.showFewer : t.showAllSongs(page.songs.length)}</button>}
+        </div>
+      )}
+      {page.releases.length > 0 && (
+        <div>
+          <h3 className="label">{t.releases}</h3>
+          <ul className="releases">
+            {page.releases.map((release) => (
+              <li key={release.id}>
+                <button className="release" onClick={() => onOpen({ kind: "album", id: release.id })}>
+                  <Art src={release.artwork} className="art-release" />
+                  <span className="name">{release.title}</span>
+                  <span className="sub">{t.release(release.kind, release.year)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {page.related.length > 0 && (
+        <div>
+          <h3 className="label">{t.fansAlsoLike}</h3>
+          <ul className="related">
+            {page.related.map((artist) => (
+              <li key={artist.id}>
+                <button className="related-chip" onClick={() => onOpen({ kind: "artist", target: { id: artist.id, name: artist.name } })}>
+                  <ArtistAvatar artist={artist} className="avatar-sm" />
+                  {artist.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AlbumView({ id, onBack, onOpen, onPick, onPickMany }: { id: string; onBack: () => void; onOpen: (entry: Browse) => void; onPick: (item: QueueItem) => Promise<void>; onPickMany: (items: QueueItem[]) => Promise<void> }) {
+  const { data: album, error: loadError } = useLoad<Album>(`album?id=${encodeURIComponent(id)}`);
+  const [error, setError] = useState<string | null>(null);
+  const { added, pick } = useAddedSet(onPick, setError);
+  const warm = useWarm(true);
+  const back = <button className="pill hero-back" onClick={onBack}><Icon.Chevron />{t.goBack}</button>;
+  if (!album) {
+    return (
+      <section className="browse" aria-busy={!loadError}>
+        <div className="browse-bar">{back}</div>
+        {loadError ? <p className="error" role="alert">{loadError}</p> : <SkeletonRows count={8} />}
+      </section>
+    );
+  }
+  const openArtist: OpenArtist = (target) => onOpen({ kind: "artist", target });
+  return (
+    <section className="browse" aria-label={album.title}>
+      <div className="browse-bar">{back}</div>
+      <div className="album-head">
+        <Art src={album.artwork} className="art-album" />
+        <div className="album-text">
+          <p className="eyebrow">{t.release(album.kind, album.year)}</p>
+          <h2 className="album-title">{album.title}</h2>
+          <p className="sub"><ArtistLinks text={album.artist} onArtist={openArtist} /> · {t.songCount(album.songs.length)}</p>
+          {album.songs.length > 0 && <QueueButton className="pill primary" label={t.queueAll} run={async () => {
+            setError(null);
+            try {
+              await onPickMany(album.songs.map(asItem));
+            } catch (failure) {
+              setError(message(failure));
+              throw failure;
+            }
+          }} />}
+        </div>
+      </div>
+      {error && <p className="error" role="alert">{error}</p>}
+      <ol className="rows">
+        {album.songs.map((song, index) => <SongRow key={song.videoId} song={{ ...song, album: null }} index={index + 1} withoutArtist done={added.has(song.videoId)} disabled={added.has(song.videoId)} onAdd={() => void pick(song)} warm={warm} />)}
+      </ol>
+    </section>
+  );
+}
+
+function Browser({ entry, onBack, onOpen, onPick, onPickMany }: { entry: Browse; onBack: () => void; onOpen: (entry: Browse) => void; onPick: (item: QueueItem) => Promise<void>; onPickMany: (items: QueueItem[]) => Promise<void> }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const key = entry.kind === "album" ? `album:${entry.id}` : `artist:${entry.target.id ?? entry.target.name}`;
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const box = element.getBoundingClientRect();
+    if (box.top < 0 || box.top > innerHeight - 120) element.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [key]);
+  return (
+    <div className="browse-area" ref={ref} key={key}>
+      {entry.kind === "artist" ? <ArtistView target={entry.target} onBack={onBack} onOpen={onOpen} onPick={onPick} onPickMany={onPickMany} /> : <AlbumView id={entry.id} onBack={onBack} onOpen={onOpen} onPick={onPick} onPickMany={onPickMany} />}
     </div>
   );
 }
@@ -544,7 +820,54 @@ function PlayIcon({ paused }: { paused: boolean }) {
   return <span className="play-icon" data-paused={paused}><Icon.Play /><Icon.Pause /></span>;
 }
 
-function NowPlaying({ view, track, command }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void> }) {
+function Listeners({ count, people }: { count: number; people: Listener[] }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: Event) => {
+      if (event instanceof KeyboardEvent ? event.key === "Escape" : !box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+  useEffect(() => {
+    if (!people.length) setOpen(false);
+  }, [people.length]);
+  const label = <><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(count)}</>;
+  if (!people.length) return <p className="listeners">{label}</p>;
+  const stack = people.slice(0, 4);
+  return (
+    <div className="listeners-box" ref={box}>
+      <button className="listeners listeners-btn" aria-expanded={open} aria-haspopup="true" title={people.map((person) => person.name).join(", ")} onClick={() => setOpen(!open)}>
+        <span className="face-stack" aria-hidden="true">
+          {stack.map((person) => <Face key={person.id} person={person} />)}
+          {people.length > stack.length && <span className="face more">+{people.length - stack.length}</span>}
+        </span>
+        {label}
+      </button>
+      {open && (
+        <div className="people-pop" role="dialog" aria-label={t.whoListens}>
+          <p className="label">{t.whoListens}</p>
+          <ul>
+            {people.map((person) => <li key={person.id}><Face person={person} />{person.name}</li>)}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Face({ person }: { person: Listener }) {
+  const [broken, setBroken] = useState(false);
+  return person.avatar && !broken ? <img className="face" src={person.avatar} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} /> : <span className="face">{person.name.slice(0, 1).toUpperCase()}</span>;
+}
+
+function NowPlaying({ view, track, command, onArtist }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void>; onArtist: OpenArtist }) {
   const now = useNow(stageOf(view, track) === "playing");
   const [seek, setSeek] = useState<number | null>(null);
   if (!track || !view) {
@@ -570,7 +893,7 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
         <p className="eyebrow"><Equalizer />{view.stale ? t.lostBot : view.loading ? t.starting : view.stalled ? t.buffering : view.paused ? t.paused : t.nowPlaying}</p>
         <div className="swap" key={track.query}>
           <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
-          <p className="artist">{track.artist || "\u00a0"}</p>
+          <p className="artist">{track.artist ? <ArtistLinks text={track.artist} onArtist={onArtist} /> : "\u00a0"}</p>
           <p className="asked-by">
             {track.requestedBy === "autoplay" ? (
               <span className="tag auto-tag">{track.pickedBy === "explore" ? <Icon.Compass size={13} /> : <Icon.Radio size={13} />}{t.autoplay}</span>
@@ -601,7 +924,7 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
         </span>
       </div>
       <div className="now-foot">
-        <p className="listeners"><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(view.listeners)}</p>
+        <Listeners count={view.listeners} people={view.people ?? []} />
         <button className="pill danger" title={t.disconnectHelp} onClick={() => void command({ action: "stop" })}>{t.disconnect}</button>
       </div>
     </section>
@@ -650,7 +973,7 @@ function scrollParent(element: Element): Element {
   return document.scrollingElement ?? document.documentElement;
 }
 
-function QueueList({ upcoming, offset, command }: { upcoming: Track[]; offset: number; command: (body: Command) => Promise<void> }) {
+function QueueList({ upcoming, offset, command, onArtist }: { upcoming: Track[]; offset: number; command: (body: Command) => Promise<void>; onArtist: OpenArtist }) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [settling, setSettling] = useState(false);
   const current = useRef<Drag | null>(null);
@@ -727,7 +1050,7 @@ function QueueList({ upcoming, offset, command }: { upcoming: Track[]; offset: n
             <Art src={artwork(item, 96)} className="art-sm" />
             <div className="meta">
               <div className="name">{item.title}</div>
-              <SongSub artist={item.artist} requester={item.requester} />
+              <SongSub artist={item.artist} requester={item.requester} onArtist={onArtist} />
             </div>
             {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
             <span className="reorder">
@@ -792,11 +1115,25 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   const [searching, setSearching] = useState(false);
+  const [browse, setBrowse] = useState<Browse[]>([]);
+  const openBrowse = useCallback((entry: Browse) => setBrowse((stack) => [...stack.slice(-19), entry]), []);
+  const openArtist = useCallback<OpenArtist>((target) => openBrowse({ kind: "artist", target }), [openBrowse]);
+  const closeBrowse = useCallback(() => setBrowse((stack) => (stack.length ? [] : stack)), []);
+  const browsing = browse.at(-1);
   const seedKey = view?.active ? (view.tracks[view.current]?.query ?? "end") : "";
   async function add(item: QueueItem) {
     if (view) setView(predictAdd(view, item));
     try {
       await enqueue({ items: [item] });
+    } catch (failure) {
+      refresh();
+      throw failure;
+    }
+  }
+  async function addMany(items: QueueItem[]) {
+    if (view) setView(items.reduce(predictAdd, view));
+    try {
+      await enqueue({ items });
     } catch (failure) {
       refresh();
       throw failure;
@@ -827,7 +1164,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
       <div className="player">
         <div className="now-col" ref={nowRef}>
           <div className="now-stage">
-            <NowPlaying view={view} track={track} command={command} />
+            <NowPlaying view={view} track={track} command={command} onArtist={openArtist} />
             <div className="now-extras">
               <Reveal open={Boolean(error)}><p className="error" role="alert">{error}</p></Reveal>
               <Reveal open={Boolean(skipped)}><p className="notice" role="status">{skipped && t.skippedFailed(skipped)}</p></Reveal>
@@ -836,8 +1173,9 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
         </div>
         <div className="side">
           <div className="discover-col">
-            <SongSearch warmUp placeholder={t.searchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} onActive={setSearching} />
-            {seedKey && <Suggestions seedKey={seedKey} onPick={add} hidden={searching} />}
+            <SongSearch warmUp placeholder={t.playerSearchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} onActive={setSearching} onArtist={openArtist} collapsed={Boolean(browsing)} onType={closeBrowse} />
+            {browsing && <Browser entry={browsing} onBack={() => setBrowse((stack) => stack.slice(0, -1))} onOpen={openBrowse} onPick={add} onPickMany={addMany} />}
+            {seedKey && <Suggestions seedKey={seedKey} onPick={add} hidden={searching || Boolean(browsing)} onArtist={openArtist} />}
           </div>
           <div className="queue-col">
             {track && (
@@ -847,7 +1185,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                   {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
                 </div>
                 {upcoming.length === 0 && view?.loop !== "queue" && <p className="hint">{t.queueEmpty}</p>}
-                {upcoming.length > 0 && <QueueList upcoming={upcoming} offset={offset} command={command} />}
+                {upcoming.length > 0 && <QueueList upcoming={upcoming} offset={offset} command={command} onArtist={openArtist} />}
                 {view?.loop === "queue" && <FromTop tracks={view.tracks} />}
                 {view && <AutoplayBlock view={view} command={command} />}
                 {view && view.loop === "off" && autoplays.length > 0 && (
@@ -859,7 +1197,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                           <Art src={artwork(pick, 96)} className="art-sm" />
                           <div className="meta">
                             <div className="name">{pick.title}</div>
-                            {pick.artist && <div className="sub">{pick.artist}</div>}
+                            {pick.artist && <div className="sub"><ArtistLinks text={pick.artist} onArtist={openArtist} /></div>}
                           </div>
                           {pick.durationMs > 0 && <span className="len">{clock(pick.durationMs)}</span>}
                           <button className="icon-btn small swap" aria-label={t.swapPick(pick.title)} title={t.swapPick(pick.title)} disabled={pick.replacing} onClick={() => void command({ action: "swapPick", id: pick.id })}><Icon.Swap /></button>
@@ -870,7 +1208,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                 )}
               </section>
             )}
-            {seedKey && <RecentlyPlayed seedKey={seedKey} current={track?.url ?? null} onPick={add} />}
+            {seedKey && <RecentlyPlayed seedKey={seedKey} current={track?.url ?? null} onPick={add} onArtist={openArtist} />}
           </div>
         </div>
       </div>
@@ -1284,10 +1622,10 @@ function SettingsTab() {
   );
 }
 
-function SkeletonRows({ count }: { count: number }) {
+function SkeletonRows({ count, label = true }: { count: number; label?: boolean }) {
   return (
     <div className="skeleton-rows" aria-hidden="true">
-      <div className="skeleton line label-line" />
+      {label && <div className="skeleton line label-line" />}
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="skeleton-row">
           <div className="skeleton art-md" />

@@ -4,7 +4,7 @@ import { client, guild } from "./client.ts";
 
 type Resolved = { title: string; artist: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string };
 
-export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed" | "disconnected"; generation: number; error?: string } | { type: "moved"; generation: number; channelId: string };
+export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed" | "disconnected"; generation: number; error?: string } | { type: "moved"; generation: number; channelId: string } | { type: "listeners"; generation: number };
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
 const RESOLVE_TTL_MS = 2 * 60 * 60 * 1000;
@@ -97,7 +97,8 @@ export function onPlayerEvent(callback: (event: PlayerEvent) => void): void {
   listener = callback;
 }
 
-client.on("voiceStateUpdate", (_before, after) => {
+client.on("voiceStateUpdate", (before, after) => {
+  if (after.id !== client.user?.id && channelId && before.channelId !== after.channelId && (before.channelId === channelId || after.channelId === channelId)) emit({ type: "listeners", generation });
   if (after.id !== client.user?.id || !connection || !after.channelId || after.channelId === channelId) return;
   console.log("moved", channelId, "to", after.channelId);
   channelId = after.channelId;
@@ -210,6 +211,15 @@ export function listenerIds(): string[] {
   const server = client.guilds.cache.first();
   const states = server?.voiceStates.cache.filter((state) => state.channelId === channelId);
   return states ? [...states.values()].filter((state) => !state.member?.user.bot && state.id !== client.user?.id).map((state) => state.id) : [];
+}
+
+export type Listener = { id: string; name: string; avatar: string | null };
+
+export function listeners(): Listener[] {
+  if (!channelId) return [];
+  const server = client.guilds.cache.first();
+  const states = server?.voiceStates.cache.filter((state) => state.channelId === channelId && state.id !== client.user?.id && !state.member?.user.bot);
+  return states ? [...states.values()].map((state) => ({ id: state.id, name: state.member?.displayName ?? "?", avatar: state.member?.displayAvatarURL({ size: 64 }) ?? null })) : [];
 }
 
 export async function join(nextChannel: string): Promise<void> {

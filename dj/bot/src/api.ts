@@ -3,7 +3,7 @@ import { WebSocketServer } from "ws";
 import { guild } from "./client.ts";
 import { accessOf, enqueueInput, voiceChannel } from "./discord.ts";
 import { resolveInput, signTicket, verifyTicket } from "./input.ts";
-import { searchSongs } from "./music.ts";
+import { album, artistByName, artistPage, searchArtists, searchSongs } from "./music.ts";
 import { warm } from "./player.ts";
 import * as session from "./session.ts";
 
@@ -61,6 +61,38 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
       } catch (error) {
         console.error("music search", (error as Error).message);
         return [{ error: "searchFailed" }, 502];
+      }
+    }
+    case "/internal/artists": {
+      const query = (url.searchParams.get("q") ?? "").trim().slice(0, 200);
+      if (!query) return [[]];
+      try {
+        return [await searchArtists(query)];
+      } catch (error) {
+        console.error("artist search", (error as Error).message);
+        return [{ error: "searchFailed" }, 502];
+      }
+    }
+    case "/internal/artist": {
+      const artistId = url.searchParams.get("id") ?? "";
+      const name = (url.searchParams.get("name") ?? "").trim().slice(0, 200);
+      try {
+        if (/^UC[\w-]{22}$/.test(artistId)) return [await artistPage(artistId)];
+        if (name) return [await artistByName(name)];
+        return [{ error: "notFound" }, 404];
+      } catch (error) {
+        console.error("artist", artistId || name, (error as Error).message);
+        return [{ error: "artistFailed" }, 502];
+      }
+    }
+    case "/internal/album": {
+      const albumId = url.searchParams.get("id") ?? "";
+      if (!/^MPRE[\w-]+$/.test(albumId)) return [{ error: "notFound" }, 404];
+      try {
+        return [await album(albumId)];
+      } catch (error) {
+        console.error("album", albumId, (error as Error).message);
+        return [{ error: "artistFailed" }, 502];
       }
     }
     case "/internal/warm": {

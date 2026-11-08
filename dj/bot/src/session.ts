@@ -47,6 +47,7 @@ export type View = {
   autoplayUpcoming: Track[];
   positionMs: number;
   listeners: number;
+  people: player.Listener[];
   active: boolean;
   skipped: Skipped | null;
 };
@@ -186,6 +187,7 @@ export function view(): View {
     autoplayUpcoming: state.autoplay ? state.autoplayUpcoming : [],
     positionMs: livePosition(),
     listeners: state.listeners,
+    people: state.active ? player.listeners() : [],
     active: state.active,
     skipped: state.skipped,
   };
@@ -576,6 +578,13 @@ player.onPlayerEvent((event) => {
   if (event.type === "moved") {
     if (!state.active) return;
     state.channelId = event.channelId;
+    state.listeners = player.status().listeners;
+    save();
+    return;
+  }
+  if (event.type === "listeners") {
+    if (!state.active) return;
+    state.listeners = player.status().listeners;
     save();
     return;
   }
