@@ -5,6 +5,33 @@ import * as Icon from "./icons";
 import { Ambient, useAccent } from "./ambient";
 
 type Tab = "player" | "playlists" | "history" | "settings";
+
+type Route = { tab: Tab; list: string | null };
+
+const ROUTE_TABS: Tab[] = ["playlists", "history", "settings"];
+
+function readRoute(): Route {
+  const [first, second] = location.pathname.split("/").filter(Boolean);
+  const tab = ROUTE_TABS.find((entry) => entry === first) ?? "player";
+  return { tab, list: tab === "playlists" && second ? decodeURIComponent(second) : null };
+}
+
+const routePath = (route: Route) => (route.tab === "player" ? "/" : `/${route.tab}${route.list ? `/${encodeURIComponent(route.list)}` : ""}`);
+
+function useRoute(): [Route, (route: Route, replace?: boolean) => void] {
+  const [route, setRoute] = useState(readRoute);
+  useEffect(() => {
+    const back = () => setRoute(readRoute());
+    window.addEventListener("popstate", back);
+    return () => window.removeEventListener("popstate", back);
+  }, []);
+  const go = useCallback((next: Route, replace = false) => {
+    const path = routePath(next);
+    if (path !== location.pathname) history[replace ? "replaceState" : "pushState"](null, "", path);
+    setRoute(next);
+  }, []);
+  return [route, go];
+}
 type QueueItem = { query: string; title?: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs?: number; playlist?: { id: string; name: string } };
 type Synced = View & { at: number; stale?: boolean };
 type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number; mode?: AutoplayMode };
@@ -1547,15 +1574,14 @@ function CreatePlaylist({ onCancel, onCreated }: { onCancel: () => void; onCreat
   );
 }
 
-function PlaylistsTab({ me, initial }: { me: Me; initial: string | null }) {
+function PlaylistsTab({ me, open, setOpen }: { me: Me; open: string | null; setOpen: (id: string | null, replace?: boolean) => void }) {
   const { data: lists, failed } = useCached<Playlist[]>("playlists");
-  const [open, setOpen] = useState<string | null>(initial);
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
   const list = lists?.find((entry) => entry.id === open);
-  if (open && list) return <PlaylistView list={list} me={me} onBack={() => setOpen(null)} />;
-  if (open && lists) return <PlaylistGone onBack={() => setOpen(null)} />;
+  if (open && list) return <PlaylistView list={list} me={me} onBack={(replace) => setOpen(null, replace)} />;
+  if (open && lists) return <PlaylistGone onBack={() => setOpen(null, true)} />;
   const needle = filter.trim().toLowerCase();
   const matching = (lists ?? []).filter((entry) => !needle || entry.name.toLowerCase().includes(needle) || entry.ownerName.toLowerCase().includes(needle));
   const mine = matching.filter((entry) => entry.ownerId === me.discordId);
@@ -1657,7 +1683,7 @@ function PlaylistTitle({ list, owned, onRename }: { list: Playlist; owned: boole
   );
 }
 
-function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: () => void }) {
+function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: (replace?: boolean) => void }) {
   const path = `playlist/tracks?id=${list.id}`;
   const { data: tracks, failed } = useCached<PlaylistTrack[]>(path);
   const [error, setError] = useState<string | null>(null);
@@ -1729,7 +1755,7 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: ()
   );
   return (
     <section className="sheet playlists" aria-label={list.name}>
-      <button className="pill ghost back" onClick={onBack}><Icon.Back />{t.back}</button>
+      <button className="pill ghost back" onClick={() => onBack()}><Icon.Back />{t.back}</button>
       <div className="playlist-hero">
         <PlaylistCover list={list} className="cover-hero" />
         <div className="playlist-hero-text">
@@ -1739,7 +1765,7 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: ()
             <QueueButton className="btn primary play-all" label={t.play} disabled={!list.trackCount} run={run(false)} />
             <QueueButton className="btn" label={t.shuffle} disabled={list.trackCount < 2} run={run(true)} />
             {owned && <VisibilityToggle value={list.visibility} className="btn" onChange={(visibility) => void act(() => post("playlist/visibility", { id: list.id, visibility }))} />}
-            {owned && <button className="icon-btn delete-list" aria-label={t.deletePlaylist} title={t.deletePlaylist} onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); onBack(); }); }}><TrashIcon /></button>}
+            {owned && <button className="icon-btn delete-list" aria-label={t.deletePlaylist} title={t.deletePlaylist} onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); onBack(true); }); }}><TrashIcon /></button>}
           </div>
         </div>
       </div>
@@ -2166,8 +2192,8 @@ function Brand() {
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [failed, setFailed] = useState(false);
-  const [tab, setTab] = useState<Tab>("player");
-  const [listOpen, setListOpen] = useState<string | null>(null);
+  const [route, go] = useRoute();
+  const tab = route.tab;
   const { view, live, setView, refresh } = useView(me);
   usePrefetch(me, live);
   const playingNow = view?.active ? view.tracks[view.current] : undefined;
@@ -2257,7 +2283,7 @@ export function App() {
           <Brand />
           {tabs.length > 0 && (
             <nav className="tabs" role="tablist">
-              {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => { setListOpen(null); setTab(entry); }} onPointerEnter={() => { const path = TAB_DATA[entry]; if (path) prefetch(path); }}>{t.tabs[entry]}</button>)}
+              {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => go({ tab: entry, list: null })} onPointerEnter={() => { const path = TAB_DATA[entry]; if (path) prefetch(path); }}>{t.tabs[entry]}</button>)}
             </nav>
           )}
           <div className="who">
@@ -2268,8 +2294,8 @@ export function App() {
         {!me.member && <p className="notice">{t.notMember}</p>}
         {me.member && !me.canPlay && <p className="notice">{t.denied}</p>}
         <main className="main">
-          {active === "player" && <PlayerTab me={me} view={view} setView={setView} refresh={refresh} live={live} onOpenList={(id) => { setListOpen(id); setTab("playlists"); }} />}
-          {active === "playlists" && <PlaylistsTab me={me} initial={listOpen} />}
+          {active === "player" && <PlayerTab me={me} view={view} setView={setView} refresh={refresh} live={live} onOpenList={(id) => go({ tab: "playlists", list: id })} />}
+          {active === "playlists" && <PlaylistsTab me={me} open={route.list} setOpen={(id, replace) => go({ tab: "playlists", list: id }, replace)} />}
           {active === "history" && <HistoryTab me={me} />}
           {active === "settings" && <SettingsTab />}
         </main>
