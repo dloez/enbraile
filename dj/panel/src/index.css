@@ -485,6 +485,17 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 .from-list svg { flex: none; }
 .from-list-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 1100px) { .playlist-body { grid-template-columns: minmax(0, 1fr); } .playlist-add { order: -1; } }
+@media (min-width: 1101px) and (min-height: 700px) {
+  .main:has(.playlist-body) { overflow: hidden; }
+  .sheet.playlists:has(.playlist-body) { flex: 1; min-height: 0; }
+  .playlist-body { flex: 1; min-height: 0; align-items: stretch; }
+  .playlist-songs, .playlist-add { min-height: 0; overflow: hidden; }
+  .playlist-songs > .rows, .playlist-add .search > section, .playlist-add .suggest-area > .rows { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+  .playlist-songs > .rows { flex: 1; padding-bottom: 2.5rem; mask-image: linear-gradient(#000 calc(100% - 3.5rem), transparent); }
+  .playlist-add .search { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .playlist-add .suggest-area { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .playlist-add .suggest-area > .rows { flex: 1; padding-bottom: 3rem; mask-image: linear-gradient(#000 calc(100% - 4.5rem), transparent); }
+}
 @media (max-width: 560px) {
   .sheet-heading { flex: 1 1 0; }
   .new-playlist { align-self: center; }
