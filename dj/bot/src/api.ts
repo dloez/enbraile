@@ -3,7 +3,7 @@ import { WebSocketServer } from "ws";
 import { guild } from "./client.ts";
 import { accessOf, enqueueInput, voiceChannel } from "./discord.ts";
 import { resolveInput, signTicket, verifyTicket } from "./input.ts";
-import { album, albumByName, artistByName, artistPage, searchArtists, searchSongs } from "./music.ts";
+import { album, albumOf, artistByName, artistPage, searchArtists, searchSongs } from "./music.ts";
 import { warm } from "./player.ts";
 import * as session from "./session.ts";
 
@@ -87,13 +87,16 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
     }
     case "/internal/album": {
       const albumId = url.searchParams.get("id") ?? "";
-      const name = (url.searchParams.get("name") ?? "").trim().slice(0, 300);
+      const video = url.searchParams.get("video") ?? "";
+      const name = (url.searchParams.get("name") ?? "").trim().slice(0, 300) || null;
+      const artist = (url.searchParams.get("artist") ?? "").trim().slice(0, 300) || null;
       try {
         if (/^MPRE[\w-]+$/.test(albumId)) return [await album(albumId)];
-        if (name) return [await albumByName(name)];
+        if (/^[\w-]{11}$/.test(video) || name) return [await albumOf(/^[\w-]{11}$/.test(video) ? video : null, name, artist)];
         return [{ error: "notFound" }, 404];
       } catch (error) {
-        console.error("album", albumId, (error as Error).message);
+        if ((error as Error).message === "notFound") return [{ error: "albumNotFound" }, 404];
+        console.error("album", albumId || video || name, (error as Error).message);
         return [{ error: "artistFailed" }, 502];
       }
     }

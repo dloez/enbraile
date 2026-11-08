@@ -10,7 +10,7 @@ type Synced = View & { at: number; stale?: boolean };
 type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number; mode?: AutoplayMode };
 type ArtistTarget = { id?: string; name: string };
 type OpenArtist = (target: ArtistTarget) => void;
-type AlbumTarget = { id?: string | null; name: string; artist?: string | null };
+type AlbumTarget = { id?: string | null; name: string; artist?: string | null; videoId?: string | null };
 type Browse = { kind: "artist"; target: ArtistTarget } | { kind: "album"; target: AlbumTarget };
 
 const message = (error: unknown) => t.errors[error instanceof ApiError ? error.message : "failed"] ?? t.errors.failed!;
@@ -759,7 +759,8 @@ function ArtistView({ target, onBack, onOpen, onPick, onPickMany }: { target: Ar
 }
 
 function AlbumView({ target, onBack, onOpen, onPick, onPickMany }: { target: AlbumTarget; onBack: () => void; onOpen: (entry: Browse) => void; onPick: (item: QueueItem) => Promise<void>; onPickMany: (items: QueueItem[]) => Promise<void> }) {
-  const { data: album, error: loadError } = useLoad<Album>(target.id ? `album?id=${encodeURIComponent(target.id)}` : `album?name=${encodeURIComponent([target.name, target.artist].filter(Boolean).join(" "))}`);
+  const lookup = new URLSearchParams(target.id ? { id: target.id } : { video: target.videoId ?? "", name: target.name, artist: target.artist ?? "" });
+  const { data: album, error: loadError } = useLoad<Album>(`album?${lookup}`);
   const [error, setError] = useState<string | null>(null);
   const { added, pick } = useAddedSet(onPick, setError);
   const warm = useWarm(true);
@@ -992,7 +993,7 @@ function NowPlaying({ view, track, command, onArtist, onAlbum }: { view: Synced 
           <Marquee title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</Marquee>
           <p className="artist">
             {track.artist ? <ArtistLinks text={track.artist} refs={track.artists} onArtist={onArtist} /> : !track.album && "\u00a0"}
-            {track.album && <span className="album-part">{track.artist && <span aria-hidden="true"> · </span>}<AlbumLink target={{ id: track.albumId, name: track.album, artist: track.artists?.[0]?.name ?? track.artist }} onAlbum={onAlbum} /></span>}
+            {track.album && <span className="album-part">{track.artist && <span aria-hidden="true"> · </span>}<AlbumLink target={{ id: track.albumId, name: track.album, artist: track.artists?.[0]?.name ?? track.artist, videoId: (track.url ?? track.query).match(/[?&]v=([\w-]{11})/)?.[1] ?? null }} onAlbum={onAlbum} /></span>}
           </p>
           <p className="asked-by">
             {track.requestedBy === "autoplay" ? (

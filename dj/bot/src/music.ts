@@ -240,8 +240,26 @@ async function loadAlbum(id: string): Promise<Album> {
 
 export const album = cache(loadAlbum);
 
-export async function albumByName(query: string): Promise<Album> {
-  const id = (await searchItems(query, ALBUMS_ONLY)).map((item) => item.musicResponsiveListItemRenderer?.navigationEndpoint?.browseEndpoint?.browseId).find((browseId) => browseId?.startsWith("MPRE"));
+const plain = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
+
+async function albumIdByName(name: string, artist: string | null): Promise<string | null> {
+  const wanted = plain(name);
+  const names = artistNames(artist);
+  const hits = (await searchItems([name, artist].filter(Boolean).join(" "), ALBUMS_ONLY)).flatMap((item) => {
+    const renderer = item.musicResponsiveListItemRenderer;
+    const id = renderer?.navigationEndpoint?.browseEndpoint?.browseId;
+    const columns = renderer?.flexColumns?.map((column) => column.musicResponsiveListItemFlexColumnRenderer?.text?.runs ?? []) ?? [];
+    return id?.startsWith("MPRE") && plain(runsText(columns[0])) === wanted ? [{ id, byline: plain(runsText(columns[1])) }] : [];
+  });
+  return (hits.find((hit) => names.some((each) => hit.byline.includes(plain(each)))) ?? hits[0])?.id ?? null;
+}
+
+export async function albumOf(videoId: string | null, name: string | null, artist: string | null): Promise<Album> {
+  if (videoId) {
+    const [self] = await songRadio(videoId).catch(() => []);
+    if (self?.videoId === videoId && self.albumId) return album(self.albumId);
+  }
+  const id = name ? await albumIdByName(name, artist) : null;
   if (!id) throw new Error("notFound");
   return album(id);
 }
@@ -258,6 +276,7 @@ function panelSong(video: PanelVideo): Song | null {
   const title = video.title?.runs?.map((run) => run.text).join("");
   if (!video.videoId || !title) return null;
   const runs = video.longBylineText?.runs ?? [];
+  const albumRun = runs.find((run) => run.navigationEndpoint?.browseEndpoint?.browseId?.startsWith("MPRE"));
   const byline = runs.map((run) => run.text).join("").split(SEPARATOR);
   const cut = runs.findIndex((run) => run.text === SEPARATOR);
   const lead = cut < 0 ? runs : runs.slice(0, cut);
@@ -273,8 +292,8 @@ function panelSong(video: PanelVideo): Song | null {
     title,
     artist: byline[0] ?? "",
     artists,
-    album: byline.length > 2 ? (byline[1] ?? null) : null,
-    albumId: runs.find((run) => run.navigationEndpoint?.browseEndpoint?.browseId?.startsWith("MPRE"))?.navigationEndpoint?.browseEndpoint?.browseId ?? null,
+    album: albumRun?.text ?? null,
+    albumId: albumRun?.navigationEndpoint?.browseEndpoint?.browseId ?? null,
     durationMs: length && /^\d+(:\d{2})+$/.test(length) ? clockToMs(length) : 0,
     artwork: artwork ? artwork.replace(/=w\d+-h\d+/, "=w544-h544") : null,
     plays: null,
