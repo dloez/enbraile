@@ -113,6 +113,14 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
         console.error("suggestions", (error as Error).message);
         return [[]];
       }
+    case "/internal/playlist/suggestions":
+      try {
+        const songs = await session.playlistSuggestions(url.searchParams.get("id") ?? "", userId);
+        return songs ? [songs] : [{ error: "notFound" }, 404];
+      } catch (error) {
+        console.error("playlist suggestions", (error as Error).message);
+        return [[]];
+      }
     case "/internal/history":
       return [session.history()];
     case "/internal/sessions":

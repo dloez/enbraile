@@ -317,6 +317,37 @@ async function filterSuggestions(songs: Promise<Song[]>): Promise<Song[]> {
   return picked;
 }
 
+const PLAYLIST_SEEDS = 5;
+const playlistSuggested = new Map<string, { key: string; at: number; songs: Promise<Song[]> }>();
+
+export async function playlistSuggestions(id: string, userId: string): Promise<Song[] | null> {
+  const tracks = playlistTracks(id, userId);
+  if (!tracks) return null;
+  const ids = [...new Set(tracks.flatMap((track) => videoId(track.query) ?? []))];
+  if (!ids.length) return [];
+  const step = Math.max(1, ids.length / PLAYLIST_SEEDS);
+  const seeds = Array.from({ length: Math.min(PLAYLIST_SEEDS, ids.length) }, (_, index) => ({ videoId: ids[Math.floor(index * step)]!, weight: 1 }));
+  const key = seeds.map((seed) => seed.videoId).join(",");
+  const kept = playlistSuggested.get(id);
+  const fresh = kept?.key === key && Date.now() - kept.at < SUGGESTIONS_KEPT_MS;
+  const songs = fresh ? kept.songs : sessionRadio(seeds, new Set(ids), []);
+  if (!fresh) {
+    playlistSuggested.set(id, { key, at: Date.now(), songs });
+    songs.catch(() => playlistSuggested.delete(id));
+  }
+  const have = new Set(ids);
+  const artists = new Set<string>();
+  const picked: Song[] = [];
+  for (const song of await songs) {
+    const names = artistNames(song.artist);
+    if (have.has(song.videoId) || names.some((name) => artists.has(name))) continue;
+    names.forEach((name) => artists.add(name));
+    picked.push(song);
+    if (picked.length === SUGGESTIONS) break;
+  }
+  return picked;
+}
+
 const unplayable = new Set<string>();
 const declined = new Set<string>();
 let planToken = 0;

@@ -403,11 +403,11 @@ function SkeletonSongs({ count }: { count: number }) {
 const STAGGER_ROWS = 10;
 const staggered = (index: number) => ({ "--i": Math.min(index, STAGGER_ROWS) }) as CSSProperties;
 
-function Suggestions({ seedKey, label, onPick, hidden, onArtist }: { seedKey: string; label: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean; onArtist: OpenArtist }) {
-  const { items: songs, version, hold, loading, failed } = useSteady<Song[]>("suggestions", seedKey);
+function Suggestions({ seedKey, label, onPick, hidden, onArtist, path = "suggestions", exclude, addLabel, warmUp = true }: { seedKey: string; label: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean; onArtist?: OpenArtist; path?: string; exclude?: Set<string>; addLabel?: (title: string) => string; warmUp?: boolean }) {
+  const { items: songs, version, hold, loading, failed } = useSteady<Song[]>(path, seedKey);
   const { added, gone, error, pick, leave } = usePicked(onPick);
-  const warm = useWarm(true);
-  const shown = songs?.filter((song) => !gone.has(song.videoId)) ?? [];
+  const warm = useWarm(warmUp);
+  const shown = songs?.filter((song) => !gone.has(song.videoId) && !exclude?.has(song.url)) ?? [];
   if (songs === null && !failed) {
     return (
       <section className="suggest-area" aria-label={label} aria-busy="true" hidden={hidden}>
@@ -422,7 +422,7 @@ function Suggestions({ seedKey, label, onPick, hidden, onArtist }: { seedKey: st
       <h2 className="label">{label}{loading && <span className="label-spinner" aria-hidden="true" />}</h2>
       {error && <p className="error" role="alert">{error}</p>}
       <ul className={`rows ${version ? "refreshed" : ""}`} key={version}>
-        {shown.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} leaving={added.has(song.videoId)} onLeft={() => leave(song.videoId)} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} />)}
+        {shown.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} leaving={added.has(song.videoId)} onLeft={() => leave(song.videoId)} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} addLabel={addLabel} />)}
       </ul>
     </section>
   );
@@ -1717,6 +1717,11 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: ()
     void act(() => post("playlist/remove", { id: list.id, trackId: track.id }));
   };
   const have = new Set(tracks?.map((track) => track.query));
+  const [searching, setSearching] = useState(false);
+  const addItem = async (item: QueueItem) => {
+    await post("playlist/add", { id: list.id, items: [item] });
+    await refresh();
+  };
   const songs = (
     <section className={`panel playlist-songs ${owned ? "" : "wide"}`} aria-label={t.songs}>
       {error && <p className="error" role="alert">{error}</p>}
@@ -1768,7 +1773,8 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: ()
           {songs}
           <section className="panel playlist-add" aria-label={t.addSongs}>
             <h2 className="section-title">{t.addSongs}</h2>
-            <SongSearch placeholder={t.addToList} exclude={have} leaveOnAdd addLabel={t.addToThisList} onPick={async (item) => { await post("playlist/add", { id: list.id, items: [item] }); await refresh(); }} onLink={async (input) => { await post("playlist/add", { id: list.id, input }); await refresh(); }} />
+            <SongSearch placeholder={t.addToList} exclude={have} leaveOnAdd addLabel={t.addToThisList} onActive={setSearching} onPick={addItem} onLink={async (input) => { await post("playlist/add", { id: list.id, input }); await refresh(); }} />
+            {tracks && tracks.length > 0 && <Suggestions path={`playlist/suggestions?id=${list.id}`} seedKey={list.id} label={t.likeThisList} exclude={have} addLabel={t.addToThisList} warmUp={false} hidden={searching} onPick={addItem} />}
           </section>
         </div>
       ) : songs}
