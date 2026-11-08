@@ -771,7 +771,7 @@ export function sessions(limit = 30): SessionSummary[] {
       requesters.set(track.requestedBy, entry);
     }
     const live = state.active && row.id === state.sessionId;
-    return { id: row.id, startedAt: row.started_at, endedAt: live ? null : (row.ended_at ?? tracks.at(-1)?.playedAt ?? row.started_at), live, songs: tracks.length, autoplay: tracks.filter((track) => track.requestedBy === "autoplay").length, requesters: [...requesters.values()].sort((a, b) => b.songs - a.songs), artworks: tracks.flatMap((track) => (track.artwork ? [track.artwork] : [])).slice(0, 4) };
+    return { id: row.id, startedAt: row.started_at, endedAt: live ? null : (row.ended_at ?? tracks.at(-1)?.playedAt ?? row.started_at), live, songs: tracks.length, autoplay: tracks.filter((track) => track.requestedBy === "autoplay").length, requesters: [...requesters.values()].sort((a, b) => b.songs - a.songs), artworks: [...new Set(tracks.flatMap((track) => (track.artwork ? [track.artwork] : [])))].slice(0, 4) };
   });
 }
 

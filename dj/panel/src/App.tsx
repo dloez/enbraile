@@ -1860,7 +1860,7 @@ function keepShape(shape: Shape): void {
 function IdleShape() {
   return (
     <section className="idle-stage waiting" aria-busy="true">
-      <div className="crate" aria-hidden="true">
+      <div className="crate" data-count="4" aria-hidden="true">
         {[0, 1, 2, 3].map((index) => <div key={index} className="art crate-card skeleton" />)}
       </div>
       <div className="idle-text" aria-hidden="true">
@@ -1918,8 +1918,8 @@ function IdleStage({ me, command, onOpenList, onError }: { me: Me; command: (bod
   const radioButton = (primary: boolean) => <QueueButton className={`pill ${primary ? "primary" : "ghost"} big`} icon={<Icon.Radio size={17} />} label={t.startRadio} run={() => radio().catch(report)} />;
   return (
     <section className="idle-stage" aria-label={t.tabs.player}>
-      <div className="crate" aria-hidden="true">
-        {[0, 1, 2, 3].map((index) => <Art key={index} src={covers[index] ?? null} className="crate-card" />)}
+      <div className="crate" data-count={Math.max(1, Math.min(4, covers.length))} aria-hidden="true">
+        {(covers.length ? covers.slice(0, 4) : [null]).map((cover, index) => <Art key={index} src={cover} className="crate-card" />)}
       </div>
       {last ? (
         <div className="idle-text">

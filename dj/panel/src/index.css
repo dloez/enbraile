@@ -414,14 +414,25 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 .idle-stage { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.6rem; text-align: center; }
 .crate { position: relative; isolation: isolate; width: 100%; height: 15rem; display: flex; align-items: center; justify-content: center; }
 .crate::after { content: ""; position: absolute; bottom: .2rem; width: 80%; height: 3.5rem; border-radius: 50%; background: radial-gradient(closest-side, rgb(0 0 0 / .7), transparent); z-index: -1; }
-.crate-card { position: absolute; width: 12rem; height: 12rem; border-radius: 1rem; box-shadow: 0 1.5rem 2.5rem -1.25rem rgb(0 0 0 / .95), inset 0 0 0 1px rgb(255 255 255 / .08); transition: transform .6s var(--ease); }
+.crate { --s: 1; }
+.crate-card { position: absolute; width: 12rem; height: 12rem; border-radius: 1rem; box-shadow: 0 1.5rem 2.5rem -1.25rem rgb(0 0 0 / .95), inset 0 0 0 1px rgb(255 255 255 / .08); transform: translate(calc(var(--x, 0rem) * var(--s)), calc(var(--y, 0rem) * var(--s))) rotate(var(--r, 0deg)); transition: transform .6s var(--ease); }
 .crate-card img[src*="i.ytimg.com"] { transform: scale(1.34); }
-.crate-card:nth-child(1) { transform: translate(-7.4rem, 1.1rem) rotate(-14deg); }
-.crate-card:nth-child(2) { transform: translate(-2.7rem, -.25rem) rotate(-5deg); }
-.crate-card:nth-child(3) { transform: translate(2.2rem, .1rem) rotate(5deg); }
-.crate-card:nth-child(4) { transform: translate(6.7rem, 1.4rem) rotate(13deg); }
-.idle-stage:not(.waiting) .crate:hover .crate-card:nth-child(1) { transform: translate(-8.4rem, .9rem) rotate(-17deg); }
-.idle-stage:not(.waiting) .crate:hover .crate-card:nth-child(4) { transform: translate(7.7rem, 1.2rem) rotate(16deg); }
+.crate[data-count="1"] .crate-card { --r: -3deg; }
+.crate[data-count="2"] .crate-card:nth-child(1) { --x: -3rem; --y: .4rem; --r: -7deg; }
+.crate[data-count="2"] .crate-card:nth-child(2) { --x: 3rem; --y: .6rem; --r: 7deg; }
+.crate[data-count="3"] .crate-card:nth-child(1) { --x: -5.4rem; --y: .9rem; --r: -11deg; }
+.crate[data-count="3"] .crate-card:nth-child(2) { --x: -.2rem; --y: -.2rem; --r: -1deg; }
+.crate[data-count="3"] .crate-card:nth-child(3) { --x: 5.2rem; --y: 1rem; --r: 10deg; }
+.crate[data-count="4"] .crate-card:nth-child(1) { --x: -7.4rem; --y: 1.1rem; --r: -14deg; }
+.crate[data-count="4"] .crate-card:nth-child(2) { --x: -2.7rem; --y: -.25rem; --r: -5deg; }
+.crate[data-count="4"] .crate-card:nth-child(3) { --x: 2.2rem; --y: .1rem; --r: 5deg; }
+.crate[data-count="4"] .crate-card:nth-child(4) { --x: 6.7rem; --y: 1.4rem; --r: 13deg; }
+.idle-stage:not(.waiting) .crate:hover .crate-card:first-child:not(:last-child) { --x: -8.4rem; --y: .9rem; --r: -17deg; }
+.idle-stage:not(.waiting) .crate:hover .crate-card:last-child:not(:first-child) { --x: 7.7rem; --y: 1.2rem; --r: 16deg; }
+.idle-stage:not(.waiting) .crate[data-count="2"]:hover .crate-card:first-child { --x: -4rem; --y: .5rem; --r: -10deg; }
+.idle-stage:not(.waiting) .crate[data-count="2"]:hover .crate-card:last-child { --x: 4rem; --y: .7rem; --r: 10deg; }
+.idle-stage:not(.waiting) .crate[data-count="3"]:hover .crate-card:first-child { --x: -6.4rem; --y: .8rem; --r: -14deg; }
+.idle-stage:not(.waiting) .crate[data-count="3"]:hover .crate-card:last-child { --x: 6.2rem; --y: .9rem; --r: 13deg; }
 .idle-text { display: flex; flex-direction: column; align-items: center; gap: .7rem; width: 100%; }
 .idle-text .eyebrow { margin: 0; }
 .idle-text .skeleton.eyebrow-bar { width: 45%; height: .7rem; margin-block: .18rem; }
@@ -457,10 +468,7 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 @media (max-width: 560px) {
   .crate { height: 11.5rem; }
   .crate-card { width: 9rem; height: 9rem; }
-  .crate-card:nth-child(1) { transform: translate(-5.6rem, .9rem) rotate(-14deg); }
-  .crate-card:nth-child(2) { transform: translate(-2rem, -.2rem) rotate(-5deg); }
-  .crate-card:nth-child(3) { transform: translate(1.7rem, .1rem) rotate(5deg); }
-  .crate-card:nth-child(4) { transform: translate(5.1rem, 1.1rem) rotate(13deg); }
+  .crate { --s: .76; }
   .idle-stage { gap: 1.3rem; }
 }
 .playlist-hero { position: relative; z-index: 2; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: 1.1rem; padding: .75rem clamp(1rem, 2.5vw, 1.75rem) clamp(1rem, 2.5vw, 1.6rem) .75rem; border-radius: 1.6rem; background: linear-gradient(120deg, hsl(var(--h, 210) 22% 26%), hsl(var(--h, 210) 22% 11%) 65%, #0b0b0e); }
