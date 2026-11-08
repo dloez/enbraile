@@ -1162,7 +1162,14 @@ function scrollParent(element: Element): Element {
   return document.scrollingElement ?? document.documentElement;
 }
 
+type SortableSong = { id: string; title: string; artist?: string | null; durationMs: number; artwork?: string | null; url?: string | null; query?: string };
+
 function QueueList({ upcoming, offset, command, onArtist }: { upcoming: Track[]; offset: number; command: (body: Command) => Promise<void>; onArtist: OpenArtist }) {
+  return <SortableSongs className="queue-list" items={upcoming} onMove={(item, to) => void command({ action: "move", id: item.id, to: offset + to })} onRemove={(item) => void command({ action: "remove", id: item.id })} sub={(item) => <SongSub artist={item.artist} requester={item.requester} onArtist={onArtist} playlist={item.playlist} />} />;
+}
+
+function SortableSongs<T extends SortableSong>({ items, className, editable = true, onMove, onRemove, sub }: { items: T[]; className: string; editable?: boolean; onMove: (item: T, to: number) => void; onRemove: (item: T) => void; sub: (item: T) => ReactNode }) {
+  const upcoming = items;
   const [drag, setDrag] = useState<Drag | null>(null);
   const [settling, setSettling] = useState(false);
   const current = useRef<Drag | null>(null);
@@ -1218,7 +1225,8 @@ function QueueList({ upcoming, offset, command, onArtist }: { upcoming: Track[];
     if (state.active && state.over !== state.from) {
       setSettling(true);
       requestAnimationFrame(() => requestAnimationFrame(() => setSettling(false)));
-      void command({ action: "move", id: state.id, to: offset + state.over });
+      const item = upcoming[state.from];
+      if (item) onMove(item, state.over);
     }
     update(null);
   }
@@ -1230,23 +1238,27 @@ function QueueList({ upcoming, offset, command, onArtist }: { upcoming: Track[];
     return 0;
   };
   return (
-    <ol className={`rows queue-list ${drag?.active ? "sorting" : ""} ${settling ? "settling" : ""}`}>
+    <ol className={`rows sortable ${className} ${drag?.active ? "sorting" : ""} ${settling ? "settling" : ""}`}>
       {upcoming.map((item, index) => {
         const lifted = drag?.active && drag.from === index;
         return (
-          <li key={item.id} className={`song queue-row ${lifted ? "lifted" : ""}`} style={shift(index) ? { transform: `translateY(${shift(index)}px)${lifted ? " scale(1.02)" : ""}` } : undefined} onPointerDown={(event) => down(event, index, item.id)} onPointerMove={move} onPointerUp={up} onPointerCancel={() => update(null)} onLostPointerCapture={() => { if (current.current) up(); }}>
-            <span className="grip" aria-hidden="true"><span className="pos">{index + 1 + Math.sign(shift(index))}</span><Icon.Grip /></span>
+          <li key={item.id} className={`song queue-row ${lifted ? "lifted" : ""}`} style={shift(index) ? { transform: `translateY(${shift(index)}px)${lifted ? " scale(1.02)" : ""}` } : undefined} {...(editable ? { onPointerDown: (event: ReactPointerEvent<HTMLLIElement>) => down(event, index, item.id), onPointerMove: move, onPointerUp: up, onPointerCancel: () => update(null), onLostPointerCapture: () => { if (current.current) up(); } } : {})}>
+            <span className={`grip ${editable ? "" : "still"}`} aria-hidden="true"><span className="pos">{index + 1 + Math.sign(shift(index))}</span>{editable && <Icon.Grip />}</span>
             <Art src={artwork(item, 96)} className="art-sm" />
             <div className="meta">
               <div className="name">{item.title}</div>
-              <SongSub artist={item.artist} requester={item.requester} onArtist={onArtist} playlist={item.playlist} />
+              {sub(item)}
             </div>
-            {item.durationMs > 0 && <span className="len">{clock(item.durationMs)}</span>}
-            <span className="reorder">
-              <button className="icon-btn small" aria-label={`${t.up}: ${item.title}`} disabled={index === 0} onClick={() => void command({ action: "move", id: item.id, to: offset + index - 1 })}><Icon.Up /></button>
-              <button className="icon-btn small" aria-label={`${t.down}: ${item.title}`} disabled={index === upcoming.length - 1} onClick={() => void command({ action: "move", id: item.id, to: offset + index + 1 })}><Icon.Down /></button>
-            </span>
-            <button className="icon-btn small" aria-label={`${t.remove}: ${item.title}`} onClick={() => void command({ action: "remove", id: item.id })}><Icon.Close /></button>
+            {editable && (
+              <>
+                <span className="reorder">
+                  <button className="icon-btn small" aria-label={`${t.up}: ${item.title}`} disabled={index === 0} onClick={() => onMove(item, index - 1)}><Icon.Up /></button>
+                  <button className="icon-btn small" aria-label={`${t.down}: ${item.title}`} disabled={index === upcoming.length - 1} onClick={() => onMove(item, index + 1)}><Icon.Down /></button>
+                </span>
+                <button className="icon-btn small" aria-label={`${t.remove}: ${item.title}`} onClick={() => onRemove(item)}><Icon.Close /></button>
+              </>
+            )}
+            <span className="len">{item.durationMs > 0 ? clock(item.durationMs) : ""}</span>
           </li>
         );
       })}
@@ -1393,8 +1405,8 @@ function PlayerTab({ me, view, setView, refresh, live, onOpenList }: { me: Me; v
                             <div className="name">{pick.title}</div>
                             {pick.artist && <div className="sub"><ArtistLinks text={pick.artist} onArtist={openArtist} /></div>}
                           </div>
-                          {pick.durationMs > 0 && <span className="len">{clock(pick.durationMs)}</span>}
                           <button className="icon-btn small swap" aria-label={t.swapPick(pick.title)} title={t.swapPick(pick.title)} disabled={pick.replacing} onClick={() => void command({ action: "swapPick", id: pick.id })}><Icon.Swap /></button>
+                          <span className="len">{pick.durationMs > 0 ? clock(pick.durationMs) : ""}</span>
                         </li>
                       ))}
                     </ol>
@@ -1746,28 +1758,7 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: (r
       {error && <p className="error" role="alert">{error}</p>}
       {!tracks && !failed && <SkeletonSongs count={8} />}
       {tracks?.length === 0 && <p className="hint">{owned ? t.emptyOwnList : t.emptyList}</p>}
-      {tracks && tracks.length > 0 && (
-        <ol className="rows">
-          {tracks.map((track, index) => (
-            <li key={track.id} className="song">
-              <span className="num">{index + 1}</span>
-              <Art src={artwork(track, 96)} className="art-md" />
-              <div className="meta">
-                <div className="name">{track.title}</div>
-                {track.artist && <div className="sub">{track.artist}</div>}
-              </div>
-              {track.durationMs > 0 && <span className="len">{clock(track.durationMs)}</span>}
-              {owned && (
-                <span className="row-tools">
-                  <button className="icon-btn small" aria-label={`${t.up}: ${track.title}`} disabled={index === 0} onClick={() => move(track, index - 1)}><Icon.Up /></button>
-                  <button className="icon-btn small" aria-label={`${t.down}: ${track.title}`} disabled={index === tracks.length - 1} onClick={() => move(track, index + 1)}><Icon.Down /></button>
-                  <button className="icon-btn small" aria-label={`${t.remove}: ${track.title}`} onClick={() => removeTrack(track)}><Icon.Close /></button>
-                </span>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
+      {tracks && tracks.length > 0 && <SortableSongs className="playlist-list" items={tracks} editable={owned} onMove={move} onRemove={removeTrack} sub={(track) => track.artist && <SongSub artist={track.artist} />} />}
     </section>
   );
   return (
@@ -2262,7 +2253,7 @@ export function App() {
           <header className="top">
             <Brand />
             <nav className="tabs waiting" aria-hidden="true">
-              {(["player", "playlists", "history"] as const).map((entry) => <button key={entry} tabIndex={-1} disabled aria-selected={entry === "player"}>{t.tabs[entry]}</button>)}
+              {(["player", "playlists", "history"] as const).map((entry) => <button key={entry} tabIndex={-1} disabled aria-selected={entry === tab}>{t.tabs[entry]}</button>)}
             </nav>
             <div className="who">
               <LangSwitch />
@@ -2271,6 +2262,12 @@ export function App() {
           </header>
           {failed && <p className="notice" role="status">{t.reconnecting}</p>}
           <main className="main">
+            {tab !== "player" ? (
+              <section className="sheet playlists" aria-hidden="true">
+                <div className="skeleton line wide" />
+                <SkeletonRows count={8} />
+              </section>
+            ) : (
             <div className="player">
               <div className="now-col">
                 <div className="now-stage">{shape === "idle" ? <IdleShape /> : <NowShape />}</div>
@@ -2285,6 +2282,7 @@ export function App() {
                 </div>
               </div>
             </div>
+            )}
           </main>
         </div>
       </>
