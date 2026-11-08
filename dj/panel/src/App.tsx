@@ -5,12 +5,13 @@ import * as Icon from "./icons";
 import { Ambient, useAccent } from "./ambient";
 
 type Tab = "player" | "playlists" | "history" | "settings";
-type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
+type QueueItem = { query: string; title?: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs?: number };
 type Synced = View & { at: number; stale?: boolean };
 type Command = { action: string; positionMs?: number; loop?: Loop; on?: boolean; id?: string; to?: number; mode?: AutoplayMode };
 type ArtistTarget = { id?: string; name: string };
 type OpenArtist = (target: ArtistTarget) => void;
-type Browse = { kind: "artist"; target: ArtistTarget } | { kind: "album"; id: string };
+type AlbumTarget = { id?: string | null; name: string; artist?: string | null };
+type Browse = { kind: "artist"; target: ArtistTarget } | { kind: "album"; target: AlbumTarget };
 
 const message = (error: unknown) => t.errors[error instanceof ApiError ? error.message : "failed"] ?? t.errors.failed!;
 const isLink = (text: string) => /^https?:\/\//.test(text.trim());
@@ -31,7 +32,7 @@ function estimate(view: Synced, now: number): number {
 }
 
 function predictAdd(view: Synced, item: QueueItem): Synced {
-  const track: Track = { id: `pending-${crypto.randomUUID()}`, query: item.query, title: item.title ?? item.query, artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy: "" };
+  const track: Track = { id: `pending-${crypto.randomUUID()}`, query: item.query, title: item.title ?? item.query, artist: item.artist ?? null, artists: item.artists, album: item.album ?? null, albumId: item.albumId ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy: "" };
   const now = performance.now();
   const tracks = [...view.tracks, track];
   if (view.active && view.current >= 0 && view.current < view.tracks.length) return { ...view, positionMs: estimate(view, now), at: now, tracks };
@@ -133,6 +134,11 @@ function ArtistLinks({ text, refs, onArtist }: { text: string | null | undefined
   if (!parts.length) return link({ name: text });
   if (cursor < text.length) parts.push(text.slice(cursor));
   return <>{parts}</>;
+}
+
+function AlbumLink({ target, onAlbum }: { target: AlbumTarget; onAlbum: (target: AlbumTarget) => void }) {
+  const href = target.id ? `https://music.youtube.com/browse/${target.id}` : `https://music.youtube.com/search?q=${encodeURIComponent([target.name, target.artist].filter(Boolean).join(" "))}`;
+  return <a href={href} className="artist-link" title={t.openAlbum(target.name)} onClick={(event) => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return; event.preventDefault(); onAlbum(target); }}>{target.name}</a>;
 }
 
 function SongSub({ artist, requester, onArtist }: { artist?: string | null; requester?: Requester | null; onArtist?: OpenArtist }) {
@@ -257,7 +263,7 @@ function useWarm(enabled: boolean): (song: Song) => void {
   }, [enabled]);
 }
 
-const asItem = (song: Song): QueueItem => ({ query: song.url, title: song.title, artist: song.artist, artwork: song.artwork, durationMs: song.durationMs });
+const asItem = (song: Song): QueueItem => ({ query: song.url, title: song.title, artist: song.artist, artists: song.artists, album: song.album, albumId: song.albumId, artwork: song.artwork, durationMs: song.durationMs });
 
 function SongRow({ song, done, disabled, onAdd, warm, onArtist, index, leaving, onLeft, withoutArtist, style }: { song: Song; done: boolean; disabled: boolean; onAdd: () => void; warm: (song: Song) => void; onArtist?: OpenArtist; index?: number; leaving?: boolean; onLeft?: () => void; withoutArtist?: boolean; style?: CSSProperties }) {
   const album = song.album && <>{!withoutArtist && song.artist && " · "}{song.album}</>;
@@ -723,7 +729,7 @@ function ArtistView({ target, onBack, onOpen, onPick, onPickMany }: { target: Ar
           <ul className="releases">
             {page.releases.map((release) => (
               <li key={release.id}>
-                <button className="release" onClick={() => onOpen({ kind: "album", id: release.id })}>
+                <button className="release" onClick={() => onOpen({ kind: "album", target: { id: release.id, name: release.title, artist: page.name } })}>
                   <Art src={release.artwork} className="art-release" />
                   <span className="name">{release.title}</span>
                   <span className="sub">{t.release(release.kind, release.year)}</span>
@@ -752,8 +758,8 @@ function ArtistView({ target, onBack, onOpen, onPick, onPickMany }: { target: Ar
   );
 }
 
-function AlbumView({ id, onBack, onOpen, onPick, onPickMany }: { id: string; onBack: () => void; onOpen: (entry: Browse) => void; onPick: (item: QueueItem) => Promise<void>; onPickMany: (items: QueueItem[]) => Promise<void> }) {
-  const { data: album, error: loadError } = useLoad<Album>(`album?id=${encodeURIComponent(id)}`);
+function AlbumView({ target, onBack, onOpen, onPick, onPickMany }: { target: AlbumTarget; onBack: () => void; onOpen: (entry: Browse) => void; onPick: (item: QueueItem) => Promise<void>; onPickMany: (items: QueueItem[]) => Promise<void> }) {
+  const { data: album, error: loadError } = useLoad<Album>(target.id ? `album?id=${encodeURIComponent(target.id)}` : `album?name=${encodeURIComponent([target.name, target.artist].filter(Boolean).join(" "))}`);
   const [error, setError] = useState<string | null>(null);
   const { added, pick } = useAddedSet(onPick, setError);
   const warm = useWarm(true);
@@ -797,7 +803,7 @@ function AlbumView({ id, onBack, onOpen, onPick, onPickMany }: { id: string; onB
 
 function Browser({ entry, onBack, onOpen, onPick, onPickMany }: { entry: Browse; onBack: () => void; onOpen: (entry: Browse) => void; onPick: (item: QueueItem) => Promise<void>; onPickMany: (items: QueueItem[]) => Promise<void> }) {
   const ref = useRef<HTMLDivElement>(null);
-  const key = entry.kind === "album" ? `album:${entry.id}` : `artist:${entry.target.id ?? entry.target.name}`;
+  const key = `${entry.kind}:${entry.target.id ?? entry.target.name}`;
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -806,7 +812,7 @@ function Browser({ entry, onBack, onOpen, onPick, onPickMany }: { entry: Browse;
   }, [key]);
   return (
     <div className="browse-area" ref={ref} key={key}>
-      {entry.kind === "artist" ? <ArtistView target={entry.target} onBack={onBack} onOpen={onOpen} onPick={onPick} onPickMany={onPickMany} /> : <AlbumView id={entry.id} onBack={onBack} onOpen={onOpen} onPick={onPick} onPickMany={onPickMany} />}
+      {entry.kind === "artist" ? <ArtistView target={entry.target} onBack={onBack} onOpen={onOpen} onPick={onPick} onPickMany={onPickMany} /> : <AlbumView target={entry.target} onBack={onBack} onOpen={onOpen} onPick={onPick} onPickMany={onPickMany} />}
     </div>
   );
 }
@@ -920,7 +926,7 @@ function Face({ person }: { person: Listener }) {
   return person.avatar && !broken ? <img className="face" src={person.avatar} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} /> : <span className="face">{person.name.slice(0, 1).toUpperCase()}</span>;
 }
 
-function NowPlaying({ view, track, command, onArtist }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void>; onArtist: OpenArtist }) {
+function NowPlaying({ view, track, command, onArtist, onAlbum }: { view: Synced | null; track: Track | undefined; command: (body: Command) => Promise<void>; onArtist: OpenArtist; onAlbum: (target: AlbumTarget) => void }) {
   const now = useNow(stageOf(view, track) === "playing");
   const [seek, setSeek] = useState<number | null>(null);
   if (!track || !view) {
@@ -946,7 +952,10 @@ function NowPlaying({ view, track, command, onArtist }: { view: Synced | null; t
         <p className="eyebrow"><Equalizer />{view.stale ? t.lostBot : view.loading ? t.starting : view.stalled ? t.buffering : view.paused ? t.paused : t.nowPlaying}</p>
         <div className="swap" key={track.query}>
           <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
-          <p className="artist">{track.artist ? <ArtistLinks text={track.artist} onArtist={onArtist} /> : "\u00a0"}</p>
+          <p className="artist">
+            {track.artist ? <ArtistLinks text={track.artist} refs={track.artists} onArtist={onArtist} /> : !track.album && "\u00a0"}
+            {track.album && <span className="album-part">{track.artist && <span aria-hidden="true"> · </span>}<AlbumLink target={{ id: track.albumId, name: track.album, artist: track.artists?.[0]?.name ?? track.artist }} onAlbum={onAlbum} /></span>}
+          </p>
           <p className="asked-by">
             {track.requestedBy === "autoplay" ? (
               <span className="tag auto-tag">{track.pickedBy === "explore" ? <Icon.Compass size={13} /> : <Icon.Radio size={13} />}{t.autoplay}</span>
@@ -1171,6 +1180,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
   const [browse, setBrowse] = useState<Browse[]>([]);
   const openBrowse = useCallback((entry: Browse) => setBrowse((stack) => [...stack.slice(-19), entry]), []);
   const openArtist = useCallback<OpenArtist>((target) => openBrowse({ kind: "artist", target }), [openBrowse]);
+  const openAlbum = useCallback((target: AlbumTarget) => openBrowse({ kind: "album", target }), [openBrowse]);
   const closeBrowse = useCallback(() => setBrowse((stack) => (stack.length ? [] : stack)), []);
   const browsing = browse.at(-1);
   const seedKey = view?.active ? (view.tracks[view.current]?.query ?? "end") : "";
@@ -1217,7 +1227,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
       <div className="player">
         <div className="now-col" ref={nowRef}>
           <div className="now-stage">
-            <NowPlaying view={view} track={track} command={command} onArtist={openArtist} />
+            <NowPlaying view={view} track={track} command={command} onArtist={openArtist} onAlbum={openAlbum} />
             <div className="now-extras">
               <Reveal open={Boolean(error)}><p className="error" role="alert">{error}</p></Reveal>
               <Reveal open={Boolean(skipped)}><p className="notice" role="status">{skipped && t.skippedFailed(skipped)}</p></Reveal>

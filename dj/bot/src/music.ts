@@ -1,5 +1,5 @@
 export type ArtistRef = { id: string; name: string };
-export type Song = { videoId: string; url: string; title: string; artist: string; artists?: ArtistRef[]; album: string | null; durationMs: number; artwork: string | null; plays: string | null };
+export type Song = { videoId: string; url: string; title: string; artist: string; artists?: ArtistRef[]; album: string | null; albumId?: string | null; durationMs: number; artwork: string | null; plays: string | null };
 
 type Run = { text: string; navigationEndpoint?: { browseEndpoint?: { browseId?: string; browseEndpointContextSupportedConfigs?: { browseEndpointContextMusicConfig?: { pageType?: string } } } } };
 type Column = { musicResponsiveListItemFlexColumnRenderer?: { text?: { runs?: Run[] } } };
@@ -19,6 +19,7 @@ type SearchResponse = { contents?: { tabbedSearchResultsRenderer?: { tabs?: { ta
 const CLIENT = { clientName: "WEB_REMIX", clientVersion: "1.20251101.01.00", hl: "en", gl: "ES" };
 const SONGS_ONLY = "EgWKAQIIAWoMEA4QChADEAQQCRAF";
 const ARTISTS_ONLY = "EgWKAQIgAWoMEA4QChADEAQQCRAF";
+const ALBUMS_ONLY = "EgWKAQIYAWoMEA4QChADEAQQCRAF";
 const ARTIST_PAGE = "MUSIC_PAGE_TYPE_ARTIST";
 const SEPARATOR = " • ";
 
@@ -55,6 +56,7 @@ function song(item: ListItem): Song | null {
     artist: text(groups[0] ?? []),
     artists,
     album: album ? text(album) : null,
+    albumId: album?.[0]?.navigationEndpoint?.browseEndpoint?.browseId ?? null,
     durationMs: duration ? clockToMs(duration) : 0,
     artwork: artwork ? artwork.replace(/=w\d+-h\d+/, "=w544-h544") : null,
     plays: columns[2]?.map((run) => run.text).join("") || null,
@@ -133,7 +135,7 @@ function releaseOf(item: TwoRow, kind: Release["kind"]): Release | null {
   return { id, title, year: subtitle.match(/\b(19|20)\d{2}\b/)?.[0] ?? null, kind, artwork: sized(item.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails?.at(-1)?.url, 544) };
 }
 
-function listSong(item: ListItem, fallback: { artist?: string; artists?: ArtistRef[]; album?: string; artwork?: string | null }): Song | null {
+function listSong(item: ListItem, fallback: { artist?: string; artists?: ArtistRef[]; album?: string; albumId?: string; artwork?: string | null }): Song | null {
   const parsed = song(item);
   if (!parsed) return null;
   const renderer = item.musicResponsiveListItemRenderer;
@@ -146,6 +148,7 @@ function listSong(item: ListItem, fallback: { artist?: string; artists?: ArtistR
     artist: parsed.artist || fallback.artist || "",
     artists: parsed.artists?.length ? parsed.artists : (fallback.artists ?? []),
     album: album ? runsText(album) : (fallback.album ?? null),
+    albumId: album ? (album[0]?.navigationEndpoint?.browseEndpoint?.browseId ?? null) : (fallback.albumId ?? null),
     durationMs: parsed.durationMs || (/^\d+(:\d{2})+$/.test(fixed) ? clockToMs(fixed) : 0),
     artwork: parsed.artwork ?? fallback.artwork ?? null,
     plays,
@@ -231,11 +234,17 @@ async function loadAlbum(id: string): Promise<Album> {
   const subtitle = (header?.subtitle?.runs ?? []).map((run) => run.text).filter((part) => part !== SEPARATOR);
   const artwork = sized(header?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.at(-1)?.url, 544);
   const items = two?.secondaryContents?.sectionListRenderer?.contents?.[0]?.musicShelfRenderer?.contents ?? [];
-  const songs = items.map((item) => listSong(item, { artist, artists, album: title, artwork })).filter((entry): entry is Song => entry !== null);
+  const songs = items.map((item) => listSong(item, { artist, artists, album: title, albumId: id, artwork })).filter((entry): entry is Song => entry !== null);
   return { id, title, year: subtitle.find((part) => /^\d{4}$/.test(part)) ?? null, kind: /album/i.test(subtitle[0] ?? "") ? "album" : "single", artwork, artist, songs };
 }
 
 export const album = cache(loadAlbum);
+
+export async function albumByName(query: string): Promise<Album> {
+  const id = (await searchItems(query, ALBUMS_ONLY)).map((item) => item.musicResponsiveListItemRenderer?.navigationEndpoint?.browseEndpoint?.browseId).find((browseId) => browseId?.startsWith("MPRE"));
+  if (!id) throw new Error("notFound");
+  return album(id);
+}
 
 type PanelVideo = { videoId?: string; title?: { runs?: Run[] }; longBylineText?: { runs?: Run[] }; lengthText?: { runs?: Run[] }; thumbnail?: { thumbnails?: { url: string }[] } };
 type NextResponse = { contents?: { singleColumnMusicWatchNextResultsRenderer?: { tabbedRenderer?: { watchNextTabbedResultsRenderer?: { tabs?: { tabRenderer?: { content?: { musicQueueRenderer?: { content?: { playlistPanelRenderer?: { contents?: { playlistPanelVideoRenderer?: PanelVideo }[] } } } } } }[] } } } } };
@@ -265,6 +274,7 @@ function panelSong(video: PanelVideo): Song | null {
     artist: byline[0] ?? "",
     artists,
     album: byline.length > 2 ? (byline[1] ?? null) : null,
+    albumId: runs.find((run) => run.navigationEndpoint?.browseEndpoint?.browseId?.startsWith("MPRE"))?.navigationEndpoint?.browseEndpoint?.browseId ?? null,
     durationMs: length && /^\d+(:\d{2})+$/.test(length) ? clockToMs(length) : 0,
     artwork: artwork ? artwork.replace(/=w\d+-h\d+/, "=w544-h544") : null,
     plays: null,

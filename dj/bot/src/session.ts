@@ -1,9 +1,9 @@
 import { db, getValue, setValue } from "./db.ts";
-import { artistNames, type Seed, sessionRadio, type Song } from "./music.ts";
+import { type ArtistRef, artistNames, type Seed, sessionRadio, type Song } from "./music.ts";
 import { type Requester, requester } from "./client.ts";
 import * as player from "./player.ts";
 
-export type Track = { id: string; query: string; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean };
+export type Track = { id: string; query: string; title: string; artist: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean };
 export type AutoplayMode = "session" | "explore";
 export type Loop = "off" | "track" | "queue";
 
@@ -58,7 +58,7 @@ export type Settings = { djRoleId: string | null };
 export type HistoryEntry = { id: number; query: string; title: string; url: string | null; requestedBy: string; requester: Requester | null; playedAt: number; artist: string | null; artwork: string | null; durationMs: number };
 export type Playlist = { id: string; name: string; ownerId: string; ownerName: string; trackCount: number };
 export type PlaylistTrack = { id: string; query: string; title: string };
-export type QueueItem = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
+export type QueueItem = { query: string; title?: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs?: number };
 export type EnqueueResult = { ok: true; added: number; position: number };
 
 export type Command =
@@ -370,7 +370,7 @@ async function radioPicks(count: number, kept: Track[]): Promise<Track[]> {
     const window = new Set([...recent, ...picks.flatMap((track) => artistNames(track.artist))].slice(-ARTIST_COOLDOWN * 2));
     const index = Math.max(0, pool.findIndex((song) => !artistNames(song.artist).some((name) => window.has(name))));
     const [song] = pool.splice(index, 1);
-    picks.push({ id: crypto.randomUUID(), query: song!.url, title: song!.title, artist: song!.artist || null, artwork: song!.artwork, durationMs: song!.durationMs, url: song!.url, requestedBy: "autoplay", pickedBy });
+    picks.push({ id: crypto.randomUUID(), query: song!.url, title: song!.title, artist: song!.artist || null, artists: song!.artists ?? [], album: song!.album, albumId: song!.albumId ?? null, artwork: song!.artwork, durationMs: song!.durationMs, url: song!.url, requestedBy: "autoplay", pickedBy });
   }
   return picks;
 }
@@ -454,12 +454,20 @@ export async function expand(url: string): Promise<{ title: string; url: string 
   return player.expand(url);
 }
 
+const REF_ID = /^UC[\w-]{22}$/;
+const ALBUM_ID = /^MPRE[\w-]+$/;
+
+function albumAndArtists(item: QueueItem): Pick<Track, "artists" | "album" | "albumId"> {
+  const artists = Array.isArray(item.artists) ? item.artists.filter((ref) => REF_ID.test(String(ref?.id)) && typeof ref.name === "string").slice(0, 8).map((ref) => ({ id: ref.id, name: ref.name.slice(0, 200) })) : [];
+  return { artists, album: typeof item.album === "string" ? item.album.slice(0, 300) : null, albumId: typeof item.albumId === "string" && ALBUM_ID.test(item.albumId) ? item.albumId : null };
+}
+
 export async function enqueue(channelId: string, items: QueueItem[], requestedBy: string): Promise<EnqueueResult> {
   const who = await requester(requestedBy);
   const before = state.tracks.length;
   const position = before - Math.max(state.current, 0);
   const wasPlaying = state.active && state.current >= 0 && state.current < before;
-  state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy, requester: who })));
+  state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, ...albumAndArtists(item), artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy, requester: who })));
   state.lastHumanAt = Date.now();
   if (!state.active || state.channelId !== channelId) {
     await player.join(channelId);
@@ -644,7 +652,7 @@ player.onPlayerEvent((event) => {
     const track = state.tracks[state.current];
     if (track) {
       const firstStart = track.url === null || track.requestedBy === "autoplay";
-      Object.assign(track, { title: event.title, artist: track.artist ?? event.artist, artwork: track.artwork ?? event.artwork, durationMs: event.durationMs || track.durationMs, url: event.url });
+      Object.assign(track, { title: event.title, artist: track.artist ?? event.artist, album: track.album ?? event.album, artwork: track.artwork ?? event.artwork, durationMs: event.durationMs || track.durationMs, url: event.url });
       if (firstStart) {
         db.prepare("INSERT INTO history (query, title, url, requested_by, played_at, artist, artwork, duration_ms, requester_name, requester_avatar, session_id, picked_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(track.query, track.title, track.url, track.requestedBy, Date.now(), track.artist, track.artwork, track.durationMs, track.requester?.name ?? null, track.requester?.avatar ?? null, state.sessionId, track.pickedBy ?? null);
         db.prepare("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY id DESC LIMIT ?)").run(HISTORY_KEPT);

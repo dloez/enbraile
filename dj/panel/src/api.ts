@@ -1,11 +1,11 @@
 export type Requester = { name: string; avatar: string | null };
 export type AutoplayMode = "session" | "explore";
-export type Track = { id: string; query: string; title: string; artist?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean };
+export type Track = { id: string; query: string; title: string; artist?: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean };
 export type Loop = "off" | "track" | "queue";
 export type Listener = { id: string; name: string; avatar: string | null };
 export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; loading: boolean; stalled?: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayMode: AutoplayMode; autoplayEndsAt: number | null; autoplayUpcoming: Track[]; positionMs: number; listeners: number; people?: Listener[]; active: boolean; skipped: { id: string; title: string } | null };
 export type ArtistRef = { id: string; name: string };
-export type Song = { videoId: string; url: string; title: string; artist: string; artists?: ArtistRef[]; album: string | null; durationMs: number; artwork: string | null; plays: string | null };
+export type Song = { videoId: string; url: string; title: string; artist: string; artists?: ArtistRef[]; album: string | null; albumId?: string | null; durationMs: number; artwork: string | null; plays: string | null };
 export type Artist = { id: string; name: string; avatar: string | null; audience: string | null };
 export type Release = { id: string; title: string; year: string | null; kind: "album" | "single"; artwork: string | null };
 export type ArtistPage = Artist & { banner: string | null; songs: Song[]; releases: Release[]; related: Artist[] };

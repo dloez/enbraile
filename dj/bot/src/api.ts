@@ -3,7 +3,7 @@ import { WebSocketServer } from "ws";
 import { guild } from "./client.ts";
 import { accessOf, enqueueInput, voiceChannel } from "./discord.ts";
 import { resolveInput, signTicket, verifyTicket } from "./input.ts";
-import { album, artistByName, artistPage, searchArtists, searchSongs } from "./music.ts";
+import { album, albumByName, artistByName, artistPage, searchArtists, searchSongs } from "./music.ts";
 import { warm } from "./player.ts";
 import * as session from "./session.ts";
 
@@ -87,9 +87,11 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
     }
     case "/internal/album": {
       const albumId = url.searchParams.get("id") ?? "";
-      if (!/^MPRE[\w-]+$/.test(albumId)) return [{ error: "notFound" }, 404];
+      const name = (url.searchParams.get("name") ?? "").trim().slice(0, 300);
       try {
-        return [await album(albumId)];
+        if (/^MPRE[\w-]+$/.test(albumId)) return [await album(albumId)];
+        if (name) return [await albumByName(name)];
+        return [{ error: "notFound" }, 404];
       } catch (error) {
         console.error("album", albumId, (error as Error).message);
         return [{ error: "artistFailed" }, 502];

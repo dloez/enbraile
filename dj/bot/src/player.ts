@@ -2,9 +2,9 @@ import { type ChildProcess, execFile, spawn } from "node:child_process";
 import { AudioPlayerStatus, type AudioPlayer, type AudioResource, createAudioPlayer, createAudioResource, entersState, joinVoiceChannel, StreamType, type VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
 import { client, guild } from "./client.ts";
 
-type Resolved = { title: string; artist: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string };
+type Resolved = { title: string; artist: string | null; album: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string };
 
-export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed" | "disconnected"; generation: number; error?: string } | { type: "moved"; generation: number; channelId: string } | { type: "listeners"; generation: number };
+export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; album: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed" | "disconnected"; generation: number; error?: string } | { type: "moved"; generation: number; channelId: string } | { type: "listeners"; generation: number };
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
 const RESOLVE_TTL_MS = 2 * 60 * 60 * 1000;
@@ -119,16 +119,16 @@ function resolveTrack(query: string, uncached = false, urgent = false): Promise<
     const started = Date.now();
     execFile(
       "yt-dlp",
-      ["--plugin-dirs", PLUGINS, "--js-runtimes", "node", ...(uncached ? ["--no-cache-dir"] : []), "--no-playlist", "--playlist-items", "1", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,track,artist,uploader,thumbnail,duration,webpage_url,url,http_headers})j", query],
+      ["--plugin-dirs", PLUGINS, "--js-runtimes", "node", ...(uncached ? ["--no-cache-dir"] : []), "--no-playlist", "--playlist-items", "1", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,track,artist,album,uploader,thumbnail,duration,webpage_url,url,http_headers})j", query],
       { timeout: 60000, maxBuffer: 8 * 1024 * 1024 },
       (error, stdout, stderr) => {
         if (error) return reject(new Error((stderr || error.message).trim().slice(-300)));
         const line = stdout.trim().split("\n").at(-1);
         if (!line) return reject(new Error("no result"));
         if (stderr.trim()) console.error("yt-dlp", query, uncached ? "uncached" : "cached", stderr.trim().slice(-400));
-        const info = JSON.parse(line) as { title: string; track?: string; artist?: string; uploader?: string; thumbnail?: string; duration?: number; webpage_url: string; url: string; http_headers?: Record<string, string> };
+        const info = JSON.parse(line) as { title: string; track?: string; artist?: string; album?: string; uploader?: string; thumbnail?: string; duration?: number; webpage_url: string; url: string; http_headers?: Record<string, string> };
         console.log("resolved", query, Date.now() - started, "ms", uncached ? "without cache" : "");
-        resolve({ title: info.track ?? info.title, artist: info.artist ?? info.uploader?.replace(/ - Topic$/, "") ?? null, artwork: info.thumbnail ?? null, durationMs: (info.duration ?? 0) * 1000, pageUrl: info.webpage_url, streamUrl: info.url, userAgent: info.http_headers?.["User-Agent"] ?? "Mozilla/5.0" });
+        resolve({ title: info.track ?? info.title, artist: info.artist ?? info.uploader?.replace(/ - Topic$/, "") ?? null, album: info.album ?? null, artwork: info.thumbnail ?? null, durationMs: (info.duration ?? 0) * 1000, pageUrl: info.webpage_url, streamUrl: info.url, userAgent: info.http_headers?.["User-Agent"] ?? "Mozilla/5.0" });
       },
     );
   }));
@@ -296,7 +296,7 @@ async function start(query: string, startMs: number, volume: number, id: number,
     flowing = true;
     emit({ type: "playing", generation: id });
   });
-  emit({ type: "started", generation: id, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs, url: track.pageUrl });
+  emit({ type: "started", generation: id, title: track.title, artist: track.artist, album: track.album, artwork: track.artwork, durationMs: track.durationMs, url: track.pageUrl });
 }
 
 export function play(query: string, startMs: number, volume: number, id: number, retried = false): void {
