@@ -593,27 +593,9 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
         </span>
       </div>
       <div className="now-foot">
-        <label className="switch">
-          <input type="checkbox" role="switch" checked={view.autoplay} onChange={(event) => void command({ action: "autoplay", on: event.target.checked })} />
-          <span className="knob" aria-hidden="true" />
-          {t.autoplay}
-        </label>
+        <p className="listeners"><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(view.listeners)}</p>
         <button className="pill danger" title={t.disconnectHelp} onClick={() => void command({ action: "stop" })}>{t.disconnect}</button>
       </div>
-      <Reveal open={view.autoplay}>
-        <div className="modes" role="radiogroup" aria-label={t.autoplayMode}>
-          {(["session", "explore"] as const).map((mode) => (
-            <button key={mode} className="mode" role="radio" aria-checked={view.autoplayMode === mode} onClick={() => void command({ action: "autoplayMode", mode })}>
-              <span className="mode-icon">{mode === "session" ? <Icon.Radio size={18} /> : <Icon.Compass size={18} />}</span>
-              <span className="mode-text">
-                <span className="mode-name">{t.autoplayModes[mode]}</span>
-                <span className="mode-help">{t.autoplayModeShort[mode]}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </Reveal>
-      <p className="listeners"><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(view.listeners)}</p>
     </section>
   );
 }
@@ -839,12 +821,6 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
           <div className="now-stage">
             <NowPlaying view={view} track={track} command={command} />
             <div className="now-extras">
-              <Reveal open={Boolean(track && view?.autoplay && view.autoplayEndsAt)}>
-                <div className="autoplay-note">
-                  <span className="sub">{t.autoplayEnds(Math.max(0, Math.ceil(((view?.autoplayEndsAt ?? 0) - Date.now()) / 60000)))}</span>
-                  <button className="pill" onClick={() => void command({ action: "keepGoing" })}>{t.keepGoing}</button>
-                </div>
-              </Reveal>
               <Reveal open={Boolean(error)}><p className="error" role="alert">{error}</p></Reveal>
               <Reveal open={Boolean(skipped)}><p className="notice" role="status">{skipped && t.skippedFailed(skipped)}</p></Reveal>
             </div>
@@ -862,11 +838,12 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                   <h2 className="label">{t.queue}{upcoming.length > 0 && <span className="count">{upcoming.length}</span>}</h2>
                   {upcoming.length > 0 && <button className="pill ghost" onClick={() => void command({ action: "clear" })}>{t.clear}</button>}
                 </div>
-                {upcoming.length === 0 && !autoplays.length && <p className="hint">{view?.autoplay ? t.autoplayPicking : t.queueEmpty}</p>}
+                {upcoming.length === 0 && view?.loop !== "queue" && <p className="hint">{t.queueEmpty}</p>}
                 {upcoming.length > 0 && <QueueList upcoming={upcoming} offset={offset} command={command} />}
-                {autoplays.length > 0 && (
+                {view?.loop === "queue" && <FromTop tracks={view.tracks} />}
+                {view && <AutoplayBlock view={view} command={command} />}
+                {view && view.loop === "off" && autoplays.length > 0 && (
                   <div className="auto-group">
-                    <p className="auto-label"><span>{upcoming.length ? t.thenAutoplay : t.autoplay}</span></p>
                     <ol className="rows">
                       {autoplays.map((pick) => (
                         <li key={pick.id} className={`song auto-row ${pick.replacing ? "replacing" : ""}`} aria-busy={pick.replacing}>
@@ -891,6 +868,74 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
       </div>
       {track && view && <Dock view={view} track={track} command={command} shown={docked} />}
     </>
+  );
+}
+
+const FROM_TOP_SHOWN = 3;
+
+function FromTop({ tracks }: { tracks: Track[] }) {
+  if (!tracks.length) return null;
+  const shown = tracks.slice(0, FROM_TOP_SHOWN);
+  return (
+    <div className="from-top">
+      <p className="auto-label from-top-label"><Icon.Repeat /><span>{t.fromTop}</span><span className="count">{tracks.length}</span></p>
+      <ol className="rows">
+        {shown.map((track, index) => (
+          <li key={track.id} className="song from-top-row">
+            <span className="num">{index + 1}</span>
+            <Art src={artwork(track, 96)} className="art-sm" />
+            <div className="meta">
+              <div className="name">{track.title}</div>
+              <SongSub artist={track.artist} requester={track.requester} />
+            </div>
+            {track.durationMs > 0 && <span className="len">{clock(track.durationMs)}</span>}
+          </li>
+        ))}
+      </ol>
+      {tracks.length > shown.length && <p className="hint">{t.fromTopMore(tracks.length - shown.length)}</p>}
+    </div>
+  );
+}
+
+function AutoplayBlock({ view, command }: { view: Synced; command: (body: Command) => Promise<void> }) {
+  const held = view.loop !== "off";
+  const minutes = Math.max(0, Math.ceil(((view.autoplayEndsAt ?? 0) - Date.now()) / 60000));
+  return (
+    <div className={`auto-block ${held ? "held" : ""}`}>
+      <div className="auto-head">
+        <p className="auto-label"><span>{held && view.autoplay ? `${t.thenAutoplay} · ${t.autoplayModes[view.autoplayMode]}` : t.thenAutoplay}</span></p>
+        <label className="switch">
+          <input type="checkbox" role="switch" aria-label={t.autoplay} checked={view.autoplay} disabled={held} onChange={(event) => void command({ action: "autoplay", on: event.target.checked })} />
+          <span className="knob" aria-hidden="true" />
+        </label>
+      </div>
+      {held ? (
+        <p className="hint">{t.autoplayOnHold}</p>
+      ) : !view.autoplay ? (
+        <p className="hint">{t.autoplayOff}</p>
+      ) : (
+        <>
+          <div className="modes" role="radiogroup" aria-label={t.autoplayMode}>
+            {(["session", "explore"] as const).map((mode) => (
+              <button key={mode} className="mode" role="radio" aria-checked={view.autoplayMode === mode} onClick={() => void command({ action: "autoplayMode", mode })}>
+                <span className="mode-icon">{mode === "session" ? <Icon.Radio size={16} /> : <Icon.Compass size={16} />}</span>
+                <span className="mode-text">
+                  <span className="mode-name">{t.autoplayModes[mode]}</span>
+                  <span className="mode-help">{t.autoplayModeShort[mode]}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          {view.autoplayEndsAt && (
+            <div className="autoplay-note">
+              <span className="sub">{t.autoplayEnds(minutes)}</span>
+              <button className="pill ghost accent" onClick={() => void command({ action: "keepGoing" })}>{t.keepGoing}</button>
+            </div>
+          )}
+          {!view.autoplayUpcoming.length && <p className="hint">{t.autoplayPicking}</p>}
+        </>
+      )}
+    </div>
   );
 }
 
