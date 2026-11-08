@@ -1724,6 +1724,14 @@ function SettingsTab() {
   );
 }
 
+function LangSwitch() {
+  return (
+    <div className="lang-switch" role="group" aria-label={t.language}>
+      {LANGS.map((entry) => <button key={entry.code} lang={entry.code} aria-label={entry.name} title={entry.name} aria-pressed={lang === entry.code} onClick={() => { if (lang !== entry.code) switchLang(); }}>{entry.code.toUpperCase()}</button>)}
+    </div>
+  );
+}
+
 function SkeletonRows({ count }: { count: number }) {
   return (
     <div className="skeleton-rows" aria-hidden="true">
@@ -1791,7 +1799,16 @@ export function App() {
       <>
         <Ambient src={null} paused />
         <div className="page" aria-busy="true">
-          <header className="top"><Brand /></header>
+          <header className="top">
+            <Brand />
+            <nav className="tabs waiting" aria-hidden="true">
+              {(["player", "playlists", "history"] as const).map((entry) => <button key={entry} tabIndex={-1} disabled aria-selected={entry === "player"}>{t.tabs[entry]}</button>)}
+            </nav>
+            <div className="who">
+              <LangSwitch />
+              <span className="avatar skeleton" aria-hidden="true" />
+            </div>
+          </header>
           {failed && <p className="notice" role="status">{t.reconnecting}</p>}
           <main className="main">
             <div className="player">
@@ -1835,9 +1852,7 @@ export function App() {
             </nav>
           )}
           <div className="who">
-            <div className="lang-switch" role="group" aria-label={t.language}>
-              {LANGS.map((entry) => <button key={entry.code} lang={entry.code} aria-label={entry.name} title={entry.name} aria-pressed={lang === entry.code} onClick={() => { if (lang !== entry.code) switchLang(); }}>{entry.code.toUpperCase()}</button>)}
-            </div>
+            <LangSwitch />
             {me.user.image ? <img className="avatar" src={me.user.image} alt={me.user.name} title={me.user.name} referrerPolicy="no-referrer" /> : <span className="avatar" title={me.user.name}>{me.user.name.slice(0, 1).toUpperCase()}</span>}
           </div>
         </header>
