@@ -90,7 +90,7 @@ const AUTOPLAY_SEEDS = 2;
 const ARTIST_COOLDOWN = 3;
 const AUTOPLAY_AHEAD = 3;
 const AUTOPLAY_SEED_WEIGHT = 0.3;
-const STALE_AFTER_NEW_SEEDS = 3;
+const REPLAN_AFTER_MS = 1_500;
 const LENGTH_MISMATCH_MS = 20_000;
 const EXPLORE_SEEDS = 12;
 const EXPLORE_SEEDS_PER_LISTENER = 3;
@@ -238,17 +238,6 @@ function radioSeeds(): Seed[] {
   return seeds;
 }
 
-function humanSeedIds(): string[] {
-  const ids: string[] = [];
-  for (const track of [...state.tracks].reverse()) {
-    if (track.requestedBy === "autoplay") continue;
-    const id = videoId(track.url) ?? videoId(track.query);
-    if (id && !ids.includes(id)) ids.push(id);
-    if (ids.length === HUMAN_SEEDS) break;
-  }
-  return ids;
-}
-
 function sample<T extends { plays: number }>(pool: T[], count: number): T[] {
   const left = [...pool];
   const chosen: T[] = [];
@@ -319,24 +308,21 @@ const declined = new Set<string>();
 let planToken = 0;
 let planning: { token: number; done: Promise<void> } | null = null;
 let refillAt: number | null = null;
-const pickBasis = new Map<string, string[]>();
+let replanTimer: ReturnType<typeof setTimeout> | null = null;
 
-function refreshStalePicks(): void {
-  if (!state.autoplay || state.loop !== "off") return;
-  const seeds = humanSeedIds();
-  const queued = Math.max(0, state.tracks.length - state.current - 1);
-  const stale: Track[] = [];
-  state.autoplayUpcoming.forEach((pick, index) => {
-    if (pick.replacing || queued + index < PREPARED_AHEAD) return;
-    const basis = pickBasis.get(pick.id);
-    if (!basis) return void pickBasis.set(pick.id, seeds);
-    if (seeds.filter((id) => !basis.includes(id)).length >= STALE_AFTER_NEW_SEEDS) stale.push(pick);
-  });
-  if (!stale.length) return;
-  for (const pick of stale) pick.replacing = true;
-  console.log("autoplay refresh", JSON.stringify({ stale: stale.length, queued }));
-  save();
-  restartPlan();
+function replanPicks(reason: string, delayMs = REPLAN_AFTER_MS): void {
+  if (replanTimer) clearTimeout(replanTimer);
+  replanTimer = setTimeout(() => {
+    replanTimer = null;
+    if (!state.active || !state.autoplay || state.loop !== "off") return;
+    const queued = Math.max(0, state.tracks.length - state.current - 1);
+    const redo = state.autoplayUpcoming.filter((pick, index) => !pick.replacing && (queued > 0 || index > 0));
+    if (!redo.length) return;
+    for (const pick of redo) pick.replacing = true;
+    console.log("autoplay replan", JSON.stringify({ reason, picks: redo.length, queued }));
+    save();
+    restartPlan();
+  }, delayMs);
 }
 
 async function verify(pick: Track): Promise<void> {
@@ -395,13 +381,10 @@ function planAutoplay(): Promise<void> {
       save();
       return;
     }
-    const seeds = humanSeedIds();
-    for (const pick of usable) pickBasis.set(pick.id, seeds);
     const next = state.autoplayUpcoming.flatMap((entry) => (entry.replacing ? (usable.length ? [usable.shift()!] : []) : [entry]));
     if (refillAt !== null && usable.length) next.splice(Math.min(refillAt, next.length), 0, usable.shift()!);
     refillAt = null;
     state.autoplayUpcoming = [...next, ...usable].slice(0, AUTOPLAY_AHEAD);
-    for (const id of pickBasis.keys()) if (!state.autoplayUpcoming.some((pick) => pick.id === id)) pickBasis.delete(id);
     save();
     prepareAhead();
   })().finally(() => {
@@ -492,7 +475,7 @@ export async function enqueue(channelId: string, items: QueueItem[], requestedBy
     state.current = before;
     startCurrent();
   }
-  refreshStalePicks();
+  replanPicks("added");
   plan();
   return { ok: true, added: items.length, position };
 }
@@ -568,6 +551,7 @@ export async function command(command: Command): Promise<void> {
     case "autoplayMode":
       if (command.mode !== "session" && command.mode !== "explore") return;
       state.autoplayMode = command.mode;
+      replanPicks("mode", 0);
       restartPlan();
       break;
     case "swapPick": {
@@ -597,7 +581,7 @@ export async function command(command: Command): Promise<void> {
   }
   save();
   prepareAhead();
-  refreshStalePicks();
+  if (command.action === "clear" || command.action === "shuffle" || command.action === "remove" || command.action === "move") replanPicks(command.action);
   plan();
 }
 
@@ -639,6 +623,7 @@ player.onPlayerEvent((event) => {
     if (!state.active) return;
     state.listeners = player.status().listeners;
     save();
+    if (state.autoplayMode === "explore") replanPicks("listeners");
     return;
   }
   if (!state.active || event.generation !== state.generation) return;
