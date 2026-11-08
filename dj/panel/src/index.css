@@ -450,6 +450,8 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 .sleeve-grid .playlist-open .name { font-size: .92rem; }
 .sleeve-grid .playlist-meta { font-size: .78rem; }
 .join-hint { margin: 0; display: inline-flex; align-items: center; gap: .5rem; padding: .45rem .95rem; border-radius: 999px; border: 1px dashed var(--line-strong); background: rgb(255 255 255 / .04); color: var(--dim); font-size: .85rem; }
+.join-hint.here { border-style: solid; border-color: var(--accent-line); background: var(--accent-soft); color: var(--text); }
+.join-hint.blocked { border-style: solid; border-color: rgb(255 120 120 / .35); background: rgb(255 120 120 / .08); color: var(--text); }
 @media (max-width: 560px) {
   .crate { height: 11.5rem; }
   .crate-card { width: 9rem; height: 9rem; }

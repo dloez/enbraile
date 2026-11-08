@@ -1,5 +1,5 @@
 import { type CSSProperties, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type FocusEvent as ReactFocusEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { type Album, ApiError, type Artist, type ArtistPage, type ArtistRef, type AutoplayMode, cached, get, type Listener, handleReply, type HistoryEntry, load, onCache, prefetch, remember, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SessionSummary, type SessionTrack, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View, type Visibility } from "./api";
+import { type Album, ApiError, type Artist, type ArtistPage, type ArtistRef, type AutoplayMode, cached, get, type Listener, handleReply, type HistoryEntry, load, onCache, prefetch, remember, type Requester, type Ticket, type Loop, type Me, type Playlist, type PlaylistTrack, post, type SessionSummary, type SessionTrack, setOwnerName, type SettingsData, type Song, type Track, attachSocket, type View, type Visibility, type Voice } from "./api";
 import { lang, switchLang, t } from "./i18n";
 import * as Icon from "./icons";
 import { Ambient, useAccent } from "./ambient";
@@ -257,8 +257,9 @@ function useView(boot: Me | null): { view: Synced | null; live: boolean; refresh
         };
         live.onmessage = (event) => {
           heardAt = performance.now();
-          const message = JSON.parse(String(event.data)) as { type: "view"; view: View } | { type: "reply"; id: number; status: number; body: unknown } | { type: "beat" };
+          const message = JSON.parse(String(event.data)) as { type: "view"; view: View } | { type: "reply"; id: number; status: number; body: unknown } | { type: "beat" } | { type: "voice"; voice: Voice };
           if (message.type === "view") setView(stamp(message.view));
+          else if (message.type === "voice") remember("voice", { voice: message.voice });
           else if (message.type === "reply") handleReply(message);
         };
         live.onclose = lost;
@@ -1944,9 +1945,17 @@ function IdleStage({ me, command, onOpenList, onError }: { me: Me; command: (bod
           </ul>
         </div>
       )}
-      <p className="join-hint"><Icon.Headphones />{t.joinHint}</p>
+      <VoiceNote />
     </section>
   );
+}
+
+function VoiceNote() {
+  const { data } = useCached<{ voice: Voice }>("voice");
+  const voice = data?.voice ?? null;
+  if (!voice) return <p className="join-hint"><Icon.Headphones />{t.joinHint}</p>;
+  if (!voice.canJoin) return <p className="join-hint blocked" role="status"><Icon.Headphones />{t.botCantJoin(voice.name, voice.reason ?? "noAccess")}</p>;
+  return <p className="join-hint here"><span className="live-dot" aria-hidden="true" />{t.inVoice(voice.name)}</p>;
 }
 
 function HistoryTab({ me }: { me: Me }) {
@@ -2220,6 +2229,7 @@ export function App() {
       get<Me>("me").then((next) => {
         if (stopped) return;
         setOwnerName(next.user.name);
+        remember("voice", { voice: next.voice });
         if (next.idle) {
           remember("sessions", next.idle.sessions);
           remember("playlists", next.idle.playlists);

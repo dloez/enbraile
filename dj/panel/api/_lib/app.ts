@@ -22,7 +22,7 @@ const worker = (path: string, init?: RequestInit) => fetch(`${env("BOT_URL")}/in
 
 const relay = async (response: Response) => new Response(await response.text(), { status: response.status, headers: { "content-type": "application/json", "cache-control": "private, no-store" } });
 
-const reads = new Set(["search", "artists", "artist", "album", "suggestions", "state", "ticket", "history", "sessions", "session/tracks", "playlists", "playlist/tracks", "playlist/suggestions", "settings"]);
+const reads = new Set(["search", "artists", "artist", "album", "suggestions", "state", "ticket", "history", "sessions", "session/tracks", "playlists", "playlist/tracks", "playlist/suggestions", "voice", "settings"]);
 const writes = new Set(["command", "enqueue", "warm", "playlists", "playlist/rename", "playlist/delete", "playlist/add", "playlist/remove", "playlist/move", "playlist/visibility", "playlist/from-session", "playlist/merge-session", "settings"]);
 
 export const app = new Hono().basePath("/api");
@@ -40,10 +40,10 @@ app.get("/me", async (c) => {
     const response = await worker(`${path}?userId=${viewer.discordId}`);
     return response.ok ? ((await response.json()) as unknown) : null;
   };
-  const [access, state, live, sessions, playlists] = await Promise.all([read("access"), read("state"), read("ticket"), read("sessions"), read("playlists")]).catch(() => [null, null, null, null, null]);
+  const [access, state, live, sessions, playlists, voice] = await Promise.all([read("access"), read("state"), read("ticket"), read("sessions"), read("playlists"), read("voice")]).catch(() => [null, null, null, null, null, null]);
   if (!access) return c.json({ error: "botUnavailable" }, 502, { "cache-control": "private, no-store" });
   const idle = state && !(state as { active?: boolean }).active && sessions && playlists ? { sessions, playlists } : null;
-  return c.json({ user: { name: viewer.name, image: viewer.image }, discordId: viewer.discordId, ...(access as Record<string, unknown>), state, live, idle }, 200, { "cache-control": "private, no-store" });
+  return c.json({ user: { name: viewer.name, image: viewer.image }, discordId: viewer.discordId, ...(access as Record<string, unknown>), state, live, idle, voice: (voice as { voice?: unknown } | null)?.voice ?? null }, 200, { "cache-control": "private, no-store" });
 });
 
 app.get("/*", async (c) => {

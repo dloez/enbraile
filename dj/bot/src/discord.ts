@@ -63,6 +63,36 @@ export async function voiceChannel(userId: string): Promise<VoiceLookup> {
   return { channelId };
 }
 
+export type Voice = { id: string; name: string; canJoin: boolean; reason: "noAccess" | "full" | null } | null;
+
+export async function voiceOf(userId: string): Promise<Voice> {
+  const server = await guild();
+  const channelId = server.voiceStates.cache.get(userId)?.channelId;
+  const channel = channelId ? server.channels.cache.get(channelId) : undefined;
+  if (!channel || !channel.isVoiceBased()) return null;
+  const me = server.members.me;
+  const allowed = Boolean(me && channel.permissionsFor(me).has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak]));
+  const present = Boolean(me && channel.members.has(me.id));
+  const full = !present && channel.userLimit > 0 && channel.members.size >= channel.userLimit && !(me && channel.permissionsFor(me).has(PermissionFlagsBits.MoveMembers));
+  const reason = !allowed ? "noAccess" : full ? "full" : null;
+  return { id: channel.id, name: channel.name, canJoin: !reason, reason };
+}
+
+const voiceWatchers = new Set<{ userId: string; callback: (voice: Voice) => void }>();
+
+client.on("voiceStateUpdate", (before, after) => {
+  if (before.channelId === after.channelId) return;
+  for (const watcher of voiceWatchers) if (watcher.userId === after.id) void voiceOf(after.id).then(watcher.callback, () => undefined);
+});
+
+export function watchVoice(userId: string, callback: (voice: Voice) => void): () => void {
+  const watcher = { userId, callback };
+  voiceWatchers.add(watcher);
+  return () => {
+    voiceWatchers.delete(watcher);
+  };
+}
+
 export async function enqueueInput(input: string, channelId: string, userId: string) {
   const items = await resolveInput(input, session.expand);
   if (!items.length) return null;

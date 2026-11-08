@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { WebSocketServer } from "ws";
 import { guild } from "./client.ts";
-import { accessOf, enqueueInput, voiceChannel } from "./discord.ts";
+import { accessOf, enqueueInput, voiceChannel, voiceOf, watchVoice } from "./discord.ts";
 import { resolveInput, signTicket, verifyTicket } from "./input.ts";
 import { album, albumOf, artistByName, artistPage, searchArtists, searchSongs } from "./music.ts";
 import { warm } from "./player.ts";
@@ -121,6 +121,8 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
         console.error("playlist suggestions", (error as Error).message);
         return [[]];
       }
+    case "/internal/voice":
+      return [{ voice: await voiceOf(userId) }];
     case "/internal/history":
       return [session.history()];
     case "/internal/sessions":
@@ -190,6 +192,7 @@ server.on("upgrade", async (request, socket, head) => {
       if (live.readyState === live.OPEN) live.send(JSON.stringify(message));
     };
     const unwatch = session.watch((view) => send({ type: "view", view }));
+    const unvoice = watchVoice(userId, (voice) => send({ type: "voice", voice }));
     let alive = true;
     live.on("pong", () => (alive = true));
     const beat = setInterval(() => {
@@ -201,6 +204,7 @@ server.on("upgrade", async (request, socket, head) => {
     const stop = () => {
       clearInterval(beat);
       unwatch();
+      unvoice();
     };
     live.on("close", stop);
     live.on("error", stop);
