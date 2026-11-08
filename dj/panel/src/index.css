@@ -219,7 +219,15 @@ a:hover { color: var(--accent); }
 .auto-row .grip { cursor: default; color: var(--accent); }
 .auto-row .grip svg { display: block; color: inherit; }
 .auto-row .swap { transition: color .2s, background .2s, transform .3s var(--ease); }
-.auto-row .swap:hover { color: var(--text); background: var(--hover); transform: rotate(90deg); }
+.auto-row .swap:hover:not(:disabled) { color: var(--text); background: var(--hover); transform: rotate(90deg); }
+.auto-row.replacing { opacity: .9; }
+.auto-row.replacing .swap { color: var(--accent); }
+.auto-row.replacing .swap svg { animation: spin .9s linear infinite; }
+.auto-row.replacing .art, .auto-row.replacing .meta { opacity: .35; filter: blur(1px); transition: opacity .3s, filter .3s; }
+.auto-row.replacing .meta { background: linear-gradient(90deg, transparent, var(--hover), transparent) 0 0 / 200% 100%; animation: shimmer 1.2s linear infinite; border-radius: .4rem; }
+.auto-row:not(.replacing) .art, .auto-row:not(.replacing) .meta { animation: fade-in .45s var(--ease) backwards; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .auto-row.replacing .swap svg, .auto-row.replacing .meta { animation: none; } }
 .who { display: inline-flex; align-items: center; gap: .3rem; vertical-align: bottom; max-width: 100%; }
 .who img, .who-initial { width: 1rem; height: 1rem; flex: none; border-radius: 999px; object-fit: cover; background: var(--press); }
 .who-initial { display: inline-flex; align-items: center; justify-content: center; font-size: .6rem; font-weight: 700; }

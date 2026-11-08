@@ -1,6 +1,6 @@
 export type Requester = { name: string; avatar: string | null };
 export type AutoplayMode = "session" | "explore";
-export type Track = { id: string; query: string; title: string; artist?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode };
+export type Track = { id: string; query: string; title: string; artist?: string | null; artwork?: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean };
 export type Loop = "off" | "track" | "queue";
 export type View = { channelId: string | null; tracks: Track[]; current: number; paused: boolean; loading: boolean; stalled?: boolean; volume: number; loop: Loop; autoplay: boolean; autoplayMode: AutoplayMode; autoplayEndsAt: number | null; autoplayUpcoming: Track[]; positionMs: number; listeners: number; active: boolean; skipped: { id: string; title: string } | null };
 export type Song = { videoId: string; url: string; title: string; artist: string; album: string | null; durationMs: number; artwork: string | null; plays: string | null };

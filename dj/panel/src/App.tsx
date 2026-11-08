@@ -64,6 +64,8 @@ function predict(view: Synced, command: Command): Synced {
       return { ...next, loop: command.loop ?? "off" };
     case "autoplay":
       return { ...next, autoplay: Boolean(command.on), autoplayUpcoming: [] };
+    case "swapPick":
+      return { ...next, autoplayUpcoming: view.autoplayUpcoming.map((pick) => (pick.id === command.id ? { ...pick, replacing: true } : pick)) };
     case "autoplayMode":
       return { ...next, autoplayMode: command.mode ?? view.autoplayMode };
     case "clear":
@@ -864,7 +866,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                     <p className="auto-label"><span>{upcoming.length ? t.thenAutoplay : t.autoplay}</span></p>
                     <ol className="rows">
                       {autoplays.map((pick) => (
-                        <li key={pick.id} className="song auto-row">
+                        <li key={pick.id} className={`song auto-row ${pick.replacing ? "replacing" : ""}`} aria-busy={pick.replacing}>
                           <span className="grip" title={t.autoplayModeHelp[pick.pickedBy ?? "session"]}>{pick.pickedBy === "explore" ? <Icon.Compass /> : <Icon.Radio />}</span>
                           <Art src={artwork(pick, 96)} className="art-sm" />
                           <div className="meta">
@@ -872,7 +874,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
                             {pick.artist && <div className="sub">{pick.artist}</div>}
                           </div>
                           {pick.durationMs > 0 && <span className="len">{clock(pick.durationMs)}</span>}
-                          <button className="icon-btn small swap" aria-label={t.swapPick(pick.title)} title={t.swapPick(pick.title)} onClick={() => void command({ action: "swapPick", id: pick.id })}><Icon.Swap /></button>
+                          <button className="icon-btn small swap" aria-label={t.swapPick(pick.title)} title={t.swapPick(pick.title)} disabled={pick.replacing} onClick={() => void command({ action: "swapPick", id: pick.id })}><Icon.Swap /></button>
                         </li>
                       ))}
                     </ol>

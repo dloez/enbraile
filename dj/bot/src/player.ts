@@ -10,6 +10,8 @@ export type Status = { connected: boolean; listeners: number; positionMs: number
 const RESOLVE_TTL_MS = 2 * 60 * 60 * 1000;
 const PLUGINS = new URL("../yt-dlp-plugins", import.meta.url).pathname;
 const MAX_WARMING = 2;
+const MAX_RESOLVING = 2;
+const MAX_BACKGROUND = 1;
 const CUT_SHORT_MS = 5_000;
 const STALL_MS = 1_000;
 const STALL_LIMIT_MS = 10_000;
@@ -17,6 +19,44 @@ const WATCH_MS = 250;
 const RECOVER_MS = 5_000;
 
 const cache = new Map<string, Promise<Resolved>>();
+const queued: { key: string; urgent: boolean; run: () => void }[] = [];
+let resolving = 0;
+
+function admit(): void {
+  for (let index = 0; index < queued.length; index++) {
+    const entry = queued[index]!;
+    if (resolving >= (entry.urgent ? MAX_RESOLVING : MAX_BACKGROUND)) continue;
+    queued.splice(index, 1);
+    entry.run();
+    return admit();
+  }
+}
+
+function limited<T>(key: string, urgent: boolean, work: () => Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const run = () => {
+      resolving += 1;
+      work().then(resolve, reject).finally(() => {
+        resolving -= 1;
+        admit();
+      });
+    };
+    const entry = { key, urgent, run };
+    const at = urgent ? queued.findIndex((other) => !other.urgent) : -1;
+    queued.splice(at < 0 ? queued.length : at, 0, entry);
+    admit();
+  });
+}
+
+function hurry(key: string): void {
+  const index = queued.findIndex((entry) => entry.key === key && !entry.urgent);
+  if (index < 0) return;
+  const [entry] = queued.splice(index, 1);
+  entry!.urgent = true;
+  const at = queued.findIndex((other) => !other.urgent);
+  queued.splice(at < 0 ? queued.length : at, 0, entry!);
+  admit();
+}
 let connection: VoiceConnection | undefined;
 let player: AudioPlayer | undefined;
 let resource: AudioResource | undefined;
@@ -67,11 +107,14 @@ function emit(event: PlayerEvent): void {
   queueMicrotask(() => listener(event));
 }
 
-function resolveTrack(query: string, uncached = false): Promise<Resolved> {
+function resolveTrack(query: string, uncached = false, urgent = false): Promise<Resolved> {
   const cached = cache.get(query);
-  if (cached && !uncached) return cached;
-  const started = Date.now();
-  const pending = new Promise<Resolved>((resolve, reject) => {
+  if (cached && !uncached) {
+    if (urgent) hurry(query);
+    return cached;
+  }
+  const pending = limited(query, urgent, () => new Promise<Resolved>((resolve, reject) => {
+    const started = Date.now();
     execFile(
       "yt-dlp",
       ["--plugin-dirs", PLUGINS, "--js-runtimes", "node", ...(uncached ? ["--no-cache-dir"] : []), "--no-playlist", "--playlist-items", "1", "--skip-download", "-f", "bestaudio", "--print", "%(.{title,track,artist,uploader,thumbnail,duration,webpage_url,url,http_headers})j", query],
@@ -86,7 +129,7 @@ function resolveTrack(query: string, uncached = false): Promise<Resolved> {
         resolve({ title: info.track ?? info.title, artist: info.artist ?? info.uploader?.replace(/ - Topic$/, "") ?? null, artwork: info.thumbnail ?? null, durationMs: (info.duration ?? 0) * 1000, pageUrl: info.webpage_url, streamUrl: info.url, userAgent: info.http_headers?.["User-Agent"] ?? "Mozilla/5.0" });
       },
     );
-  });
+  }));
   cache.set(query, pending);
   pending.catch(() => cache.delete(query));
   setTimeout(() => cache.delete(query), RESOLVE_TTL_MS);
@@ -94,7 +137,7 @@ function resolveTrack(query: string, uncached = false): Promise<Resolved> {
 }
 
 function flatList(url: string, limit: number): Promise<{ title: string; url: string }[]> {
-  return new Promise((resolve, reject) => {
+  return limited(url, true, () => new Promise((resolve, reject) => {
     execFile(
       "yt-dlp",
       ["--plugin-dirs", PLUGINS, "--js-runtimes", "node", "--flat-playlist", "--no-warnings", "--playlist-end", String(limit), "--print", "%(.{title,url,webpage_url})j", url],
@@ -112,7 +155,7 @@ function flatList(url: string, limit: number): Promise<{ title: string; url: str
         );
       },
     );
-  });
+  }));
 }
 
 export const expand = (url: string) => flatList(url, 200);
@@ -200,7 +243,7 @@ async function start(query: string, startMs: number, volume: number, id: number,
   stalled = false;
   progress = { durationMs: -1, at: 0 };
   const started = Date.now();
-  const track = await resolveTrack(query, retried);
+  const track = await resolveTrack(query, retried, true);
   if (generation !== id || !player) return;
   const stream = spawn("ffmpeg", [
     "-hide_banner", "-loglevel", "error",
