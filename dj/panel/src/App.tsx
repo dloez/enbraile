@@ -431,7 +431,7 @@ function Suggestions({ seedKey, label, onPick, hidden, onArtist }: { seedKey: st
 const RECENT_SHOWN = 20;
 
 function RecentlyPlayed({ seedKey, current, onPick, onArtist }: { seedKey: string; current: string | null; onPick: (item: QueueItem) => Promise<void>; onArtist: OpenArtist }) {
-  const { items: entries, version, hold } = useSteady<HistoryEntry[]>("history", seedKey);
+  const { items: entries, version, hold, failed } = useSteady<HistoryEntry[]>("history", seedKey);
   const { added, gone, pick, leave } = usePicked(onPick);
   const warm = useWarm(true);
   const seen = new Set<string>(current ? [current] : []);
@@ -443,6 +443,14 @@ function RecentlyPlayed({ seedKey, current, onPick, onArtist }: { seedKey: strin
     seen.add(url);
     songs.push({ videoId: id, url, title: entry.title, artist: entry.artist ?? "", album: null, durationMs: entry.durationMs, artwork: entry.artwork, plays: null });
     if (songs.length === RECENT_SHOWN) break;
+  }
+  if (entries === null && !failed) {
+    return (
+      <section className="recent-area" aria-label={t.playedBefore} aria-busy="true">
+        <h2 className="label">{t.playedBefore}</h2>
+        <SkeletonSongs count={5} />
+      </section>
+    );
   }
   if (!songs.length) return null;
   return (
@@ -1184,7 +1192,7 @@ function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
   );
 }
 
-function PlayerTab({ me, view, setView, refresh, live }: { me: Me; view: Synced | null; setView: (view: Synced) => void; refresh: () => void; live: boolean }) {
+function PlayerTab({ me, view, setView, refresh, live, onOpenList }: { me: Me; view: Synced | null; setView: (view: Synced) => void; refresh: () => void; live: boolean; onOpenList: (id: string) => void }) {
   const [error, setError] = useState<string | null>(null);
   async function command(body: Command) {
     setError(null);
@@ -1274,13 +1282,12 @@ function PlayerTab({ me, view, setView, refresh, live }: { me: Me; view: Synced 
       <div className="player">
         <div className="now-col" ref={nowRef}>
           <div className="now-stage">
-            <NowPlaying view={view} track={track} command={command} onArtist={openArtist} onAlbum={openAlbum} />
+            {view && !track ? <IdleStage me={me} command={command} onOpenList={onOpenList} onError={setError} /> : <NowPlaying view={view} track={track} command={command} onArtist={openArtist} onAlbum={openAlbum} />}
             <div className="now-extras">
               <Reveal open={Boolean(error)}><p className="error" role="alert">{error}</p></Reveal>
               <Reveal open={Boolean(skipped)}><p className="notice" role="status">{skipped && t.skippedFailed(skipped)}</p></Reveal>
             </div>
           </div>
-          {view && !track && <IdleStart me={me} />}
         </div>
         <div className="side">
           <div className="discover-col">
@@ -1522,9 +1529,9 @@ function CreatePlaylist({ onCancel, onCreated }: { onCancel: () => void; onCreat
   );
 }
 
-function PlaylistsTab({ me }: { me: Me }) {
+function PlaylistsTab({ me, initial }: { me: Me; initial: string | null }) {
   const { data: lists, failed } = useCached<Playlist[]>("playlists");
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(initial);
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -1749,7 +1756,7 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: ()
   );
 }
 
-function QueueButton({ className, label, disabled, run }: { className: string; label: string; disabled?: boolean; run: () => Promise<void> }) {
+function QueueButton({ className, label, icon, disabled, run }: { className: string; label: string; icon?: ReactNode; disabled?: boolean; run: () => Promise<void> }) {
   const [state, setState] = useState<"idle" | "busy" | "done">("idle");
   useEffect(() => {
     if (state !== "done") return;
@@ -1760,7 +1767,7 @@ function QueueButton({ className, label, disabled, run }: { className: string; l
     setState("busy");
     run().then(() => setState("done"), () => setState("idle"));
   }
-  return <button className={`${className} ${state === "done" ? "done" : ""}`} disabled={disabled || state === "busy"} aria-live="polite" onClick={click}>{state === "busy" ? t.adding : state === "done" ? t.queued : label}</button>;
+  return <button className={`${className} ${state === "done" ? "done" : ""}`} disabled={disabled || state === "busy"} aria-live="polite" onClick={click}>{state === "idle" && icon}{state === "busy" ? t.adding : state === "done" ? t.queued : label}</button>;
 }
 
 const SESSION_ROWS = 8;
@@ -1787,56 +1794,76 @@ async function queueSession(loadTracks: () => Promise<SessionTrack[]>): Promise<
   await enqueue({ items: list.map((track) => ({ query: track.url ?? track.query, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs })) });
 }
 
-const IDLE_PLAYLISTS = 3;
+const IDLE_SLEEVES = 3;
 
-function IdleStart({ me }: { me: Me }) {
-  const { data: sessions } = useCached<SessionSummary[]>("sessions");
+function IdleStage({ me, command, onOpenList, onError }: { me: Me; command: (body: Command) => Promise<void>; onOpenList: (id: string) => void; onError: (text: string) => void }) {
+  const { data: sessions, failed } = useCached<SessionSummary[]>("sessions");
   const { data: lists } = useCached<Playlist[]>("playlists");
-  const [error, setError] = useState<string | null>(null);
   const last = sessions?.find((session) => !session.live && session.songs > 0);
   const playable = (lists ?? []).filter((list) => list.trackCount > 0);
-  const picks = [...playable.filter((list) => list.ownerId === me.discordId), ...playable.filter((list) => list.ownerId !== me.discordId)].slice(0, IDLE_PLAYLISTS);
-  if (!last && !picks.length) return null;
-  const fail = (failure: unknown) => {
-    setError(message(failure));
+  const sleeves = [...playable.filter((list) => list.ownerId === me.discordId), ...playable.filter((list) => list.ownerId !== me.discordId)].slice(0, IDLE_SLEEVES);
+  const waiting = !sessions && !failed;
+  const covers = last ? last.artworks : (sleeves[0]?.covers ?? []);
+  const report = (failure: unknown) => {
+    onError(message(failure));
     throw failure;
   };
+  const sessionTracks = async () => {
+    const path = `session/tracks?id=${last?.id}`;
+    return cached<SessionTrack[]>(path) ?? load<SessionTrack[]>(path);
+  };
+  const radio = async () => {
+    const [first] = await get<Song[]>("suggestions");
+    if (!first) throw new ApiError("noResults");
+    await enqueue({ items: [asItem(first)] });
+    await command({ action: "autoplay", on: true });
+  };
+  const radioButton = (primary: boolean) => <QueueButton className={`pill ${primary ? "primary" : "ghost"} big`} icon={<Icon.Radio size={17} />} label={t.startRadio} run={() => radio().catch(report)} />;
   return (
-    <div className="idle-start">
-      {error && <p className="error" role="alert">{error}</p>}
-      {last && (
-        <section className="idle-block" aria-label={t.pickUp}>
-          <h2 className="label">{t.pickUp}</h2>
-          <div className="idle-row">
-            <span className="mosaic" aria-hidden="true">
-              {[0, 1, 2, 3].map((index) => <Art key={index} src={last.artworks[index] ?? null} className="art-tile" />)}
-            </span>
-            <span className="meta">
-              <span className="name">{relativeDay(last.startedAt)}, {sessionRange(last)}</span>
-              <span className="sub">{t.sessionMeta(spanOf((last.endedAt ?? last.startedAt) - last.startedAt), last.songs, false)}</span>
-            </span>
-            <QueueButton className="pill primary" label={t.requeue} run={() => { setError(null); const path = `session/tracks?id=${last.id}`; return queueSession(async () => cached<SessionTrack[]>(path) ?? load<SessionTrack[]>(path)).catch(fail); }} />
+    <section className={`idle-stage ${waiting ? "waiting" : ""}`} aria-label={t.tabs.player} aria-busy={waiting}>
+      <div className="crate" aria-hidden="true">
+        {[0, 1, 2, 3].map((index) => (waiting ? <div key={index} className="art crate-card skeleton" /> : <Art key={index} src={covers[index] ?? null} className="crate-card" />))}
+      </div>
+      {waiting ? (
+        <div className="idle-text">
+          <div className="skeleton line short" />
+          <div className="skeleton line wide" />
+        </div>
+      ) : last ? (
+        <div className="idle-text">
+          <p className="eyebrow">{t.lastTime(`${relativeDay(last.startedAt)}, ${sessionRange(last)}`)}</p>
+          <h1 className="idle-title">{t.pickUp}</h1>
+          <p className="idle-meta">
+            {last.requesters.length > 0 && (
+              <span className="stack" aria-hidden="true">
+                {last.requesters.slice(0, 3).map((person) => (person.avatar ? <img key={person.id} src={person.avatar} alt="" referrerPolicy="no-referrer" /> : <span key={person.id} className="who-initial">{person.name.slice(0, 1).toUpperCase()}</span>))}
+              </span>
+            )}
+            <span>{[last.requesters.map((person) => person.name).filter(Boolean).slice(0, 3).join(", "), t.sessionMeta(spanOf((last.endedAt ?? last.startedAt) - last.startedAt), last.songs, false)].filter(Boolean).join(" · ")}</span>
+          </p>
+          <div className="idle-actions">
+            <QueueButton className="pill primary big" icon={<Icon.Play />} label={t.queueItAgain} run={() => queueSession(sessionTracks).catch(report)} />
+            <QueueButton className="pill big" icon={<Icon.Shuffle />} label={t.shuffle} run={() => queueSession(async () => shuffled(await sessionTracks())).catch(report)} />
           </div>
-        </section>
+          <div className="idle-actions">{radioButton(false)}</div>
+        </div>
+      ) : (
+        <div className="idle-text">
+          <h1 className="idle-title">{t.nothing}</h1>
+          <p className="idle-meta">{t.radioHint}</p>
+          <div className="idle-actions">{radioButton(true)}</div>
+        </div>
       )}
-      {picks.length > 0 && (
-        <section className="idle-block" aria-label={t.tabs.playlists}>
-          <h2 className="label">{t.tabs.playlists}</h2>
-          <ul className="rows">
-            {picks.map((list) => (
-              <li key={list.id} className="idle-row">
-                <PlaylistCover list={list} className="cover-sm" />
-                <span className="meta">
-                  <span className="name">{list.name}</span>
-                  <span className="sub">{list.ownerId === me.discordId ? playlistMeta(list) : `${list.ownerName} · ${t.tracks(list.trackCount)}`}</span>
-                </span>
-                <QueueButton className="pill" label={t.play} run={() => { setError(null); return playTracks(list, false).catch(fail); }} />
-              </li>
-            ))}
+      {sleeves.length > 0 && (
+        <div className="idle-sleeves">
+          <h2 className="label">{t.orPutOn}</h2>
+          <ul className="sleeve-grid">
+            {sleeves.map((list) => <PlaylistCard key={list.id} list={list} mine={list.ownerId === me.discordId} onOpen={() => onOpenList(list.id)} onError={onError} />)}
           </ul>
-        </section>
+        </div>
       )}
-    </div>
+      <p className="join-hint"><Icon.Headphones />{t.joinHint}</p>
+    </section>
   );
 }
 
@@ -2092,6 +2119,7 @@ export function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [failed, setFailed] = useState(false);
   const [tab, setTab] = useState<Tab>("player");
+  const [listOpen, setListOpen] = useState<string | null>(null);
   const { view, live, setView, refresh } = useView(me);
   usePrefetch(me, live);
   const playingNow = view?.active ? view.tracks[view.current] : undefined;
@@ -2184,7 +2212,7 @@ export function App() {
           <Brand />
           {tabs.length > 0 && (
             <nav className="tabs" role="tablist">
-              {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => setTab(entry)} onPointerEnter={() => { const path = TAB_DATA[entry]; if (path) prefetch(path); }}>{t.tabs[entry]}</button>)}
+              {tabs.map((entry) => <button key={entry} role="tab" aria-selected={active === entry} onClick={() => { setListOpen(null); setTab(entry); }} onPointerEnter={() => { const path = TAB_DATA[entry]; if (path) prefetch(path); }}>{t.tabs[entry]}</button>)}
             </nav>
           )}
           <div className="who">
@@ -2195,8 +2223,8 @@ export function App() {
         {!me.member && <p className="notice">{t.notMember}</p>}
         {me.member && !me.canPlay && <p className="notice">{t.denied}</p>}
         <main className="main">
-          {active === "player" && <PlayerTab me={me} view={view} setView={setView} refresh={refresh} live={live} />}
-          {active === "playlists" && <PlaylistsTab me={me} />}
+          {active === "player" && <PlayerTab me={me} view={view} setView={setView} refresh={refresh} live={live} onOpenList={(id) => { setListOpen(id); setTab("playlists"); }} />}
+          {active === "playlists" && <PlaylistsTab me={me} initial={listOpen} />}
           {active === "history" && <HistoryTab me={me} />}
           {active === "settings" && <SettingsTab />}
         </main>
