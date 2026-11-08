@@ -278,8 +278,22 @@ function playedIds(): Set<string> {
 
 let suggested: { key: string; at: number; songs: Promise<Song[]> } | null = null;
 
-export function suggestions(): Promise<Song[]> {
-  const seeds = radioSeeds();
+function tasteSeeds(userId: string): Seed[] {
+  const own = db.prepare("SELECT url FROM history WHERE requested_by = ? AND url IS NOT NULL ORDER BY id DESC LIMIT 200").all(userId) as { url: string }[];
+  const rows = own.length ? own : (db.prepare("SELECT url FROM history WHERE requested_by != 'autoplay' AND url IS NOT NULL ORDER BY id DESC LIMIT 200").all() as { url: string }[]);
+  const seeds: Seed[] = [];
+  for (const row of rows) {
+    const id = videoId(row.url);
+    if (!id || seeds.some((seed) => seed.videoId === id)) continue;
+    seeds.push({ videoId: id, weight: 1 / (seeds.length + 1) });
+    if (seeds.length === HUMAN_SEEDS) break;
+  }
+  return seeds;
+}
+
+export function suggestions(userId: string): Promise<Song[]> {
+  const live = radioSeeds();
+  const seeds = live.length ? live : tasteSeeds(userId);
   if (!seeds.length) return Promise.resolve([]);
   const key = seeds.map((seed) => seed.videoId).join(",");
   if (suggested?.key === key && Date.now() - suggested.at < SUGGESTIONS_KEPT_MS) return filterSuggestions(suggested.songs);

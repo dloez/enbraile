@@ -108,7 +108,7 @@ async function internal(method: string, url: URL, input: Record<string, unknown>
     }
     case "/internal/suggestions":
       try {
-        return [await session.suggestions()];
+        return [await session.suggestions(userId)];
       } catch (error) {
         console.error("suggestions", (error as Error).message);
         return [[]];

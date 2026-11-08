@@ -403,23 +403,23 @@ function SkeletonSongs({ count }: { count: number }) {
 const STAGGER_ROWS = 10;
 const staggered = (index: number) => ({ "--i": Math.min(index, STAGGER_ROWS) }) as CSSProperties;
 
-function Suggestions({ seedKey, onPick, hidden, onArtist }: { seedKey: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean; onArtist: OpenArtist }) {
+function Suggestions({ seedKey, label, onPick, hidden, onArtist }: { seedKey: string; label: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean; onArtist: OpenArtist }) {
   const { items: songs, version, hold, loading, failed } = useSteady<Song[]>("suggestions", seedKey);
   const { added, gone, error, pick, leave } = usePicked(onPick);
   const warm = useWarm(true);
   const shown = songs?.filter((song) => !gone.has(song.videoId)) ?? [];
   if (songs === null && !failed) {
     return (
-      <section className="suggest-area" aria-label={t.suggested} aria-busy="true" hidden={hidden}>
-        <h2 className="label">{t.suggested}<span className="label-spinner" aria-hidden="true" /></h2>
+      <section className="suggest-area" aria-label={label} aria-busy="true" hidden={hidden}>
+        <h2 className="label">{label}<span className="label-spinner" aria-hidden="true" /></h2>
         <SkeletonSongs count={6} />
       </section>
     );
   }
   if (!shown.length) return null;
   return (
-    <section className="suggest-area" aria-label={t.suggested} aria-busy={loading} hidden={hidden} {...hold}>
-      <h2 className="label">{t.suggested}{loading && <span className="label-spinner" aria-hidden="true" />}</h2>
+    <section className="suggest-area" aria-label={label} aria-busy={loading} hidden={hidden} {...hold}>
+      <h2 className="label">{label}{loading && <span className="label-spinner" aria-hidden="true" />}</h2>
       {error && <p className="error" role="alert">{error}</p>}
       <ul className={`rows ${version ? "refreshed" : ""}`} key={version}>
         {shown.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={added.has(song.videoId)} leaving={added.has(song.videoId)} onLeft={() => leave(song.videoId)} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} />)}
@@ -1184,7 +1184,7 @@ function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
   );
 }
 
-function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setView: (view: Synced) => void; refresh: () => void; live: boolean }) {
+function PlayerTab({ me, view, setView, refresh, live }: { me: Me; view: Synced | null; setView: (view: Synced) => void; refresh: () => void; live: boolean }) {
   const [error, setError] = useState<string | null>(null);
   async function command(body: Command) {
     setError(null);
@@ -1230,7 +1230,7 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
   const openAlbum = useCallback((target: AlbumTarget) => openBrowse({ kind: "album", target }), [openBrowse]);
   const closeBrowse = useCallback(() => setBrowse((stack) => (stack.length ? [] : stack)), []);
   const browsing = browse.at(-1);
-  const seedKey = view?.active ? (view.tracks[view.current]?.query ?? "end") : "";
+  const seedKey = view?.active ? (view.tracks[view.current]?.query ?? "end") : view ? "idle" : "";
   async function add(item: QueueItem) {
     if (view) setView(predictAdd(view, item));
     try {
@@ -1280,12 +1280,13 @@ function PlayerTab({ view, setView, refresh, live }: { view: Synced | null; setV
               <Reveal open={Boolean(skipped)}><p className="notice" role="status">{skipped && t.skippedFailed(skipped)}</p></Reveal>
             </div>
           </div>
+          {view && !track && <IdleStart me={me} />}
         </div>
         <div className="side">
           <div className="discover-col">
             <SongSearch warmUp placeholder={t.playerSearchPlaceholder} onPick={add} onLink={(input) => enqueue({ input })} onActive={setSearching} onArtist={openArtist} collapsed={Boolean(browsing)} onType={closeBrowse} />
             {browsing && <Browser entry={browsing} onBack={() => setBrowse((stack) => stack.slice(0, -1))} onOpen={openBrowse} onPick={add} onPickMany={addMany} />}
-            {seedKey && <Suggestions seedKey={seedKey} onPick={add} hidden={searching || Boolean(browsing)} onArtist={openArtist} />}
+            {seedKey && <Suggestions seedKey={seedKey} label={track ? t.suggested : t.forYou} onPick={add} hidden={searching || Boolean(browsing)} onArtist={openArtist} />}
           </div>
           <div className="queue-col">
             {track && (
@@ -1781,6 +1782,64 @@ function spanOf(ms: number): string {
 
 const sessionRange = (session: SessionSummary) => `${timeOf(session.startedAt)}–${session.live ? t.liveNow.toLowerCase() : timeOf(session.endedAt ?? session.startedAt)}`;
 
+async function queueSession(loadTracks: () => Promise<SessionTrack[]>): Promise<void> {
+  const list = await loadTracks();
+  await enqueue({ items: list.map((track) => ({ query: track.url ?? track.query, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs })) });
+}
+
+const IDLE_PLAYLISTS = 3;
+
+function IdleStart({ me }: { me: Me }) {
+  const { data: sessions } = useCached<SessionSummary[]>("sessions");
+  const { data: lists } = useCached<Playlist[]>("playlists");
+  const [error, setError] = useState<string | null>(null);
+  const last = sessions?.find((session) => !session.live && session.songs > 0);
+  const playable = (lists ?? []).filter((list) => list.trackCount > 0);
+  const picks = [...playable.filter((list) => list.ownerId === me.discordId), ...playable.filter((list) => list.ownerId !== me.discordId)].slice(0, IDLE_PLAYLISTS);
+  if (!last && !picks.length) return null;
+  const fail = (failure: unknown) => {
+    setError(message(failure));
+    throw failure;
+  };
+  return (
+    <div className="idle-start">
+      {error && <p className="error" role="alert">{error}</p>}
+      {last && (
+        <section className="idle-block" aria-label={t.pickUp}>
+          <h2 className="label">{t.pickUp}</h2>
+          <div className="idle-row">
+            <span className="mosaic" aria-hidden="true">
+              {[0, 1, 2, 3].map((index) => <Art key={index} src={last.artworks[index] ?? null} className="art-tile" />)}
+            </span>
+            <span className="meta">
+              <span className="name">{relativeDay(last.startedAt)}, {sessionRange(last)}</span>
+              <span className="sub">{t.sessionMeta(spanOf((last.endedAt ?? last.startedAt) - last.startedAt), last.songs, false)}</span>
+            </span>
+            <QueueButton className="pill primary" label={t.requeue} run={() => { setError(null); const path = `session/tracks?id=${last.id}`; return queueSession(async () => cached<SessionTrack[]>(path) ?? load<SessionTrack[]>(path)).catch(fail); }} />
+          </div>
+        </section>
+      )}
+      {picks.length > 0 && (
+        <section className="idle-block" aria-label={t.tabs.playlists}>
+          <h2 className="label">{t.tabs.playlists}</h2>
+          <ul className="rows">
+            {picks.map((list) => (
+              <li key={list.id} className="idle-row">
+                <PlaylistCover list={list} className="cover-sm" />
+                <span className="meta">
+                  <span className="name">{list.name}</span>
+                  <span className="sub">{list.ownerId === me.discordId ? playlistMeta(list) : `${list.ownerName} · ${t.tracks(list.trackCount)}`}</span>
+                </span>
+                <QueueButton className="pill" label={t.play} run={() => { setError(null); return playTracks(list, false).catch(fail); }} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
+
 function HistoryTab({ me }: { me: Me }) {
   const { data: sessions, failed } = useCached<SessionSummary[]>("sessions");
   const [chosen, setChosen] = useState<number | null | undefined>(undefined);
@@ -1820,10 +1879,7 @@ function SessionCard({ session, me, open, onToggle, onNotice, onError }: { sessi
     onError(message(failure));
     throw failure;
   };
-  const queueAgain = async () => {
-    const list = await loadTracks().catch(fail);
-    await enqueue({ items: list.map((track) => ({ query: track.url ?? track.query, title: track.title, artist: track.artist, artwork: track.artwork, durationMs: track.durationMs })) }).catch(fail);
-  };
+  const queueAgain = () => queueSession(loadTracks).catch(fail);
   const save = async () => {
     const name = t.sessionPlaylist(`${shortDay(session.startedAt)} ${sessionRange(session)}`);
     await post("playlist/from-session", { sessionId: session.id, name }).catch(fail);
@@ -2139,7 +2195,7 @@ export function App() {
         {!me.member && <p className="notice">{t.notMember}</p>}
         {me.member && !me.canPlay && <p className="notice">{t.denied}</p>}
         <main className="main">
-          {active === "player" && <PlayerTab view={view} setView={setView} refresh={refresh} live={live} />}
+          {active === "player" && <PlayerTab me={me} view={view} setView={setView} refresh={refresh} live={live} />}
           {active === "playlists" && <PlaylistsTab me={me} />}
           {active === "history" && <HistoryTab me={me} />}
           {active === "settings" && <SettingsTab />}

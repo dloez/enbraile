@@ -303,6 +303,12 @@ a:hover { color: var(--accent); }
   .side { min-height: 0; overflow-y: auto; margin-bottom: 1.5rem; scrollbar-width: none; }
   .now-col::-webkit-scrollbar, .side::-webkit-scrollbar, .discover-col::-webkit-scrollbar, .queue-col::-webkit-scrollbar { display: none; }
 }
+@media (min-width: 861px) {
+  .now-col:has(.idle-start) { justify-content: flex-start; }
+  .now-col:has(.idle-start) .now-stage { --stage: 100%; }
+  .now-col:has(.idle-start) .now { display: grid; grid-template-columns: 8rem minmax(0, 1fr); column-gap: 1.1rem; align-items: center; --title-size: 1.6rem; }
+  .now-col:has(.idle-start) .art-hero { border-radius: 1.1rem; }
+}
 @media (min-width: 861px) and (max-height: 760px) {
   .now-stage, .now-stage:has(.reveal[data-open="true"]) { --stage: 100%; }
   .now { display: grid; grid-template-columns: 8rem minmax(0, 1fr); column-gap: 1.1rem; row-gap: 1.1rem; align-items: center; }
@@ -419,6 +425,14 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 .cover-grid.tile { display: flex; }
 .cover-grid.skeleton { box-shadow: none; }
 .playlist-hero { position: relative; z-index: 2; display: flex; align-items: flex-end; gap: clamp(1.25rem, 3vw, 2.25rem); flex-wrap: wrap; }
+.idle-start { width: 100%; display: flex; flex-direction: column; gap: 1.1rem; padding: 1rem .6rem .8rem; border-radius: 1.6rem; background: var(--panel); border: 1px solid var(--line); }
+.idle-start .rows { display: flex; flex-direction: column; gap: .15rem; margin: 0; padding: 0; list-style: none; }
+.idle-row { display: flex; align-items: center; gap: .9rem; padding: .35rem .5rem; border-radius: 1rem; }
+.idle-row .meta { display: flex; flex-direction: column; }
+.idle-row .meta .name { white-space: normal; overflow-wrap: anywhere; }
+.idle-row .pill { flex: none; }
+.idle-start .error { margin: 0 .5rem; }
+.cover-grid.cover-sm { flex: none; width: 3.2rem; border-radius: .7rem; box-shadow: none; }
 .cover-hero { width: clamp(9rem, 16vw, 14.5rem); border-radius: 1.4rem; box-shadow: 0 2rem 4rem -1.75rem rgb(0 0 0 / .95); }
 .playlist-hero-text { flex: 1 1 22rem; min-width: 0; display: flex; flex-direction: column; gap: .6rem; }
 .vis-badge { align-self: flex-start; display: inline-flex; align-items: center; gap: .4rem; padding: .2rem .75rem .2rem .6rem; border-radius: 999px; background: rgb(255 255 255 / .07); border: 1px solid var(--line-strong); color: var(--soft); font-size: .78rem; font-weight: 700; letter-spacing: .02em; }
