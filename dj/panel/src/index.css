@@ -232,12 +232,16 @@ a:hover { color: var(--accent); }
 .who img, .who-initial { width: 1rem; height: 1rem; flex: none; border-radius: 999px; object-fit: cover; background: var(--press); }
 .who-initial { display: inline-flex; align-items: center; justify-content: center; font-size: .6rem; font-weight: 700; }
 .who-name { overflow: hidden; text-overflow: ellipsis; }
-.autoplay-controls { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .4rem .75rem; }
-.segmented { display: inline-flex; padding: 2px; border-radius: 999px; border: 1px solid var(--line-strong); }
-.segmented button { display: inline-flex; align-items: center; gap: .3rem; min-height: 1.9rem; padding: 0 .7rem; border: 0; border-radius: 999px; background: none; color: var(--dim); font-size: .8rem; font-weight: 600; transition: color .2s, background .2s; }
-.segmented button:hover { color: var(--text); }
-.segmented button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
-.segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.mode { display: flex; align-items: center; gap: .65rem; min-width: 0; padding: .6rem .75rem; border-radius: 1rem; border: 1px solid var(--line); background: rgb(255 255 255 / .02); color: var(--soft); text-align: left; transition: border-color .2s, background .2s, color .2s; }
+.mode:hover { border-color: var(--line-strong); background: var(--hover); }
+.mode[aria-checked="true"] { border-color: var(--accent-line); background: var(--accent-soft); color: var(--text); }
+.mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mode-icon { flex: none; width: 2.1rem; height: 2.1rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--press); color: var(--dim); transition: background .2s, color .2s; }
+.mode[aria-checked="true"] .mode-icon { background: var(--accent); color: var(--accent-ink); }
+.mode-text { display: flex; flex-direction: column; min-width: 0; }
+.mode-name { font-size: .9rem; font-weight: 600; }
+.mode-help { font-size: .75rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .auto-group { margin-top: .4rem; animation: fade-in .45s var(--ease) backwards; }
 .auto-label { margin: .4rem .65rem .35rem; display: flex; align-items: center; gap: .75rem; color: var(--accent); font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .auto-label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(to right, var(--accent-line), transparent); }

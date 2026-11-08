@@ -593,23 +593,26 @@ function NowPlaying({ view, track, command }: { view: Synced | null; track: Trac
         </span>
       </div>
       <div className="now-foot">
-        <span className="autoplay-controls">
-          <label className="switch">
-            <input type="checkbox" role="switch" checked={view.autoplay} onChange={(event) => void command({ action: "autoplay", on: event.target.checked })} />
-            <span className="knob" aria-hidden="true" />
-            {t.autoplay}
-          </label>
-          <span className="segmented" role="group" aria-label={t.autoplayMode}>
-            {(["session", "explore"] as const).map((mode) => (
-              <button key={mode} aria-pressed={view.autoplayMode === mode} title={t.autoplayModeHelp[mode]} onClick={() => void command({ action: "autoplayMode", mode })}>
-                {mode === "session" ? <Icon.Radio size={14} /> : <Icon.Compass size={14} />}
-                {t.autoplayModes[mode]}
-              </button>
-            ))}
-          </span>
-        </span>
-        <button className="pill danger" onClick={() => void command({ action: "stop" })}>{t.stop}</button>
+        <label className="switch">
+          <input type="checkbox" role="switch" checked={view.autoplay} onChange={(event) => void command({ action: "autoplay", on: event.target.checked })} />
+          <span className="knob" aria-hidden="true" />
+          {t.autoplay}
+        </label>
+        <button className="pill danger" title={t.disconnectHelp} onClick={() => void command({ action: "stop" })}>{t.disconnect}</button>
       </div>
+      <Reveal open={view.autoplay}>
+        <div className="modes" role="radiogroup" aria-label={t.autoplayMode}>
+          {(["session", "explore"] as const).map((mode) => (
+            <button key={mode} className="mode" role="radio" aria-checked={view.autoplayMode === mode} onClick={() => void command({ action: "autoplayMode", mode })}>
+              <span className="mode-icon">{mode === "session" ? <Icon.Radio size={18} /> : <Icon.Compass size={18} />}</span>
+              <span className="mode-text">
+                <span className="mode-name">{t.autoplayModes[mode]}</span>
+                <span className="mode-help">{t.autoplayModeShort[mode]}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </Reveal>
       <p className="listeners"><span className="live-dot" aria-hidden="true" /><Icon.Headphones />{t.listeners(view.listeners)}</p>
     </section>
   );
