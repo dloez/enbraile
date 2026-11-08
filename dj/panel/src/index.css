@@ -280,7 +280,7 @@ a:hover { color: var(--accent); }
   .queue-row:hover .grip .pos { display: none; }
   .queue-row:hover .grip svg { display: block; }
 }
-.rows.stale { opacity: .4; transition: opacity .15s; }
+.rows.stale { opacity: .45; transition: opacity .25s var(--ease); }
 .rows.refreshed { animation: fade-in .45s var(--ease) backwards; }
 
 @media (min-width: 861px) {
@@ -484,8 +484,8 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
 .artist-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .avatar-md { width: round(4.25rem, 2px); height: round(4.25rem, 2px); font-size: 1.3rem; }
 .avatar-sm { width: round(2.2rem, 2px); height: round(2.2rem, 2px); font-size: .8rem; }
-.artist-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; transition: opacity .15s; animation: fade-in .35s var(--ease) backwards; }
-.artist-cards.stale { opacity: .4; }
+.artist-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; transition: opacity .25s var(--ease); }
+.artist-cards.stale { opacity: .45; }
 .artist-card { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; gap: .55rem; padding: .9rem .5rem .75rem; border-radius: 1.1rem; border: 1px solid var(--line); background: rgb(255 255 255 / .03); color: var(--text); text-align: center; transition: border-color .2s, background .2s; }
 .artist-card:hover:not(:disabled) { border-color: var(--accent-line); background: var(--hover); }
 .artist-card .avatar-md { transition: transform .3s var(--ease), box-shadow .3s var(--ease); }
@@ -515,9 +515,15 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
 .release { width: 100%; display: flex; flex-direction: column; gap: .35rem; padding: 0; border: 0; background: none; color: var(--text); text-align: left; }
 .release .name { font-size: .88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .release .sub { font-size: .78rem; }
-.art-release { width: 100%; aspect-ratio: 1; border-radius: .8rem; transition: transform .3s var(--ease), box-shadow .3s var(--ease); }
+.art-release { width: 100%; aspect-ratio: 1; border-radius: .8rem; }
+.art-release img { transform: translateZ(0); transition: transform .6s var(--ease), filter .4s var(--ease); will-change: transform; }
+.release .name { transition: color .25s var(--ease); }
 .art-release svg, .art-album svg { width: 30%; height: 30%; }
-.release:hover .art-release { transform: translateY(-.15rem); box-shadow: 0 .8rem 1.6rem -.8rem rgb(0 0 0 / .8); }
+@media (hover: hover) {
+  .release:hover .art-release img { transform: scale(1.06); filter: brightness(1.08); }
+  .release:hover .name { color: var(--accent); }
+}
+.release:active .art-release img { transform: scale(1.02); transition-duration: .15s; }
 .release:focus-visible { outline: none; }
 .release:focus-visible .art-release { outline: 2px solid var(--accent); outline-offset: 2px; }
 .related { list-style: none; margin: 0; padding: 0 .3rem; display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -529,8 +535,12 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
 .album-title { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; overflow-wrap: anywhere; }
 .album-text .pill { margin-top: .5rem; }
 
+.arriving > li { animation: row-in .42s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 28ms); }
+.arriving-hint { animation: fade-in .3s var(--ease) backwards; }
+@keyframes row-in { from { opacity: 0; transform: translateY(.45rem); } }
+.suggest-area:not([hidden]) { animation: fade-in .35s var(--ease) backwards; }
 .label-spinner { width: .75rem; height: .75rem; border-radius: 999px; border: 2px solid var(--line-strong); border-top-color: var(--accent); animation: spin .8s linear infinite; }
-.suggest-area .skeleton-rows { padding-top: .35rem; }
+.rows[aria-hidden="true"] .song { pointer-events: none; }
 
 .song.leaving { max-height: 5rem; overflow: hidden; pointer-events: none; animation: row-out .5s var(--ease) .45s forwards; }
 @keyframes row-out { 40% { opacity: 0; transform: translateX(1.25rem); } to { opacity: 0; transform: translateX(1.25rem); max-height: 0; padding-block: 0; margin-block: -1px; } }
@@ -560,5 +570,6 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
 }
 @media (prefers-reduced-motion: reduce) {
   .song.leaving { animation-duration: .01s; animation-delay: .2s; }
-  .browse-area, .artist-cards, .people-pop { animation: none; }
+  .browse-area, .people-pop, .arriving > li, .arriving-hint, .suggest-area { animation: none; }
+  .art-release img { transition: none; }
 }

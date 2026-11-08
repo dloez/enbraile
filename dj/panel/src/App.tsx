@@ -259,10 +259,10 @@ function useWarm(enabled: boolean): (song: Song) => void {
 
 const asItem = (song: Song): QueueItem => ({ query: song.url, title: song.title, artist: song.artist, artwork: song.artwork, durationMs: song.durationMs });
 
-function SongRow({ song, done, disabled, onAdd, warm, onArtist, index, leaving, onLeft, withoutArtist }: { song: Song; done: boolean; disabled: boolean; onAdd: () => void; warm: (song: Song) => void; onArtist?: OpenArtist; index?: number; leaving?: boolean; onLeft?: () => void; withoutArtist?: boolean }) {
+function SongRow({ song, done, disabled, onAdd, warm, onArtist, index, leaving, onLeft, withoutArtist, style }: { song: Song; done: boolean; disabled: boolean; onAdd: () => void; warm: (song: Song) => void; onArtist?: OpenArtist; index?: number; leaving?: boolean; onLeft?: () => void; withoutArtist?: boolean; style?: CSSProperties }) {
   const album = song.album && <>{!withoutArtist && song.artist && " · "}{song.album}</>;
   return (
-    <li className={`song ${leaving ? "leaving" : ""}`} onPointerEnter={() => warm(song)} onPointerDown={() => warm(song)} onFocus={() => warm(song)} onAnimationEnd={(event) => { if (leaving && event.animationName === "row-out") onLeft?.(); }}>
+    <li className={`song ${leaving ? "leaving" : ""}`} style={style} onPointerEnter={() => warm(song)} onPointerDown={() => warm(song)} onFocus={() => warm(song)} onAnimationEnd={(event) => { if (leaving && event.animationName === "row-out") onLeft?.(); }}>
       {index !== undefined && <span className="num">{index}</span>}
       <Art src={artwork(song, 96)} className="art-md" />
       <div className="meta">
@@ -372,6 +372,25 @@ function usePicked(onPick: (item: QueueItem) => Promise<void>) {
   return { added, gone, error, pick, leave };
 }
 
+function SkeletonSongs({ count }: { count: number }) {
+  return (
+    <ul className="rows" aria-hidden="true">
+      {Array.from({ length: count }, (_, index) => (
+        <li key={index} className="song">
+          <div className="art art-md skeleton" />
+          <div className="meta skeleton-text">
+            <div className="skeleton line" style={{ width: `${70 - (index % 3) * 12}%` }} />
+            <div className="skeleton line short" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const STAGGER_ROWS = 10;
+const staggered = (index: number) => ({ "--i": Math.min(index, STAGGER_ROWS) }) as CSSProperties;
+
 function Suggestions({ seedKey, onPick, hidden, onArtist }: { seedKey: string; onPick: (item: QueueItem) => Promise<void>; hidden: boolean; onArtist: OpenArtist }) {
   const { items: songs, version, hold, loading, failed } = useSteady<Song[]>("suggestions", seedKey);
   const { added, gone, error, pick, leave } = usePicked(onPick);
@@ -381,7 +400,7 @@ function Suggestions({ seedKey, onPick, hidden, onArtist }: { seedKey: string; o
     return (
       <section className="suggest-area" aria-label={t.suggested} aria-busy="true" hidden={hidden}>
         <h2 className="label">{t.suggested}<span className="label-spinner" aria-hidden="true" /></h2>
-        <SkeletonRows count={5} label={false} />
+        <SkeletonSongs count={6} />
       </section>
     );
   }
@@ -531,9 +550,9 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive, onArtist, c
       {!collapsed && artists.length > 0 && (
         <section aria-label={t.artists}>
           <h2 className="label">{t.artists}</h2>
-          <ul className={`artist-cards ${stale ? "stale" : ""}`}>
-            {artists.map((artist) => (
-              <li key={artist.id}>
+          <ul className={`artist-cards arriving ${stale ? "stale" : ""}`} key={shown}>
+            {artists.map((artist, index) => (
+              <li key={artist.id} style={staggered(index)}>
                 <button className="artist-card" disabled={stale} onClick={() => onArtist?.({ id: artist.id, name: artist.name })}>
                   <ArtistAvatar artist={artist} className="avatar-md" />
                   <span className="artist-card-text">
@@ -548,10 +567,11 @@ function SongSearch({ placeholder, onPick, onLink, warmUp, onActive, onArtist, c
       )}
       {!collapsed && (loading || results) && (
         <section aria-label={t.songs} aria-busy={loading}>
-          <h2 className="label">{loading && !results ? t.searching : t.songs}</h2>
-          {results?.length === 0 && <p className="hint">{t.noSongs}</p>}
-          <ul className={`rows ${stale ? "stale" : ""}`}>
-            {results?.map((song) => <SongRow key={song.videoId} song={song} done={added.has(song.videoId)} disabled={stale || busy === song.videoId} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} />)}
+          <h2 className="label">{t.songs}{loading && <span className="label-spinner" aria-hidden="true" />}</h2>
+          {results?.length === 0 && <p className="hint arriving-hint">{t.noSongs}</p>}
+          {!results && <SkeletonSongs count={5} />}
+          <ul className={`rows arriving ${stale ? "stale" : ""}`} key={shown}>
+            {results?.map((song, index) => <SongRow key={song.videoId} style={staggered(index + artists.length)} song={song} done={added.has(song.videoId)} disabled={stale || busy === song.videoId} onAdd={() => void pick(song)} warm={warm} onArtist={onArtist} />)}
           </ul>
         </section>
       )}
@@ -1622,10 +1642,10 @@ function SettingsTab() {
   );
 }
 
-function SkeletonRows({ count, label = true }: { count: number; label?: boolean }) {
+function SkeletonRows({ count }: { count: number }) {
   return (
     <div className="skeleton-rows" aria-hidden="true">
-      {label && <div className="skeleton line label-line" />}
+      <div className="skeleton line label-line" />
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="skeleton-row">
           <div className="skeleton art-md" />
