@@ -424,16 +424,19 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 .idle-stage:not(.waiting) .crate:hover .crate-card:nth-child(4) { transform: translate(7.7rem, 1.2rem) rotate(16deg); }
 .idle-text { display: flex; flex-direction: column; align-items: center; gap: .7rem; width: 100%; }
 .idle-text .eyebrow { margin: 0; }
-.idle-text .skeleton.line { width: 60%; }
-.idle-text .skeleton.line.wide { width: 85%; height: 2rem; }
-.idle-text .skeleton.line.short { width: 45%; height: .7rem; }
+.idle-text .skeleton.eyebrow-bar { width: 45%; height: .7rem; margin-block: .18rem; }
+.idle-text .skeleton.title-bar { width: 85%; height: calc(clamp(1.9rem, 2.4vw, 2.3rem) * 1.1 - .5rem); margin-block: .25rem; }
+.idle-text .skeleton.meta-bar { width: 60%; height: .85rem; margin-block: .375rem; }
 .skeleton.pill-shape { display: inline-block; width: 11rem; height: 3.1rem; border-radius: 999px; }
 .skeleton.pill-shape.small { width: 7.5rem; }
-.skeleton.pill-shape.hint { width: 21rem; max-width: 100%; height: 2.2rem; }
+.skeleton.pill-shape.radio { width: 14rem; }
+.skeleton.pill-shape.hint { width: 21rem; max-width: 100%; height: 2.35rem; }
 .crate-card.skeleton { background: #1b1b20; animation: none; }
-.sleeve-shape { display: flex; flex-direction: column; gap: .7rem; padding: .45rem .45rem .7rem; }
-.sleeve-shape .skeleton.line { width: 70%; }
-.idle-sleeves .skeleton.label-line { margin: 0 0 .7rem .65rem; }
+.sleeve-shape { display: flex; flex-direction: column; padding: .53rem .45rem .73rem; }
+.sleeve-shape .cover-grid { margin-bottom: .73rem; }
+.sleeve-shape .skeleton.name-bar { width: 70%; height: .85rem; margin-block: .275rem; }
+.sleeve-shape .skeleton.card-meta-bar { width: 50%; height: .7rem; margin: .5rem 0 .2rem; }
+.idle-sleeves .skeleton.label-line { margin: .2rem 0 .87rem .65rem; }
 .idle-title { margin: 0; font-size: clamp(1.9rem, 2.4vw, 2.3rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.1; text-wrap: balance; }
 .idle-meta { margin: 0; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .6rem; color: var(--dim); font-size: .92rem; }
 .idle-meta .stack { padding-left: .35rem; }

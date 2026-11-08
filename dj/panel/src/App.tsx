@@ -1864,14 +1864,16 @@ function IdleShape() {
         {[0, 1, 2, 3].map((index) => <div key={index} className="art crate-card skeleton" />)}
       </div>
       <div className="idle-text" aria-hidden="true">
-        <div className="skeleton line short" />
-        <div className="skeleton line wide" />
-        <div className="skeleton line" />
+        <span className="skeleton line eyebrow-bar" />
+        <span className="skeleton line title-bar" />
+        <span className="skeleton line meta-bar" />
         <div className="idle-actions">
           <span className="skeleton pill-shape" />
           <span className="skeleton pill-shape small" />
         </div>
-        <div className="skeleton line short" />
+        <div className="idle-actions">
+          <span className="skeleton pill-shape radio" />
+        </div>
       </div>
       <div className="idle-sleeves" aria-hidden="true">
         <div className="skeleton label-line" />
@@ -1879,7 +1881,8 @@ function IdleShape() {
           {[0, 1, 2].map((index) => (
             <li key={index} className="sleeve-shape">
               <div className="skeleton cover-grid" />
-              <div className="skeleton line" />
+              <span className="skeleton line name-bar" />
+              <span className="skeleton line card-meta-bar" />
             </li>
           ))}
         </ul>
