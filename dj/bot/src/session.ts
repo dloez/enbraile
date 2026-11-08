@@ -77,6 +77,7 @@ const IDLE_LEAVE_MS = 5 * 60_000;
 const PAUSED_LEAVE_MS = 15 * 60_000;
 const AUTOPLAY_LIMIT_MS = 60 * 60_000;
 const MAX_FAILURES_IN_A_ROW = 5;
+const REJOIN_ATTEMPTS = 4;
 const HISTORY_KEPT = 20_000;
 const PREPARED_AHEAD = 3;
 const HUMAN_SEEDS = 5;
@@ -125,7 +126,8 @@ function videoId(url: string | null): string | null {
 const state: State = { ...blank(), ...getValue<State>("state") };
 const watchers = new Set<(view: View) => void>();
 let ticker: ReturnType<typeof setInterval> | undefined;
-let cold = false;
+let cold = true;
+let rejoinFailures = 0;
 
 function save(): void {
   setValue("state", state);
@@ -533,7 +535,15 @@ async function rejoin(): Promise<void> {
   try {
     const position = livePosition();
     await player.join(state.channelId);
+    rejoinFailures = 0;
     if (playing()) restartAt(position);
+  } catch (error) {
+    rejoinFailures += 1;
+    console.error("rejoin", rejoinFailures, "of", REJOIN_ATTEMPTS, (error as Error).message);
+    if (rejoinFailures >= REJOIN_ATTEMPTS) {
+      rejoinFailures = 0;
+      end();
+    }
   } finally {
     rejoining = false;
   }
@@ -541,7 +551,7 @@ async function rejoin(): Promise<void> {
 
 player.onPlayerEvent((event) => {
   if (event.type === "disconnected") {
-    void rejoin().catch((error: Error) => console.error("rejoin", error.message));
+    void rejoin();
     return;
   }
   if (event.type === "moved") {
@@ -612,14 +622,8 @@ export function snapshot(): void {
 
 export async function resumeAfterRestart(): Promise<void> {
   if (!state.active || !state.channelId) return;
-  try {
-    await player.join(state.channelId);
-    startTicking();
-    if (state.current >= 0 && state.current < state.tracks.length) restartAt(state.positionMs);
-  } catch (error) {
-    console.error("resume", (error as Error).message);
-    end();
-  }
+  startTicking();
+  await rejoin();
 }
 
 export function history(): HistoryEntry[] {
