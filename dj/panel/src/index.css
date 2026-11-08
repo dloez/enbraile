@@ -114,7 +114,14 @@ a:hover { color: var(--accent); }
 .art-hero img.ready { opacity: 1; }
 .now[data-stage="paused"] .art-hero img { filter: saturate(.5) brightness(.62); }
 .now { --title-size: clamp(1.45rem, 1rem + 1.1vw, 2.5rem); }
-.now .title { min-height: 2.24em; }
+.now .title.marquee { display: block; white-space: nowrap; overflow: hidden; text-wrap: nowrap; -webkit-line-clamp: none; }
+.marquee { --fade: 28px; }
+.marquee-track { display: inline-block; will-change: transform; }
+.marquee.scrolling { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - var(--fade)), transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .marquee.scrolling .marquee-track { display: block; overflow: hidden; text-overflow: ellipsis; }
+  .marquee.scrolling { -webkit-mask-image: none; mask-image: none; }
+}
 .swap { display: flex; flex-direction: column; gap: .3rem; animation: swap-in .5s var(--ease) backwards; }
 @keyframes swap-in { from { opacity: 0; transform: translateY(.5rem); } }
 .play-icon { position: relative; width: 1.75rem; height: 1.75rem; display: block; }

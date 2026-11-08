@@ -879,6 +879,44 @@ function PlayIcon({ paused }: { paused: boolean }) {
   return <span className="play-icon" data-paused={paused}><Icon.Play /><Icon.Pause /></span>;
 }
 
+const MARQUEE_PX_PER_S = 50;
+const MARQUEE_HOLD_MS = 1_800;
+
+function Marquee({ title, children }: { title: string; children: ReactNode }) {
+  const box = useRef<HTMLHeadingElement>(null);
+  const track = useRef<HTMLSpanElement>(null);
+  const [shift, setShift] = useState(0);
+  useEffect(() => {
+    const outer = box.current;
+    const inner = track.current;
+    if (!outer || !inner) return;
+    const measure = () => {
+      const fade = parseFloat(getComputedStyle(outer).getPropertyValue("--fade")) || 0;
+      const overflow = inner.scrollWidth - outer.clientWidth;
+      setShift(overflow > 1 ? Math.ceil(overflow + fade) : 0);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(outer);
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, [title]);
+  useEffect(() => {
+    const inner = track.current;
+    if (!inner || !shift || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const moving = (shift / MARQUEE_PX_PER_S) * 1000;
+    const total = moving + MARQUEE_HOLD_MS;
+    const held = MARQUEE_HOLD_MS / 2 / total;
+    const animation = inner.animate([{ transform: "translateX(0)", offset: 0 }, { transform: "translateX(0)", offset: held, easing: "ease-in-out" }, { transform: `translateX(-${shift}px)`, offset: 1 - held }, { transform: `translateX(-${shift}px)`, offset: 1 }], { duration: total, iterations: Infinity, direction: "alternate" });
+    return () => animation.cancel();
+  }, [shift]);
+  return (
+    <h1 ref={box} className={`title marquee ${shift ? "scrolling" : ""}`} title={title}>
+      <span ref={track} className="marquee-track">{children}</span>
+    </h1>
+  );
+}
+
 function Listeners({ count, people }: { count: number; people: Listener[] }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -951,7 +989,7 @@ function NowPlaying({ view, track, command, onArtist, onAlbum }: { view: Synced 
       <div className="now-text">
         <p className="eyebrow"><Equalizer />{view.stale ? t.lostBot : view.loading ? t.starting : view.stalled ? t.buffering : view.paused ? t.paused : t.nowPlaying}</p>
         <div className="swap" key={track.query}>
-          <h1 className="title" title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</h1>
+          <Marquee title={track.title}>{track.url ? <a href={track.url} target="_blank" rel="noreferrer">{track.title}</a> : track.title}</Marquee>
           <p className="artist">
             {track.artist ? <ArtistLinks text={track.artist} refs={track.artists} onArtist={onArtist} /> : !track.album && "\u00a0"}
             {track.album && <span className="album-part">{track.artist && <span aria-hidden="true"> · </span>}<AlbumLink target={{ id: track.albumId, name: track.album, artist: track.artists?.[0]?.name ?? track.artist }} onAlbum={onAlbum} /></span>}
