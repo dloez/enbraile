@@ -374,12 +374,13 @@ a:hover { color: var(--accent); }
 .create-card .error { flex-basis: 100%; }
 .create-card .create-field { flex: 1 1 16rem; width: auto; border-radius: 999px; padding: 0 1.2rem; }
 .create-card .pill { min-height: 3rem; }
-.vis-toggle { gap: .5rem; }
+.vis-toggle { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
+.vis-label { display: grid; text-align: left; }
+.vis-label > span { grid-area: 1 / 1; visibility: hidden; }
+.vis-label > .on { visibility: visible; }
 .vis-toggle.private { color: var(--soft); }
 .vis-toggle.public svg { color: var(--accent); }
-.vis-toggle svg, .vis-menu svg, .vis-button svg, .vis-badge svg, .vis svg { width: 1.1rem; height: 1.1rem; flex: none; }
-.vis-name { font-size: .93rem; font-weight: 600; }
-.vis-hint { font-size: .8rem; color: var(--dim); }
+.vis-toggle svg, .vis svg { width: 1.1rem; height: 1.1rem; flex: none; }
 .create-actions { display: flex; gap: .5rem; }
 .create-actions .pill { min-height: 3rem; padding: 0 1.2rem; }
 .playlist-section { display: flex; flex-direction: column; gap: .5rem; }
@@ -460,8 +461,6 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 }
 .cover-hero { width: clamp(9rem, 16vw, 14.5rem); border-radius: 1.4rem; box-shadow: 0 2rem 4rem -1.75rem rgb(0 0 0 / .95); }
 .playlist-hero-text { flex: 1 1 22rem; min-width: 0; display: flex; flex-direction: column; gap: .6rem; }
-.vis-badge { align-self: flex-start; display: inline-flex; align-items: center; gap: .4rem; padding: .2rem .75rem .2rem .6rem; border-radius: 999px; background: rgb(255 255 255 / .07); border: 1px solid var(--line-strong); color: var(--soft); font-size: .78rem; font-weight: 700; letter-spacing: .02em; }
-.vis-badge svg { width: .85rem; height: .85rem; }
 .title-row { display: flex; align-items: center; gap: .4rem; min-width: 0; }
 .playlist-title { margin: 0; min-width: 0; font-size: clamp(1.9rem, 1rem + 2.6vw, 3.4rem); font-weight: 800; letter-spacing: -.04em; line-height: 1.08; overflow-wrap: anywhere; }
 .title-row .icon-btn { opacity: .7; }
@@ -471,16 +470,6 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
 .owner-name { color: var(--text); font-weight: 600; }
 .playlist-actions { margin-top: .4rem; gap: .6rem; }
 .playlist-actions .btn { min-height: 3.1rem; padding: 0 1.4rem; font-size: .97rem; }
-.vis-menu-box { position: relative; }
-.vis-button { display: inline-flex; align-items: center; gap: .5rem; }
-.vis-button.open { background: var(--press); border-color: rgb(255 255 255 / .3); }
-.vis-menu { position: absolute; left: 0; top: calc(100% + .5rem); z-index: 6; width: min(21rem, calc(100vw - 2rem)); padding: .5rem; display: flex; flex-direction: column; gap: .25rem; border-radius: 1.25rem; background: rgb(24 22 26 / .97); border: 1px solid var(--line-strong); box-shadow: 0 2rem 4.5rem -1.25rem rgb(0 0 0 / .9); animation: fade-in .2s var(--ease); }
-.vis-menu button { display: flex; align-items: flex-start; gap: .75rem; padding: .65rem .75rem; border: 0; border-radius: .9rem; background: none; color: var(--text); text-align: left; transition: background .2s; }
-.vis-menu button:hover { background: var(--hover); }
-.vis-menu button.on { background: var(--accent-soft); }
-.vis-menu button > svg { margin-top: .15rem; color: var(--dim); }
-.vis-menu button.on > svg { color: var(--accent); }
-.vis-text { flex: 1; display: flex; flex-direction: column; }
 .delete-list { width: 3.1rem; height: 3.1rem; color: var(--danger); }
 .delete-list:hover:not(:disabled) { color: var(--danger); background: rgb(255 143 143 / .1); }
 .delete-list svg { width: 1.15rem; height: 1.15rem; }
@@ -506,12 +495,10 @@ button.playlist-open:hover, button.playlist-open:focus-visible { background: rgb
   .playlist-hero { flex-direction: column; align-items: center; text-align: center; }
   .cover-hero { width: 12.5rem; }
   .playlist-hero-text { align-items: center; flex-basis: auto; width: 100%; }
-  .vis-badge { align-self: center; }
   .title-row { justify-content: center; }
   .playlist-owner { justify-content: center; }
   .playlist-actions { justify-content: center; }
   .playlist-actions .play-all { flex: 1; }
-  .vis-menu { left: 50%; transform: translateX(-50%); }
   .create-card .create-actions { flex: 1; }
   .create-card .create-actions .pill { flex: 1; }
 }

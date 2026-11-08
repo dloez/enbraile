@@ -1537,9 +1537,7 @@ function CreatePlaylist({ onCancel, onCreated }: { onCancel: () => void; onCreat
   return (
     <form className="create-card" aria-label={t.newPlaylistButton} onSubmit={(event) => void submit(event)}>
       <input className="field create-field" aria-label={t.playlistName} placeholder={t.playlistName} value={name} onChange={(event) => setName(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") onCancel(); }} maxLength={100} autoFocus />
-      <button type="button" className={`pill vis-toggle ${visibility}`} aria-label={`${t.whoCanSee}: ${t.visibility[visibility]}`} title={t.visibilityLong[visibility]} onClick={() => setVisibility(visibility === "public" ? "private" : "public")}>
-        <VisibilityIcon visibility={visibility} />{t.visibility[visibility]}
-      </button>
+      <VisibilityToggle value={visibility} className="pill" onChange={setVisibility} />
       <div className="create-actions">
         <button type="button" className="pill" onClick={onCancel}>{t.cancel}</button>
         <button className="pill primary" disabled={!name.trim() || busy}>{t.create}</button>
@@ -1625,36 +1623,14 @@ function PlaylistGone({ onBack }: { onBack: () => void }) {
   );
 }
 
-function VisibilityMenu({ list, onChange }: { list: Playlist; onChange: (visibility: Visibility) => Promise<void> }) {
-  const [open, setOpen] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: PointerEvent | KeyboardEvent) => {
-      if (event instanceof KeyboardEvent ? event.key === "Escape" : !box.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", close);
-    document.addEventListener("keydown", close);
-    return () => {
-      document.removeEventListener("pointerdown", close);
-      document.removeEventListener("keydown", close);
-    };
-  }, [open]);
+function VisibilityToggle({ value, className, onChange }: { value: Visibility; className: string; onChange: (visibility: Visibility) => void }) {
   return (
-    <div className="vis-menu-box" ref={box}>
-      <button className={`btn vis-button ${open ? "open" : ""}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}><VisibilityIcon visibility={list.visibility} />{t.visibility[list.visibility]}<Icon.Down /></button>
-      {open && (
-        <div className="vis-menu" role="menu" aria-label={t.whoCanSee}>
-          {(["public", "private"] as const).map((entry) => (
-            <button key={entry} role="menuitemradio" aria-checked={list.visibility === entry} className={list.visibility === entry ? "on" : ""} onClick={() => { setOpen(false); if (entry !== list.visibility) void onChange(entry); }}>
-              <VisibilityIcon visibility={entry} />
-              <span className="vis-text"><span className="vis-name">{t.visibility[entry]}</span><span className="vis-hint">{t.visibilityLong[entry]}</span></span>
-              {list.visibility === entry && <Icon.Check />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <button type="button" className={`${className} vis-toggle ${value}`} aria-label={`${t.whoCanSee}: ${t.visibility[value]}`} title={t.visibilityLong[value]} onClick={() => onChange(value === "public" ? "private" : "public")}>
+      <VisibilityIcon visibility={value} />
+      <span className="vis-label">
+        {(["public", "private"] as const).map((entry) => <span key={entry} className={entry === value ? "on" : ""} aria-hidden="true">{t.visibility[entry]}</span>)}
+      </span>
+    </button>
   );
 }
 
@@ -1757,13 +1733,12 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: ()
       <div className="playlist-hero">
         <PlaylistCover list={list} className="cover-hero" />
         <div className="playlist-hero-text">
-          <span className="vis-badge"><VisibilityIcon visibility={list.visibility} />{t.visibilityBadge[list.visibility]}</span>
           <PlaylistTitle key={list.name} list={list} owned={owned} onRename={(name) => act(() => post("playlist/rename", { id: list.id, name }))} />
-          <p className="sub playlist-owner"><OwnerFace name={list.ownerName} /><span className="owner-name">{list.ownerName}</span><span aria-hidden="true">·</span>{playlistMeta(list)}</p>
+          <p className="sub playlist-owner">{list.visibility === "private" && <span className="vis private" title={t.visibility.private}><LockIcon /><span className="sr-only">{t.visibility.private}</span></span>}<OwnerFace name={list.ownerName} /><span className="owner-name">{list.ownerName}</span><span aria-hidden="true">·</span>{playlistMeta(list)}</p>
           <div className="row playlist-actions">
             <QueueButton className="btn primary play-all" label={t.play} disabled={!list.trackCount} run={run(false)} />
             <QueueButton className="btn" label={t.shuffle} disabled={list.trackCount < 2} run={run(true)} />
-            {owned && <VisibilityMenu list={list} onChange={(visibility) => act(() => post("playlist/visibility", { id: list.id, visibility }))} />}
+            {owned && <VisibilityToggle value={list.visibility} className="btn" onChange={(visibility) => void act(() => post("playlist/visibility", { id: list.id, visibility }))} />}
             {owned && <button className="icon-btn delete-list" aria-label={t.deletePlaylist} title={t.deletePlaylist} onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); onBack(); }); }}><TrashIcon /></button>}
           </div>
         </div>
