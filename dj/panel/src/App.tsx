@@ -618,12 +618,45 @@ function shuffled<T>(items: T[]): T[] {
   return copy;
 }
 
-function BrowseSkeleton() {
+function ArtistSkeleton({ back }: { back: ReactNode }) {
   return (
-    <div className="browse-skeleton" aria-hidden="true">
-      <div className="artist-hero skeleton" />
-      <SkeletonRows count={6} />
-    </div>
+    <>
+      <div className="artist-hero loading">
+        {back}
+        <div className="artist-hero-body" aria-hidden="true">
+          <div className="artist-hero-text">
+            <p className="eyebrow">{t.artist}</p>
+            <h2 className="artist-name"><span className="skeleton block name-block" /></h2>
+            <p className="sub"><span className="skeleton block sub-block" /></p>
+          </div>
+          <div className="artist-actions">
+            <span className="pill skeleton ghost-pill">{t.queueTop(TOP_SHOWN)}</span>
+            <span className="pill skeleton ghost-pill">{t.shuffleTop(TOP_SHOWN)}</span>
+          </div>
+        </div>
+      </div>
+      <div aria-hidden="true">
+        <h3 className="label">{t.topSongs}</h3>
+        <SkeletonSongs count={6} />
+      </div>
+    </>
+  );
+}
+
+function AlbumSkeleton() {
+  return (
+    <>
+      <div className="album-head" aria-hidden="true">
+        <div className="art art-album skeleton" />
+        <div className="album-text">
+          <p className="eyebrow"><span className="skeleton ghost-text">{t.release("album", null)}</span></p>
+          <h2 className="album-title"><span className="skeleton block name-block" /></h2>
+          <p className="sub"><span className="skeleton block sub-block" /></p>
+          <span className="pill skeleton ghost-pill">{t.queueAll}</span>
+        </div>
+      </div>
+      <SkeletonSongs count={8} />
+    </>
   );
 }
 
@@ -647,7 +680,7 @@ function ArtistView({ target, onBack, onOpen, onPick, onPickMany }: { target: Ar
   if (!page) {
     return (
       <section className="browse" aria-label={target.name} aria-busy={!loadError}>
-        {loadError ? <><div className="browse-bar">{back}</div><p className="error" role="alert">{loadError}</p></> : <><div className="browse-bar">{back}</div><BrowseSkeleton /></>}
+        {loadError ? <><div className="browse-bar">{back}</div><p className="error" role="alert">{loadError}</p></> : <ArtistSkeleton back={back} />}
       </section>
     );
   }
@@ -729,7 +762,7 @@ function AlbumView({ id, onBack, onOpen, onPick, onPickMany }: { id: string; onB
     return (
       <section className="browse" aria-busy={!loadError}>
         <div className="browse-bar">{back}</div>
-        {loadError ? <p className="error" role="alert">{loadError}</p> : <SkeletonRows count={8} />}
+        {loadError ? <p className="error" role="alert">{loadError}</p> : <AlbumSkeleton />}
       </section>
     );
   }
