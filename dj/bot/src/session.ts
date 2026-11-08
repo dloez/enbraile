@@ -89,7 +89,7 @@ const HUMAN_SEEDS = 5;
 const AUTOPLAY_SEEDS = 2;
 const ARTIST_COOLDOWN = 3;
 const AUTOPLAY_AHEAD = 3;
-const AUTOPLAY_SEED_WEIGHT = 0.3;
+const AUTOPLAY_SEED_WEIGHT = 0.2;
 const REPLAN_AFTER_MS = 1_500;
 const LENGTH_MISMATCH_MS = 20_000;
 const EXPLORE_SEEDS = 12;
@@ -231,8 +231,8 @@ function radioSeeds(): Seed[] {
     const id = videoId(track.url) ?? videoId(track.query);
     if (!id || seeds.some((seed) => seed.videoId === id)) continue;
     if (track.requestedBy === "autoplay") {
-      if (autoplays < AUTOPLAY_SEEDS) seeds.push({ videoId: id, weight: AUTOPLAY_SEED_WEIGHT / ++autoplays });
-    } else if (humans < HUMAN_SEEDS) seeds.push({ videoId: id, weight: 1 / ++humans });
+      if (autoplays < AUTOPLAY_SEEDS) seeds.push({ videoId: id, weight: AUTOPLAY_SEED_WEIGHT / (++autoplays) ** 2 });
+    } else if (humans < HUMAN_SEEDS) seeds.push({ videoId: id, weight: 1 / (++humans) ** 2 });
     if (humans === HUMAN_SEEDS && autoplays === AUTOPLAY_SEEDS) break;
   }
   return seeds;
