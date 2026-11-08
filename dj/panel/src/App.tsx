@@ -1534,6 +1534,8 @@ const GlobeIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 const PencilIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>;
 const TrashIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>;
 
+const other = (visibility: Visibility): Visibility => (visibility === "public" ? "private" : "public");
+
 const VisibilityIcon = ({ visibility }: { visibility: Visibility }) => (visibility === "private" ? <LockIcon /> : <GlobeIcon />);
 
 const playlistMeta = (list: Playlist) => [t.tracks(list.trackCount), list.durationMs > 0 ? spanOf(list.durationMs) : null].filter(Boolean).join(" · ");
@@ -1690,8 +1692,7 @@ function VisibilityToggle({ value, className, onChange }: { value: Visibility; c
   );
 }
 
-function PlaylistTitle({ list, owned, onRename }: { list: Playlist; owned: boolean; onRename: (name: string) => Promise<void> }) {
-  const [editing, setEditing] = useState(false);
+function PlaylistTitle({ list, editing, setEditing, onRename }: { list: Playlist; editing: boolean; setEditing: (editing: boolean) => void; onRename: (name: string) => Promise<void> }) {
   const [name, setName] = useState(list.name);
   if (editing) {
     const done = () => {
@@ -1705,12 +1706,7 @@ function PlaylistTitle({ list, owned, onRename }: { list: Playlist; owned: boole
       </form>
     );
   }
-  return (
-    <div className="title-row">
-      <h1 className="playlist-title">{list.name}</h1>
-      {owned && <button className="icon-btn small" aria-label={t.rename} title={t.rename} onClick={() => { setName(list.name); setEditing(true); }}><PencilIcon /></button>}
-    </div>
-  );
+  return <h1 className="playlist-title">{list.name}</h1>;
 }
 
 function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: (replace?: boolean) => void }) {
@@ -1750,6 +1746,7 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: (r
   };
   const have = new Set(tracks?.map((track) => track.query));
   const [searching, setSearching] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const addItem = async (item: QueueItem) => {
     await post("playlist/add", { id: list.id, items: [item] });
     await refresh();
@@ -1764,17 +1761,26 @@ function PlaylistView({ list, me, onBack }: { list: Playlist; me: Me; onBack: (r
   );
   return (
     <section className="sheet playlists" aria-label={list.name}>
-      <button className="pill ghost back" onClick={() => onBack()}><Icon.Back />{t.back}</button>
-      <div className="playlist-hero">
-        <PlaylistCover list={list} className="cover-hero" />
-        <div className="playlist-hero-text">
-          <PlaylistTitle key={list.name} list={list} owned={owned} onRename={(name) => act(() => post("playlist/rename", { id: list.id, name }))} />
-          <p className="sub playlist-owner">{list.visibility === "private" && <span className="vis private" title={t.visibility.private}><LockIcon /><span className="sr-only">{t.visibility.private}</span></span>}<OwnerFace name={list.ownerName} /><span className="owner-name">{list.ownerName}</span><span aria-hidden="true">·</span>{playlistMeta(list)}</p>
-          <div className="row playlist-actions">
-            <QueueButton className="btn primary play-all" label={t.play} disabled={!list.trackCount} run={run(false)} />
-            <QueueButton className="btn" label={t.shuffle} disabled={list.trackCount < 2} run={run(true)} />
-            {owned && <VisibilityToggle value={list.visibility} className="btn" onChange={(visibility) => void act(() => post("playlist/visibility", { id: list.id, visibility }))} />}
-            {owned && <button className="icon-btn delete-list" aria-label={t.deletePlaylist} title={t.deletePlaylist} onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); onBack(true); }); }}><TrashIcon /></button>}
+      <div className="playlist-hero" style={{ "--h": hueOf(list.id) } as CSSProperties}>
+        <div className="playlist-hero-glow" aria-hidden="true">{list.covers.slice(0, 4).map((cover, index) => <img key={index} src={cover} alt="" referrerPolicy="no-referrer" />)}</div>
+        <button className="pill glass hero-back" onClick={() => onBack()}><Icon.Back />{t.back}</button>
+        <div className="playlist-hero-body">
+          <PlaylistCover list={list} className="cover-hero" />
+          <div className="playlist-hero-text">
+            <span className="vis-chip"><VisibilityIcon visibility={list.visibility} />{t.playlistOf[list.visibility]}</span>
+            <PlaylistTitle key={list.name} list={list} editing={renaming} setEditing={setRenaming} onRename={(name) => act(() => post("playlist/rename", { id: list.id, name }))} />
+            <p className="sub playlist-owner"><OwnerFace name={list.ownerName} /><span className="owner-name">{list.ownerName}</span><span aria-hidden="true">·</span>{playlistMeta(list)}</p>
+          </div>
+          <div className="playlist-actions">
+            {owned && (
+              <div className="owner-tools">
+                <button className="icon-btn glass" aria-label={t.rename} title={t.rename} onClick={() => setRenaming(true)}><PencilIcon /></button>
+                <button className="icon-btn glass" aria-label={t.makeVisible[other(list.visibility)]} title={t.makeVisible[other(list.visibility)]} onClick={() => void act(() => post("playlist/visibility", { id: list.id, visibility: other(list.visibility) }))}><VisibilityIcon visibility={other(list.visibility)} /></button>
+                <button className="icon-btn glass delete-list" aria-label={t.deletePlaylist} title={t.deletePlaylist} onClick={() => { if (confirm(t.confirmDelete(list.name))) void act(async () => { await post("playlist/delete", { id: list.id }); onBack(true); }); }}><TrashIcon /></button>
+              </div>
+            )}
+            <QueueButton className="pill glass big" icon={<Icon.Shuffle />} label={t.shuffle} disabled={list.trackCount < 2} run={run(true)} />
+            <QueueButton className="pill primary big play-all" icon={<Icon.Play />} label={t.play} disabled={!list.trackCount} run={run(false)} />
           </div>
         </div>
       </div>
