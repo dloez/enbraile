@@ -423,7 +423,7 @@ label.stack { display: flex; flex-direction: column; gap: .5rem; font-weight: 60
   .swap { animation: none; }
 }
 
-.history { max-width: 75rem; gap: .9rem; }
+.history { max-width: 75rem; margin-inline: auto; gap: .9rem; }
 .history-intro { margin: 0 0 .4rem .2rem; }
 .session-card { position: relative; display: flex; flex-direction: column; border-radius: 1.6rem; background: var(--panel); border: 1px solid var(--line); }
 .session-card.live { border-color: var(--accent-line); }
