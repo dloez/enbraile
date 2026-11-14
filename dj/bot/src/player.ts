@@ -1,6 +1,6 @@
 import { type ChildProcess, execFile, spawn } from "node:child_process";
 import { AudioPlayerStatus, type AudioPlayer, type AudioResource, createAudioPlayer, createAudioResource, entersState, joinVoiceChannel, StreamType, type VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
-import { client, guild } from "./client.ts";
+import { client, guild } from "../../../home/bot/src/sdk.ts";
 
 type Resolved = { title: string; artist: string | null; album: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string };
 

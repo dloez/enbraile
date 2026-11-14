@@ -1,0 +1,22 @@
+{
+  "name": "enbraile-bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "node scripts/link-modules.mjs",
+    "gate": "tsc --noEmit",
+    "start": "node src/main.ts",
+    "dev": "node --env-file=.env.local src/main.ts"
+  },
+  "dependencies": {
+    "@discordjs/voice": "0.19.2",
+    "@snazzah/davey": "0.2.0",
+    "discord.js": "14.28.1",
+    "ws": "8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "@types/ws": "8.18.1",
+    "typescript": "7.0.2"
+  }
+}

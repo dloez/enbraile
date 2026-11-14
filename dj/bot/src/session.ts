@@ -1,6 +1,6 @@
-import { db, getValue, setValue } from "./db.ts";
+import { getValue, requester, type Requester, setValue } from "../../../home/bot/src/sdk.ts";
+import { db } from "./db.ts";
 import { type ArtistRef, artistNames, type Seed, sessionRadio, type Song } from "./music.ts";
-import { type Requester, requester } from "./client.ts";
 import * as player from "./player.ts";
 
 export type Track = { id: string; query: string; title: string; artist: string | null; artists?: ArtistRef[]; album?: string | null; albumId?: string | null; artwork: string | null; durationMs: number; url: string | null; requestedBy: string; requester?: Requester | null; pickedBy?: AutoplayMode; replacing?: boolean; playlist?: PlaylistRef | null };

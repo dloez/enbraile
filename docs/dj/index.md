@@ -6,5 +6,5 @@ The group's Discord music bot and its web panel. Code lives in `dj/`; its docs l
 
 | Project | Status | Description |
 |---------|--------|-------------|
-| Bot | Deployed | The Node process on the owner's home cluster that takes slash commands and plays audio, its API published through Tailscale Funnel: [explanation](bot/explanation/bot.md), [how to run and deploy it](bot/how-to/run-and-deploy-the-bot.md) |
+| Bot | Deployed | The music module of the [Enbraile bot](../home/bot/explanation/bot.md): slash commands, playback, queue, playlists and the panel's routes: [explanation](bot/explanation/bot.md) |
 | Panel | Deployed | The web panel for `dj.enbraile.vip`, on Vercel: [explanation](panel/explanation/panel.md) |

@@ -1,0 +1,8 @@
+**
+!home/bot/package.json
+!home/bot/package-lock.json
+!home/bot/scripts
+!home/bot/src
+!dj/bot/package.json
+!dj/bot/src
+!dj/bot/yt-dlp-plugins

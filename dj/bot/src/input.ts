@@ -2,7 +2,6 @@ import { musicSearchUrl, searchSongs } from "./music.ts";
 
 export type Item = { query: string; title?: string; artist?: string | null; artwork?: string | null; durationMs?: number };
 
-const TICKET_LIFETIME_MS = 60_000;
 const MAX_TRACKS = 200;
 
 type SpotifyEntity = { title?: string; name?: string; subtitle?: string; artists?: { name: string }[]; trackList?: { title: string; subtitle: string }[] };
@@ -35,21 +34,4 @@ export async function resolveInput(input: string, expand: (url: string) => Promi
     return tracks.slice(0, MAX_TRACKS).map((track) => ({ query: track.url, title: track.title }));
   }
   return [{ query: text, title: text }];
-}
-
-const hmac = async (message: string, secret: string) => {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
-  return btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-};
-
-export async function signTicket(secret: string, userId: string): Promise<string> {
-  const claim = `${Date.now() + TICKET_LIFETIME_MS}.${userId}`;
-  return `${claim}.${await hmac(claim, secret)}`;
-}
-
-export async function verifyTicket(ticket: string, secret: string): Promise<string | null> {
-  const [expires, userId, signature] = ticket.split(".");
-  if (!expires || !userId || !signature || Number(expires) < Date.now()) return null;
-  return (await hmac(`${expires}.${userId}`, secret)) === signature ? userId : null;
 }

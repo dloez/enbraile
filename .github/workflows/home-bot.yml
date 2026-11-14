@@ -1,11 +1,12 @@
-name: dj bot image
+name: bot image
 
 on:
   push:
     branches: [main]
     paths:
+      - home/bot/**
       - dj/bot/**
-      - .github/workflows/dj-bot.yml
+      - .github/workflows/home-bot.yml
   workflow_dispatch:
 
 permissions:
@@ -13,7 +14,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: dj-bot-image
+  group: bot-image
   cancel-in-progress: false
 
 jobs:
@@ -21,14 +22,14 @@ jobs:
     runs-on: ubuntu-24.04-arm
     defaults:
       run:
-        working-directory: dj/bot
+        working-directory: home/bot
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: dj/bot/package-lock.json
+          cache-dependency-path: home/bot/package-lock.json
       - run: npm ci
       - run: npm run gate
       - id: tag
@@ -40,7 +41,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
-          context: dj/bot
+          context: .
+          file: home/bot/Dockerfile
           platforms: linux/arm64
           push: true
           tags: ghcr.io/dloez/enbraile-dj-bot:${{ steps.tag.outputs.tag }}
