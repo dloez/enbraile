@@ -1,22 +1,5 @@
 # Zombies Coach — Tasks
 
-## Draw the survey sheet's inks from tokens
-
-The zone's hatch, the drawn plan's grid and its lines are raw hex in a component: `zombies/site/src/art.tsx:107` (`#c4321a`), `:110` (`#2945a8`) and `:118` (`#15140f`). That breaks "Tokens only in the site's code … no hex in components" (`docs/zombies/site/reference/design-system.md:27`). The doc's `:52` says the survey sheet's inks "become tokens when those features are built", and zones were built in e681f38.
-
-**Do:**
-- [ ] Add the survey inks as tokens in `src/index.css` `:root`, and have `SurveyZone` read them (CSS classes or `var(--…)` on the SVG attributes).
-- [ ] Add them to the design system's Colour Tokens table, and drop the survey sheet from `:52`'s list of raw values.
-
-**Acceptance:**
-- Claude-run: `npm run gate`. `grep -nE '#[0-9a-fA-F]{3,6}' zombies/site/src/*.tsx` finds nothing. Through `verify-site`-style local checks in the Playwright MCP, the test map's level-3 slip shows its zone on the drawn plan, looking the same as before.
-- Human-run: none.
-- Reuse: the token pattern in `src/index.css`.
-- Neighbors: the `slip-*` tokens.
-- Forbidden: a changed colour; hex in a component.
-
-**Touches:** `zombies/site/src/art.tsx`, `zombies/site/src/index.css`, `docs/zombies/site/reference/design-system.md`
-
 ## Answer a failed voice turn with 500, as the site doc says
 
 `docs/zombies/site/explanation/site.md:108` says "A turn that fails answers 500, which the bot logs and also meets with silence." It does not. When the Claude call fails, `coachTurn` catches the error, logs it in `coach_calls` and only emits a `failed` event (`zombies/site/api/_lib/coach.ts:729-736`, `:908`). `voiceTurn` reads only `text` events (`zombies/site/api/_lib/voice.ts:28-31`), so the route answers 200 `{ reply: null }` (`api/_lib/app.ts:139`). The bot then treats it as Cari choosing silence and logs nothing (`zombies/bot/src/call.ts`, `ask` and `heard`). Only a thrown database error reaches a 500. In the chat, a failed reply already says so rather than staying silent ("A failed reply says so", `site.md:205`). So the doc's behaviour is the intended one, and the code is what falls short.

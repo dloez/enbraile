@@ -104,10 +104,10 @@ export function SurveyZone({ zone, art, label }: { zone: ShownZone; art: Publish
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
         <defs>
           <pattern id={`${id}h`} width={hatch} height={hatch} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <path d={`M0 0V${hatch}`} stroke="#c4321a" strokeWidth={1.6 * unit} />
+            <path d={`M0 0V${hatch}`} className="survey-hatch" strokeWidth={1.6 * unit} />
           </pattern>
           <pattern id={`${id}g`} width={cell} height={cell} patternUnits="userSpaceOnUse">
-            <path d={`M${cell} 0H0V${cell}`} fill="none" stroke="#2945a8" strokeOpacity={0.2} strokeWidth={unit} />
+            <path d={`M${cell} 0H0V${cell}`} fill="none" className="survey-grid" strokeOpacity={0.2} strokeWidth={unit} />
           </pattern>
         </defs>
         {zone.survey ? (
@@ -115,7 +115,7 @@ export function SurveyZone({ zone, art, label }: { zone: ShownZone; art: Publish
         ) : (
           <>
             <rect width={width} height={height} fill={`url(#${id}g)`} />
-            <g className="survey-plan" fill="none" stroke="#15140f">
+            <g className="survey-plan" fill="none">
               <Plan />
             </g>
           </>

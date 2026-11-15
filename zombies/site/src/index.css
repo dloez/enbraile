@@ -21,6 +21,10 @@
   --slip-hi: #000;
   --slip-mute: #5b5443;
   --slip-line: #c9bb88;
+  --survey: #f4f0e6;
+  --survey-ink: #15140f;
+  --survey-grid: #2945a8;
+  --survey-zone: #c4321a;
   --sans: "Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible", system-ui, sans-serif;
   --cond: "Archivo Variable", sans-serif;
   --type: "Courier Prime", ui-monospace, monospace;
@@ -1296,7 +1300,7 @@ a:hover {
   border-radius: 6px;
   overflow: hidden;
   line-height: 0;
-  background: #f4f0e6;
+  background: var(--survey);
   box-shadow: 0 0 0 1px var(--slip-line);
 }
 
@@ -1311,6 +1315,18 @@ a:hover {
   vector-effect: non-scaling-stroke;
 }
 
+.survey-hatch {
+  stroke: var(--survey-zone);
+}
+
+.survey-grid {
+  stroke: var(--survey-grid);
+}
+
+.survey-plan {
+  stroke: var(--survey-ink);
+}
+
 .survey-plan * {
   vector-effect: non-scaling-stroke;
   stroke-width: 1.4;
@@ -1322,20 +1338,20 @@ a:hover {
 
 .zone-halo {
   fill: none;
-  stroke: #f4f0e6;
+  stroke: var(--survey);
   stroke-width: 6;
   stroke-opacity: 0.8;
 }
 
 .zone-edge {
   fill: none;
-  stroke: #c4321a;
+  stroke: var(--survey-zone);
   stroke-width: 2.6;
 }
 
 .zone-ring {
   fill: none;
-  stroke: #c4321a;
+  stroke: var(--survey-zone);
   stroke-width: 1.6;
   transform-box: fill-box;
   transform-origin: center;

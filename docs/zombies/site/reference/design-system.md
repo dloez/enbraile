@@ -48,8 +48,9 @@ The boards between them draw both languages: `maps`, `map`, `start-run` and `joi
 | `on-red` | `#fff` | Text on `red` |
 | `blue`, `blue-hi`, `blue-tx`, `blue-bg` | `#3a57c9`, `#4865d6`, `#9db0ff`, `#20263f` | A revision: the pressed toggle and Send, the sent line and its tag, the dashed composer |
 | `slip`, `slip-ink`, `slip-hi`, `slip-mute`, `slip-line` | `#ebdfb0`, `#1b1a14`, `#000`, `#5b5443`, `#c9bb88` | A hint's dispatch slip: its ground, text and More button, More's hover, earlier rungs and the head's time, its dashed rules |
+| `survey`, `survey-ink`, `survey-grid`, `survey-zone` | `#f4f0e6`, `#15140f`, `#2945a8`, `#c4321a` | A slip's survey sheet: its paper and the zone's halo, the drawn plan's lines, the plan's grid, the zone's hatch, edge and pulsing ring |
 
-The boards also write white on `blue`, and the survey sheet's own inks, raw; they become tokens when those features are built. Members carry no colour of their own; a person is their initials chip, the reader's own filled `text`.
+The boards also write white on `blue` raw. Members carry no colour of their own; a person is their initials chip, the reader's own filled `text`.
 
 ## Typography
 
