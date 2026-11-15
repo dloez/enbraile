@@ -17,6 +17,25 @@ Progress reports, open threads and the session rules that need run state: `On su
 
 **Touches:** `zombies/site/`, `docs/zombies/site/`
 
+## Rebuild the site from the third take
+
+The owner found the radio-log site's flow awkward and its UI clumsy and hard to read, and asked for map rows to be clickable and for Claude design to remake it (2026-11-15). The "Third take" page of the canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) redraws it: every map row opens a new map view with its open runs and one "Start a run" with the language inline; a shared link lands on the join view; a "Your run" pill in the header leads back to your run; body text in Atkinson Hyperlegible Next at 16–18px in sentence case, a warm dark theme with the paper slip and survey sheet as light cards, and soft cards on one spacing scale. It keeps the radio-log identity (the run as a log, hints as dispatch slips) and replaces the v2 look ([Discovery → Runs and the site](discovery.md#runs-and-the-site)).
+
+**Do:**
+- [ ] Freeze the canvas's `v3/*.dc.html` boards into `zombies/site/design/`, replacing the current files (kebab-case names, `map.dc.html` and `map-phone.dc.html` new).
+- [ ] Build the flow: map rows as single links to a map view route; start and join from there; a shared run link on the join view; the "Your run" pill on every screen outside the run; "Copy link" in the run; the one-run rule as a line under the actions, without a confirmation step.
+- [ ] Restyle every built screen to the boards, keeping the loading, empty and error states, focus handling and fixes the UX review added, redrawn in the new look.
+- [ ] Rewrite `docs/zombies/site/reference/design-system.md` from the boards (tokens, type, shape, spacing, components, states) and update `docs/zombies/site/explanation/site.md` for the map view route and the owner's decision.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1440×900 and 390×844 with two local members on the test map: pick a map → start (2 taps), pick a map → join (2 taps), run link → join (1 tap), back to my run (1 tap), each screen matching its board, every loading, empty and error state still present, no console error.
+- Human-run: the owner and a friend use it on phones on `zombies.enbraile.vip` and find it easy to read and to move around.
+- Reuse: the boards; the states and fixes in `zombies/site/src/` from the UX review.
+- Neighbors: `pkmn/site/design/` for the freeze format.
+- Forbidden: step or hint numbers in the UI; a way to end a run; real map content or any game's art in a board; dropping a state the UX review added.
+
+**Touches:** `zombies/site/design/`, `zombies/site/src/`, `zombies/site/index.html`, `zombies/site/package.json`, `zombies/site/package-lock.json`, `docs/zombies/site/`
+
 ## Hold on gaps and take REVISION and card feedback
 
 When no prepared line fits, Cari holds and the run records a gap; `REVISION:` messages and card feedback are stored with the line they refer to and never go to the model as gameplay ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
