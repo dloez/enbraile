@@ -307,6 +307,20 @@ a:hover {
   background: var(--red);
 }
 
+.b-blue {
+  background: var(--blue);
+  color: var(--on-red);
+}
+
+.b-blue:hover {
+  background: var(--blue-hi);
+  color: var(--on-red);
+}
+
+.b-blue:disabled:hover {
+  background: var(--blue);
+}
+
 .b-ghost {
   background: transparent;
   color: var(--text);
@@ -879,6 +893,47 @@ a:hover {
   flex: none;
 }
 
+.who-rev {
+  color: var(--blue-tx);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--sp-3);
+  border-radius: 12px;
+  background: var(--blue-bg);
+  color: var(--blue-tx);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.revmsg {
+  margin-top: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: 8px;
+  background: var(--blue-bg);
+  color: var(--blue-tx);
+  font-size: 17px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.re {
+  display: block;
+  margin-top: var(--sp-2);
+  font-family: var(--type);
+  font-size: 14px;
+  color: var(--blue-tx);
+}
+
+.sending .revmsg,
+.sending .re {
+  opacity: 0.7;
+}
+
 .msg {
   font-size: 17px;
   line-height: 1.55;
@@ -986,10 +1041,6 @@ a:hover {
   padding: var(--sp-5);
 }
 
-.slip-end {
-  height: var(--sp-5);
-}
-
 .more {
   display: inline-flex;
   align-items: center;
@@ -1015,6 +1066,56 @@ a:hover {
   cursor: default;
 }
 
+.fb {
+  display: flex;
+  gap: var(--sp-2);
+  border: 0;
+  margin: 0 0 0 auto;
+  padding: 0;
+  min-width: 0;
+}
+
+.fb legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.fb label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border-radius: 22px;
+  box-shadow: inset 0 0 0 1.5px var(--slip-mute);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--slip-ink);
+  white-space: nowrap;
+}
+
+.fb input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+
+.fb label:has(input:checked) {
+  background: var(--slip-ink);
+  color: var(--slip);
+  box-shadow: none;
+}
+
+.fb label:has(input:focus-visible) {
+  outline: 2px solid var(--slip-ink);
+  outline-offset: 2px;
+}
+
 .trouble {
   flex: none;
   display: flex;
@@ -1031,16 +1132,60 @@ a:hover {
 
 .cmp {
   flex: none;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-12) var(--sp-5);
+  padding: var(--sp-3) var(--sp-12) var(--sp-5);
   border-top: 1px solid var(--line);
   background: var(--surf);
 }
 
-.cmp > * {
-  max-width: 100%;
+.cmp-in {
+  max-width: 784px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.mode {
+  max-width: 784px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blue-tx);
+  margin-bottom: var(--sp-2);
+}
+
+.cmp-rev .field {
+  border: 2px dashed var(--blue-tx);
+  background: var(--blue-bg);
+}
+
+.cmp-rev .field::placeholder {
+  color: var(--blue-tx);
+}
+
+.revb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 56px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: none;
+}
+
+.revb:hover {
+  background: var(--surf-2);
+}
+
+.revb[aria-pressed="true"] {
+  background: var(--blue);
+  color: var(--on-red);
+  box-shadow: none;
 }
 
 .field {
@@ -1444,8 +1589,38 @@ a:hover {
   }
 
   .cmp {
-    gap: var(--sp-2);
     padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  }
+
+  .cmp-in {
+    gap: var(--sp-2);
+  }
+
+  .revb {
+    justify-content: center;
+    width: 52px;
+    min-height: 52px;
+    padding: 0;
+  }
+
+  .revb-w {
+    display: none;
+  }
+
+  .fb {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0;
+  }
+
+  .fb label {
+    justify-content: center;
+    text-align: center;
+    min-height: 48px;
+    padding: var(--sp-1) var(--sp-2);
+    border-radius: 8px;
+    line-height: 1.2;
+    white-space: normal;
   }
 
   .field {

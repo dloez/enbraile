@@ -1,5 +1,5 @@
 import type { Language } from "../shared/bundle";
-import type { MapsPage, ReplyEvent, RunSheet, Transcript } from "../shared/runs";
+import type { MapsPage, Rating, ReplyEvent, RunSheet, Transcript } from "../shared/runs";
 
 export type Me = { user: { name: string; image: string | null; discordId: string } };
 
@@ -38,6 +38,7 @@ export const fetchTranscript = (id: string, after: number, rungsAfter: number) =
   call<Transcript>(`runs/${encodeURIComponent(id)}/messages?after=${after}&rungsAfter=${rungsAfter}`);
 export const startRun = (game: string, map: string, language: Language) => call<{ id: string }>("runs", { method: "POST", body: { game, map, language } });
 export const joinRun = (id: string) => call<{ id: string }>(`runs/${encodeURIComponent(id)}/join`, { method: "POST" });
+export const rateCard = (id: string, card: number, rating: Rating) => call<{ rating: Rating }>(`runs/${encodeURIComponent(id)}/cards/${card}/feedback`, { method: "PUT", body: { rating } });
 export type Listener = { opened: () => void; heard: (event: ReplyEvent) => void };
 
 async function listen(path: string, body: unknown, listener: Listener): Promise<void> {
@@ -65,5 +66,5 @@ async function listen(path: string, body: unknown, listener: Listener): Promise<
   }
 }
 
-export const sendMessage = (id: string, text: string, listener: Listener) => listen(`runs/${encodeURIComponent(id)}/messages`, { text }, listener);
+export const sendMessage = (id: string, text: string, revision: boolean, listener: Listener) => listen(`runs/${encodeURIComponent(id)}/messages`, { text, revision }, listener);
 export const askMore = (id: string, card: number, listener: Listener) => listen(`runs/${encodeURIComponent(id)}/cards/${card}/more`, undefined, listener);

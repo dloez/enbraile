@@ -37,7 +37,7 @@ Copy `.env.example` to `.env.local` and fill it in:
 | `DATABASE_URL` | `postgres://postgres:postgres@localhost:5433/zombies` |
 | `ROOT_URL` | `https://enbraile.vip`, read only when `DEV_USER_ID` is empty |
 | `CLAUDE_TOKEN` | Any long random string, e.g. `openssl rand -hex 24`; the bearer token of Claude's `/api/claude/` routes |
-| `ZOMBIES_URL` | Where `publish` sends bundles: `http://localhost:8789` |
+| `ZOMBIES_URL` | Where `publish` sends bundles and `runs` reads runs: `http://localhost:8789` |
 | `DEV_USER_ID` | One or more members, comma-separated, each `<id>` or `<id>:<name>` (e.g. `111:Marina,222:Teo`), to be signed in without the root site |
 | `ANTHROPIC_API_KEY` | An Anthropic API key for Cari; without one she stays silent |
 | `COACH_MODEL` | The model Cari runs on; `claude-haiku-5-5` when empty |
@@ -77,13 +77,22 @@ npm run publish -- test-map
 
 The path is the map's dir, holding its `bundle.json`, relative to where the command is run; from `zombies/site/` a real map's is `../maps/<game>/<map>/`. It prints the version stored, or `unchanged` when the bundle equals the latest one, and every schema error when it is rejected.
 
-### 7. Run the gate
+### 7. Read a run
+
+```sh
+npm run runs
+npm run runs -- <run id>
+```
+
+The first lists every run with its map, members and counts; the second writes the whole run (its log, gaps, feedback, marks and Claude calls) to `zombies/maps/<game>/<map>/runs/<id>.json`, gitignored, and prints only its counts. Both read `ZOMBIES_URL` and `CLAUDE_TOKEN`, as `publish` does.
+
+### 8. Run the gate
 
 ```sh
 npm run gate
 ```
 
-### 8. Set up production (once)
+### 9. Set up production (once)
 
 This was done on 2026-11-15.
 
@@ -105,7 +114,7 @@ printf %s "$v" | npx vercel env add DATABASE_URL --environment production --sens
 unset v
 ```
 
-and the same with `dev` for `--environment preview`. The value goes through a variable rather than a straight pipe because `vercel env add` reads its stdin before a piped `npx neonctl` has written anything. `DEV_USER_ID` stays unset in Vercel, so every deployment asks the root site who is signed in; `ZOMBIES_URL` belongs to the shell running `publish`, not to the project.
+and the same with `dev` for `--environment preview`. The value goes through a variable rather than a straight pipe because `vercel env add` reads its stdin before a piped `npx neonctl` has written anything. `DEV_USER_ID` stays unset in Vercel, so every deployment asks the root site who is signed in; `ZOMBIES_URL` belongs to the shell running `publish` and `runs`, not to the project.
 
 Hand Cari's key from the cluster to Vercel the same way, never printing it:
 

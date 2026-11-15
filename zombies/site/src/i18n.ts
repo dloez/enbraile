@@ -54,6 +54,11 @@ const en = {
   quiet: "Nothing on the log yet.",
   notSent: "Your line didn't go through.",
   noAnswer: "Cari didn't answer.",
+  revision: "Revision",
+  revisionMode: "Revision mode · for Claude",
+  commentOnCoaching: "Comment on the coaching…",
+  re: (time: string | null) => (time ? `re: Cari ${time} · for Claude` : "for Claude"),
+  notRated: "Your rating didn't go through.",
   planOf: (name: string) => `${name} plan`,
 };
 
@@ -100,6 +105,11 @@ const es: typeof en = {
   quiet: "Aún no hay nada en el registro.",
   notSent: "Tu mensaje no ha llegado.",
   noAnswer: "Cari no ha contestado.",
+  revision: "Revisión",
+  revisionMode: "Modo revisión · para Claude",
+  commentOnCoaching: "Comenta el coaching…",
+  re: (time: string | null) => (time ? `re: Cari ${time} · para Claude` : "para Claude"),
+  notRated: "Tu valoración no ha llegado.",
   planOf: (name: string) => `Plano de ${name}`,
 };
 

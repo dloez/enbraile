@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Language } from "../shared/bundle";
-import type { Card, Member, Message, RunSheet } from "../shared/runs";
-import { askMore, type Listener, fetchRun, fetchTranscript, joinRun, Refused, sendMessage, SignedOut, signIn } from "./api";
+import { asRevision, ratings, type Card, type Member, type Message, type Rating, type RunSheet } from "../shared/runs";
+import { askMore, type Listener, fetchRun, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
-import { Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Notice, type RunLink, useFit } from "./ui";
+import { Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Notice, Pencil, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
 const freshRows = 4;
@@ -18,9 +18,23 @@ function clock(at: string): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: string }> = {
-  es: { dispatch: "Despacho", more: "Más", transmitting: "transmitiendo", writing: "Cari escribe" },
-  en: { dispatch: "Dispatch", more: "More", transmitting: "transmitting", writing: "Cari is writing" },
+const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: string; rate: string; ratings: Record<Rating, string> }> = {
+  es: {
+    dispatch: "Despacho",
+    more: "Más",
+    transmitting: "transmitiendo",
+    writing: "Cari escribe",
+    rate: "Valora esta pista",
+    ratings: { obvious: "Demasiado obvia", right: "Justa", vague: "Demasiado vaga" },
+  },
+  en: {
+    dispatch: "Dispatch",
+    more: "More",
+    transmitting: "transmitting",
+    writing: "Cari is writing",
+    rate: "Rate this hint",
+    ratings: { obvious: "Too obvious", right: "Right", vague: "Too vague" },
+  },
 };
 
 function JoinView({ sheet, onJoined }: { sheet: RunSheet; onJoined: () => void }) {
@@ -82,7 +96,36 @@ function JoinView({ sheet, onJoined }: { sheet: RunSheet; onJoined: () => void }
   );
 }
 
-function Slip({ card, language, busy, onMore }: { card: Card; language: Language; busy: boolean; onMore: (card: number) => void }) {
+function Feedback({ card, language, rating, onRate }: { card: number; language: Language; rating: Rating | null; onRate: (card: number, rating: Rating) => void }) {
+  const words = cariWords[language];
+  return (
+    <fieldset className="fb">
+      <legend>{words.rate}</legend>
+      {ratings.map((value) => (
+        <label key={value}>
+          <input type="radio" name={`fb-${card}`} value={value} checked={rating === value} onChange={() => onRate(card, value)} />
+          {words.ratings[value]}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
+function Slip({
+  card,
+  language,
+  busy,
+  rating,
+  onMore,
+  onRate,
+}: {
+  card: Card;
+  language: Language;
+  busy: boolean;
+  rating: Rating | null;
+  onMore: (card: number) => void;
+  onRate: (card: number, rating: Rating) => void;
+}) {
   const words = cariWords[language];
   return (
     <div className="slip" lang={language}>
@@ -95,15 +138,14 @@ function Slip({ card, language, busy, onMore }: { card: Card; language: Language
           {rung.text}
         </p>
       ))}
-      {card.more ? (
-        <div className="slip-f">
+      <div className="slip-f">
+        {card.more && (
           <button type="button" className="more" disabled={busy} onClick={() => onMore(card.id)}>
             <Down /> {words.more}
           </button>
-        </div>
-      ) : (
-        <div className="slip-end" />
-      )}
+        )}
+        <Feedback card={card.id} language={language} rating={rating} onRate={onRate} />
+      </div>
     </div>
   );
 }
@@ -126,6 +168,23 @@ function Line({ at, cari, name, className, children }: { at: string; cari: boole
 
 function Row({ message, card, old, slip }: { message: Message; card: Card | undefined; old: boolean; slip: (card: Card) => ReactNode }) {
   const cari = message.author === "cari";
+  if (message.revision) {
+    const time = clock(message.at);
+    return (
+      <div className={message.id < 0 ? "row sending" : "row"}>
+        <span className="t">{time}</span>
+        <div>
+          <p className="who who-rev">
+            {message.name}
+            <span className="t t-in">{time}</span>
+            <span className="tag">{t.revision}</span>
+          </p>
+          <p className="revmsg">{message.text}</p>
+          <span className="re">{t.re(message.revision.re && clock(message.revision.re))}</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <Line at={message.at} cari={cari} name={cari ? "Cari" : message.name} className={old ? "row old" : message.id < 0 ? "row sending" : "row"}>
       <p className="msg">{message.text}</p>
@@ -189,6 +248,8 @@ function RunView({ sheet }: { sheet: RunSheet }) {
   const [pending, setPending] = useState<Message | null>(null);
   const [airing, setAiring] = useState<{ text: string; at: string } | null>(null);
   const [trouble, setTrouble] = useState<Trouble | null>(null);
+  const [revising, setRevising] = useState(false);
+  const [rated, setRated] = useState<Map<number, Rating>>(new Map());
   const last = useRef(0);
   const lastRung = useRef(0);
   const rows = useRef<HTMLDivElement>(null);
@@ -287,16 +348,27 @@ function RunView({ sheet }: { sheet: RunSheet }) {
       .finally(() => setAiring(null));
   };
 
-  const transmit = (text: string) => {
+  const transmit = (text: string, flagged: boolean) => {
     const you = members.find((member) => member.you);
+    const revision = asRevision(text, flagged);
     setDraft((current) => (current.trim() === text ? "" : current));
-    setPending({ id: -1, author: "member", name: you?.name ?? "", you: true, text, at: new Date().toISOString(), card: null });
+    setPending({
+      id: -1,
+      author: "member",
+      revision: revision === null ? null : { re: null },
+      name: you?.name ?? "",
+      you: true,
+      text: revision ?? text,
+      at: new Date().toISOString(),
+      card: null,
+    });
     void listen(
-      (listener) => sendMessage(sheet.id, text, listener),
-      () => transmit(text),
+      (listener) => sendMessage(sheet.id, text, flagged, listener),
+      () => transmit(text, flagged),
       () => {
         setPending(null);
         setDraft((current) => current || text);
+        if (flagged) setRevising(true);
       },
     );
   };
@@ -304,9 +376,27 @@ function RunView({ sheet }: { sheet: RunSheet }) {
   const send = (event: FormEvent) => {
     event.preventDefault();
     const text = draft.trim();
-    if (!text || airing !== null) return;
+    if (!text || airing !== null || asRevision(text, revising) === "") return;
     setDraft("");
-    transmit(text);
+    setRevising(false);
+    transmit(text, revising);
+  };
+
+  const rate = (card: number, rating: Rating) => {
+    const before = rated.get(card) ?? cards.get(card)?.rating ?? null;
+    const put = (value: Rating | null) =>
+      setRated((current) => {
+        const next = new Map(current);
+        if (value) next.set(card, value);
+        else next.delete(card);
+        return next;
+      });
+    put(rating);
+    rateCard(sheet.id, card, rating).catch((error: unknown) => {
+      if (error instanceof SignedOut) return signIn();
+      put(before);
+      setTrouble({ text: t.notRated, retry: () => rate(card, rating) });
+    });
   };
 
   const more = (card: number) => {
@@ -317,7 +407,9 @@ function RunView({ sheet }: { sheet: RunSheet }) {
     );
   };
 
-  const slip = (card: Card) => <Slip card={card} language={sheet.language} busy={airing !== null} onMore={more} />;
+  const slip = (card: Card) => (
+    <Slip card={card} language={sheet.language} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
+  );
   const notice = trouble ?? (lost ? { text: t.failed, retry: () => void poll() } : null);
 
   return (
@@ -377,11 +469,25 @@ function RunView({ sheet }: { sheet: RunSheet }) {
             </button>
           </div>
         )}
-        <form className="cmp" onSubmit={send}>
-          <input className="field" aria-label={t.messageForCari} placeholder={t.writeToCari} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} />
-          <button type="submit" className="b" disabled={airing !== null}>
-            {t.send}
-          </button>
+        <form className={revising ? "cmp cmp-rev" : "cmp"} onSubmit={send}>
+          {revising && <p className="mode">{t.revisionMode}</p>}
+          <div className="cmp-in">
+            <input
+              className="field"
+              aria-label={revising ? t.revision : t.messageForCari}
+              placeholder={revising ? t.commentOnCoaching : t.writeToCari}
+              value={draft}
+              maxLength={2000}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+            <button type="button" className="revb" aria-pressed={revising} aria-label={t.revision} onClick={() => setRevising((current) => !current)}>
+              <Pencil />
+              <span className="revb-w">{t.revision}</span>
+            </button>
+            <button type="submit" className={revising ? "b b-blue" : "b"} disabled={airing !== null}>
+              {t.send}
+            </button>
+          </div>
         </form>
       </section>
     </div>

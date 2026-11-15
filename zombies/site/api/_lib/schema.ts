@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { boolean, foreignKey, index, integer, jsonb, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { Bundle, Language } from "../../shared/bundle.js";
+import type { GapContext, Rating } from "../../shared/runs.js";
 
 export const maps = pgTable(
   "maps",
@@ -72,6 +73,7 @@ export const messages = pgTable(
       .notNull()
       .references(() => runs.id),
     author: text("author").$type<"member" | "cari">().notNull(),
+    kind: text("kind").$type<"chat" | "revision" | "ack">().notNull().default("chat"),
     discordId: text("discord_id"),
     name: text("name").notNull(),
     text: text("text").notNull(),
@@ -184,4 +186,47 @@ export const headsUpsGiven = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.runId, table.stepId, table.position] })],
+);
+
+export const gaps = pgTable(
+  "gaps",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    askedBy: text("asked_by"),
+    asked: text("asked").notNull(),
+    about: text("about").notNull(),
+    said: text("said").notNull(),
+    context: jsonb("context").$type<GapContext>().notNull(),
+    bundleVersion: integer("bundle_version").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index().on(table.runId, table.id)],
+);
+
+export const feedback = pgTable(
+  "feedback",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    kind: text("kind").$type<"revision" | "card">().notNull(),
+    discordId: text("discord_id").notNull(),
+    name: text("name").notNull(),
+    messageId: integer("message_id").references(() => messages.id),
+    refersTo: integer("refers_to").references(() => messages.id),
+    cardId: integer("card_id").references(() => hintCards.id),
+    deliveryId: integer("delivery_id").references(() => deliveries.id),
+    rating: text("rating").$type<Rating>(),
+    text: text("text"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index().on(table.runId, table.id),
+    uniqueIndex("feedback_one_rating_per_card").on(table.cardId, table.discordId).where(sql`${table.kind} = 'card'`),
+  ],
 );

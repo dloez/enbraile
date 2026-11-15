@@ -1,10 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Bundle, Language } from "../../shared/bundle.js";
 import type { ReplyEvent } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
-import { bundleVersions, coachCalls, deliveries, headsUpsGiven, hintCards, maps, messages, runKnowledge, runs, runSteps } from "./schema.js";
+import { bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runs, runSteps } from "./schema.js";
 
 const defaultModel = "claude-haiku-5-5";
 const maxTokens = 1024;
@@ -23,6 +23,21 @@ const notYet: Record<Language, string> = {
   en: "This isn't budging… and I don't think it's for lack of trying. Maybe it isn't the moment.",
 };
 
+const holdLines: Record<Language, string[]> = {
+  es: [
+    "Uf, eso no lo tengo claro ahora mismo. Dame un momento y seguid a lo vuestro.",
+    "Ahí me pillas. Lo miro y os digo; mientras, ¿qué tenéis delante?",
+    "No quiero liaros con eso sin estar segura. Seguid, que ahora vuelvo.",
+  ],
+  en: [
+    "Hm, I'm not sure about that one right now. Give me a moment and keep at it.",
+    "You've got me there. I'll check and get back to you; meanwhile, what are you looking at?",
+    "I don't want to send you the wrong way on that. Keep going, I'll be back.",
+  ],
+};
+
+const recentLines = 8;
+
 const systemPrompt = `You are Cari, the radio voice who coaches a small group of friends through a Zombies easter egg while they play. You have beaten it before; they want to solve it themselves with as little help as possible. They are mid-round, so be short and immediate.
 
 How you speak
@@ -38,7 +53,7 @@ Choosing a hint
 - Follow what they bring up, never your own order. When they report one part found, switch to the ladder of the part still missing.
 - The full answer only when they clearly ask for the answer, and then with answer: true.
 - On "what now?": if they have mentioned something half done, ask one open question about it, naming only what they mentioned; otherwise give the first hint of a ladder listed as ready.
-- If no listed hint fits what they ask, say briefly in voice that they should keep at it, or ask what they see. Never make a hint up.
+- If they ask about something no listed hint covers, call hold with what they asked about: code says a prepared line in your voice and records it, so the missing hint gets written. Never make a hint up, and never answer it in your own words.
 
 Following their progress
 - A report that they finished something is also the question "what now?": always call record_progress with status done on its ladder, never just congratulate them. Code then says the prepared line about what they achieved and hands over the first hint of something else they can do now, so add no hint of your own and do not repeat either. Pass next with one of the ready ladders when what they said points at it, and quiet: true only when they made clear they already know what they are doing next.
@@ -105,6 +120,16 @@ const tools: Anthropic.Tool[] = [
         number: { type: "integer", minimum: 1, description: "The heads-up's number in the list." },
       },
       required: ["ladder", "number"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "hold",
+    description: "When the players ask about something no listed hint covers. Code says a prepared holding line in your voice and records what they asked so the missing hint can be written. Your reply is then complete.",
+    input_schema: {
+      type: "object",
+      properties: { about: { type: "string", description: "What they asked about, in a few words, for whoever writes the missing hint." } },
+      required: ["about"],
       additionalProperties: false,
     },
   },
@@ -278,7 +303,7 @@ async function history(runId: string): Promise<Anthropic.MessageParam[]> {
     await db
       .select({ id: messages.id, author: messages.author, name: messages.name, text: messages.text })
       .from(messages)
-      .where(eq(messages.runId, runId))
+      .where(and(eq(messages.runId, runId), eq(messages.kind, "chat")))
       .orderBy(desc(messages.id))
       .limit(historyLength)
   ).reverse();
@@ -507,6 +532,28 @@ class Speech {
 
 export type Ask = { kind: "message" } | { kind: "more"; cardId: number };
 
+async function hold(state: State, askedBy: string, asked: string, about: string, recent: string[]): Promise<string> {
+  const [held] = await db.select({ n: count() }).from(gaps).where(eq(gaps.runId, state.runId));
+  const lines = holdLines[state.language];
+  const said = lines[(held?.n ?? 0) % lines.length]!;
+  await db.insert(gaps).values({
+    runId: state.runId,
+    askedBy,
+    asked,
+    about,
+    said,
+    bundleVersion: state.version,
+    context: {
+      model: model(),
+      known: [...state.known],
+      open: state.ladders.filter((ladder) => isOpen(state, ladder)).map((ladder) => ({ ladder: keyOf(ladder), given: state.given.get(keyOf(ladder)) ?? 0 })),
+      done: [...state.done],
+      recent,
+    },
+  });
+  return said;
+}
+
 async function finish(state: State, speech: Speech, cards: number[]): Promise<void> {
   const text = speech.spoken.join(" ");
   if (!text && !cards.length) return;
@@ -566,7 +613,10 @@ export async function coachTurn(
         role: "user",
         content: `${askedBy.name} pressed More on the card of ladder ${target.ladder.handle}; its next hint cannot be given as it stands.`,
       });
-    if (conversation[conversation.length - 1]?.role !== "user") return "ok";
+    const lastTurn = conversation[conversation.length - 1];
+    if (lastTurn?.role !== "user") return "ok";
+    const asked = typeof lastTurn.content === "string" ? lastTurn.content : "";
+    const recent = conversation.flatMap((turn) => (typeof turn.content === "string" ? turn.content.split("\n") : [])).slice(-recentLines);
     const violations: string[] = [];
     const speech = new Speech(state, emit, violations);
     const cards: number[] = [];
@@ -619,7 +669,7 @@ export async function coachTurn(
       const results: Anthropic.ToolResultBlockParam[] = [];
       for (const block of response.content) {
         if (block.type !== "tool_use") continue;
-        const input = (block.input ?? {}) as { ladder?: unknown; alt?: unknown; answer?: unknown; said?: unknown; status?: unknown; next?: unknown; quiet?: unknown; number?: unknown };
+        const input = (block.input ?? {}) as { ladder?: unknown; alt?: unknown; answer?: unknown; said?: unknown; status?: unknown; next?: unknown; quiet?: unknown; number?: unknown; about?: unknown };
         let content: string;
         if (block.name === "give_hint") {
           const ladder = state.ladders.find((entry) => entry.handle === input.ladder);
@@ -731,6 +781,13 @@ export async function coachTurn(
             for (const id of fresh) state.known.add(id);
             content = `Noted. If they reported finishing or starting something listed, call record_progress now. What you may use now:\n\n${offers(state)}`;
           } else content = "Nothing new to note.";
+        } else if (block.name === "hold") {
+          if (hinted) content = "You already handed something over in this reply. Add nothing.";
+          else {
+            hinted = true;
+            speech.add(await hold(state, askedBy.discordId, asked, typeof input.about === "string" ? input.about : "", recent));
+            content = "Said for you in your voice, and recorded so the missing hint gets written. Your reply is complete: add nothing of your own.";
+          }
         } else if (block.name === "ask_round") {
           const recent = state.roundAskedAt && Date.now() - state.roundAskedAt.getTime() < roundGapMs;
           if (recent || round || hinted) content = "Not now; do not ask about the round in this reply.";

@@ -1,11 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { messageSchema, startRunSchema, type ReplyEvent } from "../../shared/runs.js";
+import { asRevision, messageSchema, ratingSchema, startRunSchema, type ReplyEvent } from "../../shared/runs.js";
 import { coachTurn, type Ask } from "./coach.js";
 import { requireEnv } from "./env.js";
 import { storeVersion } from "./maps.js";
-import { isActiveMember, joinRun, mapsPage, postMessage, runSheet, startRun, transcript } from "./runs.js";
+import { isActiveMember, joinRun, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 
 const noStore = { "cache-control": "private, no-store" };
@@ -41,6 +41,11 @@ function reply(runId: string, viewer: Viewer, ask: Ask): Response {
   return new Response(body, { status: 200, headers: { ...noStore, "content-type": "application/x-ndjson", "x-accel-buffering": "no" } });
 }
 
+function said(text: string): Response {
+  const lines = [{ type: "text", text }, { type: "done" }] satisfies ReplyEvent[];
+  return new Response(lines.map((line) => `${JSON.stringify(line)}\n`).join(""), { status: 200, headers: { ...noStore, "content-type": "application/x-ndjson" } });
+}
+
 function isClaude(header: string | undefined): boolean {
   const expected = Buffer.from(`Bearer ${requireEnv("CLAUDE_TOKEN")}`);
   const given = Buffer.from(header ?? "");
@@ -60,6 +65,13 @@ claude.put("/maps/:game/:map", async (c) => {
   const bundle = parsed.data;
   if (bundle.game !== c.req.param("game") || bundle.map !== c.req.param("map")) return c.json({ error: "pathMismatch" }, 400);
   return c.json(await storeVersion(bundle, "claude"), 200, noStore);
+});
+
+claude.get("/runs", async (c) => c.json({ runs: await runList() }, 200, noStore));
+
+claude.get("/runs/:id", async (c) => {
+  const log = await runLog(c.req.param("id"));
+  return log ? c.json(log, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
 });
 
 const member = new Hono<{ Variables: { viewer: Viewer } }>();
@@ -107,6 +119,12 @@ member.post("/runs/:id/messages", async (c) => {
   if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
   const parsed = messageSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidMessage" }, 400, noStore);
+  const revision = asRevision(parsed.data.text, parsed.data.revision);
+  if (revision === "") return c.json({ error: "invalidMessage" }, 400, noStore);
+  if (revision !== null) {
+    const ack = await postRevision(viewer, id, revision);
+    return ack ? said(ack) : c.json({ error: "noSuchRun" }, 404, noStore);
+  }
   await postMessage(viewer, id, parsed.data.text);
   return reply(id, viewer, { kind: "message" });
 });
@@ -118,6 +136,16 @@ member.post("/runs/:id/cards/:card/more", async (c) => {
   const card = cursor(c.req.param("card"));
   if (!card) return c.json({ error: "noSuchCard" }, 404, noStore);
   return reply(id, viewer, { kind: "more", cardId: card });
+});
+
+member.put("/runs/:id/cards/:card/feedback", async (c) => {
+  const viewer = c.get("viewer");
+  const id = c.req.param("id");
+  if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
+  const parsed = ratingSchema.safeParse(await c.req.json().catch(() => null));
+  const card = cursor(c.req.param("card"));
+  if (!parsed.success || !card) return c.json({ error: "invalidFeedback" }, 400, noStore);
+  return (await rateCard(viewer, id, card, parsed.data.rating)) ? c.json({ rating: parsed.data.rating }, 200, noStore) : c.json({ error: "noSuchCard" }, 404, noStore);
 });
 
 const dev = new Hono();

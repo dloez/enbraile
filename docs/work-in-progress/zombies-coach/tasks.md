@@ -1,23 +1,5 @@
 # Zombies Coach — Tasks
 
-## Hold on gaps and take REVISION and card feedback
-
-When no prepared line fits, Cari holds and the run records a gap; `REVISION:` messages and card feedback are stored with the line they refer to and never go to the model as gameplay ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
-
-**Do:**
-- [ ] A hold tool with prepared in-voice non-answers per language; a gap record with the context.
-- [ ] `REVISION:` detection (and wherever the boards put feedback) acknowledged briefly; feedback controls on cards; both logged on the run.
-- [ ] `GET /api/claude/runs/<id>` behind `CLAUDE_TOKEN` returns the run's log, gaps, feedback and marks for debriefs; the ee-coach debrief reads it.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through the Playwright MCP, a question the test map has no line for gets a hold and a gap; a `REVISION:` message gets an acknowledgement and no model call (read from the call log); card feedback appears in the Claude read.
-- Human-run: send a `REVISION:` from a phone; in Claude Code, run the debrief and see it.
-- Reuse: the call log and run state of earlier entries.
-- Neighbors: the hint tools.
-- Forbidden: an improvised hint; a `REVISION:` reaching the coach model.
-
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/site/`
-
 ## Continue the Blood of the Dead session on the site
 
 Import the terminal session into a run so the group continues it on the site, then retire the old workspace ([Discovery → Migration](discovery.md#migration)).
@@ -34,7 +16,6 @@ Import the terminal session into a run so the group continues it on the site, th
 - Forbidden: deleting the old workspace before the owner's yes.
 
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
-**After:** Prepare publishes Haiku-ready bundles, starting with Blood of the Dead; Hold on gaps and take REVISION and card feedback
 
 ## Watch a run from Claude Code and fix things live
 

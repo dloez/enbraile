@@ -62,6 +62,12 @@ export const Down = () => (
   </Icon>
 );
 
+export const Pencil = () => (
+  <Icon size={20} width={2}>
+    <path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4" />
+  </Icon>
+);
+
 export const LinkIcon = ({ size = 18 }: { size?: number }) => (
   <Icon size={size}>
     <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />

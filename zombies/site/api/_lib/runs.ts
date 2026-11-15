@@ -1,11 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Card, MapsPage, Member, Message, OpenRun, RunSheet, Transcript } from "../../shared/runs.js";
+import type { Card, MapsPage, Member, Message, OpenRun, Rating, RunSheet, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { hasMore, ladderKey, laddersOf } from "./ladders.js";
-import { bundleVersions, deliveries, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { bundleVersions, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -15,7 +15,7 @@ async function lockPerson(tx: Tx, discordId: string): Promise<void> {
   await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`member/${discordId}`}))`);
 }
 
-async function latestBundle(tx: Tx, game: string, map: string): Promise<Bundle | null> {
+async function latestBundle(tx: Tx | typeof db, game: string, map: string): Promise<Bundle | null> {
   const [row] = await tx
     .select({ bundle: bundleVersions.bundle })
     .from(maps)
@@ -144,7 +144,7 @@ export async function isActiveMember(viewer: Viewer, runId: string): Promise<boo
   return (await currentRunId(viewer)) === runId;
 }
 
-async function cardsSince(runId: string, after: number, rungsAfter: number, newCards: boolean): Promise<Card[]> {
+async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAfter: number, newCards: boolean): Promise<Card[]> {
   const touched = await db
     .selectDistinct({ stepId: deliveries.stepId, partId: deliveries.partId })
     .from(deliveries)
@@ -191,6 +191,14 @@ async function cardsSince(runId: string, after: number, rungsAfter: number, newC
       ladderKey(entry.stepId, entry.partId || null),
     ),
   );
+  const rated = new Map(
+    (
+      await db
+        .select({ cardId: feedback.cardId, rating: feedback.rating })
+        .from(feedback)
+        .where(and(eq(feedback.runId, runId), eq(feedback.kind, "card"), eq(feedback.discordId, viewer.discordId), inArray(feedback.cardId, wanted.map((card) => card.id))))
+    ).map((entry) => [entry.cardId, entry.rating]),
+  );
   return wanted.map((card) => {
     const key = ladderKey(card.stepId, card.partId);
     const onLadder = rungs.filter((rung) => ladderKey(rung.stepId, rung.partId) === key);
@@ -203,6 +211,7 @@ async function cardsSince(runId: string, after: number, rungsAfter: number, newC
       rungs: own.map((rung) => ({ id: rung.id, text: rung.text })),
       at: (own.at(-1)?.at ?? new Date()).toISOString(),
       more: latest && ladder !== undefined && !done.has(card.stepId) && !done.has(key) && hasMore(ladder, given),
+      rating: rated.get(card.id) ?? null,
     };
   });
 }
@@ -215,11 +224,24 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
     .where(and(eq(messages.runId, runId), gt(messages.id, after)))
     .orderBy(asc(messages.id));
   const members = (await activeMembers(viewer, [runId])).get(runId) ?? [];
+  const revisionIds = rows.filter((row) => row.message.kind === "revision").map((row) => row.message.id);
+  const referred = new Map(
+    revisionIds.length
+      ? (
+          await db
+            .select({ messageId: feedback.messageId, at: messages.createdAt })
+            .from(feedback)
+            .leftJoin(messages, eq(messages.id, feedback.refersTo))
+            .where(and(eq(feedback.runId, runId), inArray(feedback.messageId, revisionIds)))
+        ).map((entry) => [entry.messageId, entry.at?.toISOString() ?? null])
+      : [],
+  );
   return {
     messages: rows.map(
       ({ message: row, card }): Message => ({
         id: row.id,
         author: row.author,
+        revision: row.kind === "revision" ? { re: referred.get(row.id) ?? null } : null,
         name: row.name,
         you: row.discordId === viewer.discordId,
         text: row.text,
@@ -229,6 +251,7 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
     ),
     members,
     cards: await cardsSince(
+      viewer,
       runId,
       after,
       rungsAfter,
@@ -242,3 +265,117 @@ export async function postMessage(viewer: Viewer, runId: string, text: string): 
   return row!.id;
 }
 
+const acknowledgement: Record<Language, string> = { es: "Anotado, gracias.", en: "Noted, thanks." };
+
+export async function postRevision(viewer: Viewer, runId: string, text: string): Promise<string | null> {
+  return db.transaction(async (tx) => {
+    const [run] = await tx.select({ language: runs.language }).from(runs).where(eq(runs.id, runId));
+    if (!run) return null;
+    const [last] = await tx
+      .select({ id: messages.id, card: hintCards.id })
+      .from(messages)
+      .leftJoin(hintCards, eq(hintCards.messageId, messages.id))
+      .where(and(eq(messages.runId, runId), eq(messages.author, "cari"), ne(messages.kind, "ack")))
+      .orderBy(desc(messages.id), desc(hintCards.id))
+      .limit(1);
+    const [rung] = last?.card
+      ? await tx.select({ id: max(deliveries.id) }).from(deliveries).where(eq(deliveries.cardId, last.card))
+      : [];
+    const [message] = await tx
+      .insert(messages)
+      .values({ runId, author: "member", kind: "revision", discordId: viewer.discordId, name: viewer.name, text })
+      .returning({ id: messages.id });
+    await tx.insert(feedback).values({
+      runId,
+      kind: "revision",
+      discordId: viewer.discordId,
+      name: viewer.name,
+      messageId: message!.id,
+      refersTo: last?.id ?? null,
+      cardId: last?.card ?? null,
+      deliveryId: rung?.id ?? null,
+      text,
+    });
+    const said = acknowledgement[run.language];
+    await tx.insert(messages).values({ runId, author: "cari", kind: "ack", name: "Cari", text: said });
+    return said;
+  });
+}
+
+export async function rateCard(viewer: Viewer, runId: string, cardId: number, rating: Rating): Promise<boolean> {
+  const [card] = await db
+    .select({ id: hintCards.id })
+    .from(hintCards)
+    .where(and(eq(hintCards.id, cardId), eq(hintCards.runId, runId), isNotNull(hintCards.messageId)));
+  if (!card) return false;
+  const [rung] = await db.select({ id: max(deliveries.id) }).from(deliveries).where(eq(deliveries.cardId, cardId));
+  const now = new Date();
+  await db
+    .insert(feedback)
+    .values({ runId, kind: "card", discordId: viewer.discordId, name: viewer.name, cardId, deliveryId: rung?.id ?? null, rating })
+    .onConflictDoUpdate({
+      target: [feedback.cardId, feedback.discordId],
+      targetWhere: sql`${feedback.kind} = 'card'`,
+      set: { rating, deliveryId: rung?.id ?? null, name: viewer.name, updatedAt: now },
+    });
+  return true;
+}
+
+export async function runList() {
+  const rows = await db.select().from(runs).orderBy(desc(runs.createdAt));
+  const ids = rows.map((row) => row.id);
+  if (!ids.length) return [];
+  const members = await db.select({ runId: runMembers.runId, name: runMembers.name }).from(runMembers).where(inArray(runMembers.runId, ids));
+  const tally = async (table: typeof messages | typeof gaps | typeof feedback | typeof deliveries) =>
+    new Map((await db.select({ runId: table.runId, n: count() }).from(table).where(inArray(table.runId, ids)).groupBy(table.runId)).map((entry) => [entry.runId, entry.n]));
+  const [lines, held, notes, rungs] = await Promise.all([tally(messages), tally(gaps), tally(feedback), tally(deliveries)]);
+  const lastLine = new Map(
+    (await db.select({ runId: messages.runId, at: max(messages.createdAt) }).from(messages).where(inArray(messages.runId, ids)).groupBy(messages.runId)).map((entry) => [entry.runId, entry.at]),
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    game: row.game,
+    map: row.map,
+    language: row.language,
+    startedBy: row.startedByName,
+    createdAt: row.createdAt,
+    lastLineAt: lastLine.get(row.id) ?? null,
+    members: [...new Set(members.filter((member) => member.runId === row.id).map((member) => member.name))],
+    counts: { messages: lines.get(row.id) ?? 0, deliveries: rungs.get(row.id) ?? 0, gaps: held.get(row.id) ?? 0, feedback: notes.get(row.id) ?? 0 },
+  }));
+}
+
+export async function runLog(runId: string) {
+  const [run] = await db.select().from(runs).where(eq(runs.id, runId));
+  if (!run) return null;
+  const [map] = await db.select({ latestVersion: maps.latestVersion }).from(maps).where(and(eq(maps.game, run.game), eq(maps.map, run.map)));
+  const bundle = await latestBundle(db, run.game, run.map);
+  const names = new Map((bundle?.knowledge ?? []).map((entry) => [entry.id, entry.name]));
+  const [members, lines, cards, rungs, notes, held, marks, steps, headsUps, calls] = await Promise.all([
+    db.select().from(runMembers).where(eq(runMembers.runId, runId)).orderBy(asc(runMembers.id)),
+    db.select().from(messages).where(eq(messages.runId, runId)).orderBy(asc(messages.id)),
+    db.select().from(hintCards).where(eq(hintCards.runId, runId)).orderBy(asc(hintCards.id)),
+    db.select().from(deliveries).where(eq(deliveries.runId, runId)).orderBy(asc(deliveries.id)),
+    db.select().from(feedback).where(eq(feedback.runId, runId)).orderBy(asc(feedback.id)),
+    db.select().from(gaps).where(eq(gaps.runId, runId)).orderBy(asc(gaps.id)),
+    db.select().from(runKnowledge).where(eq(runKnowledge.runId, runId)).orderBy(asc(runKnowledge.createdAt)),
+    db.select().from(runSteps).where(eq(runSteps.runId, runId)),
+    db.select().from(headsUpsGiven).where(eq(headsUpsGiven.runId, runId)).orderBy(asc(headsUpsGiven.createdAt)),
+    db.select().from(coachCalls).where(eq(coachCalls.runId, runId)).orderBy(asc(coachCalls.id)),
+  ]);
+  const strip = <T extends { runId: string }>(rows: T[]) => rows.map(({ runId: _, ...rest }) => rest);
+  return {
+    run: { ...run, latestVersion: map?.latestVersion ?? null },
+    members: strip(members),
+    messages: strip(lines),
+    cards: strip(cards),
+    deliveries: strip(rungs),
+    feedback: strip(notes),
+    gaps: strip(held),
+    marks: marks.map((mark) => ({ id: mark.knowledgeId, name: names.get(mark.knowledgeId) ?? null, at: mark.createdAt })),
+    unknown: (bundle?.knowledge ?? []).filter((entry) => !marks.some((mark) => mark.knowledgeId === entry.id)).map((entry) => ({ id: entry.id, name: entry.name })),
+    steps: strip(steps),
+    headsUps: strip(headsUps),
+    calls: strip(calls),
+  };
+}

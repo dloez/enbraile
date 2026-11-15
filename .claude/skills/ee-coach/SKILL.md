@@ -98,6 +98,8 @@ Then stop. They know they can say `more`.
 
 ## Debrief (after the run or on feedback)
 
-Ask briefly which hints were too obvious, which were too vague, and which felt right. Combine with what `session.md` shows (a hint followed by an instant solve at level 1 may have been too strong; three `more` in a row means the lower rungs carried nothing).
+For a run played on the site, read it first: from `zombies/site/`, `npm run runs` lists the runs and `npm run runs -- <id>` writes the whole run (the chat, every rung given, the revisions with the Cari line each refers to, the card ratings, the gaps Cari held on, the marks and the Claude calls) to the map's `runs/<id>.json` and prints only counts ([How to Run and Deploy the Site → Read a run](../../../docs/zombies/site/how-to/run-and-deploy-the-site.md#7-read-a-run)). Work from that file in a subagent, since it holds hint text, and report back counts and spoiler-free summaries only. Each gap is a question no prepared line covered: write and blind-check the missing line in `hints.md`, then compile and publish. Revisions and ratings are the group's feedback, taken as below.
+
+Ask briefly which hints were too obvious, which were too vague, and which felt right. Combine with what `session.md` (or the run's file) shows (a hint followed by an instant solve at level 1 may have been too strong; three `more` in a row means the lower rungs carried nothing).
 
 Write the lessons into the map's `calibration.md` with the actual hint wording as examples, and the general lesson, without any map content, into `zombies/calibration.md`. Fix any rung in `hints.md` that failed, and any dossier step that turned out wrong, so the next run on this map is better.
