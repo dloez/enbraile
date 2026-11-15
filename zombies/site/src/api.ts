@@ -1,8 +1,6 @@
 import type { Language } from "../shared/bundle";
 import type { MapsPage, Rating, ReplyEvent, RunSheet, Transcript } from "../shared/runs";
 
-export type Me = { user: { name: string; image: string | null; discordId: string } };
-
 export class SignedOut extends Error {}
 
 export class Refused extends Error {
@@ -31,7 +29,6 @@ async function call<T>(path: string, init?: { method: string; body?: unknown }):
   return (await response.json()) as T;
 }
 
-export const fetchMe = () => call<Me>("me");
 export const fetchMaps = () => call<MapsPage>("maps");
 export const fetchRun = (id: string) => call<RunSheet>(`runs/${encodeURIComponent(id)}`);
 export const fetchTranscript = (id: string, after: number, rungsAfter: number) =>

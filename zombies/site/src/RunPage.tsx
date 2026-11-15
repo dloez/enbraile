@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import type { Language } from "../shared/bundle";
+import type { Language, Viewer } from "../shared/bundle";
 import { asRevision, ratings, type Card, type Member, type Message, type Rating, type RunSheet } from "../shared/runs";
 import { askMore, type Listener, fetchRun, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
@@ -496,23 +496,35 @@ function RunView({ sheet }: { sheet: RunSheet }) {
 
 type State = { kind: "loading" } | { kind: "missing" } | { kind: "failed" } | { kind: "ready"; sheet: RunSheet };
 
-export function RunPage({ id, onMap, onYourRun }: { id: string; onMap: (name: string | undefined) => void; onYourRun: (run: RunLink | null) => void }) {
+export function RunPage({
+  id,
+  onMap,
+  onYourRun,
+  onViewer,
+}: {
+  id: string;
+  onMap: (name: string | undefined) => void;
+  onYourRun: (run: RunLink | null) => void;
+  onViewer: (viewer: Viewer | null) => void;
+}) {
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = useCallback(() => {
     setState((current) => (current.kind === "ready" ? current : { kind: "loading" }));
     fetchRun(id)
       .then((sheet) => {
+        onViewer(sheet.viewer);
         onMap(sheet.you ? sheet.map.name[lang] : undefined);
         onYourRun(sheet.you ? { id: sheet.id, name: sheet.map.name } : sheet.yourRun);
         setState({ kind: "ready", sheet });
       })
       .catch((error: unknown) => {
         if (error instanceof SignedOut) return signIn();
+        onViewer(null);
         onMap(undefined);
         setState({ kind: error instanceof Refused && error.status === 404 ? "missing" : "failed" });
       });
-  }, [id, onMap, onYourRun]);
+  }, [id, onMap, onYourRun, onViewer]);
 
   useEffect(load, [load]);
 

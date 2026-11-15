@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Language } from "../shared/bundle";
+import type { Language, Viewer } from "../shared/bundle";
 import type { MapsPage as Page, MapWithRuns, OpenRun } from "../shared/runs";
-import { fetchMaps, fetchMe, joinRun, SignedOut, signIn, startRun, type Me } from "./api";
+import { fetchMaps, joinRun, SignedOut, signIn, startRun } from "./api";
 import { MapPlan } from "./art";
 import { languageNames, lang, switchLang, t } from "./i18n";
 import { mapPath, navigate, runPath, usePath } from "./route";
@@ -10,7 +10,7 @@ import { Arrow, Back, Chevron, Chips, initials, LeaveNote, Link, MapHead, Notice
 
 const languages: Language[] = ["es", "en"];
 
-function Header({ me, inRun, yourRun }: { me: Me | null | undefined; inRun: string | null | undefined; yourRun: RunLink | null | undefined }) {
+function Header({ me, inRun, yourRun }: { me: Viewer | null | undefined; inRun: string | null | undefined; yourRun: RunLink | null | undefined }) {
   return (
     <header className={inRun ? "hd in-run" : inRun === null ? "hd hd-wait" : "hd"}>
       <Link to="/" className="wm">
@@ -44,8 +44,8 @@ function Header({ me, inRun, yourRun }: { me: Me | null | undefined; inRun: stri
         </div>
       )}
       {me && (
-        <span className="cs cs-me hd-me" role="img" aria-label={me.user.name} title={me.user.name}>
-          {initials(me.user.name)}
+        <span className="cs cs-me hd-me" role="img" aria-label={me.name} title={me.name}>
+          {initials(me.name)}
         </span>
       )}
     </header>
@@ -121,17 +121,24 @@ function MapRow({ map }: { map: MapWithRuns }) {
 
 type Loaded = { kind: "loading" } | { kind: "failed" } | { kind: "ready"; page: Page };
 
-function useMaps(onYourRun: (run: RunLink | null) => void) {
+type Heard = { onYourRun: (run: RunLink | null) => void; onViewer: (viewer: Viewer | null) => void };
+
+function useMaps({ onYourRun, onViewer }: Heard) {
   const [state, setState] = useState<Loaded>({ kind: "loading" });
   const load = useCallback(() => {
     setState({ kind: "loading" });
     fetchMaps()
       .then((page) => {
+        onViewer(page.viewer);
         onYourRun(page.yourRun);
         setState({ kind: "ready", page });
       })
-      .catch((error: unknown) => (error instanceof SignedOut ? signIn() : setState({ kind: "failed" })));
-  }, [onYourRun]);
+      .catch((error: unknown) => {
+        if (error instanceof SignedOut) return signIn();
+        onViewer(null);
+        setState({ kind: "failed" });
+      });
+  }, [onYourRun, onViewer]);
   useEffect(load, [load]);
   return { state, load };
 }
@@ -146,8 +153,8 @@ function Failed({ retry }: { retry: () => void }) {
   );
 }
 
-function MapsPage({ onYourRun }: { onYourRun: (run: RunLink | null) => void }) {
-  const { state, load } = useMaps(onYourRun);
+function MapsPage(heard: Heard) {
+  const { state, load } = useMaps(heard);
   const page = state.kind === "ready" ? state.page : null;
 
   return (
@@ -267,8 +274,8 @@ function MapView({ map, yourRun }: { map: MapWithRuns; yourRun: RunLink | null }
   );
 }
 
-function MapPage({ game, map, onYourRun }: { game: string; map: string; onYourRun: (run: RunLink | null) => void }) {
-  const { state, load } = useMaps(onYourRun);
+function MapPage({ game, map, ...heard }: { game: string; map: string } & Heard) {
+  const { state, load } = useMaps(heard);
   if (state.kind === "loading")
     return (
       <main className="page">
@@ -297,15 +304,11 @@ function MapPage({ game, map, onYourRun }: { game: string; map: string; onYourRu
 
 export function App() {
   const path = usePath();
-  const [me, setMe] = useState<Me | null | undefined>();
+  const [me, setMe] = useState<Viewer | null | undefined>();
   const [runHead, setRunHead] = useState<{ id: string; name: string | undefined } | null>(null);
   const [yourRun, setYourRun] = useState<RunLink | null | undefined>();
 
-  useEffect(() => {
-    fetchMe()
-      .then(setMe)
-      .catch((error: unknown) => (error instanceof SignedOut ? signIn() : setMe(null)));
-  }, []);
+  const onViewer = useCallback((viewer: Viewer | null) => setMe((current) => viewer ?? current ?? null), []);
 
   const runId = path.match(/^\/runs\/([^/]+)\/?$/)?.[1];
   const mapMatch = path.match(/^\/maps\/([^/]+)\/([^/]+)\/?$/);
@@ -316,11 +319,11 @@ export function App() {
     <>
       <Header me={me} inRun={inRun} yourRun={yourRun} />
       {runId ? (
-        <RunPage key={runId} id={decodeURIComponent(runId)} onMap={onMap} onYourRun={setYourRun} />
+        <RunPage key={runId} id={decodeURIComponent(runId)} onMap={onMap} onYourRun={setYourRun} onViewer={onViewer} />
       ) : mapMatch ? (
-        <MapPage key={path} game={decodeURIComponent(mapMatch[1]!)} map={decodeURIComponent(mapMatch[2]!)} onYourRun={setYourRun} />
+        <MapPage key={path} game={decodeURIComponent(mapMatch[1]!)} map={decodeURIComponent(mapMatch[2]!)} onYourRun={setYourRun} onViewer={onViewer} />
       ) : (
-        <MapsPage onYourRun={setYourRun} />
+        <MapsPage onYourRun={setYourRun} onViewer={onViewer} />
       )}
     </>
   );

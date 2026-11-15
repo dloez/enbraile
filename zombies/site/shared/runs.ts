@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { languages, type Language, type PublishedMap } from "./bundle.js";
+import { languages, type Language, type PublishedMap, type Viewer } from "./bundle.js";
 
 export type Member = { name: string; you: boolean };
 
@@ -9,9 +9,10 @@ export type MapWithRuns = PublishedMap & { runs: OpenRun[] };
 
 export type YourRun = { id: string; name: Record<Language, string>; language: Language; members: Member[] };
 
-export type MapsPage = { maps: MapWithRuns[]; yourRun: YourRun | null };
+export type MapsPage = { viewer: Viewer; maps: MapWithRuns[]; yourRun: YourRun | null };
 
 export type RunSheet = {
+  viewer: Viewer;
   id: string;
   map: PublishedMap;
   language: Language;

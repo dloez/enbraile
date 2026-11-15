@@ -1,14 +1,21 @@
 import { timingSafeEqual } from "node:crypto";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
+import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
 import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchema, type ReplyEvent } from "../../shared/runs.js";
 import { coachTurn, type Ask } from "./coach.js";
+import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { storeVersion } from "./maps.js";
-import { importRun, isActiveMember, joinRun, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
+import { importRun, type Time, isActiveMember, joinRun, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 
 const noStore = { "cache-control": "private, no-store" };
+
+const timed =
+  (c: Context): Time =>
+  (name, work) =>
+    wrapTime(c, name, work);
 
 const cursor = (value: string | undefined) => {
   const parsed = Number(value ?? 0);
@@ -85,18 +92,14 @@ claude.get("/runs/:id", async (c) => {
 const member = new Hono<{ Variables: { viewer: Viewer } }>();
 
 member.use(async (c, next) => {
-  const viewer = await viewerOf(c.req.header("cookie"));
+  const cookie = c.req.header("cookie");
+  const [viewer] = await Promise.all([wrapTime(c, "viewer", viewerOf(cookie)), cookie ? wrapTime(c, "db", warmPool().catch(() => undefined)) : undefined]);
   if (!viewer) return c.json({ error: "signedOut" }, 401, noStore);
   c.set("viewer", viewer);
   await next();
 });
 
-member.get("/me", (c) => {
-  const { name, image, discordId } = c.get("viewer");
-  return c.json({ user: { name, image, discordId } }, 200, noStore);
-});
-
-member.get("/maps", async (c) => c.json(await mapsPage(c.get("viewer")), 200, noStore));
+member.get("/maps", async (c) => c.json(await mapsPage(c.get("viewer"), timed(c)), 200, noStore));
 
 member.post("/runs", async (c) => {
   const parsed = startRunSchema.safeParse(await c.req.json().catch(() => null));
@@ -106,7 +109,7 @@ member.post("/runs", async (c) => {
 });
 
 member.get("/runs/:id", async (c) => {
-  const sheet = await runSheet(c.get("viewer"), c.req.param("id"));
+  const sheet = await runSheet(c.get("viewer"), c.req.param("id"), timed(c));
   return sheet ? c.json(sheet, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
 });
 
@@ -166,6 +169,8 @@ dev.get("/sign-in/:id", (c) => {
 });
 
 export const app = new Hono().basePath("/api");
+
+app.use(timing());
 
 app.route("/claude", claude);
 app.route("/dev", dev);
