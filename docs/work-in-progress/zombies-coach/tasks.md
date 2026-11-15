@@ -19,6 +19,24 @@ The owner wants the real map assets shown, not drawn stand-ins, for the maps the
 
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
 
+## Fit the attempt page to the screen with only the chat scrolling
+
+The owner reports that the chat does not take the screen's width and that the page scrolls over it (2026-11-15). In `zombies/site/src/index.css`, `.runv` takes `calc(100dvh - var(--hd))` while `#root` only has a `min-height` and the page itself can scroll, so any header or bar above the composer (the trouble notice, revision mode) taller than `--hd` makes the whole page scroll on top of `.rows`; and the chat is capped at fixed widths (`.cmp-in` and `.mode` 784px, `.field` 680px, slips 640px), leaving the right side empty on a wide screen.
+
+**Do:**
+- [ ] The attempt page fills exactly the viewport at every width: the page never scrolls there, only the transcript (`.rows`) and, if it overflows, the rail; the composer and the bars above it stay pinned, including with a phone's keyboard open.
+- [ ] The transcript, slips, composer and mode bar use the main column's full width, keeping lines readable with the design system's spacing rather than fixed caps; update the boards' widths in `docs/zombies/site/reference/design-system.md` where the built page now differs.
+- [ ] Check the other pages (maps, map view, join) for the same page-over-content scroll and fix it where found.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1920×1080, 1440×900 and 390×844 with a long transcript and the trouble notice and revision mode shown: `document.scrollingElement.scrollHeight` equals the viewport height on the attempt page, only `.rows` scrolls, the composer stays in view, and the chat spans the main column.
+- Human-run: the owner reads a long attempt on desktop and phone and only the chat scrolls.
+- Reuse: the third take's layout shell; the stick-to-bottom scroll the UX review added.
+- Neighbors: the DJ panel's full-height layout in `dj/panel/src/index.css`.
+- Forbidden: dropping a state or the transcript's scroll behaviour.
+
+**Touches:** `zombies/site/src/`, `docs/zombies/site/reference/design-system.md`
+
 ## Watch a run from Claude Code and fix things live
 
 A `watch` stream on the Claude API and a skill section so Claude follows a run while it is played: closing gaps with a checked line, applying revisions and card feedback, and fixing the dossier when players report something it contradicts, all in subagents, the terminal showing spoiler-free one-liners ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
