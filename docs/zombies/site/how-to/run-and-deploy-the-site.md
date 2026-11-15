@@ -41,6 +41,8 @@ Copy `.env.example` to `.env.local` and fill it in:
 | `DEV_USER_ID` | One or more members, comma-separated, each `<id>` or `<id>:<name>` (e.g. `111:Marina,222:Teo`), to be signed in without the root site |
 | `ANTHROPIC_API_KEY` | An Anthropic API key for Cari; without one she stays silent |
 | `COACH_MODEL` | The model Cari runs on; `claude-haiku-5-5` when empty |
+| `BOT_URL` | Where the bot's API is, for bringing Cari into a call: `http://localhost:8080` for a local bot; without it the run page offers no call |
+| `INTERNAL_SECRET` | The bot's `INTERNAL_SECRET`, the bearer token both ways between the site and the bot; any long random string, the same in the bot's `.env.local`, which sets `ZOMBIES_URL=http://localhost:8789` |
 
 ### 4. Migrate
 
@@ -131,6 +133,8 @@ Set the project's environment variables, piping each secret in so it never reach
 | `CLAUDE_TOKEN` | the 1Password item "zombies claude token"'s value | unset |
 | `ANTHROPIC_API_KEY` | the cluster's `discord-bot-enbraile` secret, as below | unset |
 | `COACH_MODEL` | `claude-haiku-5-5` | unset |
+| `BOT_URL` | the bot's address, as the DJ panel's | unset |
+| `INTERNAL_SECRET` | the cluster's `discord-bot-enbraile` secret, as below | unset |
 
 ```sh
 v=$(npx neonctl connection-string main --project-id silent-morning-44744308 --pooled | sed 's/sslmode=require/sslmode=verify-full/' | tr -d '\n')
@@ -144,6 +148,12 @@ Hand Cari's key from the cluster to Vercel the same way, never printing it:
 
 ```sh
 kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.ANTHROPIC_API_KEY}' | base64 -d | npx vercel env add ANTHROPIC_API_KEY production
+```
+
+and the bot's secret, which the bot checks on every call from the site and the site checks on every spoken line from the bot (set on 2026-11-15, with `BOT_URL`):
+
+```sh
+kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.INTERNAL_SECRET}' | base64 -d | npx vercel env add INTERNAL_SECRET production
 ```
 
 Make Claude's token in 1Password and hand it to Vercel without printing it:
@@ -179,4 +189,4 @@ Use Instant Rollback on the previous production deployment in the Vercel dashboa
 
 ## Verification
 
-The maps page shows Harrow Station with a Test map tag and "No attempts yet". Locally, with two members in `DEV_USER_ID`, one opens Harrow Station's row and starts an attempt there, and the other opens its link (`/attempts/<id>`) or its row on the map's view, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking Cari for a hint brings a card both see, and its More adds the next rung; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.
+The maps page shows Harrow Station with a Test map tag and "No attempts yet". Locally, with two members in `DEV_USER_ID`, one opens Harrow Station's row and starts an attempt there, and the other opens its link (`/attempts/<id>`) or its row on the map's view, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking Cari for a hint brings a card both see, and its More adds the next rung; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. With `BOT_URL` and `INTERNAL_SECRET` set to a local bot, a member in a voice channel sees the call line above the composer with **Bring Cari in**, and a «cari» request posted to `/api/voice` with the secret, as the bot sends it, answers `{ reply }` with Cari's words and any hint, and shows the line and the card in the chat. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.

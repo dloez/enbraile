@@ -69,6 +69,13 @@ export const Down = () => (
   </Icon>
 );
 
+export const Mic = () => (
+  <Icon size={20} width={2}>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+  </Icon>
+);
+
 export const Pencil = () => (
   <Icon size={20} width={2}>
     <path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4" />

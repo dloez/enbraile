@@ -66,6 +66,14 @@ export type RunEvent = { id: number; at: string } & (
 
 export type RunEvents = { run: { id: string; game: string; map: string }; events: RunEvent[]; next: string };
 
+export type VoiceChannel = { id: string; name: string; canJoin: boolean; reason: "noAccess" | "full" | null };
+
+export type CallState = { reachable: boolean; channel: VoiceChannel | null; cari: string | null };
+
+export type JoinRefusal = "notInVoice" | "noAccess" | "full" | "botOffline";
+
+export const voiceSchema = z.object({ userId: z.string().min(1), text: z.string().trim().min(1).max(2000) });
+
 export type ReplyEvent = { type: "text"; text: string } | { type: "failed" } | { type: "done" };
 
 export const startRunSchema = z.object({ game: z.string().min(1), map: z.string().min(1), language: z.enum(languages).default("es") });

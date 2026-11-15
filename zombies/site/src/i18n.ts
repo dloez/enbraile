@@ -66,6 +66,14 @@ const en = {
   notRated: "Your rating didn't go through.",
   planOf: (name: string) => `${name} plan`,
   artOf: (name: string) => `${name} art`,
+  voiceChannel: "Voice channel",
+  onAir: "On air",
+  youreInChannel: (channel: string) => `You’re in ${channel}`,
+  bringCari: "Bring Cari in",
+  cariIsIn: (channel: string) => `Cari is in ${channel}`,
+  sayCari: "Say «cari» and your question.",
+  cantJoin: { noAccess: (channel: string) => `Cari can’t reach ${channel}: give the bot’s role access to it.`, full: (channel: string) => `${channel} is full.` },
+  joinRefused: { notInVoice: "Join a voice channel first.", noAccess: "Cari can’t reach your channel.", full: "Your channel is full.", botOffline: "The bot isn’t answering right now." },
 };
 
 const es: typeof en = {
@@ -124,6 +132,14 @@ const es: typeof en = {
   notRated: "Tu valoración no ha llegado.",
   planOf: (name: string) => `Plano de ${name}`,
   artOf: (name: string) => `Arte de ${name}`,
+  voiceChannel: "Canal de voz",
+  onAir: "En el aire",
+  youreInChannel: (channel: string) => `Estás en ${channel}`,
+  bringCari: "Traer a Cari",
+  cariIsIn: (channel: string) => `Cari está en ${channel}`,
+  sayCari: "Di «cari» y tu pregunta.",
+  cantJoin: { noAccess: (channel: string) => `Cari no puede entrar en ${channel}: dale acceso al rol del bot.`, full: (channel: string) => `${channel} está lleno.` },
+  joinRefused: { notInVoice: "Entra primero en un canal de voz.", noAccess: "Cari no puede entrar en tu canal.", full: "Tu canal está lleno.", botOffline: "El bot no responde ahora mismo." },
 };
 
 export const t = lang === "es" ? es : en;

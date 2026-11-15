@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { type Context, Hono } from "hono";
 import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchema, stepInSchema, type ReplyEvent } from "../../shared/runs.js";
+import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent } from "../../shared/runs.js";
 import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
@@ -10,6 +10,7 @@ import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
 import { importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
+import { bringCari, callState, voiceTurn } from "./voice.js";
 
 const noStore = { "cache-control": "private, no-store" };
 
@@ -55,8 +56,8 @@ function said(text: string): Response {
   return new Response(lines.map((line) => `${JSON.stringify(line)}\n`).join(""), { status: 200, headers: { ...noStore, "content-type": "application/x-ndjson" } });
 }
 
-function isClaude(header: string | undefined): boolean {
-  const expected = Buffer.from(`Bearer ${requireEnv("CLAUDE_TOKEN")}`);
+function bearerIs(header: string | undefined, name: string): boolean {
+  const expected = Buffer.from(`Bearer ${requireEnv(name)}`);
   const given = Buffer.from(header ?? "");
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
@@ -64,7 +65,7 @@ function isClaude(header: string | undefined): boolean {
 const claude = new Hono();
 
 claude.use(async (c, next) => {
-  if (!isClaude(c.req.header("authorization"))) return c.json({ error: "forbidden" }, 403);
+  if (!bearerIs(c.req.header("authorization"), "CLAUDE_TOKEN")) return c.json({ error: "forbidden" }, 403);
   await next();
 });
 
@@ -119,6 +120,15 @@ claude.post("/runs/:id/say", async (c) => {
   const result = await stepIn(c.req.param("id"), parsed.data);
   if (result.ok) return c.json({ message: result.message, card: result.card }, 201, noStore);
   return c.json({ error: result.error }, result.error === "noSuchRun" ? 404 : result.error === "busy" ? 409 : 400, noStore);
+});
+
+const voice = new Hono();
+
+voice.post("/", async (c) => {
+  if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
+  const parsed = voiceSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
+  return c.json({ reply: await voiceTurn(parsed.data.userId, parsed.data.text) }, 200, noStore);
 });
 
 const images = new Hono();
@@ -205,6 +215,19 @@ member.put("/runs/:id/cards/:card/feedback", async (c) => {
   return (await rateCard(viewer, id, card, parsed.data.rating)) ? c.json({ rating: parsed.data.rating }, 200, noStore) : c.json({ error: "noSuchCard" }, 404, noStore);
 });
 
+member.get("/runs/:id/voice", async (c) => {
+  const viewer = c.get("viewer");
+  if (!(await isActiveMember(viewer, c.req.param("id")))) return c.json({ error: "notInRun" }, 403, noStore);
+  return c.json(await callState(viewer.discordId), 200, noStore);
+});
+
+member.post("/runs/:id/voice/join", async (c) => {
+  const viewer = c.get("viewer");
+  if (!(await isActiveMember(viewer, c.req.param("id")))) return c.json({ error: "notInRun" }, 403, noStore);
+  const joined = await bringCari(viewer.discordId);
+  return "error" in joined ? c.json(joined, joined.error === "botOffline" ? 503 : 409, noStore) : c.json(joined, 200, noStore);
+});
+
 const dev = new Hono();
 
 dev.get("/sign-in/:id", (c) => {
@@ -221,4 +244,5 @@ app.use(timing());
 app.route("/claude", claude);
 app.route("/dev", dev);
 app.route("/images", images);
+app.route("/voice", voice);
 app.route("/", member);

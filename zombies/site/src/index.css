@@ -976,6 +976,94 @@ a:hover {
   display: none;
 }
 
+.voice {
+  margin-top: auto;
+  background: var(--surf-2);
+  border-radius: 12px;
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.voice .big {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.voice .b {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.voice.on,
+.vb.on {
+  background: var(--red);
+  color: var(--on-red);
+}
+
+.voice.on .lab {
+  color: var(--on-red);
+}
+
+.voice .state,
+.vb .state {
+  font-size: 15px;
+  font-weight: 400;
+  color: inherit;
+}
+
+.vb {
+  display: none;
+}
+
+.meter {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 28px;
+}
+
+.meter i {
+  display: block;
+  width: 5px;
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: level 1.2s ease-in-out infinite;
+}
+
+.meter i:nth-child(2n) {
+  animation-delay: -0.3s;
+}
+
+.meter i:nth-child(3n) {
+  animation-delay: -0.7s;
+}
+
+.meter i:nth-child(5n) {
+  animation-delay: -0.5s;
+}
+
+@keyframes level {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter i {
+    animation: none;
+  }
+}
+
 .copy {
   width: 100%;
   min-height: 48px;
@@ -1755,6 +1843,37 @@ a:hover {
 
   .rail {
     display: none;
+  }
+
+  .vb {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 64px;
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--surf-2);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .vb p {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .vb .b {
+    flex: none;
+    min-height: 44px;
+  }
+
+  .meter {
+    gap: 3px;
+    height: 22px;
+  }
+
+  .meter i {
+    width: 4px;
   }
 
   .strip {

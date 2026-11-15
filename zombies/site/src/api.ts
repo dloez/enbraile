@@ -1,5 +1,5 @@
 import type { Language } from "../shared/bundle";
-import type { MapPage, MapsPage, Rating, ReplyEvent, RunSheet, Transcript } from "../shared/runs";
+import type { CallState, JoinRefusal, MapPage, MapsPage, Rating, ReplyEvent, RunSheet, Transcript } from "../shared/runs";
 
 export class SignedOut extends Error {}
 
@@ -37,6 +37,15 @@ export const fetchTranscript = (id: string, after: number, rungsAfter: number) =
 export const startRun = (game: string, map: string, language: Language) => call<{ id: string }>("runs", { method: "POST", body: { game, map, language } });
 export const joinRun = (id: string) => call<{ id: string }>(`runs/${encodeURIComponent(id)}/join`, { method: "POST" });
 export const rateCard = (id: string, card: number, rating: Rating) => call<{ rating: Rating }>(`runs/${encodeURIComponent(id)}/cards/${card}/feedback`, { method: "PUT", body: { rating } });
+export const fetchCall = (id: string) => call<CallState>(`runs/${encodeURIComponent(id)}/voice`);
+
+export async function bringCari(id: string): Promise<{ channelId: string } | { error: JoinRefusal }> {
+  const response = await fetch(`/api/runs/${encodeURIComponent(id)}/voice/join`, { credentials: "include", method: "POST", signal: AbortSignal.timeout(callMs) });
+  if (response.status === 401) throw new SignedOut();
+  if (response.ok || response.status === 409 || response.status === 503) return (await response.json()) as { channelId: string } | { error: JoinRefusal };
+  throw new Refused(response.status);
+}
+
 export type Listener = { opened: () => void; heard: (event: ReplyEvent) => void };
 
 async function listen(path: string, body: unknown, listener: Listener): Promise<void> {

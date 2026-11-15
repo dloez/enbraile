@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Language, Viewer } from "../shared/bundle";
-import { asRevision, ratings, type Card, type Member, type Message, type Rating, type RunSheet } from "../shared/runs";
-import { askMore, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
+import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type Member, type Message, type Rating, type RunSheet } from "../shared/runs";
+import { askMore, bringCari, fetchCall, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
 import { forget, known, load as fetchPage, openFreshMs, runSource } from "./store";
-import { Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Notice, Pencil, type RunLink, useFit } from "./ui";
+import { Arrow, Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
+const callPollMs = 10000;
 const freshRows = 4;
 
 function pad(value: number): string {
@@ -238,6 +239,122 @@ function CopyLink({ id, icon }: { id: string; icon: boolean }) {
   );
 }
 
+type Voice = { channel: VoiceChannel; here: boolean; busy: boolean; refused: string | null; bring: () => void };
+
+function useVoice(id: string): Voice | null {
+  const [state, setState] = useState<CallState | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [refused, setRefused] = useState<string | null>(null);
+
+  const look = useCallback(() => {
+    if (document.hidden) return;
+    fetchCall(id)
+      .then((next) => {
+        setState(next);
+        setRefused(null);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof SignedOut) signIn();
+      });
+  }, [id]);
+
+  useEffect(() => {
+    look();
+    const timer = setInterval(look, callPollMs);
+    document.addEventListener("visibilitychange", look);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", look);
+    };
+  }, [look]);
+
+  const channel = state?.reachable ? state.channel : null;
+  if (!channel) return null;
+
+  const bring = () => {
+    setBusy(true);
+    setRefused(null);
+    bringCari(id)
+      .then((joined) => {
+        if ("error" in joined) setRefused(t.joinRefused[joined.error]);
+        else setState((current) => current && { ...current, cari: joined.channelId });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof SignedOut) return signIn();
+        setRefused(t.joinRefused.botOffline);
+      })
+      .finally(() => setBusy(false));
+  };
+
+  return { channel, here: state?.cari === channel.id, busy, refused, bring };
+}
+
+function voiceLine(voice: Voice): string {
+  const { channel } = voice;
+  if (voice.here) return t.cariIsIn(channel.name);
+  return channel.reason ? t.cantJoin[channel.reason](channel.name) : t.youreInChannel(channel.name);
+}
+
+function Meter({ bars }: { bars: number }) {
+  return (
+    <div className="meter" aria-hidden="true">
+      {Array.from({ length: bars }, (_, index) => (
+        <i key={index} />
+      ))}
+    </div>
+  );
+}
+
+function VoicePanel({ voice }: { voice: Voice }) {
+  return (
+    <section className={voice.here ? "voice on" : "voice"} aria-label={t.voiceChannel}>
+      <div>
+        <span className="lab">{voice.here ? t.onAir : t.voiceChannel}</span>
+        <p className="big">{voiceLine(voice)}</p>
+      </div>
+      {voice.here && <Meter bars={20} />}
+      {!voice.here && voice.channel.canJoin && (
+        <button type="button" className="b b-red" disabled={voice.busy} onClick={voice.bring}>
+          {t.bringCari}
+          <Arrow size={20} />
+        </button>
+      )}
+      {voice.refused && (
+        <p className="state" role="alert">
+          {voice.refused}
+        </p>
+      )}
+      {voice.here && <p className="state">{t.sayCari}</p>}
+    </section>
+  );
+}
+
+function VoiceBar({ voice }: { voice: Voice }) {
+  return (
+    <section className={voice.here ? "vb on" : "vb"} aria-label={t.voiceChannel}>
+      {!voice.here && <Mic />}
+      <p>
+        {voice.here ? (
+          <>
+            {t.onAir}
+            <br />
+            <span className="state">{voiceLine(voice)}</span>
+          </>
+        ) : (
+          (voice.refused ?? voiceLine(voice))
+        )}
+      </p>
+      <span className="sp" />
+      {voice.here && <Meter bars={14} />}
+      {!voice.here && voice.channel.canJoin && (
+        <button type="button" className="b b-red" disabled={voice.busy} onClick={voice.bring}>
+          {t.bringCari}
+        </button>
+      )}
+    </section>
+  );
+}
+
 type Trouble = { text: string; retry: () => void };
 
 type Log = { messages: Message[]; cards: Map<number, Card>; members: Member[]; rated: Map<number, Rating>; last: number; lastRung: number };
@@ -265,6 +382,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const polling = useRef(0);
   const name = sheet.map.name[lang];
   const title = useFit<HTMLHeadingElement>(name);
+  const voice = useVoice(sheet.id);
 
   const poll = useCallback(async () => {
     polling.current++;
@@ -453,6 +571,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           </ul>
           <CopyLink id={sheet.id} icon={false} />
         </div>
+        {voice && <VoicePanel voice={voice} />}
       </aside>
       <div className="strip">
         <Chips members={members} />
@@ -460,6 +579,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
         <span className="sp" />
         <CopyLink id={sheet.id} icon />
       </div>
+      {voice && <VoiceBar voice={voice} />}
       <section className="main">
         <div className={loaded && !settled ? "rows arrive-all" : "rows"} ref={rows} onScroll={onScroll} aria-busy={!loaded}>
           {!loaded && <RowsSkeleton />}

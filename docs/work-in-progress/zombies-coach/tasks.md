@@ -1,22 +1,5 @@
 # Zombies Coach — Tasks
 
-## Ask Cari by voice in the Discord call
-
-The site side: the site's offer brings Cari into the run's voice channel, and «cari …» heard by the bot's `zombies` module becomes a line in the speaker's run, answered in the chat and spoken back ([Discovery → Voice](discovery.md#voice)).
-
-**Do:**
-- [ ] Site: `POST /api/voice` behind `INTERNAL_SECRET` (Discord ID + text → the speaker's run → reply), and the join offer when a member is in a channel, calling the bot's `/zombies/join`; `BOT_URL` and `INTERNAL_SECRET` in Vercel, `INTERNAL_SECRET` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.INTERNAL_SECRET}' | base64 -d | npx vercel env add INTERNAL_SECRET production` (owner, 2026-11-15).
-- [ ] Docs: the voice parts of `docs/zombies/site/explanation/site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `home/bot` and `zombies/site`; a local bot against the local site answers a fake trigger with the run's reply.
-- Human-run: in a call, bring Cari in from the site, say «cari, una pista», hear the hint and see it in the chat; stop the bot and the site still answers typed questions.
-- Reuse: the module from "Add the zombies module to the bot".
-- Neighbors: `dj/panel/` calling the bot's API.
-- Forbidden: Claude calls from the bot; run state in the bot's SQLite.
-
-**Touches:** `zombies/site/`, `docs/zombies/site/`
-
 ## Let the chat's messages and slips use the full width
 
 The owner finds the chat boxes still do not use the full width (2026-11-15): "Use the screen's full width on every page and scroll only the content" wraps messages, sent revisions and hint slips at 52em (the agent's choice recorded in `docs/zombies/site/explanation/site.md`). The owner's call replaces it.
@@ -68,7 +51,6 @@ While Cari is in the call for a run, what is said there goes into the run for th
 - Forbidden: transcript text in the coach model's prompt.
 
 **Touches:** `zombies/bot/`, `zombies/site/`, `docs/zombies/`
-**After:** Ask Cari by voice in the Discord call
 
 ## Show a zone on the map for level-3 hints
 
