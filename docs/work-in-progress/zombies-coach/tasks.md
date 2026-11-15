@@ -1,0 +1,263 @@
+# Zombies Coach — Tasks
+
+## Move the zombies workspace into Enbraile with terminal coaching intact
+
+Bring the ee-coach loop into Enbraile so it runs from here and building happens only here ([Discovery → Migration](discovery.md#migration)). The Blood of the Dead session in progress keeps going from the terminal in Enbraile.
+
+**Do:**
+- [ ] Create the `zombies` category: `zombies/CLAUDE.md` (imports `docs/zombies/index.md` and carries the standing rules of `~/workspace/zombies/CLAUDE.md`: no spoilers in chat, never interact with the game, known/unknown marks, everything prepared before play, short replies mid-game, `REVISION:`, reply in the players' language), `docs/zombies/index.md`, and the row in `docs/index.md`.
+- [ ] Move the skill to `.claude/skills/ee-coach/` (`SKILL.md`, `references/hint-craft.md`, `references/research.md`), with paths pointing at `zombies/maps/` and the committed calibration.
+- [ ] Split `calibration.md`: general preferences and rules committed at `zombies/calibration.md` (and folded into `hint-craft.md` where they are rules); map-specific quotes into `zombies/maps/bo4/blood-of-the-dead/calibration.md`.
+- [ ] Add `zombies/maps/` to `.gitignore`, then copy `~/workspace/zombies/maps/` there (dossier, hints, knowledge, session, sources).
+- [ ] Note in `docs/general/explanation/repository-layout.md` that `zombies/maps/` is gitignored spoiler data, and why.
+- [ ] Leave `~/workspace/zombies/` in place; it is deleted by "Continue the Blood of the Dead session on the site".
+
+**Acceptance:**
+- Claude-run: `git status --porcelain` and `git check-ignore -v zombies/maps/bo4/blood-of-the-dead/dossier.md` show nothing under `zombies/maps/` staged and the file ignored; `grep -rn "Blood of the Dead\|blood-of-the-dead" $(git ls-files)` finds no map content in tracked files beyond paths in docs; `diff -r ~/workspace/zombies/maps zombies/maps` is empty except the moved calibration.
+- Human-run: open Claude Code in `~/workspace/enbraile`, say you are continuing the Blood of the Dead run; the coach reads `zombies/maps/bo4/blood-of-the-dead/session.md` and answers the next hint request as it did in the old workspace.
+- Reuse: the existing skill files, moved, not rewritten.
+- Neighbors: `pkmn/CLAUDE.md` for a category's `CLAUDE.md`.
+- Forbidden: any dossier, hint or map-specific calibration line in a tracked file; a commit message naming a step.
+
+**Touches:** `zombies/`, `.claude/skills/ee-coach/`, `.gitignore`, `docs/zombies/`, `docs/index.md`, `docs/general/explanation/repository-layout.md`
+
+## Design the zombies site in Claude design
+
+The look and layout come from a Claude design artifact, as pkmn's and DJ's did, frozen as `.dc.html` boards in `zombies/site/design/` ([Discovery → Runs and the site](discovery.md#runs-and-the-site)). The owner does not review the boards; they see the site as a surprise, so the bar is the taste and "wow" of the pkmn site and the DJ panel.
+
+**Do:**
+- [ ] Brief Claude design with the constraints only: maps list, start/join a run, the shared chat with Cari, hint cards with a generic "more" and feedback (too obvious / right / too vague), a level-3 map zone under a card, bringing Cari into voice, REVISION feedback, en/es, desktop and phone; no step or hint numbers, no list of steps, nothing in the UI that suggests what to try; a Zombies mood without copying any game's art or branding.
+- [ ] Freeze the chosen boards into `zombies/site/design/*.dc.html` and start `docs/zombies/site/reference/design-system.md` from them.
+
+**Acceptance:**
+- Claude-run: `ls zombies/site/design/*.dc.html` lists boards for every screen above, desktop and phone; `grep -rniE "paso [0-9]|step [0-9]|pista [0-9]|hint [0-9]/" zombies/site/design` finds nothing.
+- Human-run: none (the owner chose not to review).
+- Reuse: the pkmn site's boards and design system doc as the format (`pkmn/site/design/`, `docs/pkmn/site/reference/design-system.md`).
+- Neighbors: `pkmn/site/design/`.
+- Forbidden: real map content or a real map image in a board; any game's logo, characters or art.
+
+**Touches:** `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
+**After:** Move the zombies workspace into Enbraile with terminal coaching intact
+
+## Show published maps on zombies.enbraile.vip
+
+The thinnest end-to-end path: a signed-in member opens `zombies.enbraile.vip` and sees the maps Claude published, starting with the made-up test map ([Discovery → Data and storage](discovery.md#data-and-storage)).
+
+**Do:**
+- [ ] Scaffold `zombies/site/` after `dj/panel/` (Vite + React, one Hono function in `api/index.ts`, `shared/` with zod), the design system from the boards, en/es.
+- [ ] Sign-in through `ROOT_URL/api/me`, as `dj/panel/api/_lib/app.ts`.
+- [ ] Neon project `zombies` (Frankfurt) with a `dev` branch; Drizzle schema for maps and bundle versions; migrations run in the build, as pkmn's.
+- [ ] The bundle schema in `shared/` (steps, `Requires`, conditions, optional flags, `On success`, ladders and part ladders with per-language wording and `Mentions`, knowledge entries with marks, map-specific calibration notes, dossier and sources as the durable copy); a committed made-up test map bundle.
+- [ ] `PUT /api/admin/maps/<game>/<map>` behind `ZOMBIES_ADMIN_TOKEN` stores a new version (the same bundle twice is a no-op); `npm run publish -- <dir>` sends a map's bundle.
+- [ ] Vercel project `enbraile-zombies` (root `zombies/site`, `fra1`), `.github/workflows/zombies-site.yml` after `dj-panel.yml`, `zombies.enbraile.vip` as a DNS-only CNAME; variables `DATABASE_URL`, `ROOT_URL`, `ZOMBIES_ADMIN_TOKEN`; `.env.example`.
+- [ ] Docs: `docs/zombies/site/explanation/site.md`, `docs/zombies/site/how-to/run-and-deploy-the-site.md`, the deploy how-to and its project list.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; locally, publish the test map and see it listed through the Playwright MCP, signed in with `DEV_USER_ID`; publish it twice and see one version.
+- Human-run: after the first deploy, open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map; the 1Password item holds `ZOMBIES_ADMIN_TOKEN`.
+- Reuse: `viewerOf` pattern (`dj/panel/api/_lib/app.ts`); pkmn's Drizzle setup (`pkmn/site/api/_lib/db.ts`, `drizzle.config.ts`); the workflow `.github/workflows/dj-panel.yml`.
+- Neighbors: `dj/panel/`.
+- Forbidden: auth tables in the zombies database; a connection to pkmn's database; any real map content in the repo.
+
+**Touches:** `zombies/site/`, `.github/workflows/zombies-site.yml`, `docs/zombies/`, `docs/general/how-to/deploy-vercel-projects.md`, `docs/index.md`
+**After:** Design the zombies site in Claude design
+
+## Start a run and get prepared hints from Cari in a shared chat
+
+Members start or join a run on a map and talk to Cari; Haiku answers through tools, delivering only prepared rungs that code allows ([Discovery → Architecture](discovery.md#architecture)).
+
+**Do:**
+- [ ] Runs, members (one active run per person), chat messages, the run's knowledge marks (baseline plus what the same people learned in earlier runs) and language (Spanish by default).
+- [ ] The coach on the function: `ANTHROPIC_API_KEY`, `COACH_MODEL` (default `claude-haiku-5-5`), a system prompt distilled from ee-coach's session rules, tools to give a rung (the next one, or its Alt), mark something known and ask the round; code offers only rungs whose `Mentions` are known or meant to be revealed, one rung at a time, and updates marks on delivery.
+- [ ] Hint cards with "more" and no numbers; the asker's reply streams, others poll every 2 s.
+- [ ] Each Claude call's model, tokens, latency and refusals stored on the run.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through the Playwright MCP with the test map, two signed-in browsers join one run; one asks for a hint, both see the card; "more" gives the next rung; a rung mentioning an unknown thing is never delivered before the rung meant to reveal it (read back from the stored log); `grep` finds no step or rung number rendered.
+- Human-run: in Vercel, set `ANTHROPIC_API_KEY` from 1Password `discord-bot-enbraile/anthropic-api-key` and `COACH_MODEL`; two people on phones join a test-map run and ask for hints.
+- Reuse: the `Anthropic` SDK as in `home/bot/src/claude.ts` (tool loop shape), but on Vercel; the hint-delivery rules in `.claude/skills/ee-coach/SKILL.md` and `references/hint-craft.md`.
+- Neighbors: the DJ panel's streaming-less polling fallback (`dj/panel/src/`).
+- Forbidden: the dossier or unknown entries in the model's prompt; the model writing hint text; step or hint numbers in the UI.
+
+**Touches:** `zombies/site/`, `docs/zombies/site/`
+**After:** Show published maps on zombies.enbraile.vip
+
+## Decide how a run ends
+
+**Needs the author:**
+- Does a run end by itself when its last required step is recorded, only when a member ends it, or both? What do members see then (a debrief prompt, the run read-only)? And can a finished run be reopened?
+
+**Acceptance:**
+- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md`.
+- Human-run: none.
+- Reuse: none.
+- Neighbors: none.
+- Forbidden: building an ending before this is answered.
+
+**Touches:** `docs/zombies/site/explanation/site.md`
+
+## Follow progress and threads the way ee-coach does
+
+Progress reports, open threads and the session rules that need run state: `On success` plus an L1 in the same reply, the players' order over the dossier's, `Requires`, optional steps never offered (and the one heads-up once they sink time), blocked threads silent until asked then a ladder at the blocker, part ladders, false-block checks, asking the round now and then, single-use resource heads-ups, retries, and the run's ending ([Discovery → Architecture](discovery.md#architecture)).
+
+**Do:**
+- [ ] A progress tool; open threads kept on the run, never shown; code chooses the L1 candidates whose `Requires` are met and never an optional step; the run's end per the answer above.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through the Playwright MCP on the test map, report a step done and get its `On success` and an L1 for a different met step in one reply; start an optional step and see it followed, never offered; reach a blocked step and see no hint until asked.
+- Human-run: a test-map run on phones walks one blocked and one optional step.
+- Reuse: the run state and tools of the previous entry; "Players choose the order" in the ee-coach skill.
+- Neighbors: the hint tools of "Start a run and get prepared hints from Cari in a shared chat".
+- Forbidden: listing threads to players; naming what a blocked step lacks before its ladder does.
+
+**Touches:** `zombies/site/`, `docs/zombies/site/`
+**After:** Decide how a run ends
+
+## Prepare publishes Haiku-ready bundles, starting with Blood of the Dead
+
+ee-coach's prepare writes the structured data the live coach needs and publishes it; Blood of the Dead is the first real bundle ([Discovery → Data and storage](discovery.md#data-and-storage)).
+
+**Do:**
+- [ ] Extend `references/research.md` and `SKILL.md`: every step, rung, Alt, part ladder, `Mentions`, condition and heads-up in a form the bundle schema takes; Spanish wording translated once; card text never carries numbers.
+- [ ] `npm run compile -- <map dir>` (in `zombies/site/scripts/`) builds the bundle from a map's files and checks it against the schema (every `Mentions` names a knowledge entry, every `Requires` a step); `publish` sends it.
+- [ ] Compile and publish Blood of the Dead, in a subagent so no solution reaches the terminal.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `compile` on Blood of the Dead exits 0; publishing it adds a version; the bundle's ladder count matches `hints.md`'s, checked in a subagent.
+- Human-run: start a Blood of the Dead run on the site and ask for a hint at a point you already passed; the card's wording matches `hints.es.md`.
+- Reuse: the bundle schema in `zombies/site/shared/`; the existing map files.
+- Neighbors: the test map bundle.
+- Forbidden: map content in tracked files; solutions printed in the main conversation.
+
+**Touches:** `.claude/skills/ee-coach/`, `zombies/site/scripts/`, `zombies/site/shared/`
+**After:** Show published maps on zombies.enbraile.vip
+
+## Hold on gaps and take REVISION and card feedback
+
+When no prepared line fits, Cari holds and the run records a gap; `REVISION:` messages and card feedback are stored with the line they refer to and never go to the model as gameplay ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
+
+**Do:**
+- [ ] A hold tool with prepared in-voice non-answers per language; a gap record with the context.
+- [ ] `REVISION:` detection (and wherever the boards put feedback) acknowledged briefly; feedback controls on cards; both logged on the run.
+- [ ] `GET /api/admin/runs/<id>` behind `ZOMBIES_ADMIN_TOKEN` returns the run's log, gaps, feedback and marks for debriefs; the ee-coach debrief reads it.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; through the Playwright MCP, a question the test map has no line for gets a hold and a gap; a `REVISION:` message gets an acknowledgement and no model call (read from the call log); card feedback appears in the admin read.
+- Human-run: send a `REVISION:` from a phone; in Claude Code, run the debrief and see it.
+- Reuse: the call log and run state of earlier entries.
+- Neighbors: the hint tools.
+- Forbidden: an improvised hint; a `REVISION:` reaching the coach model.
+
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/site/`
+**After:** Follow progress and threads the way ee-coach does
+
+## Continue the Blood of the Dead session on the site
+
+Import the terminal session into a run so the group continues it on the site, then retire the old workspace ([Discovery → Migration](discovery.md#migration)).
+
+**Do:**
+- [ ] An admin import of a run from a map's `session.md` and `knowledge.md` (members, marks, hints given, open threads), in a subagent.
+- [ ] Delete `~/workspace/zombies/` after the owner confirms the run reads right on the site.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; the imported run's revealed marks and hint log match `session.md` and `knowledge.md` (checked in a subagent, reporting counts only).
+- Human-run: open the imported run, ask for the next hint, and get what the terminal would have given; confirm deleting the old folder.
+- Reuse: the admin API and bundle of earlier entries.
+- Neighbors: the publish script.
+- Forbidden: deleting the old workspace before the owner's yes.
+
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`
+**After:** Prepare publishes Haiku-ready bundles, starting with Blood of the Dead; Hold on gaps and take REVISION and card feedback
+
+## Watch a run from Claude Code and fix things live
+
+A `watch` stream on the admin API and a skill section so Claude follows a run while it is played: closing gaps with a checked line, applying revisions and card feedback, and fixing the dossier when players report something it contradicts, all in subagents, the terminal showing spoiler-free one-liners ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
+
+**Do:**
+- [ ] `GET /api/admin/runs/<id>/events?after=` and `npm run watch -- <run>` printing one line per event, for `Monitor`.
+- [ ] A "Watch" section in the ee-coach skill: per event type, what to do, which subagent, publish, and what one line to print.
+- [ ] A held gap is answered on the run's next message, or posted at once if the run is waiting, once the new version lands.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; with a test-map run open in the Playwright MCP, a gap appears in `watch`, a new line is published and the run delivers it; a revision changes a rung and the next delivery uses it.
+- Human-run: on a game night, run the watch from Claude Code, send a `REVISION:` and see it applied without leaving the game.
+- Reuse: the admin API, `compile` and `publish`.
+- Neighbors: the debrief in the ee-coach skill.
+- Forbidden: solutions or rung text printed in the main conversation.
+
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
+**After:** Continue the Blood of the Dead session on the site
+
+## Audit every reply and step in as Cari
+
+The watch loop checks each live reply against the rules and Claude can post into a run as Cari when Haiku is lost ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
+
+**Do:**
+- [ ] Code-side checks recorded on each reply (an unknown named, a rung skipped, an optional offered, a number shown), surfaced in `watch`; the skill's audit of what code cannot judge.
+- [ ] `POST /api/admin/runs/<id>/say` behind `ZOMBIES_ADMIN_TOKEN` posting as Cari, logged as from Claude Code.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; a forced violation on the test map shows in `watch`; a step-in message shows in both browsers.
+- Human-run: on a game night, see a step-in arrive in the run.
+- Reuse: the watch stream and call log.
+- Neighbors: the hold path.
+- Forbidden: step-ins that bypass the knowledge marks.
+
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`
+**After:** Watch a run from Claude Code and fix things live
+
+## Ask Cari by voice in the Discord call
+
+A `zombies` module in the bot: the site's offer and `/cari` bring Cari into the run's voice channel; «cari …» goes to the site's API as the speaker and the answer is spoken and posted in the chat ([Discovery → Voice](discovery.md#voice)).
+
+**Do:**
+- [ ] `zombies/bot/` module listed in `home/bot/src/modules.ts`: `/cari`, a `/zombies/join` route the site calls, `voice.hold("zombies", channel, { listen: true })`, `hearing.onTrigger("cari", …)`, `hearing.say`.
+- [ ] Site: `POST /api/voice` behind `INTERNAL_SECRET` (Discord ID + text → the speaker's run → reply), the join offer when a member is in a channel; `BOT_URL` and `INTERNAL_SECRET` in Vercel.
+- [ ] Docs: `docs/zombies/bot/explanation/bot.md`, the bot doc's module list.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `home/bot` and `zombies/site`; a local bot against the local site answers a fake trigger with the run's reply.
+- Human-run: in a call, bring Cari in from the site, say «cari, una pista», hear the hint and see it in the chat; stop the bot and the site still answers typed questions.
+- Reuse: `voice.hold`, `hearing.onTrigger`, `hearing.say` (`home/bot/src/sdk.ts`); the DJ's join (`dj/bot/src/player.ts`).
+- Neighbors: `dj/bot/`.
+- Forbidden: Claude calls from the bot; run state in the bot's SQLite.
+
+**Touches:** `zombies/bot/`, `home/bot/src/modules.ts`, `zombies/site/`, `docs/zombies/bot/`, `docs/home/bot/explanation/bot.md`
+**After:** Follow progress and threads the way ee-coach does
+
+## Keep the call's transcript in the run
+
+While Cari is in the call for a run, what is said there goes into the run for the watch loop and debriefs ([Discovery → Voice](discovery.md#voice)).
+
+**Do:**
+- [ ] `hearing.onTranscript(handler)` in the host (`home/bot/src/hearing.ts`, exported in `sdk.ts`), documented in the bot doc.
+- [ ] The module asks `transcripts.keep("zombies", true)` while in a run's call and forwards lines to `POST /api/voice/transcript`; the run stores them; `watch` and the admin read show them.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in both; a fake transcript reaches the run in a local pair.
+- Human-run: talk in the call during a run and see the lines in the admin read, and that the coach model got only the «cari» requests (call log).
+- Reuse: `transcripts.keep`, the worker's transcript messages (`home/bot/src/hearing.ts`).
+- Neighbors: `onTrigger`.
+- Forbidden: transcript text in the coach model's prompt.
+
+**Touches:** `home/bot/src/hearing.ts`, `home/bot/src/sdk.ts`, `zombies/bot/`, `zombies/site/`, `docs/home/bot/explanation/bot.md`, `docs/zombies/`
+**After:** Ask Cari by voice in the Discord call
+
+## Show a zone on the map for level-3 hints
+
+At prepare Claude finds a community map image and draws zones on the rungs that give a place; the card shows it ([Discovery → Visual hints](discovery.md#visual-hints)).
+
+**Do:**
+- [ ] Bundle: map images (stored with the bundle, never in git) and zones on level-3 (and some level-4) rungs.
+- [ ] ee-coach prepare: find the image, place zones, blind-check them in a subagent; Blood of the Dead's zones.
+- [ ] The card shows the zone as the boards draw it.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `compile` rejects a zone on a level 1–2 rung; the test map's level-3 card shows its zone in the Playwright MCP.
+- Human-run: ask for a level-3 hint in Blood of the Dead and judge whether the zone is readable mid-round.
+- Reuse: the bundle schema and `compile`.
+- Neighbors: the hint card.
+- Forbidden: a zone below level 3; a map image in the repo.
+
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`
+**After:** Prepare publishes Haiku-ready bundles, starting with Blood of the Dead

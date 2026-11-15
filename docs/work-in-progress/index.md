@@ -9,3 +9,4 @@ Its layout and lifecycle are the `/scope` skill's work-in-progress layout (`~/.c
 | Document | Kind | Description |
 |----------|------|-------------|
 | [Backlog](backlog.md) | Backlog | Open questions, one-off tasks and unscoped ideas that belong to no scoped idea |
+| [Zombies Coach](zombies-coach/discovery.md) | Idea | The zombies site, voice and watch loop for easter egg coaching, and moving the zombies workspace in ([tasks](zombies-coach/tasks.md)) |

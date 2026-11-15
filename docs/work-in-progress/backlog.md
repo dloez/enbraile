@@ -166,3 +166,7 @@ An MCP server, signed in with easy auth, through which Claude acts as an adminis
 ### dj: count skips against a song in autoplay
 
 Explore seeds autoplay from the songs each listener asked for, weighted by how often ([The DJ Bot → Decisions](../dj/bot/explanation/bot.md#decisions)), and history saves a song when it starts, with no record of a skip. A song its requester, or the call, skipped quickly could weigh less as a seed, or be kept out of picks. Unscoped: what counts as a quick skip, whose skip counts, and whether it applies to Session too. Left out when Explore was built. _(owner, 2026-11-07)_
+
+### home: take the sign-in tables out of pkmn's database
+
+The shared sign-in (`home/site`) runs Better Auth over pkmn's `user`, `session`, `account` and `verification` tables, which pkmn's migrations own ([The Root Site](../home/site/explanation/site.md)), so every app's sign-in depends on pkmn's Neon project. The owner wants them decoupled (2026-11-15, scoping zombies-coach). About twenty pkmn tables reference `user` with foreign keys, and `admin`/`allowed` are pkmn's flags. Unscoped: a home Neon project owning the auth tables, and whether pkmn keeps a mirror of users for its foreign keys or drops them. Apps that sign in through `enbraile.vip/api/me` (DJ, zombies) need no change. _(owner, 2026-11-15)_
