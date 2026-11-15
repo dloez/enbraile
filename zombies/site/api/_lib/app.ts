@@ -1,9 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
+import { messageSchema, startRunSchema } from "../../shared/runs.js";
 import { requireEnv } from "./env.js";
-import { publishedMaps, storeVersion } from "./maps.js";
-import { viewerOf } from "./viewer.js";
+import { storeVersion } from "./maps.js";
+import { isActiveMember, joinRun, mapsPage, postMessage, runSheet, startRun, transcript } from "./runs.js";
+import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 
 const noStore = { "cache-control": "private, no-store" };
 
@@ -42,9 +44,53 @@ member.get("/me", (c) => {
   return c.json({ user: { name, image, discordId } }, 200, noStore);
 });
 
-member.get("/maps", async (c) => c.json({ maps: await publishedMaps() }, 200, noStore));
+member.get("/maps", async (c) => c.json(await mapsPage(c.get("viewer")), 200, noStore));
+
+member.post("/runs", async (c) => {
+  const parsed = startRunSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidRun" }, 400, noStore);
+  const id = await startRun(c.get("viewer"), parsed.data.game, parsed.data.map, parsed.data.language);
+  return id ? c.json({ id }, 201, noStore) : c.json({ error: "noSuchMap" }, 404, noStore);
+});
+
+member.get("/runs/:id", async (c) => {
+  const sheet = await runSheet(c.get("viewer"), c.req.param("id"));
+  return sheet ? c.json(sheet, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
+});
+
+member.post("/runs/:id/join", async (c) =>
+  (await joinRun(c.get("viewer"), c.req.param("id"))) ? c.json({ id: c.req.param("id") }, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore),
+);
+
+member.get("/runs/:id/messages", async (c) => {
+  const viewer = c.get("viewer");
+  const id = c.req.param("id");
+  if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
+  const after = Number(c.req.query("after") ?? 0);
+  return c.json(await transcript(viewer, id, Number.isInteger(after) && after > 0 ? after : 0), 200, noStore);
+});
+
+member.post("/runs/:id/messages", async (c) => {
+  const viewer = c.get("viewer");
+  const id = c.req.param("id");
+  if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
+  const parsed = messageSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidMessage" }, 400, noStore);
+  await postMessage(viewer, id, parsed.data.text);
+  return c.json({ ok: true }, 201, noStore);
+});
+
+const dev = new Hono();
+
+dev.get("/sign-in/:id", (c) => {
+  const user = devUsers()?.find((entry) => entry.discordId === c.req.param("id"));
+  if (!user) return c.json({ error: "notFound" }, 404);
+  c.header("set-cookie", `${devUserCookie}=${encodeURIComponent(user.discordId)}; path=/; httponly; samesite=lax`);
+  return c.redirect("/", 302);
+});
 
 export const app = new Hono().basePath("/api");
 
 app.route("/admin", admin);
+app.route("/dev", dev);
 app.route("/", member);

@@ -12,7 +12,7 @@ The players name a map, Claude researches several guides and prepares a cross-ch
 | `.claude/skills/ee-coach/` | The skill: prepare, session and debrief, with `references/hint-craft.md` and `references/research.md` | Yes |
 | `zombies/maps/<game>/<map>/` | `sources/`, `dossier.md`, `knowledge.md`, `hints.md`, `session.md`, the map's own `calibration.md`, and Spanish copies | No, gitignored ([why](../general/explanation/repository-layout.md#decisions)) |
 
-A site, `zombies.enbraile.vip`, is being built in `zombies/site/`, which lists the published maps and deploys to Vercel; it and a voice module for the bot are scoped in [Zombies Coach](../work-in-progress/zombies-coach/discovery.md).
+A site, `zombies.enbraile.vip`, is being built in `zombies/site/`, where members start or join a run on a published map and talk in its chat, and which deploys to Vercel; it and a voice module for the bot are scoped in [Zombies Coach](../work-in-progress/zombies-coach/discovery.md).
 
 ## Site
 

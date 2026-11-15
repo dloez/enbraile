@@ -1,6 +1,6 @@
 # Zombies Site Design System
 
-The visual system of `zombies/site/`: its tokens, type, layout shell, components and recurring patterns. For a screen not built yet the frozen boards in `zombies/site/design/` are the source of truth and this doc describes them; for one that is built the code is, and this doc changes in the same commit as it does, as pkmn's does ([pkmn Site Design System](../../../pkmn/site/reference/design-system.md)). Built so far: the header and the maps page's map rows, with the tokens in `src/index.css` and the fonts bundled through `@fontsource`. The rules these screens follow are in [The Zombies Site → Decisions](../explanation/site.md#decisions).
+The visual system of `zombies/site/`: its tokens, type, layout shell, components and recurring patterns. For a screen not built yet the frozen boards in `zombies/site/design/` are the source of truth and this doc describes them; for one that is built the code is, and this doc changes in the same commit as it does, as pkmn's does ([pkmn Site Design System](../../../pkmn/site/reference/design-system.md)). Built so far: the header, the maps page with its run rows and the reader's run, the start-run sheet, the join page, and a run's rail, transcript and composer (without the voice panel, the revision toggle, slips or the transmitting row, which come with their features), with the tokens in `src/index.css` and the fonts bundled through `@fontsource`. The rules these screens follow are in [The Zombies Site → Decisions](../explanation/site.md#decisions).
 
 ## Boards
 
@@ -45,8 +45,11 @@ Five flat inks (`paper`, `ink`, `red`, `blue`, `slip`) and the tints of each.
 | `red`, `red-hi` | `#c4321a`, `#d94427` | Cari (her name and mark, her chip, the zone's ring, the transmitting caret), the main action (Start a run, Join the run, Bring Cari in) and its hover, "You're in it", the voice panel on air, the wordmark's square |
 | `blue` | `#2945a8` | A revision: the pressed toggle, the dashed composer, Send, the sent line; the plans' grid at 22% |
 | `on-ink`, `on-ink-mute`, `ink-rule` | `#ece7da`, `#a8a293`, `#3b382f` | Text, labels and rules on `ink`: the header, the rail, the phone's voice bar |
+| `on-red` | `#fff` | Text on `red`: the main action |
+| `scrim` | `rgba(233,228,215,.8)` | The `paper` scrim behind the start-run sheet |
+| `hover` | `rgba(21,20,15,.08)` | The hover tint of a bare control, such as the sheet's close |
 
-The boards also write a few values raw that become tokens when built: white on `red` and `blue`, the blue button's hover `#1f378c`, the scrim `rgba(233,228,215,.8)`, and the hover tint `rgba(21,20,15,.07–.08)`. Members carry no colour of their own; a person is their initials chip.
+The boards also write a few values raw that become tokens when built: white on `blue`, the blue button's hover `#1f378c`, and the feedback boxes' hover tint `rgba(21,20,15,.07)`. Members carry no colour of their own; a person is their initials chip.
 
 ## Typography
 
@@ -75,14 +78,14 @@ Everything is square. Cards are not boxes but rows parted by rules: 1px `ink` be
 
 | Component | Board | Shape |
 |-----------|-------|-------|
-| Map row | `maps` | The plan, the map's label (Test map, or its game; the boards' made-up maps say "Sample") over its condensed name, and the open runs: one run row each or "— none open —", then Start a run outlined at the foot (built without Start a run until runs exist) |
-| Plan | `maps`, `join-run`, `start-run` | A line drawing of the map's layout in `ink` on `sheet`; larger plans add the blue 20px grid, room labels in Courier and a title block at the bottom right |
+| Map row | `maps` | The plan, the map's label (Test map, or its game; the boards' made-up maps say "Sample") over its condensed name, and the open runs: one run row each or "— none open —", then Start a run outlined at the foot |
+| Plan | `maps`, `join-run`, `start-run` | A line drawing of the map's layout in `ink` on `sheet`; larger plans add the blue 20px grid, room labels in Courier and a title block at the bottom right. Built, the join page's plan is the map's row plan drawn large over the blue grid, without room labels or title block, since a bundle carries only its `art` key |
 | Run row | `maps` | Member chips, the starter's name, the language chip, and Join outlined; the reader's own run says "You're in it" in red instead |
 | Your run | `maps` | Desktop: under a 3px rule at the column's foot, "Your run", the map's name, member chips and language, and Back to the run as an ink button. Phone: an `ink` band with "Your run · ES", the name and an arrow |
 | Language choice | `start-run` | Stacked options under "Cari speaks", each a tick square, the code (`ES`, `EN`) and the language's own name; the chosen one filled `ink`; Español first and chosen |
 | Note | `start-run`, `join-run` | A 1px `ink` frame with an `ink` key cell ("Note") and the line naming the run the reader leaves, since a person is in one run at a time |
 | Run sheet | `join-run` | A definition list: Started by, In the run, Cari speaks, each value with its chip |
-| Transcript row | `run` | Time in Courier, the speaker's name condensed (Cari in red with a red square before it), the message; earlier rows `mute` |
+| Transcript row | `run` | Time in Courier, the speaker's name condensed (Cari in red with a red square before it), the message; earlier rows `mute` (built: all but the newest four) |
 | Transmitting | `run` | Cari's row reads "transmitting" in Courier `mute` with a blinking red block caret while her reply streams |
 | Dispatch slip | `run`, `run-zone` | `slip` in a 1px `ink` frame, up to 640px, under Cari's line. It follows Cari's language, so every board draws it in Spanish. Its head reads "Despacho" and "Cari · time"; each rung given is a Courier paragraph, earlier rungs smaller in `mute`, parted by a dashed rule. The foot holds More as an ink button and the three feedback tick boxes under a hidden "Valora esta pista" legend (Demasiado obvia, Justa, Demasiado vaga; in English Too obvious, Right, Too vague), the ticked one filled `ink`. On a phone the feedback sits as three cells under More |
 | Zone | `run-zone` | Inside a level-3 slip under its text: the survey sheet (the map image the bundle carries, drawn on the boards as rooms on the blue grid with Courier labels, a north mark and a title block), the zone an ellipse hatched in `red` with one red ring pulsing out from it |

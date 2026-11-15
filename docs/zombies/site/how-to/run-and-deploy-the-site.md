@@ -38,7 +38,7 @@ Copy `.env.example` to `.env.local` and fill it in:
 | `ROOT_URL` | `https://enbraile.vip`, read only when `DEV_USER_ID` is empty |
 | `ZOMBIES_ADMIN_TOKEN` | Any long random string, e.g. `openssl rand -hex 24` |
 | `ZOMBIES_URL` | Where `publish` sends bundles: `http://localhost:8789` |
-| `DEV_USER_ID` | Any ID, to be signed in without the root site |
+| `DEV_USER_ID` | One or more members, comma-separated, each `<id>` or `<id>:<name>` (e.g. `111:Marina,222:Teo`), to be signed in without the root site |
 
 ### 4. Migrate
 
@@ -57,7 +57,7 @@ npm run dev:api
 npm run dev
 ```
 
-The page is at `http://localhost:5175`, the API at `http://localhost:8789`.
+The page is at `http://localhost:5175`, the API at `http://localhost:8789`. A browser is the first member of `DEV_USER_ID` until it opens `http://localhost:5175/api/dev/sign-in/<id>`, which makes it that member; a second browser profile (or a Playwright context) signed in as another ID is a second member of the same run.
 
 ### 6. Publish a map
 
@@ -136,4 +136,4 @@ Use Instant Rollback on the previous production deployment in the Vercel dashboa
 
 ## Verification
 
-The maps page shows Harrow Station with a Test map tag and "No runs yet". Publishing it again prints `version 1, unchanged`. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.
+The maps page shows Harrow Station with a Test map tag and "— none open —". Locally, with two members in `DEV_USER_ID`, one starts a run from Harrow Station's row and the other opens its link, joins, and sees the first one's lines within 2 seconds. Publishing it again prints `version 1, unchanged`. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.

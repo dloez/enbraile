@@ -24,23 +24,20 @@ The Vercel project, its Neon database, the workflow and the root's `trustedOrigi
 
 ## Start a run and get prepared hints from Cari in a shared chat
 
-Members start or join a run on a map and talk to Cari; Haiku answers through tools, delivering only prepared rungs that code allows ([Discovery → Architecture](discovery.md#architecture)).
+Members in a run talk to Cari; Haiku answers through tools, delivering only prepared rungs that code allows ([Discovery → Architecture](discovery.md#architecture)). Runs, members, the chat, marks and the start and join screens are in place.
 
 **Do:**
-- [ ] Local development signs in as more than one member: `DEV_USER_ID` takes a list and each browser picks one of them, so a Claude-run check can be two members of one run; it exists only where `DEV_USER_ID` is set, never in production, which keeps Discord through the root as the DJ panel does (owner, 2026-11-15). Record it as a dated decision in `docs/zombies/site/explanation/site.md`.
-- [ ] Starting a run, the player picks the map they are playing (owner, 2026-11-15), from the maps list as the boards draw it.
-- [ ] Runs, members (one active run per person), chat messages, the run's knowledge marks (baseline plus what the same people learned in earlier runs) and language (Spanish by default).
-- [ ] The coach on the function: `ANTHROPIC_API_KEY`, `COACH_MODEL` (default `claude-haiku-5-5`), a system prompt distilled from ee-coach's session rules, tools to give a rung (the next one, or its Alt), mark something known and ask the round; code offers only rungs whose `Mentions` are known or meant to be revealed, one rung at a time, and updates marks on delivery.
-- [ ] Hint cards with "more" and no numbers; the asker's reply streams, others poll every 2 s.
+- [ ] The coach on the function: `ANTHROPIC_API_KEY`, `COACH_MODEL` (default `claude-haiku-5-5`), a system prompt distilled from ee-coach's session rules, tools to give a rung (the next one, or its Alt), mark something known and ask the round; code offers only rungs whose `Mentions` are known (`run_knowledge`) or meant to be revealed, one rung at a time, and updates marks on delivery.
+- [ ] Hint cards with "more" and no numbers; the asker's reply streams (the transmitting row), others keep polling every 2 s.
 - [ ] Each Claude call's model, tokens, latency and refusals stored on the run.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through the Playwright MCP with the test map, two signed-in browsers join one run; one asks for a hint, both see the card; "more" gives the next rung; a rung mentioning an unknown thing is never delivered before the rung meant to reveal it (read back from the stored log); `grep` finds no step or rung number rendered.
+- Claude-run: `npm run gate`; through the Playwright MCP with the test map, two signed-in browsers (`DEV_USER_ID` list, `/api/dev/sign-in/<id>`) in one run; one asks for a hint, both see the card; "more" gives the next rung; a rung mentioning an unknown thing is never delivered before the rung meant to reveal it (read back from the stored log); `grep` finds no step or rung number rendered.
 - Claude-run (setup): set Vercel's `COACH_MODEL`, and `ANTHROPIC_API_KEY` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.ANTHROPIC_API_KEY}' | base64 -d | npx vercel env add ANTHROPIC_API_KEY production` (owner, 2026-11-15).
 - Human-run: two people on phones join a test-map run and ask for hints.
-- Reuse: the `Anthropic` SDK as in `home/bot/src/claude.ts` (tool loop shape), but on Vercel; the hint-delivery rules in `.claude/skills/ee-coach/SKILL.md` and `references/hint-craft.md`.
+- Reuse: the `Anthropic` SDK as in `home/bot/src/claude.ts` (tool loop shape), but on Vercel; the hint-delivery rules in `.claude/skills/ee-coach/SKILL.md` and `references/hint-craft.md`; the run API and `src/RunPage.tsx`.
 - Neighbors: the DJ panel's streaming-less polling fallback (`dj/panel/src/`).
-- Forbidden: the dossier or unknown entries in the model's prompt; the model writing hint text; step or hint numbers in the UI.
+- Forbidden: the dossier or unknown entries in the model's prompt; the model writing hint text; step or hint numbers in the UI; a way to end a run.
 
 **Touches:** `zombies/site/`, `docs/zombies/`
 

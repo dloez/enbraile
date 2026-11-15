@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { PublishedMap } from "../shared/bundle";
 
 const wards = [28, 46, 64, 82, 100];
@@ -43,10 +44,21 @@ function Works() {
 
 const plans = { teal: Platform, rust: Wards, furnace: Works };
 
-export function MapPlan({ art, name }: { art: PublishedMap["art"]; name: string }) {
+export function MapPlan({ art, name, grid = false }: { art: PublishedMap["art"]; name: string; grid?: boolean }) {
   const Plan = plans[art];
+  const pattern = useId();
   return (
     <svg className="plan" viewBox="0 0 140 96" fill="none" strokeWidth="1.4" role="img" aria-label={name}>
+      {grid && (
+        <>
+          <defs>
+            <pattern id={pattern} width="5" height="5" patternUnits="userSpaceOnUse">
+              <path d="M5 0H0V5" className="plan-grid" strokeWidth=".25" />
+            </pattern>
+          </defs>
+          <rect width="140" height="96" fill={`url(#${pattern})`} stroke="none" />
+        </>
+      )}
       <Plan />
     </svg>
   );
