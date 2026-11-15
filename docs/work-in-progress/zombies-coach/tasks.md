@@ -37,6 +37,24 @@ Members in a run talk to Cari; Haiku answers through tools, delivering only prep
 
 **Touches:** `zombies/site/`, `docs/zombies/`
 
+## Name the site's machine API for Claude
+
+The token and routes the site calls "admin" are Claude's: only Claude uses them, from the terminal, to publish bundles and, later, to read and watch runs and step in as Cari. The owner wants them named and attributed that way, not as a general admin (2026-11-15). A browser admin like pkmn's (`npm run admin:create`, `/admin`) is not wanted now.
+
+**Do:**
+- [ ] Rename `ZOMBIES_ADMIN_TOKEN` to `CLAUDE_TOKEN` and the `/api/admin/` routes to `/api/claude/` in `zombies/site/` (`api/`, `scripts/publish.ts`, `.env.example`).
+- [ ] Record "Claude" as the author of what that API does: each stored bundle version says it was published by Claude, and later writes through it (a line posted into a run) carry the same.
+- [ ] Docs: `docs/zombies/site/explanation/site.md` (a dated owner decision, and every "admin" naming this API), `docs/zombies/site/how-to/run-and-deploy-the-site.md` (steps 8 and 9 with `CLAUDE_TOKEN` and the 1Password item "zombies claude token"), `docs/zombies/index.md` where it names it.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; `grep -rn "ZOMBIES_ADMIN_TOKEN\|/api/admin" zombies/site docs/zombies` finds nothing outside `node_modules`; locally, `npm run publish -- test-map` with `CLAUDE_TOKEN` stores a version whose author reads Claude, a second prints `unchanged`, and a request without the token gets 403.
+- Human-run: none.
+- Reuse: the existing token check in `zombies/site/api/_lib/app.ts`.
+- Neighbors: none.
+- Forbidden: a browser admin sign-in; any other credential reaching these routes.
+
+**Touches:** `zombies/site/`, `docs/zombies/`
+
 ## Review the site's frontend for UX, loading states and glitches
 
 The owner wants the site to feel good to use before the group plays on it (2026-11-15): every screen has a proper loading, empty and error state, and nothing odd happens in the browser. Review what is built so far in `zombies/site/src/` against the boards and fix what falls short.
@@ -55,25 +73,7 @@ The owner wants the site to feel good to use before the group plays on it (2026-
 - Forbidden: new features or screens; changing what a screen does rather than how it feels; step or hint numbers in the UI.
 
 **Touches:** `zombies/site/src/`, `zombies/site/index.html`, `docs/zombies/site/reference/design-system.md`
-**After:** Start a run and get prepared hints from Cari in a shared chat
-
-## Name the site's machine API for Claude
-
-The token and routes the site calls "admin" are Claude's: only Claude uses them, from the terminal, to publish bundles and, later, to read and watch runs and step in as Cari. The owner wants them named and attributed that way, not as a general admin (2026-11-15). A browser admin like pkmn's (`npm run admin:create`, `/admin`) is not wanted now.
-
-**Do:**
-- [ ] Rename `ZOMBIES_ADMIN_TOKEN` to `CLAUDE_TOKEN` and the `/api/admin/` routes to `/api/claude/` in `zombies/site/` (`api/`, `scripts/publish.ts`, `.env.example`).
-- [ ] Record "Claude" as the author of what that API does: each stored bundle version says it was published by Claude, and later writes through it (a line posted into a run) carry the same.
-- [ ] Docs: `docs/zombies/site/explanation/site.md` (a dated owner decision, and every "admin" naming this API), `docs/zombies/site/how-to/run-and-deploy-the-site.md` (steps 8 and 9 with `CLAUDE_TOKEN` and the 1Password item "zombies claude token"), `docs/zombies/index.md` where it names it.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; `grep -rn "ZOMBIES_ADMIN_TOKEN\|/api/admin" zombies/site docs/zombies` finds nothing outside `node_modules`; locally, `npm run publish -- test-map` with `CLAUDE_TOKEN` stores a version whose author reads Claude, a second prints `unchanged`, and a request without the token gets 403.
-- Human-run: none.
-- Reuse: the existing token check in `zombies/site/api/_lib/app.ts`.
-- Neighbors: none.
-- Forbidden: a browser admin sign-in; any other credential reaching these routes.
-
-**Touches:** `zombies/site/`, `docs/zombies/`
+**After:** Start a run and get prepared hints from Cari in a shared chat; Point zombies.enbraile.vip at the site and publish the test map
 
 ## Follow progress and threads the way ee-coach does
 
