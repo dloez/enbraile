@@ -6,13 +6,13 @@ The Vercel project, its Neon database, the workflow and the root's `trustedOrigi
 
 **Do:**
 - [ ] `zombies.enbraile.vip` as a DNS-only CNAME to `0cedcc0080c9a767.vercel-dns-017.com` (`npx vercel api /v6/domains/zombies.enbraile.vip/config`, `recommendedCNAME`) in the Cloudflare `enbraile.vip` zone.
-- [ ] `ZOMBIES_ADMIN_TOKEN` generated in 1Password and set in Vercel Production with the commands in step 8 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`; never let the value appear in the conversation or a command line.
+- [ ] `CLAUDE_TOKEN` generated in 1Password and set in Vercel Production with the commands in step 8 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`; never let the value appear in the conversation or a command line.
 - [ ] Publish the test map to production with step 9's command (`ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map`, the token read from 1Password).
 - [ ] Docs: drop "except the DNS record and the admin token, which wait on the owner" from step 8 of the how-to, and turn `site.md`'s Hosting sentence "is to be a DNS-only (grey-cloud) `CNAME` … until the owner adds that record the name does not resolve" into the record as it stands.
 
 **Acceptance:**
 - Claude-run: `curl -s https://zombies.enbraile.vip/api/maps` answers 401 signed out; a second production publish prints `unchanged`; the first push to `main` touching `zombies/site/` runs `zombies-site.yml` to a deployment URL.
-- Human-run: open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map; the 1Password item holds `ZOMBIES_ADMIN_TOKEN`.
+- Human-run: open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map; the 1Password item holds `CLAUDE_TOKEN`.
 - Reuse: steps 8 and 9 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`.
 - Neighbors: `home/site/`.
 - Forbidden: a proxied record; secrets in the repo or printed in the conversation.
@@ -20,7 +20,7 @@ The Vercel project, its Neon database, the workflow and the root's `trustedOrigi
 **Touches:** `docs/zombies/site/how-to/run-and-deploy-the-site.md`, `docs/zombies/site/explanation/site.md`
 **Needs the author:**
 - Add the DNS-only CNAME `zombies` → `0cedcc0080c9a767.vercel-dns-017.com` in Cloudflare's `enbraile.vip` zone yourself, or give agents a Cloudflare API token limited to DNS edit on that zone? Agents have no access to it today.
-- Create the 1Password item "zombies admin token" and set Vercel's Production `ZOMBIES_ADMIN_TOKEN` with step 8's commands (agents have no 1Password session). Then publish the test map yourself with step 9, or unlock 1Password for an agent run?
+- Create the 1Password item "zombies claude token" and set Vercel's Production `CLAUDE_TOKEN` with step 8's commands (agents have no 1Password session). Then publish the test map yourself with step 9, or unlock 1Password for an agent run?
 
 ## Start a run and get prepared hints from Cari in a shared chat
 
@@ -38,6 +38,24 @@ Members in a run talk to Cari; Haiku answers through tools, delivering only prep
 - Reuse: the `Anthropic` SDK as in `home/bot/src/claude.ts` (tool loop shape), but on Vercel; the hint-delivery rules in `.claude/skills/ee-coach/SKILL.md` and `references/hint-craft.md`; the run API and `src/RunPage.tsx`.
 - Neighbors: the DJ panel's streaming-less polling fallback (`dj/panel/src/`).
 - Forbidden: the dossier or unknown entries in the model's prompt; the model writing hint text; step or hint numbers in the UI; a way to end a run.
+
+**Touches:** `zombies/site/`, `docs/zombies/`
+
+## Name the site's machine API for Claude
+
+The token and routes the site calls "admin" are Claude's: only Claude uses them, from the terminal, to publish bundles and, later, to read and watch runs and step in as Cari. The owner wants them named and attributed that way, not as a general admin (2026-11-15). A browser admin like pkmn's (`npm run admin:create`, `/admin`) is not wanted now.
+
+**Do:**
+- [ ] Rename `ZOMBIES_ADMIN_TOKEN` to `CLAUDE_TOKEN` and the `/api/admin/` routes to `/api/claude/` in `zombies/site/` (`api/`, `scripts/publish.ts`, `.env.example`).
+- [ ] Record "Claude" as the author of what that API does: each stored bundle version says it was published by Claude, and later writes through it (a line posted into a run) carry the same.
+- [ ] Docs: `docs/zombies/site/explanation/site.md` (a dated owner decision, and every "admin" naming this API), `docs/zombies/site/how-to/run-and-deploy-the-site.md` (steps 8 and 9 with `CLAUDE_TOKEN` and the 1Password item "zombies claude token"), `docs/zombies/index.md` where it names it.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; `grep -rn "ZOMBIES_ADMIN_TOKEN\|/api/admin" zombies/site docs/zombies` finds nothing outside `node_modules`; locally, `npm run publish -- test-map` with `CLAUDE_TOKEN` stores a version whose author reads Claude, a second prints `unchanged`, and a request without the token gets 403.
+- Human-run: none.
+- Reuse: the existing token check in `zombies/site/api/_lib/app.ts`.
+- Neighbors: none.
+- Forbidden: a browser admin sign-in; any other credential reaching these routes.
 
 **Touches:** `zombies/site/`, `docs/zombies/`
 
@@ -66,10 +84,10 @@ When no prepared line fits, Cari holds and the run records a gap; `REVISION:` me
 **Do:**
 - [ ] A hold tool with prepared in-voice non-answers per language; a gap record with the context.
 - [ ] `REVISION:` detection (and wherever the boards put feedback) acknowledged briefly; feedback controls on cards; both logged on the run.
-- [ ] `GET /api/admin/runs/<id>` behind `ZOMBIES_ADMIN_TOKEN` returns the run's log, gaps, feedback and marks for debriefs; the ee-coach debrief reads it.
+- [ ] `GET /api/claude/runs/<id>` behind `CLAUDE_TOKEN` returns the run's log, gaps, feedback and marks for debriefs; the ee-coach debrief reads it.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; through the Playwright MCP, a question the test map has no line for gets a hold and a gap; a `REVISION:` message gets an acknowledgement and no model call (read from the call log); card feedback appears in the admin read.
+- Claude-run: `npm run gate`; through the Playwright MCP, a question the test map has no line for gets a hold and a gap; a `REVISION:` message gets an acknowledgement and no model call (read from the call log); card feedback appears in the Claude read.
 - Human-run: send a `REVISION:` from a phone; in Claude Code, run the debrief and see it.
 - Reuse: the call log and run state of earlier entries.
 - Neighbors: the hint tools.
@@ -83,13 +101,13 @@ When no prepared line fits, Cari holds and the run records a gap; `REVISION:` me
 Import the terminal session into a run so the group continues it on the site, then retire the old workspace ([Discovery → Migration](discovery.md#migration)).
 
 **Do:**
-- [ ] An admin import of a run from a map's `session.md` and `knowledge.md` (members, marks, hints given, open threads), in a subagent.
+- [ ] A Claude import of a run from a map's `session.md` and `knowledge.md` (members, marks, hints given, open threads), in a subagent.
 - [ ] Delete `~/workspace/zombies/` after the owner confirms the run reads right on the site.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; the imported run's revealed marks and hint log match `session.md` and `knowledge.md` (checked in a subagent, reporting counts only).
 - Human-run: open the imported run, ask for the next hint, and get what the terminal would have given; confirm deleting the old folder.
-- Reuse: the admin API and bundle of earlier entries.
+- Reuse: the Claude API and bundle of earlier entries.
 - Neighbors: the publish script.
 - Forbidden: deleting the old workspace before the owner's yes.
 
@@ -98,17 +116,17 @@ Import the terminal session into a run so the group continues it on the site, th
 
 ## Watch a run from Claude Code and fix things live
 
-A `watch` stream on the admin API and a skill section so Claude follows a run while it is played: closing gaps with a checked line, applying revisions and card feedback, and fixing the dossier when players report something it contradicts, all in subagents, the terminal showing spoiler-free one-liners ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
+A `watch` stream on the Claude API and a skill section so Claude follows a run while it is played: closing gaps with a checked line, applying revisions and card feedback, and fixing the dossier when players report something it contradicts, all in subagents, the terminal showing spoiler-free one-liners ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
 
 **Do:**
-- [ ] `GET /api/admin/runs/<id>/events?after=` and `npm run watch -- <run>` printing one line per event, for `Monitor`.
+- [ ] `GET /api/claude/runs/<id>/events?after=` and `npm run watch -- <run>` printing one line per event, for `Monitor`.
 - [ ] A "Watch" section in the ee-coach skill: per event type, what to do, which subagent, publish, and what one line to print.
 - [ ] A held gap is answered on the run's next message, or posted at once if the run is waiting, once the new version lands.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; with a test-map run open in the Playwright MCP, a gap appears in `watch`, a new line is published and the run delivers it; a revision changes a rung and the next delivery uses it.
 - Human-run: on a game night, run the watch from Claude Code, send a `REVISION:` and see it applied without leaving the game.
-- Reuse: the admin API, `compile` and `publish`.
+- Reuse: the Claude API, `compile` and `publish`.
 - Neighbors: the debrief in the ee-coach skill.
 - Forbidden: solutions or rung text printed in the main conversation.
 
@@ -121,7 +139,7 @@ The watch loop checks each live reply against the rules and Claude can post into
 
 **Do:**
 - [ ] Code-side checks recorded on each reply (an unknown named, a rung skipped, an optional offered, a number shown), surfaced in `watch`; the skill's audit of what code cannot judge.
-- [ ] `POST /api/admin/runs/<id>/say` behind `ZOMBIES_ADMIN_TOKEN` posting as Cari, logged as from Claude Code.
+- [ ] `POST /api/claude/runs/<id>/say` behind `CLAUDE_TOKEN` posting as Cari, attributed to Claude.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; a forced violation on the test map shows in `watch`; a step-in message shows in both browsers.
@@ -159,11 +177,11 @@ While Cari is in the call for a run, what is said there goes into the run for th
 
 **Do:**
 - [ ] `hearing.onTranscript(handler)` in the host (`home/bot/src/hearing.ts`, exported in `sdk.ts`), documented in the bot doc.
-- [ ] The module asks `transcripts.keep("zombies", true)` while in a run's call and forwards lines to `POST /api/voice/transcript`; the run stores them; `watch` and the admin read show them.
+- [ ] The module asks `transcripts.keep("zombies", true)` while in a run's call and forwards lines to `POST /api/voice/transcript`; the run stores them; `watch` and the Claude read show them.
 
 **Acceptance:**
 - Claude-run: `npm run gate` in both; a fake transcript reaches the run in a local pair.
-- Human-run: talk in the call during a run and see the lines in the admin read, and that the coach model got only the «cari» requests (call log).
+- Human-run: talk in the call during a run and see the lines in the Claude read, and that the coach model got only the «cari» requests (call log).
 - Reuse: `transcripts.keep`, the worker's transcript messages (`home/bot/src/hearing.ts`).
 - Neighbors: `onTrigger`.
 - Forbidden: transcript text in the coach model's prompt.
