@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "gate": "tsc --noEmit",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && tsx scripts/build-api.ts",
     "dev": "vite",
     "dev:api": "tsx --env-file-if-exists=.env.local scripts/dev-api.ts",
     "db:generate": "drizzle-kit generate",
@@ -34,6 +34,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.2.1",
     "drizzle-kit": "0.31.11",
+    "esbuild": "0.28.2",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "vite": "8.3.6"

@@ -3,7 +3,7 @@ import { type Context, Hono } from "hono";
 import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
 import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchema, type ReplyEvent } from "../../shared/runs.js";
-import { coachTurn, type Ask } from "./coach.js";
+import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { storeVersion } from "./maps.js";
@@ -36,6 +36,7 @@ function reply(runId: string, viewer: Viewer, ask: Ask): Response {
         }
       };
       try {
+        const { coachTurn } = await import("./coach.js");
         await coachTurn(runId, viewer, ask, send);
       } catch (error) {
         console.error("coach turn failed", error);

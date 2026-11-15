@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["fra1"],
+  "fluid": true,
   "git": { "deploymentEnabled": false },
-  "outputDirectory": "public",
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }]
+  "buildCommand": "npm run build"
 }

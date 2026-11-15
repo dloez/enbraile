@@ -1,5 +1,0 @@
-import { handle } from "hono/vercel";
-import { app } from "./_lib/app.js";
-
-export const GET = handle(app);
-export const POST = handle(app);

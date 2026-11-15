@@ -1,24 +1,5 @@
 # Zombies Coach — Tasks
 
-## Cut the API functions' cold start
-
-After 10 idle minutes a signed-out `/api/maps` on production took 4.0 s to its first byte with no database query: about 1.85 s for the zombies function to start and 2.2 s for the root's `/api/me`, one after the other (signed-out figures on the deployment before "Make the site's pages load fast", [The Zombies Site → Load Time](../../zombies/site/explanation/site.md#load-time)). Warm, the same calls take 55–110 ms. Locally, importing the zombies API module takes about 0.4 s, `drizzle-orm/node-postgres` alone about 240 ms, so module loading is a likely share of it; the root loads Better Auth.
-
-**Do:**
-- [ ] Read the first signed-in `Server-Timing` figures from production (the owner's, cold and warm) and set them beside the function start times.
-- [ ] Measure where each function's cold start goes (module load against Vercel's own start), then cut it: bundle the function into one file, load the Anthropic client and the coach only on the routes that use them, and the same for the root's `/api/me` if it holds.
-- [ ] If the Neon wake turns out to dominate instead, say so in the report with the figure, since keeping a compute awake is a cost the owner decides.
-- [ ] Docs: the figures and what changed in `docs/zombies/site/explanation/site.md` and `docs/home/site/explanation/site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site` and `home/site`; signed-out cold and warm time to first byte on production before and after; the maps page and the run page through the Playwright MCP locally with no change in what they show.
-- Human-run: the owner opens the site after it has been idle and finds the maps quick to appear; reads `Server-Timing` on `/api/maps` signed in, cold and warm.
-- Reuse: the `Server-Timing` metrics in `zombies/site/api/_lib/app.ts`.
-- Neighbors: `dj/panel/api/_lib/app.ts`, which makes the same root lookup.
-- Forbidden: a paid Neon or Vercel setting changed without the owner's yes; caching the reader across requests.
-
-**Touches:** `zombies/site/api/`, `zombies/site/package.json`, `zombies/site/package-lock.json`, `zombies/site/vercel.json`, `home/site/api/`, `home/site/package.json`, `home/site/package-lock.json`, `docs/zombies/site/explanation/site.md`, `docs/home/site/explanation/site.md`
-
 ## Load with skeletons like the DJ panel
 
 The owner finds the "— receiving —" loading line terrible and wants loading done as the DJ panel does it (2026-11-15): grey blocks in the shape of the content that is coming (the panel's `.skeleton` with a 1.4 s pulse in `dj/panel/src/index.css`, `SkeletonSongs` in `dj/panel/src/App.tsx`), with the real content fading in over them.
