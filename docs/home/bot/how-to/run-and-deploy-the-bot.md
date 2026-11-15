@@ -24,7 +24,7 @@ To roll back, revert the commit in `enbraile` and push, which builds a newer ima
 1. In the Tailscale admin console → DNS, turn on MagicDNS and HTTPS Certificates, and note the tailnet's DNS name (`<tailnet>.ts.net`).
 2. In Access Controls, add `"tag:dj": ["autogroup:admin"]` to `tagOwners`, and a `nodeAttrs` entry `{"target": ["tag:dj"], "attr": ["funnel"]}`.
 3. In Settings → Keys, generate an auth key: pre-approved, tagged `tag:dj`, not ephemeral. The pod uses it only for its first login.
-4. In 1Password, vault `Homelab - Tom`, create an item `dj` with the fields `bot-token` (the bot token), `internal-secret` (the same `INTERNAL_SECRET` as the panel's), `ts-authkey`, and optionally `anthropic-api-key` (a Claude Console key) and `b2-key-id` and `b2-application-key` (a Backblaze application key that can read and write the transcripts bucket).
+4. In 1Password, vault `Homelab - Tom`, create an item `discord-bot-enbraile` with the fields `bot-token` (the bot token), `internal-secret` (the same `INTERNAL_SECRET` as the panel's), `ts-authkey`, and optionally `anthropic-api-key` (a Claude Console key) and `b2-key-id` and `b2-application-key` (a Backblaze application key that can read and write the transcripts bucket).
 5. In `dloez`, set `PUBLIC_URL` in `homelab/apps/tom/dj.yaml` to `https://dj.<tailnet>.ts.net` and push. Flux creates the namespace, the secret, the volume and both pods, and then keeps the bot's image current.
 6. In the Discord developer portal, check that the application has no Interactions Endpoint URL, so Discord sends commands over the gateway. The bot registers its slash commands itself on every start.
 7. In Vercel, set the panel's `BOT_URL` to `https://dj.<tailnet>.ts.net` for Production, and redeploy.
