@@ -2,25 +2,21 @@
 
 ## Point zombies.enbraile.vip at the site and publish the test map
 
-The Vercel project, its Neon database, the workflow and the root's `trustedOrigins` are in place; what is left is the domain's DNS record, the admin token and the first production publish, so a signed-in member opens `zombies.enbraile.vip` and sees the published test map ([Discovery → Anchor Areas](discovery.md#anchor-areas)).
+The owner added the DNS-only `CNAME` `zombies` → `0cedcc0080c9a767.vercel-dns-017.com` and set `CLAUDE_TOKEN` in Vercel Production and in the 1Password item "zombies claude token" (2026-11-15); `https://zombies.enbraile.vip/api/maps` answers 401 signed out. What is left is recording that and the first production publish ([Discovery → Anchor Areas](discovery.md#anchor-areas)).
 
 **Do:**
-- [ ] `zombies.enbraile.vip` as a DNS-only CNAME to `0cedcc0080c9a767.vercel-dns-017.com` (`npx vercel api /v6/domains/zombies.enbraile.vip/config`, `recommendedCNAME`) in the Cloudflare `enbraile.vip` zone.
-- [ ] `CLAUDE_TOKEN` generated in 1Password and set in Vercel Production with the commands in step 8 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`; never let the value appear in the conversation or a command line.
-- [ ] Publish the test map to production with step 9's command (`ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map`, the token read from 1Password).
-- [ ] Docs: drop "except the DNS record and the admin token, which wait on the owner" from step 8 of the how-to, and turn `site.md`'s Hosting sentence "is to be a DNS-only (grey-cloud) `CNAME` … until the owner adds that record the name does not resolve" into the record as it stands.
+- [ ] Docs: drop "except the DNS record and the admin token, which wait on the owner" from step 8 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`, and turn `site.md`'s Hosting sentence about the `CNAME` that "is to be" added into the record as it stands.
+- [ ] Redeploy production once the rename to `CLAUDE_TOKEN` has landed (`gh workflow run zombies-site.yml --ref main`), so the deployment reads the variable.
 
 **Acceptance:**
-- Claude-run: `curl -s https://zombies.enbraile.vip/api/maps` answers 401 signed out; a second production publish prints `unchanged`; the first push to `main` touching `zombies/site/` runs `zombies-site.yml` to a deployment URL.
-- Human-run: open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map; the 1Password item holds `CLAUDE_TOKEN`.
+- Claude-run: `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` prints 401; the redeploy's workflow run ends with a deployment URL; a `PUT /api/claude/maps/test/test` without a token gets 403.
+- Human-run: publish the test map with step 9's command, the token from 1Password, and see a second publish print `unchanged`; open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map.
 - Reuse: steps 8 and 9 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`.
 - Neighbors: `home/site/`.
 - Forbidden: a proxied record; secrets in the repo or printed in the conversation.
 
 **Touches:** `docs/zombies/site/how-to/run-and-deploy-the-site.md`, `docs/zombies/site/explanation/site.md`
-**Needs the author:**
-- Add the DNS-only CNAME `zombies` → `0cedcc0080c9a767.vercel-dns-017.com` in Cloudflare's `enbraile.vip` zone yourself, or give agents a Cloudflare API token limited to DNS edit on that zone? Agents have no access to it today.
-- Create the 1Password item "zombies claude token" and set Vercel's Production `CLAUDE_TOKEN` with step 8's commands (agents have no 1Password session). Then publish the test map yourself with step 9, or unlock 1Password for an agent run?
+**After:** Name the site's machine API for Claude
 
 ## Start a run and get prepared hints from Cari in a shared chat
 
