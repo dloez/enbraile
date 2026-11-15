@@ -21,6 +21,25 @@ The owner is not sold on runs as they show now (2026-11-15): a run is to be call
 
 **Touches:** `zombies/site/`, `docs/zombies/`
 
+## Show each map's real art on the maps list and map view
+
+The owner wants the real map assets shown, not drawn stand-ins, for the maps themselves as well as the hints (2026-11-15). A full overhead map would show areas the players have not found, which the knowledge marks forbid until a hint reveals them, so the maps list and the map view show the map's official key art or loading screen (mood, no layout), and the overhead map stays inside level-3 zone cards ("Show a zone on the map for level-3 hints"). Images live with the published bundle, never in git ([Discovery → Visual hints](discovery.md#visual-hints)).
+
+**Do:**
+- [ ] At prepare, the ee-coach skill finds the map's key art or loading screen, saves it in the gitignored map dir, and checks in a subagent that it shows no layout, no area the baseline marks unknown, and no step; `compile` puts it in the bundle and `publish` sends it.
+- [ ] Where a published image is stored and served is the build's choice (recorded in `docs/zombies/site/explanation/site.md`); the site shows it on the map's row and at the head of its view, in place of the drawn plan, with a skeleton while it loads; a map without one (the test map) keeps its drawn plan.
+- [ ] Blood of the Dead's art found, checked, compiled and published.
+- [ ] Docs: the bundle's image field, the decision, and the design-system doc's map row and map view.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; `compile` rejects an image path that is missing; through the Playwright MCP locally, a map with art shows it on its row and view at desktop and phone width, the test map keeps its plan; `git ls-files | grep -iE '\.(png|jpe?g|webp)$'` finds no map image tracked.
+- Human-run: the owner sees Blood of the Dead's art on the maps list and finds it reveals nothing they have not seen.
+- Reuse: the bundle, `compile` and `publish`; the map row and map view of the third take.
+- Neighbors: "Show a zone on the map for level-3 hints", which stores the overhead map the same way.
+- Forbidden: an overhead map or any layout on the maps list or map view; any map image in a tracked file.
+
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
+
 ## Watch a run from Claude Code and fix things live
 
 A `watch` stream on the Claude API and a skill section so Claude follows a run while it is played: closing gaps with a checked line, applying revisions and card feedback, and fixing the dossier when players report something it contradicts, all in subagents, the terminal showing spoiler-free one-liners ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
