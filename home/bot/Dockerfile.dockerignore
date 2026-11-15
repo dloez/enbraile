@@ -6,3 +6,5 @@
 !dj/bot/package.json
 !dj/bot/src
 !dj/bot/yt-dlp-plugins
+!zombies/bot/package.json
+!zombies/bot/src

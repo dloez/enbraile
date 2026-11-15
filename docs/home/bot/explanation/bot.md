@@ -42,7 +42,7 @@ A module can also hear the lines themselves: `hearing.onTranscript(handler)` cal
 
 ## Modules in Other Categories
 
-A module's code stays in its own category (`dj/bot/` for the DJ, `zombies/bot/` for Cari), so the host imports it by relative path. A module has no dependencies of its own: the host's `package.json` holds them all, and `npm ci` in `home/bot/` links each module's `node_modules` to the host's (`scripts/link-modules.mjs`). Node caches a package by its real path, so the host and every module share one copy of `discord.js` and `@discordjs/voice`. A module keeps a `package.json` that only says `"type": "module"`.
+A module's code stays in its own category (`dj/bot/` for the DJ, `zombies/bot/` for Cari), so the host imports it by relative path. A module has no dependencies of its own: the host's `package.json` holds them all, and `npm ci` in `home/bot/` links each module's `node_modules` to the host's (`scripts/link-modules.mjs`). Node caches a package by its real path, so the host and every module share one copy of `discord.js` and `@discordjs/voice`. A module keeps a `package.json` that only says `"type": "module"`. The image is built from the repository root, so a new module's paths go in four places: `home/bot/tsconfig.json`'s `include`, the `COPY` lines of `home/bot/Dockerfile`, the allowlist in `home/bot/Dockerfile.dockerignore` (which ignores everything else), and the `paths` of `.github/workflows/home-bot.yml`.
 
 ## Deploying
 
