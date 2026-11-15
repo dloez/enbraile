@@ -22,27 +22,12 @@ The Vercel project, its Neon database, the workflow and the root's `trustedOrigi
 - Add the DNS-only CNAME `zombies` → `0cedcc0080c9a767.vercel-dns-017.com` in Cloudflare's `enbraile.vip` zone yourself, or give agents a Cloudflare API token limited to DNS edit on that zone? Agents have no access to it today.
 - Create the 1Password item "zombies admin token" and set Vercel's Production `ZOMBIES_ADMIN_TOKEN` with step 8's commands (agents have no 1Password session). Then publish the test map yourself with step 9, or unlock 1Password for an agent run?
 
-## Decide how two members sign in to the local site
-
-"Start a run…" asks for two signed-in browsers as two members of one run, with one active run per person, but locally every request is the same person: `zombies/site/api/_lib/viewer.ts:5-6` returns one fixed `DEV_USER_ID` viewer, and without it the root's session cookie is set on `enbraile.vip` (`home/site/api/_lib/auth.ts:25`), which a `localhost` browser (or a `vercel.app` preview) never carries. pkmn's test players (`pkmn/site/api/_lib/dev-sign-in.ts`) live in its own auth tables, which the zombies site may not have ([Discovery → Data and storage](discovery.md#data-and-storage)).
-
-**Needs the author:**
-- How does a Claude-run check act as two different members: a second local identity on the zombies site's dev sign-in, or the two-browser check run against `zombies.enbraile.vip` with two real accounts?
-
-**Acceptance:**
-- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md`; the Claude-run line of "Start a run and get prepared hints from Cari in a shared chat" matches it.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: `dj/panel/api/_lib/app.ts`, which has the same single `DEV_USER_ID`.
-- Forbidden: a sign-in path that works in production without the root session; auth tables in the zombies database.
-
-**Touches:** `docs/zombies/site/explanation/site.md`
-
 ## Start a run and get prepared hints from Cari in a shared chat
 
 Members start or join a run on a map and talk to Cari; Haiku answers through tools, delivering only prepared rungs that code allows ([Discovery → Architecture](discovery.md#architecture)).
 
 **Do:**
+- [ ] Local development signs in as more than one member: `DEV_USER_ID` takes a list and each browser picks one of them, so a Claude-run check can be two members of one run; it exists only where `DEV_USER_ID` is set, never in production, which keeps Discord through the root as the DJ panel does (owner, 2026-11-15). Record it as a dated decision in `docs/zombies/site/explanation/site.md`.
 - [ ] Runs, members (one active run per person), chat messages, the run's knowledge marks (baseline plus what the same people learned in earlier runs) and language (Spanish by default).
 - [ ] The coach on the function: `ANTHROPIC_API_KEY`, `COACH_MODEL` (default `claude-haiku-5-5`), a system prompt distilled from ee-coach's session rules, tools to give a rung (the next one, or its Alt), mark something known and ask the round; code offers only rungs whose `Mentions` are known or meant to be revealed, one rung at a time, and updates marks on delivery.
 - [ ] Hint cards with "more" and no numbers; the asker's reply streams, others poll every 2 s.
@@ -57,7 +42,6 @@ Members start or join a run on a map and talk to Cari; Haiku answers through too
 - Forbidden: the dossier or unknown entries in the model's prompt; the model writing hint text; step or hint numbers in the UI.
 
 **Touches:** `zombies/site/`, `docs/zombies/`
-**After:** Decide how two members sign in to the local site
 
 ## Decide how a run ends
 
