@@ -20,8 +20,40 @@ Put the locally built site online: a signed-in member opens `zombies.enbraile.vi
 - Neighbors: `dj/panel/`, `home/site/`.
 - Forbidden: a connection to pkmn's database; secrets in the repo or printed in the conversation.
 
-**Touches:** `.github/workflows/zombies-site.yml`, `home/site/api/_lib/auth.ts`, `docs/zombies/site/`, `docs/general/how-to/deploy-vercel-projects.md`
-**After:** Build the zombies site locally and publish the test map
+**Touches:** `.github/workflows/zombies-site.yml`, `home/site/api/_lib/auth.ts`, `docs/zombies/`, `docs/general/how-to/deploy-vercel-projects.md`
+
+## Record the site's settled UI rules in its explanation doc
+
+The site's permanent docs cite settled owner decisions from the work-in-progress discovery, which is deleted when the idea closes: `docs/zombies/site/reference/design-system.md:3` cites [Discovery → Runs and the site](discovery.md#runs-and-the-site) for why the screens are as they are, and `:112` cites [Discovery → Voice](discovery.md#voice) for "no sound cue". `docs/zombies/site/explanation/site.md`'s `## Decisions` holds none of them, though the built maps page already follows them.
+
+**Do:**
+- [ ] Add to `## Decisions` in `docs/zombies/site/explanation/site.md`, with their original attribution and date (owner, 2026-11-15): no step or hint numbers anywhere, no list of steps, the UI is never a hint; hints as cards with a generic "more" and the three feedback controls; Cari's voice only, no sound cue on a new hint.
+- [ ] Point `design-system.md:3` and `:112` at those decisions instead of the discovery.
+
+**Acceptance:**
+- Claude-run: `grep -n 'work-in-progress' docs/zombies/site/reference/design-system.md` finds nothing; each rule appears once, dated, in `site.md`'s `## Decisions`.
+- Human-run: none.
+- Reuse: the wording of the discovery's decisions, unchanged in meaning.
+- Neighbors: `docs/pkmn/site/explanation/site.md` for the decision format.
+- Forbidden: a new rule or reworded meaning; editing the discovery.
+
+**Touches:** `docs/zombies/site/explanation/site.md`, `docs/zombies/site/reference/design-system.md`
+
+## Decide how two members sign in to the local site
+
+"Start a run…" asks for two signed-in browsers as two members of one run, with one active run per person, but locally every request is the same person: `zombies/site/api/_lib/viewer.ts:5-6` returns one fixed `DEV_USER_ID` viewer, and without it the root's session cookie is set on `enbraile.vip` (`home/site/api/_lib/auth.ts:25`), which a `localhost` browser (or a `vercel.app` preview) never carries. pkmn's test players (`pkmn/site/api/_lib/dev-sign-in.ts`) live in its own auth tables, which the zombies site may not have ([Discovery → Data and storage](discovery.md#data-and-storage)).
+
+**Needs the author:**
+- How does a Claude-run check act as two different members: a second local identity on the zombies site's dev sign-in, or the two-browser check run against `zombies.enbraile.vip` with two real accounts?
+
+**Acceptance:**
+- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md`; the Claude-run line of "Start a run and get prepared hints from Cari in a shared chat" matches it.
+- Human-run: none.
+- Reuse: none.
+- Neighbors: `dj/panel/api/_lib/app.ts`, which has the same single `DEV_USER_ID`.
+- Forbidden: a sign-in path that works in production without the root session; auth tables in the zombies database.
+
+**Touches:** `docs/zombies/site/explanation/site.md`
 
 ## Start a run and get prepared hints from Cari in a shared chat
 
@@ -41,8 +73,8 @@ Members start or join a run on a map and talk to Cari; Haiku answers through too
 - Neighbors: the DJ panel's streaming-less polling fallback (`dj/panel/src/`).
 - Forbidden: the dossier or unknown entries in the model's prompt; the model writing hint text; step or hint numbers in the UI.
 
-**Touches:** `zombies/site/`, `docs/zombies/site/`
-**After:** Build the zombies site locally and publish the test map; Deploy the zombies site to zombies.enbraile.vip
+**Touches:** `zombies/site/`, `docs/zombies/`
+**After:** Deploy the zombies site to zombies.enbraile.vip; Decide how two members sign in to the local site
 
 ## Decide how a run ends
 
@@ -86,6 +118,7 @@ ee-coach's prepare writes the structured data the live coach needs and publishes
 - [ ] Extend `references/research.md` and `SKILL.md`: every step, rung, Alt, part ladder, `Mentions`, condition and heads-up in a form the bundle schema takes; Spanish wording translated once; card text never carries numbers.
 - [ ] `npm run compile -- <map dir>` (in `zombies/site/scripts/`) builds the bundle from a map's files and checks it against the schema (every `Mentions` names a knowledge entry, every `Requires` a step); `publish` sends it.
 - [ ] Compile and publish Blood of the Dead, in a subagent so no solution reaches the terminal.
+- [ ] Docs: `compile` in `docs/zombies/site/how-to/run-and-deploy-the-site.md`, and `site.md`'s "as the queue's `compile` will write its bundle there" made true of the shipped command.
 
 **Acceptance:**
 - Claude-run: `npm run gate`; `compile` on Blood of the Dead exits 0; publishing it adds a version; the bundle's ladder count matches `hints.md`'s, checked in a subagent.
@@ -94,8 +127,7 @@ ee-coach's prepare writes the structured data the live coach needs and publishes
 - Neighbors: the test map bundle.
 - Forbidden: map content in tracked files; solutions printed in the main conversation.
 
-**Touches:** `.claude/skills/ee-coach/`, `zombies/site/scripts/`, `zombies/site/shared/`
-**After:** Build the zombies site locally and publish the test map
+**Touches:** `.claude/skills/ee-coach/`, `zombies/site/scripts/`, `zombies/site/shared/`, `zombies/site/package.json`, `docs/zombies/site/`
 
 ## Hold on gaps and take REVISION and card feedback
 
@@ -131,7 +163,7 @@ Import the terminal session into a run so the group continues it on the site, th
 - Neighbors: the publish script.
 - Forbidden: deleting the old workspace before the owner's yes.
 
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
 **After:** Prepare publishes Haiku-ready bundles, starting with Blood of the Dead; Hold on gaps and take REVISION and card feedback
 
 ## Watch a run from Claude Code and fix things live
@@ -168,7 +200,7 @@ The watch loop checks each live reply against the rules and Claude can post into
 - Neighbors: the hold path.
 - Forbidden: step-ins that bypass the knowledge marks.
 
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
 **After:** Watch a run from Claude Code and fix things live
 
 ## Ask Cari by voice in the Discord call
@@ -178,6 +210,7 @@ A `zombies` module in the bot: the site's offer and `/cari` bring Cari into the 
 **Do:**
 - [ ] `zombies/bot/` module listed in `home/bot/src/modules.ts`: `/cari`, a `/zombies/join` route the site calls, `voice.hold("zombies", channel, { listen: true })`, `hearing.onTrigger("cari", …)`, `hearing.say`.
 - [ ] Site: `POST /api/voice` behind `INTERNAL_SECRET` (Discord ID + text → the speaker's run → reply), the join offer when a member is in a channel; `BOT_URL` and `INTERNAL_SECRET` in Vercel, `INTERNAL_SECRET` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.INTERNAL_SECRET}' | base64 -d | npx vercel env add INTERNAL_SECRET production` (owner, 2026-11-15).
+- [ ] Build it into the host as `dj/bot` is: `home/bot/tsconfig.json`'s `include`, the `COPY` lines of `home/bot/Dockerfile`, and the `paths` of `.github/workflows/home-bot.yml`.
 - [ ] Docs: `docs/zombies/bot/explanation/bot.md`, the bot doc's module list.
 
 **Acceptance:**
@@ -187,7 +220,7 @@ A `zombies` module in the bot: the site's offer and `/cari` bring Cari into the 
 - Neighbors: `dj/bot/`.
 - Forbidden: Claude calls from the bot; run state in the bot's SQLite.
 
-**Touches:** `zombies/bot/`, `home/bot/src/modules.ts`, `zombies/site/`, `docs/zombies/bot/`, `docs/home/bot/explanation/bot.md`
+**Touches:** `zombies/bot/`, `home/bot/src/modules.ts`, `home/bot/tsconfig.json`, `home/bot/Dockerfile`, `.github/workflows/home-bot.yml`, `zombies/site/`, `docs/zombies/`, `docs/home/bot/explanation/bot.md`
 **After:** Follow progress and threads the way ee-coach does
 
 ## Keep the call's transcript in the run
@@ -224,5 +257,5 @@ At prepare Claude finds a community map image and draws zones on the rungs that 
 - Neighbors: the hint card.
 - Forbidden: a zone below level 3; a map image in the repo.
 
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
 **After:** Prepare publishes Haiku-ready bundles, starting with Blood of the Dead
