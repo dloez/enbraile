@@ -1,4 +1,3 @@
-import { useId } from "react";
 import type { PublishedMap } from "../shared/bundle";
 
 const wards = [28, 46, 64, 82, 100];
@@ -9,7 +8,7 @@ function Platform() {
     <>
       <rect x="10" y="30" width="96" height="14" />
       <path d="M6 56H134M6 64H134" />
-      <path d={sleepers.map((x) => `M${x} 52v16`).join("")} strokeWidth=".8" />
+      <path d={sleepers.map((x) => `M${x} 52v16`).join("")} className="thin" />
       <rect x="18" y="8" width="34" height="22" />
       <rect x="60" y="12" width="22" height="18" />
       <path d="M106 30h22v14" strokeDasharray="3 3" />
@@ -23,7 +22,7 @@ function Wards() {
     <>
       <rect x="10" y="10" width="120" height="76" />
       <path d="M10 44H130M10 54H130" />
-      <path d={wards.map((x) => `M${x} 10v34M${x} 54v32`).join("")} strokeWidth=".9" />
+      <path d={wards.map((x) => `M${x} 10v34M${x} 54v32`).join("")} className="thin" />
       <circle cx="116" cy="70" r="8" />
     </>
   );
@@ -44,21 +43,10 @@ function Works() {
 
 const plans = { teal: Platform, rust: Wards, furnace: Works };
 
-export function MapPlan({ art, name, grid = false }: { art: PublishedMap["art"]; name: string; grid?: boolean }) {
+export function MapPlan({ art, label }: { art: PublishedMap["art"]; label?: string }) {
   const Plan = plans[art];
-  const pattern = useId();
   return (
-    <svg className="plan" viewBox="0 0 140 96" fill="none" strokeWidth="1.4" role="img" aria-label={name}>
-      {grid && (
-        <>
-          <defs>
-            <pattern id={pattern} width="5" height="5" patternUnits="userSpaceOnUse">
-              <path d="M5 0H0V5" className="plan-grid" strokeWidth=".25" />
-            </pattern>
-          </defs>
-          <rect width="140" height="96" fill={`url(#${pattern})`} stroke="none" />
-        </>
-      )}
+    <svg className="plan-svg" viewBox="0 0 140 96" fill="none" stroke="currentColor" role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <Plan />
     </svg>
   );

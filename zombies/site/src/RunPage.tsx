@@ -2,9 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEve
 import type { Language } from "../shared/bundle";
 import type { Card, Member, Message, RunSheet } from "../shared/runs";
 import { askMore, type Listener, fetchRun, fetchTranscript, joinRun, Refused, sendMessage, SignedOut, signIn } from "./api";
-import { MapPlan } from "./art";
 import { languageNames, lang, t } from "./i18n";
-import { Arrow, Chips, initials, LeaveNote, Link, useFit } from "./ui";
+import { mapPath, runPath } from "./route";
+import { Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Notice, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
 const freshRows = 4;
@@ -13,15 +13,9 @@ function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-function clock(at: string, seconds: boolean): string {
+function clock(at: string): string {
   const date = new Date(at);
-  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  return seconds ? `${time}:${pad(date.getSeconds())}` : time;
-}
-
-function today(): string {
-  const date = new Date();
-  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}`;
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: string }> = {
@@ -33,8 +27,7 @@ function JoinView({ sheet, onJoined }: { sheet: RunSheet; onJoined: () => void }
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const name = sheet.map.name[lang];
-  const label = sheet.map.test ? t.testMap : sheet.map.game;
-  const title = useFit<HTMLHeadingElement>(name);
+  const starter = sheet.members.findIndex((member) => member.name === sheet.startedBy);
 
   const join = () => {
     setBusy(true);
@@ -49,59 +42,43 @@ function JoinView({ sheet, onJoined }: { sheet: RunSheet; onJoined: () => void }
   };
 
   return (
-    <div className="join">
-      <main className="join-main">
-        <div className="join-top">
-          <span className="lab">{t.joinThisRun}</span>
-          <span className="lab">{label}</span>
-        </div>
-        <h1 ref={title} className="cond">
-          {name}
-        </h1>
-        <div className="sheet join-plan">
-          <MapPlan art={sheet.map.art} name={name} grid />
-        </div>
-      </main>
-      <aside className="join-sheet">
-        <span className="lab join-sheet-lab">{t.runSheet}</span>
-        <dl className="dl">
-          <dt className="lab">{t.startedBy}</dt>
-          <dd>
-            <span className="cs">{initials(sheet.startedBy)}</span> {sheet.startedBy}
-          </dd>
-          <dt className="lab">{t.inTheRun}</dt>
-          <dd>
-            <Chips members={sheet.members} /> {sheet.members.map((member) => member.name).join(", ")}
-          </dd>
-          <dt className="lab">{t.cariSpeaks}</dt>
-          <dd>
-            <span className="cs">{sheet.language.toUpperCase()}</span> {languageNames[sheet.language]}
-          </dd>
-        </dl>
-        {sheet.yourRun && <LeaveNote name={sheet.yourRun.name[lang]} />}
-        {failed && (
-          <p className="none" role="alert">
-            {t.failed}
-          </p>
-        )}
-        <div className="join-actions">
-          <button type="button" className="b b-red" disabled={busy} onClick={join}>
-            {t.joinTheRun} <Arrow />
+    <main className="page two join">
+      <MapHead back eyebrow={t.runOf(sheet.startedBy)} name={name} art={sheet.map.art} plan={t.planOf(name)} />
+      <div className="side">
+        <div className="card join-card">
+          <div className="join-grid">
+            <div>
+              <span className="lab">{t.inTheRun}</span>
+              <ul className="mem">
+                {sheet.members.map((member, index) => (
+                  <li key={index}>
+                    <Chip name={member.name} you={member.you} />
+                    {member.name}
+                    {index === starter && <span className="m wide"> {t.startedIt}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <span className="lab">{t.cariSpeaks}</span>
+              <p className="val">{languageNames[sheet.language]}</p>
+            </div>
+          </div>
+          {failed && (
+            <p className="state" role="alert">
+              {t.failed}
+            </p>
+          )}
+          <button type="button" className="b b-red wide-b" disabled={busy} onClick={join}>
+            {t.joinTheRun}
           </button>
-          <Link to="/" className="b b-line">
-            {t.cancel}
-          </Link>
         </div>
-      </aside>
-    </div>
-  );
-}
-
-function Down() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" aria-hidden="true">
-      <path d="M12 4v15M5 13l7 7 7-7" />
-    </svg>
+        {sheet.yourRun && <LeaveNote before={t.leaveOnJoin} name={sheet.yourRun.name[lang]} after={t.leaveAfter} />}
+        <Link to={mapPath(sheet.map.game, sheet.map.map)} className="link">
+          {t.otherRuns}
+        </Link>
+      </div>
+    </main>
   );
 }
 
@@ -111,57 +88,92 @@ function Slip({ card, language, busy, onMore }: { card: Card; language: Language
     <div className="slip" lang={language}>
       <div className="slip-h">
         <b>{words.dispatch}</b>
-        <span>Cari · {clock(card.at, false)}</span>
+        <span>Cari · {clock(card.at)}</span>
       </div>
       {card.rungs.map((rung, index) => (
         <p key={rung.id} className={index < card.rungs.length - 1 ? "rung rung-old" : "rung"}>
           {rung.text}
         </p>
       ))}
-      {card.more && (
+      {card.more ? (
         <div className="slip-f">
-          <button type="button" className="b" disabled={busy} onClick={() => onMore(card.id)}>
+          <button type="button" className="more" disabled={busy} onClick={() => onMore(card.id)}>
             <Down /> {words.more}
           </button>
         </div>
+      ) : (
+        <div className="slip-end" />
       )}
     </div>
   );
 }
 
-function Row({ message, card, old, slip }: { message: Message; card: Card | undefined; old: boolean; slip: (card: Card) => ReactNode }) {
-  const who = message.author === "cari" ? "who who-cari" : "who";
+function Line({ at, cari, name, className, children }: { at: string; cari: boolean; name: string; className: string; children: ReactNode }) {
+  const time = clock(at);
   return (
-    <div className={old ? "row old" : message.id < 0 ? "row sending" : "row"}>
-      <span className="t">
-        <span className="t-long">{clock(message.at, true)}</span>
-        <span className="t-short">{clock(message.at, false)}</span>
-      </span>
-      <span className={who}>{message.author === "cari" ? "Cari" : message.name}</span>
-      <div className="msg">
-        <p className="txt">{message.text}</p>
-        {card && slip(card)}
+    <div className={className}>
+      <span className="t">{time}</span>
+      <div>
+        <p className={cari ? "who who-cari" : "who"}>
+          {name}
+          <span className="t t-in">{time}</span>
+        </p>
+        {children}
       </div>
     </div>
   );
 }
 
-function Transmitting({ text, at: now, language }: { text: string; at: string; language: Language }) {
+function Row({ message, card, old, slip }: { message: Message; card: Card | undefined; old: boolean; slip: (card: Card) => ReactNode }) {
+  const cari = message.author === "cari";
+  return (
+    <Line at={message.at} cari={cari} name={cari ? "Cari" : message.name} className={old ? "row old" : message.id < 0 ? "row sending" : "row"}>
+      <p className="msg">{message.text}</p>
+      {card && slip(card)}
+    </Line>
+  );
+}
+
+function Transmitting({ text, at, language }: { text: string; at: string; language: Language }) {
   const words = cariWords[language];
   return (
-    <div className="row">
-      <span className="t">
-        <span className="t-long">{clock(now, true)}</span>
-        <span className="t-short">{clock(now, false)}</span>
+    <Line at={at} cari name="Cari" className="row">
+      <p className={text ? "msg" : "typing"} lang={language}>
+        {text || words.transmitting}
+        <span className="caret" role="img" aria-label={words.writing} />
+      </p>
+    </Line>
+  );
+}
+
+function CopyLink({ id, icon }: { id: string; icon: boolean }) {
+  const [said, setSaid] = useState<string | null>(null);
+  useEffect(() => {
+    if (!said) return;
+    const timer = setTimeout(() => setSaid(null), 2000);
+    return () => clearTimeout(timer);
+  }, [said]);
+  const copy = () => {
+    navigator.clipboard
+      .writeText(`${location.origin}${runPath(id)}`)
+      .then(() => setSaid(t.copied))
+      .catch(() => setSaid(t.notCopied));
+  };
+  return (
+    <>
+      {icon ? (
+        <button type="button" className="ib" aria-label={t.copyRunLink} onClick={copy}>
+          <LinkIcon size={20} />
+        </button>
+      ) : (
+        <button type="button" className="b b-ghost copy" onClick={copy}>
+          <LinkIcon /> {said ?? t.copyLink}
+        </button>
+      )}
+      <span className="sr" role="status">
+        {said ?? ""}
       </span>
-      <span className="who who-cari">Cari</span>
-      <div className="msg">
-        <p className={text ? "txt" : "txt ty"} lang={language}>
-          {text || words.transmitting}
-          <span className="caret" role="img" aria-label={words.writing} />
-        </p>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -305,46 +317,47 @@ function RunView({ sheet }: { sheet: RunSheet }) {
     );
   };
 
-  const code = sheet.language.toUpperCase();
   const slip = (card: Card) => <Slip card={card} language={sheet.language} busy={airing !== null} onMore={more} />;
   const notice = trouble ?? (lost ? { text: t.failed, retry: () => void poll() } : null);
 
   return (
-    <div className="run">
+    <div className="runv">
       <aside className="rail">
-        <span className="lab">{t.runLang(code)}</span>
-        <h2 ref={title} className="cond">
-          {name}
-        </h2>
-        <span className="lab rail-lab">{t.inTheRun}</span>
-        <ul className="mem">
-          {members.map((member, index) => (
-            <li key={index}>
-              <span className={member.you ? "cs cs-me" : "cs"}>{initials(member.name)}</span>
-              <span>{member.you ? `${member.name} · ${t.you}` : member.name}</span>
-            </li>
-          ))}
-        </ul>
+        <div>
+          <span className="lab">{t.yourRun}</span>
+          <h2 ref={title} className="cond">
+            {name}
+          </h2>
+          <p className="sub">{t.cariSpeaksIn[sheet.language]}</p>
+        </div>
+        <div>
+          <span className="lab">{t.inTheRun}</span>
+          <ul className="mem">
+            {members.map((member, index) => (
+              <li key={index}>
+                <Chip name={member.name} you={member.you} />
+                {member.name}
+                {member.you && <span className="y"> {t.you}</span>}
+              </li>
+            ))}
+          </ul>
+          <CopyLink id={sheet.id} icon={false} />
+        </div>
       </aside>
       <div className="strip">
         <Chips members={members} />
+        <span className="m">{t.cariSpeaksIn[sheet.language]}</span>
         <span className="sp" />
-        <span className="lab">{t.lang(code)}</span>
+        <CopyLink id={sheet.id} icon />
       </div>
       <section className="main">
-        <div className="trh">
-          <span className="lab">{t.time}</span>
-          <span className="lab">{t.from}</span>
-          <span className="lab">{t.transcriptOf(name)}</span>
-          <span className="lab">{today()}</span>
-        </div>
         <div className="rows" ref={rows} onScroll={onScroll}>
           {!loaded && (
-            <p className="none quiet" role="status">
+            <p className="state quiet" role="status">
               {t.receiving}
             </p>
           )}
-          {loaded && !shown.length && airing === null && <p className="none quiet">{t.quiet}</p>}
+          {loaded && !shown.length && airing === null && <p className="state quiet">{t.quiet}</p>}
           {shown.map((message, index) => (
             <Row
               key={message.id}
@@ -358,15 +371,14 @@ function RunView({ sheet }: { sheet: RunSheet }) {
         </div>
         {notice && (
           <div className="trouble" role="alert">
-            <p className="none">{notice.text}</p>
-            <button type="button" className="b b-line" onClick={notice.retry} disabled={airing !== null}>
+            <p className="state">{notice.text}</p>
+            <button type="button" className="b b-ghost" onClick={notice.retry} disabled={airing !== null}>
               {t.retry}
             </button>
           </div>
         )}
         <form className="cmp" onSubmit={send}>
-          <span className="tx">TX →</span>
-          <input aria-label={t.messageForCari} placeholder={t.writeToCari} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} />
+          <input className="field" aria-label={t.messageForCari} placeholder={t.writeToCari} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} />
           <button type="submit" className="b" disabled={airing !== null}>
             {t.send}
           </button>
@@ -378,7 +390,7 @@ function RunView({ sheet }: { sheet: RunSheet }) {
 
 type State = { kind: "loading" } | { kind: "missing" } | { kind: "failed" } | { kind: "ready"; sheet: RunSheet };
 
-export function RunPage({ id, onMap }: { id: string; onMap: (name: string | undefined) => void }) {
+export function RunPage({ id, onMap, onYourRun }: { id: string; onMap: (name: string | undefined) => void; onYourRun: (run: RunLink | null) => void }) {
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = useCallback(() => {
@@ -386,6 +398,7 @@ export function RunPage({ id, onMap }: { id: string; onMap: (name: string | unde
     fetchRun(id)
       .then((sheet) => {
         onMap(sheet.you ? sheet.map.name[lang] : undefined);
+        onYourRun(sheet.you ? { id: sheet.id, name: sheet.map.name } : sheet.yourRun);
         setState({ kind: "ready", sheet });
       })
       .catch((error: unknown) => {
@@ -393,29 +406,31 @@ export function RunPage({ id, onMap }: { id: string; onMap: (name: string | unde
         onMap(undefined);
         setState({ kind: error instanceof Refused && error.status === 404 ? "missing" : "failed" });
       });
-  }, [id, onMap]);
+  }, [id, onMap, onYourRun]);
 
   useEffect(load, [load]);
 
+  if (state.kind === "loading")
+    return (
+      <main className="page">
+        <Notice text={t.receiving} />
+      </main>
+    );
   if (state.kind !== "ready")
     return (
-      <div className="maps-list solo">
-        <div className="notice">
-          <p className="none" role={state.kind === "loading" ? "status" : "alert"}>
-            {state.kind === "loading" ? t.receiving : state.kind === "missing" ? t.noSuchRun : t.failed}
-          </p>
-          {state.kind === "failed" && (
-            <button type="button" className="b b-line" onClick={load}>
+      <main className="page">
+        <Notice text={state.kind === "missing" ? t.noSuchRun : t.failed} alert>
+          {state.kind === "failed" ? (
+            <button type="button" className="b b-ghost" onClick={load}>
               {t.retry}
             </button>
-          )}
-          {state.kind === "missing" && (
-            <Link to="/" className="b b-line">
+          ) : (
+            <Link to="/" className="b b-ghost">
               {t.maps}
             </Link>
           )}
-        </div>
-      </div>
+        </Notice>
+      </main>
     );
   return state.sheet.you ? <RunView sheet={state.sheet} /> : <JoinView sheet={state.sheet} onJoined={load} />;
 }
