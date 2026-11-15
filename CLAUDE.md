@@ -16,6 +16,7 @@
 - **Greenfield:** no backwards-compatibility shims or deprecation layers.
 - **No tests**, in any category or project: no test files, test runners or test steps in a gate. Check a change by running it (owner, 2026-10-20). Añil's `anil check` is such a run, not a test runner: it drives the real game and prints what it saw ([Randomlocke Design → How the Checks Run](docs/pkmn/games/anil/explanation/randomlocke-design.md#how-the-checks-run)).
 - Throwaway Python scripts: `uv run --with <pkg> python3 script.py`. Never `pip install`.
+- Vendor CLIs (`vercel`, `neonctl` and the like) run through `npx`, never installed (owner, 2026-11-15).
 
 ## Keeping Docs Current
 

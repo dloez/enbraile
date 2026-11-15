@@ -53,7 +53,7 @@ Members start or join a run on a map and talk to Cari; Haiku answers through too
 
 **Acceptance:**
 - Claude-run: `npm run gate`; through the Playwright MCP with the test map, two signed-in browsers join one run; one asks for a hint, both see the card; "more" gives the next rung; a rung mentioning an unknown thing is never delivered before the rung meant to reveal it (read back from the stored log); `grep` finds no step or rung number rendered.
-- Claude-run (setup): set Vercel's `COACH_MODEL`, and `ANTHROPIC_API_KEY` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.ANTHROPIC_API_KEY}' | base64 -d | vercel env add ANTHROPIC_API_KEY production` (owner, 2026-11-15).
+- Claude-run (setup): set Vercel's `COACH_MODEL`, and `ANTHROPIC_API_KEY` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.ANTHROPIC_API_KEY}' | base64 -d | npx vercel env add ANTHROPIC_API_KEY production` (owner, 2026-11-15).
 - Human-run: two people on phones join a test-map run and ask for hints.
 - Reuse: the `Anthropic` SDK as in `home/bot/src/claude.ts` (tool loop shape), but on Vercel; the hint-delivery rules in `.claude/skills/ee-coach/SKILL.md` and `references/hint-craft.md`.
 - Neighbors: the DJ panel's streaming-less polling fallback (`dj/panel/src/`).
@@ -195,7 +195,7 @@ A `zombies` module in the bot: the site's offer and `/cari` bring Cari into the 
 
 **Do:**
 - [ ] `zombies/bot/` module listed in `home/bot/src/modules.ts`: `/cari`, a `/zombies/join` route the site calls, `voice.hold("zombies", channel, { listen: true })`, `hearing.onTrigger("cari", …)`, `hearing.say`.
-- [ ] Site: `POST /api/voice` behind `INTERNAL_SECRET` (Discord ID + text → the speaker's run → reply), the join offer when a member is in a channel; `BOT_URL` and `INTERNAL_SECRET` in Vercel, `INTERNAL_SECRET` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.INTERNAL_SECRET}' | base64 -d | vercel env add INTERNAL_SECRET production` (owner, 2026-11-15).
+- [ ] Site: `POST /api/voice` behind `INTERNAL_SECRET` (Discord ID + text → the speaker's run → reply), the join offer when a member is in a channel; `BOT_URL` and `INTERNAL_SECRET` in Vercel, `INTERNAL_SECRET` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.INTERNAL_SECRET}' | base64 -d | npx vercel env add INTERNAL_SECRET production` (owner, 2026-11-15).
 - [ ] Docs: `docs/zombies/bot/explanation/bot.md`, the bot doc's module list.
 
 **Acceptance:**
