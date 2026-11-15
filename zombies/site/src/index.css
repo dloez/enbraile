@@ -1633,3 +1633,99 @@ a:hover {
     padding: 0 var(--sp-4);
   }
 }
+
+.skeleton {
+  background: var(--line);
+  box-shadow: none;
+  color: transparent;
+  animation: sk-pulse 1.4s ease-in-out infinite;
+}
+
+.sk {
+  pointer-events: none;
+}
+
+.sk-line {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: 0.72em;
+  border-radius: 0.2em;
+}
+
+.sk-plan {
+  display: block;
+  aspect-ratio: 140 / 96;
+}
+
+.sk-go {
+  margin-left: auto;
+  flex: none;
+  width: 76px;
+  height: 48px;
+  border-radius: 8px;
+}
+
+.sk-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sk-option {
+  height: 56px;
+  border-radius: 8px;
+}
+
+.revb.sk-revb {
+  width: 124px;
+}
+
+.b.sk-send {
+  width: 88px;
+}
+
+.arrive,
+.arrive-all > *,
+.runv.arrive .rail > *,
+.runv.arrive .strip > *,
+.runv.arrive .cmp > * {
+  animation: arrive 0.35s ease-out backwards;
+}
+
+@keyframes sk-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .arrive,
+  .arrive-all > *,
+  .runv.arrive .rail > *,
+  .runv.arrive .strip > *,
+  .runv.arrive .cmp > * {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .sk-option {
+    height: 52px;
+  }
+
+  .revb.sk-revb {
+    width: 52px;
+  }
+
+  .b.sk-send {
+    width: 80px;
+  }
+}

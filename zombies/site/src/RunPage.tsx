@@ -4,6 +4,7 @@ import { asRevision, ratings, type Card, type Member, type Message, type Rating,
 import { askMore, type Listener, fetchRun, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
+import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
 import { Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Notice, Pencil, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
@@ -56,7 +57,7 @@ function JoinView({ sheet, onJoined }: { sheet: RunSheet; onJoined: () => void }
   };
 
   return (
-    <main className="page two join">
+    <main className="page two join arrive">
       <MapHead back eyebrow={t.runOf(sheet.startedBy)} name={name} art={sheet.map.art} plan={t.planOf(name)} />
       <div className="side">
         <div className="card join-card">
@@ -244,6 +245,7 @@ function RunView({ sheet }: { sheet: RunSheet }) {
   const [members, setMembers] = useState<Member[]>(sheet.members);
   const [loaded, setLoaded] = useState(false);
   const [lost, setLost] = useState(false);
+  const [settled, setSettled] = useState(false);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<Message | null>(null);
   const [airing, setAiring] = useState<{ text: string; at: string } | null>(null);
@@ -295,6 +297,12 @@ function RunView({ sheet }: { sheet: RunSheet }) {
       document.removeEventListener("visibilitychange", onShow);
     };
   }, [poll]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = setTimeout(() => setSettled(true), 600);
+    return () => clearTimeout(timer);
+  }, [loaded]);
 
   const shown = pending ? [...messages, pending] : messages;
   const rungCount = [...cards.values()].reduce((sum, card) => sum + card.rungs.length, 0);
@@ -413,7 +421,7 @@ function RunView({ sheet }: { sheet: RunSheet }) {
   const notice = trouble ?? (lost ? { text: t.failed, retry: () => void poll() } : null);
 
   return (
-    <div className="runv">
+    <div className="runv arrive">
       <aside className="rail">
         <div>
           <span className="lab">{t.yourRun}</span>
@@ -443,12 +451,8 @@ function RunView({ sheet }: { sheet: RunSheet }) {
         <CopyLink id={sheet.id} icon />
       </div>
       <section className="main">
-        <div className="rows" ref={rows} onScroll={onScroll}>
-          {!loaded && (
-            <p className="state quiet" role="status">
-              {t.receiving}
-            </p>
-          )}
+        <div className={loaded && !settled ? "rows arrive-all" : "rows"} ref={rows} onScroll={onScroll} aria-busy={!loaded}>
+          {!loaded && <RowsSkeleton />}
           {loaded && !shown.length && airing === null && <p className="state quiet">{t.quiet}</p>}
           {shown.map((message, index) => (
             <Row
@@ -498,11 +502,13 @@ type State = { kind: "loading" } | { kind: "missing" } | { kind: "failed" } | { 
 
 export function RunPage({
   id,
+  expect,
   onMap,
   onYourRun,
   onViewer,
 }: {
   id: string;
+  expect: "run" | "join";
   onMap: (name: string | undefined) => void;
   onYourRun: (run: RunLink | null) => void;
   onViewer: (viewer: Viewer | null) => void;
@@ -528,12 +534,7 @@ export function RunPage({
 
   useEffect(load, [load]);
 
-  if (state.kind === "loading")
-    return (
-      <main className="page">
-        <Notice text={t.receiving} />
-      </main>
-    );
+  if (state.kind === "loading") return expect === "run" ? <RunSkeleton /> : <JoinSkeleton />;
   if (state.kind !== "ready")
     return (
       <main className="page">

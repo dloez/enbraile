@@ -82,11 +82,11 @@ Every padding, margin and gap is a step of one 4px scale, as `--sp-<n>` tokens i
 
 ## States
 
-Every fetch, post and poll has a loading, an empty and an error state, as plain `mute` sentences in the place the content will take:
+Every fetch, post and poll has a loading, an empty and an error state in the place the content will take: loading as skeletons, the rest as plain `mute` sentences.
 
 | State | Where | Shape |
 |-------|-------|-------|
-| Loading | The maps list, a map's view, a run's link, a log's first poll | "Receiving…" (`Recibiendo…`); the maps title keeps its line while the count waits |
+| Loading | The maps list, a map's view, a run's link, a log's first poll | Skeletons, as the DJ panel's: `line`-coloured blocks with no text, built from the screen's own classes so each sits where its content will (map rows with plan tile, eyebrow, name and runs line; the map view's head, plan, a run row and the Start a run card; the run's rail, three transcript rows and the composer; the join view's head and card), pulsing to 45% opacity every 1.4 s. A run's link shows the run skeleton unless the site already knows the reader is in another run or none, when it shows the join skeleton. The content fades in over 0.35 s when it lands; a log's first rows fade in together, later lines do not. The maps title keeps its line and the count is a bar while it waits |
 | Empty | The maps list, a map's runs, a log | A dashed 12px card: "No maps on file yet.", "None open on this map."; a log says "Nothing on the log yet." On a map row, "No open runs" |
 | Can't load | The maps list, a map's view, a run's link | "Can't reach the site right now." with a ghost Retry; a map or run that does not exist says "No such map on file." or "No such run on file." with a ghost Maps |
 | Trouble in a run | Above the composer, under a 1px `line` | One line and a ghost Retry: "Can't reach the site right now." while polls fail (Retry polls at once), "Your line didn't go through." when a line was not stored (the line goes back into the composer, Retry sends it), "Cari didn't answer." when her reply failed (Retry sends the line again, or presses More again when the failed reply was a More) |
@@ -122,7 +122,7 @@ Each request gives up after 10 seconds (20 for a reply to start streaming), so a
 | Composer | `run` | A `surf` bar: a 56px field (52px phone) on `surf-2`, 10px round, ringed `text` on focus; the Revision toggle (a pencil and the word, the icon alone on a phone) and Send as a `text` button |
 | Revision mode | `run-revision` | The toggle pressed `blue`; "Revision mode · For Claude" above in `blue-tx`, the field dashed `blue-tx` on `blue-bg`, Send in `blue`. A sent revision is the speaker's name in `blue-tx` with a "Revision" tag, the line on `blue-bg` and "re: Cari time · for Claude" in Courier; Cari answers it with one short line (built: the toggle lets go after a send, and "re:" names the last Cari line before the revision) |
 
-Motion: the transmitting caret, the voice meter and the zone's ring are the only animation, and stand still under `prefers-reduced-motion`. No sound cue accompanies a new hint ([The Zombies Site → Decisions](../explanation/site.md#decisions)).
+Motion: the transmitting caret, the loading skeletons' pulse and the content's fade-in as it lands, the voice meter and the zone's ring are the only animation, and stand still under `prefers-reduced-motion`. No sound cue accompanies a new hint ([The Zombies Site → Decisions](../explanation/site.md#decisions)).
 
 ## Icons
 

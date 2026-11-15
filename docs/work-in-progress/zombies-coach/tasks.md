@@ -1,24 +1,5 @@
 # Zombies Coach — Tasks
 
-## Load with skeletons like the DJ panel
-
-The owner finds the "— receiving —" loading line terrible and wants loading done as the DJ panel does it (2026-11-15): grey blocks in the shape of the content that is coming (the panel's `.skeleton` with a 1.4 s pulse in `dj/panel/src/index.css`, `SkeletonSongs` in `dj/panel/src/App.tsx`), with the real content fading in over them.
-
-**Do:**
-- [ ] Replace every "receiving" loading line in `zombies/site/src/` with skeletons shaped like what loads there: map rows (plan tile, name, meta) on the maps list; the map view's header and its run rows; the run page's rail, a few transcript rows and the composer; the join view.
-- [ ] One `.skeleton` style in the site's dark tokens with a soft pulse, still under `prefers-reduced-motion`; content fades in when it arrives, with no layout shift between skeleton and content.
-- [ ] Keep every empty and error state the UX review added.
-- [ ] Docs: the loading state in `docs/zombies/site/reference/design-system.md` (States).
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1440×900 and 390×844 on a throttled network, each screen shows skeletons shaped like its content, then the content in the same place with no jump; no "receiving" text left (`grep -rni receiv zombies/site/src` finds none); no console error.
-- Human-run: the owner opens the site after it has been idle and finds the wait looks like the DJ panel's.
-- Reuse: the DJ panel's skeleton CSS and `SkeletonSongs` as the pattern.
-- Neighbors: `dj/panel/src/`.
-- Forbidden: a spinner; text standing in for loading; dropping an empty or error state.
-
-**Touches:** `zombies/site/src/`, `docs/zombies/site/reference/design-system.md`
-
 ## Call runs attempts and list a map's attempts
 
 The owner is not sold on runs as they show now (2026-11-15): a run is to be called an attempt, opening a map shows the list of its attempts, the ones that beat the easter egg are visually identifiable, and the one being played is easy to see. This also settles the question left by "Make the site's pages load fast", which hid runs nobody is in: a map's view lists every attempt again.

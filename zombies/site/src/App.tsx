@@ -6,6 +6,7 @@ import { MapPlan } from "./art";
 import { languageNames, lang, switchLang, t } from "./i18n";
 import { mapPath, navigate, runPath, usePath } from "./route";
 import { RunPage } from "./RunPage";
+import { Bar, MapSkeleton, MapsSkeleton } from "./skeletons";
 import { Arrow, Back, Chevron, Chips, initials, LeaveNote, Link, MapHead, Notice, type RunLink } from "./ui";
 
 const languages: Language[] = ["es", "en"];
@@ -161,13 +162,13 @@ function MapsPage(heard: Heard) {
     <main className="page maps">
       <div className="maps-top">
         <h1 className="cond">{t.maps}</h1>
-        <span className="lab">{page ? t.onFile(page.maps.length) : " "}</span>
+        <span className={page ? "lab arrive" : "lab"}>{page ? t.onFile(page.maps.length) : state.kind === "loading" ? <Bar w="7em" /> : " "}</span>
       </div>
-      {state.kind === "loading" && <Notice text={t.receiving} />}
+      {state.kind === "loading" && <MapsSkeleton />}
       {state.kind === "failed" && <Failed retry={load} />}
-      {page && page.maps.length === 0 && <p className="empty">{t.noMaps}</p>}
+      {page && page.maps.length === 0 && <p className="empty arrive">{t.noMaps}</p>}
       {page && page.maps.length > 0 && (
-        <ul className="mlist">
+        <ul className="mlist arrive">
           {page.maps.map((map) => (
             <MapRow key={`${map.game}/${map.map}`} map={map} />
           ))}
@@ -230,7 +231,7 @@ function MapView({ map, yourRun }: { map: MapWithRuns; yourRun: RunLink | null }
   };
 
   return (
-    <main className="page two">
+    <main className="page two arrive">
       <MapHead back eyebrow={label(map)} name={name} art={map.art} plan={t.planOf(name)} />
       <div className="side">
         <section className="sec">
@@ -276,12 +277,7 @@ function MapView({ map, yourRun }: { map: MapWithRuns; yourRun: RunLink | null }
 
 function MapPage({ game, map, ...heard }: { game: string; map: string } & Heard) {
   const { state, load } = useMaps(heard);
-  if (state.kind === "loading")
-    return (
-      <main className="page">
-        <Notice text={t.receiving} />
-      </main>
-    );
+  if (state.kind === "loading") return <MapSkeleton />;
   if (state.kind === "failed")
     return (
       <main className="page">
@@ -319,7 +315,7 @@ export function App() {
     <>
       <Header me={me} inRun={inRun} yourRun={yourRun} />
       {runId ? (
-        <RunPage key={runId} id={decodeURIComponent(runId)} onMap={onMap} onYourRun={setYourRun} onViewer={onViewer} />
+        <RunPage key={runId} id={decodeURIComponent(runId)} expect={yourRun === undefined || yourRun?.id === decodeURIComponent(runId) ? "run" : "join"} onMap={onMap} onYourRun={setYourRun} onViewer={onViewer} />
       ) : mapMatch ? (
         <MapPage key={path} game={decodeURIComponent(mapMatch[1]!)} map={decodeURIComponent(mapMatch[2]!)} onYourRun={setYourRun} onViewer={onViewer} />
       ) : (
