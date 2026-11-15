@@ -4,7 +4,7 @@ The visual system of `zombies/site/`: its tokens, type, layout shell, components
 
 ## Boards
 
-The boards were drawn by Claude on 2026-11-15 from the brief's constraints alone, and the owner chose not to review them, to see the site as a surprise. They follow the `.dc.html` board format of `pkmn/site/design/`: one fixed-size frame per board, 1440×900 for desktop and 390×844 for a phone. They never change; a later revision is drawn and copied in again. Their maps (Harrow Station, Saltmarsh Asylum, Kessel Works), people, messages and hint text are made up, the map art and the zone's floor plan are drawn shapes rather than any game's images, and their Google Fonts link stands for the bundled fonts.
+The boards were drawn by Claude on 2026-11-15 from the brief's constraints alone, and the owner chose not to review them, to see the site as a surprise. They follow the `.dc.html` board format of `pkmn/site/design/`: one fixed-size frame per board, 1440×900 for desktop and 390×844 for a phone. The same boards sit on the Claude design canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) under PascalCase names (`Maps.dc.html`, `RunZonePhone.dc.html`), which the boards' links use. They never change; a later revision is drawn on the canvas and copied in again. Their maps (Harrow Station, Saltmarsh Asylum, Kessel Works), people, messages and hint text are made up, the map art and the zone's floor plan are drawn shapes rather than any game's images, and their Google Fonts link stands for the bundled fonts.
 
 | Board | Draws |
 |-------|-------|
