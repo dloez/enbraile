@@ -1,12 +1,10 @@
 import { server } from "./api.ts";
-import { useTools } from "./assistant/index.ts";
 import { registerCommands } from "./commands.ts";
 import { client, ready } from "./discord.ts";
 import { modules } from "./modules.ts";
 
 const port = Number(process.env.PORT ?? 8080);
-
-useTools(modules.flatMap((module) => module.tools ?? []));
+const STOP_MS = 5_000;
 
 server.listen(port, () => console.log("listening", port));
 void client.login(process.env.DISCORD_BOT_TOKEN ?? "");
@@ -18,8 +16,10 @@ void ready.then(async () => {
 
 for (const signal of ["SIGTERM", "SIGINT"] as const) {
   process.on(signal, () => {
-    for (const module of modules) module.stop?.();
+    const stopped = Promise.allSettled(modules.map((module) => module.stop?.()));
     server.close();
-    void client.destroy().finally(() => process.exit(0));
+    void Promise.race([stopped, new Promise((resolve) => setTimeout(resolve, STOP_MS))])
+      .then(() => client.destroy())
+      .finally(() => process.exit(0));
   });
 }

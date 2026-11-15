@@ -31,7 +31,6 @@ from websockets.exceptions import ConnectionClosed  # noqa: E402
 
 BOT_URL = os.environ["BOT_URL"].rstrip("/").replace("https://", "wss://").replace("http://", "ws://")
 SECRET = os.environ["INTERNAL_SECRET"]
-WAKE = os.environ.get("WAKE_WORD", "bebe")
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "large-v3")
 LANGUAGE = os.environ.get("LANGUAGE", "es")
 VOICE = os.environ.get("VOICE", "es_ES-davefx-medium")
@@ -88,25 +87,28 @@ class Worker:
         self.voice = PiperVoice.load(str(model_path))
         self.chime = chime()
         self.pending = {}
+        self.triggers = {}
         log(f"ready: {WHISPER_MODEL} and {VOICE} loaded in {time.time() - started:.1f}s")
 
     def transcribe(self, clip):
-        segments, _ = self.whisper.transcribe(io.BytesIO(clip), language=LANGUAGE, vad_filter=True, beam_size=5, hotwords="bebé")
-        return " ".join(segment.text.strip() for segment in segments).strip()
+        hotwords = " ".join(self.triggers) or None
+        segments, info = self.whisper.transcribe(io.BytesIO(clip), language=LANGUAGE, vad_filter=True, beam_size=5, hotwords=hotwords)
+        return " ".join(segment.text.strip() for segment in segments).strip(), info.duration
 
-    def request(self, user, text):
+    def trigger(self, user, text):
         words = text.split()
         now = time.time()
-        if now - self.pending.pop(user, 0) < FOLLOW_UP_S and words:
-            return text, False
-        for index, word in enumerate(words):
-            if plain(word) == WAKE:
+        word, at = self.pending.pop(user, (None, 0))
+        if word and now - at < FOLLOW_UP_S and words:
+            return word, text
+        for index, spoken in enumerate(words):
+            if plain(spoken) in self.triggers:
                 rest = " ".join(words[index + 1 :]).strip(" ,.;:¿?¡!")
                 if len(plain(rest)) < 2:
-                    self.pending[user] = now
-                    return None, True
-                return rest, True
-        return None, False
+                    self.pending[user] = (plain(spoken), now)
+                    return plain(spoken), None
+                return plain(spoken), rest
+        return None, None
 
     def speak(self, text):
         buffer = io.BytesIO()
@@ -115,33 +117,39 @@ class Worker:
         return opus(buffer.getvalue())
 
     async def serve(self):
-        async for socket in connect(f"{BOT_URL}/assistant/connect", additional_headers={"Authorization": f"Bearer {SECRET}"}, max_size=None):
+        async for socket in connect(f"{BOT_URL}/voice/connect", additional_headers={"Authorization": f"Bearer {SECRET}"}, max_size=None):
             log("connected to", BOT_URL)
             try:
                 async for message in socket:
                     if isinstance(message, bytes):
                         header, body = unframe(message)
                         if header.get("type") == "clip":
-                            await self.on_clip(socket, header["user"], body)
+                            await self.on_clip(socket, header["user"], body, header.get("at"))
                     else:
                         data = json.loads(message)
-                        if data.get("type") == "say":
+                        if data.get("type") == "triggers":
+                            self.triggers = {entry["word"]: entry["ack"] for entry in data["words"]}
+                            log("triggers", ", ".join(self.triggers) or "none")
+                        elif data.get("type") == "say":
                             audio = await asyncio.to_thread(self.speak, data["text"])
                             await socket.send(frame({"type": "audio", "id": data["id"]}, audio))
             except ConnectionClosed:
                 log("disconnected, reconnecting")
 
-    async def on_clip(self, socket, user, clip):
+    async def on_clip(self, socket, user, clip, spoken_at):
         started = time.time()
-        text = await asyncio.to_thread(self.transcribe, clip)
+        text, duration = await asyncio.to_thread(self.transcribe, clip)
         if not text:
             return
-        request, woke = self.request(user, text)
-        if woke:
-            await socket.send(frame({"type": "audio", "id": "chime"}, self.chime))
-        if request:
-            log(f"wake {user} ({time.time() - started:.2f}s): {request}")
-            await socket.send(json.dumps({"type": "wake", "user": user, "text": request}))
+        await socket.send(json.dumps({"type": "transcript", "user": user, "text": text, "at": spoken_at, "ms": round(duration * 1000)}))
+        word, request = self.trigger(user, text)
+        if word and request is None and self.triggers.get(word):
+            await socket.send(frame({"type": "audio", "id": "ack"}, self.chime))
+        if word and request is not None:
+            if self.triggers.get(word) and request != text:
+                await socket.send(frame({"type": "audio", "id": "ack"}, self.chime))
+            log(f"trigger {word} {user} ({time.time() - started:.2f}s): {request}")
+            await socket.send(json.dumps({"type": "trigger", "word": word, "user": user, "text": request}))
 
 
 if __name__ == "__main__":

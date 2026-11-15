@@ -26,7 +26,7 @@ Decisions live, dated, in the `## Decisions` section of the owning explanation d
 |----------|-------------|
 | [pkmn](pkmn/index.md) | Pokémon: the group's Randomlocke and the tools around it |
 | [dj](dj/index.md) | The group's Discord music bot and its web panel |
-| [home](home/index.md) | What the apps share: the `enbraile.vip` Discord sign-in and the `Enbraile` bot that hosts each feature as a module, with a voice assistant |
+| [home](home/index.md) | What the apps share: the `enbraile.vip` Discord sign-in and the `Enbraile` bot that hosts each feature as a module, with hearing and speech for them |
 
 ## Work in Progress
 

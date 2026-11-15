@@ -1,13 +1,13 @@
 import { EndBehaviorType, type VoiceReceiver } from "@discordjs/voice";
-import { client } from "../discord.ts";
-import { oggOpus } from "../ogg.ts";
-import * as voice from "../voice.ts";
+import { client } from "./discord.ts";
+import { oggOpus } from "./ogg.ts";
+import * as voice from "./voice.ts";
 
 const SILENCE_MS = 800;
 const MIN_PACKETS = 20;
 const MAX_MS = 30_000;
 
-export function listen(onClip: (userId: string, clip: Buffer) => void, enabled: () => boolean): void {
+export function listen(onClip: (userId: string, clip: Buffer, startedAt: number) => void, enabled: () => boolean): void {
   let bound: VoiceReceiver | null = null;
   const bind = () => {
     const receiver = voice.receiver();
@@ -18,6 +18,7 @@ export function listen(onClip: (userId: string, clip: Buffer) => void, enabled: 
       if (!enabled() || open.has(userId) || client.users.cache.get(userId)?.bot) return;
       open.add(userId);
       const packets: Buffer[] = [];
+      const startedAt = Date.now();
       const stream = receiver.subscribe(userId, { end: { behavior: EndBehaviorType.AfterSilence, duration: SILENCE_MS } });
       const cap = setTimeout(() => stream.destroy(), MAX_MS);
       let finished = false;
@@ -26,7 +27,7 @@ export function listen(onClip: (userId: string, clip: Buffer) => void, enabled: 
         finished = true;
         clearTimeout(cap);
         open.delete(userId);
-        if (packets.length >= MIN_PACKETS) onClip(userId, oggOpus(packets));
+        if (packets.length >= MIN_PACKETS) onClip(userId, oggOpus(packets), startedAt);
       };
       stream.on("data", (packet: Buffer) => packets.push(packet));
       stream.once("end", finish);

@@ -1,22 +1,24 @@
 # The Voice Worker
 
-The ears and the voice of the [Enbraile bot's assistant](../../bot/explanation/bot.md#assistant): a Python process in `home/voice/` that runs on the owner's PC, which has an RTX 5090, under WSL. The bot sends it what people say in the call; it sends back only requests to the bot and the bot's spoken replies.
+The ears and the voice of the [Enbraile bot](../../bot/explanation/bot.md#hearing-speaking-and-claude): a Python process in `home/voice/` that runs on the owner's PC, which has an RTX 5090, under WSL. The bot sends it what people say in the call; it sends back each transcript, the trigger words it heard and the bot's spoken replies.
 
 ## How It Works
 
-On start, `worker.py` loads Whisper large-v3 through faster-whisper on the GPU (float16), runs it once on noise so the first real clip does not wait for the GPU to warm up, loads the Piper voice `es_ES-davefx-medium` (downloaded into `data/` the first time) and makes the chime with ffmpeg. It then opens a WebSocket to `<BOT_URL>/assistant/connect` with `INTERNAL_SECRET` and keeps it open, reconnecting with backoff when it drops.
+On start, `worker.py` loads Whisper large-v3 through faster-whisper on the GPU (float16), runs it once on noise so the first real clip does not wait for the GPU to warm up, loads the Piper voice `es_ES-davefx-medium` (downloaded into `data/` the first time) and makes the chime with ffmpeg. It then opens a WebSocket to `<BOT_URL>/voice/connect` with `INTERNAL_SECRET` and keeps it open, reconnecting with backoff when it drops.
 
 Each message on the socket is JSON text or a binary frame: a 4-byte big-endian header length, a JSON header, then the audio.
 
 | From | Message | Meaning |
 |------|---------|---------|
-| Bot | binary `{"type": "clip", "user": id}` + Ogg Opus | One person's speech, up to a pause of 0.8 s |
-| Worker | binary `{"type": "audio", "id": "chime"}` + Ogg Opus | Play now: «bebé» was heard |
-| Worker | `{"type": "wake", "user": id, "text": …}` | A request: the words after «bebé» |
+| Bot | `{"type": "triggers", "words": [{"word": …, "ack": …}]}` | The trigger words modules registered; sent on connect and on every change |
+| Bot | binary `{"type": "clip", "user": id, "at": ms}` + Ogg Opus | One person's speech, up to a pause of 0.8 s, and when it started |
+| Worker | `{"type": "transcript", "user": id, "text": …, "at": ms, "ms": …}` | What was said, for the bot's transcripts |
+| Worker | binary `{"type": "audio", "id": "ack"}` + Ogg Opus | Play now: a trigger word with `ack` was heard |
+| Worker | `{"type": "trigger", "word": …, "user": id, "text": …}` | A trigger word and the words after it |
 | Bot | `{"type": "say", "id": n, "text": …}` | Say this |
-| Worker | binary `{"type": "audio", "id": n}` + Ogg Opus | The spoken reply |
+| Worker | binary `{"type": "audio", "id": n}` + Ogg Opus | The spoken text |
 
-A clip is transcribed in Spanish with voice activity filtering and «bebé» as a hotword. The wake word is found anywhere in the transcript, by comparing each word lowercased, without accents or punctuation, with `WAKE_WORD`; the request is everything after it. A clip that is «bebé» alone, or with less than two letters after it, chimes and waits: that person's next clip within 8 s is the request. Nothing else is sent to the bot or kept; the worker logs only requests.
+A clip is transcribed in Spanish with voice activity filtering, the trigger words as hotwords. Every non-empty transcript goes back to the bot. A trigger word is found anywhere in the transcript, by comparing each word lowercased, without accents or punctuation; the request is everything after it. A word alone, or with less than two letters after it, waits: that person's next clip within 8 s is the request. The worker has no trigger word of its own, and with none registered nothing triggers. It keeps nothing and logs only triggers.
 
 Speech is made with Piper in the process, about 0.1 s a sentence, and encoded to 48 kHz stereo Ogg Opus with ffmpeg, which the bot plays without decoding.
 
