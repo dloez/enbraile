@@ -3,7 +3,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const host = dirname(dirname(fileURLToPath(import.meta.url)));
-const modules = ["../../dj/bot"];
+const modules = ["../../dj/bot", "../../zombies/bot"];
 
 for (const module of modules) {
   const root = join(host, module);

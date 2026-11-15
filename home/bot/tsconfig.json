@@ -14,5 +14,5 @@
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "../../dj/bot/src"]
+  "include": ["src", "../../dj/bot/src", "../../zombies/bot/src"]
 }

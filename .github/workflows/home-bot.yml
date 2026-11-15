@@ -6,6 +6,7 @@ on:
     paths:
       - home/bot/**
       - dj/bot/**
+      - zombies/bot/**
       - .github/workflows/home-bot.yml
   workflow_dispatch:
 

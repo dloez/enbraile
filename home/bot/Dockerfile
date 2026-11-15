@@ -13,6 +13,8 @@ COPY home/bot/src ./src
 COPY dj/bot/package.json /app/dj/bot/package.json
 COPY dj/bot/src /app/dj/bot/src
 COPY dj/bot/yt-dlp-plugins /app/dj/bot/yt-dlp-plugins
+COPY zombies/bot/package.json /app/zombies/bot/package.json
+COPY zombies/bot/src /app/zombies/bot/src
 RUN node scripts/link-modules.mjs
 ENV NODE_ENV=production DATA_PATH=/data/dj.db PORT=8080
 USER node

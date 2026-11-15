@@ -1,6 +1,6 @@
 # The Enbraile Bot
 
-The group's Discord bot, `Enbraile`, for the `TemploManchego` server (`757377019536211988`). One Node process in `home/bot/` hosts the bot's features as modules; the first is the [DJ](../../../dj/bot/explanation/bot.md). The host holds what Discord allows only once per bot: the gateway connection, the server's slash commands and the voice connection. It also holds what every module needs: the database and the API.
+The group's Discord bot, `Enbraile`, for the `TemploManchego` server (`757377019536211988`). One Node process in `home/bot/` hosts the bot's features as modules: the [DJ](../../../dj/bot/explanation/bot.md) and [Cari's voice for the zombies runs](../../../zombies/bot/explanation/bot.md). The host holds what Discord allows only once per bot: the gateway connection, the server's slash commands and the voice connection. It also holds what every module needs: the database and the API.
 
 ## How It Runs
 
@@ -14,7 +14,7 @@ The host (`home/bot/src/`) holds:
 - the HTTP API behind `INTERNAL_SECRET` (`api.ts`): `/<module>/<path>` goes to that module's route, as the user named by `userId` in the query or body; `/healthz` answers `{"ok":true}`; anything else is 404.
 - the live sockets (`api.ts`, `ticket.ts`): a module's route can hand out a ticket, signed for one user and one module and valid for 60 s, which opens `/<module>/live`. The socket gets the module's pushes and answers the same calls as its HTTP routes, as that user, except `ticket`. Every 10 s the host pings each socket, closing one whose last ping went unanswered, and sends a `beat` message.
 
-A module (`home/bot/src/module.ts`) is an object with a `name` and any of `commands`, `route`, `live`, `connect` (a process holding `INTERNAL_SECRET` opening `/<module>/connect`), `start` (run once the gateway is ready) and `stop` (run on shutdown). The modules are listed in `home/bot/src/modules.ts`. A module imports only `home/bot/src/sdk.ts`, which exports the client, the server, member lookup, the database, tickets, the voice hub, hearing, Claude and transcripts.
+A module (`home/bot/src/module.ts`) is an object with a `name` and any of `commands`, `route`, `live`, `connect` (a process holding `INTERNAL_SECRET` opening `/<module>/connect`), `start` (run once the gateway is ready) and `stop` (run on shutdown). The modules are listed in `home/bot/src/modules.ts`: `dj`, `zombies` and the host's own `voice`. A module imports only `home/bot/src/sdk.ts`, which exports the client, the server, member lookup, the database, tickets, the voice hub, hearing, Claude and transcripts.
 
 ## Voice
 
@@ -40,11 +40,11 @@ Modules decide whether calls are transcribed: `transcripts.keep(owner, true)` as
 
 ## Modules in Other Categories
 
-A module's code stays in its own category (`dj/bot/` for the DJ), so the host imports it by relative path. A module has no dependencies of its own: the host's `package.json` holds them all, and `npm ci` in `home/bot/` links each module's `node_modules` to the host's (`scripts/link-modules.mjs`). Node caches a package by its real path, so the host and every module share one copy of `discord.js` and `@discordjs/voice`. A module keeps a `package.json` that only says `"type": "module"`.
+A module's code stays in its own category (`dj/bot/` for the DJ, `zombies/bot/` for Cari), so the host imports it by relative path. A module has no dependencies of its own: the host's `package.json` holds them all, and `npm ci` in `home/bot/` links each module's `node_modules` to the host's (`scripts/link-modules.mjs`). Node caches a package by its real path, so the host and every module share one copy of `discord.js` and `@discordjs/voice`. A module keeps a `package.json` that only says `"type": "module"`.
 
 ## Deploying
 
-A push to `main` touching `home/bot/` or `dj/bot/` runs `.github/workflows/home-bot.yml` on GitHub's arm64 runner. It runs the gate and builds `home/bot/Dockerfile` from the repository root, pushing `ghcr.io/dloez/enbraile-dj-bot:main-<UTC timestamp>-<short sha>`. Flux in `tom` scans the repository every minute, picks the newest tag (`clusters/tom/dj-image-automation.yaml` in `dloez`), commits it to `dloez`'s `main`, and rolls the pod.
+A push to `main` touching `home/bot/`, `dj/bot/` or `zombies/bot/` runs `.github/workflows/home-bot.yml` on GitHub's arm64 runner. It runs the gate and builds `home/bot/Dockerfile` from the repository root, pushing `ghcr.io/dloez/enbraile-dj-bot:main-<UTC timestamp>-<short sha>`. Flux in `tom` scans the repository every minute, picks the newest tag (`clusters/tom/dj-image-automation.yaml` in `dloez`), commits it to `dloez`'s `main`, and rolls the pod.
 
 ## Decisions
 

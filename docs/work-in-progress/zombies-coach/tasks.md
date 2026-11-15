@@ -92,24 +92,6 @@ The watch loop checks each live reply against the rules and Claude can post into
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
 **After:** Watch a run from Claude Code and fix things live
 
-## Add the zombies module to the bot
-
-The bot side of asking Cari by voice, split from "Ask Cari by voice in the Discord call" so it can run beside site work (2026-11-15): a `zombies` module in the bot that joins a run's voice channel, hears «cari …» and forwards it to the site as the speaker, and speaks the answer back ([Discovery → Voice](discovery.md#voice)).
-
-**Do:**
-- [ ] `zombies/bot/` module listed in `home/bot/src/modules.ts`: `/cari`, a `/zombies/join` route the site calls (behind `INTERNAL_SECRET`), `voice.hold("zombies", channel, { listen: true })`, `hearing.onTrigger("cari", …)` sending the speaker's Discord ID and text to the site's `POST /api/voice`, and `hearing.say` with the reply.
-- [ ] Build it into the host as `dj/bot` is: `home/bot/tsconfig.json`'s `include`, the `COPY` lines of `home/bot/Dockerfile`, and the `paths` of `.github/workflows/home-bot.yml`.
-- [ ] Docs: `docs/zombies/bot/explanation/bot.md`, its row in `docs/zombies/index.md`, and the module list in `docs/home/bot/explanation/bot.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `home/bot`; the bot starts locally with the module loaded and `/cari` registered; `/zombies/join` answers only with `INTERNAL_SECRET`; a fake trigger sends the request the site's `POST /api/voice` will take, seen by a local listener that prints it.
-- Human-run: none until the site part lands.
-- Reuse: `voice.hold`, `hearing.onTrigger`, `hearing.say` (`home/bot/src/sdk.ts`); the DJ's join (`dj/bot/src/player.ts`).
-- Neighbors: `dj/bot/`.
-- Forbidden: Claude calls from the bot; run state in the bot's SQLite.
-
-**Touches:** `zombies/bot/`, `home/bot/src/modules.ts`, `home/bot/tsconfig.json`, `home/bot/Dockerfile`, `.github/workflows/home-bot.yml`, `docs/zombies/bot/`, `docs/zombies/index.md`, `docs/home/bot/explanation/bot.md`
-
 ## Let modules hear the call's transcript
 
 The host side of keeping a call's transcript, split from "Keep the call's transcript in the run" so it can run beside site work (2026-11-15): modules can subscribe to what the hearing worker transcribes ([Discovery → Voice](discovery.md#voice)).
@@ -142,7 +124,6 @@ The site side: the site's offer brings Cari into the run's voice channel, and «
 - Forbidden: Claude calls from the bot; run state in the bot's SQLite.
 
 **Touches:** `zombies/site/`, `docs/zombies/site/`
-**After:** Add the zombies module to the bot
 
 ## Keep the call's transcript in the run
 

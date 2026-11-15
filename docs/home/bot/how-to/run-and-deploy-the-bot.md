@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- `home/bot/.env.local` (gitignored) holding `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY`, `DISCORD_BOT_TOKEN` and `INTERNAL_SECRET`, and optionally `ANTHROPIC_API_KEY` (for `claude.ask`) and `TRANSCRIPTS_ENDPOINT`, `TRANSCRIPTS_BUCKET`, `B2_KEY_ID` and `B2_APPLICATION_KEY` (to store transcripts).
+- `home/bot/.env.local` (gitignored) holding `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY`, `DISCORD_BOT_TOKEN` and `INTERNAL_SECRET`, and optionally `ANTHROPIC_API_KEY` (for `claude.ask`) and `TRANSCRIPTS_ENDPOINT`, `TRANSCRIPTS_BUCKET`, `B2_KEY_ID` and `B2_APPLICATION_KEY` (to store transcripts), and `ZOMBIES_URL` (the zombies site the `zombies` module asks, `https://zombies.enbraile.vip` unless set, as `http://localhost:<port>` for a local site).
 - For the cluster steps, `kubectl` and `flux` pointed at `tom`, and the owner's `dloez` repository.
 
 ## Run It Locally
