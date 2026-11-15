@@ -19,7 +19,7 @@ export const auth = betterAuth({
   baseURL: "https://enbraile.vip",
   secret: required("BETTER_AUTH_SECRET"),
   database: drizzleAdapter(db, { provider: "pg", schema }),
-  trustedOrigins: ["https://enbraile.vip", "https://pkmn.enbraile.vip", "https://dj.enbraile.vip"],
+  trustedOrigins: ["https://enbraile.vip", "https://pkmn.enbraile.vip", "https://dj.enbraile.vip", "https://zombies.enbraile.vip"],
   socialProviders: { discord: { clientId: required("DISCORD_CLIENT_ID"), clientSecret: required("DISCORD_CLIENT_SECRET"), overrideUserInfoOnSignIn: true } },
   account: { accountLinking: { enabled: false } },
   advanced: { cookiePrefix: "enbraile", crossSubDomainCookies: { enabled: true, domain: "enbraile.vip" } },

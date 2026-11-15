@@ -1,6 +1,6 @@
 # How to Deploy the Vercel Projects
 
-The three Vercel projects, `enbraile-dj` (`dj/panel/`), `enbraile-pkmn` (`pkmn/site/`) and `enbraile-home` (`home/site/`), are deployed by GitHub Actions, not by Vercel's Git integration ([Repository Layout → Decisions](../explanation/repository-layout.md#decisions)). Each has a workflow, `.github/workflows/dj-panel.yml`, `pkmn-site.yml` and `home-site.yml`, that runs only on a push touching its project's folder or the workflow itself. A push to `main` deploys to production; a push to any other branch makes a preview. Either way the job runs `vercel deploy` from the repository root, with the project's ID in `VERCEL_PROJECT_ID`. Vercel uploads the checkout and builds it in its own cloud with the project's root directory, build command and environment variables, as the Git integration did, so pkmn's migrations and preview seeding run unchanged. Each project's `vercel.json` sets `"git": { "deploymentEnabled": false }`, so Vercel no longer builds pushes itself.
+The four Vercel projects, `enbraile-dj` (`dj/panel/`), `enbraile-pkmn` (`pkmn/site/`), `enbraile-home` (`home/site/`) and `enbraile-zombies` (`zombies/site/`), are deployed by GitHub Actions, not by Vercel's Git integration ([Repository Layout → Decisions](../explanation/repository-layout.md#decisions)). Each has a workflow, `.github/workflows/dj-panel.yml`, `pkmn-site.yml`, `home-site.yml` and `zombies-site.yml`, that runs only on a push touching its project's folder or the workflow itself. A push to `main` deploys to production; a push to any other branch makes a preview. Either way the job runs `vercel deploy` from the repository root, with the project's ID in `VERCEL_PROJECT_ID`. Vercel uploads the checkout and builds it in its own cloud with the project's root directory, build command and environment variables, as the Git integration did, so pkmn's migrations and preview seeding run unchanged. Each project's `vercel.json` sets `"git": { "deploymentEnabled": false }`, so Vercel no longer builds pushes itself.
 
 ## Prerequisites
 
@@ -27,4 +27,4 @@ Push. A workflow can also be run by hand from the Actions tab (`workflow_dispatc
 
 ## Verification
 
-The push's run under Actions ends with the deployment's URL, and the deployment shows in the Vercel dashboard. A push touching none of the three folders starts no Vercel deployment.
+The push's run under Actions ends with the deployment's URL, and the deployment shows in the Vercel dashboard. A push touching none of the four folders starts no Vercel deployment.

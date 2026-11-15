@@ -1,26 +1,26 @@
 # Zombies Coach — Tasks
 
-## Deploy the zombies site to zombies.enbraile.vip
+## Point zombies.enbraile.vip at the site and publish the test map
 
-Put the locally built site online: a signed-in member opens `zombies.enbraile.vip` and sees the published test map ([Discovery → Anchor Areas](discovery.md#anchor-areas)).
+The Vercel project, its Neon database, the workflow and the root's `trustedOrigins` are in place; what is left is the domain's DNS record, the admin token and the first production publish, so a signed-in member opens `zombies.enbraile.vip` and sees the published test map ([Discovery → Anchor Areas](discovery.md#anchor-areas)).
 
 **Do:**
-- [ ] Neon project `zombies` (Frankfurt) with a `dev` branch for previews; its URLs as `DATABASE_URL` in Production and Preview.
-- [ ] Vercel project `enbraile-zombies` (root `zombies/site`, `fra1`); variables `DATABASE_URL`, `ROOT_URL`, `ZOMBIES_ADMIN_TOKEN` (generated, kept in 1Password; never let the value appear in the conversation or a command line).
-- [ ] `.github/workflows/zombies-site.yml` after `dj-panel.yml`, with the new project's ID.
-- [ ] `zombies.enbraile.vip` as a DNS-only CNAME in the Cloudflare `enbraile.vip` zone, added to the project's domains.
-- [ ] Add `https://zombies.enbraile.vip` to `trustedOrigins` in `home/site/api/_lib/auth.ts`, so sign-in returns to it.
-- [ ] Docs: the deploy section of `docs/zombies/site/how-to/run-and-deploy-the-site.md` (set up production once, deploy, roll back), the hosting paragraph of `docs/zombies/site/explanation/site.md`, and the project list in `docs/general/how-to/deploy-vercel-projects.md` ("three Vercel projects" becomes four).
-- [ ] Publish the test map to production with `ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map`.
+- [ ] `zombies.enbraile.vip` as a DNS-only CNAME to `0cedcc0080c9a767.vercel-dns-017.com` (`npx vercel api /v6/domains/zombies.enbraile.vip/config`, `recommendedCNAME`) in the Cloudflare `enbraile.vip` zone.
+- [ ] `ZOMBIES_ADMIN_TOKEN` generated in 1Password and set in Vercel Production with the commands in step 8 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`; never let the value appear in the conversation or a command line.
+- [ ] Publish the test map to production with step 9's command (`ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map`, the token read from 1Password).
+- [ ] Docs: drop "except the DNS record and the admin token, which wait on the owner" from step 8 of the how-to, and turn `site.md`'s Hosting sentence "is to be a DNS-only (grey-cloud) `CNAME` … until the owner adds that record the name does not resolve" into the record as it stands.
 
 **Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site` and `home/site`; the workflow's run ends with a deployment URL; `curl -s https://zombies.enbraile.vip/api/maps` answers 401 signed out; a second production publish prints `unchanged`.
-- Human-run: after the first deploy, open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map; the 1Password item holds `ZOMBIES_ADMIN_TOKEN`.
-- Reuse: the workflow `.github/workflows/dj-panel.yml`; [How to Deploy the Vercel Projects](../../general/how-to/deploy-vercel-projects.md); pkmn's production setup in `docs/pkmn/site/how-to/run-and-deploy-the-site.md`.
-- Neighbors: `dj/panel/`, `home/site/`.
-- Forbidden: a connection to pkmn's database; secrets in the repo or printed in the conversation.
+- Claude-run: `curl -s https://zombies.enbraile.vip/api/maps` answers 401 signed out; a second production publish prints `unchanged`; the first push to `main` touching `zombies/site/` runs `zombies-site.yml` to a deployment URL.
+- Human-run: open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map; the 1Password item holds `ZOMBIES_ADMIN_TOKEN`.
+- Reuse: steps 8 and 9 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`.
+- Neighbors: `home/site/`.
+- Forbidden: a proxied record; secrets in the repo or printed in the conversation.
 
-**Touches:** `.github/workflows/zombies-site.yml`, `home/site/api/_lib/auth.ts`, `docs/zombies/`, `docs/general/how-to/deploy-vercel-projects.md`
+**Touches:** `docs/zombies/site/how-to/run-and-deploy-the-site.md`, `docs/zombies/site/explanation/site.md`
+**Needs the author:**
+- Add the DNS-only CNAME `zombies` → `0cedcc0080c9a767.vercel-dns-017.com` in Cloudflare's `enbraile.vip` zone yourself, or give agents a Cloudflare API token limited to DNS edit on that zone? Agents have no access to it today.
+- Create the 1Password item "zombies admin token" and set Vercel's Production `ZOMBIES_ADMIN_TOKEN` with step 8's commands (agents have no 1Password session). Then publish the test map yourself with step 9, or unlock 1Password for an agent run?
 
 ## Record the site's settled UI rules in its explanation doc
 
@@ -74,7 +74,7 @@ Members start or join a run on a map and talk to Cari; Haiku answers through too
 - Forbidden: the dossier or unknown entries in the model's prompt; the model writing hint text; step or hint numbers in the UI.
 
 **Touches:** `zombies/site/`, `docs/zombies/`
-**After:** Deploy the zombies site to zombies.enbraile.vip; Decide how two members sign in to the local site
+**After:** Decide how two members sign in to the local site
 
 ## Decide how a run ends
 

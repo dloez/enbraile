@@ -21,6 +21,10 @@ A bundle is everything the live coach will need about one map, as one JSON docum
 
 The maps page reads `GET /api/maps`, which returns each map's name, tint, test flag and version and nothing else from the bundle, so no solution reaches a browser.
 
+## Hosting
+
+Vercel serves the site from the owner's Hobby team as the project `enbraile-zombies`: the Vite build's static `dist/` and the API as a Vercel Function (`api/index.ts`) in the same project, as pkmn's and the DJ panel's are. `vercel.json` runs the function in Frankfurt (`fra1`), beside its Neon database (`aws-eu-central-1`), and rewrites every path but `/api/` and `/assets/` to `/index.html`. The database is the Neon project `zombies`, its own and never pkmn's, with a `main` branch for production and a `dev` branch for previews. The `zombies-site.yml` workflow deploys pushes to `main` touching `zombies/site/` to production, and other branches' pushes as previews, which Vercel's Deployment Protection keeps to the team ([How to Deploy the Vercel Projects](../../../general/how-to/deploy-vercel-projects.md)). `zombies.enbraile.vip` is on the project's domains and is to be a DNS-only (grey-cloud) `CNAME` to the Vercel target in the `enbraile.vip` zone on the owner's Cloudflare account; until the owner adds that record the name does not resolve. It is DNS-only for the reason pkmn's is: Cloudflare's proxied IPs are blocked by Spanish ISPs during LaLiga matches ([The pkmn Site → Decisions](../../../pkmn/site/explanation/site.md#decisions)). The root site lists the domain in its `trustedOrigins`, so sign-in returns to it. Setting it up is in [How to Run and Deploy the Site](../how-to/run-and-deploy-the-site.md#8-set-up-production-once).
+
 ## Decisions
 
 - **One `bundle.json` per map dir:** `publish` takes the dir that holds a map's files, as the queue's `compile` will write its bundle there. _(the agent's choice, 2026-11-15)_
@@ -28,3 +32,4 @@ The maps page reads `GET /api/maps`, which returns each map's name, tint, test f
 - **A rung's `reveals`:** the discovery lets a rung mention an unknown thing when it is the rung meant to reveal it; the bundle says which rung that is with `reveals`, next to `mentions`. _(the agent's choice, 2026-11-15)_
 - **Versions numbered per map, deduplicated by digest:** the SHA-256 of the bundle's JSON with sorted keys, so key order in the file never makes a new version. _(the agent's choice, 2026-11-15)_
 - **Map cards without Start a run yet:** the boards draw it on every card, but a button that does nothing until runs exist would be a dead control; it comes with runs. _(the agent's choice, 2026-11-15)_
+- **Neon from the Vercel Marketplace, without its variables:** the Neon organization is managed by Vercel and refuses a project made with `neonctl`, so the `zombies` project comes from the integration with `--no-connect`, and `DATABASE_URL` is set by hand per environment with `sslmode=verify-full`, as pkmn's table has it, rather than the integration's own variables. _(the agent's choice, 2026-11-15)_
