@@ -170,3 +170,7 @@ Explore seeds autoplay from the songs each listener asked for, weighted by how o
 ### home: take the sign-in tables out of pkmn's database
 
 The shared sign-in (`home/site`) runs Better Auth over pkmn's `user`, `session`, `account` and `verification` tables, which pkmn's migrations own ([The Root Site](../home/site/explanation/site.md)), so every app's sign-in depends on pkmn's Neon project. The owner wants them decoupled (2026-11-15, scoping zombies-coach). About twenty pkmn tables reference `user` with foreign keys, and `admin`/`allowed` are pkmn's flags. Unscoped: a home Neon project owning the auth tables, and whether pkmn keeps a mirror of users for its foreign keys or drops them. Apps that sign in through `enbraile.vip/api/me` (DJ, zombies) need no change. _(owner, 2026-11-15)_
+
+### zombies: the site as the hub of the group's runs
+
+The zombies site becomes where the group's runs live: a history of every run, how many easter eggs the group has beaten, and each run open to review afterwards. Runs already stay open and are never closed for now ([Zombies Coach → Follow progress and threads](zombies-coach/tasks.md#follow-progress-and-threads-the-way-ee-coach-does)). Unscoped: what counts as beating an easter egg, what the history shows, and what review adds over reading the run. _(owner, 2026-11-15)_
