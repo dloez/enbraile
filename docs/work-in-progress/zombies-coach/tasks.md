@@ -19,23 +19,24 @@ The owner wants the real map assets shown, not drawn stand-ins, for the maps the
 
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
 
-## Fit the attempt page to the screen with only the chat scrolling
+## Use the screen's full width on every page and scroll only the content
 
-The owner reports that the chat does not take the screen's width and that the page scrolls over it (2026-11-15). In `zombies/site/src/index.css`, `.runv` takes `calc(100dvh - var(--hd))` while `#root` only has a `min-height` and the page itself can scroll, so any header or bar above the composer (the trouble notice, revision mode) taller than `--hd` makes the whole page scroll on top of `.rows`; and the chat is capped at fixed widths (`.cmp-in` and `.mode` 784px, `.field` 680px, slips 640px), leaving the right side empty on a wide screen.
+The owner reports that the chat does not take the screen's width and that the page scrolls over it (2026-11-15). In `zombies/site/src/index.css`, `.runv` takes `calc(100dvh - var(--hd))` while `#root` only has a `min-height` and the page itself can scroll, so any header or bar above the composer (the trouble notice, revision mode) taller than `--hd` makes the whole page scroll on top of `.rows`; and the chat is capped at fixed widths (`.cmp-in` and `.mode` 784px, `.field` 680px, slips 640px), leaving the right side empty on a wide screen. The owner also wants every page to make full use of the screen's width (2026-11-15): the maps list and the map view sit in fixed containers (`max-width` 1232px and 928px in `index.css`).
 
 **Do:**
 - [ ] The attempt page fills exactly the viewport at every width: the page never scrolls there, only the transcript (`.rows`) and, if it overflows, the rail; the composer and the bars above it stay pinned, including with a phone's keyboard open.
 - [ ] The transcript, slips, composer and mode bar use the main column's full width, keeping lines readable with the design system's spacing rather than fixed caps; update the boards' widths in `docs/zombies/site/reference/design-system.md` where the built page now differs.
-- [ ] Check the other pages (maps, map view, join) for the same page-over-content scroll and fix it where found.
+- [ ] Every page (maps list, map view, join, attempt) uses the screen's full width: no fixed container width leaving empty bands; on wide screens the layout adds columns or widens rows (e.g. map rows in a grid, the map view's attempts beside its start panel) rather than centring a narrow column, with line lengths kept readable; no page scrolls over its own content.
+- [ ] Draw the wide layouts on the canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) ("Third take" boards at 1920×1080 beside the 1440 ones) before building them, and freeze them into `zombies/site/design/`.
 
 **Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1920×1080, 1440×900 and 390×844 with a long transcript and the trouble notice and revision mode shown: `document.scrollingElement.scrollHeight` equals the viewport height on the attempt page, only `.rows` scrolls, the composer stays in view, and the chat spans the main column.
+- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1920×1080, 1440×900 and 390×844 with a long transcript and the trouble notice and revision mode shown: `document.scrollingElement.scrollHeight` equals the viewport height on the attempt page, only `.rows` scrolls, the composer stays in view, and the chat spans the main column; at 1920×1080 the maps list, map view and join view leave no empty side bands and match their wide boards.
 - Human-run: the owner reads a long attempt on desktop and phone and only the chat scrolls.
 - Reuse: the third take's layout shell; the stick-to-bottom scroll the UX review added.
 - Neighbors: the DJ panel's full-height layout in `dj/panel/src/index.css`.
 - Forbidden: dropping a state or the transcript's scroll behaviour.
 
-**Touches:** `zombies/site/src/`, `docs/zombies/site/reference/design-system.md`
+**Touches:** `zombies/site/src/`, `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
 
 ## Watch a run from Claude Code and fix things live
 
