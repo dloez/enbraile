@@ -69,13 +69,13 @@ A real map's `bundle.json` is built first from the files the ee-coach skill prep
 npm run compile -- ../maps/<game>/<map>/
 ```
 
-It prints the counts of steps, ladders, rungs, Alts and knowledge entries, or every error by file and line or step and rung, never the text. The test map has no prepare files; its `bundle.json` is written by hand. Then:
+It prints the counts of steps, ladders, rungs, Alts and knowledge entries and the size of the map's image (`no art` without one), or every error by file and line or step and rung, never the text. The test map has no prepare files; its `bundle.json` is written by hand. Then:
 
 ```sh
 npm run publish -- test-map
 ```
 
-The path is the map's dir, holding its `bundle.json`, relative to where the command is run; from `zombies/site/` a real map's is `../maps/<game>/<map>/`. It prints the version stored, or `unchanged` when the bundle equals the latest one, and every schema error when it is rejected.
+The path is the map's dir, holding its `bundle.json`, relative to where the command is run; from `zombies/site/` a real map's is `../maps/<game>/<map>/`. When the bundle has an image it uploads that first and prints its size (`already stored` when the site has it); a file changed since `compile` stops it with a request to compile again. It then prints the version stored, or `unchanged` when the bundle equals the latest one, and every schema error when it is rejected. A bundle with an image needs a deployment that has the image route, so a map's first image is published after the code that shows it is in production.
 
 ### 7. Read a run
 

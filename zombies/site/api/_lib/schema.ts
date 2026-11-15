@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
-import { boolean, foreignKey, index, integer, jsonb, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { boolean, customType, foreignKey, index, integer, jsonb, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { Bundle, Language } from "../../shared/bundle.js";
+import type { ImageType } from "../../shared/image.js";
 import type { GapContext, Rating } from "../../shared/runs.js";
 
 export const maps = pgTable(
@@ -14,6 +15,15 @@ export const maps = pgTable(
   },
   (table) => [primaryKey({ columns: [table.game, table.map] })],
 );
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
+
+export const mapImages = pgTable("map_images", {
+  digest: text("digest").primaryKey(),
+  type: text("type").$type<ImageType>().notNull(),
+  bytes: bytea("bytes").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const bundleVersions = pgTable(
   "bundle_versions",

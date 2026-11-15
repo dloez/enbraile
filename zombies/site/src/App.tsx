@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Language, Viewer } from "../shared/bundle";
 import type { Attempt, MapPage as MapPageData, MapSummary } from "../shared/runs";
 import { fetchMap, fetchMaps, joinRun, Refused, SignedOut, signIn, startRun } from "./api";
-import { MapPlan } from "./art";
+import { MapArt } from "./art";
 import { languageNames, lang, playedAt, switchLang, t } from "./i18n";
 import { mapPath, navigate, runPath, usePath } from "./route";
 import { RunPage } from "./RunPage";
@@ -62,9 +62,7 @@ function MapRow({ map }: { map: MapSummary }) {
   return (
     <li>
       <Link to={mapPath(map.game, map.map)} className="mrow">
-        <span className="pl">
-          <MapPlan art={map.art} />
-        </span>
+        <MapArt map={map} className="pl" />
         <span className="mrow-t">
           <span className="lab">{label(map)}</span>
           <h2>{name}</h2>
@@ -220,7 +218,7 @@ function MapView({ page }: { page: MapPageData }) {
 
   return (
     <main className="page two arrive">
-      <MapHead back eyebrow={label(map)} name={name} art={map.art} plan={t.planOf(name)} />
+      <MapHead back eyebrow={label(map)} name={name} map={map} label={map.image ? t.artOf(name) : t.planOf(name)} />
       <div className="side">
         <section className="sec">
           <h2>{t.attempts}</h2>

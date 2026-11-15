@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { imageTypes } from "./image.js";
 
 export const languages = ["es", "en"] as const;
 export type Language = (typeof languages)[number];
@@ -58,6 +59,14 @@ const source = z.object({
   text: z.string().optional(),
 });
 
+const image = z.object({
+  file: z.string().min(1),
+  digest: z.string().regex(/^[0-9a-f]{64}$/),
+  type: z.enum(imageTypes),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+
 const unique = (ids: string[]) => ids.filter((value, index) => ids.indexOf(value) !== index);
 
 export const bundleSchema = z
@@ -67,6 +76,7 @@ export const bundleSchema = z
     name: worded,
     test: z.boolean().default(false),
     art: z.enum(["teal", "rust", "furnace"]),
+    image: image.optional(),
     knowledge: z.array(knowledge),
     steps: z.array(step).min(1),
     calibration: z.array(z.string().min(1)).default([]),
@@ -109,6 +119,7 @@ export type PublishedMap = {
   name: Record<Language, string>;
   test: boolean;
   art: Bundle["art"];
+  image: { digest: string; width: number; height: number } | null;
   version: number;
 };
 

@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from "react";
 import type { PublishedMap } from "../shared/bundle";
+import { imagePath } from "../shared/image";
 
 const wards = [28, 46, 64, 82, 100];
 
@@ -49,5 +51,39 @@ export function MapPlan({ art, label }: { art: PublishedMap["art"]; label?: stri
     <svg className="plan-svg" viewBox="0 0 140 96" fill="none" stroke="currentColor" role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <Plan />
     </svg>
+  );
+}
+
+type Shown = Pick<PublishedMap, "art" | "image">;
+
+export function MapArt({ map, label, className, large }: { map: Shown; label?: string; className: string; large?: boolean }) {
+  const Tag = large ? "div" : "span";
+  const image = useRef<HTMLImageElement>(null);
+  const digest = map.image?.digest;
+  const [seen, setSeen] = useState<{ digest: string | undefined; state: "loading" | "shown" | "failed" }>({ digest, state: "loading" });
+  const state = seen.digest === digest ? seen.state : "loading";
+  const setState = (next: "shown" | "failed") => setSeen({ digest, state: next });
+  useEffect(() => {
+    if (image.current?.complete && image.current.naturalWidth > 0) setSeen({ digest, state: "shown" });
+  }, [digest]);
+  if (!map.image || state === "failed")
+    return (
+      <Tag className={className}>
+        <MapPlan art={map.art} label={label} />
+      </Tag>
+    );
+  return (
+    <Tag className={`${className} art${state === "loading" ? " skeleton" : ""}`}>
+      <img
+        ref={image}
+        src={imagePath(map.image.digest)}
+        width={map.image.width}
+        height={map.image.height}
+        alt={label ?? ""}
+        decoding="async"
+        onLoad={() => setState("shown")}
+        onError={() => setState("failed")}
+      />
+    </Tag>
   );
 }

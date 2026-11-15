@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import type { PublishedMap } from "../shared/bundle";
 import type { Member, RunLink } from "../shared/runs";
-import { MapPlan } from "./art";
+import { MapArt } from "./art";
 import { t } from "./i18n";
 import { navigate } from "./route";
 
@@ -144,7 +144,7 @@ export function useFit<T extends HTMLElement>(text: string) {
   return ref;
 }
 
-export function MapHead({ back, eyebrow, name, art, plan }: { back: boolean; eyebrow: string; name: string; art: PublishedMap["art"]; plan: string }) {
+export function MapHead({ back, eyebrow, name, map, label }: { back: boolean; eyebrow: string; name: string; map: Pick<PublishedMap, "art" | "image">; label: string }) {
   const title = useFit<HTMLHeadingElement>(name);
   return (
     <div className="mv-head">
@@ -161,13 +161,9 @@ export function MapHead({ back, eyebrow, name, art, plan }: { back: boolean; eye
             {name}
           </h1>
         </div>
-        <span className="pl mv-small">
-          <MapPlan art={art} label={plan} />
-        </span>
+        <MapArt map={map} label={label} className="pl mv-small" />
       </div>
-      <div className="plan mv-large">
-        <MapPlan art={art} label={plan} />
-      </div>
+      <MapArt map={map} label={label} className="plan mv-large" large />
     </div>
   );
 }

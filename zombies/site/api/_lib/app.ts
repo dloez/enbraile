@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { type Context, Hono } from "hono";
 import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
@@ -6,7 +6,8 @@ import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchem
 import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
-import { storeVersion } from "./maps.js";
+import { imageFacts, maxImageBytes } from "../../shared/image.js";
+import { hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
 import { importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 
@@ -72,7 +73,18 @@ claude.put("/maps/:game/:map", async (c) => {
   if (!parsed.success) return c.json({ error: "invalidBundle", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) }, 400);
   const bundle = parsed.data;
   if (bundle.game !== c.req.param("game") || bundle.map !== c.req.param("map")) return c.json({ error: "pathMismatch" }, 400);
+  if (bundle.image && !(await hasImage(bundle.image.digest))) return c.json({ error: "missingImage" }, 400, noStore);
   return c.json(await storeVersion(bundle, "claude"), 200, noStore);
+});
+
+claude.put("/images/:digest", async (c) => {
+  const digest = c.req.param("digest");
+  const bytes = Buffer.from(await c.req.arrayBuffer());
+  if (bytes.length === 0 || bytes.length > maxImageBytes) return c.json({ error: "invalidImage" }, 400, noStore);
+  if (createHash("sha256").update(bytes).digest("hex") !== digest) return c.json({ error: "digestMismatch" }, 400, noStore);
+  const facts = imageFacts(bytes);
+  if (!facts) return c.json({ error: "invalidImage" }, 400, noStore);
+  return c.json({ digest, created: await storeImage(digest, facts.type, bytes) }, 200, noStore);
 });
 
 claude.get("/runs", async (c) => c.json({ runs: await runList() }, 200, noStore));
@@ -88,6 +100,15 @@ claude.post("/runs", async (c) => {
 claude.get("/runs/:id", async (c) => {
   const log = await runLog(c.req.param("id"));
   return log ? c.json(log, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
+});
+
+const images = new Hono();
+
+images.get("/:digest", async (c) => {
+  const digest = c.req.param("digest");
+  const image = /^[0-9a-f]{64}$/.test(digest) ? await imageOf(digest) : undefined;
+  if (!image) return c.json({ error: "noSuchImage" }, 404, noStore);
+  return c.body(new Uint8Array(image.bytes), 200, { "content-type": image.type, "cache-control": "public, max-age=31536000, s-maxage=31536000, immutable" });
 });
 
 const member = new Hono<{ Variables: { viewer: Viewer } }>();
@@ -180,4 +201,5 @@ app.use(timing());
 
 app.route("/claude", claude);
 app.route("/dev", dev);
+app.route("/images", images);
 app.route("/", member);

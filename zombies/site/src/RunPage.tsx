@@ -58,7 +58,7 @@ function JoinView({ sheet, onJoined }: { sheet: RunSheet; onJoined: () => void }
 
   return (
     <main className="page two join arrive">
-      <MapHead back eyebrow={t.runOf(sheet.startedBy)} name={name} art={sheet.map.art} plan={t.planOf(name)} />
+      <MapHead back eyebrow={t.runOf(sheet.startedBy)} name={name} map={sheet.map} label={sheet.map.image ? t.artOf(name) : t.planOf(name)} />
       <div className="side">
         <div className="card join-card">
           <div className="join-grid">

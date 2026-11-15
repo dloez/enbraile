@@ -433,6 +433,29 @@ a:hover {
   padding: var(--sp-8);
 }
 
+.art {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+.art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 1;
+  transition: opacity 0.3s ease-out;
+}
+
+.art.skeleton img {
+  opacity: 0;
+}
+
+.pl.art img {
+  aspect-ratio: 140 / 96;
+  object-fit: cover;
+}
+
 .page {
   flex: 1;
   width: 100%;
@@ -1416,6 +1439,10 @@ a:hover {
     padding: var(--sp-1);
   }
 
+  .mrow .pl.art {
+    padding: 0;
+  }
+
   .mrow h2 {
     font-size: 20px;
     line-height: 1.25;
@@ -1538,6 +1565,10 @@ a:hover {
   .join .mv-large {
     display: block;
     padding: var(--sp-4) var(--sp-20);
+  }
+
+  .join .mv-large.art {
+    padding: 0;
   }
 
   .join .side {

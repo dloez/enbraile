@@ -1,24 +1,5 @@
 # Zombies Coach — Tasks
 
-## Show each map's real art on the maps list and map view
-
-The owner wants the real map assets shown, not drawn stand-ins, for the maps themselves as well as the hints (2026-11-15). The maps list and the map view show the map's official announcement image, the reveal art a map normally gets, found during map research; seeing unfound areas in a map image is fine (owner, 2026-11-15). Images live with the published bundle, never in git ([Discovery → Visual hints](discovery.md#visual-hints)).
-
-**Do:**
-- [ ] At prepare, the ee-coach skill finds the map's announcement image during research and saves it in the gitignored map dir; `compile` puts it in the bundle and `publish` sends it.
-- [ ] Where a published image is stored and served is the build's choice (recorded in `docs/zombies/site/explanation/site.md`); the site shows it on the map's row and at the head of its view, in place of the drawn plan, with a skeleton while it loads; a map without one (the test map) keeps its drawn plan.
-- [ ] Blood of the Dead's art found, checked, compiled and published.
-- [ ] Docs: the bundle's image field, the decision, and the design-system doc's map row and map view.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; `compile` rejects an image path that is missing; through the Playwright MCP locally, a map with art shows it on its row and view at desktop and phone width, the test map keeps its plan; `git ls-files | grep -iE '\.(png|jpe?g|webp)$'` finds no map image tracked.
-- Human-run: the owner sees Blood of the Dead's announcement image on the maps list and map view.
-- Reuse: the bundle, `compile` and `publish`; the map row and map view of the third take.
-- Neighbors: "Show a zone on the map for level-3 hints", which stores the overhead map the same way.
-- Forbidden: any map image in a tracked file.
-
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
-
 ## Use the screen's full width on every page and scroll only the content
 
 The owner reports that the chat does not take the screen's width and that the page scrolls over it (2026-11-15). In `zombies/site/src/index.css`, `.runv` takes `calc(100dvh - var(--hd))` while `#root` only has a `min-height` and the page itself can scroll, so any header or bar above the composer (the trouble notice, revision mode) taller than `--hd` makes the whole page scroll on top of `.rows`; and the chat is capped at fixed widths (`.cmp-in` and `.mode` 784px, `.field` 680px, slips 640px), leaving the right side empty on a wide screen. The owner also wants every page to make full use of the screen's width (2026-11-15): the maps list and the map view sit in fixed containers (`max-width` 1232px and 928px in `index.css`).

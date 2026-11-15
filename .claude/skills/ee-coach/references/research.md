@@ -16,6 +16,8 @@ Each agent first saves the page text it used, unedited, as `sources/raw/<n>-<sho
 
 Give each agent the game, map, quest, and player count. If a source can't be fetched, the agent finds another of the same kind rather than giving up.
 
+The wiki-style agent also saves the map's **announcement image**: the official reveal art the map got when it was announced (the publisher's blog post or press kit, or the image the wiki shows as the map's official art). It converts it to a JPEG at most 1920 px wide and under 700 KB with metadata stripped (`uv run --with pillow`), saves it as `art.jpg` in the map dir, and checks that it shows no easter-egg step or solution, such as a code, a symbol answer or a diagram of a step; a map's areas and characters are fine, found or not. It reports only yes or no, the file's dimensions and size, and the source's domain, never what the image shows. No official image, or none that passes, means no `art.jpg`, and the site keeps a drawn plan for the map.
+
 ## 2. Synthesise the dossier (one agent)
 
 One agent reads all of `sources/`, plus `zombies/calibration.md` and `.claude/skills/ee-coach/references/hint-craft.md`, and writes two files.
@@ -135,10 +137,10 @@ One round of fixes is enough. The real calibration comes from the players. After
 
 ## 4. Compile and publish
 
-The live coach on `zombies.enbraile.vip` reads a map only as a bundle. In the map dir, write `map.json` with the map's name in each language and its `art`, the key of one of the site's three drawn plans:
+The live coach on `zombies.enbraile.vip` reads a map only as a bundle. In the map dir, write `map.json` with the map's name in each language, its `art`, the key of one of the site's three drawn plans, shown wherever the map has no image, and `image`, the announcement image's file name, when section 1 saved one:
 
 ```json
-{ "name": { "es": "<name as the Spanish game shows it>", "en": "<English name>" }, "art": "teal | rust | furnace" }
+{ "name": { "es": "<name as the Spanish game shows it>", "en": "<English name>" }, "art": "teal | rust | furnace", "image": "art.jpg" }
 ```
 
 Then, from `zombies/site/`, in the synthesis subagent:
@@ -148,7 +150,7 @@ npm run compile -- ../maps/<game>/<map>
 npm run publish -- ../maps/<game>/<map>
 ```
 
-`compile` reads `map.json`, `hints.md`, `hints.es.md` (the site carries every line in Spanish and English, so a bundle needs the Spanish copy whatever the players' language), `knowledge.md` (a thing is `known` in the bundle only when its status is `known`), `dossier.md` (the `L4 as spoken` and `Conditions` of each step, and the whole text as the durable copy), the map's `calibration.md` and everything under `sources/`, checks them, and writes `bundle.json` beside them. Its errors name a file and line or a step and rung, never the text, so they can be quoted in the main conversation; fix each and run it again. Its warnings list `unknown` IDs that some line mentions but no line reveals, which the site can only deliver once the players name the thing themselves: add the missing `Reveals` unless that is intended. It prints counts only. `publish` sends the bundle to the site as a new version ([How to Run and Deploy the Site](../../../../docs/zombies/site/how-to/run-and-deploy-the-site.md)). Any later change to the hints or dossier is followed by both commands again.
+`compile` reads `map.json`, `hints.md`, `hints.es.md` (the site carries every line in Spanish and English, so a bundle needs the Spanish copy whatever the players' language), `knowledge.md` (a thing is `known` in the bundle only when its status is `known`), `dossier.md` (the `L4 as spoken` and `Conditions` of each step, and the whole text as the durable copy), the map's `calibration.md` everything under `sources/` and the image `map.json` names (rejected if it is missing, over 4 MB, or not a JPEG, PNG or WebP file), checks them, and writes `bundle.json` beside them. Its errors name a file and line or a step and rung, never the text, so they can be quoted in the main conversation; fix each and run it again. Its warnings list `unknown` IDs that some line mentions but no line reveals, which the site can only deliver once the players name the thing themselves: add the missing `Reveals` unless that is intended. It prints counts only. `publish` uploads the image, then sends the bundle to the site as a new version ([How to Run and Deploy the Site](../../../../docs/zombies/site/how-to/run-and-deploy-the-site.md)). Any later change to the hints or dossier is followed by both commands again.
 
 ## 5. Report
 

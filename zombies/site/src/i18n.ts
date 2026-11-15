@@ -65,6 +65,7 @@ const en = {
   re: (time: string | null) => (time ? `re: Cari ${time} · for Claude` : "for Claude"),
   notRated: "Your rating didn't go through.",
   planOf: (name: string) => `${name} plan`,
+  artOf: (name: string) => `${name} art`,
 };
 
 const es: typeof en = {
@@ -122,6 +123,7 @@ const es: typeof en = {
   re: (time: string | null) => (time ? `re: Cari ${time} · para Claude` : "para Claude"),
   notRated: "Tu valoración no ha llegado.",
   planOf: (name: string) => `Plano de ${name}`,
+  artOf: (name: string) => `Arte de ${name}`,
 };
 
 export const t = lang === "es" ? es : en;

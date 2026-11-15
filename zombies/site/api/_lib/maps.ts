@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import type { Bundle, PublishedMap } from "../../shared/bundle.js";
 import { db } from "./db.js";
-import { bundleVersions, maps } from "./schema.js";
+import type { ImageType } from "../../shared/image.js";
+import { bundleVersions, mapImages, maps } from "./schema.js";
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
@@ -46,9 +47,25 @@ export async function publishedMaps(): Promise<PublishedMap[]> {
       name: sql<PublishedMap["name"]>`${bundleVersions.bundle}->'name'`,
       test: sql<boolean>`coalesce((${bundleVersions.bundle}->>'test')::boolean, false)`,
       art: sql<PublishedMap["art"]>`${bundleVersions.bundle}->>'art'`,
+      image: sql<PublishedMap["image"]>`case when ${bundleVersions.bundle} ? 'image' then jsonb_build_object('digest', ${bundleVersions.bundle}->'image'->'digest', 'width', ${bundleVersions.bundle}->'image'->'width', 'height', ${bundleVersions.bundle}->'image'->'height') end`,
     })
     .from(maps)
     .innerJoin(bundleVersions, and(eq(bundleVersions.game, maps.game), eq(bundleVersions.map, maps.map), eq(bundleVersions.version, maps.latestVersion)))
     .orderBy(maps.createdAt);
   return rows;
+}
+
+export async function storeImage(digest: string, type: ImageType, bytes: Buffer): Promise<boolean> {
+  const stored = await db.insert(mapImages).values({ digest, type, bytes }).onConflictDoNothing().returning({ digest: mapImages.digest });
+  return stored.length > 0;
+}
+
+export async function hasImage(digest: string): Promise<boolean> {
+  const [row] = await db.select({ digest: mapImages.digest }).from(mapImages).where(eq(mapImages.digest, digest));
+  return Boolean(row);
+}
+
+export async function imageOf(digest: string): Promise<{ type: ImageType; bytes: Buffer } | undefined> {
+  const [row] = await db.select({ type: mapImages.type, bytes: mapImages.bytes }).from(mapImages).where(eq(mapImages.digest, digest));
+  return row;
 }

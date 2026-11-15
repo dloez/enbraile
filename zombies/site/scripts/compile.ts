@@ -1,7 +1,9 @@
+import { createHash } from "node:crypto";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { z } from "zod";
 import { bundleSchema, languages, type Language } from "../shared/bundle.js";
+import { imageFacts, maxImageBytes } from "../shared/image.js";
 
 type Line = { text: string; mentions: string[]; reveals: string[] };
 type Alt = Line & { level: number; when: string };
@@ -278,11 +280,30 @@ const parseJson = (source: string | null) => {
   }
 };
 
-const meta = z.object({ name: z.object({ es: z.string().min(1), en: z.string().min(1) }), art: z.enum(["teal", "rust", "furnace"]), test: z.boolean().optional() }).safeParse(parseJson(await readOptional("map.json")));
+const meta = z.object({ name: z.object({ es: z.string().min(1), en: z.string().min(1) }), art: z.enum(["teal", "rust", "furnace"]), test: z.boolean().optional(), image: z.string().regex(/^[^/\\]+$/).optional() }).safeParse(parseJson(await readOptional("map.json")));
 if (!meta.success) {
-  console.error("map.json: needs to be JSON with name.es, name.en and art (teal, rust or furnace)");
+  console.error("map.json: needs to be JSON with name.es, name.en and art (teal, rust or furnace), and image only as a file name");
   process.exit(1);
 }
+
+const readImage = async (name: string) => {
+  const bytes = await readFile(join(dir, name)).catch(() => null);
+  if (!bytes) {
+    console.error(`map.json: image ${name} is missing from ${dirArg}`);
+    process.exit(1);
+  }
+  if (bytes.length > maxImageBytes) {
+    console.error(`map.json: image ${name} is over ${maxImageBytes / 1024 / 1024} MB`);
+    process.exit(1);
+  }
+  const facts = imageFacts(bytes);
+  if (!facts) {
+    console.error(`map.json: image ${name} is not a JPEG, PNG or WebP file`);
+    process.exit(1);
+  }
+  return { file: name, digest: createHash("sha256").update(bytes).digest("hex"), ...facts };
+};
+const image = meta.data.image ? await readImage(meta.data.image) : undefined;
 
 const hints: Record<Language, Step[]> = { en: parseSteps(await read("hints.md"), "hints.md"), es: parseSteps(await read("hints.es.md"), "hints.es.md") };
 const dossier = await read("dossier.md");
@@ -338,6 +359,7 @@ const candidate = {
   name: meta.data.name,
   test: meta.data.test ?? false,
   art: meta.data.art,
+  image,
   knowledge,
   steps,
   calibration: parseCalibration(await readOptional("calibration.md")),
@@ -361,4 +383,4 @@ await writeFile(join(dir, "bundle.json"), `${JSON.stringify(parsed.data, null, 2
 const ladders = parsed.data.steps.reduce((sum, step) => sum + 1 + step.parts.length, 0);
 const rungs = parsed.data.steps.reduce((sum, step) => sum + [step.ladder, ...step.parts.map((part) => part.ladder)].reduce((inner, ladder) => inner + ladder.length, 0), 0);
 const alts = parsed.data.steps.reduce((sum, step) => sum + [step.ladder, ...step.parts.map((part) => part.ladder)].reduce((inner, ladder) => inner + ladder.reduce((count, rung) => count + rung.alts.length, 0), 0), 0);
-console.log(`${parsed.data.game}/${parsed.data.map}: ${parsed.data.steps.length} steps, ${ladders} ladders, ${rungs} rungs, ${alts} alts, ${parsed.data.knowledge.length} knowledge entries, languages ${languages.join("+")} → ${relative(process.env.INIT_CWD ?? process.cwd(), join(dir, "bundle.json"))}`);
+console.log(`${parsed.data.game}/${parsed.data.map}: ${parsed.data.steps.length} steps, ${ladders} ladders, ${rungs} rungs, ${alts} alts, ${parsed.data.knowledge.length} knowledge entries, ${parsed.data.image ? `art ${parsed.data.image.width}x${parsed.data.image.height}` : "no art"}, languages ${languages.join("+")} → ${relative(process.env.INIT_CWD ?? process.cwd(), join(dir, "bundle.json"))}`);

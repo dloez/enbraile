@@ -43,6 +43,13 @@
       "when": 1794768102533,
       "tag": "0005_holds_feedback",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794775801103,
+      "tag": "0006_map_images",
+      "breakpoints": true
     }
   ]
 }
