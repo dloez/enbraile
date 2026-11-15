@@ -103,6 +103,38 @@ function RunRowSkeleton({ w }: { w: string }) {
   );
 }
 
+export function MapBelowSkeleton() {
+  return (
+    <div className="below sk" aria-hidden="true">
+      <section className="sec">
+        <h2>
+          <Bar w="7em" />
+        </h2>
+        <RunRowSkeleton w="9em" />
+        <RunRowSkeleton w="7em" />
+        <RunRowSkeleton w="8em" />
+      </section>
+      <section className="sec">
+        <h2>
+          <Bar w="6em" />
+        </h2>
+        <div className="card">
+          <div className="sk-stack">
+            <span className="lab">
+              <Bar w="6em" />
+            </span>
+            <span className="seg">
+              <span className="skeleton sk-option" />
+              <span className="skeleton sk-option" />
+            </span>
+          </div>
+          <span className="b wide-b skeleton" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function MapSkeleton() {
   return (
     <Shell className="page mapv">
@@ -123,33 +155,7 @@ export function MapSkeleton() {
         </div>
         <span className="bn-art skeleton" />
       </div>
-      <div className="below" aria-hidden="true">
-        <section className="sec">
-          <h2>
-            <Bar w="7em" />
-          </h2>
-          <RunRowSkeleton w="9em" />
-          <RunRowSkeleton w="7em" />
-          <RunRowSkeleton w="8em" />
-        </section>
-        <section className="sec">
-          <h2>
-            <Bar w="6em" />
-          </h2>
-          <div className="card">
-            <div className="sk-stack">
-              <span className="lab">
-                <Bar w="6em" />
-              </span>
-              <span className="seg">
-                <span className="skeleton sk-option" />
-                <span className="skeleton sk-option" />
-              </span>
-            </div>
-            <span className="b wide-b skeleton" />
-          </div>
-        </section>
-      </div>
+      <MapBelowSkeleton />
     </Shell>
   );
 }

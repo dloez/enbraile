@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Language, Viewer } from "../shared/bundle";
 import { asRevision, ratings, type Card, type Member, type Message, type Rating, type RunSheet } from "../shared/runs";
-import { askMore, type Listener, fetchRun, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
+import { askMore, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
+import { forget, known, load as fetchPage, openFreshMs, runSource } from "./store";
 import { Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Notice, Pencil, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
@@ -38,7 +39,7 @@ const cariWords: Record<Language, { dispatch: string; more: string; transmitting
   },
 };
 
-function JoinView({ sheet, onJoined }: { sheet: RunSheet; onJoined: () => void }) {
+function JoinView({ sheet, arrive, onJoined }: { sheet: RunSheet; arrive: boolean; onJoined: () => void }) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const name = sheet.map.name[lang];
@@ -57,7 +58,7 @@ function JoinView({ sheet, onJoined }: { sheet: RunSheet; onJoined: () => void }
   };
 
   return (
-    <main className="page two join arrive">
+    <main className={arrive ? "page two join arrive" : "page two join"}>
       <MapHead back eyebrow={t.runOf(sheet.startedBy)} name={name} map={sheet.map} label={sheet.map.image ? t.artOf(name) : t.planOf(name)} />
       <div className="side">
         <div className="card join-card">
@@ -239,21 +240,26 @@ function CopyLink({ id, icon }: { id: string; icon: boolean }) {
 
 type Trouble = { text: string; retry: () => void };
 
-function RunView({ sheet }: { sheet: RunSheet }) {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [cards, setCards] = useState<Map<number, Card>>(new Map());
-  const [members, setMembers] = useState<Member[]>(sheet.members);
-  const [loaded, setLoaded] = useState(false);
+type Log = { messages: Message[]; cards: Map<number, Card>; members: Member[]; rated: Map<number, Rating>; last: number; lastRung: number };
+
+const logs = new Map<string, Log>();
+
+function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
+  const [log] = useState(() => logs.get(sheet.id));
+  const [messages, setMessages] = useState<Message[]>(log?.messages ?? []);
+  const [cards, setCards] = useState<Map<number, Card>>(log?.cards ?? new Map());
+  const [members, setMembers] = useState<Member[]>(log?.members ?? sheet.members);
+  const [loaded, setLoaded] = useState(log !== undefined);
   const [lost, setLost] = useState(false);
-  const [settled, setSettled] = useState(false);
+  const [settled, setSettled] = useState(log !== undefined);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<Message | null>(null);
   const [airing, setAiring] = useState<{ text: string; at: string } | null>(null);
   const [trouble, setTrouble] = useState<Trouble | null>(null);
   const [revising, setRevising] = useState(false);
-  const [rated, setRated] = useState<Map<number, Rating>>(new Map());
-  const last = useRef(0);
-  const lastRung = useRef(0);
+  const [rated, setRated] = useState<Map<number, Rating>>(log?.rated ?? new Map());
+  const last = useRef(log?.last ?? 0);
+  const lastRung = useRef(log?.lastRung ?? 0);
   const rows = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const polling = useRef(0);
@@ -297,6 +303,10 @@ function RunView({ sheet }: { sheet: RunSheet }) {
       document.removeEventListener("visibilitychange", onShow);
     };
   }, [poll]);
+
+  useEffect(() => {
+    if (loaded) logs.set(sheet.id, { messages, cards, members, rated, last: last.current, lastRung: lastRung.current });
+  }, [sheet.id, loaded, messages, cards, members, rated]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -421,7 +431,7 @@ function RunView({ sheet }: { sheet: RunSheet }) {
   const notice = trouble ?? (lost ? { text: t.failed, retry: () => void poll() } : null);
 
   return (
-    <div className="runv arrive">
+    <div className={arrive ? "runv arrive" : "runv"}>
       <aside className="rail">
         <div>
           <span className="lab">{t.yourRun}</span>
@@ -513,26 +523,49 @@ export function RunPage({
   onYourRun: (run: RunLink | null) => void;
   onViewer: (viewer: Viewer | null) => void;
 }) {
-  const [state, setState] = useState<State>({ kind: "loading" });
+  const source = useMemo(() => runSource(id), [id]);
+  const [atOnce] = useState(() => known(source) !== undefined);
+  const [state, setState] = useState<State>(() => {
+    const sheet = known(source);
+    return sheet ? { kind: "ready", sheet } : { kind: "loading" };
+  });
 
-  const load = useCallback(() => {
-    setState((current) => (current.kind === "ready" ? current : { kind: "loading" }));
-    fetchRun(id)
-      .then((sheet) => {
-        onViewer(sheet.viewer);
-        onMap(sheet.you ? sheet.map.name[lang] : undefined);
-        onYourRun(sheet.you ? { id: sheet.id, name: sheet.map.name } : sheet.yourRun);
-        setState({ kind: "ready", sheet });
-      })
-      .catch((error: unknown) => {
-        if (error instanceof SignedOut) return signIn();
-        onViewer(null);
-        onMap(undefined);
-        setState({ kind: error instanceof Refused && error.status === 404 ? "missing" : "failed" });
-      });
-  }, [id, onMap, onYourRun, onViewer]);
+  const asked = useRef(0);
+  const load = useCallback(
+    (freshMs: number) => {
+      const ask = ++asked.current;
+      setState((current) => (current.kind === "ready" ? current : { kind: "loading" }));
+      fetchPage(source, freshMs)
+        .then((sheet) => {
+          if (ask !== asked.current) return;
+          onViewer(sheet.viewer);
+          onMap(sheet.you ? sheet.map.name[lang] : undefined);
+          onYourRun(sheet.you ? { id: sheet.id, name: sheet.map.name } : sheet.yourRun);
+          setState({ kind: "ready", sheet });
+        })
+        .catch((error: unknown) => {
+          if (error instanceof SignedOut) return signIn();
+          if (ask !== asked.current) return;
+          onViewer(null);
+          if (error instanceof Refused && error.status === 404) {
+            forget(source);
+            logs.delete(id);
+            onMap(undefined);
+            setState({ kind: "missing" });
+          } else {
+            if (!known(source)) onMap(undefined);
+            setState((current) => (current.kind === "ready" ? current : { kind: "failed" }));
+          }
+        });
+    },
+    [id, source, onMap, onYourRun, onViewer],
+  );
+  const retry = useCallback(() => {
+    forget(source);
+    load(0);
+  }, [source, load]);
 
-  useEffect(load, [load]);
+  useEffect(() => load(openFreshMs), [load]);
 
   if (state.kind === "loading") return expect === "run" ? <RunSkeleton /> : <JoinSkeleton />;
   if (state.kind !== "ready")
@@ -540,7 +573,7 @@ export function RunPage({
       <main className="page">
         <Notice text={state.kind === "missing" ? t.noSuchRun : t.failed} alert>
           {state.kind === "failed" ? (
-            <button type="button" className="b b-ghost" onClick={load}>
+            <button type="button" className="b b-ghost" onClick={retry}>
               {t.retry}
             </button>
           ) : (
@@ -551,5 +584,5 @@ export function RunPage({
         </Notice>
       </main>
     );
-  return state.sheet.you ? <RunView sheet={state.sheet} /> : <JoinView sheet={state.sheet} onJoined={load} />;
+  return state.sheet.you ? <RunView sheet={state.sheet} arrive={!atOnce} /> : <JoinView sheet={state.sheet} arrive={!atOnce} onJoined={retry} />;
 }

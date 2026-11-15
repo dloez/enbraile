@@ -1,25 +1,5 @@
 # Zombies Coach — Tasks
 
-## Move between pages without reloading what is already known
-
-The owner finds that going from a map back to the maps list, and between other pages, refreshes too much (2026-11-15). Navigation is client-side (`history.pushState` in `zombies/site/src/route.ts`), but every page starts in `loading` on mount (`usePage` in `zombies/site/src/App.tsx`), so each move unmounts the page, shows its skeleton and fetches it again, even for a page seen a second ago.
-
-**Do:**
-- [ ] Keep each page's last reply in memory, keyed by what it shows (the maps list, a map, an attempt), and render it at once when the reader comes back, refreshing in the background and swapping the new reply in without a skeleton or a jump; the skeleton shows only when nothing is known yet.
-- [ ] Use what one page already has to start the next: opening a map from the maps list shows its banner from the list's data while its attempts load; going back to the list shows it straight away.
-- [ ] Start fetching a page when the reader points at or presses its link, so it is usually ready by the time it opens.
-- [ ] Keep the header (the reader, the "Your attempt" pill) across navigations instead of re-deriving it each time, and restore the list's scroll position on going back.
-- [ ] Docs: the loading behaviour in `docs/zombies/site/explanation/site.md` and the States in `docs/zombies/site/reference/design-system.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP with requests delayed 1 s: maps → map → back → map again shows a skeleton only on the first visit to each page, the second visit renders at once and updates in place; a change made by another member (a new attempt) appears after the background refresh; no console error.
-- Human-run: the owner moves around the site and it no longer feels like it refreshes on every click.
-- Reuse: `usePage` and the skeletons; the attempt page's polling, which already updates in place.
-- Neighbors: `dj/panel/src/`, which keeps its state between views.
-- Forbidden: showing one member's data to another; stale data that never refreshes; a data-fetching library added only for this when a small in-memory store does.
-
-**Touches:** `zombies/site/src/`, `docs/zombies/site/`
-
 ## Audit every reply and step in as Cari
 
 The watch loop checks each live reply against the rules and Claude can post into a run as Cari when Haiku is lost ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).

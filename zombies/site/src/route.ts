@@ -18,3 +18,13 @@ export function usePath(): string {
 
 export const runPath = (id: string) => `/attempts/${encodeURIComponent(id)}`;
 export const mapPath = (game: string, map: string) => `/maps/${encodeURIComponent(game)}/${encodeURIComponent(map)}`;
+
+export type Place = { kind: "maps" } | { kind: "map"; game: string; map: string } | { kind: "run"; id: string };
+
+export function place(path: string): Place {
+  const run = path.match(/^\/attempts\/([^/]+)\/?$/);
+  if (run) return { kind: "run", id: decodeURIComponent(run[1]!) };
+  const map = path.match(/^\/maps\/([^/]+)\/([^/]+)\/?$/);
+  if (map) return { kind: "map", game: decodeURIComponent(map[1]!), map: decodeURIComponent(map[2]!) };
+  return { kind: "maps" };
+}

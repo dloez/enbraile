@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Language, PublishedMap, Viewer } from "../shared/bundle";
 import type { Attempt, MapPage as MapPageData, MapSummary } from "../shared/runs";
-import { fetchMap, fetchMaps, joinRun, Refused, SignedOut, signIn, startRun } from "./api";
+import { joinRun, Refused, SignedOut, signIn, startRun } from "./api";
 import { MapArt } from "./art";
 import { languageNames, lang, playedAt, switchLang, t } from "./i18n";
-import { mapPath, navigate, runPath, usePath } from "./route";
+import { mapPath, navigate, place, runPath, usePath } from "./route";
 import { RunPage } from "./RunPage";
-import { Bar, MapSkeleton, MapsSkeleton } from "./skeletons";
+import { Bar, MapBelowSkeleton, MapSkeleton, MapsSkeleton } from "./skeletons";
+import { forget, known, load as fetchPage, mapSource, mapsSource, openFreshMs, runSource, type Source } from "./store";
 import { Arrow, Back, Check, Chevron, Chips, initials, LeaveNote, Link, Notice, type RunLink, useFit } from "./ui";
 
 const languages: Language[] = ["es", "en"];
@@ -90,24 +91,39 @@ type Loaded<T> = { kind: "loading" } | { kind: "failed" } | { kind: "missing" } 
 
 type Heard = { onYourRun: (run: RunLink | null) => void; onViewer: (viewer: Viewer | null) => void };
 
-function usePage<T extends { viewer: Viewer; yourRun: RunLink | null }>(fetch: () => Promise<T>, { onYourRun, onViewer }: Heard) {
-  const [state, setState] = useState<Loaded<T>>({ kind: "loading" });
-  const load = useCallback(() => {
-    setState({ kind: "loading" });
-    fetch()
-      .then((page) => {
-        onViewer(page.viewer);
-        onYourRun(page.yourRun);
-        setState({ kind: "ready", page });
-      })
-      .catch((error: unknown) => {
-        if (error instanceof SignedOut) return signIn();
-        onViewer(null);
-        setState({ kind: error instanceof Refused && error.status === 404 ? "missing" : "failed" });
-      });
-  }, [fetch, onYourRun, onViewer]);
-  useEffect(load, [load]);
-  return { state, load };
+function usePage<T extends { viewer: Viewer; yourRun: RunLink | null }>(source: Source<T>, { onYourRun, onViewer }: Heard) {
+  const [atOnce] = useState(() => known(source) !== undefined);
+  const [state, setState] = useState<Loaded<T>>(() => {
+    const page = known(source);
+    return page ? { kind: "ready", page } : { kind: "loading" };
+  });
+  const asked = useRef(0);
+  const load = useCallback(
+    (freshMs: number) => {
+      const ask = ++asked.current;
+      setState((current) => (current.kind === "ready" ? current : { kind: "loading" }));
+      fetchPage(source, freshMs)
+        .then((page) => {
+          if (ask !== asked.current) return;
+          onViewer(page.viewer);
+          onYourRun(page.yourRun);
+          setState({ kind: "ready", page });
+        })
+        .catch((error: unknown) => {
+          if (error instanceof SignedOut) return signIn();
+          if (ask !== asked.current) return;
+          onViewer(null);
+          if (error instanceof Refused && error.status === 404) {
+            forget(source);
+            setState({ kind: "missing" });
+          } else setState((current) => (current.kind === "ready" ? current : { kind: "failed" }));
+        });
+    },
+    [source, onYourRun, onViewer],
+  );
+  useEffect(() => load(openFreshMs), [load]);
+  const retry = useCallback(() => load(0), [load]);
+  return { state, load: retry, atOnce };
 }
 
 function Failed({ retry }: { retry: () => void }) {
@@ -120,21 +136,30 @@ function Failed({ retry }: { retry: () => void }) {
   );
 }
 
+let mapsScroll = 0;
+
 function MapsPage(heard: Heard) {
-  const { state, load } = usePage(fetchMaps, heard);
+  const { state, load, atOnce } = usePage(mapsSource, heard);
   const page = state.kind === "ready" ? state.page : null;
+  const arrive = atOnce ? "" : " arrive";
+  const scroller = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    if (atOnce && scroller.current) scroller.current.scrollTop = mapsScroll;
+    else mapsScroll = 0;
+  }, [atOnce]);
 
   return (
-    <main className="page maps">
+    <main className="page maps" ref={scroller} onScroll={(event) => (mapsScroll = event.currentTarget.scrollTop)}>
       <div className="maps-top">
         <h1 className="cond">{t.maps}</h1>
-        <span className={page ? "lab arrive" : "lab"}>{page ? t.onFile(page.maps.length) : state.kind === "loading" ? <Bar w="7em" /> : " "}</span>
+        <span className={page ? `lab${arrive}` : "lab"}>{page ? t.onFile(page.maps.length) : state.kind === "loading" ? <Bar w="7em" /> : " "}</span>
       </div>
       {state.kind === "loading" && <MapsSkeleton />}
       {state.kind === "failed" && <Failed retry={load} />}
-      {page && page.maps.length === 0 && <p className="empty arrive">{t.noMaps}</p>}
+      {page && page.maps.length === 0 && <p className={`empty${arrive}`}>{t.noMaps}</p>}
       {page && page.maps.length > 0 && (
-        <ul className="mlist arrive">
+        <ul className={`mlist${arrive}`}>
           {page.maps.map((map) => (
             <MapRow key={`${map.game}/${map.map}`} map={map} />
           ))}
@@ -196,10 +221,15 @@ function AttemptRow({ attempt, busy, onJoin }: { attempt: Attempt; busy: boolean
   );
 }
 
-function MapBanner({ map, attempts }: { map: PublishedMap; attempts: Attempt[] }) {
+type Counts = { attempts: number; beaten: number; you: boolean };
+
+function counted(attempts: Attempt[]): Counts {
+  return { attempts: attempts.length, beaten: attempts.filter((attempt) => attempt.beaten).length, you: attempts.some((attempt) => attempt.you) };
+}
+
+function MapBanner({ map, counts }: { map: PublishedMap; counts: Counts }) {
   const name = map.name[lang];
   const title = useFit<HTMLHeadingElement>(name);
-  const beaten = attempts.filter((attempt) => attempt.beaten).length;
   return (
     <section className="banner">
       <div className="bn-id">
@@ -208,8 +238,8 @@ function MapBanner({ map, attempts }: { map: PublishedMap; attempts: Attempt[] }
           {name}
         </h1>
         <p className="bn-cnt">
-          {attempts.length === 0 ? t.noAttempts : t.attemptsLine(attempts.length, beaten)}
-          {attempts.some((attempt) => attempt.you) && (
+          {counts.attempts === 0 ? t.noAttempts : t.attemptsLine(counts.attempts, counts.beaten)}
+          {counts.you && (
             <>
               {" · "}
               <span className="here">{t.youreIn}</span>
@@ -222,7 +252,7 @@ function MapBanner({ map, attempts }: { map: PublishedMap; attempts: Attempt[] }
   );
 }
 
-function MapView({ page }: { page: MapPageData }) {
+function MapBelow({ page, arrive }: { page: MapPageData; arrive: boolean }) {
   const { map, attempts, yourRun } = page;
   const [language, setLanguage] = useState<Language>("es");
   const [busy, setBusy] = useState(false);
@@ -233,7 +263,10 @@ function MapView({ page }: { page: MapPageData }) {
     setBusy(true);
     setFailed(null);
     post()
-      .then(({ id }) => navigate(runPath(id)))
+      .then(({ id }) => {
+        forget(runSource(id));
+        navigate(runPath(id));
+      })
       .catch((error: unknown) => {
         if (error instanceof SignedOut) return signIn();
         setBusy(false);
@@ -242,58 +275,65 @@ function MapView({ page }: { page: MapPageData }) {
   };
 
   return (
-    <main className="page mapv arrive">
-      <Link to="/" className="back">
-        <Back />
-        {t.maps}
-      </Link>
-      <MapBanner map={map} attempts={attempts} />
-      <div className="below">
-        <section className="sec">
-          <h2>{t.attempts}</h2>
-          {attempts.length === 0 ? (
-            <p className="empty">{t.noneOnMap}</p>
-          ) : (
-            attempts.map((attempt) => <AttemptRow key={attempt.id} attempt={attempt} busy={busy} onJoin={(id) => act("join", () => joinRun(id))} />)
-          )}
-          {failed === "join" && (
+    <div className={arrive ? "below arrive" : "below"}>
+      <section className="sec">
+        <h2>{t.attempts}</h2>
+        {attempts.length === 0 ? (
+          <p className="empty">{t.noneOnMap}</p>
+        ) : (
+          attempts.map((attempt) => <AttemptRow key={attempt.id} attempt={attempt} busy={busy} onJoin={(id) => act("join", () => joinRun(id))} />)
+        )}
+        {failed === "join" && (
+          <p className="state" role="alert">
+            {t.failed}
+          </p>
+        )}
+      </section>
+      <section className="sec">
+        <h2>{t.startARun}</h2>
+        <div className="card">
+          <fieldset className="seg">
+            <legend>{t.cariSpeaks}</legend>
+            {languages.map((code) => (
+              <label key={code}>
+                <input type="radio" name="lang" checked={language === code} onChange={() => setLanguage(code)} />
+                {languageNames[code]}
+              </label>
+            ))}
+          </fieldset>
+          {failed === "start" && (
             <p className="state" role="alert">
               {t.failed}
             </p>
           )}
-        </section>
-        <section className="sec">
-          <h2>{t.startARun}</h2>
-          <div className="card">
-            <fieldset className="seg">
-              <legend>{t.cariSpeaks}</legend>
-              {languages.map((code) => (
-                <label key={code}>
-                  <input type="radio" name="lang" checked={language === code} onChange={() => setLanguage(code)} />
-                  {languageNames[code]}
-                </label>
-              ))}
-            </fieldset>
-            {failed === "start" && (
-              <p className="state" role="alert">
-                {t.failed}
-              </p>
-            )}
-            <button type="button" className="b b-red wide-b" disabled={busy} onClick={() => act("start", () => startRun(map.game, map.map, language))}>
-              {t.startRun}
-            </button>
-          </div>
-          {yourRun && <LeaveNote before={others ? t.leaveOnEither : t.leaveOnStart} name={yourRun.name[lang]} after={t.leaveAfter} />}
-        </section>
-      </div>
+          <button type="button" className="b b-red wide-b" disabled={busy} onClick={() => act("start", () => startRun(map.game, map.map, language))}>
+            {t.startRun}
+          </button>
+        </div>
+        {yourRun && <LeaveNote before={others ? t.leaveOnEither : t.leaveOnStart} name={yourRun.name[lang]} after={t.leaveAfter} />}
+      </section>
+    </div>
+  );
+}
+
+function MapView({ map, counts, page, arrive }: { map: PublishedMap; counts: Counts; page: MapPageData | null; arrive: "all" | "below" | "none" }) {
+  return (
+    <main className={arrive === "all" ? "page mapv arrive" : "page mapv"} aria-busy={page ? undefined : true}>
+      <Link to="/" className="back">
+        <Back />
+        {t.maps}
+      </Link>
+      <MapBanner map={map} counts={counts} />
+      {page ? <MapBelow page={page} arrive={arrive === "below"} /> : <MapBelowSkeleton />}
     </main>
   );
 }
 
 function MapPage({ game, map, ...heard }: { game: string; map: string } & Heard) {
-  const fetch = useCallback(() => fetchMap(game, map), [game, map]);
-  const { state, load } = usePage(fetch, heard);
-  if (state.kind === "loading") return <MapSkeleton />;
+  const source = useMemo(() => mapSource(game, map), [game, map]);
+  const { state, load, atOnce } = usePage(source, heard);
+  const [seed] = useState(() => (atOnce ? undefined : known(mapsSource)?.maps.find((summary) => summary.game === game && summary.map === map)));
+  if (state.kind === "loading") return seed ? <MapView map={seed} counts={seed} page={null} arrive="none" /> : <MapSkeleton />;
   if (state.kind === "failed")
     return (
       <main className="page">
@@ -310,7 +350,13 @@ function MapPage({ game, map, ...heard }: { game: string; map: string } & Heard)
         </Notice>
       </main>
     );
-  return <MapView page={state.page} />;
+  return <MapView map={state.page.map} counts={counted(state.page.attempts)} page={state.page} arrive={atOnce ? "none" : seed ? "below" : "all"} />;
+}
+
+function runName(id: string, yourRun: RunLink | null | undefined): string | undefined | null {
+  const sheet = known(runSource(id));
+  if (sheet) return sheet.you ? sheet.map.name[lang] : undefined;
+  return yourRun?.id === id ? yourRun.name[lang] : null;
 }
 
 export function App() {
@@ -321,18 +367,18 @@ export function App() {
 
   const onViewer = useCallback((viewer: Viewer | null) => setMe((current) => viewer ?? current ?? null), []);
 
-  const runId = path.match(/^\/attempts\/([^/]+)\/?$/)?.[1];
-  const mapMatch = path.match(/^\/maps\/([^/]+)\/([^/]+)\/?$/);
+  const at = place(path);
+  const runId = at.kind === "run" ? at.id : undefined;
   const onMap = useCallback((name: string | undefined) => runId && setRunHead({ id: runId, name }), [runId]);
-  const inRun = runId ? (runHead?.id === runId ? runHead.name : null) : undefined;
+  const inRun = runId ? (runHead?.id === runId ? runHead.name : runName(runId, yourRun)) : undefined;
 
   return (
     <>
       <Header me={me} inRun={inRun} yourRun={yourRun} />
-      {runId ? (
-        <RunPage key={runId} id={decodeURIComponent(runId)} expect={yourRun === undefined || yourRun?.id === decodeURIComponent(runId) ? "run" : "join"} onMap={onMap} onYourRun={setYourRun} onViewer={onViewer} />
-      ) : mapMatch ? (
-        <MapPage key={path} game={decodeURIComponent(mapMatch[1]!)} map={decodeURIComponent(mapMatch[2]!)} onYourRun={setYourRun} onViewer={onViewer} />
+      {at.kind === "run" ? (
+        <RunPage key={at.id} id={at.id} expect={yourRun === undefined || yourRun?.id === at.id ? "run" : "join"} onMap={onMap} onYourRun={setYourRun} onViewer={onViewer} />
+      ) : at.kind === "map" ? (
+        <MapPage key={path} game={at.game} map={at.map} onYourRun={setYourRun} onViewer={onViewer} />
       ) : (
         <MapsPage onYourRun={setYourRun} onViewer={onViewer} />
       )}

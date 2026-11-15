@@ -4,6 +4,7 @@ import type { Member, RunLink } from "../shared/runs";
 import { MapArt } from "./art";
 import { t } from "./i18n";
 import { navigate } from "./route";
+import { prefetch } from "./store";
 
 export type { RunLink };
 
@@ -86,6 +87,9 @@ export function Link({ to, className, children, label }: { to: string; className
       href={to}
       className={className}
       aria-label={label}
+      onPointerEnter={() => prefetch(to)}
+      onPointerDown={() => prefetch(to)}
+      onFocus={() => prefetch(to)}
       onClick={(event) => {
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
         event.preventDefault();
