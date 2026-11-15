@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- `home/bot/.env.local` (gitignored) holding `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY`, `DISCORD_BOT_TOKEN` and `INTERNAL_SECRET`.
+- `home/bot/.env.local` (gitignored) holding `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY`, `DISCORD_BOT_TOKEN` and `INTERNAL_SECRET`, and `ANTHROPIC_API_KEY` for the assistant to answer.
 - For the cluster steps, `kubectl` and `flux` pointed at `tom`, and the owner's `dloez` repository.
 
 ## Run It Locally
@@ -24,7 +24,7 @@ To roll back, revert the commit in `enbraile` and push, which builds a newer ima
 1. In the Tailscale admin console → DNS, turn on MagicDNS and HTTPS Certificates, and note the tailnet's DNS name (`<tailnet>.ts.net`).
 2. In Access Controls, add `"tag:dj": ["autogroup:admin"]` to `tagOwners`, and a `nodeAttrs` entry `{"target": ["tag:dj"], "attr": ["funnel"]}`.
 3. In Settings → Keys, generate an auth key: pre-approved, tagged `tag:dj`, not ephemeral. The pod uses it only for its first login.
-4. In 1Password, vault `Homelab - Tom`, create an item `dj` with the fields `bot-token` (the bot token), `internal-secret` (the same `INTERNAL_SECRET` as the panel's) and `ts-authkey`.
+4. In 1Password, vault `Homelab - Tom`, create an item `dj` with the fields `bot-token` (the bot token), `internal-secret` (the same `INTERNAL_SECRET` as the panel's), `ts-authkey` and `anthropic-api-key` (a Claude Console key, optional: without it the assistant gives a canned reply).
 5. In `dloez`, set `PUBLIC_URL` in `homelab/apps/tom/dj.yaml` to `https://dj.<tailnet>.ts.net` and push. Flux creates the namespace, the secret, the volume and both pods, and then keeps the bot's image current.
 6. In the Discord developer portal, check that the application has no Interactions Endpoint URL, so Discord sends commands over the gateway. The bot registers its slash commands itself on every start.
 7. In Vercel, set the panel's `BOT_URL` to `https://dj.<tailnet>.ts.net` for Production, and redeploy.

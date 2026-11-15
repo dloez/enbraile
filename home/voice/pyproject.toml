@@ -1,0 +1,17 @@
+[project]
+name = "enbraile-voice"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+  "av==16.1.0",
+  "ctranslate2==4.9.0",
+  "faster-whisper==1.2.1",
+  "numpy==2.5.4",
+  "nvidia-cublas-cu12==12.9.3.13",
+  "nvidia-cudnn-cu12==9.28.1.4",
+  "piper-tts==1.8.0",
+  "websockets==17.4",
+]
+
+[tool.uv]
+package = false

@@ -1,9 +1,12 @@
 import { server } from "./api.ts";
+import { useTools } from "./assistant/index.ts";
 import { registerCommands } from "./commands.ts";
 import { client, ready } from "./discord.ts";
 import { modules } from "./modules.ts";
 
 const port = Number(process.env.PORT ?? 8080);
+
+useTools(modules.flatMap((module) => module.tools ?? []));
 
 server.listen(port, () => console.log("listening", port));
 void client.login(process.env.DISCORD_BOT_TOKEN ?? "");

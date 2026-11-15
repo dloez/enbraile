@@ -1,19 +1,23 @@
-import { type AudioPlayer, entersState, joinVoiceChannel, type VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
+import { type AudioPlayer, AudioPlayerStatus, type AudioResource, createAudioPlayer, entersState, joinVoiceChannel, type VoiceConnection, VoiceConnectionStatus, type VoiceReceiver } from "@discordjs/voice";
 import { client, guild } from "./discord.ts";
 
-export type VoiceEvent = { type: "lost" | "rejoined" | "gone" | "members" } | { type: "moved"; channelId: string };
+export type VoiceEvent = { type: "lost" | "rejoined" | "gone" | "members" | "connected" } | { type: "moved"; channelId: string };
 export type Member = { id: string; name: string; avatar: string | null };
 
 const RECOVER_MS = 5_000;
 const READY_MS = 30_000;
 const CHECK_MS = 15_000;
 const REJOIN_ATTEMPTS = 4;
+const SPEECH_LIMIT_MS = 60_000;
 
 const leases = new Set<string>();
 const watchers = new Set<(event: VoiceEvent) => void>();
 let connection: VoiceConnection | undefined;
 let channelId = "";
 let output: AudioPlayer | undefined;
+const speech = createAudioPlayer();
+const spoken: AudioResource[] = [];
+let talking = false;
 let lost = false;
 let rejoining = false;
 let failures = 0;
@@ -33,7 +37,7 @@ export const channel = () => channelId || null;
 async function connect(): Promise<void> {
   const server = await guild();
   connection?.destroy();
-  connection = joinVoiceChannel({ guildId: server.id, channelId, adapterCreator: server.voiceAdapterCreator, selfDeaf: true });
+  connection = joinVoiceChannel({ guildId: server.id, channelId, adapterCreator: server.voiceAdapterCreator, selfDeaf: false, selfMute: false });
   const joined = connection;
   joined.on("error", (error) => console.error("voice", error.message));
   joined.on(VoiceConnectionStatus.Disconnected, () => {
@@ -44,7 +48,8 @@ async function connect(): Promise<void> {
     });
   });
   await entersState(joined, VoiceConnectionStatus.Ready, READY_MS);
-  if (output) joined.subscribe(output);
+  joined.subscribe(talking ? speech : (output ?? speech));
+  emit({ type: "connected" });
 }
 
 async function rejoin(): Promise<void> {
@@ -94,6 +99,8 @@ export async function hold(owner: string, nextChannel: string): Promise<void> {
   }
 }
 
+export const holding = (owner: string) => leases.has(owner);
+
 export function release(owner: string): void {
   leases.delete(owner);
   if (!leases.size) disconnect();
@@ -101,7 +108,30 @@ export function release(owner: string): void {
 
 export function play(player: AudioPlayer): void {
   output = player;
-  if (connection) connection.subscribe(player);
+  if (connection && !talking) connection.subscribe(player);
+}
+
+export const speaking = () => talking;
+export const receiver = (): VoiceReceiver | null => (connected() ? connection!.receiver : null);
+
+function speakNext(): void {
+  const next = spoken.shift();
+  if (!next || !connected()) {
+    spoken.length = 0;
+    talking = false;
+    if (output) connection?.subscribe(output);
+    return;
+  }
+  talking = true;
+  connection!.subscribe(speech);
+  speech.play(next);
+  entersState(speech, AudioPlayerStatus.Playing, SPEECH_LIMIT_MS).then(() => entersState(speech, AudioPlayerStatus.Idle, SPEECH_LIMIT_MS)).catch(() => speech.stop(true)).finally(speakNext);
+}
+
+export function speak(resource: AudioResource): void {
+  if (!connected()) return;
+  spoken.push(resource);
+  if (!talking) speakNext();
 }
 
 export function members(): Member[] {

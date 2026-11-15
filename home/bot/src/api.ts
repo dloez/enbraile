@@ -47,6 +47,11 @@ export const server = createServer(async (request, response) => {
 server.on("upgrade", async (request, socket, head) => {
   const url = new URL(request.url ?? "/", "http://bot");
   const found = target(url.pathname);
+  const peer = found?.path === "connect" && found.module.connect && request.headers.authorization === `Bearer ${secret}` ? found.module : null;
+  if (peer) {
+    sockets.handleUpgrade(request, socket, head, (connected) => peer.connect!(connected));
+    return;
+  }
   const module = found?.path === "live" && found.module.live && found.module.route ? found.module : null;
   const userId = module ? await verifyTicket(module.name, url.searchParams.get("ticket") ?? "") : null;
   if (!module || !userId) {

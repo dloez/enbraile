@@ -91,7 +91,7 @@ voice.play(player);
 setInterval(() => {
   const status = player.state.status;
   const now = Date.now();
-  if (!resource || !flowing || (status !== AudioPlayerStatus.Playing && status !== AudioPlayerStatus.AutoPaused)) {
+  if (!resource || !flowing || voice.speaking() || (status !== AudioPlayerStatus.Playing && status !== AudioPlayerStatus.AutoPaused)) {
     progress.at = now;
     return;
   }

@@ -3,11 +3,13 @@ import { commands } from "./commands.ts";
 import { watchVoice } from "./discord.ts";
 import { route } from "./routes.ts";
 import * as session from "./session.ts";
+import { tools } from "./tools.ts";
 
 export const dj: Module = {
   name: "dj",
   commands,
   route,
+  tools,
   live: (userId, send) => {
     const unwatch = session.watch((view) => send({ type: "view", view }));
     const unvoice = watchVoice(userId, (voice) => send({ type: "voice", voice }));
