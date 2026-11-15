@@ -169,11 +169,11 @@ printf %s "$v" | npx vercel env add CLAUDE_TOKEN --environment production --sens
 unset v
 ```
 
-With the item in another vault, put that vault's name in place of `Private` here and in step 9.
+With the item in another vault, put that vault's name in place of `Private` here and in [step 10](#10-deploy).
 
 `zombies.enbraile.vip` is on the project's domains (`npx vercel domains add zombies.enbraile.vip enbraile-zombies`). In Cloudflare's `enbraile.vip` zone, add a `CNAME` for `zombies` to the target Vercel names for it (`npx vercel api /v6/domains/zombies.enbraile.vip/config`, `recommendedCNAME`, `0cedcc0080c9a767.vercel-dns-017.com` on 2026-11-15), with the proxy off: a proxied record would be blocked during LaLiga matches ([The Zombies Site → Hosting](../explanation/site.md#hosting)). The [root site](../../../home/site/explanation/site.md) lists `https://zombies.enbraile.vip` in `trustedOrigins` (`home/site/api/_lib/auth.ts`), so its sign-in returns to the site.
 
-### 9. Deploy
+### 10. Deploy
 
 Push to `main`. The `zombies-site.yml` workflow deploys every push to `main` that touches `zombies/site/` to production, and another branch's push gets a preview, whose URL ends the workflow's run ([How to Deploy the Vercel Projects](../../../general/how-to/deploy-vercel-projects.md)). Vercel's build runs `npm run build && npm run db:migrate` (`buildCommand` in `vercel.json`) against that environment's `DATABASE_URL`, so a deploy migrates its own branch before it goes live, and a failed build migrates nothing.
 
@@ -187,10 +187,10 @@ CLAUDE_TOKEN="$(op read 'op://Private/zombies claude token/password')" ZOMBIES_U
 
 From `zombies/site/`, after `npx vercel link --project enbraile-zombies` once (`.vercel/` is gitignored), the commands of [pkmn's table](../../../pkmn/site/how-to/run-and-deploy-the-site.md#inspect-deployments-and-the-database-from-the-shell) work with `enbraile-zombies` and `--project-id silent-morning-44744308` in place of pkmn's. `select count(*) from drizzle.__drizzle_migrations` on a branch shows how many migrations it has applied. A connection string carries its password: keep it out of commits and logs.
 
-### 10. Roll back
+### 11. Roll back
 
 Use Instant Rollback on the previous production deployment in the Vercel dashboard, or revert the commit and push, which redeploys. A migration is not rolled back: a schema change is undone by a new forward migration, and lost data comes back through Neon's point-in-time restore. A map's bundle is reverted by publishing the older bundle again.
 
 ## Verification
 
-The maps page shows Harrow Station with a Test map tag and "No attempts yet". Locally, with two members in `DEV_USER_ID`, one opens Harrow Station's row and starts an attempt there, and the other opens its link (`/attempts/<id>`) or its row on the map's view, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking Cari for a hint brings a card both see, and its More adds the next rung; the third rung of the lantern step shows its zone on the station's drawn plan under its text; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. With `BOT_URL` and `INTERNAL_SECRET` set to a local bot, a member in a voice channel sees the call line above the composer with **Bring Cari in**, and a «cari» request posted to `/api/voice` with the secret, as the bot sends it, answers `{ reply }` with Cari's words and any hint, and shows the line and the card in the chat. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.
+The maps page shows Harrow Station with a Test map tag and "No attempts yet". Locally, with two members in `DEV_USER_ID`, one opens Harrow Station's row and starts an attempt there, and the other opens its link (`/attempts/<id>`) or its row on the map's view, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking Cari for a hint brings a card both see, and its More adds the next rung; the third rung of the lantern step shows its zone on the station's drawn plan under its text; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. With `BOT_URL` and `INTERNAL_SECRET` set to a local bot, a member in a voice channel sees the voice panel at the rail's foot (a bar under the strip on a phone) with **Bring Cari in**, and a «cari» request posted to `/api/voice` with the secret, as the bot sends it, answers `{ reply }` with Cari's words and any hint, and shows the line and the card in the chat. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.

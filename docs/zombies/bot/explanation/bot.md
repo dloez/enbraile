@@ -1,6 +1,6 @@
 # The Zombies Bot Module
 
-Cari's voice in the group's Discord call: a module of the [Enbraile bot](../../../home/bot/explanation/bot.md) with its code in `zombies/bot/`. It brings the bot into a run member's voice channel, hears «cari …» and passes it to the [site](../../site/explanation/site.md), which answers as the speaker's run, speaks the answer back, and sends the site everything else said in the call for the run to keep. The bot is only the interface: it holds no run state and calls no model ([Zombies Coach → Architecture](../../../work-in-progress/zombies-coach/discovery.md#architecture)).
+Cari's voice in the group's Discord call: a module of the [Enbraile bot](../../../home/bot/explanation/bot.md) with its code in `zombies/bot/`. It brings the bot into a run member's voice channel, hears «cari …» and passes it to the [site](../../site/explanation/site.md), which answers as the speaker's run, speaks the answer back, and sends the site everything else said in the call for the run to keep. The bot is only the interface: it holds no run state and calls no model ([The Zombies Site → Decisions](../../site/explanation/site.md#decisions), "The site is the brain, the bot only an interface").
 
 ## How It Works
 
@@ -23,7 +23,7 @@ The module deploys with the host: see [The Enbraile Bot → Deploying](../../../
 - **The site's address defaults to production:** the bot's cluster manifest in `dloez` needs no new variable, and a local run overrides it with `ZOMBIES_URL`. _(the agent's choice, 2026-11-15)_
 - **A `voice` route beside `join`:** the site offers to bring Cari in only when a member is in a channel, and only the bot can see voice states. _(the agent's choice, 2026-11-15)_
 - **The lease drops when the call empties,** since a listening lease left behind would keep the bot in an empty channel hearing nothing. _(the agent's choice, 2026-11-15)_
-- **The chime on «cari» stays on** (the trigger's default `ack`): it only says the word was heard, which the voice tests asked for, not that a hint is new, so it is not one of the sound cues [Discovery → Voice](../../../work-in-progress/zombies-coach/discovery.md#voice) rules out. _(the agent's choice, 2026-11-15)_
+- **The chime on «cari» stays on** (the trigger's default `ack`): it only says the word was heard, which the voice tests asked for, not that a hint is new, so it is not one of the sound cues the site's "Cari's voice only" rules out ([The Zombies Site → Decisions](../../site/explanation/site.md#decisions)). _(the agent's choice, 2026-11-15)_
 - **Each call line goes to the site as it is heard,** one request per sentence and none retried: sentences come seconds apart, and the bucket keeps the full call when it is configured. _(the agent's choice, 2026-11-15)_
 - **A line from someone in no run goes to the run of whoever brought Cari in,** since a friend in the call who never opened the site is still part of the attempt. _(the agent's choice, 2026-11-15)_
 - **The site's reply is `{ reply: string | null }`,** spoken as it comes; the language is the run's, chosen on the site. _(the agent's choice, 2026-11-15)_

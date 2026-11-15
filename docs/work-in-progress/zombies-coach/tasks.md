@@ -1,35 +1,5 @@
 # Zombies Coach — Tasks
 
-## Fix the zombies docs' stale and contradicting lines
-
-Entries that landed one after another left lines that no longer match the site or each other (gardener pass, 2026-11-15):
-
-- `docs/zombies/site/explanation/site.md:201`: the "third take" decision still says the map view holds "its open runs and Start a run" and a "Your run" pill. The attempts decision (`:220`) replaced listing open runs, and the pill reads "Your attempt" (`:49`, `zombies/site/src/i18n.ts`).
-- `site.md:174`: "Map rows without Start a run yet … It came with runs on 2026-11-15". Map rows still have no Start button. Starting an attempt lives on the map's view (`:57`), so this decision now says something false.
-- `site.md:3`: "where the group will start attempts", in the future tense, followed by "Today it lists…".
-- `docs/zombies/site/how-to/run-and-deploy-the-site.md:196`: "sees the call line above the composer with **Bring Cari in**". The voice panel sits at the rail's foot, or in a bar under the strip on a phone (`site.md:106`, `zombies/site/src/RunPage.tsx:582`, `:590`).
-- The how-to has two `### 9.` headings (`:125` "Set up production (once)" and `:176` "Deploy"), then `### 10.`. Its `:172` "here and in step 9" is ambiguous, and `.claude/skills/ee-coach/SKILL.md:116` links `#9-deploy`.
-- `docs/zombies/site/reference/design-system.md:26`: the radius rule says 8px for buttons and lists no other radii. The built Revision toggle and composer field are 10px (`zombies/site/src/index.css:1494`, `:1518`; the doc's own `:128`), and the survey sheet is 6px (`:126`).
-- `design-system.md:3`: the members' in-voice marks "come with their feature". `:127` says they are not built because the bot reports only the reader's channel, and no entry builds them.
-- `design-system.md:29`: "the line naming the run the reader leaves", on a built screen whose players read "attempt".
-- `docs/zombies/bot/explanation/bot.md:26` takes the no-sound-cue rule from the work-in-progress discovery. The rule is now in `site.md`'s Decisions ("Cari's voice only").
-- `bot.md:3` cites [Discovery → Architecture](discovery.md#architecture) for "the bot is only the interface". That owner decision (Vercel is the brain, the bot an interface, so the site works with the bot down) is in no permanent doc's Decisions.
-
-**Do:**
-- [ ] Rewrite `site.md:201` and `:174` to say what is true now, dated, as [Recording Decisions](../../general/how-to/write-documentation.md#recording-decisions) says. Make `:3` present tense.
-- [ ] Add to `site.md`'s `## Decisions`, with its original attribution: the site holds the run state, the coach and the hint rules, and the bot is only an interface, so the site works with the bot down _(owner, 2026-11-15)_. Point `bot.md:3` at it, and `bot.md:26` at "Cari's voice only".
-- [ ] How-to: fix `:196`, then renumber the steps so each number appears once. Fix the "step 9" reference and every link to a renumbered anchor (`grep -rn 'run-and-deploy-the-site.md#' docs .claude`).
-- [ ] Design system: list the 10px and 6px radii in the rule, or name them as the exceptions. Drop "which come with their feature". Say "attempt" at `:29`.
-
-**Acceptance:**
-- Claude-run: `grep -rn 'Your run\|open runs\|call line above' docs/zombies` finds nothing outside board descriptions. `grep -c '^### 9\.' docs/zombies/site/how-to/run-and-deploy-the-site.md` prints 1. `grep -rn 'work-in-progress' docs/zombies/bot` finds nothing. Every anchor link into the how-to resolves.
-- Human-run: none.
-- Reuse: the discovery's wording of the architecture decision, unchanged in meaning.
-- Neighbors: `docs/pkmn/site/explanation/site.md` for the decision format.
-- Forbidden: a new rule or a changed meaning; editing the discovery; code changes.
-
-**Touches:** `docs/zombies/`, `.claude/skills/ee-coach/SKILL.md`
-
 ## Draw the survey sheet's inks from tokens
 
 The zone's hatch, the drawn plan's grid and its lines are raw hex in a component: `zombies/site/src/art.tsx:107` (`#c4321a`), `:110` (`#2945a8`) and `:118` (`#15140f`). That breaks "Tokens only in the site's code … no hex in components" (`docs/zombies/site/reference/design-system.md:27`). The doc's `:52` says the survey sheet's inks "become tokens when those features are built", and zones were built in e681f38.
