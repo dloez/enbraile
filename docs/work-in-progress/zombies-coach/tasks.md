@@ -129,6 +129,7 @@ ee-coach's prepare writes the structured data the live coach needs and publishes
 - Forbidden: map content in tracked files; solutions printed in the main conversation.
 
 **Touches:** `.claude/skills/ee-coach/`, `zombies/site/scripts/`, `zombies/site/shared/`, `zombies/site/package.json`, `docs/zombies/site/`
+**Attempted once:** 2026-11-15, built and kept on branch `wq/prepare-haiku-bundles` (commit `b5d6f5c`: schema `alts[]` and `onSuccess` lines, `compile`, the skill's strict hints shape, docs; Blood of the Dead converted and compiling: 38 steps, 44 ladders), but its third validation failed on two defects: `zombies/site/scripts/compile.ts:260` lets a malformed `map.json`'s `JSON.parse` error echo its text, breaking the docs' "never the text" claim; and `references/research.md:48-51`'s dossier template writes `Conditions` as plain indented lines, which compile drops silently since it only takes `- ` items. The converted map files sit in the gitignored `zombies/maps/bo4/blood-of-the-dead/converted/`. The next pass restores the branch, fixes both, and validates.
 
 ## Hold on gaps and take REVISION and card feedback
 
