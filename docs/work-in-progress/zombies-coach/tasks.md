@@ -1,5 +1,25 @@
 # Zombies Coach — Tasks
 
+## Make the site's pages load fast
+
+The owner finds the maps page slow to load (2026-11-15). A load asks `/api/me` and `/api/maps` in parallel; each asks the root site's `/api/me` who the reader is (a second Vercel function and a session read in pkmn's Neon database), and `/api/maps` then runs four queries one after another (`publishedMaps`, every run ever made, members, the reader's run; `zombies/site/api/_lib/runs.ts`). Warm, the endpoints answer in 0.15–0.4 s; after a few idle minutes both functions start cold, both Neon computes wake from auto-suspend and each function opens a new Postgres connection, all in series.
+
+**Do:**
+- [ ] Measure first: a `Server-Timing` header on the API that splits the viewer lookup and each query, then time a cold load (after 10 idle minutes) and a warm one on production, signed in, and write the figures into the report.
+- [ ] One viewer lookup per page load: `/api/maps` (and the run page's first call) returns the reader, and the separate `/api/me` call goes where it is no longer needed.
+- [ ] Run independent queries in parallel, and list only runs that still have active members.
+- [ ] From the measured figures, cut the cold path: keep connections between invocations or use Neon's HTTP driver (`@neondatabase/serverless`) where the handshake dominates; if the Neon wake itself dominates, say so in the report with the figure, since keeping a compute awake is a cost the owner decides.
+- [ ] Docs: the measurements and what changed in `docs/zombies/site/explanation/site.md`.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; the `Server-Timing` breakdown before and after, cold and warm, on production; the maps page and the run page through the Playwright MCP locally with no change in what they show.
+- Human-run: the owner opens the site after it has been idle and finds the maps quick to appear.
+- Reuse: the existing queries in `zombies/site/api/_lib/runs.ts` and `maps.ts`; `viewerOf` in `api/_lib/viewer.ts`.
+- Neighbors: `dj/panel/api/_lib/app.ts`, which makes the same root lookup.
+- Forbidden: caching the reader across requests in a way that could show one member another's view; a paid Neon or Vercel setting changed without the owner's yes.
+
+**Touches:** `zombies/site/api/`, `zombies/site/src/App.tsx`, `zombies/site/src/RunPage.tsx`, `zombies/site/src/api.ts`, `zombies/site/package.json`, `zombies/site/package-lock.json`, `docs/zombies/site/explanation/site.md`
+
 ## Continue the Blood of the Dead session on the site
 
 Import the terminal session into a run so the group continues it on the site, then retire the old workspace ([Discovery → Migration](discovery.md#migration)).
