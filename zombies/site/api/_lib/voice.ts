@@ -15,27 +15,32 @@ async function speakerOf(discordId: string): Promise<{ runId: string; viewer: Vi
   return row ? { runId: row.runId, viewer: { discordId, name: row.name, image: row.image } } : null;
 }
 
-export async function voiceTurn(discordId: string, text: string): Promise<string | null> {
+export type VoiceTurn = { ok: true; reply: string | null } | { ok: false };
+
+export async function voiceTurn(discordId: string, text: string): Promise<VoiceTurn> {
   const speaker = await speakerOf(discordId);
-  if (!speaker) return null;
+  if (!speaker) return { ok: true, reply: null };
   const { runId, viewer } = speaker;
   const revision = asRevision(text, false);
-  if (revision === "") return null;
-  if (revision !== null) return postRevision(viewer, runId, revision);
+  if (revision === "") return { ok: true, reply: null };
+  if (revision !== null) return { ok: true, reply: await postRevision(viewer, runId, revision) };
   const [before] = await db.select({ last: max(deliveries.id) }).from(deliveries).where(eq(deliveries.runId, runId));
   await postMessage(viewer, runId, text);
   const { coachTurn } = await import("./coach.js");
   let said = "";
+  let failed = false;
   await coachTurn(runId, viewer, { kind: "message" }, (event) => {
     if (event.type === "text") said += event.text;
+    if (event.type === "failed") failed = true;
   });
+  if (failed) return { ok: false };
   const hints = await db
     .select({ text: deliveries.text })
     .from(deliveries)
     .where(and(eq(deliveries.runId, runId), eq(deliveries.askedBy, discordId), gt(deliveries.id, before?.last ?? 0)))
     .orderBy(asc(deliveries.id));
   const reply = [said.trim(), ...hints.map((hint) => hint.text)].filter(Boolean).join(" ");
-  return reply || null;
+  return { ok: true, reply: reply || null };
 }
 
 export async function keepCallLine(line: CallLine): Promise<boolean> {

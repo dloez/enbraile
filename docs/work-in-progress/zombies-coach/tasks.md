@@ -1,22 +1,5 @@
 # Zombies Coach — Tasks
 
-## Answer a failed voice turn with 500, as the site doc says
-
-`docs/zombies/site/explanation/site.md:108` says "A turn that fails answers 500, which the bot logs and also meets with silence." It does not. When the Claude call fails, `coachTurn` catches the error, logs it in `coach_calls` and only emits a `failed` event (`zombies/site/api/_lib/coach.ts:729-736`, `:908`). `voiceTurn` reads only `text` events (`zombies/site/api/_lib/voice.ts:28-31`), so the route answers 200 `{ reply: null }` (`api/_lib/app.ts:139`). The bot then treats it as Cari choosing silence and logs nothing (`zombies/bot/src/call.ts`, `ask` and `heard`). Only a thrown database error reaches a 500. In the chat, a failed reply already says so rather than staying silent ("A failed reply says so", `site.md:205`). So the doc's behaviour is the intended one, and the code is what falls short.
-
-**Do:**
-- [ ] Have `voiceTurn` notice the turn's `failed` event and make the `/api/voice` route answer 500, so the bot logs it as the doc says. A refusal and a deliberate silence still answer `{ reply: null }`.
-- [ ] Check `site.md:108` and `docs/zombies/bot/explanation/bot.md`'s Hearing line still read true.
-
-**Acceptance:**
-- Claude-run: `npm run gate`. Against the local site with `ANTHROPIC_API_KEY` set to an invalid key, a «cari» request posted to `/api/voice` with `INTERNAL_SECRET` answers 500 and the run's `coach_calls` row holds the error. With the real key, a chat line that needs nothing still answers `{ reply: null }` with 200.
-- Human-run: none.
-- Reuse: the `failed` event `coachTurn` already emits; the typed path's handling of it in `src/RunPage.tsx`.
-- Neighbors: the `POST /api/runs/<id>/messages` stream.
-- Forbidden: a retry in the site or the bot; speaking an error line in the call (a sound or line would be a new behaviour the docs do not describe).
-
-**Touches:** `zombies/site/api/_lib/voice.ts`, `zombies/site/api/_lib/app.ts`, `docs/zombies/`
-
 ## Measure a signed-in production load
 
 Every production figure in `docs/zombies/site/explanation/site.md` was taken signed out or on a preview. `:139` says the owner's `Server-Timing` split (cold and warm), the zombies database's Neon wake and the session read in pkmn's database "are still not measured". `:152` says production after the bundled function "is not measured". `:226` leaves the `pg`-versus-serverless-driver choice to "the `Server-Timing` figures from a signed-in production load". `docs/home/site/explanation/site.md`'s Load Time table still reads "not deployed yet" for the root's bundled `/api/me`, though a2803a1 is on `origin/main` and has deployed.

@@ -136,7 +136,8 @@ voice.post("/", async (c) => {
   if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
   const parsed = voiceSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
-  return c.json({ reply: await voiceTurn(parsed.data.userId, parsed.data.text) }, 200, noStore);
+  const turn = await voiceTurn(parsed.data.userId, parsed.data.text);
+  return turn.ok ? c.json({ reply: turn.reply }, 200, noStore) : c.json({ error: "turnFailed" }, 500, noStore);
 });
 
 voice.post("/transcript", async (c) => {
