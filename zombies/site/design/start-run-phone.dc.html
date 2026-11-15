@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Start a run, phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+.z{--ground:#0b0e0d;--fog:#123029;--ink:#070908;--panel:#121816;--panel-hi:#18201e;--well:#090c0b;--line:#24302c;--line-hi:#37483f;--bone:#ebe5d6;--ash:#a3aba4;--dim:#6c7871;--blood:#c3302a;--blood-hi:#de4339;--blood-deep:#5a1512;--mint:#7fe3c4;--mint-ink:#062019;--mint-hi:#a6f0d9;--amber:#f0b23c;--amber-dim:#5c4416;--paper:#e6dcc0;--paper-ink:#211c12;--note:#d8c48d;
+font-family:'IBM Plex Sans',system-ui,sans-serif;font-synthesis:none;color:var(--bone);background-color:var(--ground);
+background-image:radial-gradient(1200px 520px at 18% -8%,rgba(32,86,74,0.42),transparent 70%),radial-gradient(900px 600px at 105% 110%,rgba(90,21,18,0.35),transparent 70%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.z *{box-sizing:border-box}
+.stencil{font-family:'Saira Stencil One',sans-serif;font-weight:400;letter-spacing:0.02em}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-weight:500;letter-spacing:0.06em;text-transform:uppercase}
+.hdr{flex:none;height:64px;background:var(--ink);border-bottom:3px solid var(--blood);display:flex;align-items:center;gap:16px;padding:0 32px;position:relative;z-index:2}
+.drips{position:absolute;left:0;right:0;top:100%;height:22px;pointer-events:none}
+.mark{display:flex;align-items:baseline;gap:6px;color:var(--bone);text-decoration:none}
+.mark b{font-family:'Saira Stencil One',sans-serif;font-weight:400;font-size:30px;line-height:1;color:var(--bone)}
+.mark i{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--blood-hi)}
+.lang{display:flex;align-items:center;gap:6px;height:40px;padding:0 10px;border-radius:8px;color:var(--bone);font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;background:transparent;border:1px solid var(--line)}
+.lang:hover{background:var(--panel)}
+.me{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;color:var(--ink);border:2px solid var(--ink);box-shadow:0 0 0 2px currentColor}
+.av{border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--ink);flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 18px;border-radius:8px;font-family:'Saira Stencil One',sans-serif;font-size:19px;letter-spacing:0.03em;text-decoration:none;border:0;cursor:pointer;white-space:nowrap}
+.btn-go{background:var(--blood);color:#fff;box-shadow:inset 0 -4px 0 rgba(0,0,0,0.35)}
+.btn-go:hover,.btn-go:focus-visible{background:var(--blood-hi)}
+.btn-mint{background:var(--mint);color:var(--mint-ink);box-shadow:inset 0 -4px 0 rgba(0,0,0,0.25)}
+.btn-mint:hover,.btn-mint:focus-visible{background:var(--mint-hi)}
+.btn-quiet{background:rgba(255,255,255,0.07);color:var(--bone);box-shadow:inset 0 -4px 0 rgba(0,0,0,0.4)}
+.btn-quiet:hover,.btn-quiet:focus-visible{background:rgba(255,255,255,0.14)}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:16px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.hint{position:relative;background:var(--paper);color:var(--paper-ink);border-radius:4px 14px 14px 14px;padding:18px 20px 14px;box-shadow:0 6px 0 rgba(0,0,0,0.45);
+background-image:linear-gradient(180deg,rgba(255,255,255,0.28),transparent 45%),radial-gradient(circle at 92% 88%,rgba(120,90,40,0.18),transparent 40%)}
+.hint::before{content:"";position:absolute;left:-2px;top:-2px;width:46px;height:12px;background:var(--amber);opacity:0.85;transform:rotate(-4deg) translate(-8px,-6px);border-radius:2px}
+.hint p{margin:0;font-size:17px;line-height:1.55;font-weight:500}
+.rung+.rung{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(33,28,18,0.35)}
+.rung-old p{color:rgba(33,28,18,0.62)}
+.hint-foot{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.more{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 2px;border-radius:7px;background:var(--paper-ink);color:var(--paper);font-family:'Saira Stencil One',sans-serif;font-size:17px;border:0;letter-spacing:0.03em}
+.more:hover,.more:focus-visible{background:#3a3222}
+.fb{display:inline-flex;align-items:center;height:30px;padding:0 11px;border-radius:999px;border:1.5px solid rgba(33,28,18,0.35);font-size:13px;font-weight:600;color:rgba(33,28,18,0.78);background:transparent}
+.fb:hover{border-color:var(--paper-ink)}
+.fb-on{background:var(--paper-ink);color:var(--paper);border-color:var(--paper-ink)}
+.msg{display:flex;gap:12px;align-items:flex-start}
+.msg-body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.who{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:700;color:var(--ash)}
+.who .t{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;color:var(--dim)}
+.bub{background:var(--panel-hi);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:16px;line-height:1.5;color:var(--bone)}
+.bub-cari{background:linear-gradient(180deg,rgba(240,178,60,0.10),rgba(240,178,60,0.04));border-color:rgba(240,178,60,0.35)}
+.bub-note{background:rgba(216,196,141,0.06);border:1.5px dashed var(--note);color:var(--paper)}
+.cari{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2a210f,#0f0c06);border:2px solid var(--amber);display:grid;place-items:center;flex:none;box-shadow:0 0 18px rgba(240,178,60,0.28)}
+.typing span{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-right:4px;animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.wave i{display:block;height:10px;width:3px;margin-right:3px;border-radius:2px;background:var(--amber);animation:wave 1s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.15s}.wave i:nth-child(3){animation-delay:.3s}.wave i:nth-child(4){animation-delay:.45s}.wave i:nth-child(5){animation-delay:.6s}
+@keyframes wave{0%,100%{height:5px}50%{height:16px}}
+.zone-ring{transform-origin:center;transform-box:fill-box;animation:pulse 2.2s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.typing span,.wave i,.zone-ring{animation:none}}
+.composer{display:flex;align-items:flex-end;gap:10px;background:var(--well);border:2px solid var(--line);border-radius:14px;padding:8px 8px 8px 16px}
+.composer-rev{border:2px dashed var(--note);background:rgba(216,196,141,0.05)}
+.field{flex:1;min-height:40px;display:flex;align-items:center;font-size:16px;color:var(--dim)}
+.ibtn{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;color:var(--ash);background:transparent;border:0}
+.ibtn:hover{background:var(--panel-hi);color:var(--bone)}
+.send{width:44px;height:40px;border-radius:9px;display:grid;place-items:center;background:var(--mint);color:var(--mint-ink);box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25)}
+.seg{display:flex;background:var(--well);border:2px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg a{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;border-radius:8px;color:var(--ash);text-decoration:none;font-weight:600;font-size:16px}
+.seg a.on{background:var(--blood);color:#fff}
+.seg .code{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:2px 6px;border-radius:4px;border:1px solid currentColor;opacity:.85}
+.label{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim)}
+.scrim{position:absolute;inset:0;background:rgba(3,5,4,0.72);backdrop-filter:blur(2px);z-index:5}
+</style>
+</helmet>
+<div class="z" style="width: 390px; height: 844px">
+<header class="hdr" style="height:60px;padding:0 8px 0 16px;gap:8px">
+<a href="Maps.dc.html" class="mark" style="flex:1"><b style="font-size:27px">zombies</b><i>.enbraile.vip</i></a>
+<a href="#" class="lang" aria-label="Language">ES <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
+<a href="#" class="ibtn" style="width:44px;height:44px;color:var(--bone)" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a>
+<svg class="drips" viewBox="0 0 390 22" preserveAspectRatio="none" aria-hidden="true"><path fill="#c3302a" d="M0 0h390v2H0z M62 2c0 0 2.5 0 2.5 6s-2.5 8-2.5 8-2.5-2-2.5-8 2.5-6 2.5-6z M281 2c0 0 2 0 2 4s-2 6-2 6-2-2-2-6 2-4 2-4z"/></svg>
+</header>
+<main style="flex:1;overflow:hidden;padding:28px 16px 24px;display:flex;flex-direction:column;gap:18px">
+<h1 class="stencil" style="margin:0;font-size:52px;line-height:0.9">Mapas</h1>
+<a href="Run.dc.html" style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;text-decoration:none;color:var(--bone);background:linear-gradient(90deg,rgba(240,178,60,0.16),rgba(240,178,60,0.03));border:2px solid rgba(240,178,60,0.45)">
+<span class="cari" style="width:36px;height:36px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0b23c" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2.2" fill="#f0b23c" stroke="none"/><path d="M8.2 8.2a5.4 5.4 0 000 7.6M15.8 8.2a5.4 5.4 0 010 7.6"/><path d="M5.3 5.3a9.5 9.5 0 000 13.4M18.7 5.3a9.5 9.5 0 010 13.4" opacity="0.55"/></svg></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="label" style="color:var(--amber)">Tu partida</span><span class="stencil" style="font-size:22px;line-height:1.1">Harrow Station</span></span>
+
+<span class="btn btn-quiet" style="min-height:40px;font-size:17px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+</a>
+<div style="display:flex;flex-direction:column;gap:18px"><article class="card" style="overflow:hidden;display:flex;flex-direction:column">
+<div style="position:relative;height:150px;border-bottom:2px solid var(--line)"><svg viewBox="0 0 400 150" width="100%" height="150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<defs><linearGradient id="sk1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16302b"/><stop offset="1" stop-color="#0b1412"/></linearGradient></defs>
+<rect width="400" height="150" fill="url(#sk1)"/>
+<circle cx="318" cy="48" r="26" fill="#d9e8d9" opacity="0.85"/><circle cx="318" cy="48" r="60" fill="#d9e8d9" opacity="0.06"/>
+<path d="M0 104 L60 104 L60 62 L74 62 L74 104 L150 104 L150 80 L240 80 L240 104 L400 104 L400 150 L0 150Z" fill="#070a09"/>
+<path d="M150 80 L195 54 L240 80Z" fill="#070a09"/>
+<g stroke="#070a09" stroke-width="3"><path d="M0 130 H400"/><path d="M0 140 H400"/></g>
+<g stroke="#070a09" stroke-width="5"><path d="M8 126 V146"/><path d="M34 126 V146"/><path d="M60 126 V146"/><path d="M86 126 V146"/><path d="M112 126 V146"/><path d="M138 126 V146"/><path d="M164 126 V146"/><path d="M190 126 V146"/><path d="M216 126 V146"/><path d="M242 126 V146"/><path d="M268 126 V146"/><path d="M294 126 V146"/><path d="M320 126 V146"/><path d="M346 126 V146"/><path d="M372 126 V146"/><path d="M398 126 V146"/></g>
+<rect x="0" y="110" width="400" height="18" fill="#7fe3c4" opacity="0.05"/>
+</svg>
+<span class="chip" style="position:absolute;left:14px;top:14px;background:rgba(7,9,8,0.75);color:var(--ash);border:1px solid var(--line-hi)">TEST MAP</span>
+<h2 class="stencil" style="position:absolute;left:18px;bottom:10px;margin:0;font-size:34px;line-height:1;color:var(--bone);text-shadow:0 3px 0 #000">Harrow Station</h2>
+</div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:10px;flex:1">
+<span class="label">Partidas</span>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--well);border:1px solid rgba(127,227,196,0.35)">
+<span style="display:flex;align-items:center"><span style="border-radius:50%;box-shadow:0 0 0 2px var(--panel)"><span class="av" style="width:28px;height:28px;background:#f0b23c;font-size:12px;">M</span></span><span style="margin-left:-6px;border-radius:50%;box-shadow:0 0 0 2px var(--panel)"><span class="av" style="width:28px;height:28px;background:#7fe3c4;font-size:12px;">T</span></span><span style="margin-left:-6px;border-radius:50%;box-shadow:0 0 0 2px var(--panel)"><span class="av" style="width:28px;height:28px;background:#e58ab0;font-size:12px;">L</span></span></span>
+<span style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--ash);white-space:nowrap;overflow:hidden">Marina<span class="chip" style="background:rgba(127,227,196,0.12);color:var(--mint)">Tú</span></span>
+<span class="chip" style="border:1px solid var(--line-hi);color:var(--ash)">ES</span>
+<a href="Run.dc.html" class="btn btn-quiet" style="min-height:38px;font-size:17px;padding:0 14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</div>
+<span style="flex:1"></span>
+<a href="StartRun.dc.html" class="btn btn-go" style="margin-top:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Empezar partida</a>
+</div>
+</article><article class="card" style="overflow:hidden;display:flex;flex-direction:column">
+<div style="position:relative;height:150px;border-bottom:2px solid var(--line)"><svg viewBox="0 0 400 150" width="100%" height="150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<defs><linearGradient id="sk2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1514"/><stop offset="1" stop-color="#0d0908"/></linearGradient></defs>
+<rect width="400" height="150" fill="url(#sk2)"/>
+<path d="M90 110 V40 L150 10 L210 40 V110Z" fill="#090606"/>
+<rect x="138" y="-20" width="24" height="40" fill="#090606"/><path d="M134 -20 L150 -38 L166 -20Z" fill="#090606"/>
+<rect x="110" y="50" width="9" height="13" fill="#f0b23c" opacity="0.75"/><rect x="186" y="50" width="9" height="13" fill="#f0b23c" opacity="0.18"/><rect x="110" y="76" width="9" height="13" fill="#f0b23c" opacity="0.18"/><rect x="186" y="76" width="9" height="13" fill="#f0b23c" opacity="0.55"/>
+<path d="M0 110 Q100 98 200 110 T400 108 V150 H0Z" fill="#050404"/>
+<path d="M0 120 Q120 106 260 120 T400 122" stroke="#c3302a" stroke-width="1" fill="none" opacity="0.4"/>
+<g fill="#050404"><path d="M240 112 l3 -18 l3 18z"/><path d="M249 112 l3 -25 l3 25z"/><path d="M258 112 l3 -18 l3 18z"/><path d="M267 112 l3 -25 l3 25z"/><path d="M276 112 l3 -18 l3 18z"/><path d="M285 112 l3 -25 l3 25z"/><path d="M294 112 l3 -18 l3 18z"/><path d="M303 112 l3 -25 l3 25z"/><path d="M312 112 l3 -18 l3 18z"/><path d="M321 112 l3 -25 l3 25z"/><path d="M330 112 l3 -18 l3 18z"/><path d="M339 112 l3 -25 l3 25z"/><path d="M348 112 l3 -18 l3 18z"/><path d="M357 112 l3 -25 l3 25z"/><path d="M366 112 l3 -18 l3 18z"/><path d="M375 112 l3 -25 l3 25z"/><path d="M384 112 l3 -18 l3 18z"/><path d="M393 112 l3 -25 l3 25z"/></g>
+</svg>
+<span class="chip" style="position:absolute;left:14px;top:14px;background:rgba(7,9,8,0.75);color:var(--ash);border:1px solid var(--line-hi)">SAMPLE</span>
+<h2 class="stencil" style="position:absolute;left:18px;bottom:10px;margin:0;font-size:34px;line-height:1;color:var(--bone);text-shadow:0 3px 0 #000">Saltmarsh Asylum</h2>
+</div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:10px;flex:1">
+<span class="label">Partidas</span>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--well);border:1px solid var(--line)">
+<span style="display:flex;align-items:center"><span style="border-radius:50%;box-shadow:0 0 0 2px var(--panel)"><span class="av" style="width:28px;height:28px;background:#9fb6ff;font-size:12px;">N</span></span><span style="margin-left:-6px;border-radius:50%;box-shadow:0 0 0 2px var(--panel)"><span class="av" style="width:28px;height:28px;background:#c7e36b;font-size:12px;">A</span></span></span>
+<span style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--ash);white-space:nowrap;overflow:hidden">Nico</span>
+<span class="chip" style="border:1px solid var(--line-hi);color:var(--ash)">EN</span>
+<a href="JoinRun.dc.html" class="btn btn-mint" style="min-height:38px;font-size:17px;padding:0 14px">Unirse</a>
+</div>
+<span style="flex:1"></span>
+<a href="StartRun.dc.html" class="btn btn-go" style="margin-top:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Empezar partida</a>
+</div>
+</article><article class="card" style="overflow:hidden;display:flex;flex-direction:column">
+<div style="position:relative;height:150px;border-bottom:2px solid var(--line)"><svg viewBox="0 0 400 150" width="100%" height="150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<defs><linearGradient id="sk3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1a10"/><stop offset="1" stop-color="#0b0a07"/></linearGradient><radialGradient id="gl3" cx="0.7" cy="0.85" r="0.6"><stop offset="0" stop-color="#f0b23c" stop-opacity="0.35"/><stop offset="1" stop-color="#f0b23c" stop-opacity="0"/></radialGradient></defs>
+<rect width="400" height="150" fill="url(#sk3)"/><rect width="400" height="150" fill="url(#gl3)"/>
+<rect x="40" y="0" width="22" height="110" fill="#080705"/><rect x="78" y="26" width="18" height="84" fill="#080705"/>
+<path d="M30 110 V70 H180 V110Z M180 110 V54 L230 30 L280 54 V110Z M280 110 V80 H400 V110Z" fill="#080705"/>
+<rect x="0" y="110" width="400" height="40" fill="#050403"/>
+<g fill="#cfc7b2" opacity="0.12"><circle cx="51" cy="-18" r="10"/><circle cx="58" cy="-40" r="14"/><circle cx="66" cy="-66" r="18"/></g>
+</svg>
+<span class="chip" style="position:absolute;left:14px;top:14px;background:rgba(7,9,8,0.75);color:var(--ash);border:1px solid var(--line-hi)">SAMPLE</span>
+<h2 class="stencil" style="position:absolute;left:18px;bottom:10px;margin:0;font-size:34px;line-height:1;color:var(--bone);text-shadow:0 3px 0 #000">Kessel Works</h2>
+</div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:10px;flex:1">
+<span class="label">Partidas</span>
+<div style="height:58px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px dashed var(--line);color:var(--dim);font-size:15px">Aún no hay partidas</div>
+<span style="flex:1"></span>
+<a href="StartRun.dc.html" class="btn btn-go" style="margin-top:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Empezar partida</a>
+</div>
+</article></div>
+</main><div class="scrim"></div>
+<section role="dialog" aria-label="Empezar partida" style="position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--panel);border-top:3px solid var(--blood);border-radius:20px 20px 0 0;padding:14px 16px 24px;display:flex;flex-direction:column;gap:18px">
+<span style="align-self:center;width:44px;height:5px;border-radius:3px;background:var(--line-hi)"></span>
+<h1 class="stencil" style="margin:0;font-size:32px;line-height:1">Empezar partida</h1>
+<div style="position:relative;height:120px;border-radius:12px;overflow:hidden;border:2px solid var(--line)"><svg viewBox="0 0 400 120" width="100%" height="120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<defs><linearGradient id="sk3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1a10"/><stop offset="1" stop-color="#0b0a07"/></linearGradient><radialGradient id="gl3" cx="0.7" cy="0.85" r="0.6"><stop offset="0" stop-color="#f0b23c" stop-opacity="0.35"/><stop offset="1" stop-color="#f0b23c" stop-opacity="0"/></radialGradient></defs>
+<rect width="400" height="120" fill="url(#sk3)"/><rect width="400" height="120" fill="url(#gl3)"/>
+<rect x="40" y="-30" width="22" height="110" fill="#080705"/><rect x="78" y="-4" width="18" height="84" fill="#080705"/>
+<path d="M30 80 V40 H180 V80Z M180 80 V24 L230 0 L280 24 V80Z M280 80 V50 H400 V80Z" fill="#080705"/>
+<rect x="0" y="80" width="400" height="40" fill="#050403"/>
+<g fill="#cfc7b2" opacity="0.12"><circle cx="51" cy="-48" r="10"/><circle cx="58" cy="-70" r="14"/><circle cx="66" cy="-96" r="18"/></g>
+</svg>
+<h2 class="stencil" style="position:absolute;left:16px;bottom:8px;margin:0;font-size:34px;line-height:1;text-shadow:0 3px 0 #000">Kessel Works</h2></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span class="label">Cari habla</span><div class="seg"><a href="#" class="on"><span class="code">ES</span>Español</a><a href="#"><span class="code">EN</span>English</a></div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(240,178,60,0.07);border:1px solid rgba(240,178,60,0.3);color:var(--paper);font-size:15px">
+<span style="display:flex;color:var(--amber)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0b23c" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2.2" fill="#f0b23c" stroke="none"/><path d="M8.2 8.2a5.4 5.4 0 000 7.6M15.8 8.2a5.4 5.4 0 010 7.6"/><path d="M5.3 5.3a9.5 9.5 0 000 13.4M18.7 5.3a9.5 9.5 0 010 13.4" opacity="0.55"/></svg></span><span>Dejas tu partida en <b>Harrow Station</b></span></div>
+<div style="display:flex;gap:10px;flex-direction:column-reverse"><a href="Maps.dc.html" class="btn btn-quiet">Cancelar</a><a href="Run.dc.html" class="btn btn-go" style="">Empezar partida</a></div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,23 +1,5 @@
 # Zombies Coach — Tasks
 
-## Design the zombies site in Claude design
-
-The look and layout come from a Claude design artifact, as pkmn's and DJ's did, frozen as `.dc.html` boards in `zombies/site/design/` ([Discovery → Runs and the site](discovery.md#runs-and-the-site)). The owner does not review the boards; they see the site as a surprise, so the bar is the taste and "wow" of the pkmn site and the DJ panel.
-
-**Do:**
-- [ ] Brief Claude design with the constraints only: maps list, start/join a run, the shared chat with Cari, hint cards with a generic "more" and feedback (too obvious / right / too vague), a level-3 map zone under a card, bringing Cari into voice, REVISION feedback, en/es, desktop and phone; no step or hint numbers, no list of steps, nothing in the UI that suggests what to try; a Zombies mood without copying any game's art or branding.
-- [ ] Freeze the chosen boards into `zombies/site/design/*.dc.html` and start `docs/zombies/site/reference/design-system.md` from them.
-
-**Acceptance:**
-- Claude-run: `ls zombies/site/design/*.dc.html` lists boards for every screen above, desktop and phone; `grep -rniE "paso [0-9]|step [0-9]|pista [0-9]|hint [0-9]/" zombies/site/design` finds nothing.
-- Human-run: none (the owner chose not to review).
-- Reuse: the pkmn site's boards and design system doc as the format (`pkmn/site/design/`, `docs/pkmn/site/reference/design-system.md`).
-- Neighbors: `pkmn/site/design/`.
-- Forbidden: real map content or a real map image in a board; any game's logo, characters or art.
-
-**Touches:** `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
-**After:** Move the zombies workspace into Enbraile with terminal coaching intact
-
 ## Show published maps on zombies.enbraile.vip
 
 The thinnest end-to-end path: a signed-in member opens `zombies.enbraile.vip` and sees the maps Claude published, starting with the made-up test map ([Discovery → Data and storage](discovery.md#data-and-storage)).

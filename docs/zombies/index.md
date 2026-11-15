@@ -13,3 +13,9 @@ The players name a map, Claude researches several guides and prepares a cross-ch
 | `zombies/maps/<game>/<map>/` | `sources/`, `dossier.md`, `knowledge.md`, `hints.md`, `session.md`, the map's own `calibration.md`, and Spanish copies | No, gitignored ([why](../general/explanation/repository-layout.md#decisions)) |
 
 A site, `zombies.enbraile.vip`, and a voice module for the bot are being scoped in [Zombies Coach](../work-in-progress/zombies-coach/discovery.md).
+
+## Site
+
+| Document | Type | Description |
+|----------|------|-------------|
+| [Site Design System](site/reference/design-system.md) | Reference | The site's look, from the frozen boards in `zombies/site/design/` |
