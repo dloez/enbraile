@@ -77,26 +77,6 @@ Progress reports, open threads and the session rules that need run state: `On su
 **Touches:** `zombies/site/`, `docs/zombies/site/`
 **After:** Start a run and get prepared hints from Cari in a shared chat
 
-## Prepare publishes Haiku-ready bundles, starting with Blood of the Dead
-
-ee-coach's prepare writes the structured data the live coach needs and publishes it; Blood of the Dead is the first real bundle ([Discovery → Data and storage](discovery.md#data-and-storage)).
-
-**Do:**
-- [ ] Extend `references/research.md` and `SKILL.md`: every step, rung, Alt, part ladder, `Mentions`, condition and heads-up in a form the bundle schema takes; Spanish wording translated once; card text never carries numbers.
-- [ ] `npm run compile -- <map dir>` (in `zombies/site/scripts/`) builds the bundle from a map's files and checks it against the schema (every `Mentions` names a knowledge entry, every `Requires` a step); `publish` sends it.
-- [ ] Compile and publish Blood of the Dead, in a subagent so no solution reaches the terminal.
-- [ ] Docs: `compile` in `docs/zombies/site/how-to/run-and-deploy-the-site.md`, and `site.md`'s "as the queue's `compile` will write its bundle there" made true of the shipped command.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; `compile` on Blood of the Dead exits 0; publishing it adds a version; the bundle's ladder count matches `hints.md`'s, checked in a subagent.
-- Human-run: start a Blood of the Dead run on the site and ask for a hint at a point you already passed; the card's wording matches `hints.es.md`.
-- Reuse: the bundle schema in `zombies/site/shared/`; the existing map files.
-- Neighbors: the test map bundle.
-- Forbidden: map content in tracked files; solutions printed in the main conversation.
-
-**Touches:** `.claude/skills/ee-coach/`, `zombies/site/scripts/`, `zombies/site/shared/`, `zombies/site/package.json`, `docs/zombies/site/`
-**Attempted once:** 2026-11-15, built and kept on branch `wq/prepare-haiku-bundles` (commit `b5d6f5c`: schema `alts[]` and `onSuccess` lines, `compile`, the skill's strict hints shape, docs; Blood of the Dead converted and compiling: 38 steps, 44 ladders), but its third validation failed on two defects: `zombies/site/scripts/compile.ts:260` lets a malformed `map.json`'s `JSON.parse` error echo its text, breaking the docs' "never the text" claim; and `references/research.md:48-51`'s dossier template writes `Conditions` as plain indented lines, which compile drops silently since it only takes `- ` items. The converted map files sit in the gitignored `zombies/maps/bo4/blood-of-the-dead/converted/`. The next pass restores the branch, fixes both, and validates.
-
 ## Hold on gaps and take REVISION and card feedback
 
 When no prepared line fits, Cari holds and the run records a gap; `REVISION:` messages and card feedback are stored with the line they refer to and never go to the model as gameplay ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).

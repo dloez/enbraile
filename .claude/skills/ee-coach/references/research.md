@@ -43,13 +43,13 @@ rounds. Every step's Conditions must be checked against this section.
 - Requires: <earlier steps, items, round conditions>
 - Where / What / How / When: <the four components, each on its own line>
 - Full solution: <complete instructions>
-- L4 as spoken: <the answer exactly as it will be given to the players if they ask for it: short, in order, readable mid-round>
+- L4 as spoken: <the answer exactly as it will be given to the players if they ask for it: short, in order, readable mid-round, on one line> Mentions: <IDs> [Reveals: <IDs>]
 - Confirmation: <what the game does when it worked: sound, quote, visual, item>
-- Conditions: <for steps that depend on rounds, enemies, items or chance, four parts:
-  essential (enemy / item / state that must be present, and every natural way it comes about — see Map mechanics);
-  routes (each way to do it, with its round range, cost and reliability, e.g. "works at any round but rarely first try");
-  single-use resources (once per game / round) and when spending them is safe;
-  open doubts between sources>
+- Conditions: <for steps that depend on rounds, enemies, items or chance, four parts, each an indented item:>
+  - Essential: <enemy / item / state that must be present, and every natural way it comes about — see Map mechanics>
+  - Routes: <each way to do it, with its round range, cost and reliability, e.g. "works at any round but rarely first try">
+  - Single-use: <resources usable once per game / round, and when spending them is safe>
+  - Doubts: <open doubts between sources>
 - Fail states and lockouts: <what resets or blocks it, how to retry>
 - Varies: <random elements and how to read them; solo vs co-op differences>
 - Source agreement: <all agree | conflict, with which source says what and which is likelier and why>
@@ -84,7 +84,7 @@ In `dossier.md`, give each thing its ID on first mention in a step, like `<name>
 - `Uses: <IDs the step depends on>`
 - `Introduces: <IDs the players meet for the first time in this step>`
 
-In `hints.md`, every rung, `Alt`, `Heads-up` and `On success` line ends with `Mentions: <IDs it names or implies>` (or `Mentions: none`). A rung should be written to mention as few `unknown` things as its level allows: L1 ideally none beyond what earlier steps introduced, and each higher rung adding only what it is meant to give. The language copies carry the same IDs.
+In `hints.md`, every rung, `Alt`, `Heads-up` and `On success` line, and the dossier's `L4 as spoken`, ends with `Mentions: <IDs it names or implies>` (or `Mentions: none`). A rung should be written to mention as few `unknown` things as its level allows: L1 ideally none beyond what earlier steps introduced, and each higher rung adding only what it is meant to give. When a line is the one meant to give an `unknown` thing away, that ID is also listed after the Mentions as `Reveals: <IDs>` (a subset of its Mentions; usually a rung of the step that `Introduces` it). Every other ID a line mentions must already be known by the time it is said, which is what lets the site's code refuse a line naming something the players have not met. `Heads-up` lines never reveal. The language copies carry the same IDs.
 
 ### `hints.md` (no solutions)
 
@@ -93,21 +93,29 @@ In `hints.md`, every rung, `Alt`, `Heads-up` and `On success` line ends with `Me
 
 ## Step 1 (<type>)
 Spoiler-free title: <something that could be said aloud, e.g. "Getting started">
-- L1: …
-- L2: …
-- L3: …
-- Alt (they already know <component>): <replacement for the rung that would otherwise tell them something they have>
-- Heads-up: <lockout or missable warning to give unprompted, if any>
-- On success: <what to tell them when they report the confirmation signal>
+Requires: <Step 3, Step 4> | none
+Optional: yes
+- L1: … Mentions: K01
+- L2: … Mentions: K01
+- L3: … Mentions: K01, K07 Reveals: K07
+- Alt for L2 (<they already know component, are solo, …>): <replacement for that rung> Mentions: …
+- Part ladder, <the part, said plainly>:
+  - L1: … Mentions: …
+  - L2: … Mentions: …
+  - Alt for L1 (<situation>): … Mentions: …
+- Heads-up (<when to give it>): <lockout or missable warning to give unprompted, if any> Mentions: …
+- On success: <what to tell them when they report the confirmation signal> Mentions: …
 ```
 
-Levels 1 to 3 only; level 4 is the dossier's "L4 as spoken". Write every rung using the components, the two tests, and the per-type handling from `hint-craft.md`, and respect anything `zombies/calibration.md` says about this group.
+Levels 1 to 3 only; level 4 is the dossier's "L4 as spoken", kept out of this file so the blind check never reads an answer.
+
+**The shape is strict**, because `compile` (section 4) reads it into the site's bundle and rejects anything else: one line per item, the labels exactly as above, and nothing else inside a step but plain prose lines, which it ignores; a heading that is not a step ends the step, so keep a step's lines under its own heading. `Requires` names only steps, by number, that must be done first (items and rounds stay in the dossier); `none` when there are none. `Optional: yes` appears only on optional steps. Each `Alt` names the rung it replaces, and a step may have several. A `Part ladder` holds only its indented `L<n>` and `Alt for L<n>` lines, and is used when players report one part of a multi-part step found. The dossier's step headings keep their numbers (`## Step <n>: …`), its `L4 as spoken` stays on one line, and a step's `Conditions` are written as indented `- ` items under that field, one per condition, which the bundle carries as they stand. Card text never carries a step, hint or level number (no "Step 5", "L2", "2/4"): `compile` rejects it. Write every rung using the components, the two tests, and the per-type handling from `hint-craft.md`, and respect anything `zombies/calibration.md` says about this group.
 
 **`On success` lines** are said the moment players report the step done, immediately followed by the next step's L1. So an `On success` line is one short sentence, in the same teammate voice as the low rungs, that makes clear what they achieved or what it changed in the game, and nothing else: no advice they cannot act on, no teaser that repeats what the next L1 is about to say, no bare praise.
 
 **This file is the script for the session.** The coach delivers these lines word for word, so write them as finished text a player will read, not as notes. The point is that every hint the players get was written with the full guide in view and checked in advance, instead of being made up mid-round. Cover the predictable situations with `Alt` lines (players who already found the place, already have the item, are playing solo) so the coach rarely has to go off script.
 
-**Language.** Write `dossier.md` and `hints.md` in English. If `zombies/calibration.md` says the players use another language, also write `dossier.<lang>.md` (for example `dossier.es.md`): a faithful, complete translation of the dossier, same structure and same step numbers, so someone in the group who already knows the map can read it and check the guide is right. It is a review copy; `dossier.md` stays the reference, and any correction is applied to both. In the same case also write `hints.<lang>.md` (for example `hints.es.md`) with the same structure, including each step's "L4 as spoken", translated once here so the wording is fixed rather than re-translated differently on every request. Translate the sentences, not the in-game names: use area, item, and weapon names in the language `zombies/calibration.md` says the game is played in, and if that isn't English, give the localised name only when a source confirms it, otherwise keep the English name.
+**Language.** Write `dossier.md` and `hints.md` in English. If `zombies/calibration.md` says the players use another language, also write `dossier.<lang>.md` (for example `dossier.es.md`): a faithful, complete translation of the dossier, same structure and same step numbers, so someone in the group who already knows the map can read it and check the guide is right. It is a review copy; `dossier.md` stays the reference, and any correction is applied to both. In the same case also write `hints.<lang>.md` (for example `hints.es.md`) with the same structure, adding each step's "L4 as spoken" as an `- L4:` line after its L3, translated once here so the wording is fixed rather than re-translated differently on every request. Every line of the English file has its translation, in the same order with the same `Mentions` and `Reveals`; the headings may be translated, but the labels (`L1`, `Alt for L2 (…)`, `Part ladder, …`, `Heads-up (…)`, `On success`) stay exactly as in English so `compile` can pair the two files; `Requires` and `Optional` are read from the English file only. Translate the sentences, not the in-game names: use area, item, and weapon names in the language `zombies/calibration.md` says the game is played in, and if that isn't English, give the localised name only when a source confirms it, otherwise keep the English name.
 
 ## 3. Blind check (one agent, no access to the dossier)
 
@@ -125,10 +133,27 @@ Then the synthesis agent (or a fresh one with dossier access) compares against t
 
 One round of fixes is enough. The real calibration comes from the players. After the fixes, bring any `hints.<lang>.md` in line with the final English rungs, and `dossier.<lang>.md` in line with any change to "L4 as spoken".
 
-## 4. Report
+## 4. Compile and publish
+
+The live coach on `zombies.enbraile.vip` reads a map only as a bundle. In the map dir, write `map.json` with the map's name in each language and its `art`, the key of one of the site's three drawn plans:
+
+```json
+{ "name": { "es": "<name as the Spanish game shows it>", "en": "<English name>" }, "art": "teal | rust | furnace" }
+```
+
+Then, from `zombies/site/`, in the synthesis subagent:
+
+```sh
+npm run compile -- ../maps/<game>/<map>
+npm run publish -- ../maps/<game>/<map>
+```
+
+`compile` reads `map.json`, `hints.md`, `hints.es.md` (the site carries every line in Spanish and English, so a bundle needs the Spanish copy whatever the players' language), `knowledge.md` (a thing is `known` in the bundle only when its status is `known`), `dossier.md` (the `L4 as spoken` and `Conditions` of each step, and the whole text as the durable copy), the map's `calibration.md` and everything under `sources/`, checks them, and writes `bundle.json` beside them. Its errors name a file and line or a step and rung, never the text, so they can be quoted in the main conversation; fix each and run it again. Its warnings list `unknown` IDs that some line mentions but no line reveals, which the site can only deliver once the players name the thing themselves: add the missing `Reveals` unless that is intended. It prints counts only. `publish` sends the bundle to the site as a new version ([How to Run and Deploy the Site](../../../../docs/zombies/site/how-to/run-and-deploy-the-site.md)). Any later change to the hints or dossier is followed by both commands again.
+
+## 5. Report
 
 Back in the main conversation: number of steps, whether any sources conflicted (without saying on what), and whether the quest has points of no return. Nothing else.
 
 ## Fast prepare
 
-If the players are already in a game: one agent, two sources (wiki plus one written guide), dossier and hints in one pass, no blind check. Mark the dossier as `fast` so a full prepare can replace it later.
+If the players are already in a game: one agent, two sources (wiki plus one written guide), dossier and hints in one pass, no blind check. Mark the dossier as `fast` so a full prepare can replace it later, and compile and publish it as in section 4 so the site can coach it too.

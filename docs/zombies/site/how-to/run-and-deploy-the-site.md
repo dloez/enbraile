@@ -61,6 +61,14 @@ The page is at `http://localhost:5175`, the API at `http://localhost:8789`.
 
 ### 6. Publish a map
 
+A real map's `bundle.json` is built first from the files the ee-coach skill prepared in its dir ([Research and dossier building → Compile and publish](../../../../.claude/skills/ee-coach/references/research.md#4-compile-and-publish)):
+
+```sh
+npm run compile -- ../maps/<game>/<map>/
+```
+
+It prints the counts of steps, ladders, rungs, Alts and knowledge entries, or every error by file and line or step and rung, never the text. The test map has no prepare files; its `bundle.json` is written by hand. Then:
+
 ```sh
 npm run publish -- test-map
 ```

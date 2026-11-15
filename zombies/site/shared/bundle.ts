@@ -13,9 +13,11 @@ const line = z.object({
   reveals: z.array(id).default([]),
 });
 
+const alt = line.extend({ when: z.string().min(1) });
+
 const rung = line.extend({
   level: z.number().int().min(1).max(4),
-  alt: line.optional(),
+  alts: z.array(alt).default([]),
 });
 
 const ladder = z.array(rung).min(1);
@@ -38,7 +40,7 @@ const step = z.object({
   requires: z.array(id).default([]),
   conditions: z.array(z.string().min(1)).default([]),
   optional: z.boolean().default(false),
-  onSuccess: worded,
+  onSuccess: line,
   ladder,
   parts: z.array(part).default([]),
   headsUps: z.array(headsUp).default([]),
@@ -86,11 +88,12 @@ export const bundleSchema = z
     const checkLadder = (rungs: z.infer<typeof ladder>, path: (string | number)[]) =>
       rungs.forEach((value, index) => {
         checkLine(value, [...path, index]);
-        if (value.alt) checkLine(value.alt, [...path, index, "alt"]);
+        value.alts.forEach((entry, altIndex) => checkLine(entry, [...path, index, "alts", altIndex]));
       });
     bundle.steps.forEach((value, index) => {
       const path = ["steps", index];
       for (const required of value.requires) if (!steps.has(required) || required === value.id) ctx.addIssue({ code: "custom", message: `${required} names no other step`, path: [...path, "requires"] });
+      checkLine(value.onSuccess, [...path, "onSuccess"]);
       checkLadder(value.ladder, [...path, "ladder"]);
       for (const repeated of unique(value.parts.map((entry) => entry.id))) ctx.addIssue({ code: "custom", message: `part ${repeated} is listed twice`, path: [...path, "parts"] });
       value.parts.forEach((entry, partIndex) => checkLadder(entry.ladder, [...path, "parts", partIndex, "ladder"]));
