@@ -19,6 +19,25 @@ After 10 idle minutes a signed-out `/api/maps` on production took 4.0 s to its f
 
 **Touches:** `zombies/site/api/`, `zombies/site/package.json`, `zombies/site/package-lock.json`, `zombies/site/vercel.json`, `home/site/api/`, `home/site/package.json`, `home/site/package-lock.json`, `docs/zombies/site/explanation/site.md`, `docs/home/site/explanation/site.md`
 
+## Load with skeletons like the DJ panel
+
+The owner finds the "— receiving —" loading line terrible and wants loading done as the DJ panel does it (2026-11-15): grey blocks in the shape of the content that is coming (the panel's `.skeleton` with a 1.4 s pulse in `dj/panel/src/index.css`, `SkeletonSongs` in `dj/panel/src/App.tsx`), with the real content fading in over them.
+
+**Do:**
+- [ ] Replace every "receiving" loading line in `zombies/site/src/` with skeletons shaped like what loads there: map rows (plan tile, name, meta) on the maps list; the map view's header and its run rows; the run page's rail, a few transcript rows and the composer; the join view.
+- [ ] One `.skeleton` style in the site's dark tokens with a soft pulse, still under `prefers-reduced-motion`; content fades in when it arrives, with no layout shift between skeleton and content.
+- [ ] Keep every empty and error state the UX review added.
+- [ ] Docs: the loading state in `docs/zombies/site/reference/design-system.md` (States).
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1440×900 and 390×844 on a throttled network, each screen shows skeletons shaped like its content, then the content in the same place with no jump; no "receiving" text left (`grep -rni receiv zombies/site/src` finds none); no console error.
+- Human-run: the owner opens the site after it has been idle and finds the wait looks like the DJ panel's.
+- Reuse: the DJ panel's skeleton CSS and `SkeletonSongs` as the pattern.
+- Neighbors: `dj/panel/src/`.
+- Forbidden: a spinner; text standing in for loading; dropping an empty or error state.
+
+**Touches:** `zombies/site/src/`, `docs/zombies/site/reference/design-system.md`
+
 ## Call runs attempts and list a map's attempts
 
 The owner is not sold on runs as they show now (2026-11-15): a run is to be called an attempt, opening a map shows the list of its attempts, the ones that beat the easter egg are visually identifiable, and the one being played is easy to see. This also settles the question left by "Make the site's pages load fast", which hid runs nobody is in: a map's view lists every attempt again.
@@ -28,6 +47,7 @@ The owner is not sold on runs as they show now (2026-11-15): a run is to be call
 - [ ] The map view lists all its attempts, newest first, each with who played it, its language and when it was last played; the maps list row says how many attempts a map has and how many are beaten.
 - [ ] An attempt is beaten once every required (non-optional) step of the map's bundle is recorded done in `run_steps`; it stays open, since nothing closes an attempt. A beaten attempt carries a distinct mark, and the attempt being played (someone in it; yours first) is highlighted at the top of the list.
 - [ ] Draw the map view's attempts list, the beaten mark and the playing highlight on the canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) (its "Third take" `Map` and `MapPhone` boards) in the design system's look, freeze them into `zombies/site/design/`, then build them; update `docs/zombies/site/reference/design-system.md`.
+- [ ] Loading on the new list uses the skeletons from "Load with skeletons like the DJ panel".
 - [ ] Record the owner's decision (attempts, the list, beaten and playing marks) and the beaten rule as dated decisions, replacing "Only runs with someone in them are listed".
 
 **Acceptance:**
