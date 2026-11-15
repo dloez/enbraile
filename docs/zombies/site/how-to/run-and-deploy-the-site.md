@@ -110,7 +110,11 @@ To carry a session coached from the terminal over to the site, write the map dir
 npm run import -- ../maps/<game>/<map> <name>=<discord id> ...
 ```
 
-Each member named in the file needs a Discord ID, from the file or from a `<name>=<discord id>` argument, which wins. It prints the new run's ID and counts only; check the run with `npm run runs -- <id>`.
+Each member named in the file needs a Discord ID, from the file or from a `<name>=<discord id>` argument, which wins. It prints the new run's ID and counts only; check the run with `npm run runs -- <id>`. The terminal's conversation goes in after, from the dir's gitignored `history.json` (written in the same subagent), and once per run:
+
+```sh
+npm run import -- ../maps/<game>/<map> --history <run id>
+```
 
 ### 8. Run the gate
 

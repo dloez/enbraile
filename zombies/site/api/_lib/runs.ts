@@ -1,11 +1,11 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Attempt, Card, MapPage, MapsPage, Member, Message, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, Transcript } from "../../shared/runs.js";
+import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
-import { audits, bundleVersions, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { audits, bundleVersions, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runHistory, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -290,7 +290,13 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
   });
 }
 
+async function historyOf(runId: string): Promise<Message[]> {
+  const rows = await db.select().from(runHistory).where(eq(runHistory.runId, runId)).orderBy(asc(runHistory.saidAt), asc(runHistory.id));
+  return rows.map((row) => ({ id: -1 - row.id, author: row.author, revision: null, name: row.name, you: false, text: row.text, at: row.saidAt.toISOString(), card: null }));
+}
+
 export async function transcript(viewer: Viewer, runId: string, after: number, rungsAfter: number): Promise<Transcript> {
+  const history = after ? [] : await historyOf(runId);
   const rows = await db
     .select({ message: messages, card: hintCards.id })
     .from(messages)
@@ -311,6 +317,7 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
       : [],
   );
   return {
+    history,
     messages: rows.map(
       ({ message: row, card }): Message => ({
         id: row.id,
@@ -400,9 +407,9 @@ export async function runList() {
   const ids = rows.map((row) => row.id);
   if (!ids.length) return [];
   const members = await db.select({ runId: runMembers.runId, name: runMembers.name }).from(runMembers).where(inArray(runMembers.runId, ids));
-  const tally = async (table: typeof messages | typeof gaps | typeof feedback | typeof deliveries) =>
+  const tally = async (table: typeof messages | typeof runHistory | typeof gaps | typeof feedback | typeof deliveries) =>
     new Map((await db.select({ runId: table.runId, n: count() }).from(table).where(inArray(table.runId, ids)).groupBy(table.runId)).map((entry) => [entry.runId, entry.n]));
-  const [lines, held, notes, rungs] = await Promise.all([tally(messages), tally(gaps), tally(feedback), tally(deliveries)]);
+  const [lines, earlier, held, notes, rungs] = await Promise.all([tally(messages), tally(runHistory), tally(gaps), tally(feedback), tally(deliveries)]);
   const lastLine = new Map(
     (await db.select({ runId: messages.runId, at: max(messages.createdAt) }).from(messages).where(inArray(messages.runId, ids)).groupBy(messages.runId)).map((entry) => [entry.runId, entry.at]),
   );
@@ -415,7 +422,7 @@ export async function runList() {
     createdAt: row.createdAt,
     lastLineAt: lastLine.get(row.id) ?? null,
     members: [...new Set(members.filter((member) => member.runId === row.id).map((member) => member.name))],
-    counts: { messages: lines.get(row.id) ?? 0, deliveries: rungs.get(row.id) ?? 0, gaps: held.get(row.id) ?? 0, feedback: notes.get(row.id) ?? 0 },
+    counts: { history: earlier.get(row.id) ?? 0, messages: lines.get(row.id) ?? 0, deliveries: rungs.get(row.id) ?? 0, gaps: held.get(row.id) ?? 0, feedback: notes.get(row.id) ?? 0 },
   }));
 }
 
@@ -425,8 +432,9 @@ export async function runLog(runId: string) {
   const [map] = await db.select({ latestVersion: maps.latestVersion }).from(maps).where(and(eq(maps.game, run.game), eq(maps.map, run.map)));
   const bundle = await latestBundle(db, run.game, run.map);
   const names = new Map((bundle?.knowledge ?? []).map((entry) => [entry.id, entry.name]));
-  const [members, lines, cards, rungs, notes, held, marks, steps, headsUps, calls, findings] = await Promise.all([
+  const [members, earlier, lines, cards, rungs, notes, held, marks, steps, headsUps, calls, findings] = await Promise.all([
     db.select().from(runMembers).where(eq(runMembers.runId, runId)).orderBy(asc(runMembers.id)),
+    db.select().from(runHistory).where(eq(runHistory.runId, runId)).orderBy(asc(runHistory.saidAt), asc(runHistory.id)),
     db.select().from(messages).where(eq(messages.runId, runId)).orderBy(asc(messages.id)),
     db.select().from(hintCards).where(eq(hintCards.runId, runId)).orderBy(asc(hintCards.id)),
     db.select().from(deliveries).where(eq(deliveries.runId, runId)).orderBy(asc(deliveries.id)),
@@ -442,6 +450,7 @@ export async function runLog(runId: string) {
   return {
     run: { ...run, latestVersion: map?.latestVersion ?? null },
     members: strip(members),
+    history: strip(earlier),
     messages: strip(lines),
     cards: strip(cards),
     deliveries: strip(rungs),
@@ -561,6 +570,33 @@ export async function importRun(input: RunImport): Promise<Imported> {
       id,
       counts: { members: input.members.length, known: learned.size, cards: cards.size, deliveries: input.deliveries.length, steps: progress.size, headsUps: headsUps.length },
     };
+  });
+}
+
+const terminalName = "Terminal";
+
+export type HistoryImported = { counts: Record<string, number> } | { error: "noSuchRun" | "hasHistory" | "invalidHistory"; issues: string[] };
+
+export async function importHistory(runId: string, input: HistoryImport): Promise<HistoryImported> {
+  return db.transaction(async (tx) => {
+    const [run] = await tx.select({ createdAt: runs.createdAt }).from(runs).where(eq(runs.id, runId)).for("update");
+    if (!run) return { error: "noSuchRun", issues: [] };
+    const [held] = await tx.select({ n: count() }).from(runHistory).where(eq(runHistory.runId, runId));
+    if (held && held.n > 0) return { error: "hasHistory", issues: [] };
+    const issues: string[] = [];
+    let previous = -Infinity;
+    input.lines.forEach((line, index) => {
+      const at = Date.parse(line.at);
+      if (at < previous) issues.push(`lines.${index}: comes before the line above it`);
+      if (at >= run.createdAt.getTime()) issues.push(`lines.${index}: is not earlier than the run`);
+      previous = at;
+    });
+    if (issues.length) return { error: "invalidHistory", issues };
+    await tx.insert(runHistory).values(
+      input.lines.map((line) => ({ runId, author: line.author, name: line.author === "cari" ? "Cari" : terminalName, text: line.text, saidAt: new Date(line.at) })),
+    );
+    const said = (author: "member" | "cari") => input.lines.filter((line) => line.author === author).length;
+    return { counts: { lines: input.lines.length, member: said("member"), cari: said("cari") } };
   });
 }
 

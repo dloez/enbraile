@@ -174,7 +174,7 @@ function Row({ message, card, old, slip }: { message: Message; card: Card | unde
   if (message.revision) {
     const time = clock(message.at);
     return (
-      <div className={message.id < 0 ? "row sending" : "row"}>
+      <div className={message.id === -1 ? "row sending" : "row"}>
         <span className="t">{time}</span>
         <div>
           <p className="who who-rev">
@@ -189,7 +189,7 @@ function Row({ message, card, old, slip }: { message: Message; card: Card | unde
     );
   }
   return (
-    <Line at={message.at} cari={cari} name={cari ? "Cari" : message.name} className={old ? "row old" : message.id < 0 ? "row sending" : "row"}>
+    <Line at={message.at} cari={cari} name={cari ? "Cari" : message.name} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
       <p className="msg">{message.text}</p>
       {card && slip(card)}
     </Line>
@@ -357,12 +357,13 @@ function VoiceBar({ voice }: { voice: Voice }) {
 
 type Trouble = { text: string; retry: () => void };
 
-type Log = { messages: Message[]; cards: Map<number, Card>; members: Member[]; rated: Map<number, Rating>; last: number; lastRung: number };
+type Log = { history: Message[]; messages: Message[]; cards: Map<number, Card>; members: Member[]; rated: Map<number, Rating>; last: number; lastRung: number };
 
 const logs = new Map<string, Log>();
 
 function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const [log] = useState(() => logs.get(sheet.id));
+  const [history, setHistory] = useState<Message[]>(log?.history ?? []);
   const [messages, setMessages] = useState<Message[]>(log?.messages ?? []);
   const [cards, setCards] = useState<Map<number, Card>>(log?.cards ?? new Map());
   const [members, setMembers] = useState<Member[]>(log?.members ?? sheet.members);
@@ -389,6 +390,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
     try {
       const reply = await fetchTranscript(sheet.id, last.current, lastRung.current);
       setMembers(reply.members);
+      if (reply.history.length) setHistory(reply.history);
       setLoaded(true);
       setLost(false);
       if (reply.cards.length) {
@@ -423,8 +425,8 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   }, [poll]);
 
   useEffect(() => {
-    if (loaded) logs.set(sheet.id, { messages, cards, members, rated, last: last.current, lastRung: lastRung.current });
-  }, [sheet.id, loaded, messages, cards, members, rated]);
+    if (loaded) logs.set(sheet.id, { history, messages, cards, members, rated, last: last.current, lastRung: lastRung.current });
+  }, [sheet.id, loaded, history, messages, cards, members, rated]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -432,7 +434,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
     return () => clearTimeout(timer);
   }, [loaded]);
 
-  const shown = pending ? [...messages, pending] : messages;
+  const shown = [...history, ...messages, ...(pending ? [pending] : [])];
   const rungCount = [...cards.values()].reduce((sum, card) => sum + card.rungs.length, 0);
 
   useLayoutEffect(() => {

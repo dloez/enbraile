@@ -2,13 +2,13 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { type Context, Hono } from "hono";
 import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent } from "../../shared/runs.js";
+import { asRevision, historyImportSchema, messageSchema, ratingSchema, runImportSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent } from "../../shared/runs.js";
 import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
-import { importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
+import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 import { bringCari, callState, voiceTurn } from "./voice.js";
 
@@ -98,6 +98,14 @@ claude.post("/runs", async (c) => {
   if (!parsed.success) return c.json({ error: "invalidImport", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) }, 400, noStore);
   const imported = await importRun(parsed.data);
   if ("error" in imported) return c.json(imported, imported.error === "noSuchMap" ? 404 : 400, noStore);
+  return c.json(imported, 201, noStore);
+});
+
+claude.post("/runs/:id/history", async (c) => {
+  const parsed = historyImportSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidHistory", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.code}`) }, 400, noStore);
+  const imported = await importHistory(c.req.param("id"), parsed.data);
+  if ("error" in imported) return c.json(imported, imported.error === "noSuchRun" ? 404 : imported.error === "hasHistory" ? 409 : 400, noStore);
   return c.json(imported, 201, noStore);
 });
 

@@ -49,7 +49,7 @@ export type GapContext = {
   recent: string[];
 };
 
-export type Transcript = { messages: Message[]; members: Member[]; cards: Card[] };
+export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[] };
 
 export type RunEvent = { id: number; at: string } & (
   | { kind: "line" | "cari"; name: string; text: string; cards: number[]; by: "claude" | null }
@@ -106,6 +106,15 @@ export const runImportSchema = z.object({
 });
 
 export type RunImport = z.infer<typeof runImportSchema>;
+
+export const historyImportSchema = z.object({
+  lines: z
+    .array(z.object({ author: z.enum(["member", "cari"]), text: z.string().trim().min(1).max(20000), at: z.iso.datetime({ offset: true }) }))
+    .min(1)
+    .max(5000),
+});
+
+export type HistoryImport = z.infer<typeof historyImportSchema>;
 
 export const stepInSchema = z
   .object({

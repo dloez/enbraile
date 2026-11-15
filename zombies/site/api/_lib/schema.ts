@@ -93,6 +93,22 @@ export const messages = pgTable(
   (table) => [index().on(table.runId, table.id)],
 );
 
+export const runHistory = pgTable(
+  "run_history",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    author: text("author").$type<"member" | "cari">().notNull(),
+    name: text("name").notNull(),
+    text: text("text").notNull(),
+    saidAt: timestamp("said_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index().on(table.runId, table.id)],
+);
+
 export const runKnowledge = pgTable(
   "run_knowledge",
   {
