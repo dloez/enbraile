@@ -9,11 +9,13 @@ import * as voice from "./voice.ts";
 export type Trigger = { word: string; userId: string; text: string };
 export type TriggerOptions = { ack?: boolean };
 type Registration = { word: string; ack: boolean; handler: (trigger: Trigger) => void };
+export type TranscriptLine = transcripts.Line;
 
 const BEAT_MS = 10_000;
 const SAY_TIMEOUT_MS = 30_000;
 
 const registrations = new Set<Registration>();
+const listeners = new Set<(line: TranscriptLine) => void>();
 const waiting = new Map<number, { resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
 let worker: WebSocket | null = null;
 let said = 0;
@@ -39,11 +41,30 @@ export function onTrigger(word: string, handler: (trigger: Trigger) => void, { a
   };
 }
 
+export function onTranscript(handler: (line: TranscriptLine) => void): () => void {
+  listeners.add(handler);
+  return () => {
+    listeners.delete(handler);
+  };
+}
+
+async function heard(userId: string, text: string, at: number, ms: number | null): Promise<void> {
+  const line = await transcripts.record(userId, text, at, ms);
+  if (!line) return;
+  for (const listener of listeners) {
+    try {
+      listener(line);
+    } catch (error) {
+      console.error("transcript handler", (error as Error).message);
+    }
+  }
+}
+
 export function say(text: string): Promise<void> {
   if (!worker) return Promise.reject(new Error("the voice worker is not connected"));
   const id = ++said;
   worker.send(JSON.stringify({ type: "say", id, text }));
-  void transcripts.recordBot(text);
+  transcripts.recordBot(text);
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       waiting.delete(id);
@@ -83,7 +104,7 @@ function received(data: Buffer, binary: boolean): void {
   }
   const message = JSON.parse(String(data)) as { type: string; word?: string; user?: string; text?: string; at?: number; ms?: number };
   if (message.type === "transcript" && message.user && message.text) {
-    void transcripts.record(message.user, message.text, message.at ?? Date.now(), message.ms ?? null);
+    heard(message.user, message.text, message.at ?? Date.now(), message.ms ?? null).catch((error: Error) => console.error("transcript", error.message));
     return;
   }
   if (message.type !== "trigger" || !message.word || !message.user) return;
@@ -139,7 +160,7 @@ export const hearing: Module = {
   start: async () =>
     listen(
       (userId, clip, startedAt) => worker?.send(frame({ type: "clip", user: userId, at: startedAt }, clip)),
-      () => worker !== null && voice.listening() && (registrations.size > 0 || transcripts.active()),
+      () => worker !== null && voice.listening() && (registrations.size > 0 || transcripts.active() || (transcripts.kept() && listeners.size > 0)),
     ),
   stop: () => transcripts.flush(),
 };

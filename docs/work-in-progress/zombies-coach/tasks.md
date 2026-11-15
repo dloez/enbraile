@@ -92,22 +92,6 @@ The watch loop checks each live reply against the rules and Claude can post into
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
 **After:** Watch a run from Claude Code and fix things live
 
-## Let modules hear the call's transcript
-
-The host side of keeping a call's transcript, split from "Keep the call's transcript in the run" so it can run beside site work (2026-11-15): modules can subscribe to what the hearing worker transcribes ([Discovery → Voice](discovery.md#voice)).
-
-**Do:**
-- [ ] `hearing.onTranscript(handler)` in the host (`home/bot/src/hearing.ts`, exported in `sdk.ts`), called with each transcript line of a call whose transcripts a module keeps; documented in the bot doc.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `home/bot`; a module subscribed with `onTranscript` receives a transcript line fed through the worker's message path in a local run.
-- Human-run: none.
-- Reuse: `transcripts.keep`, the worker's transcript messages (`home/bot/src/hearing.ts`).
-- Neighbors: `hearing.onTrigger`.
-- Forbidden: transcript text reaching any Claude call.
-
-**Touches:** `home/bot/src/hearing.ts`, `home/bot/src/sdk.ts`, `docs/home/bot/explanation/bot.md`
-
 ## Ask Cari by voice in the Discord call
 
 The site side: the site's offer brings Cari into the run's voice channel, and «cari …» heard by the bot's `zombies` module becomes a line in the speaker's run, answered in the chat and spoken back ([Discovery → Voice](discovery.md#voice)).
@@ -140,7 +124,7 @@ While Cari is in the call for a run, what is said there goes into the run for th
 - Forbidden: transcript text in the coach model's prompt.
 
 **Touches:** `zombies/bot/`, `zombies/site/`, `docs/zombies/`
-**After:** Ask Cari by voice in the Discord call; Let modules hear the call's transcript
+**After:** Ask Cari by voice in the Discord call
 
 ## Show a zone on the map for level-3 hints
 

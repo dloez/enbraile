@@ -19,7 +19,8 @@ let lines: Line[] = [];
 let flushing: Promise<void> = Promise.resolve();
 
 export const configured = () => client !== null;
-export const active = () => client !== null && keepers.size > 0;
+export const kept = () => keepers.size > 0;
+export const active = () => client !== null && kept();
 
 export function keep(owner: string, on: boolean): void {
   if (on) keepers.add(owner);
@@ -32,14 +33,16 @@ async function nameOf(userId: string): Promise<string> {
   return member?.displayName ?? userId;
 }
 
-export async function record(userId: string, text: string, at: number, ms: number | null): Promise<void> {
+export async function record(userId: string, text: string, at: number, ms: number | null): Promise<Line | null> {
   const channelId = voice.channel();
-  if (!active() || !channelId || !text) return;
+  if (!kept() || !channelId || !text) return null;
   const channel = (await guild()).channels.cache.get(channelId)?.name ?? channelId;
-  lines.push({ at: new Date(at).toISOString(), channelId, channel, userId, name: await nameOf(userId), text, ms });
+  const line = { at: new Date(at).toISOString(), channelId, channel, userId, name: await nameOf(userId), text, ms };
+  if (active()) lines.push(line);
+  return line;
 }
 
-export const recordBot = (text: string) => record(BOT, text, Date.now(), null);
+export const recordBot = (text: string) => void record(BOT, text, Date.now(), null);
 
 async function upload(): Promise<void> {
   if (!client || !lines.length) return;
