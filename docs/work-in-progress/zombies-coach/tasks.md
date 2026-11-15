@@ -22,23 +22,6 @@ The Vercel project, its Neon database, the workflow and the root's `trustedOrigi
 - Add the DNS-only CNAME `zombies` → `0cedcc0080c9a767.vercel-dns-017.com` in Cloudflare's `enbraile.vip` zone yourself, or give agents a Cloudflare API token limited to DNS edit on that zone? Agents have no access to it today.
 - Create the 1Password item "zombies admin token" and set Vercel's Production `ZOMBIES_ADMIN_TOKEN` with step 8's commands (agents have no 1Password session). Then publish the test map yourself with step 9, or unlock 1Password for an agent run?
 
-## Record the site's settled UI rules in its explanation doc
-
-The site's permanent docs cite settled owner decisions from the work-in-progress discovery, which is deleted when the idea closes: `docs/zombies/site/reference/design-system.md:3` cites [Discovery → Runs and the site](discovery.md#runs-and-the-site) for why the screens are as they are, and `:112` cites [Discovery → Voice](discovery.md#voice) for "no sound cue". `docs/zombies/site/explanation/site.md`'s `## Decisions` holds none of them, though the built maps page already follows them.
-
-**Do:**
-- [ ] Add to `## Decisions` in `docs/zombies/site/explanation/site.md`, with their original attribution and date (owner, 2026-11-15): no step or hint numbers anywhere, no list of steps, the UI is never a hint; hints as cards with a generic "more" and the three feedback controls; Cari's voice only, no sound cue on a new hint.
-- [ ] Point `design-system.md:3` and `:112` at those decisions instead of the discovery.
-
-**Acceptance:**
-- Claude-run: `grep -n 'work-in-progress' docs/zombies/site/reference/design-system.md` finds nothing; each rule appears once, dated, in `site.md`'s `## Decisions`.
-- Human-run: none.
-- Reuse: the wording of the discovery's decisions, unchanged in meaning.
-- Neighbors: `docs/pkmn/site/explanation/site.md` for the decision format.
-- Forbidden: a new rule or reworded meaning; editing the discovery.
-
-**Touches:** `docs/zombies/site/explanation/site.md`, `docs/zombies/site/reference/design-system.md`
-
 ## Decide how two members sign in to the local site
 
 "Start a run…" asks for two signed-in browsers as two members of one run, with one active run per person, but locally every request is the same person: `zombies/site/api/_lib/viewer.ts:5-6` returns one fixed `DEV_USER_ID` viewer, and without it the root's session cookie is set on `enbraile.vip` (`home/site/api/_lib/auth.ts:25`), which a `localhost` browser (or a `vercel.app` preview) never carries. pkmn's test players (`pkmn/site/api/_lib/dev-sign-in.ts`) live in its own auth tables, which the zombies site may not have ([Discovery → Data and storage](discovery.md#data-and-storage)).

@@ -1,6 +1,6 @@
 # Zombies Site Design System
 
-The visual system of `zombies/site/`: its tokens, type, layout shell, components and recurring patterns. For a screen not built yet the frozen boards in `zombies/site/design/` are the source of truth and this doc describes them; for one that is built the code is, and this doc changes in the same commit as it does, as pkmn's does ([pkmn Site Design System](../../../pkmn/site/reference/design-system.md)). Built so far: the header and the maps page's map cards, with the tokens in `src/index.css` and the fonts bundled through `@fontsource`. Why the site has these screens is in [Zombies Coach → Runs and the site](../../../work-in-progress/zombies-coach/discovery.md#runs-and-the-site).
+The visual system of `zombies/site/`: its tokens, type, layout shell, components and recurring patterns. For a screen not built yet the frozen boards in `zombies/site/design/` are the source of truth and this doc describes them; for one that is built the code is, and this doc changes in the same commit as it does, as pkmn's does ([pkmn Site Design System](../../../pkmn/site/reference/design-system.md)). Built so far: the header and the maps page's map cards, with the tokens in `src/index.css` and the fonts bundled through `@fontsource`. The rules these screens follow are in [The Zombies Site → Decisions](../explanation/site.md#decisions).
 
 ## Boards
 
@@ -109,7 +109,7 @@ Cards and the rail's voice panel are `panel` with a 2px `line` border, 16px radi
 | Composer | `run` | A `well` field, a revision toggle (a note icon) and Send in mint |
 | Revision mode | `run-revision` | The toggle pressed: a "Revision mode" chip above, the composer's border dashed `note`, the placeholder "Comment on the coaching…", Send in `note`. A sent revision is a dashed `note` bubble with a "Revision · For Claude" chip, and Cari answers it with one short line |
 
-Motion: the writing dots, the waveform and the zone's ring are the only animation, and stand still under `prefers-reduced-motion`. No sound cue accompanies a new hint ([Zombies Coach → Voice](../../../work-in-progress/zombies-coach/discovery.md#voice)).
+Motion: the writing dots, the waveform and the zone's ring are the only animation, and stand still under `prefers-reduced-motion`. No sound cue accompanies a new hint ([The Zombies Site → Decisions](../explanation/site.md#decisions)).
 
 ## Imagery and Icons
 

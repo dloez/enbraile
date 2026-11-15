@@ -27,6 +27,9 @@ Vercel serves the site from the owner's Hobby team as the project `enbraile-zomb
 
 ## Decisions
 
+- **No numbers, no step list, the UI is never a hint:** no step or hint numbers anywhere (the terminal's "Step 5 · hint 2/4" is not shown), no list of steps, and no buttons or suggestions that tell players what to try. _(owner, 2026-11-15)_
+- **Hints as cards:** one shared chat with Cari, where hints arrive as cards with a generic "more" control and the three feedback controls (too obvious, right, too vague); a level-3 zone shows under its card. _(owner, 2026-11-15)_
+- **Cari's voice only:** no chimes or clips on a new hint, since a cue would itself carry meaning. _(owner, 2026-11-15)_
 - **One `bundle.json` per map dir:** `publish` takes the dir that holds a map's files, as the queue's `compile` will write its bundle there. _(the agent's choice, 2026-11-15)_
 - **Names per language, art as a tint:** the map's name is stored in both languages, since in-game names differ by language, and its card art is one of the three drawn silhouettes (teal, rust, furnace) chosen in the bundle, since no game's art goes on the site. _(the agent's choice, 2026-11-15)_
 - **A rung's `reveals`:** the discovery lets a rung mention an unknown thing when it is the rung meant to reveal it; the bundle says which rung that is with `reveals`, next to `mentions`. _(the agent's choice, 2026-11-15)_
