@@ -37,6 +37,26 @@ Members in a run talk to Cari; Haiku answers through tools, delivering only prep
 
 **Touches:** `zombies/site/`, `docs/zombies/`
 
+## Review the site's frontend for UX, loading states and glitches
+
+The owner wants the site to feel good to use before the group plays on it (2026-11-15): every screen has a proper loading, empty and error state, and nothing odd happens in the browser. Review what is built so far in `zombies/site/src/` against the boards and fix what falls short.
+
+**Do:**
+- [ ] Walk every built screen (maps, Start a run, join, the run page with Cari's hint slips and "more") through the Playwright MCP at desktop 1440×900 and phone 390×844, with two local members, on a normal and a throttled network.
+- [ ] Each fetch, post and poll has a loading state drawn in the boards' language (no blank screen, no spinner the boards do not use), an empty state, and an error state that says what failed and lets the reader retry.
+- [ ] Nothing weird: no console errors or warnings, no layout shift as data arrives, no flash of signed-out or empty content, no double submit on a slow click, no message duplicated or reordered by the 2 s poll, no scroll jump in the transcript when a line arrives, focus and keyboard order that make sense, touch targets of 44 px, and the phone layout without horizontal scroll.
+- [ ] Fix what the walk finds in `zombies/site/src/`; a state the boards do not draw follows the design system's tokens and components, and is added to `docs/zombies/site/reference/design-system.md`.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; the walk above repeated after the fixes with no console error or warning, each screen's loading, empty and error state seen at both widths (the error by stopping the local API), and the report listing every issue found with its fix.
+- Human-run: the owner and a friend use the site on phones on `zombies.enbraile.vip` and nothing feels off.
+- Reuse: the boards in `zombies/site/design/`; `docs/zombies/site/reference/design-system.md`; the `verify-site` skill's way of driving a local stack, as a pattern.
+- Neighbors: `pkmn/site/src/` for loading and error states already in the group's apps.
+- Forbidden: new features or screens; changing what a screen does rather than how it feels; step or hint numbers in the UI.
+
+**Touches:** `zombies/site/src/`, `zombies/site/index.html`, `docs/zombies/site/reference/design-system.md`
+**After:** Start a run and get prepared hints from Cari in a shared chat
+
 ## Name the site's machine API for Claude
 
 The token and routes the site calls "admin" are Claude's: only Claude uses them, from the terminal, to publish bundles and, later, to read and watch runs and step in as Cari. The owner wants them named and attributed that way, not as a general admin (2026-11-15). A browser admin like pkmn's (`npm run admin:create`, `/admin`) is not wanted now.
