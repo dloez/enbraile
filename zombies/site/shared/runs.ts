@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { languages, type Language, type PublishedMap, type Viewer } from "./bundle.js";
+import { languages, type Language, type PublishedMap, type Viewer, type Zone } from "./bundle.js";
 
 export type Member = { name: string; you: boolean };
 
@@ -39,7 +39,11 @@ export type Message = {
   card: number | null;
 };
 
-export type Card = { id: number; rungs: { id: number; text: string }[]; at: string; more: boolean; rating: Rating | null };
+export type Survey = { digest: string; width: number; height: number };
+
+export type ShownZone = Zone & { survey: Survey | null };
+
+export type Card = { id: number; rungs: { id: number; text: string; zone: ShownZone | null }[]; at: string; more: boolean; rating: Rating | null };
 
 export type GapContext = {
   model: string;

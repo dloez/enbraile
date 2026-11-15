@@ -18,6 +18,8 @@ Give each agent the game, map, quest, and player count. If a source can't be fet
 
 The wiki-style agent also saves the map's **announcement image**: the official reveal art the map got when it was announced (the publisher's blog post or press kit, or the image the wiki shows as the map's official art). It converts it to a JPEG at most 1920 px wide and under 700 KB with metadata stripped (`uv run --with pillow`), saves it as `art.jpg` in the map dir, and checks that it shows no easter-egg step or solution, such as a code, a symbol answer or a diagram of a step; a map's areas and characters are fine, found or not. It reports only yes or no, the file's dimensions and size, and the source's domain, never what the image shows. No official image, or none that passes, means no `art.jpg`, and the site keeps a drawn plan for the map.
 
+The same agent saves a **survey image**: a community overhead map of the whole level, the top-down layout wikis and guide sites draw, ideally with area labels. It converts it to a JPEG at most 2400 px on its longer side and under 2 MB with metadata stripped, saves it as `survey.jpg`, and checks it carries no easter-egg step or solution (a marked step location, a code, a symbol answer); areas the players have not found are fine. It reports only yes or no, the dimensions and size and the source's domain. No overhead map that passes means no `survey.jpg` and no zones.
+
 ## 2. Synthesise the dossier (one agent)
 
 One agent reads all of `sources/`, plus `zombies/calibration.md` and `.claude/skills/ee-coach/references/hint-craft.md`, and writes two files.
@@ -135,12 +137,22 @@ Then the synthesis agent (or a fresh one with dossier access) compares against t
 
 One round of fixes is enough. The real calibration comes from the players. After the fixes, bring any `hints.<lang>.md` in line with the final English rungs, and `dossier.<lang>.md` in line with any change to "L4 as spoken".
 
-## 4. Compile and publish
+## 3b. Zones (one agent with dossier access, then a blind check)
 
-The live coach on `zombies.enbraile.vip` reads a map only as a bundle. In the map dir, write `map.json` with the map's name in each language, its `art`, the key of one of the site's three drawn plans, shown wherever the map has no image, and `image`, the announcement image's file name, when section 1 saved one:
+When there is a `survey.jpg`, a subagent with the dossier reads every level 3 rung, every Alt for one and every step's `L4 as spoken`, and gives a zone to each that sends the players to a place; levels 1 and 2 never get one, since a place drawn on a map is the strongest hint there is. It writes `zones.json` in the map dir, one entry per zoned rung, keyed by the rung's address as `compile` names it: `step <n> L3`, `step <n> L4`, `step <n> Alt <k>` (the step's k-th Alt line, in file order), `step <n> part <p> L3` and `step <n> part <p> Alt <k>`. Each is an ellipse over where the action happens, about a room's size, its centre and radii as fractions of the image's width and height:
 
 ```json
-{ "name": { "es": "<name as the Spanish game shows it>", "en": "<English name>" }, "art": "teal | rust | furnace", "image": "art.jpg" }
+{ "step 5 L3": { "x": 0.42, "y": 0.61, "rx": 0.05, "ry": 0.04 } }
+```
+
+It checks each placement by drawing the ellipse on the image (`uv run --with pillow`) and looking at the render. Then a fresh agent with no access to the dossier gets `hints.md` and each render, and says for each zoned rung whether the zone and the rung's text point to the same place, and whether the zone gives away more than the rung says (another step's place, a later rung's detail); the first agent fixes what fails against the dossier, one round. Both report addresses, counts and verdicts only.
+
+## 4. Compile and publish
+
+The live coach on `zombies.enbraile.vip` reads a map only as a bundle. In the map dir, write `map.json` with the map's name in each language, its `art`, the key of one of the site's three drawn plans, shown wherever the map has no image, `image`, the announcement image's file name, when section 1 saved one, and `survey`, the survey image's, when it saved that:
+
+```json
+{ "name": { "es": "<name as the Spanish game shows it>", "en": "<English name>" }, "art": "teal | rust | furnace", "image": "art.jpg", "survey": "survey.jpg" }
 ```
 
 Then, from `zombies/site/`, in the synthesis subagent:
@@ -150,7 +162,7 @@ npm run compile -- ../maps/<game>/<map>
 npm run publish -- ../maps/<game>/<map>
 ```
 
-`compile` reads `map.json`, `hints.md`, `hints.es.md` (the site carries every line in Spanish and English, so a bundle needs the Spanish copy whatever the players' language), `knowledge.md` (a thing is `known` in the bundle only when its status is `known`), `dossier.md` (the `L4 as spoken` and `Conditions` of each step, and the whole text as the durable copy), the map's `calibration.md` everything under `sources/` and the image `map.json` names (rejected if it is missing, over 4 MB, or not a JPEG, PNG or WebP file), checks them, and writes `bundle.json` beside them. Its errors name a file and line or a step and rung, never the text, so they can be quoted in the main conversation; fix each and run it again. Its warnings list `unknown` IDs that some line mentions but no line reveals, which the site can only deliver once the players name the thing themselves: add the missing `Reveals` unless that is intended. It prints counts only. `publish` uploads the image, then sends the bundle to the site as a new version ([How to Run and Deploy the Site](../../../../docs/zombies/site/how-to/run-and-deploy-the-site.md)). Any later change to the hints or dossier is followed by both commands again.
+`compile` reads `map.json`, `hints.md`, `hints.es.md` (the site carries every line in Spanish and English, so a bundle needs the Spanish copy whatever the players' language), `knowledge.md` (a thing is `known` in the bundle only when its status is `known`), `dossier.md` (the `L4 as spoken` and `Conditions` of each step, and the whole text as the durable copy), the map's `calibration.md` everything under `sources/`, `zones.json` and the images `map.json` names (each rejected if it is missing, over 4 MB, or not a JPEG, PNG or WebP file), checks them (a zone on a level 1 or 2 rung, on a rung that does not exist, or with no survey image is an error), and writes `bundle.json` beside them. Its errors name a file and line or a step and rung, never the text, so they can be quoted in the main conversation; fix each and run it again. Its warnings list `unknown` IDs that some line mentions but no line reveals, which the site can only deliver once the players name the thing themselves: add the missing `Reveals` unless that is intended. It prints counts only. `publish` uploads the images, then sends the bundle to the site as a new version ([How to Run and Deploy the Site](../../../../docs/zombies/site/how-to/run-and-deploy-the-site.md)). Any later change to the hints, the dossier or the zones is followed by both commands again.
 
 ## 5. Report
 

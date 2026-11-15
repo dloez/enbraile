@@ -20,7 +20,7 @@
       "ladder": [
         { "level": 1, "text": { "es": "La caseta de señales guarda algo más que palancas.", "en": "The signal box holds more than levers." }, "mentions": ["signal-box"] },
         { "level": 2, "text": { "es": "Busca algo que dé luz en la caseta de señales.", "en": "Look for something that gives light in the signal box." }, "mentions": ["signal-box"], "alts": [{ "when": "They already looked around the box", "text": { "es": "Mira en los estantes altos de la caseta.", "en": "Check the high shelves of the box." }, "mentions": ["signal-box"] }] },
-        { "level": 3, "text": { "es": "Hay un farol apagado colgado sobre la puerta de la caseta.", "en": "An unlit lantern hangs above the signal box door." }, "mentions": ["signal-box"], "reveals": ["lantern"] },
+        { "level": 3, "text": { "es": "Hay un farol apagado colgado sobre la puerta de la caseta.", "en": "An unlit lantern hangs above the signal box door." }, "mentions": ["signal-box"], "reveals": ["lantern"], "zone": { "x": 0.25, "y": 0.28, "rx": 0.11, "ry": 0.12 } },
         { "level": 4, "text": { "es": "Interactúa con el farol sobre la puerta con la corriente encendida.", "en": "Interact with the lantern above the door with the power on." }, "mentions": ["lantern"] }
       ]
     },

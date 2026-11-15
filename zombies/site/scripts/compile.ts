@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { z } from "zod";
-import { bundleSchema, languages, type Language } from "../shared/bundle.js";
+import { bundleSchema, languages, zoneLevel, zoneSchema, type Language, type Zone } from "../shared/bundle.js";
 import { imageFacts, maxImageBytes } from "../shared/image.js";
 
 type Line = { text: string; mentions: string[]; reveals: string[] };
@@ -176,10 +176,11 @@ const pairLadder = (en: Ladder, es: Ladder | undefined, where: string) => {
   return en.rungs.map((rung, index) => ({
     level: rung.level,
     ...pairLines(rung, es.rungs[index]!, `${where} L${rung.level}`),
+    ...zoneAt(`${where} L${rung.level}`, rung.level),
     alts: en.alts
       .map((alt, altIndex) => ({ alt, altIndex }))
       .filter(({ alt }) => alt.level === rung.level)
-      .map(({ alt, altIndex }) => ({ when: alt.when, ...pairLines(alt, es.alts[altIndex]!, `${where} Alt ${altIndex + 1}`) })),
+      .map(({ alt, altIndex }) => ({ when: alt.when, ...pairLines(alt, es.alts[altIndex]!, `${where} Alt ${altIndex + 1}`), ...zoneAt(`${where} Alt ${altIndex + 1}`, alt.level, true) })),
   }));
 };
 
@@ -280,9 +281,10 @@ const parseJson = (source: string | null) => {
   }
 };
 
-const meta = z.object({ name: z.object({ es: z.string().min(1), en: z.string().min(1) }), art: z.enum(["teal", "rust", "furnace"]), test: z.boolean().optional(), image: z.string().regex(/^[^/\\]+$/).optional() }).safeParse(parseJson(await readOptional("map.json")));
+const fileName = z.string().regex(/^[^/\\]+$/);
+const meta = z.object({ name: z.object({ es: z.string().min(1), en: z.string().min(1) }), art: z.enum(["teal", "rust", "furnace"]), test: z.boolean().optional(), image: fileName.optional(), survey: fileName.optional() }).safeParse(parseJson(await readOptional("map.json")));
 if (!meta.success) {
-  console.error("map.json: needs to be JSON with name.es, name.en and art (teal, rust or furnace), and image only as a file name");
+  console.error("map.json: needs to be JSON with name.es, name.en and art (teal, rust or furnace), and image and survey only as file names");
   process.exit(1);
 }
 
@@ -304,6 +306,27 @@ const readImage = async (name: string) => {
   return { file: name, digest: createHash("sha256").update(bytes).digest("hex"), ...facts };
 };
 const image = meta.data.image ? await readImage(meta.data.image) : undefined;
+const survey = meta.data.survey ? await readImage(meta.data.survey) : undefined;
+
+const zonesSource = await readOptional("zones.json");
+const zonesParsed = z.record(z.string(), zoneSchema).safeParse(zonesSource === null ? {} : parseJson(zonesSource));
+if (!zonesParsed.success) {
+  console.error("zones.json: needs to be JSON mapping a rung, such as \"step 5 L3\", \"step 5 part 1 L3\" or \"step 5 Alt 2\", to { x, y, rx, ry }, each a fraction of the survey image from 0 to 1");
+  process.exit(1);
+}
+const zones: Record<string, Zone> = zonesParsed.data;
+if (Object.keys(zones).length && !survey) errors.push("zones.json: zones need a survey image named in map.json");
+const placed = new Set<string>();
+const zoneAt = (address: string, level: number, alt = false) => {
+  const zone = zones[address];
+  if (!zone) return {};
+  placed.add(address);
+  if (level < zoneLevel) {
+    errors.push(`zones.json: ${address} is ${alt ? "an Alt for " : ""}a level ${level} rung; a zone goes only on level ${zoneLevel} and up`);
+    return {};
+  }
+  return { zone };
+};
 
 const hints: Record<Language, Step[]> = { en: parseSteps(await read("hints.md"), "hints.md"), es: parseSteps(await read("hints.es.md"), "hints.es.md") };
 const dossier = await read("dossier.md");
@@ -345,6 +368,8 @@ const steps = hints.en.map((en) => {
   };
 });
 
+for (const address of Object.keys(zones)) if (!placed.has(address)) errors.push(`zones.json: ${address} names no rung`);
+
 const lines = steps.flatMap((step) => [step.onSuccess, ...[step.ladder, ...step.parts.map((part) => part.ladder)].flatMap((ladder) => ladder.flatMap((rung) => [rung, ...rung.alts]))]);
 const unknown = new Set(knowledge.filter((entry) => entry.mark === "unknown").map((entry) => entry.id));
 const revealed = new Set(lines.flatMap((line) => line.reveals));
@@ -360,6 +385,7 @@ const candidate = {
   test: meta.data.test ?? false,
   art: meta.data.art,
   image,
+  survey,
   knowledge,
   steps,
   calibration: parseCalibration(await readOptional("calibration.md")),
@@ -382,5 +408,6 @@ if (!parsed.success) {
 await writeFile(join(dir, "bundle.json"), `${JSON.stringify(parsed.data, null, 2)}\n`);
 const ladders = parsed.data.steps.reduce((sum, step) => sum + 1 + step.parts.length, 0);
 const rungs = parsed.data.steps.reduce((sum, step) => sum + [step.ladder, ...step.parts.map((part) => part.ladder)].reduce((inner, ladder) => inner + ladder.length, 0), 0);
+const zoneCount = parsed.data.steps.reduce((sum, step) => sum + [step.ladder, ...step.parts.map((part) => part.ladder)].reduce((inner, ladder) => inner + ladder.reduce((count, rung) => count + (rung.zone ? 1 : 0) + rung.alts.filter((alt) => alt.zone).length, 0), 0), 0);
 const alts = parsed.data.steps.reduce((sum, step) => sum + [step.ladder, ...step.parts.map((part) => part.ladder)].reduce((inner, ladder) => inner + ladder.reduce((count, rung) => count + rung.alts.length, 0), 0), 0);
-console.log(`${parsed.data.game}/${parsed.data.map}: ${parsed.data.steps.length} steps, ${ladders} ladders, ${rungs} rungs, ${alts} alts, ${parsed.data.knowledge.length} knowledge entries, ${parsed.data.image ? `art ${parsed.data.image.width}x${parsed.data.image.height}` : "no art"}, languages ${languages.join("+")} → ${relative(process.env.INIT_CWD ?? process.cwd(), join(dir, "bundle.json"))}`);
+console.log(`${parsed.data.game}/${parsed.data.map}: ${parsed.data.steps.length} steps, ${ladders} ladders, ${rungs} rungs, ${alts} alts, ${parsed.data.knowledge.length} knowledge entries, ${parsed.data.image ? `art ${parsed.data.image.width}x${parsed.data.image.height}` : "no art"}, ${zoneCount} zones${parsed.data.survey ? ` on a ${parsed.data.survey.width}x${parsed.data.survey.height} survey` : ""}, languages ${languages.join("+")} → ${relative(process.env.INIT_CWD ?? process.cwd(), join(dir, "bundle.json"))}`);

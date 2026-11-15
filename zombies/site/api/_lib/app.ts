@@ -74,7 +74,7 @@ claude.put("/maps/:game/:map", async (c) => {
   if (!parsed.success) return c.json({ error: "invalidBundle", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) }, 400);
   const bundle = parsed.data;
   if (bundle.game !== c.req.param("game") || bundle.map !== c.req.param("map")) return c.json({ error: "pathMismatch" }, 400);
-  if (bundle.image && !(await hasImage(bundle.image.digest))) return c.json({ error: "missingImage" }, 400, noStore);
+  for (const image of [bundle.image, bundle.survey]) if (image && !(await hasImage(image.digest))) return c.json({ error: "missingImage" }, 400, noStore);
   const stored = await storeVersion(bundle, "claude");
   if (!stored.created) return c.json({ ...stored, held: { waiting: 0, answered: 0 } }, 200, noStore);
   const { retryHeld } = await import("./coach.js");

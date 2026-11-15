@@ -18,23 +18,24 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-const { game, map, image } = parsed.data;
+const { game, map, image, survey } = parsed.data;
 const base = requireEnv("ZOMBIES_URL");
 const authorization = `Bearer ${requireEnv("CLAUDE_TOKEN")}`;
 
-if (image) {
-  const bytes = await readFile(join(root, image.file)).catch(() => null);
-  if (!bytes || createHash("sha256").update(bytes).digest("hex") !== image.digest) {
-    console.error(`${image.file}: missing or changed since compile; run compile again`);
+for (const entry of [image, survey]) {
+  if (!entry) continue;
+  const bytes = await readFile(join(root, entry.file)).catch(() => null);
+  if (!bytes || createHash("sha256").update(bytes).digest("hex") !== entry.digest) {
+    console.error(`${entry.file}: missing or changed since compile; run compile again`);
     process.exit(1);
   }
-  const sent = await fetch(`${base}/api/claude/images/${image.digest}`, { method: "PUT", headers: { authorization, "content-type": image.type }, body: bytes });
+  const sent = await fetch(`${base}/api/claude/images/${entry.digest}`, { method: "PUT", headers: { authorization, "content-type": entry.type }, body: bytes });
   const stored = (await sent.json().catch(() => null)) as { created?: boolean; error?: string } | null;
   if (!sent.ok) {
-    console.error(`image upload failed: ${sent.status} ${stored?.error ?? ""}`);
+    console.error(`${entry.file}: upload failed: ${sent.status} ${stored?.error ?? ""}`);
     process.exit(1);
   }
-  console.log(`${image.file}: ${image.width}x${image.height}${stored?.created ? "" : ", already stored"}`);
+  console.log(`${entry.file}: ${entry.width}x${entry.height}${stored?.created ? "" : ", already stored"}`);
 }
 
 const response = await fetch(`${base}/api/claude/maps/${game}/${map}`, {

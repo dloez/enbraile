@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { PublishedMap } from "../shared/bundle";
 import { imagePath } from "../shared/image";
+import type { ShownZone } from "../shared/runs";
 
 const wards = [28, 46, 64, 82, 100];
 
@@ -85,5 +86,45 @@ export function MapArt({ map, label, className, large }: { map: Shown; label?: s
         onError={() => setState("failed")}
       />
     </Tag>
+  );
+}
+
+const planBox = { width: 140, height: 96 };
+
+export function SurveyZone({ zone, art, label }: { zone: ShownZone; art: PublishedMap["art"]; label: string }) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const { width, height } = zone.survey ?? planBox;
+  const unit = width / 600;
+  const hatch = 7 * unit;
+  const cell = 20 * unit;
+  const Plan = plans[art];
+  const shape = { cx: zone.x * width, cy: zone.y * height, rx: zone.rx * width, ry: zone.ry * height };
+  return (
+    <div className="survey">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
+        <defs>
+          <pattern id={`${id}h`} width={hatch} height={hatch} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <path d={`M0 0V${hatch}`} stroke="#c4321a" strokeWidth={1.6 * unit} />
+          </pattern>
+          <pattern id={`${id}g`} width={cell} height={cell} patternUnits="userSpaceOnUse">
+            <path d={`M${cell} 0H0V${cell}`} fill="none" stroke="#2945a8" strokeOpacity={0.2} strokeWidth={unit} />
+          </pattern>
+        </defs>
+        {zone.survey ? (
+          <image href={imagePath(zone.survey.digest)} width={width} height={height} />
+        ) : (
+          <>
+            <rect width={width} height={height} fill={`url(#${id}g)`} />
+            <g className="survey-plan" fill="none" stroke="#15140f">
+              <Plan />
+            </g>
+          </>
+        )}
+        <ellipse {...shape} fill={`url(#${id}h)`} fillOpacity={0.55} />
+        <ellipse {...shape} className="zone-halo" />
+        <ellipse {...shape} className="zone-edge" />
+        <ellipse {...shape} className="zone-ring" />
+      </svg>
+    </div>
   );
 }

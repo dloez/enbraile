@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, Transcript } from "../../shared/runs.js";
+import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
@@ -247,6 +247,7 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
       stepId: deliveries.stepId,
       partId: deliveries.partId,
       rung: deliveries.rung,
+      alt: deliveries.alt,
       text: deliveries.text,
       at: deliveries.createdAt,
     })
@@ -254,12 +255,18 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
     .where(and(eq(deliveries.runId, runId), inArray(deliveries.stepId, [...new Set(wanted.map((card) => card.stepId))])))
     .orderBy(asc(deliveries.id));
   const [row] = await db
-    .select({ steps: sql<Bundle["steps"]>`${bundleVersions.bundle}->'steps'` })
+    .select({ steps: sql<Bundle["steps"]>`${bundleVersions.bundle}->'steps'`, survey: sql<Bundle["survey"] | null>`${bundleVersions.bundle}->'survey'` })
     .from(runs)
     .innerJoin(maps, and(eq(maps.game, runs.game), eq(maps.map, runs.map)))
     .innerJoin(bundleVersions, and(eq(bundleVersions.game, maps.game), eq(bundleVersions.map, maps.map), eq(bundleVersions.version, maps.latestVersion)))
     .where(eq(runs.id, runId));
   const ladders = new Map(laddersOf(row?.steps ?? []).map((ladder) => [ladderKey(ladder.stepId, ladder.partId), ladder]));
+  const survey = row?.survey ? { digest: row.survey.digest, width: row.survey.width, height: row.survey.height } : null;
+  const zoneOf = (key: string, index: number, alt: number | null): ShownZone | null => {
+    const rung = ladders.get(key)?.rungs[index];
+    const zone = rung && (alt === null ? rung.zone : rung.alts[alt]?.zone);
+    return zone ? { ...zone, survey } : null;
+  };
   const done = new Set(
     (await db.select({ stepId: runSteps.stepId, partId: runSteps.partId }).from(runSteps).where(and(eq(runSteps.runId, runId), isNotNull(runSteps.doneAt)))).map((entry) =>
       ladderKey(entry.stepId, entry.partId || null),
@@ -282,7 +289,7 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
     const own = onLadder.filter((rung) => rung.cardId === card.id);
     return {
       id: card.id,
-      rungs: own.map((rung) => ({ id: rung.id, text: rung.text })),
+      rungs: own.map((rung) => ({ id: rung.id, text: rung.text, zone: zoneOf(key, rung.rung, rung.alt) })),
       at: (own.at(-1)?.at ?? new Date()).toISOString(),
       more: latest && ladder !== undefined && !done.has(card.stepId) && !done.has(key) && hasMore(ladder, given),
       rating: rated.get(card.id) ?? null,

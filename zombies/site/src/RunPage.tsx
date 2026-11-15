@@ -4,6 +4,7 @@ import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type
 import { askMore, bringCari, fetchCall, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
+import { SurveyZone } from "./art";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
 import { forget, known, load as fetchPage, openFreshMs, runSource } from "./store";
 import { Arrow, Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, type RunLink, useFit } from "./ui";
@@ -21,9 +22,10 @@ function clock(at: string): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: string; rate: string; ratings: Record<Rating, string> }> = {
+const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: string; rate: string; zone: string; ratings: Record<Rating, string> }> = {
   es: {
     dispatch: "Despacho",
+    zone: "Mapa con una zona marcada en rojo",
     more: "Más",
     transmitting: "transmitiendo",
     writing: "Cari escribe",
@@ -32,6 +34,7 @@ const cariWords: Record<Language, { dispatch: string; more: string; transmitting
   },
   en: {
     dispatch: "Dispatch",
+    zone: "Map with an area marked in red",
     more: "More",
     transmitting: "transmitting",
     writing: "Cari is writing",
@@ -117,6 +120,7 @@ function Feedback({ card, language, rating, onRate }: { card: number; language: 
 function Slip({
   card,
   language,
+  art,
   busy,
   rating,
   onMore,
@@ -124,6 +128,7 @@ function Slip({
 }: {
   card: Card;
   language: Language;
+  art: RunSheet["map"]["art"];
   busy: boolean;
   rating: Rating | null;
   onMore: (card: number) => void;
@@ -137,9 +142,10 @@ function Slip({
         <span>Cari · {clock(card.at)}</span>
       </div>
       {card.rungs.map((rung, index) => (
-        <p key={rung.id} className={index < card.rungs.length - 1 ? "rung rung-old" : "rung"}>
-          {rung.text}
-        </p>
+        <div key={rung.id} className={index < card.rungs.length - 1 ? "rung-old" : undefined}>
+          <p className="rung">{rung.text}</p>
+          {rung.zone && <SurveyZone zone={rung.zone} art={art} label={words.zone} />}
+        </div>
       ))}
       <div className="slip-f">
         {card.more && (
@@ -546,7 +552,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   };
 
   const slip = (card: Card) => (
-    <Slip card={card} language={sheet.language} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
+    <Slip card={card} language={sheet.language} art={sheet.map.art} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
   );
   const notice = trouble ?? (lost ? { text: t.failed, retry: () => void poll() } : null);
 

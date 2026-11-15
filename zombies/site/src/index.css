@@ -1282,10 +1282,81 @@ a:hover {
 }
 
 .rung-old {
-  font-size: 16px;
-  color: var(--slip-mute);
   padding-bottom: var(--sp-4);
   border-bottom: 1px dashed var(--slip-line);
+}
+
+.rung-old .rung {
+  font-size: 16px;
+  color: var(--slip-mute);
+}
+
+.survey {
+  margin: var(--sp-4) var(--sp-5) 0;
+  border-radius: 6px;
+  overflow: hidden;
+  line-height: 0;
+  background: #f4f0e6;
+  box-shadow: 0 0 0 1px var(--slip-line);
+}
+
+.survey svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 60vh;
+}
+
+.survey ellipse {
+  vector-effect: non-scaling-stroke;
+}
+
+.survey-plan * {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1.4;
+}
+
+.survey-plan .thin {
+  stroke-width: 0.8;
+}
+
+.zone-halo {
+  fill: none;
+  stroke: #f4f0e6;
+  stroke-width: 6;
+  stroke-opacity: 0.8;
+}
+
+.zone-edge {
+  fill: none;
+  stroke: #c4321a;
+  stroke-width: 2.6;
+}
+
+.zone-ring {
+  fill: none;
+  stroke: #c4321a;
+  stroke-width: 1.6;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: zone-ring 2.4s ease-out infinite;
+}
+
+@keyframes zone-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zone-ring {
+    animation: none;
+  }
 }
 
 .slip-f {
@@ -1934,6 +2005,10 @@ a:hover {
   .rung {
     padding: var(--sp-4) var(--sp-4) 0;
     line-height: 1.5;
+  }
+
+  .survey {
+    margin: var(--sp-3) var(--sp-4) 0;
   }
 
   .slip-f {

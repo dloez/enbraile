@@ -14,10 +14,19 @@ const line = z.object({
   reveals: z.array(id).default([]),
 });
 
-const alt = line.extend({ when: z.string().min(1) });
+const fraction = z.number().min(0).max(1);
+
+export const zoneSchema = z.object({ x: fraction, y: fraction, rx: fraction.positive(), ry: fraction.positive() });
+
+export type Zone = z.infer<typeof zoneSchema>;
+
+export const zoneLevel = 3;
+
+const alt = line.extend({ when: z.string().min(1), zone: zoneSchema.optional() });
 
 const rung = line.extend({
   level: z.number().int().min(1).max(4),
+  zone: zoneSchema.optional(),
   alts: z.array(alt).default([]),
 });
 
@@ -77,6 +86,7 @@ export const bundleSchema = z
     test: z.boolean().default(false),
     art: z.enum(["teal", "rust", "furnace"]),
     image: image.optional(),
+    survey: image.optional(),
     knowledge: z.array(knowledge),
     steps: z.array(step).min(1),
     calibration: z.array(z.string().min(1)).default([]),
@@ -99,6 +109,11 @@ export const bundleSchema = z
       rungs.forEach((value, index) => {
         checkLine(value, [...path, index]);
         value.alts.forEach((entry, altIndex) => checkLine(entry, [...path, index, "alts", altIndex]));
+        const low = value.level < zoneLevel;
+        if (low && value.zone) ctx.addIssue({ code: "custom", message: `a level ${value.level} rung carries a zone`, path: [...path, index, "zone"] });
+        value.alts.forEach((entry, altIndex) => {
+          if (low && entry.zone) ctx.addIssue({ code: "custom", message: `an Alt for a level ${value.level} rung carries a zone`, path: [...path, index, "alts", altIndex, "zone"] });
+        });
       });
     bundle.steps.forEach((value, index) => {
       const path = ["steps", index];
