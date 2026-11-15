@@ -14,10 +14,17 @@ const keyId = process.env.B2_KEY_ID;
 const key = process.env.B2_APPLICATION_KEY;
 const client = endpoint && bucket && keyId && key ? new AwsClient({ accessKeyId: keyId, secretAccessKey: key, service: "s3", region }) : null;
 
+const keepers = new Set<string>();
 let lines: Line[] = [];
 let flushing: Promise<void> = Promise.resolve();
 
-export const enabled = () => client !== null;
+export const configured = () => client !== null;
+export const active = () => client !== null && keepers.size > 0;
+
+export function keep(owner: string, on: boolean): void {
+  if (on) keepers.add(owner);
+  else keepers.delete(owner);
+}
 
 async function nameOf(userId: string): Promise<string> {
   if (userId === BOT) return "Enbraile";
@@ -27,7 +34,7 @@ async function nameOf(userId: string): Promise<string> {
 
 export async function record(userId: string, text: string, at: number, ms: number | null): Promise<void> {
   const channelId = voice.channel();
-  if (!client || !channelId || !text) return;
+  if (!active() || !channelId || !text) return;
   const channel = (await guild()).channels.cache.get(channelId)?.name ?? channelId;
   lines.push({ at: new Date(at).toISOString(), channelId, channel, userId, name: await nameOf(userId), text, ms });
 }

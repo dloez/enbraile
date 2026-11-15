@@ -139,7 +139,7 @@ export const hearing: Module = {
   start: async () =>
     listen(
       (userId, clip, startedAt) => worker?.send(frame({ type: "clip", user: userId, at: startedAt }, clip)),
-      () => worker !== null && (registrations.size > 0 || transcripts.enabled()),
+      () => worker !== null && (registrations.size > 0 || transcripts.active()),
     ),
   stop: () => transcripts.flush(),
 };
