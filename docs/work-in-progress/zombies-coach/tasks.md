@@ -1,22 +1,5 @@
 # Zombies Coach — Tasks
 
-## Let the chat's messages and slips use the full width
-
-The owner finds the chat boxes still do not use the full width (2026-11-15): "Use the screen's full width on every page and scroll only the content" wraps messages, sent revisions and hint slips at 52em (the agent's choice recorded in `docs/zombies/site/explanation/site.md`). The owner's call replaces it.
-
-**Do:**
-- [ ] Messages, revisions, acknowledgements and hint slips span the transcript's column after the time column, at every width; the composer already does.
-- [ ] Replace the "Chat text wraps at 52em" decision with the owner's, dated, and update `docs/zombies/site/reference/design-system.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1920×1080, 1440×900 and 390×844, a long message and a slip reach the column's right edge less its padding; no console error.
-- Human-run: the owner sees the chat use the width.
-- Reuse: the third take's transcript row.
-- Neighbors: none.
-- Forbidden: dropping the page's single scroller or any state.
-
-**Touches:** `zombies/site/src/`, `docs/zombies/site/`
-
 ## Bring the terminal conversation into the imported Blood of the Dead attempt
 
 The owner expected the imported attempt to hold their messages (2026-11-15). "Import a terminal session as a site run" imported what `session.md` holds (members, marks, rungs, progress, heads-ups), and `session.md` has no conversation; the conversation lives only in Claude Code's transcripts of those sessions, `~/.claude/projects/-home-david-workspace-zombies/*.jsonl` (three sessions), which nothing may delete.

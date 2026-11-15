@@ -1165,7 +1165,6 @@ a:hover {
 }
 
 .revmsg {
-  max-width: 52em;
   margin-top: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
   border-radius: 8px;
@@ -1191,7 +1190,6 @@ a:hover {
 }
 
 .msg {
-  max-width: 52em;
   font-size: 17px;
   line-height: 1.55;
   margin-top: 2px;
@@ -1254,7 +1252,6 @@ a:hover {
   background: var(--slip);
   color: var(--slip-ink);
   border-radius: 8px;
-  max-width: 52em;
 }
 
 .slip-h {
@@ -1928,7 +1925,6 @@ a:hover {
 
   .slip {
     margin-top: var(--sp-2);
-    max-width: none;
   }
 
   .slip-h {
