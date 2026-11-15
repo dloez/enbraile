@@ -40,25 +40,25 @@ function reply(runId: string, viewer: Viewer, ask: Ask): Response {
   return new Response(body, { status: 200, headers: { ...noStore, "content-type": "application/x-ndjson", "x-accel-buffering": "no" } });
 }
 
-function isAdmin(header: string | undefined): boolean {
-  const expected = Buffer.from(`Bearer ${requireEnv("ZOMBIES_ADMIN_TOKEN")}`);
+function isClaude(header: string | undefined): boolean {
+  const expected = Buffer.from(`Bearer ${requireEnv("CLAUDE_TOKEN")}`);
   const given = Buffer.from(header ?? "");
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
-const admin = new Hono();
+const claude = new Hono();
 
-admin.use(async (c, next) => {
-  if (!isAdmin(c.req.header("authorization"))) return c.json({ error: "forbidden" }, 403);
+claude.use(async (c, next) => {
+  if (!isClaude(c.req.header("authorization"))) return c.json({ error: "forbidden" }, 403);
   await next();
 });
 
-admin.put("/maps/:game/:map", async (c) => {
+claude.put("/maps/:game/:map", async (c) => {
   const parsed = bundleSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidBundle", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) }, 400);
   const bundle = parsed.data;
   if (bundle.game !== c.req.param("game") || bundle.map !== c.req.param("map")) return c.json({ error: "pathMismatch" }, 400);
-  return c.json(await storeVersion(bundle), 200, noStore);
+  return c.json(await storeVersion(bundle, "claude"), 200, noStore);
 });
 
 const member = new Hono<{ Variables: { viewer: Viewer } }>();
@@ -130,6 +130,6 @@ dev.get("/sign-in/:id", (c) => {
 
 export const app = new Hono().basePath("/api");
 
-app.route("/admin", admin);
+app.route("/claude", claude);
 app.route("/dev", dev);
 app.route("/", member);

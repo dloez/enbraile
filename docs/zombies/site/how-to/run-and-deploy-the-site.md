@@ -36,7 +36,7 @@ Copy `.env.example` to `.env.local` and fill it in:
 |----------|---------|
 | `DATABASE_URL` | `postgres://postgres:postgres@localhost:5433/zombies` |
 | `ROOT_URL` | `https://enbraile.vip`, read only when `DEV_USER_ID` is empty |
-| `ZOMBIES_ADMIN_TOKEN` | Any long random string, e.g. `openssl rand -hex 24` |
+| `CLAUDE_TOKEN` | Any long random string, e.g. `openssl rand -hex 24`; the bearer token of Claude's `/api/claude/` routes |
 | `ZOMBIES_URL` | Where `publish` sends bundles: `http://localhost:8789` |
 | `DEV_USER_ID` | One or more members, comma-separated, each `<id>` or `<id>:<name>` (e.g. `111:Marina,222:Teo`), to be signed in without the root site |
 | `ANTHROPIC_API_KEY` | An Anthropic API key for Cari; without one she stays silent |
@@ -85,7 +85,7 @@ npm run gate
 
 ### 8. Set up production (once)
 
-This was done on 2026-11-15, except the DNS record and the admin token, which wait on the owner.
+This was done on 2026-11-15, except the DNS record and the Claude token, which wait on the owner.
 
 The Vercel project is `enbraile-zombies` (ID `prj_VYZlP7Ln4TfrWJAJzdqzafTbvzwD`), root directory `zombies/site`, framework Vite, Node 26, with the function in `fra1` from `vercel.json` and Deployment Protection on every deployment but the custom domain. Its database is the Neon project `zombies` (ID `silent-morning-44744308`, Frankfurt, `aws-eu-central-1`), made from the Vercel Marketplace as `npx vercel integration add neon --name zombies --meta region=fra1 --no-connect --no-env-pull`, since the Neon organization is managed by Vercel and refuses `neonctl projects create`; `--no-connect` keeps the integration from writing variables of its own. It holds the branches `main` (production) and `dev` (previews), each with the database `neondb`.
 
@@ -95,7 +95,7 @@ Set the project's environment variables, piping each secret in so it never reach
 |----------|------------|---------|
 | `DATABASE_URL` | `main`'s pooled connection string, with `sslmode=verify-full` | `dev`'s, the same way |
 | `ROOT_URL` | `https://enbraile.vip` | the same |
-| `ZOMBIES_ADMIN_TOKEN` | the 1Password item's value | unset |
+| `CLAUDE_TOKEN` | the 1Password item "zombies claude token"'s value | unset |
 | `ANTHROPIC_API_KEY` | the cluster's `discord-bot-enbraile` secret, as below | unset |
 | `COACH_MODEL` | `claude-haiku-5-5` | unset |
 
@@ -113,12 +113,12 @@ Hand Cari's key from the cluster to Vercel the same way, never printing it:
 kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.ANTHROPIC_API_KEY}' | base64 -d | npx vercel env add ANTHROPIC_API_KEY production
 ```
 
-Make the admin token in 1Password and hand it to Vercel without printing it:
+Make Claude's token in 1Password and hand it to Vercel without printing it:
 
 ```sh
-op item create --category password --title "zombies admin token" --generate-password=48,letters,digits
-v=$(op read "op://Private/zombies admin token/password")
-printf %s "$v" | npx vercel env add ZOMBIES_ADMIN_TOKEN --environment production --sensitive
+op item create --category password --title "zombies claude token" --generate-password=48,letters,digits
+v=$(op read "op://Private/zombies claude token/password")
+printf %s "$v" | npx vercel env add CLAUDE_TOKEN --environment production --sensitive
 unset v
 ```
 
@@ -133,7 +133,7 @@ Push to `main`. The `zombies-site.yml` workflow deploys every push to `main` tha
 Then publish the maps to production, with the token read from 1Password into the shell:
 
 ```sh
-ZOMBIES_ADMIN_TOKEN="$(op read 'op://Private/zombies admin token/password')" ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map
+CLAUDE_TOKEN="$(op read 'op://Private/zombies claude token/password')" ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map
 ```
 
 ### Inspect deployments and the database from the shell

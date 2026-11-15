@@ -5,7 +5,7 @@
 The owner added the DNS-only `CNAME` `zombies` → `0cedcc0080c9a767.vercel-dns-017.com` and set `CLAUDE_TOKEN` in Vercel Production and in the 1Password item "zombies claude token" (2026-11-15); `https://zombies.enbraile.vip/api/maps` answers 401 signed out. What is left is recording that and the first production publish ([Discovery → Anchor Areas](discovery.md#anchor-areas)).
 
 **Do:**
-- [ ] Docs: drop "except the DNS record and the admin token, which wait on the owner" from step 8 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`, and turn `site.md`'s Hosting sentence about the `CNAME` that "is to be" added into the record as it stands.
+- [ ] Docs: drop "except the DNS record and the Claude token, which wait on the owner" from step 8 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`, and turn `site.md`'s Hosting sentence about the `CNAME` that "is to be" added into the record as it stands.
 - [ ] Redeploy production once the rename to `CLAUDE_TOKEN` has landed (`gh workflow run zombies-site.yml --ref main`), so the deployment reads the variable.
 
 **Acceptance:**
@@ -16,25 +16,6 @@ The owner added the DNS-only `CNAME` `zombies` → `0cedcc0080c9a767.vercel-dns-
 - Forbidden: a proxied record; secrets in the repo or printed in the conversation.
 
 **Touches:** `docs/zombies/site/how-to/run-and-deploy-the-site.md`, `docs/zombies/site/explanation/site.md`
-**After:** Name the site's machine API for Claude
-
-## Name the site's machine API for Claude
-
-The token and routes the site calls "admin" are Claude's: only Claude uses them, from the terminal, to publish bundles and, later, to read and watch runs and step in as Cari. The owner wants them named and attributed that way, not as a general admin (2026-11-15). A browser admin like pkmn's (`npm run admin:create`, `/admin`) is not wanted now.
-
-**Do:**
-- [ ] Rename `ZOMBIES_ADMIN_TOKEN` to `CLAUDE_TOKEN` and the `/api/admin/` routes to `/api/claude/` in `zombies/site/` (`api/`, `scripts/publish.ts`, `.env.example`).
-- [ ] Record "Claude" as the author of what that API does: each stored bundle version says it was published by Claude, and later writes through it (a line posted into a run) carry the same.
-- [ ] Docs: `docs/zombies/site/explanation/site.md` (a dated owner decision, and every "admin" naming this API), `docs/zombies/site/how-to/run-and-deploy-the-site.md` (steps 8 and 9 with `CLAUDE_TOKEN` and the 1Password item "zombies claude token"), `docs/zombies/index.md` where it names it.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; `grep -rn "ZOMBIES_ADMIN_TOKEN\|/api/admin" zombies/site docs/zombies` finds nothing outside `node_modules`; locally, `npm run publish -- test-map` with `CLAUDE_TOKEN` stores a version whose author reads Claude, a second prints `unchanged`, and a request without the token gets 403.
-- Human-run: none.
-- Reuse: the existing token check in `zombies/site/api/_lib/app.ts`.
-- Neighbors: none.
-- Forbidden: a browser admin sign-in; any other credential reaching these routes.
-
-**Touches:** `zombies/site/`, `docs/zombies/`
 
 ## Review the site's frontend for UX, loading states and glitches
 

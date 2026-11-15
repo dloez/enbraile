@@ -17,9 +17,9 @@ if (!parsed.success) {
 }
 
 const { game, map } = parsed.data;
-const response = await fetch(`${requireEnv("ZOMBIES_URL")}/api/admin/maps/${game}/${map}`, {
+const response = await fetch(`${requireEnv("ZOMBIES_URL")}/api/claude/maps/${game}/${map}`, {
   method: "PUT",
-  headers: { authorization: `Bearer ${requireEnv("ZOMBIES_ADMIN_TOKEN")}`, "content-type": "application/json" },
+  headers: { authorization: `Bearer ${requireEnv("CLAUDE_TOKEN")}`, "content-type": "application/json" },
   body: JSON.stringify(parsed.data),
 });
 const reply = (await response.json().catch(() => null)) as { version?: number; created?: boolean; error?: string; issues?: string[] } | null;

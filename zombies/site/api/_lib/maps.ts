@@ -15,7 +15,7 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 
-export async function storeVersion(bundle: Bundle): Promise<{ version: number; created: boolean }> {
+export async function storeVersion(bundle: Bundle, publishedBy: "claude"): Promise<{ version: number; created: boolean }> {
   const digest = createHash("sha256").update(canonical(bundle)).digest("hex");
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`${bundle.game}/${bundle.map}`}))`);
@@ -28,7 +28,7 @@ export async function storeVersion(bundle: Bundle): Promise<{ version: number; c
       if (latest?.digest === digest) return { version: current.latestVersion, created: false };
     }
     const version = (current?.latestVersion ?? 0) + 1;
-    await tx.insert(bundleVersions).values({ game: bundle.game, map: bundle.map, version, digest, bundle });
+    await tx.insert(bundleVersions).values({ game: bundle.game, map: bundle.map, version, digest, bundle, publishedBy });
     await tx
       .insert(maps)
       .values({ game: bundle.game, map: bundle.map, latestVersion: version })

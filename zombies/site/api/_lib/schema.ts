@@ -23,6 +23,7 @@ export const bundleVersions = pgTable(
     version: integer("version").notNull(),
     digest: text("digest").notNull(),
     bundle: jsonb("bundle").$type<Bundle>().notNull(),
+    publishedBy: text("published_by").$type<"claude">().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [unique().on(table.game, table.map, table.version)],
