@@ -1,26 +1,5 @@
 # Zombies Coach — Tasks
 
-## Move the zombies workspace into Enbraile with terminal coaching intact
-
-Bring the ee-coach loop into Enbraile so it runs from here and building happens only here ([Discovery → Migration](discovery.md#migration)). The Blood of the Dead session in progress keeps going from the terminal in Enbraile.
-
-**Do:**
-- [ ] Create the `zombies` category: `zombies/CLAUDE.md` (imports `docs/zombies/index.md` and carries the standing rules of `~/workspace/zombies/CLAUDE.md`: no spoilers in chat, never interact with the game, known/unknown marks, everything prepared before play, short replies mid-game, `REVISION:`, reply in the players' language), `docs/zombies/index.md`, and the row in `docs/index.md`.
-- [ ] Move the skill to `.claude/skills/ee-coach/` (`SKILL.md`, `references/hint-craft.md`, `references/research.md`), with paths pointing at `zombies/maps/` and the committed calibration.
-- [ ] Split `calibration.md`: general preferences and rules committed at `zombies/calibration.md` (and folded into `hint-craft.md` where they are rules); map-specific quotes into `zombies/maps/bo4/blood-of-the-dead/calibration.md`.
-- [ ] Add `zombies/maps/` to `.gitignore`, then copy `~/workspace/zombies/maps/` there (dossier, hints, knowledge, session, sources).
-- [ ] Note in `docs/general/explanation/repository-layout.md` that `zombies/maps/` is gitignored spoiler data, and why.
-- [ ] Leave `~/workspace/zombies/` in place; it is deleted by "Continue the Blood of the Dead session on the site".
-
-**Acceptance:**
-- Claude-run: `git status --porcelain` and `git check-ignore -v zombies/maps/bo4/blood-of-the-dead/dossier.md` show nothing under `zombies/maps/` staged and the file ignored; `grep -rn "Blood of the Dead\|blood-of-the-dead" $(git ls-files)` finds no map content in tracked files beyond paths in docs; `diff -r ~/workspace/zombies/maps zombies/maps` is empty except the moved calibration.
-- Human-run: open Claude Code in `~/workspace/enbraile`, say you are continuing the Blood of the Dead run; the coach reads `zombies/maps/bo4/blood-of-the-dead/session.md` and answers the next hint request as it did in the old workspace.
-- Reuse: the existing skill files, moved, not rewritten.
-- Neighbors: `pkmn/CLAUDE.md` for a category's `CLAUDE.md`.
-- Forbidden: any dossier, hint or map-specific calibration line in a tracked file; a commit message naming a step.
-
-**Touches:** `zombies/`, `.claude/skills/ee-coach/`, `.gitignore`, `docs/zombies/`, `docs/index.md`, `docs/general/explanation/repository-layout.md`
-
 ## Design the zombies site in Claude design
 
 The look and layout come from a Claude design artifact, as pkmn's and DJ's did, frozen as `.dc.html` boards in `zombies/site/design/` ([Discovery → Runs and the site](discovery.md#runs-and-the-site)). The owner does not review the boards; they see the site as a surprise, so the bar is the taste and "wow" of the pkmn site and the DJ panel.

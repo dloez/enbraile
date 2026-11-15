@@ -9,3 +9,4 @@ pkmn/site/saves/
 __pycache__/
 pkmn/games/anil/game/
 .wrangler/
+zombies/maps/
