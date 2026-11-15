@@ -1,22 +1,5 @@
 # Zombies Coach — Tasks
 
-## Follow progress and threads the way ee-coach does
-
-Progress reports, open threads and the session rules that need run state: `On success` plus an L1 in the same reply, the players' order over the dossier's, `Requires`, optional steps never offered (and the one heads-up once they sink time), blocked threads silent until asked then a ladder at the blocker, part ladders, false-block checks, asking the round now and then, single-use resource heads-ups and retries ([Discovery → Architecture](discovery.md#architecture)).
-
-**Do:**
-- [ ] A progress tool; open threads kept on the run, never shown; code chooses the L1 candidates whose `Requires` are met and never an optional step.
-- [ ] A run stays open: closing a run is not built yet, and a run never ends by itself on its last required step; when closing is built, a run ends only when the players say so and confirm (owner, 2026-11-15). Record both as dated decisions in `docs/zombies/site/explanation/site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through the Playwright MCP on the test map, report a step done and get its `On success` and an L1 for a different met step in one reply; start an optional step and see it followed, never offered; reach a blocked step and see no hint until asked.
-- Human-run: a test-map run on phones walks one blocked and one optional step.
-- Reuse: the run state and tools of the previous entry; "Players choose the order" in the ee-coach skill.
-- Neighbors: the hint tools of "Start a run and get prepared hints from Cari in a shared chat".
-- Forbidden: listing threads to players; naming what a blocked step lacks before its ladder does; a way to close or end a run.
-
-**Touches:** `zombies/site/`, `docs/zombies/site/`
-
 ## Rebuild the site from the third take
 
 The owner found the radio-log site's flow awkward and its UI clumsy and hard to read, and asked for map rows to be clickable and for Claude design to remake it (2026-11-15). The "Third take" page of the canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) redraws it: every map row opens a new map view with its open runs and one "Start a run" with the language inline; a shared link lands on the join view; a "Your run" pill in the header leads back to your run; body text in Atkinson Hyperlegible Next at 16–18px in sentence case, a warm dark theme with the paper slip and survey sheet as light cards, and soft cards on one spacing scale. It keeps the radio-log identity (the run as a log, hints as dispatch slips) and replaces the v2 look ([Discovery → Runs and the site](discovery.md#runs-and-the-site)).
@@ -53,7 +36,6 @@ When no prepared line fits, Cari holds and the run records a gap; `REVISION:` me
 - Forbidden: an improvised hint; a `REVISION:` reaching the coach model.
 
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/site/`
-**After:** Follow progress and threads the way ee-coach does
 
 ## Continue the Blood of the Dead session on the site
 
@@ -128,7 +110,6 @@ A `zombies` module in the bot: the site's offer and `/cari` bring Cari into the 
 - Forbidden: Claude calls from the bot; run state in the bot's SQLite.
 
 **Touches:** `zombies/bot/`, `home/bot/src/modules.ts`, `home/bot/tsconfig.json`, `home/bot/Dockerfile`, `.github/workflows/home-bot.yml`, `zombies/site/`, `docs/zombies/`, `docs/home/bot/explanation/bot.md`
-**After:** Follow progress and threads the way ee-coach does
 
 ## Keep the call's transcript in the run
 

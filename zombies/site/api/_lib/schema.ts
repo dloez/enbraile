@@ -154,3 +154,34 @@ export const coachCalls = pgTable(
   },
   (table) => [index().on(table.runId, table.id)],
 );
+
+export const runSteps = pgTable(
+  "run_steps",
+  {
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    stepId: text("step_id").notNull(),
+    partId: text("part_id").notNull().default(""),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    doneAt: timestamp("done_at", { withTimezone: true }),
+    blockedToldAt: timestamp("blocked_told_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.runId, table.stepId, table.partId] })],
+);
+
+export const headsUpsGiven = pgTable(
+  "heads_ups_given",
+  {
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    stepId: text("step_id").notNull(),
+    position: integer("position").notNull(),
+    text: text("text").notNull(),
+    bundleVersion: integer("bundle_version").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.runId, table.stepId, table.position] })],
+);

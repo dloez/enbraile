@@ -1,6 +1,6 @@
 # The Zombies Site
 
-The site in `zombies/site/`, for `zombies.enbraile.vip`, where the group will start runs on a map and talk to the coach, Cari. Today it lists the maps Claude has published, and members start or join a run on one and talk in its shared chat, where Cari answers with the prepared hints; following progress, holds and feedback come next ([Zombies Coach](../../../work-in-progress/zombies-coach/discovery.md)). Its look is in the [Site Design System](../reference/design-system.md).
+The site in `zombies/site/`, for `zombies.enbraile.vip`, where the group will start runs on a map and talk to the coach, Cari. Today it lists the maps Claude has published, and members start or join a run on one and talk in its shared chat, where Cari answers with the prepared hints and follows their progress; holds and feedback come next ([Zombies Coach](../../../work-in-progress/zombies-coach/discovery.md)). Its look is in the [Site Design System](../reference/design-system.md).
 
 ## How It Is Built
 
@@ -18,6 +18,8 @@ Maps live in their own Postgres database, never pkmn's, through Drizzle with `pg
 | `run_knowledge` | The knowledge entries known in a run; an entry without a row is unknown |
 | `hint_cards` | A hint card: the ladder it belongs to (a step, or one of its parts) and the Cari line it hangs under |
 | `deliveries` | Every rung given, in order: its card, ladder, rung, Alt, level, the wording as delivered, its `mentions` and `reveals`, the bundle version and who asked |
+| `run_steps` | A run's progress, never shown to players: each step or part the players started or finished, and when Cari told them a blocked step was not possible yet |
+| `heads_ups_given` | Each heads-up Cari gave in a run, so none is given twice |
 | `coach_calls` | Every Claude call: model, tokens, latency, stop reason, refusal and its category, the rules code caught the model breaking, and any error |
 
 ## Map Bundles
@@ -34,7 +36,7 @@ The maps page reads `GET /api/maps`, which returns each map's game and map IDs, 
 
 ## Runs
 
-A member starts a run from a map's row on the maps page, choosing the language Cari speaks (Spanish unless they pick English): `POST /api/runs`. Anyone signed in can join an open run from its row or its link, `/runs/<id>`, which shows the run's sheet to a reader not in it and the run to a member (`POST /api/runs/<id>/join`). A person is in one run at a time, so starting or joining a run leaves the one they were in. Nothing closes or ends a run: every run stays on its map's row, even once everyone has left it, and can be joined again.
+A member starts a run from a map's row on the maps page, choosing the language Cari speaks (Spanish unless they pick English): `POST /api/runs`. Anyone signed in can join an open run from its row or its link, `/runs/<id>`, which shows the run's sheet to a reader not in it and the run to a member (`POST /api/runs/<id>/join`). A person is in one run at a time, so starting or joining a run leaves the one they were in. Nothing closes or ends a run, not even its last required step done: every run stays on its map's row, even once everyone has left it, and can be joined again.
 
 A new run's knowledge marks are the latest bundle's `known` entries plus every entry known in the starter's earlier runs on that map; each member who joins adds what was known in their own earlier runs there.
 
@@ -42,15 +44,27 @@ The run page polls `GET /api/runs/<id>/messages?after=<last id>&rungsAfter=<last
 
 ## Cari
 
-Cari is Claude, `COACH_MODEL` (Haiku 5.5, `claude-haiku-5-5`, unless set) with `ANTHROPIC_API_KEY`, called by the function on every member's line; without a key she stays silent. The model never writes a hint: it acts through three tools, and code decides what each may do.
+Cari is Claude, `COACH_MODEL` (Haiku 5.5, `claude-haiku-5-5`, unless set) with `ANTHROPIC_API_KEY`, called by the function on every member's line; without a key she stays silent. The model never writes a hint: it acts through five tools, and code decides what each may do.
 
 - **`give_hint`** hands over the next rung of one ladder, or one of that rung's Alts. Code gives only a rung whose `mentions` are all known in the run (its `reveals` may still be unknown, since it is the line meant to give them away), one per reply, level 4 only when the model says the players asked for the answer, and records the delivery and adds the rung's `mentions` and `reveals` to `run_knowledge` in the same transaction.
 - **`mark_known`** takes the players' words; code marks known every unknown entry whose name, in either language and without its article, appears both in them and in a member's line among the last 24, so the model cannot mark something only a rung named.
+- **`record_progress`** records a step or part as started or done, by its handle. A step marked done marks every step it `requires` done too, since they had to come first. On a step done, code marks known what its `onSuccess` line mentions and the players named in the chat, says that line when all it mentions is known, and hands over on a card the first rung of a ready step, the one the model names with `next` or else the first in the bundle's order; the model passes `quiet` only when the players said what they are doing next. A part done just closes that part's ladder.
+- **`heads_up`** says one of an open step's heads-ups, word for word, once per run.
 - **`ask_round`** adds the run's fixed question about the round to the reply, at most once every 10 minutes and never in a reply that gives a hint.
 
-The prompt is a system prompt distilled from the ee-coach skill's session rules, then the run's state: its language, the names of the entries known, each opened ladder with the rungs given and the next rung and Alts code would allow, and the first rung of each ladder not opened yet whose `mentions` are known, leaving out optional steps. An Alt whose `when` names an unknown entry is left out. Ladders are named by handles (`s2`, `s2p1`), never by their step's title, so the dossier and the titles stay out of it, and an unknown entry's name reaches the model only inside a rung meant to reveal it, which is one of the rungs it may give. The last 24 lines of the chat are the conversation, with each card's rungs under Cari's line in brackets.
+The prompt is a system prompt distilled from the ee-coach skill's session rules, then the run's state, sorted the way the skill keeps its open threads:
 
-Her own words are streamed to the asker sentence by sentence as newline-delimited JSON, while the run page shows her row "transmitting" with the blinking caret; a sentence naming an unknown entry or holding brackets is dropped and recorded as a violation instead. When the reply ends, her line and its card are stored together and every member's next poll shows them. When the reply fails before she has said anything or given a card (the call to Claude, or the turn itself throwing), the stream ends with a `failed` event, so the asker's page says she did not answer instead of falling silent; a refusal stays silent. A card's More asks `POST /api/runs/<id>/cards/<card>/more`, which gives the ladder's next rung onto the same card in code, without a model call, when that rung is allowed; when it is not, the model is told More was pressed and chooses an Alt or asks what they see. More shows only on the newest card of its ladder, and never when the next rung is level 4.
+- **Open threads:** each ladder the players started or were given a rung of, with the rungs given and the next rung and Alts code would allow.
+- **Ready:** the first rung of each ladder not opened yet whose step's `requires` are all done and whose `mentions` are known, never an optional step's.
+- **Optional, not started:** listed only so the model can record one the players start themselves; code refuses any rung of an optional step until then.
+- **Blocked:** steps whose `requires` are not all done, each listed once the players have opened it or, for a required step, once its title names nothing unknown.
+- **Done**, and the heads-ups and conditions of the open threads.
+
+A step or part is named by its title only when the title names no unknown entry, so the model can tell which one the players are talking about without learning what they have not met; otherwise it is only its handle. An Alt, heads-up or condition whose text names an unknown entry is left out. Ladders are named by handles (`s2`, `s2p1`), never by their step's title, so the dossier and the titles stay out of it, and an unknown entry's name reaches the model only inside a rung meant to reveal it, which is one of the rungs it may give. The last 24 lines of the chat are the conversation, with each card's rungs under Cari's line in brackets.
+
+A blocked step gets no hint of its own. The first time the model asks for one, code says a fixed line in the run's language, the skill's "this isn't budging… maybe it isn't the moment", and records it; each later ask hands over the next rung of the step that is missing, followed down its own `requires` to one that is ready, so the ladder aimed at the blocker is made of that step's checked rungs and names nothing they lack before those rungs do.
+
+Her own words are streamed to the asker sentence by sentence as newline-delimited JSON, while the run page shows her row "transmitting" with the blinking caret; a sentence naming an unknown entry, holding brackets, or repeating a line code said or a rung given is dropped and recorded as a violation instead. When the reply ends, her line and its card are stored together and every member's next poll shows them. When the reply fails before she has said anything or given a card (the call to Claude, or the turn itself throwing), the stream ends with a `failed` event, so the asker's page says she did not answer instead of falling silent; a refusal stays silent. A card's More asks `POST /api/runs/<id>/cards/<card>/more`, which gives the ladder's next rung onto the same card in code, without a model call, when that rung is allowed; when it is not, the model is told More was pressed and chooses an Alt or asks what they see. More shows only on the newest card of its ladder, never when the next rung is level 4, and never once its step or part is done; a poll after a step is done sends that step's cards again without it.
 
 Each Claude call is a row in `coach_calls`, and each rung a row in `deliveries`, so a run's whole hint history can be read back against its marks.
 
@@ -77,7 +91,15 @@ Vercel serves the site from the owner's Hobby team as the project `enbraile-zomb
 - **Map rows without Start a run yet:** the boards draw it on every map's row, but a button that does nothing until runs exist would be a dead control; it comes with runs. _(the agent's choice, 2026-11-15)_ It came with runs on 2026-11-15.
 - **Several local members:** `DEV_USER_ID` takes a list and each browser picks one of them, so a Claude-run check can be two members of one run; it exists only where `DEV_USER_ID` is set, never in production, which keeps Discord through the root as the DJ panel does. _(owner, 2026-11-15)_
 - **The player picks the map:** a run is started from the map the players are playing, picked from the maps list as the boards draw it. _(owner, 2026-11-15)_
-- **Runs stay open:** there is no way to close or end a run. _(owner, 2026-11-15)_
+- **Closing a run is not built yet:** there is no way to close or end a run, and a run never ends by itself, not even when its last required step is done. _(owner, 2026-11-15)_
+- **A run ends only when the players say so:** when closing is built, a run ends only when the players ask for it and confirm. _(owner, 2026-11-15)_
+- **Progress kept in `run_steps`, never shown:** what the players started and finished lives on the run for the coach and later for debriefs, and no route a browser calls returns it, since a list of threads would be a hint. _(the agent's choice, 2026-11-15)_
+- **The L1 after a step done is chosen in code:** `record_progress` hands it over itself, from the ready steps, so a step done always gets its `On success` line and an L1 in the same reply even when the model forgets, and an optional step is never among them. _(the agent's choice, 2026-11-15)_
+- **Titles only when they name nothing unknown:** a step's title reaches the model once the players have met everything it names, so it can record a step they report without seeing what they have not found. _(the agent's choice, 2026-11-15)_
+- **Done implies its `requires`:** a step reported done marks the steps it requires done, since the bundle's `requires` say they had to come first. _(the agent's choice, 2026-11-15)_
+- **The blocked ladder from prepared lines:** the skill's blocked-thread ladder has no lines of its own in the bundle, so its first rung is one fixed line per language in code and the rest is the missing step's own ladder, which keeps every word prepared and checked. _(the agent's choice, 2026-11-15)_
+- **`On success` learns what the players named:** a step done marks known the entries its `On success` line mentions that a member named in the chat, so the line is said when the players reported it in their own words even if the model did not mark them first. _(the agent's choice, 2026-11-15)_
+- **Code drops repeats:** a sentence of the model's that repeats an `On success` line, a fixed line or a rung already given is dropped, since Haiku echoed lines code had just said. _(the agent's choice, 2026-11-15)_
 - **Knowledge follows the people:** a run's marks start from the bundle's baseline and the starter's earlier runs on the map, and each member who joins adds what their own earlier runs on it knew, so the marks are never lowered by who joins. _(the agent's choice, 2026-11-15)_
 - **One link per run:** `/runs/<id>` is both the run and its join page, chosen by whether the reader is in it, so a link sent to a friend opens the run sheet the boards draw. _(the agent's choice, 2026-11-15)_
 - **Ladders by handle:** the model sees a ladder as `s<n>` or `s<n>p<m>` from the bundle's order rather than its step's title, since titles name things the players may not know. _(the agent's choice, 2026-11-15)_

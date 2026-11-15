@@ -29,6 +29,13 @@
       "when": 1794763155479,
       "tag": "0003_published_by",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794765023421,
+      "tag": "0004_progress",
+      "breakpoints": true
     }
   ]
 }

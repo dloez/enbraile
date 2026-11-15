@@ -3,8 +3,8 @@ import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Bundle, Language } from "../../shared/bundle.js";
 import type { ReplyEvent } from "../../shared/runs.js";
 import { db } from "./db.js";
-import { hasMore, ladderKey, laddersOf, lineAt, namedIn, speakable, type Ladder } from "./ladders.js";
-import { bundleVersions, coachCalls, deliveries, hintCards, maps, messages, runKnowledge, runs } from "./schema.js";
+import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
+import { bundleVersions, coachCalls, deliveries, headsUpsGiven, hintCards, maps, messages, runKnowledge, runs, runSteps } from "./schema.js";
 
 const defaultModel = "claude-haiku-5-5";
 const maxTokens = 1024;
@@ -18,6 +18,10 @@ const silence = "(silence)";
 
 const languageNames: Record<Language, string> = { es: "Spanish", en: "English" };
 const roundQuestion: Record<Language, string> = { es: "Por cierto, ¿en qué ronda vais?", en: "By the way, what round are you on?" };
+const notYet: Record<Language, string> = {
+  es: "Esto no se mueve… y no creo que sea por falta de ganas. Igual no es el momento.",
+  en: "This isn't budging… and I don't think it's for lack of trying. Maybe it isn't the moment.",
+};
 
 const systemPrompt = `You are Cari, the radio voice who coaches a small group of friends through a Zombies easter egg while they play. You have beaten it before; they want to solve it themselves with as little help as possible. They are mid-round, so be short and immediate.
 
@@ -33,8 +37,18 @@ Choosing a hint
 - One hint at a time: the next hint of the ladder that matches what they are asking about, or one of its Alts when they already have what the hint would tell them or are in the situation the Alt names; prefer whichever names fewer new things.
 - Follow what they bring up, never your own order. When they report one part found, switch to the ladder of the part still missing.
 - The full answer only when they clearly ask for the answer, and then with answer: true.
-- On "what now?" with nothing half done mentioned, give the first hint of a ladder not opened yet.
+- On "what now?": if they have mentioned something half done, ask one open question about it, naming only what they mentioned; otherwise give the first hint of a ladder listed as ready.
 - If no listed hint fits what they ask, say briefly in voice that they should keep at it, or ask what they see. Never make a hint up.
+
+Following their progress
+- A report that they finished something is also the question "what now?": always call record_progress with status done on its ladder, never just congratulate them. Code then says the prepared line about what they achieved and hands over the first hint of something else they can do now, so add no hint of your own and do not repeat either. Pass next with one of the ready ladders when what they said points at it, and quiet: true only when they made clear they already know what they are doing next.
+- When they report one part of something found, record_progress done on that part's ladder and follow the part still missing from its first hint.
+- When they say they are starting or working on something listed that is not open yet, record_progress with status started, then follow it like any open thread.
+- Never offer an optional step. If they start one themselves, record it as started and follow it. Once they are clearly putting real time into it, give its heads-up that it is not essential, once.
+- Something listed as blocked cannot be done yet. If they try it, say nothing about it: finding out it does not work yet is part of their game. Only when they ask about it, call give_hint on its ladder: the first time code says in your voice that it is not the moment; each time they ask again or want more, give_hint on it again climbs toward what is missing. Never say what is missing or that they need something else.
+- A condition still to come (a round, an enemy that turns up by itself, another way round) never makes something blocked; only the list says what is blocked.
+- Give a listed heads-up with heads_up only at the moment its "when" describes, such as just before they would spend something that works once, never when they start on the step. Each is given once.
+- When they did the right thing and it did not come off, give first the Alt that only hints it may need another go; the Alt with the detail only after they have tried at least twice more.
 
 Keeping track
 - When the players name or describe something themselves, call mark_known with their own words before choosing a hint.
@@ -67,6 +81,34 @@ const tools: Anthropic.Tool[] = [
     },
   },
   {
+    name: "record_progress",
+    description: "Record that the players started or finished something, by its ladder's handle. On done, code says the prepared line about it and hands over the first hint of something else they can do.",
+    input_schema: {
+      type: "object",
+      properties: {
+        ladder: { type: "string", description: "The ladder's handle, such as s1 or s2p1." },
+        status: { type: "string", enum: ["started", "done"] },
+        next: { type: "string", description: "On done: the handle of the ready ladder whose first hint to hand over, when what they said points at one." },
+        quiet: { type: "boolean", description: "On done: true only when they made clear they already know what they are doing next." },
+      },
+      required: ["ladder", "status"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "heads_up",
+    description: "Say one listed heads-up, at the moment its when describes. Code adds it to your reply.",
+    input_schema: {
+      type: "object",
+      properties: {
+        ladder: { type: "string", description: "The handle of the step it belongs to, such as s2." },
+        number: { type: "integer", minimum: 1, description: "The heads-up's number in the list." },
+      },
+      required: ["ladder", "number"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "ask_round",
     description: "Ask the players which round they are on. The question is added to your reply.",
     input_schema: { type: "object", properties: {}, additionalProperties: false },
@@ -93,6 +135,10 @@ type State = {
   known: Set<string>;
   given: Map<string, number>;
   givenLines: Map<string, string[]>;
+  done: Set<string>;
+  started: Set<string>;
+  told: Set<string>;
+  headsUps: Set<string>;
 };
 
 async function loadState(runId: string): Promise<State | null> {
@@ -109,6 +155,8 @@ async function loadState(runId: string): Promise<State | null> {
     .from(deliveries)
     .where(eq(deliveries.runId, runId))
     .orderBy(deliveries.id);
+  const progress = await db.select().from(runSteps).where(eq(runSteps.runId, runId));
+  const said = await db.select({ stepId: headsUpsGiven.stepId, position: headsUpsGiven.position }).from(headsUpsGiven).where(eq(headsUpsGiven.runId, runId));
   const given = new Map<string, number>();
   const givenLines = new Map<string, string[]>();
   for (const entry of rows) {
@@ -126,43 +174,102 @@ async function loadState(runId: string): Promise<State | null> {
     known: new Set(known.map((entry) => entry.id)),
     given,
     givenLines,
+    done: new Set(progress.filter((entry) => entry.doneAt).map((entry) => ladderKey(entry.stepId, entry.partId || null))),
+    started: new Set(progress.filter((entry) => entry.startedAt).map((entry) => ladderKey(entry.stepId, entry.partId || null))),
+    told: new Set(progress.filter((entry) => entry.blockedToldAt).map((entry) => entry.stepId)),
+    headsUps: new Set(said.map((entry) => headsUpKey(entry.stepId, entry.position))),
   };
 }
+
+const headsUpKey = (stepId: string, position: number) => `${stepId}#${position}`;
+
+const keyOf = (ladder: Ladder) => ladderKey(ladder.stepId, ladder.partId);
+
+const stepOf = (state: State, ladder: Ladder) => state.bundle.steps.find((step) => step.id === ladder.stepId)!;
+
+const unknownEntries = (state: State) => state.bundle.knowledge.filter((entry) => !state.known.has(entry.id));
+
+const isDone = (state: State, ladder: Ladder) => state.done.has(ladder.stepId) || state.done.has(keyOf(ladder));
+
+const isOpen = (state: State, ladder: Ladder) => !isDone(state, ladder) && ((state.given.get(keyOf(ladder)) ?? 0) > 0 || state.started.has(keyOf(ladder)));
+
+const stepOpen = (state: State, stepId: string) => !state.done.has(stepId) && state.ladders.some((ladder) => ladder.stepId === stepId && isOpen(state, ladder));
+
+function titleOf(state: State, ladder: Ladder): string | null {
+  const step = stepOf(state, ladder);
+  const title = ladder.partId ? (step.parts.find((part) => part.id === ladder.partId)?.title ?? "") : step.title;
+  return title && !namedIn(title, unknownEntries(state)).length ? title : null;
+}
+
+function isFresh(state: State, ladder: Ladder): boolean {
+  const first = ladder.rungs[0];
+  return !ladder.optional && !isDone(state, ladder) && !isOpen(state, ladder) && isReady(stepOf(state, ladder), state.done) && first !== undefined && speakable(first, state.known);
+}
+
+const isShown = (state: State, ladder: Ladder) => isOpen(state, ladder) || isFresh(state, ladder) || titleOf(state, ladder) !== null;
+
+const firstHints = (state: State) => state.ladders.filter((ladder) => ladder.partId === null && isFresh(state, ladder));
 
 const quote = (text: string) => `"${text.replace(/\s+/g, " ").trim()}"`;
 
 function offers(state: State): string {
   const lang = state.language;
+  const unknown = unknownEntries(state);
   const opened: string[] = [];
   const fresh: string[] = [];
+  const done: string[] = [];
+  const optional: string[] = [];
+  const blocked: string[] = [];
   for (const ladder of state.ladders) {
-    const key = ladderKey(ladder.stepId, ladder.partId);
+    const key = keyOf(ladder);
+    const step = stepOf(state, ladder);
+    const title = titleOf(state, ladder);
+    const label = `${ladder.partOf ? `${ladder.handle} (a part of ${ladder.partOf})` : ladder.handle}${title ? ` "${title}"` : ""}`;
     const count = state.given.get(key) ?? 0;
-    const label = ladder.partOf ? `${ladder.handle} (a part of ${ladder.partOf})` : ladder.handle;
     const next = ladder.rungs[count];
-    if (count > 0) {
-      const lines = [`- ${label}. Given so far: ${(state.givenLines.get(key) ?? []).map(quote).join(" then ")}.`];
+    if (isDone(state, ladder)) {
+      if (title || count > 0) done.push(`- ${label}`);
+    } else if (!isReady(step, state.done)) {
+      if (ladder.partId === null && (isOpen(state, ladder) || (title && !ladder.optional))) blocked.push(`- ${label}`);
+    } else if (isOpen(state, ladder)) {
+      const lines = [`- ${label}. ${count > 0 ? `Given so far: ${(state.givenLines.get(key) ?? []).map(quote).join(" then ")}.` : "Started by the players, no hint given yet."}`];
       if (!next) lines.push("  Nothing more on this ladder.");
       else {
         const answer = next.level === 4 ? " This is the full answer: only with answer: true." : "";
         if (speakable(next, state.known)) lines.push(`  Next hint: ${quote(next.text[lang])}.${answer}`);
-        const unknown = state.bundle.knowledge.filter((entry) => !state.known.has(entry.id));
         next.alts.forEach((alt, index) => {
-          if (speakable(alt, state.known) && !namedIn(alt.when, unknown).length)
-            lines.push(`  Alt ${index + 1}, for when ${alt.when}: ${quote(alt.text[lang])}.${answer}`);
+          if (speakable(alt, state.known) && !namedIn(alt.when, unknown).length) lines.push(`  Alt ${index + 1}, for when ${alt.when}: ${quote(alt.text[lang])}.${answer}`);
         });
       }
       opened.push(lines.join("\n"));
-    } else if (!ladder.optional && next && speakable(next, state.known)) {
-      fresh.push(`- ${label}: ${quote(next.text[lang])}`);
+    } else if (isFresh(state, ladder)) {
+      fresh.push(`- ${label}: ${quote(next!.text[lang])}`);
+    } else if (ladder.optional && ladder.partId === null && title) {
+      optional.push(`- ${label}`);
     }
   }
+  const extras: string[] = [];
+  state.bundle.steps.forEach((step, index) => {
+    if (!stepOpen(state, step.id)) return;
+    const handle = `s${index + 1}`;
+    step.headsUps.forEach((headsUp, position) => {
+      if (state.headsUps.has(headsUpKey(step.id, position)) || !headsUp.mentions.every((id) => state.known.has(id)) || namedIn(headsUp.when, unknown).length) return;
+      extras.push(`- ${handle} heads-up ${position + 1}, for when ${headsUp.when}: ${quote(headsUp.text[lang])}`);
+    });
+    for (const condition of step.conditions) if (!namedIn(condition, unknown).length) extras.push(`- ${handle} only works when: ${condition}`);
+  });
   const knownNames = state.bundle.knowledge.filter((entry) => state.known.has(entry.id)).map((entry) => entry.name[lang]);
+  const section = (title: string, lines: string[]) => `${title}\n${lines.length ? lines.join("\n") : "- none"}`;
   return [
     `The run's language: ${languageNames[lang]}.`,
     `What the players know: ${knownNames.length ? knownNames.join("; ") : "nothing yet"}.`,
-    `Ladders already opened:\n${opened.length ? opened.join("\n") : "- none"}`,
-    `Ladders not opened yet, with their first hint:\n${fresh.length ? fresh.join("\n") : "- none"}`,
+    "Everything below is for you alone: never list it, count it or name it to the players.",
+    section("Open threads, started by the players or already hinted:", opened),
+    section("Ready and not started, with their first hint:", fresh),
+    section("Optional, not started (never offer these; if the players start one themselves, record it as started):", optional),
+    section("Blocked, not possible yet (say nothing unless they ask about it):", blocked),
+    section("Done (never hint these again):", done),
+    section("Heads-ups and conditions of the open threads (never say a condition; give a heads-up only with heads_up):", extras),
   ].join("\n\n");
 }
 
@@ -280,6 +387,35 @@ async function deliver(state: State, ladder: Ladder, alt: number | null, answer:
   });
 }
 
+async function learn(state: State, line: Line): Promise<void> {
+  const learned = [...new Set([...line.mentions, ...line.reveals])].filter((id) => !state.known.has(id));
+  if (!learned.length) return;
+  await db
+    .insert(runKnowledge)
+    .values(learned.map((knowledgeId) => ({ runId: state.runId, knowledgeId })))
+    .onConflictDoNothing();
+  for (const id of learned) state.known.add(id);
+}
+
+async function markSteps(state: State, ladder: Ladder, status: "started" | "done"): Promise<void> {
+  const now = new Date();
+  const keys = status === "done" && ladder.partId === null ? withRequires(state.bundle.steps, ladder.stepId).map((stepId) => ({ stepId, partId: "" })) : [{ stepId: ladder.stepId, partId: ladder.partId ?? "" }];
+  const set = status === "done" ? { doneAt: now } : { startedAt: now };
+  await db
+    .insert(runSteps)
+    .values(keys.map((key) => ({ runId: state.runId, ...key, ...set })))
+    .onConflictDoUpdate({ target: [runSteps.runId, runSteps.stepId, runSteps.partId], set: status === "done" ? { doneAt: sql`coalesce(${runSteps.doneAt}, excluded.done_at)` } : { startedAt: sql`coalesce(${runSteps.startedAt}, excluded.started_at)` } });
+  for (const key of keys) (status === "done" ? state.done : state.started).add(ladderKey(key.stepId, key.partId || null));
+}
+
+async function tellBlocked(state: State, stepId: string): Promise<void> {
+  await db
+    .insert(runSteps)
+    .values({ runId: state.runId, stepId, blockedToldAt: new Date() })
+    .onConflictDoUpdate({ target: [runSteps.runId, runSteps.stepId, runSteps.partId], set: { blockedToldAt: sql`coalesce(${runSteps.blockedToldAt}, excluded.blocked_told_at)` } });
+  state.told.add(stepId);
+}
+
 type CallLog = {
   stopReason: string | null;
   refused: boolean;
@@ -309,8 +445,17 @@ async function logCall(runId: string, log: CallLog): Promise<void> {
 
 const sentenceEnd = /[.!?…:;]["»”')]*\s+|\n+/g;
 
+const flat = (text: string) =>
+  text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+
 class Speech {
   readonly spoken: string[] = [];
+  private readonly prepared: string[] = [];
   private buffer = "";
 
   constructor(
@@ -334,6 +479,7 @@ class Speech {
   }
 
   add(text: string): void {
+    this.prepared.push(flat(text));
     this.spoken.push(text);
     this.emit({ type: "text", text: `${this.spoken.length > 1 ? " " : ""}${text}` });
   }
@@ -343,6 +489,11 @@ class Speech {
     if (!text || text.replace(/[\s.…]/g, "") === "" || text.includes(silence)) return;
     if (text.includes("[") || text.includes("]")) {
       this.violations.push("brackets");
+      return;
+    }
+    const repeated = flat(text);
+    if (repeated.split(" ").length >= 3 && [...this.prepared, ...[...this.state.givenLines.values()].flat().map(flat)].some((line) => ` ${line} `.includes(` ${repeated} `))) {
+      this.violations.push("repeated");
       return;
     }
     const unknown = this.state.bundle.knowledge.filter((entry) => !this.state.known.has(entry.id));
@@ -397,7 +548,7 @@ export async function coachTurn(
     if (ask.kind === "more") {
       const found = await moreTarget(runId, ask.cardId, state);
       if (!found) return "notFound";
-      if (!found.latest || !hasMore(found.ladder, state.given.get(ladderKey(found.ladder.stepId, found.ladder.partId)) ?? 0)) return "notLatest";
+      if (!found.latest || isDone(state, found.ladder) || !hasMore(found.ladder, state.given.get(ladderKey(found.ladder.stepId, found.ladder.partId)) ?? 0)) return "notLatest";
       const direct = await deliver(state, found.ladder, null, false, ask.cardId, askedBy.discordId);
       if (direct.ok) return "ok";
       target = { cardId: ask.cardId, ladder: found.ladder };
@@ -420,6 +571,7 @@ export async function coachTurn(
     const speech = new Speech(state, emit, violations);
     const cards: number[] = [];
     let hinted = false;
+    let headsUpSaid = false;
     let round = false;
     let failed = false;
     const askedBefore = state.roundAskedAt;
@@ -467,28 +619,103 @@ export async function coachTurn(
       const results: Anthropic.ToolResultBlockParam[] = [];
       for (const block of response.content) {
         if (block.type !== "tool_use") continue;
-        const input = (block.input ?? {}) as { ladder?: unknown; alt?: unknown; answer?: unknown; said?: unknown };
+        const input = (block.input ?? {}) as { ladder?: unknown; alt?: unknown; answer?: unknown; said?: unknown; status?: unknown; next?: unknown; quiet?: unknown; number?: unknown };
         let content: string;
         if (block.name === "give_hint") {
           const ladder = state.ladders.find((entry) => entry.handle === input.ladder);
-          const opened = ladder && (state.given.get(ladderKey(ladder.stepId, ladder.partId)) ?? 0) > 0;
+          const step = ladder && stepOf(state, ladder);
           if (hinted) {
             violations.push("second-hint");
             content = "Only one hint per reply. Say nothing more about hints.";
-          } else if (!ladder || (ladder.optional && !opened)) {
+          } else if (!ladder || !step || !isShown(state, ladder) || (ladder.optional && !isOpen(state, ladder) && isReady(step, state.done))) {
             violations.push("unknown-ladder");
             content = "There is no such ladder you may use.";
+          } else if (isDone(state, ladder)) {
+            violations.push("done-ladder");
+            content = "That is already done. Never hint it again.";
+          } else if (!isReady(step, state.done) && !state.told.has(step.id)) {
+            await tellBlocked(state, step.id);
+            speech.add(notYet[state.language]);
+            hinted = true;
+            content = "Said for you, in your voice, that it is not the moment. Add nothing about it. If they ask about it again or want more, call give_hint on the same ladder.";
           } else {
-            const alt = typeof input.alt === "number" && Number.isInteger(input.alt) ? input.alt - 1 : null;
-            const sameLadder = target && target.ladder.handle === ladder.handle ? target.cardId : null;
-            const result = await deliver(state, ladder, alt, input.answer === true, sameLadder, askedBy.discordId);
-            if (result.ok) {
-              hinted = true;
-              if (sameLadder === null) cards.push(result.cardId);
-              content = "Handed over on the card. Add at most a few words of your own, and never repeat, explain or extend the hint.";
+            const blocker = isReady(step, state.done) ? null : blockerOf(state.bundle.steps, step.id, state.done);
+            const aimed = isReady(step, state.done) ? ladder : blocker ? state.ladders.find((entry) => entry.stepId === blocker.id && entry.partId === null) : undefined;
+            if (!aimed) {
+              content = "There is nothing you may give about that now. Ask what they see.";
             } else {
-              if (result.violation) violations.push(result.violation);
-              content = result.reason;
+              const alt = !blocker && typeof input.alt === "number" && Number.isInteger(input.alt) ? input.alt - 1 : null;
+              const sameLadder = target && target.ladder.handle === aimed.handle ? target.cardId : null;
+              const result = await deliver(state, aimed, alt, input.answer === true, sameLadder, askedBy.discordId);
+              if (result.ok) {
+                hinted = true;
+                if (sameLadder === null) cards.push(result.cardId);
+                content = "Handed over on the card. Add at most a few words of your own, and never repeat, explain or extend the hint.";
+              } else {
+                if (result.violation) violations.push(result.violation);
+                content = result.reason;
+              }
+            }
+          }
+        } else if (block.name === "record_progress") {
+          const ladder = state.ladders.find((entry) => entry.handle === input.ladder);
+          const status = input.status === "done" ? "done" : input.status === "started" ? "started" : null;
+          if (!ladder || !status || !isShown(state, ladder)) {
+            violations.push("unknown-ladder");
+            content = "There is no such ladder you may record.";
+          } else if (isDone(state, ladder)) {
+            content = "That is already recorded as done.";
+          } else if (status === "started") {
+            await markSteps(state, ladder, "started");
+            content = `Noted. What you may use now:\n\n${offers(state)}`;
+          } else if (ladder.partId !== null) {
+            await markSteps(state, ladder, "done");
+            content = `Noted. Follow the part still missing, from its first hint. What you may use now:\n\n${offers(state)}`;
+          } else {
+            await markSteps(state, ladder, "done");
+            const said: string[] = [];
+            const onSuccess = stepOf(state, ladder).onSuccess;
+            await learn(state, { ...onSuccess, mentions: onSuccess.mentions.filter((id) => heard.has(id)), reveals: [] });
+            if (speakable(onSuccess, state.known)) {
+              await learn(state, onSuccess);
+              speech.add(onSuccess.text[state.language]);
+              said.push(`Said for you: ${quote(onSuccess.text[state.language])}.`);
+            }
+            const ready = firstHints(state);
+            const chosen = ready.find((entry) => entry.handle === input.next) ?? ready[0];
+            if (input.quiet === true || hinted || !chosen) said.push(hinted ? "No other hint in this reply." : "Nothing else handed over.");
+            else {
+              const result = await deliver(state, chosen, null, false, null, askedBy.discordId);
+              if (result.ok) {
+                hinted = true;
+                cards.push(result.cardId);
+                said.push(`Handed over the first hint of ${chosen.handle} on a card.`);
+              } else said.push("Nothing else handed over.");
+            }
+            content = `${said.join(" ")} Your reply is complete: add nothing of your own.`;
+          }
+        } else if (block.name === "heads_up") {
+          const ladder = state.ladders.find((entry) => entry.handle === input.ladder && entry.partId === null);
+          const position = typeof input.number === "number" && Number.isInteger(input.number) ? input.number - 1 : -1;
+          const headsUp = ladder ? stepOf(state, ladder).headsUps[position] : undefined;
+          if (!ladder || !headsUp || !stepOpen(state, ladder.stepId) || !headsUp.mentions.every((id) => state.known.has(id)) || namedIn(headsUp.when, unknownEntries(state)).length) {
+            violations.push("unknown-heads-up");
+            content = "There is no such heads-up you may give.";
+          } else if (headsUpSaid) {
+            content = "One heads-up per reply.";
+          } else {
+            const text = headsUp.text[state.language];
+            const inserted = await db
+              .insert(headsUpsGiven)
+              .values({ runId, stepId: ladder.stepId, position, text, bundleVersion: state.version })
+              .onConflictDoNothing()
+              .returning({ position: headsUpsGiven.position });
+            state.headsUps.add(headsUpKey(ladder.stepId, position));
+            if (!inserted.length) content = "That heads-up was already given.";
+            else {
+              headsUpSaid = true;
+              speech.add(text);
+              content = "Said for you. Do not repeat it.";
             }
           }
         } else if (block.name === "mark_known") {
@@ -502,7 +729,7 @@ export async function coachTurn(
               .values(fresh.map((knowledgeId) => ({ runId, knowledgeId })))
               .onConflictDoNothing();
             for (const id of fresh) state.known.add(id);
-            content = `Noted. What you may use now:\n\n${offers(state)}`;
+            content = `Noted. If they reported finishing or starting something listed, call record_progress now. What you may use now:\n\n${offers(state)}`;
           } else content = "Nothing new to note.";
         } else if (block.name === "ask_round") {
           const recent = state.roundAskedAt && Date.now() - state.roundAskedAt.getTime() < roundGapMs;

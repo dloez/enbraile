@@ -1,6 +1,6 @@
 import type { Bundle, Language } from "../../shared/bundle.js";
 
-type Step = Bundle["steps"][number];
+export type Step = Bundle["steps"][number];
 export type Rung = Step["ladder"][number];
 export type Line = { text: Record<Language, string>; mentions: string[]; reveals: string[] };
 
@@ -64,4 +64,29 @@ function core(name: string): string {
 export function namedIn(text: string, knowledge: Bundle["knowledge"]): string[] {
   const haystack = ` ${strip(text)} `;
   return knowledge.filter((entry) => Object.values(entry.name).some((name) => haystack.includes(` ${core(name)} `))).map((entry) => entry.id);
+}
+
+export const isReady = (step: Step, done: Set<string>) => step.requires.every((id) => done.has(id));
+
+export function withRequires(steps: Step[], stepId: string): string[] {
+  const found = new Set<string>();
+  const visit = (id: string) => {
+    if (found.has(id)) return;
+    found.add(id);
+    for (const required of steps.find((step) => step.id === id)?.requires ?? []) visit(required);
+  };
+  visit(stepId);
+  return [...found];
+}
+
+export function blockerOf(steps: Step[], stepId: string, done: Set<string>): Step | null {
+  const seen = new Set<string>();
+  let current = steps.find((step) => step.id === stepId);
+  while (current && !isReady(current, done)) {
+    if (seen.has(current.id)) return null;
+    seen.add(current.id);
+    const missing = current.requires.find((id) => !done.has(id));
+    current = steps.find((step) => step.id === missing);
+  }
+  return current && current.id !== stepId ? current : null;
 }

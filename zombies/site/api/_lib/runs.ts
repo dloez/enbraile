@@ -5,7 +5,7 @@ import type { Card, MapsPage, Member, Message, OpenRun, RunSheet, Transcript } f
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { hasMore, ladderKey, laddersOf } from "./ladders.js";
-import { bundleVersions, deliveries, hintCards, maps, messages, runKnowledge, runMembers, runs } from "./schema.js";
+import { bundleVersions, deliveries, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -149,14 +149,22 @@ async function cardsSince(runId: string, after: number, rungsAfter: number, newC
     .selectDistinct({ stepId: deliveries.stepId, partId: deliveries.partId })
     .from(deliveries)
     .where(and(eq(deliveries.runId, runId), gt(deliveries.id, rungsAfter)));
-  if (!touched.length && !newCards) return [];
+  const [since] = after ? await db.select({ at: messages.createdAt }).from(messages).where(and(eq(messages.runId, runId), eq(messages.id, after))) : [];
+  const finished = await db
+    .select({ stepId: runSteps.stepId, partId: runSteps.partId })
+    .from(runSteps)
+    .where(and(eq(runSteps.runId, runId), since ? gt(runSteps.doneAt, since.at) : isNotNull(runSteps.doneAt)));
+  if (!touched.length && !newCards && !finished.length) return [];
   const ladderCards = await db
     .select({ id: hintCards.id, messageId: hintCards.messageId, stepId: hintCards.stepId, partId: hintCards.partId })
     .from(hintCards)
     .where(and(eq(hintCards.runId, runId), isNotNull(hintCards.messageId)))
     .orderBy(asc(hintCards.id));
   const keys = new Set(touched.map((entry) => ladderKey(entry.stepId, entry.partId)));
-  const wanted = ladderCards.filter((card) => keys.has(ladderKey(card.stepId, card.partId)) || (card.messageId ?? 0) > after);
+  const finishedKeys = new Set(finished.map((entry) => ladderKey(entry.stepId, entry.partId || null)));
+  const wanted = ladderCards.filter(
+    (card) => keys.has(ladderKey(card.stepId, card.partId)) || finishedKeys.has(card.stepId) || finishedKeys.has(ladderKey(card.stepId, card.partId)) || (card.messageId ?? 0) > after,
+  );
   if (!wanted.length) return [];
   const rungs = await db
     .select({
@@ -178,6 +186,11 @@ async function cardsSince(runId: string, after: number, rungsAfter: number, newC
     .innerJoin(bundleVersions, and(eq(bundleVersions.game, maps.game), eq(bundleVersions.map, maps.map), eq(bundleVersions.version, maps.latestVersion)))
     .where(eq(runs.id, runId));
   const ladders = new Map(laddersOf(row?.steps ?? []).map((ladder) => [ladderKey(ladder.stepId, ladder.partId), ladder]));
+  const done = new Set(
+    (await db.select({ stepId: runSteps.stepId, partId: runSteps.partId }).from(runSteps).where(and(eq(runSteps.runId, runId), isNotNull(runSteps.doneAt)))).map((entry) =>
+      ladderKey(entry.stepId, entry.partId || null),
+    ),
+  );
   return wanted.map((card) => {
     const key = ladderKey(card.stepId, card.partId);
     const onLadder = rungs.filter((rung) => ladderKey(rung.stepId, rung.partId) === key);
@@ -189,7 +202,7 @@ async function cardsSince(runId: string, after: number, rungsAfter: number, newC
       id: card.id,
       rungs: own.map((rung) => ({ id: rung.id, text: rung.text })),
       at: (own.at(-1)?.at ?? new Date()).toISOString(),
-      more: latest && ladder !== undefined && hasMore(ladder, given),
+      more: latest && ladder !== undefined && !done.has(card.stepId) && !done.has(key) && hasMore(ladder, given),
     };
   });
 }

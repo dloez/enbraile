@@ -56,6 +56,9 @@
       "onSuccess": { "text": { "es": "Algo responde desde el túnel con una luz verde.", "en": "Something answers from the tunnel with a green light." } },
       "ladder": [
         { "level": 1, "text": { "es": "Las vías vacías también escuchan.", "en": "The empty tracks listen too." }, "mentions": [] }
+      ],
+      "headsUps": [
+        { "when": "They are clearly putting real time into it", "text": { "es": "Esto es un extra; no hace falta para terminar.", "en": "This one's an extra; you don't need it to finish." } }
       ]
     },
     {
