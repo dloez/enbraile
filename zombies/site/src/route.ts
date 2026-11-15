@@ -16,5 +16,5 @@ export function usePath(): string {
   return path;
 }
 
-export const runPath = (id: string) => `/runs/${encodeURIComponent(id)}`;
+export const runPath = (id: string) => `/attempts/${encodeURIComponent(id)}`;
 export const mapPath = (game: string, map: string) => `/maps/${encodeURIComponent(game)}/${encodeURIComponent(map)}`;

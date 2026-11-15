@@ -1,26 +1,5 @@
 # Zombies Coach — Tasks
 
-## Call runs attempts and list a map's attempts
-
-The owner is not sold on runs as they show now (2026-11-15): a run is to be called an attempt, opening a map shows the list of its attempts, the ones that beat the easter egg are visually identifiable, and the one being played is easy to see. This also settles the question left by "Make the site's pages load fast", which hid runs nobody is in: a map's view lists every attempt again.
-
-**Do:**
-- [ ] Rename runs to attempts everywhere a player sees them: the UI copy in both languages ("attempt" / "intento"), the page URLs (`/attempts/<id>`), and the site docs' vocabulary; the internal tables and code names stay `runs` (the agent's choice, recorded in `docs/zombies/site/explanation/site.md`, so no migration renames data).
-- [ ] The map view lists all its attempts, newest first, each with who played it, its language and when it was last played; the maps list row says how many attempts a map has and how many are beaten.
-- [ ] An attempt is beaten once every required (non-optional) step of the map's bundle is recorded done in `run_steps`; it stays open, since nothing closes an attempt. A beaten attempt carries a distinct mark, and the attempt being played (someone in it; yours first) is highlighted at the top of the list.
-- [ ] Draw the map view's attempts list, the beaten mark and the playing highlight on the canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) (its "Third take" `Map` and `MapPhone` boards) in the design system's look, freeze them into `zombies/site/design/`, then build them; update `docs/zombies/site/reference/design-system.md`.
-- [ ] Loading on the new list uses the skeletons from "Load with skeletons like the DJ panel".
-- [ ] Record the owner's decision (attempts, the list, beaten and playing marks) and the beaten rule as dated decisions, replacing "Only runs with someone in them are listed".
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at desktop and phone width with two local members on the test map: three attempts on one map (one beaten by recording every required step done, one being played, one left), each identifiable at a glance, the played one at the top; no player-facing "run" left (`grep -rniE '\bruns?\b|partida' zombies/site/src` finds only code identifiers).
-- Human-run: the owner opens Blood of the Dead's map view and finds the imported attempt, and later a beaten one, easy to pick out.
-- Reuse: `run_steps` and the bundle's `requires` and `optional`; the map view from the third take.
-- Neighbors: the backlog idea "zombies: the site as the hub of the group's runs", which this moves toward without scoping.
-- Forbidden: closing or ending an attempt; renaming database tables; step or hint numbers, or a count of steps left, in the UI.
-
-**Touches:** `zombies/site/`, `docs/zombies/`
-
 ## Show each map's real art on the maps list and map view
 
 The owner wants the real map assets shown, not drawn stand-ins, for the maps themselves as well as the hints (2026-11-15). A full overhead map would show areas the players have not found, which the knowledge marks forbid until a hint reveals them, so the maps list and the map view show the map's official key art or loading screen (mood, no layout), and the overhead map stays inside level-3 zone cards ("Show a zone on the map for level-3 hints"). Images live with the published bundle, never in git ([Discovery → Visual hints](discovery.md#visual-hints)).

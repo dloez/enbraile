@@ -95,7 +95,7 @@ function RunRowSkeleton({ w }: { w: string }) {
           <Bar w={w} />
         </span>
         <span className="m">
-          <Bar w="10em" />
+          <Bar w="14em" />
         </span>
       </span>
       <span className="skeleton sk-go" />
@@ -113,6 +113,8 @@ export function MapSkeleton() {
             <Bar w="7em" />
           </h2>
           <RunRowSkeleton w="9em" />
+          <RunRowSkeleton w="7em" />
+          <RunRowSkeleton w="8em" />
         </section>
         <section className="sec">
           <h2>

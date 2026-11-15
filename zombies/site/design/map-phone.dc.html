@@ -30,6 +30,7 @@ font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-
 .lg button{min-width:44px;height:44px;border:0;background:transparent;color:var(--mute);font:700 15px 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer}
 .lg button[aria-pressed="true"]{background:var(--text);color:var(--bg)}
 .cs{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--surf-2);box-shadow:inset 0 0 0 1px var(--line-2);font-size:12px;font-weight:700;color:var(--text);flex:none;line-height:1}
+.cs-me{background:var(--text);color:var(--bg);box-shadow:none}
 .chips{display:flex;gap:3px}
 .b{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 24px;border:0;border-radius:8px;background:var(--text);color:var(--bg);font:700 18px 'Atkinson Hyperlegible Next',system-ui,sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
 .b-red{background:var(--red);color:#fff}
@@ -42,6 +43,14 @@ font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-
 .run .who{font-size:17px;font-weight:700;line-height:1.3;display:block}
 .run .m{font-size:15px;color:var(--mute);line-height:1.35;display:block;margin-top:2px}
 .run .go{margin-left:auto;display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:8px;background:var(--text);color:var(--bg);font-weight:700;font-size:17px;flex:none}
+.run-live{border-color:transparent;box-shadow:inset 0 0 0 2px var(--text)}
+.run-you{border-color:transparent;box-shadow:inset 0 0 0 2px var(--red-tx)}
+.run .go-open{background:transparent;color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+.marks{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+.live-tag{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:700;line-height:1.3}
+.live-tag i{width:10px;height:10px;border-radius:50%;background:currentColor;display:block}
+.run-you .live-tag{color:var(--red-tx)}
+.won{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 12px 0 8px;border-radius:14px;background:var(--text);color:var(--bg);font-size:14px;font-weight:700;line-height:1}
 .start{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:16px}
 .seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;border:0;margin:0;padding:0;min-width:0}
 .seg legend{font-size:15px;font-weight:700;color:var(--mute);padding:0;margin-bottom:8px}
@@ -55,7 +64,7 @@ a{color:var(--text)}a:hover{color:#fff}
 </style>
 </helmet>
 <div class="r" style="width: 390px; height: 844px">
-<header class="hd"><a class="wm" href="MapsPhone.dc.html"><i></i><b>Zombies</b></a><span class="sp"></span><a class="yr" href="RunPhone.dc.html"><span class="live"></span>Your run</a><div class="lg" role="group" aria-label="Language"><button aria-pressed="false">ES</button><button aria-pressed="true">EN</button></div></header>
+<header class="hd"><a class="wm" href="MapsPhone.dc.html"><i></i><b>Zombies</b></a><span class="sp"></span><a class="yr" href="RunPhone.dc.html"><span class="live"></span>Your attempt</a><div class="lg" role="group" aria-label="Language"><button aria-pressed="false">ES</button><button aria-pressed="true">EN</button></div></header>
 <main style="flex:1;min-height:0;padding:12px 16px 0;display:flex;flex-direction:column;gap:24px">
 <div style="display:flex;flex-direction:column;gap:8px">
 <a class="back" href="MapsPhone.dc.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Maps</a>
@@ -64,15 +73,17 @@ a{color:var(--text)}a:hover{color:#fff}
 <span class="pl"><svg width="96" height="66" viewBox="0 0 140 96" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Saltmarsh Asylum plan"><rect x="10" y="10" width="120" height="76"/><path d="M10 44H130M10 54H130"/><path d="M28 10v34M46 10v34M64 10v34M82 10v34M100 10v34M28 54v32M46 54v32M64 54v32M82 54v32M100 54v32" stroke-width="1.1"/><circle cx="116" cy="70" r="8"/></svg></span>
 </div>
 </div>
-<section class="sec"><h2>Open runs</h2>
-<a class="run" href="RunPhone.dc.html"><span class="chips"><span class="cs">NI</span><span class="cs">AL</span></span><span style="min-width:0"><span class="who">Nico’s run</span><span class="m">Cari speaks English</span></span><span class="go">Join</span></a>
+<section class="sec"><h2>Attempts</h2>
+<a class="run run-you" href="RunPhone.dc.html"><span class="chips"><span class="cs">AL</span><span class="cs cs-me">TE</span></span><span style="min-width:0"><span class="marks"><span class="live-tag"><i></i>You’re in it</span></span><span class="who">Alba’s attempt</span><span class="m">Cari speaks Spanish · played today, 21:40</span></span><span class="go go-open">Open</span></a>
+<a class="run run-live" href="JoinRunPhone.dc.html"><span class="chips"><span class="cs">NI</span></span><span style="min-width:0"><span class="marks"><span class="live-tag"><i></i>Playing now</span></span><span class="who">Nico’s attempt</span><span class="m">Cari speaks English · played today, 20:15</span></span><span class="go">Join</span></a>
+<a class="run" href="JoinRunPhone.dc.html"><span class="chips"><span class="cs">MA</span><span class="cs">NI</span></span><span style="min-width:0"><span class="marks"><span class="won"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Beaten</span></span><span class="who">Marina’s attempt</span><span class="m">Cari speaks Spanish · played 9 Nov</span></span><span class="go">Join</span></a>
 </section>
-<section class="sec"><h2>Start a run</h2>
+<section class="sec"><h2>Start an attempt</h2>
 <div class="start">
 <fieldset class="seg"><legend>Cari speaks</legend><label><input type="radio" name="lang" checked>Español</label><label><input type="radio" name="lang">English</label></fieldset>
-<a class="b b-red" href="RunPhone.dc.html" style="width:100%">Start a run</a>
+<a class="b b-red" href="RunPhone.dc.html" style="width:100%">Start an attempt</a>
 </div>
-<p class="note">Joining or starting a run takes you out of yours on <b>Harrow Station</b>.</p>
+<p class="note">Joining or starting an attempt takes you out of yours on <b>Saltmarsh Asylum</b>.</p>
 </section>
 </main>
 </div>

@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Card, MapsPage, Member, Message, OpenRun, Rating, RunImport, RunSheet, Transcript } from "../../shared/runs.js";
+import type { Attempt, Card, MapPage, MapsPage, Member, Message, Rating, RunImport, RunLink, RunSheet, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
@@ -98,14 +98,6 @@ async function currentRunId(viewer: Viewer): Promise<string | null> {
   return row?.runId ?? null;
 }
 
-function liveRuns() {
-  return db
-    .select({ id: runs.id, game: runs.game, map: runs.map, language: runs.language, startedBy: runs.startedByName, name: runMembers.name, discordId: runMembers.discordId })
-    .from(runs)
-    .innerJoin(runMembers, and(eq(runMembers.runId, runs.id), activeMember))
-    .orderBy(asc(runs.createdAt), asc(runMembers.joinedAt));
-}
-
 function runOf(viewer: Viewer) {
   return db
     .select({ id: runs.id, game: runs.game, map: runs.map })
@@ -114,28 +106,90 @@ function runOf(viewer: Viewer) {
     .where(and(eq(runMembers.discordId, viewer.discordId), activeMember));
 }
 
-type LiveRun = { id: string; game: string; map: string; language: Language; startedBy: string; members: Member[] };
+type AttemptRow = { id: string; game: string; map: string; language: Language; startedBy: string; createdAt: Date; lastPlayed: Date; beaten: boolean };
+
+async function attemptRows(only?: { game: string; map: string }): Promise<AttemptRow[]> {
+  const where = only ? sql`where r.game = ${only.game} and r.map = ${only.map}` : sql``;
+  const result = await db.execute<AttemptRow>(sql`
+    with required as (
+      select m.game, m.map, step->>'id' as step_id
+      from ${maps} m
+      join ${bundleVersions} b on b.game = m.game and b.map = m.map and b.version = m.latest_version
+      cross join lateral jsonb_array_elements(b.bundle->'steps') step
+      where not coalesce((step->>'optional')::boolean, false)
+    )
+    select r.id, r.game, r.map, r.language, r.started_by_name as "startedBy", r.created_at as "createdAt",
+      greatest(r.created_at, (select max(x.created_at) from ${messages} x where x.run_id = r.id)) as "lastPlayed",
+      not exists (
+        select 1 from required q
+        where q.game = r.game and q.map = r.map
+          and not exists (select 1 from ${runSteps} s where s.run_id = r.id and s.step_id = q.step_id and s.part_id = '' and s.done_at is not null)
+      ) as beaten
+    from ${runs} r
+    ${where}
+    order by r.created_at desc`);
+  return result.rows.map((row) => ({ ...row, createdAt: new Date(row.createdAt), lastPlayed: new Date(row.lastPlayed) }));
+}
+
+function playersOf(game: string, map: string) {
+  return db
+    .select({ runId: runMembers.runId, name: runMembers.name, discordId: runMembers.discordId, leftAt: runMembers.leftAt })
+    .from(runMembers)
+    .innerJoin(runs, eq(runs.id, runMembers.runId))
+    .where(and(eq(runs.game, game), eq(runs.map, map)))
+    .orderBy(asc(runMembers.joinedAt));
+}
+
+function linkOf(current: { id: string; game: string; map: string } | undefined, published: PublishedMap[]): RunLink | null {
+  const map = current && published.find((entry) => entry.game === current.game && entry.map === current.map);
+  return current && map ? { id: current.id, name: map.name } : null;
+}
 
 export async function mapsPage(viewer: Viewer, time: Time): Promise<MapsPage> {
-  const [published, rows] = await Promise.all([time("maps", publishedMaps()), time("runs", liveRuns())]);
-  const live = new Map<string, LiveRun>();
-  for (const { name, discordId, ...run } of rows) {
-    const entry = live.get(run.id) ?? { ...run, members: [] };
-    entry.members.push({ name, you: discordId === viewer.discordId });
-    live.set(run.id, entry);
-  }
-  const open = [...live.values()];
-  const yours = open.find((run) => run.members.some((member) => member.you));
-  const runsOf = (map: PublishedMap): OpenRun[] =>
-    open
-      .filter((run) => run.game === map.game && run.map === map.map)
-      .map((run) => ({ id: run.id, language: run.language, startedBy: run.startedBy, members: run.members, you: run === yours }));
-  const yourMap = yours && published.find((map) => map.game === yours.game && map.map === yours.map);
+  const [published, rows, [current]] = await Promise.all([time("maps", publishedMaps()), time("runs", attemptRows()), time("mine", runOf(viewer))]);
+  const on = (map: PublishedMap) => rows.filter((row) => row.game === map.game && row.map === map.map);
   return {
     viewer,
-    maps: published.map((map) => ({ ...map, runs: runsOf(map) })),
-    yourRun: yours && yourMap ? { id: yours.id, name: yourMap.name, language: yours.language, members: yours.members } : null,
+    maps: published.map((map) => ({
+      ...map,
+      attempts: on(map).length,
+      beaten: on(map).filter((row) => row.beaten).length,
+      you: current?.game === map.game && current.map === map.map,
+    })),
+    yourRun: linkOf(current, published),
   };
+}
+
+export async function mapPage(viewer: Viewer, game: string, map: string, time: Time): Promise<MapPage | null> {
+  const [published, rows, players, [current]] = await Promise.all([
+    time("maps", publishedMaps()),
+    time("runs", attemptRows({ game, map })),
+    time("members", playersOf(game, map)),
+    time("mine", runOf(viewer)),
+  ]);
+  const found = published.find((entry) => entry.game === game && entry.map === map);
+  if (!found) return null;
+  const attempts: Attempt[] = rows.map((row) => {
+    const people = new Map<string, { name: string; here: boolean }>();
+    for (const player of players.filter((entry) => entry.runId === row.id)) {
+      const here = player.leftAt === null || (people.get(player.discordId)?.here ?? false);
+      people.set(player.discordId, { name: player.name, here });
+    }
+    const ordered = [...people.entries()].sort(([, a], [, b]) => Number(b.here) - Number(a.here));
+    return {
+      id: row.id,
+      language: row.language,
+      startedBy: row.startedBy,
+      members: ordered.map(([discordId, person]) => ({ name: person.name, you: discordId === viewer.discordId })),
+      playing: ordered.some(([, person]) => person.here),
+      you: current?.id === row.id,
+      beaten: row.beaten,
+      lastPlayed: row.lastPlayed.toISOString(),
+    };
+  });
+  const rank = (attempt: Attempt) => (attempt.you ? 0 : attempt.playing ? 1 : 2);
+  attempts.sort((a, b) => rank(a) - rank(b) || (rank(a) === 1 ? b.lastPlayed.localeCompare(a.lastPlayed) : 0));
+  return { viewer, map: found, attempts, yourRun: linkOf(current, published) };
 }
 
 export async function runSheet(viewer: Viewer, runId: string, time: Time): Promise<RunSheet | null> {
@@ -148,8 +202,6 @@ export async function runSheet(viewer: Viewer, runId: string, time: Time): Promi
   if (!run) return null;
   const map = published.find((entry) => entry.game === run.game && entry.map === run.map);
   if (!map) return null;
-  const other = current && current.id !== runId ? current : undefined;
-  const otherMap = other && published.find((entry) => entry.game === other.game && entry.map === other.map);
   return {
     viewer,
     id: run.id,
@@ -158,7 +210,7 @@ export async function runSheet(viewer: Viewer, runId: string, time: Time): Promi
     startedBy: run.startedByName,
     members: members.get(runId) ?? [],
     you: current?.id === runId,
-    yourRun: other && otherMap ? { id: other.id, name: otherMap.name } : null,
+    yourRun: current && current.id !== runId ? linkOf(current, published) : null,
   };
 }
 

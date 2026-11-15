@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Language, Viewer } from "../shared/bundle";
-import type { MapsPage as Page, MapWithRuns, OpenRun } from "../shared/runs";
-import { fetchMaps, joinRun, SignedOut, signIn, startRun } from "./api";
+import type { Attempt, MapPage as MapPageData, MapSummary } from "../shared/runs";
+import { fetchMap, fetchMaps, joinRun, Refused, SignedOut, signIn, startRun } from "./api";
 import { MapPlan } from "./art";
-import { languageNames, lang, switchLang, t } from "./i18n";
+import { languageNames, lang, playedAt, switchLang, t } from "./i18n";
 import { mapPath, navigate, runPath, usePath } from "./route";
 import { RunPage } from "./RunPage";
 import { Bar, MapSkeleton, MapsSkeleton } from "./skeletons";
-import { Arrow, Back, Chevron, Chips, initials, LeaveNote, Link, MapHead, Notice, type RunLink } from "./ui";
+import { Arrow, Back, Check, Chevron, Chips, initials, LeaveNote, Link, MapHead, Notice, type RunLink } from "./ui";
 
 const languages: Language[] = ["es", "en"];
 
@@ -53,51 +53,11 @@ function Header({ me, inRun, yourRun }: { me: Viewer | null | undefined; inRun: 
   );
 }
 
-function label(map: MapWithRuns): string {
+function label(map: { test: boolean; game: string }): string {
   return map.test ? t.testMap : map.game;
 }
 
-function RowRuns({ runs }: { runs: OpenRun[] }) {
-  const mine = runs.some((run) => run.you);
-  if (runs.length === 0) return <span>{t.noOpenRuns}</span>;
-  if (runs.length > 1)
-    return (
-      <span>
-        {t.someOpenRuns(runs.length)}
-        {mine && (
-          <>
-            {" · "}
-            <span className="here">{t.youreIn}</span>
-          </>
-        )}
-      </span>
-    );
-  const run = runs[0]!;
-  return (
-    <>
-      <Chips members={run.members} />
-      <span>
-        <span className={run.you ? "wide" : undefined}>{t.runOf(run.startedBy)}</span>
-        {run.you ? (
-          <>
-            <span className="wide">{" · "}</span>
-            <span className="here">
-              <span className="wide">{t.youreIn}</span>
-              <span className="narrow">{t.youreInIt}</span>
-            </span>
-          </>
-        ) : (
-          <span className="wide">
-            {" · "}
-            {languageNames[run.language]}
-          </span>
-        )}
-      </span>
-    </>
-  );
-}
-
-function MapRow({ map }: { map: MapWithRuns }) {
+function MapRow({ map }: { map: MapSummary }) {
   const name = map.name[lang];
   return (
     <li>
@@ -109,7 +69,15 @@ function MapRow({ map }: { map: MapWithRuns }) {
           <span className="lab">{label(map)}</span>
           <h2>{name}</h2>
           <span className="sub">
-            <RowRuns runs={map.runs} />
+            <span>
+              {map.attempts === 0 ? t.noAttempts : t.attemptsLine(map.attempts, map.beaten)}
+              {map.you && (
+                <>
+                  {" · "}
+                  <span className="here">{t.youreIn}</span>
+                </>
+              )}
+            </span>
           </span>
         </span>
         <span className="go">
@@ -120,15 +88,15 @@ function MapRow({ map }: { map: MapWithRuns }) {
   );
 }
 
-type Loaded = { kind: "loading" } | { kind: "failed" } | { kind: "ready"; page: Page };
+type Loaded<T> = { kind: "loading" } | { kind: "failed" } | { kind: "missing" } | { kind: "ready"; page: T };
 
 type Heard = { onYourRun: (run: RunLink | null) => void; onViewer: (viewer: Viewer | null) => void };
 
-function useMaps({ onYourRun, onViewer }: Heard) {
-  const [state, setState] = useState<Loaded>({ kind: "loading" });
+function usePage<T extends { viewer: Viewer; yourRun: RunLink | null }>(fetch: () => Promise<T>, { onYourRun, onViewer }: Heard) {
+  const [state, setState] = useState<Loaded<T>>({ kind: "loading" });
   const load = useCallback(() => {
     setState({ kind: "loading" });
-    fetchMaps()
+    fetch()
       .then((page) => {
         onViewer(page.viewer);
         onYourRun(page.yourRun);
@@ -137,9 +105,9 @@ function useMaps({ onYourRun, onViewer }: Heard) {
       .catch((error: unknown) => {
         if (error instanceof SignedOut) return signIn();
         onViewer(null);
-        setState({ kind: "failed" });
+        setState({ kind: error instanceof Refused && error.status === 404 ? "missing" : "failed" });
       });
-  }, [onYourRun, onViewer]);
+  }, [fetch, onYourRun, onViewer]);
   useEffect(load, [load]);
   return { state, load };
 }
@@ -155,7 +123,7 @@ function Failed({ retry }: { retry: () => void }) {
 }
 
 function MapsPage(heard: Heard) {
-  const { state, load } = useMaps(heard);
+  const { state, load } = usePage(fetchMaps, heard);
   const page = state.kind === "ready" ? state.page : null;
 
   return (
@@ -178,45 +146,65 @@ function MapsPage(heard: Heard) {
   );
 }
 
-function OpenRunRow({ run, busy, onJoin }: { run: OpenRun; busy: boolean; onJoin: (id: string) => void }) {
+function AttemptRow({ attempt, busy, onJoin }: { attempt: Attempt; busy: boolean; onJoin: (id: string) => void }) {
+  const live = attempt.you ? " run-you" : attempt.playing ? " run-live" : "";
   const body = (
     <>
-      <Chips members={run.members} />
+      <Chips members={attempt.members} />
       <span className="run-t">
-        <span className="who">{t.runOf(run.startedBy)}</span>
+        {(attempt.playing || attempt.beaten) && (
+          <span className="marks">
+            {attempt.playing && (
+              <span className="live-tag">
+                <i />
+                {attempt.you ? t.youreInIt : t.playing}
+              </span>
+            )}
+            {attempt.beaten && (
+              <span className="won">
+                <Check />
+                {t.beaten}
+              </span>
+            )}
+          </span>
+        )}
+        <span className="who">{t.runOf(attempt.startedBy)}</span>
         <span className="m">
-          {run.members.length > 0 && (
+          {attempt.members.length > 0 && (
             <span className="wide">
-              {run.members.map((member) => member.name).join(", ")}
+              {attempt.members.map((member) => member.name).join(", ")}
               {" · "}
             </span>
           )}
-          {t.cariSpeaksIn[run.language]}
+          {t.cariSpeaksIn[attempt.language]}
+          {" · "}
+          {playedAt(attempt.lastPlayed)}
         </span>
       </span>
     </>
   );
-  if (run.you)
+  if (attempt.you)
     return (
-      <Link to={runPath(run.id)} className="run">
+      <Link to={runPath(attempt.id)} className={`run${live}`}>
         {body}
-        <span className="here go-here">{t.youreInIt}</span>
+        <span className="go go-open">{t.open}</span>
       </Link>
     );
   return (
-    <button type="button" className="run" disabled={busy} onClick={() => onJoin(run.id)}>
+    <button type="button" className={`run${live}`} disabled={busy} onClick={() => onJoin(attempt.id)}>
       {body}
       <span className="go">{t.join}</span>
     </button>
   );
 }
 
-function MapView({ map, yourRun }: { map: MapWithRuns; yourRun: RunLink | null }) {
+function MapView({ page }: { page: MapPageData }) {
+  const { map, attempts, yourRun } = page;
   const [language, setLanguage] = useState<Language>("es");
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<"start" | "join" | null>(null);
   const name = map.name[lang];
-  const others = map.runs.some((run) => !run.you);
+  const others = attempts.some((attempt) => !attempt.you);
 
   const act = (kind: "start" | "join", post: () => Promise<{ id: string }>) => {
     setBusy(true);
@@ -235,11 +223,11 @@ function MapView({ map, yourRun }: { map: MapWithRuns; yourRun: RunLink | null }
       <MapHead back eyebrow={label(map)} name={name} art={map.art} plan={t.planOf(name)} />
       <div className="side">
         <section className="sec">
-          <h2>{t.openRuns}</h2>
-          {map.runs.length === 0 ? (
+          <h2>{t.attempts}</h2>
+          {attempts.length === 0 ? (
             <p className="empty">{t.noneOnMap}</p>
           ) : (
-            map.runs.map((run) => <OpenRunRow key={run.id} run={run} busy={busy} onJoin={(id) => act("join", () => joinRun(id))} />)
+            attempts.map((attempt) => <AttemptRow key={attempt.id} attempt={attempt} busy={busy} onJoin={(id) => act("join", () => joinRun(id))} />)
           )}
           {failed === "join" && (
             <p className="state" role="alert">
@@ -276,7 +264,8 @@ function MapView({ map, yourRun }: { map: MapWithRuns; yourRun: RunLink | null }
 }
 
 function MapPage({ game, map, ...heard }: { game: string; map: string } & Heard) {
-  const { state, load } = useMaps(heard);
+  const fetch = useCallback(() => fetchMap(game, map), [game, map]);
+  const { state, load } = usePage(fetch, heard);
   if (state.kind === "loading") return <MapSkeleton />;
   if (state.kind === "failed")
     return (
@@ -284,8 +273,7 @@ function MapPage({ game, map, ...heard }: { game: string; map: string } & Heard)
         <Failed retry={load} />
       </main>
     );
-  const found = state.page.maps.find((each) => each.game === game && each.map === map);
-  if (!found)
+  if (state.kind === "missing")
     return (
       <main className="page">
         <Notice text={t.noSuchMap} alert>
@@ -295,7 +283,7 @@ function MapPage({ game, map, ...heard }: { game: string; map: string } & Heard)
         </Notice>
       </main>
     );
-  return <MapView map={found} yourRun={state.page.yourRun} />;
+  return <MapView page={state.page} />;
 }
 
 export function App() {
@@ -306,7 +294,7 @@ export function App() {
 
   const onViewer = useCallback((viewer: Viewer | null) => setMe((current) => viewer ?? current ?? null), []);
 
-  const runId = path.match(/^\/runs\/([^/]+)\/?$/)?.[1];
+  const runId = path.match(/^\/attempts\/([^/]+)\/?$/)?.[1];
   const mapMatch = path.match(/^\/maps\/([^/]+)\/([^/]+)\/?$/);
   const onMap = useCallback((name: string | undefined) => runId && setRunHead({ id: runId, name }), [runId]);
   const inRun = runId ? (runHead?.id === runId ? runHead.name : null) : undefined;

@@ -1,5 +1,5 @@
 import type { Language } from "../shared/bundle";
-import type { MapsPage, Rating, ReplyEvent, RunSheet, Transcript } from "../shared/runs";
+import type { MapPage, MapsPage, Rating, ReplyEvent, RunSheet, Transcript } from "../shared/runs";
 
 export class SignedOut extends Error {}
 
@@ -30,6 +30,7 @@ async function call<T>(path: string, init?: { method: string; body?: unknown }):
 }
 
 export const fetchMaps = () => call<MapsPage>("maps");
+export const fetchMap = (game: string, map: string) => call<MapPage>(`maps/${encodeURIComponent(game)}/${encodeURIComponent(map)}`);
 export const fetchRun = (id: string) => call<RunSheet>(`runs/${encodeURIComponent(id)}`);
 export const fetchTranscript = (id: string, after: number, rungsAfter: number) =>
   call<Transcript>(`runs/${encodeURIComponent(id)}/messages?after=${after}&rungsAfter=${rungsAfter}`);

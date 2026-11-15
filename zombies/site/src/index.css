@@ -644,12 +644,71 @@ a:hover {
   background: var(--text-hi);
 }
 
-.run .go-here {
-  margin-left: auto;
-  flex: none;
-  min-height: 48px;
+.run .go-open {
+  background: transparent;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.run:hover .go-open {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--text);
+}
+
+.run-live,
+.sec .run-live:hover {
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--text);
+}
+
+.run-you,
+.sec .run-you:hover {
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--red-tx);
+}
+
+.marks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.live-tag {
   display: inline-flex;
   align-items: center;
+  gap: var(--sp-2);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.live-tag i {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.run-you .live-tag {
+  color: var(--red-tx);
+}
+
+.won {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 28px;
+  padding: 0 var(--sp-3) 0 var(--sp-2);
+  border-radius: 14px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .card {

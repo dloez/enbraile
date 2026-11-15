@@ -1,11 +1,11 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
-import type { Language, PublishedMap } from "../shared/bundle";
-import type { Member } from "../shared/runs";
+import type { PublishedMap } from "../shared/bundle";
+import type { Member, RunLink } from "../shared/runs";
 import { MapPlan } from "./art";
 import { t } from "./i18n";
 import { navigate } from "./route";
 
-export type RunLink = { id: string; name: Record<Language, string> };
+export type { RunLink };
 
 export function initials(name: string): string {
   const letters = name.replace(/[^\p{L}\p{N}]/gu, "");
@@ -53,6 +53,12 @@ export const Back = ({ size = 20 }: { size?: number }) => (
 export const Chevron = ({ size = 24 }: { size?: number }) => (
   <Icon size={size}>
     <path d="M9 5l7 7-7 7" />
+  </Icon>
+);
+
+export const Check = () => (
+  <Icon size={16} width={3}>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
   </Icon>
 );
 

@@ -3,13 +3,15 @@ import { languages, type Language, type PublishedMap, type Viewer } from "./bund
 
 export type Member = { name: string; you: boolean };
 
-export type OpenRun = { id: string; language: Language; startedBy: string; members: Member[]; you: boolean };
+export type RunLink = { id: string; name: Record<Language, string> };
 
-export type MapWithRuns = PublishedMap & { runs: OpenRun[] };
+export type MapSummary = PublishedMap & { attempts: number; beaten: number; you: boolean };
 
-export type YourRun = { id: string; name: Record<Language, string>; language: Language; members: Member[] };
+export type MapsPage = { viewer: Viewer; maps: MapSummary[]; yourRun: RunLink | null };
 
-export type MapsPage = { viewer: Viewer; maps: MapWithRuns[]; yourRun: YourRun | null };
+export type Attempt = { id: string; language: Language; startedBy: string; members: Member[]; playing: boolean; you: boolean; beaten: boolean; lastPlayed: string };
+
+export type MapPage = { viewer: Viewer; map: PublishedMap; attempts: Attempt[]; yourRun: RunLink | null };
 
 export type RunSheet = {
   viewer: Viewer;
@@ -19,7 +21,7 @@ export type RunSheet = {
   startedBy: string;
   members: Member[];
   you: boolean;
-  yourRun: { id: string; name: Record<Language, string> } | null;
+  yourRun: RunLink | null;
 };
 
 export const ratings = ["obvious", "right", "vague"] as const;

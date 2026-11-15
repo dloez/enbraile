@@ -7,7 +7,7 @@ import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { storeVersion } from "./maps.js";
-import { importRun, type Time, isActiveMember, joinRun, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
+import { importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 
 const noStore = { "cache-control": "private, no-store" };
@@ -101,6 +101,11 @@ member.use(async (c, next) => {
 });
 
 member.get("/maps", async (c) => c.json(await mapsPage(c.get("viewer"), timed(c)), 200, noStore));
+
+member.get("/maps/:game/:map", async (c) => {
+  const page = await mapPage(c.get("viewer"), c.req.param("game"), c.req.param("map"), timed(c));
+  return page ? c.json(page, 200, noStore) : c.json({ error: "noSuchMap" }, 404, noStore);
+});
 
 member.post("/runs", async (c) => {
   const parsed = startRunSchema.safeParse(await c.req.json().catch(() => null));
