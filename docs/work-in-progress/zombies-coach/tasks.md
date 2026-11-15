@@ -17,23 +17,6 @@ The zone's hatch, the drawn plan's grid and its lines are raw hex in a component
 
 **Touches:** `zombies/site/src/art.tsx`, `zombies/site/src/index.css`, `docs/zombies/site/reference/design-system.md`
 
-## Reject a bundle with no required step
-
-Beaten is computed as "no non-optional step of the latest bundle lacks its done row" (`zombies/site/api/_lib/runs.ts:114-127`). A bundle whose steps are all `optional` therefore marks every attempt on it beaten the moment it starts. The schema only asks for at least one step (`zombies/site/shared/bundle.ts:47`). Every easter egg has a required step (Blood of the Dead's bundle has 34 of 38), so a bundle without one is a mistake. Rejecting it keeps beaten meaning what `docs/zombies/site/explanation/site.md:222` says.
-
-**Do:**
-- [ ] In the schema's `superRefine`, reject a bundle with no step that is not `optional`, with a message naming no text. `compile` and the publish route take it from the schema.
-- [ ] Record it in `site.md`'s Decisions, dated, as the agent's choice, citing the vacuous beaten.
-
-**Acceptance:**
-- Claude-run: `npm run gate`. A copy of `test-map/bundle.json` with every step `optional` is refused by `npm run publish` against the local site. The real test map still publishes `unchanged`.
-- Human-run: none.
-- Reuse: the existing `superRefine` checks in `shared/bundle.ts`.
-- Neighbors: the "names no other step" check.
-- Forbidden: changing what beaten means; a check in the SQL instead of the schema.
-
-**Touches:** `zombies/site/shared/bundle.ts`, `docs/zombies/site/explanation/site.md`
-
 ## Answer a failed voice turn with 500, as the site doc says
 
 `docs/zombies/site/explanation/site.md:108` says "A turn that fails answers 500, which the bot logs and also meets with silence." It does not. When the Claude call fails, `coachTurn` catches the error, logs it in `coach_calls` and only emits a `failed` event (`zombies/site/api/_lib/coach.ts:729-736`, `:908`). `voiceTurn` reads only `text` events (`zombies/site/api/_lib/voice.ts:28-31`), so the route answers 200 `{ reply: null }` (`api/_lib/app.ts:139`). The bot then treats it as Cari choosing silence and logs nothing (`zombies/bot/src/call.ts`, `ask` and `heard`). Only a thrown database error reaches a 500. In the chat, a failed reply already says so rather than staying silent ("A failed reply says so", `site.md:205`). So the doc's behaviour is the intended one, and the code is what falls short.

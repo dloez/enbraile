@@ -98,6 +98,7 @@ export const bundleSchema = z
     const steps = new Set(bundle.steps.map((entry) => entry.id));
     for (const repeated of unique(bundle.knowledge.map((entry) => entry.id))) ctx.addIssue({ code: "custom", message: `knowledge entry ${repeated} is listed twice`, path: ["knowledge"] });
     for (const repeated of unique(bundle.steps.map((entry) => entry.id))) ctx.addIssue({ code: "custom", message: `step ${repeated} is listed twice`, path: ["steps"] });
+    if (bundle.steps.every((entry) => entry.optional)) ctx.addIssue({ code: "custom", message: "no step is required", path: ["steps"] });
     const named = (ids: string[], path: (string | number)[]) => {
       for (const entry of ids) if (!known.has(entry)) ctx.addIssue({ code: "custom", message: `${entry} names no knowledge entry`, path });
     };
