@@ -45,7 +45,8 @@
 html,
 body {
   margin: 0;
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -76,8 +77,9 @@ input {
 }
 
 #root {
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: var(--app-h, 100dvh);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -458,14 +460,13 @@ a:hover {
 
 .page {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   width: 100%;
-  margin: 0 auto;
-  padding: var(--sp-8) var(--sp-6) var(--sp-16);
-  max-width: 1232px;
+  padding: var(--sp-8) var(--sp-12) var(--sp-16);
 }
 
 .maps {
-  max-width: 928px;
   padding-top: var(--sp-16);
   display: flex;
   flex-direction: column;
@@ -488,8 +489,8 @@ a:hover {
 }
 
 .mlist {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr));
   gap: var(--sp-4);
 }
 
@@ -546,10 +547,95 @@ a:hover {
 
 .two {
   display: grid;
-  grid-template-columns: minmax(0, 600px) minmax(0, 520px);
-  justify-content: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--sp-16);
   align-items: start;
+}
+
+.mapv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.mapv > *,
+.maps > * {
+  flex: none;
+}
+
+.mapv > .back {
+  align-self: flex-start;
+}
+
+.banner {
+  --bn-h: 280px;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  min-height: var(--bn-h);
+  background: var(--surf);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bn-id {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-8);
+  min-width: 0;
+}
+
+.bn-id .lab {
+  display: block;
+}
+
+.bn-id h1 {
+  font-size: 88px;
+}
+
+.bn-cnt {
+  font-size: 16px;
+  color: var(--mute);
+}
+
+.bn-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-6);
+  background: var(--surf-2);
+  border-left: 1px solid var(--line);
+  color: var(--plan);
+  line-height: 0;
+  min-width: 0;
+}
+
+.bn-art .plan-svg {
+  width: auto;
+  max-width: 100%;
+  height: calc(var(--bn-h) - 2 * var(--sp-6));
+}
+
+.bn-art.art {
+  padding: 0;
+}
+
+.bn-art.art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.below {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--sp-12);
+  align-items: start;
+  margin-top: var(--sp-8);
 }
 
 .mv-head {
@@ -842,8 +928,6 @@ a:hover {
   flex: 1 1 auto;
   display: flex;
   min-height: 0;
-  height: calc(100vh - var(--hd));
-  height: calc(100dvh - var(--hd));
 }
 
 .rail {
@@ -920,6 +1004,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .rows {
@@ -938,7 +1023,7 @@ a:hover {
 
 .row {
   display: grid;
-  grid-template-columns: 88px minmax(0, 680px);
+  grid-template-columns: 88px minmax(0, 1fr);
   column-gap: var(--sp-4);
 }
 
@@ -992,6 +1077,7 @@ a:hover {
 }
 
 .revmsg {
+  max-width: 52em;
   margin-top: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
   border-radius: 8px;
@@ -1017,6 +1103,7 @@ a:hover {
 }
 
 .msg {
+  max-width: 52em;
   font-size: 17px;
   line-height: 1.55;
   margin-top: 2px;
@@ -1079,7 +1166,7 @@ a:hover {
   background: var(--slip);
   color: var(--slip-ink);
   border-radius: 8px;
-  max-width: 640px;
+  max-width: 52em;
 }
 
 .slip-h {
@@ -1220,14 +1307,12 @@ a:hover {
 }
 
 .cmp-in {
-  max-width: 784px;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
 }
 
 .mode {
-  max-width: 784px;
   font-size: 15px;
   font-weight: 700;
   color: var(--blue-tx);
@@ -1273,7 +1358,6 @@ a:hover {
 .field {
   flex: 1;
   min-width: 0;
-  max-width: 680px;
   height: 56px;
   border-radius: 10px;
   background: var(--surf-2);
@@ -1300,13 +1384,38 @@ a:hover {
   padding: var(--sp-3) 0;
 }
 
+@media (min-width: 1600px) {
+  .banner {
+    --bn-h: 320px;
+  }
+
+  .bn-id h1 {
+    font-size: 96px;
+  }
+
+  .join-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1180px) {
+  .page {
+    padding-left: var(--sp-6);
+    padding-right: var(--sp-6);
+  }
+
   .two {
     gap: var(--sp-8);
   }
 
-  .mv-name h1 {
+  .mv-name h1,
+  .bn-id h1 {
     font-size: 72px;
+  }
+
+  .below {
+    gap: var(--sp-8);
   }
 
   .rail {
@@ -1318,6 +1427,12 @@ a:hover {
   .trouble {
     padding-left: var(--sp-6);
     padding-right: var(--sp-6);
+  }
+}
+
+@media (max-width: 960px) {
+  .below {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1472,6 +1587,45 @@ a:hover {
 
   .mv-name h1 {
     font-size: 52px;
+  }
+
+  .mapv {
+    gap: var(--sp-2);
+  }
+
+  .banner {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .bn-art {
+    order: -1;
+    height: 132px;
+    padding: var(--sp-3);
+    border-left: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bn-art .plan-svg {
+    height: 108px;
+  }
+
+  .bn-id {
+    gap: var(--sp-2);
+    padding: var(--sp-4);
+  }
+
+  .bn-id h1 {
+    font-size: 52px;
+  }
+
+  .bn-cnt {
+    font-size: 15px;
+  }
+
+  .below {
+    gap: var(--sp-6);
+    margin-top: var(--sp-4);
   }
 
   .mv-small {

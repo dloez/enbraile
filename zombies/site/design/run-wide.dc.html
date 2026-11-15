@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Intento con Cari · ancho</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,700..900&amp;family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Courier+Prime:wght@400;700&amp;display=swap">
+<style>
+body{margin:0;background:#15140f}
+.r{--bg:#15140f;--surf:#1e1d16;--surf-2:#29281f;--line:#36342a;--line-2:#4b483b;--text:#ede8dc;--mute:#aca593;--red:#c23a20;--red-hi:#d4492e;--red-tx:#f27c60;--blue:#3a57c9;--blue-hi:#4865d6;--blue-tx:#9db0ff;--blue-bg:#20263f;--slip:#ebdfb0;--slip-ink:#1b1a14;--slip-mute:#5b5443;--slip-line:#c9bb88;
+font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-serif;font-size:17px;line-height:1.5;color:var(--text);background:var(--bg);box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+.r *{box-sizing:border-box}
+.r h1,.r h2,.r h3,.r p,.r ul{margin:0;padding:0}
+.r ul{list-style:none}
+.cond{font-family:'Archivo',sans-serif;font-stretch:68%;font-weight:800;text-transform:uppercase;line-height:.92;letter-spacing:.01em}
+.ty{font-family:'Courier Prime',ui-monospace,monospace}
+.lab{font-size:15px;font-weight:700;color:var(--mute);line-height:1.3}
+.hd{flex:none;height:64px;background:var(--surf);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 24px}
+.wm{display:flex;align-items:center;gap:10px;min-height:44px;color:var(--text);text-decoration:none}
+.wm i{width:10px;height:10px;background:var(--red-tx);display:block}
+.wm b{font-family:'Archivo',sans-serif;font-stretch:68%;font-weight:900;font-size:26px;letter-spacing:.03em;text-transform:uppercase;line-height:1}
+.sp{flex:1}
+.lg{display:flex;border-radius:8px;box-shadow:inset 0 0 0 1px var(--line-2);overflow:hidden}
+.lg button{min-width:52px;height:44px;border:0;background:transparent;color:var(--mute);font:700 15px 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer}
+.lg button[aria-pressed="true"]{background:var(--text);color:var(--bg)}
+.lg button:hover{color:var(--text)}
+.lg button[aria-pressed="true"]:hover{color:var(--bg)}
+.cs{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--surf-2);box-shadow:inset 0 0 0 1px var(--line-2);font-size:13px;font-weight:700;color:var(--text);flex:none;line-height:1}
+.cs-me{background:var(--text);color:var(--bg);box-shadow:none}
+.cs-cari{background:var(--red);color:#fff;box-shadow:none;border-radius:6px}
+.b{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border:0;border-radius:8px;background:var(--text);color:var(--bg);font:700 17px 'Atkinson Hyperlegible Next',system-ui,sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+.b:hover,.b:focus-visible{background:#fff}
+.b-red{background:var(--red);color:#fff}
+.b-red:hover,.b-red:focus-visible{background:var(--red-hi)}
+.b-ghost{background:transparent;color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+.b-ghost:hover,.b-ghost:focus-visible{background:var(--surf-2);box-shadow:inset 0 0 0 1.5px var(--text)}
+.b-blue{background:var(--blue);color:#fff}
+.b-blue:hover,.b-blue:focus-visible{background:var(--blue-hi)}
+.rail{width:340px;flex:none;background:var(--surf);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:32px;padding:32px 24px 24px}
+.rail h1{font-size:60px;margin-top:8px}
+.rail .sub{font-size:16px;color:var(--mute);margin-top:12px}
+.mem{display:flex;flex-direction:column;margin-top:8px}
+.mem li{display:flex;align-items:center;gap:12px;min-height:52px;font-size:17px;font-weight:700}
+.mem .y{font-weight:400;color:var(--mute)}
+.mem .v{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:400;color:var(--mute)}
+.voice{margin-top:auto;background:var(--surf-2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.voice .big{font-size:19px;font-weight:700;line-height:1.3;margin-top:2px}
+.voice.on{background:var(--red);color:#fff}
+.voice.on .lab{color:#fff}
+.meter{display:flex;gap:4px;align-items:flex-end;height:28px}
+.meter i{display:block;width:5px;height:100%;border-radius:2px;background:currentColor;transform-origin:bottom;animation:lv 1.2s ease-in-out infinite}
+.meter i:nth-child(2n){animation-delay:-.3s}.meter i:nth-child(3n){animation-delay:-.7s}.meter i:nth-child(5n){animation-delay:-.5s}
+@keyframes lv{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.rows{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:24px;padding:24px 48px 32px}
+.row{display:grid;grid-template-columns:88px minmax(0,680px);column-gap:16px}
+.row .t{font-family:'Courier Prime',ui-monospace,monospace;font-size:14px;color:var(--mute);padding-top:2px}
+.who{font-size:16px;font-weight:700;line-height:1.4;display:flex;align-items:center;gap:8px}
+.who-cari{color:var(--red-tx)}
+.who-cari::before{content:"";width:9px;height:9px;background:var(--red-tx);display:block}
+.msg{font-size:17px;line-height:1.55;margin-top:2px}
+.old .msg,.old .who{color:var(--mute)}
+.old .who-cari::before{background:var(--mute)}
+.slip{margin-top:12px;background:var(--slip);color:var(--slip-ink);border-radius:8px;max-width:640px}
+.slip-h{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px dashed var(--slip-line);font-family:'Courier Prime',ui-monospace,monospace;font-size:14px}
+.slip-h b{font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.slip-h span{color:var(--slip-mute)}
+.rung{padding:16px 20px 0;font-size:18px;line-height:1.55}
+.rung-old{font-size:16px;color:var(--slip-mute);padding-bottom:16px;border-bottom:1px dashed var(--slip-line)}
+.slip-f{display:flex;align-items:center;gap:16px;padding:20px}
+.more{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 20px;border:0;border-radius:8px;background:var(--slip-ink);color:var(--slip);font:700 17px 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer}
+.more:hover{background:#000}
+.fb{display:flex;gap:8px;border:0;margin:0 0 0 auto;padding:0;min-width:0}
+.fb legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.fb label{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:22px;box-shadow:inset 0 0 0 1.5px var(--slip-mute);font-size:15px;font-weight:700;cursor:pointer;color:var(--slip-ink);white-space:nowrap}
+.fb label:hover{box-shadow:inset 0 0 0 2px var(--slip-ink)}
+.fb input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.fb label:has(input:checked){background:var(--slip-ink);color:var(--slip);box-shadow:none}
+.typing{display:inline-flex;align-items:center;gap:8px;font-family:'Courier Prime',ui-monospace,monospace;font-size:15px;color:var(--mute);margin-top:2px}
+.caret{display:inline-block;width:10px;height:18px;background:var(--red-tx);animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.meter i,.caret,.ring{animation:none}}
+.cmp{flex:none;border-top:1px solid var(--line);background:var(--surf);padding:16px 48px 20px}
+.cmp-in{max-width:784px;display:flex;align-items:center;gap:12px}
+.field{flex:1;min-width:0;height:56px;border-radius:10px;background:var(--surf-2);border:1px solid var(--line-2);padding:0 18px;font:400 17px 'Atkinson Hyperlegible Next',system-ui,sans-serif;color:var(--text);outline:none}
+.field::placeholder{color:var(--mute)}
+.field:focus{border-color:var(--text)}
+.revb{display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:0 18px;border:0;border-radius:10px;background:transparent;box-shadow:inset 0 0 0 1px var(--line-2);color:var(--text);font:700 16px 'Atkinson Hyperlegible Next',system-ui,sans-serif;cursor:pointer}
+.revb i{width:16px;height:16px;border:2px solid currentColor;border-radius:3px;display:block}
+.revb:hover{box-shadow:inset 0 0 0 1.5px var(--text)}
+.revb[aria-pressed="true"]{background:var(--blue);color:#fff;box-shadow:none}
+.revb[aria-pressed="true"] i{background:#fff;border-color:#fff}
+.cmp .b{min-height:56px}
+a{color:var(--text)}a:hover{color:#fff}
+.rows{justify-content:flex-start;overflow:hidden}
+.rows>:first-child{margin-top:auto}
+.row{grid-template-columns:88px minmax(0,1fr)}
+.msg{max-width:52em}
+.slip{max-width:52em}
+.trouble{flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 48px;border-top:1px solid var(--line)}
+.trouble p{font-size:16px;color:var(--mute)}
+.trouble .b{min-height:44px}
+.cmp-in{max-width:none}
+</style>
+</helmet>
+<div class="r" style="width: 1920px; height: 1080px">
+<header class="hd"><a class="wm" href="MapsWide.dc.html"><i></i><b>Zombies</b></a><span class="sp"></span><div class="lg" role="group" aria-label="Idioma"><button aria-pressed="true">ES</button><button aria-pressed="false">EN</button></div><span class="cs cs-me" role="img" aria-label="Teo">TE</span></header>
+<div style="flex:1;display:flex;min-height:0">
+<aside class="rail">
+<div><span class="lab">Tu intento</span><h1 class="cond">Harrow Station</h1><p class="sub">Cari habla español</p></div>
+<div><span class="lab">En el intento</span>
+<ul class="mem"><li><span class="cs">MA</span>Marina<span class="v"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>en voz</span></li><li><span class="cs cs-me">TE</span>Teo <span class="y">tú</span><span class="v"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>en voz</span></li><li><span class="cs">LU</span>Lucía</li></ul>
+<button class="b b-ghost" style="margin-top:16px;min-height:48px;font-size:16px;width:100%"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Copiar enlace</button>
+</div>
+<section class="voice"><div><span class="lab">Canal de voz</span><p class="big">Estás en General</p></div><button class="b b-red" style="width:100%;justify-content:space-between">Traer a Cari<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></section>
+</aside>
+<section class="main">
+<div class="rows">
+<div class="row old"><span class="t">22:12</span><div><p class="who">Teo</p><p class="msg">Vamos allá, primera ronda. Marina coge la escopeta del andén y yo abro la puerta de la taquilla.</p></div></div>
+<div class="row old"><span class="t">22:19</span><div><p class="who">Lucía</p><p class="msg">He visto una radio vieja en la sala del jefe de estación, pero no hace nada al tocarla. ¿Es importante o es decoración?</p></div></div>
+<div class="row old"><span class="t">22:19</span><div><p class="who who-cari">Cari</p><p class="msg">Buena vista. Seguid jugando y fijaos en lo que pasa cerca de ella cuando cambie algo en la estación.</p></div></div>
+<div class="row old"><span class="t">22:31</span><div><p class="who">Marina</p><p class="msg">Ronda 6. Hemos abierto todo lo que se puede abrir con puntos y seguimos sin saber qué hacer con la radio ni con la palanca de las vías.</p></div></div>
+<div class="row"><span class="t">22:41</span><div><p class="who">Marina</p><p class="msg">Cari, llevamos un rato dando vueltas por el andén y no sabemos qué hacer con la radio. Danos algo pequeño, que no queremos la respuesta.</p></div></div>
+<div class="row"><span class="t">22:41</span><div><p class="who who-cari">Cari</p><p class="msg">Vale, os doy algo pequeño.</p><div class="slip"><div class="slip-h"><b>Despacho</b><span>Cari · 22:46</span></div><p class="rung rung-old">La radio no es lo único del andén que hace ruido.</p><p class="rung">Cuando se apagan las luces, algo cerca de las vías cambia de tono. Escuchad antes de tocar nada.</p><div class="slip-f"><button class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>Más</button><fieldset class="fb"><legend>Valora esta pista</legend><label><input type="radio" name="fb1">Demasiado obvia</label><label><input type="radio" name="fb1" checked>Justa</label><label><input type="radio" name="fb1">Demasiado vaga</label></fieldset></div></div></div></div>
+<div class="row"><span class="t">22:48</span><div><p class="who">Lucía</p><p class="msg">¡Ya está! Se ha encendido algo en la cabina.</p></div></div>
+<div class="row"><span class="t">22:48</span><div><p class="who who-cari">Cari</p><p class="typing">transmitiendo<span class="caret" role="img" aria-label="Cari escribe"></span></p></div></div>
+</div>
+<div class="trouble" role="alert"><p>Ahora mismo no se puede llegar al sitio.</p><button class="b b-ghost">Reintentar</button></div>
+<div class="cmp"><div class="cmp-in"><input class="field" aria-label="Mensaje para Cari" placeholder="Escribe a Cari…"><button class="revb" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4"/></svg>Revisión</button><button class="b">Enviar</button></div></div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

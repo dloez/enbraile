@@ -105,9 +105,25 @@ function RunRowSkeleton({ w }: { w: string }) {
 
 export function MapSkeleton() {
   return (
-    <Shell className="page two">
-      <MapHeadSkeleton />
-      <div className="side" aria-hidden="true">
+    <Shell className="page mapv">
+      <span className="back" aria-hidden="true">
+        <Bar w="4em" />
+      </span>
+      <div className="banner" aria-hidden="true">
+        <div className="bn-id">
+          <span className="lab">
+            <Bar w="8em" />
+          </span>
+          <h1 className="cond">
+            <Bar w="72%" />
+          </h1>
+          <span className="bn-cnt">
+            <Bar w="11em" />
+          </span>
+        </div>
+        <span className="bn-art skeleton" />
+      </div>
+      <div className="below" aria-hidden="true">
         <section className="sec">
           <h2>
             <Bar w="7em" />

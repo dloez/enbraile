@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Language, Viewer } from "../shared/bundle";
+import type { Language, PublishedMap, Viewer } from "../shared/bundle";
 import type { Attempt, MapPage as MapPageData, MapSummary } from "../shared/runs";
 import { fetchMap, fetchMaps, joinRun, Refused, SignedOut, signIn, startRun } from "./api";
 import { MapArt } from "./art";
@@ -7,7 +7,7 @@ import { languageNames, lang, playedAt, switchLang, t } from "./i18n";
 import { mapPath, navigate, runPath, usePath } from "./route";
 import { RunPage } from "./RunPage";
 import { Bar, MapSkeleton, MapsSkeleton } from "./skeletons";
-import { Arrow, Back, Check, Chevron, Chips, initials, LeaveNote, Link, MapHead, Notice, type RunLink } from "./ui";
+import { Arrow, Back, Check, Chevron, Chips, initials, LeaveNote, Link, Notice, type RunLink, useFit } from "./ui";
 
 const languages: Language[] = ["es", "en"];
 
@@ -196,12 +196,37 @@ function AttemptRow({ attempt, busy, onJoin }: { attempt: Attempt; busy: boolean
   );
 }
 
+function MapBanner({ map, attempts }: { map: PublishedMap; attempts: Attempt[] }) {
+  const name = map.name[lang];
+  const title = useFit<HTMLHeadingElement>(name);
+  const beaten = attempts.filter((attempt) => attempt.beaten).length;
+  return (
+    <section className="banner">
+      <div className="bn-id">
+        <span className="lab">{label(map)}</span>
+        <h1 ref={title} className="cond">
+          {name}
+        </h1>
+        <p className="bn-cnt">
+          {attempts.length === 0 ? t.noAttempts : t.attemptsLine(attempts.length, beaten)}
+          {attempts.some((attempt) => attempt.you) && (
+            <>
+              {" · "}
+              <span className="here">{t.youreIn}</span>
+            </>
+          )}
+        </p>
+      </div>
+      <MapArt map={map} label={map.image ? t.artOf(name) : t.planOf(name)} className="bn-art" large />
+    </section>
+  );
+}
+
 function MapView({ page }: { page: MapPageData }) {
   const { map, attempts, yourRun } = page;
   const [language, setLanguage] = useState<Language>("es");
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<"start" | "join" | null>(null);
-  const name = map.name[lang];
   const others = attempts.some((attempt) => !attempt.you);
 
   const act = (kind: "start" | "join", post: () => Promise<{ id: string }>) => {
@@ -217,9 +242,13 @@ function MapView({ page }: { page: MapPageData }) {
   };
 
   return (
-    <main className="page two arrive">
-      <MapHead back eyebrow={label(map)} name={name} map={map} label={map.image ? t.artOf(name) : t.planOf(name)} />
-      <div className="side">
+    <main className="page mapv arrive">
+      <Link to="/" className="back">
+        <Back />
+        {t.maps}
+      </Link>
+      <MapBanner map={map} attempts={attempts} />
+      <div className="below">
         <section className="sec">
           <h2>{t.attempts}</h2>
           {attempts.length === 0 ? (
