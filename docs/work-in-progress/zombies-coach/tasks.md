@@ -1,22 +1,5 @@
 # Zombies Coach — Tasks
 
-## Point zombies.enbraile.vip at the site and publish the test map
-
-The owner added the DNS-only `CNAME` `zombies` → `0cedcc0080c9a767.vercel-dns-017.com` and set `CLAUDE_TOKEN` in Vercel Production and in the 1Password item "zombies claude token" (2026-11-15); `https://zombies.enbraile.vip/api/maps` answers 401 signed out. What is left is recording that and the first production publish ([Discovery → Anchor Areas](discovery.md#anchor-areas)).
-
-**Do:**
-- [ ] Docs: drop "except the DNS record and the Claude token, which wait on the owner" from step 8 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`, and turn `site.md`'s Hosting sentence about the `CNAME` that "is to be" added into the record as it stands.
-- [ ] Redeploy production once the rename to `CLAUDE_TOKEN` has landed (`gh workflow run zombies-site.yml --ref main`), so the deployment reads the variable.
-
-**Acceptance:**
-- Claude-run: `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` prints 401; the redeploy's workflow run ends with a deployment URL; a `PUT /api/claude/maps/test/test` without a token gets 403.
-- Human-run: publish the test map with step 9's command, the token from 1Password, and see a second publish print `unchanged`; open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map.
-- Reuse: steps 8 and 9 of `docs/zombies/site/how-to/run-and-deploy-the-site.md`.
-- Neighbors: `home/site/`.
-- Forbidden: a proxied record; secrets in the repo or printed in the conversation.
-
-**Touches:** `docs/zombies/site/how-to/run-and-deploy-the-site.md`, `docs/zombies/site/explanation/site.md`
-
 ## Review the site's frontend for UX, loading states and glitches
 
 The owner wants the site to feel good to use before the group plays on it (2026-11-15): every screen has a proper loading, empty and error state, and nothing odd happens in the browser. Review what is built so far in `zombies/site/src/` against the boards and fix what falls short.
@@ -38,7 +21,6 @@ The owner wants the site to feel good to use before the group plays on it (2026-
 - Forbidden: new features or screens; changing what a screen does rather than how it feels; step or hint numbers in the UI.
 
 **Touches:** `zombies/site/src/`, `zombies/site/index.html`, `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
-**After:** Point zombies.enbraile.vip at the site and publish the test map
 
 ## Follow progress and threads the way ee-coach does
 

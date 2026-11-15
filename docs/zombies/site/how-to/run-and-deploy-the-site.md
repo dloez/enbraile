@@ -85,7 +85,7 @@ npm run gate
 
 ### 8. Set up production (once)
 
-This was done on 2026-11-15, except the DNS record and the Claude token, which wait on the owner.
+This was done on 2026-11-15.
 
 The Vercel project is `enbraile-zombies` (ID `prj_VYZlP7Ln4TfrWJAJzdqzafTbvzwD`), root directory `zombies/site`, framework Vite, Node 26, with the function in `fra1` from `vercel.json` and Deployment Protection on every deployment but the custom domain. Its database is the Neon project `zombies` (ID `silent-morning-44744308`, Frankfurt, `aws-eu-central-1`), made from the Vercel Marketplace as `npx vercel integration add neon --name zombies --meta region=fra1 --no-connect --no-env-pull`, since the Neon organization is managed by Vercel and refuses `neonctl projects create`; `--no-connect` keeps the integration from writing variables of its own. It holds the branches `main` (production) and `dev` (previews), each with the database `neondb`.
 
