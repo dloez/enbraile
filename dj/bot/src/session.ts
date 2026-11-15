@@ -1,4 +1,4 @@
-import { getValue, requester, type Requester, setValue } from "../../../home/bot/src/sdk.ts";
+import { getValue, type Member, requester, type Requester, setValue, voice } from "../../../home/bot/src/sdk.ts";
 import { db } from "./db.ts";
 import { type ArtistRef, artistNames, type Seed, sessionRadio, type Song } from "./music.ts";
 import * as player from "./player.ts";
@@ -48,7 +48,7 @@ export type View = {
   autoplayUpcoming: Track[];
   positionMs: number;
   listeners: number;
-  people: player.Listener[];
+  people: Member[];
   active: boolean;
   skipped: Skipped | null;
 };
@@ -82,7 +82,6 @@ const IDLE_LEAVE_MS = 5 * 60_000;
 const PAUSED_LEAVE_MS = 15 * 60_000;
 const AUTOPLAY_LIMIT_MS = 60 * 60_000;
 const MAX_FAILURES_IN_A_ROW = 5;
-const REJOIN_ATTEMPTS = 4;
 const HISTORY_KEPT = 20_000;
 const PREPARED_AHEAD = 3;
 const HUMAN_SEEDS = 5;
@@ -141,7 +140,7 @@ if (state.active && !state.sessionId) openSession();
 const watchers = new Set<(view: View) => void>();
 let ticker: ReturnType<typeof setInterval> | undefined;
 let cold = true;
-let rejoinFailures = 0;
+let lostAt: number | null = null;
 
 function save(): void {
   setValue("state", state);
@@ -507,7 +506,10 @@ export async function enqueue(channelId: string, items: QueueItem[], requestedBy
   state.tracks.push(...items.map((item) => ({ id: crypto.randomUUID(), query: item.query, title: item.title ?? displayName(item.query), artist: item.artist ?? null, ...albumAndArtists(item), artwork: item.artwork ?? null, durationMs: item.durationMs ?? 0, url: null, requestedBy, requester: who, ...playlistOf(item) })));
   state.lastHumanAt = Date.now();
   if (!state.active || state.channelId !== channelId) {
-    await player.join(channelId);
+    await player.join(channelId).catch((error: Error) => {
+      if (!state.active) player.leave();
+      throw error;
+    });
     if (!state.active) openSession();
     state.channelId = channelId;
     state.active = true;
@@ -630,47 +632,30 @@ export async function command(command: Command): Promise<void> {
   plan();
 }
 
-let rejoining = false;
-
-async function rejoin(): Promise<void> {
-  if (rejoining || !state.active || !state.channelId) return;
-  rejoining = true;
-  try {
-    const position = livePosition();
-    await player.join(state.channelId);
-    rejoinFailures = 0;
-    if (playing()) restartAt(position);
-  } catch (error) {
-    rejoinFailures += 1;
-    console.error("rejoin", rejoinFailures, "of", REJOIN_ATTEMPTS, (error as Error).message);
-    if (rejoinFailures >= REJOIN_ATTEMPTS) {
-      rejoinFailures = 0;
-      end();
-    }
-  } finally {
-    rejoining = false;
+voice.watch((event) => {
+  if (event.type === "lost") {
+    if (state.active) lostAt = livePosition();
+    return;
   }
-}
+  if (event.type === "rejoined") {
+    const position = lostAt ?? livePosition();
+    lostAt = null;
+    if (playing()) restartAt(position);
+    return;
+  }
+  if (event.type === "gone") {
+    lostAt = null;
+    if (state.active) end();
+    return;
+  }
+  if (!state.active) return;
+  if (event.type === "moved") state.channelId = event.channelId;
+  state.listeners = player.status().listeners;
+  save();
+  if (event.type === "members" && state.autoplayMode === "explore") replanPicks("listeners");
+});
 
 player.onPlayerEvent((event) => {
-  if (event.type === "disconnected") {
-    void rejoin();
-    return;
-  }
-  if (event.type === "moved") {
-    if (!state.active) return;
-    state.channelId = event.channelId;
-    state.listeners = player.status().listeners;
-    save();
-    return;
-  }
-  if (event.type === "listeners") {
-    if (!state.active) return;
-    state.listeners = player.status().listeners;
-    save();
-    if (state.autoplayMode === "explore") replanPicks("listeners");
-    return;
-  }
   if (!state.active || event.generation !== state.generation) return;
   if (event.type === "stalled") {
     if (state.loading || state.stalled) return;
@@ -718,7 +703,7 @@ async function tick(): Promise<void> {
   if (!state.active) return;
   const now = Date.now();
   const status = player.status();
-  if (!status.connected && state.channelId) return rejoin();
+  if (!status.connected) return;
   if (playing() && !state.loading && !state.stalled && !cold) state.positionMs = status.positionMs;
   state.listeners = status.listeners;
   state.emptySince = state.listeners === 0 ? (state.emptySince ?? now) : null;
@@ -736,7 +721,14 @@ export function snapshot(): void {
 export async function resumeAfterRestart(): Promise<void> {
   if (!state.active || !state.channelId) return;
   startTicking();
-  await rejoin();
+  const position = livePosition();
+  try {
+    await player.join(state.channelId);
+  } catch (error) {
+    console.error("rejoin after restart", (error as Error).message);
+    return;
+  }
+  if (playing()) restartAt(position);
 }
 
 export function history(): HistoryEntry[] {

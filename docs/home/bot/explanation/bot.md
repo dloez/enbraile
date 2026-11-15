@@ -1,6 +1,6 @@
 # The Enbraile Bot
 
-The group's Discord bot, `Enbraile`, for the `TemploManchego` server (`757377019536211988`). One Node process in `home/bot/` hosts the bot's features as modules; the first is the [DJ](../../../dj/bot/explanation/bot.md). The host holds what Discord allows only once per bot: the gateway connection, the server's slash commands and, later, the voice connection. It also holds what every module needs: the database and the API.
+The group's Discord bot, `Enbraile`, for the `TemploManchego` server (`757377019536211988`). One Node process in `home/bot/` hosts the bot's features as modules; the first is the [DJ](../../../dj/bot/explanation/bot.md). The host holds what Discord allows only once per bot: the gateway connection, the server's slash commands and the voice connection. It also holds what every module needs: the database and the API.
 
 ## How It Runs
 
@@ -14,7 +14,13 @@ The host (`home/bot/src/`) holds:
 - the HTTP API behind `INTERNAL_SECRET` (`api.ts`): `/<module>/<path>` goes to that module's route, as the user named by `userId` in the query or body; `/healthz` answers `{"ok":true}`; anything else is 404.
 - the live sockets (`api.ts`, `ticket.ts`): a module's route can hand out a ticket, signed for one user and one module and valid for 60 s, which opens `/<module>/live`. The socket gets the module's pushes and answers the same calls as its HTTP routes, as that user, except `ticket`. Every 10 s the host pings each socket, closing one whose last ping went unanswered, and sends a `beat` message.
 
-A module (`home/bot/src/module.ts`) is an object with a `name` and any of `commands`, `route`, `live`, `start` (run once the gateway is ready) and `stop` (run on shutdown). The modules are listed in `home/bot/src/modules.ts`. A module imports only `home/bot/src/sdk.ts`, which exports the client, the server, member lookup, the database and tickets.
+A module (`home/bot/src/module.ts`) is an object with a `name` and any of `commands`, `route`, `live`, `start` (run once the gateway is ready) and `stop` (run on shutdown). The modules are listed in `home/bot/src/modules.ts`. A module imports only `home/bot/src/sdk.ts`, which exports the client, the server, member lookup, the database, tickets and the voice hub.
+
+## Voice
+
+A bot can be in one voice channel per server, so the host owns the one voice connection (`voice.ts`) and modules hold leases on it. `voice.hold(owner, channel)` adds a lease and joins the channel, moving the bot if it was elsewhere; `voice.release(owner)` drops it, and the bot leaves when no lease is left. A module hands the hub the audio player it plays through (`voice.play`), which the hub subscribes to every connection it makes. `voice.members()` lists the people in the bot's channel, read from the gateway's voice states.
+
+The hub rejoins on its own. A connection that has not started reconnecting by itself within 5 s of dropping is joined again at once, and a check every 15 s rejoins one that is still down; after four failed joins in a row it drops every lease and leaves. Modules follow it through `voice.watch` events: `lost` when it starts rejoining, `rejoined` when it is back, `gone` when it gives up, `moved` when someone drags the bot to another channel, and `members` when someone joins or leaves the bot's channel.
 
 ## Modules in Other Categories
 
@@ -39,3 +45,4 @@ A push to `main` touching `home/bot/` or `dj/bot/` runs `.github/workflows/home-
 - **No monthly hour limit:** it only capped the Container bill. _(owner, 2026-11-07)_
 - **SQLite on the pod's volume:** one guild and one process, and nothing else reads it; every module shares the file. _(2026-11-07)_
 - **One shared Discord application,** renamed `Enbraile`, for login and bot; private, server installs only, with View Channels, Connect and Speak. _(owner, 2026-11-06)_
+- **The voice connection and rejoining moved from the DJ into the host,** with the DJ's numbers kept (5 s to recover, a check every 15 s, four failed joins), so every module gets the same rejoin and a voice assistant can share the call with the music. _(owner, 2026-11-15; the lease mechanism the agent's choice)_

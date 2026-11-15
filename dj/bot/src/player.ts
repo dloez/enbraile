@@ -1,10 +1,10 @@
 import { type ChildProcess, execFile, spawn } from "node:child_process";
-import { AudioPlayerStatus, type AudioPlayer, type AudioResource, createAudioPlayer, createAudioResource, entersState, joinVoiceChannel, StreamType, type VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
-import { client, guild } from "../../../home/bot/src/sdk.ts";
+import { AudioPlayerStatus, type AudioResource, createAudioPlayer, createAudioResource, entersState, StreamType } from "@discordjs/voice";
+import { type Member, voice } from "../../../home/bot/src/sdk.ts";
 
 type Resolved = { title: string; artist: string | null; album: string | null; artwork: string | null; durationMs: number; pageUrl: string; streamUrl: string; userAgent: string };
 
-export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; album: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed" | "disconnected"; generation: number; error?: string } | { type: "moved"; generation: number; channelId: string } | { type: "listeners"; generation: number };
+export type PlayerEvent = { type: "started"; generation: number; title: string; artist: string | null; album: string | null; artwork: string | null; durationMs: number; url: string } | { type: "playing" | "stalled" | "ended" | "failed"; generation: number; error?: string };
 export type Status = { connected: boolean; listeners: number; positionMs: number };
 
 const RESOLVE_TTL_MS = 2 * 60 * 60 * 1000;
@@ -16,7 +16,6 @@ const CUT_SHORT_MS = 5_000;
 const STALL_MS = 1_000;
 const STALL_LIMIT_MS = 10_000;
 const WATCH_MS = 250;
-const RECOVER_MS = 5_000;
 const SILENCE_MS = 500;
 
 const cache = new Map<string, Promise<Resolved>>();
@@ -58,11 +57,8 @@ function hurry(key: string): void {
   queued.splice(at < 0 ? queued.length : at, 0, entry!);
   admit();
 }
-let connection: VoiceConnection | undefined;
-let player: AudioPlayer | undefined;
 let resource: AudioResource | undefined;
 let ffmpeg: ChildProcess | undefined;
-let channelId = "";
 let generation = 0;
 let offsetMs = 0;
 let listener: (event: PlayerEvent) => void = () => undefined;
@@ -72,8 +68,28 @@ let flowing = false;
 let stalled = false;
 let progress = { durationMs: -1, at: 0 };
 
+const player = createAudioPlayer({ behaviors: { maxMissedFrames: STALL_LIMIT_MS / 20 } });
+player.on("error", (error) => console.error("player", error.message));
+player.on(AudioPlayerStatus.Idle, () => {
+  if (!resource?.ended || !ffmpeg) return;
+  const finished = generation;
+  const reached = offsetMs + resource.playbackDuration;
+  const song = playing;
+  killStream();
+  const cut = song !== undefined && song.durationMs > 0 && reached < song.durationMs - CUT_SHORT_MS;
+  if (!cut) return emit({ type: "ended", generation: finished });
+  console.error("stream cut", song.query, reached, "of", song.durationMs, "ms", song.error);
+  cache.delete(song.query);
+  if (!song.retried) {
+    emit({ type: "stalled", generation: finished });
+    return play(song.query, reached, song.volume, finished, true);
+  }
+  emit({ type: "failed", generation: finished, error: song.error || "stream cut short" });
+});
+voice.play(player);
+
 setInterval(() => {
-  const status = player?.state.status;
+  const status = player.state.status;
   const now = Date.now();
   if (!resource || !flowing || (status !== AudioPlayerStatus.Playing && status !== AudioPlayerStatus.AutoPaused)) {
     progress.at = now;
@@ -96,14 +112,6 @@ setInterval(() => {
 export function onPlayerEvent(callback: (event: PlayerEvent) => void): void {
   listener = callback;
 }
-
-client.on("voiceStateUpdate", (before, after) => {
-  if (after.id !== client.user?.id && channelId && before.channelId !== after.channelId && (before.channelId === channelId || after.channelId === channelId)) emit({ type: "listeners", generation });
-  if (after.id !== client.user?.id || !connection || !after.channelId || after.channelId === channelId) return;
-  console.log("moved", channelId, "to", after.channelId);
-  channelId = after.channelId;
-  emit({ type: "moved", generation, channelId });
-});
 
 function emit(event: PlayerEvent): void {
   queueMicrotask(() => listener(event));
@@ -178,7 +186,7 @@ export function warm(query: string): void {
 
 function silence(): Promise<void> {
   const current = player;
-  if (!current || current.state.status === AudioPlayerStatus.Idle) return Promise.resolve();
+  if (current.state.status === AudioPlayerStatus.Idle) return Promise.resolve();
   if (current.state.status !== AudioPlayerStatus.Playing) {
     current.stop(true);
     return Promise.resolve();
@@ -198,66 +206,15 @@ function killStream(): void {
 export function leave(): void {
   generation += 1;
   killStream();
-  player?.stop(true);
-  connection?.destroy();
-  connection = undefined;
-  player = undefined;
+  player.stop(true);
   resource = undefined;
-  channelId = "";
+  voice.release("dj");
 }
 
-export function listenerIds(): string[] {
-  if (!channelId) return [];
-  const server = client.guilds.cache.first();
-  const states = server?.voiceStates.cache.filter((state) => state.channelId === channelId);
-  return states ? [...states.values()].filter((state) => !state.member?.user.bot && state.id !== client.user?.id).map((state) => state.id) : [];
-}
+export const listenerIds = (): string[] => voice.members().map((member) => member.id);
+export const listeners = (): Member[] => voice.members();
 
-export type Listener = { id: string; name: string; avatar: string | null };
-
-export function listeners(): Listener[] {
-  if (!channelId) return [];
-  const server = client.guilds.cache.first();
-  const states = server?.voiceStates.cache.filter((state) => state.channelId === channelId && state.id !== client.user?.id && !state.member?.user.bot);
-  return states ? [...states.values()].map((state) => ({ id: state.id, name: state.member?.displayName ?? "?", avatar: state.member?.displayAvatarURL({ size: 64 }) ?? null })) : [];
-}
-
-export async function join(nextChannel: string): Promise<void> {
-  if (connection && channelId === nextChannel && connection.state.status === VoiceConnectionStatus.Ready) return;
-  const server = await guild();
-  connection?.destroy();
-  channelId = nextChannel;
-  connection = joinVoiceChannel({ guildId: server.id, channelId, adapterCreator: server.voiceAdapterCreator, selfDeaf: true });
-  const joined = connection;
-  joined.on("error", (error) => console.error("voice", error.message));
-  joined.on(VoiceConnectionStatus.Disconnected, () => {
-    Promise.race([entersState(joined, VoiceConnectionStatus.Signalling, RECOVER_MS), entersState(joined, VoiceConnectionStatus.Connecting, RECOVER_MS)]).catch(() => {
-      if (connection !== joined) return;
-      console.error("voice lost", channelId);
-      emit({ type: "disconnected", generation });
-    });
-  });
-  await entersState(connection, VoiceConnectionStatus.Ready, 30000);
-  player = createAudioPlayer({ behaviors: { maxMissedFrames: STALL_LIMIT_MS / 20 } });
-  connection.subscribe(player);
-  player.on("error", (error) => console.error("player", error.message));
-  player.on(AudioPlayerStatus.Idle, () => {
-    if (!resource?.ended || !ffmpeg) return;
-    const finished = generation;
-    const reached = offsetMs + resource.playbackDuration;
-    const song = playing;
-    killStream();
-    const cut = song !== undefined && song.durationMs > 0 && reached < song.durationMs - CUT_SHORT_MS;
-    if (!cut) return emit({ type: "ended", generation: finished });
-    console.error("stream cut", song.query, reached, "of", song.durationMs, "ms", song.error);
-    cache.delete(song.query);
-    if (!song.retried) {
-      emit({ type: "stalled", generation: finished });
-      return play(song.query, reached, song.volume, finished, true);
-    }
-    emit({ type: "failed", generation: finished, error: song.error || "stream cut short" });
-  });
-}
+export const join = (channelId: string): Promise<void> => voice.hold("dj", channelId);
 
 async function start(query: string, startMs: number, volume: number, id: number, retried: boolean): Promise<void> {
   generation = id;
@@ -270,7 +227,7 @@ async function start(query: string, startMs: number, volume: number, id: number,
   const started = Date.now();
   const track = await resolveTrack(query, retried, true);
   await quiet;
-  if (generation !== id || !player) return;
+  if (generation !== id) return;
   const stream = spawn("ffmpeg", [
     "-hide_banner", "-loglevel", "error",
     "-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5",
@@ -306,8 +263,8 @@ export function play(query: string, startMs: number, volume: number, id: number,
   });
 }
 
-export const pause = () => void player?.pause();
-export const resume = () => void player?.unpause();
+export const pause = () => void player.pause();
+export const resume = () => void player.unpause();
 
 export function halt(): void {
   generation += 1;
@@ -318,7 +275,7 @@ export function halt(): void {
 
 export function status(): Status {
   return {
-    connected: connection?.state.status === VoiceConnectionStatus.Ready,
+    connected: voice.connected(),
     listeners: listenerIds().length,
     positionMs: resource ? offsetMs + resource.playbackDuration : 0,
   };
