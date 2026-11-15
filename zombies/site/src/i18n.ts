@@ -12,10 +12,15 @@ export function switchLang(): void {
 }
 
 const en = {
+  radioLog: "Radio log",
   maps: "Maps",
-  runs: "Runs",
-  noRuns: "No runs yet",
-  noMaps: "No maps published yet",
+  onFile: (count: number) => `${count} ${count === 1 ? "map" : "maps"} on file`,
+  plan: "Plan",
+  map: "Map",
+  openRuns: "Open runs",
+  noneOpen: "— none open —",
+  endOfFile: "End of file",
+  noMaps: "— no maps on file yet —",
   testMap: "Test map",
   language: "Language",
   failed: "Can't reach the site right now.",
@@ -23,10 +28,15 @@ const en = {
 };
 
 const es: typeof en = {
+  radioLog: "Registro de radio",
   maps: "Mapas",
-  runs: "Partidas",
-  noRuns: "Aún no hay partidas",
-  noMaps: "Aún no hay mapas publicados",
+  onFile: (count: number) => `${count} ${count === 1 ? "mapa archivado" : "mapas archivados"}`,
+  plan: "Plano",
+  map: "Mapa",
+  openRuns: "Partidas abiertas",
+  noneOpen: "— ninguna abierta —",
+  endOfFile: "Fin del archivo",
+  noMaps: "— aún no hay mapas archivados —",
   testMap: "Mapa de prueba",
   language: "Idioma",
   failed: "Ahora mismo no se puede llegar al sitio.",

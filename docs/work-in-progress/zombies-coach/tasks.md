@@ -38,24 +38,6 @@ The Vercel project, its Neon database, the workflow and the root's `trustedOrigi
 
 **Touches:** `docs/zombies/site/explanation/site.md`
 
-## Rebuild the site's look from the Radio log boards
-
-The owner found the first boards "very AI" and asked for another angle (2026-11-15). The "Radio log" page of the Claude design canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) redraws every screen as the group's radio log: a run as a timestamped transcript table, hints as typed dispatch slips with tick-box feedback, the level-3 zone as a marked survey sheet, condensed Archivo with Courier Prime, five flat inks, square corners and no glows, gradients, drips or silhouettes. The owner chose it over the first take (2026-11-15), which it replaces ([Discovery → Runs and the site](discovery.md#runs-and-the-site)).
-
-**Do:**
-- [ ] Freeze the canvas's `v2/*.dc.html` boards into `zombies/site/design/`, replacing the first take's files (kebab-case names as now: `maps.dc.html`, `run-zone-phone.dc.html`).
-- [ ] Rewrite `docs/zombies/site/reference/design-system.md` from them: tokens, type, shape, layout shell, components; keep the rules that point at `site.md`'s Decisions.
-- [ ] Restyle what is built (the header and the maps page in `zombies/site/src/`, fonts through `@fontsource`) to the new boards.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; `ls zombies/site/design/*.dc.html` lists the 12 boards; `grep -rniE "paso [0-9]|step [0-9]|pista [0-9]|hint [0-9]/" zombies/site/design` finds nothing; the local maps page through the Playwright MCP at desktop and phone width matches `maps.dc.html` and `maps-phone.dc.html`.
-- Human-run: none (the owner sees the site as a surprise).
-- Reuse: the canvas files (read with the Artifact tool's `read` and a `path`); the built maps page.
-- Neighbors: `pkmn/site/design/` and its design-system doc for the format.
-- Forbidden: real map content or any game's art or branding in a board; a token the boards do not use.
-
-**Touches:** `zombies/site/design/`, `zombies/site/src/`, `zombies/site/index.html`, `zombies/site/package.json`, `zombies/site/package-lock.json`, `docs/zombies/site/reference/design-system.md`
-
 ## Start a run and get prepared hints from Cari in a shared chat
 
 Members start or join a run on a map and talk to Cari; Haiku answers through tools, delivering only prepared rungs that code allows ([Discovery → Architecture](discovery.md#architecture)).
