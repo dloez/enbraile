@@ -1,10 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { MapsPage, Member, Message, OpenRun, RunSheet, Transcript } from "../../shared/runs.js";
+import type { Card, MapsPage, Member, Message, OpenRun, RunSheet, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
-import { bundleVersions, maps, messages, runKnowledge, runMembers, runs } from "./schema.js";
+import { hasMore, ladderKey, laddersOf } from "./ladders.js";
+import { bundleVersions, deliveries, hintCards, maps, messages, runKnowledge, runMembers, runs } from "./schema.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -143,22 +144,88 @@ export async function isActiveMember(viewer: Viewer, runId: string): Promise<boo
   return (await currentRunId(viewer)) === runId;
 }
 
-export async function transcript(viewer: Viewer, runId: string, after: number): Promise<Transcript> {
+async function cardsSince(runId: string, after: number, rungsAfter: number, newCards: boolean): Promise<Card[]> {
+  const touched = await db
+    .selectDistinct({ stepId: deliveries.stepId, partId: deliveries.partId })
+    .from(deliveries)
+    .where(and(eq(deliveries.runId, runId), gt(deliveries.id, rungsAfter)));
+  if (!touched.length && !newCards) return [];
+  const ladderCards = await db
+    .select({ id: hintCards.id, messageId: hintCards.messageId, stepId: hintCards.stepId, partId: hintCards.partId })
+    .from(hintCards)
+    .where(and(eq(hintCards.runId, runId), isNotNull(hintCards.messageId)))
+    .orderBy(asc(hintCards.id));
+  const keys = new Set(touched.map((entry) => ladderKey(entry.stepId, entry.partId)));
+  const wanted = ladderCards.filter((card) => keys.has(ladderKey(card.stepId, card.partId)) || (card.messageId ?? 0) > after);
+  if (!wanted.length) return [];
+  const rungs = await db
+    .select({
+      id: deliveries.id,
+      cardId: deliveries.cardId,
+      stepId: deliveries.stepId,
+      partId: deliveries.partId,
+      rung: deliveries.rung,
+      text: deliveries.text,
+      at: deliveries.createdAt,
+    })
+    .from(deliveries)
+    .where(and(eq(deliveries.runId, runId), inArray(deliveries.stepId, [...new Set(wanted.map((card) => card.stepId))])))
+    .orderBy(asc(deliveries.id));
+  const [row] = await db
+    .select({ steps: sql<Bundle["steps"]>`${bundleVersions.bundle}->'steps'` })
+    .from(runs)
+    .innerJoin(maps, and(eq(maps.game, runs.game), eq(maps.map, runs.map)))
+    .innerJoin(bundleVersions, and(eq(bundleVersions.game, maps.game), eq(bundleVersions.map, maps.map), eq(bundleVersions.version, maps.latestVersion)))
+    .where(eq(runs.id, runId));
+  const ladders = new Map(laddersOf(row?.steps ?? []).map((ladder) => [ladderKey(ladder.stepId, ladder.partId), ladder]));
+  return wanted.map((card) => {
+    const key = ladderKey(card.stepId, card.partId);
+    const onLadder = rungs.filter((rung) => ladderKey(rung.stepId, rung.partId) === key);
+    const given = onLadder.reduce((most, rung) => Math.max(most, rung.rung + 1), 0);
+    const latest = ladderCards.filter((other) => ladderKey(other.stepId, other.partId) === key).at(-1)?.id === card.id;
+    const ladder = ladders.get(key);
+    const own = onLadder.filter((rung) => rung.cardId === card.id);
+    return {
+      id: card.id,
+      rungs: own.map((rung) => ({ id: rung.id, text: rung.text })),
+      at: (own.at(-1)?.at ?? new Date()).toISOString(),
+      more: latest && ladder !== undefined && hasMore(ladder, given),
+    };
+  });
+}
+
+export async function transcript(viewer: Viewer, runId: string, after: number, rungsAfter: number): Promise<Transcript> {
   const rows = await db
-    .select()
+    .select({ message: messages, card: hintCards.id })
     .from(messages)
+    .leftJoin(hintCards, eq(hintCards.messageId, messages.id))
     .where(and(eq(messages.runId, runId), gt(messages.id, after)))
     .orderBy(asc(messages.id));
   const members = (await activeMembers(viewer, [runId])).get(runId) ?? [];
   return {
     messages: rows.map(
-      (row): Message => ({ id: row.id, author: row.author, name: row.name, you: row.discordId === viewer.discordId, text: row.text, at: row.createdAt.toISOString() }),
+      ({ message: row, card }): Message => ({
+        id: row.id,
+        author: row.author,
+        name: row.name,
+        you: row.discordId === viewer.discordId,
+        text: row.text,
+        at: row.createdAt.toISOString(),
+        card,
+      }),
     ),
     members,
+    cards: await cardsSince(
+      runId,
+      after,
+      rungsAfter,
+      rows.some((row) => row.card !== null),
+    ),
   };
 }
 
-export async function postMessage(viewer: Viewer, runId: string, text: string): Promise<void> {
-  await db.insert(messages).values({ runId, author: "member", discordId: viewer.discordId, name: viewer.name, text });
+export async function postMessage(viewer: Viewer, runId: string, text: string): Promise<number> {
+  const [row] = await db.insert(messages).values({ runId, author: "member", discordId: viewer.discordId, name: viewer.name, text }).returning({ id: messages.id });
+  return row!.id;
 }
 

@@ -39,6 +39,8 @@ Copy `.env.example` to `.env.local` and fill it in:
 | `ZOMBIES_ADMIN_TOKEN` | Any long random string, e.g. `openssl rand -hex 24` |
 | `ZOMBIES_URL` | Where `publish` sends bundles: `http://localhost:8789` |
 | `DEV_USER_ID` | One or more members, comma-separated, each `<id>` or `<id>:<name>` (e.g. `111:Marina,222:Teo`), to be signed in without the root site |
+| `ANTHROPIC_API_KEY` | An Anthropic API key for Cari; without one she stays silent |
+| `COACH_MODEL` | The model Cari runs on; `claude-haiku-5-5` when empty |
 
 ### 4. Migrate
 
@@ -94,6 +96,8 @@ Set the project's environment variables, piping each secret in so it never reach
 | `DATABASE_URL` | `main`'s pooled connection string, with `sslmode=verify-full` | `dev`'s, the same way |
 | `ROOT_URL` | `https://enbraile.vip` | the same |
 | `ZOMBIES_ADMIN_TOKEN` | the 1Password item's value | unset |
+| `ANTHROPIC_API_KEY` | the cluster's `discord-bot-enbraile` secret, as below | unset |
+| `COACH_MODEL` | `claude-haiku-5-5` | unset |
 
 ```sh
 v=$(npx neonctl connection-string main --project-id silent-morning-44744308 --pooled | sed 's/sslmode=require/sslmode=verify-full/' | tr -d '\n')
@@ -102,6 +106,12 @@ unset v
 ```
 
 and the same with `dev` for `--environment preview`. The value goes through a variable rather than a straight pipe because `vercel env add` reads its stdin before a piped `npx neonctl` has written anything. `DEV_USER_ID` stays unset in Vercel, so every deployment asks the root site who is signed in; `ZOMBIES_URL` belongs to the shell running `publish`, not to the project.
+
+Hand Cari's key from the cluster to Vercel the same way, never printing it:
+
+```sh
+kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.ANTHROPIC_API_KEY}' | base64 -d | npx vercel env add ANTHROPIC_API_KEY production
+```
 
 Make the admin token in 1Password and hand it to Vercel without printing it:
 
@@ -136,4 +146,4 @@ Use Instant Rollback on the previous production deployment in the Vercel dashboa
 
 ## Verification
 
-The maps page shows Harrow Station with a Test map tag and "— none open —". Locally, with two members in `DEV_USER_ID`, one starts a run from Harrow Station's row and the other opens its link, joins, and sees the first one's lines within 2 seconds. Publishing it again prints `version 1, unchanged`. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.
+The maps page shows Harrow Station with a Test map tag and "— none open —". Locally, with two members in `DEV_USER_ID`, one starts a run from Harrow Station's row and the other opens its link, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking Cari for a hint brings a card both see, and its More adds the next rung; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.

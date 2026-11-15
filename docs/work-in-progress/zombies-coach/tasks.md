@@ -18,25 +18,6 @@ The owner added the DNS-only `CNAME` `zombies` → `0cedcc0080c9a767.vercel-dns-
 **Touches:** `docs/zombies/site/how-to/run-and-deploy-the-site.md`, `docs/zombies/site/explanation/site.md`
 **After:** Name the site's machine API for Claude
 
-## Start a run and get prepared hints from Cari in a shared chat
-
-Members in a run talk to Cari; Haiku answers through tools, delivering only prepared rungs that code allows ([Discovery → Architecture](discovery.md#architecture)). Runs, members, the chat, marks and the start and join screens are in place.
-
-**Do:**
-- [ ] The coach on the function: `ANTHROPIC_API_KEY`, `COACH_MODEL` (default `claude-haiku-5-5`), a system prompt distilled from ee-coach's session rules, tools to give a rung (the next one, or its Alt), mark something known and ask the round; code offers only rungs whose `Mentions` are known (`run_knowledge`) or meant to be revealed, one rung at a time, and updates marks on delivery.
-- [ ] Hint cards with "more" and no numbers; the asker's reply streams (the transmitting row), others keep polling every 2 s.
-- [ ] Each Claude call's model, tokens, latency and refusals stored on the run.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through the Playwright MCP with the test map, two signed-in browsers (`DEV_USER_ID` list, `/api/dev/sign-in/<id>`) in one run; one asks for a hint, both see the card; "more" gives the next rung; a rung mentioning an unknown thing is never delivered before the rung meant to reveal it (read back from the stored log); `grep` finds no step or rung number rendered.
-- Claude-run (setup): set Vercel's `COACH_MODEL`, and `ANTHROPIC_API_KEY` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.ANTHROPIC_API_KEY}' | base64 -d | npx vercel env add ANTHROPIC_API_KEY production` (owner, 2026-11-15).
-- Human-run: two people on phones join a test-map run and ask for hints.
-- Reuse: the `Anthropic` SDK as in `home/bot/src/claude.ts` (tool loop shape), but on Vercel; the hint-delivery rules in `.claude/skills/ee-coach/SKILL.md` and `references/hint-craft.md`; the run API and `src/RunPage.tsx`.
-- Neighbors: the DJ panel's streaming-less polling fallback (`dj/panel/src/`).
-- Forbidden: the dossier or unknown entries in the model's prompt; the model writing hint text; step or hint numbers in the UI; a way to end a run.
-
-**Touches:** `zombies/site/`, `docs/zombies/`
-
 ## Name the site's machine API for Claude
 
 The token and routes the site calls "admin" are Claude's: only Claude uses them, from the terminal, to publish bundles and, later, to read and watch runs and step in as Cari. The owner wants them named and attributed that way, not as a general admin (2026-11-15). A browser admin like pkmn's (`npm run admin:create`, `/admin`) is not wanted now.
@@ -61,6 +42,7 @@ The owner wants the site to feel good to use before the group plays on it (2026-
 
 **Do:**
 - [ ] Walk every built screen (maps, Start a run, join, the run page with Cari's hint slips and "more") through the Playwright MCP at desktop 1440×900 and phone 390×844, with two local members, on a normal and a throttled network.
+- [ ] Run the walk against the real Haiku at least once: the coach pass that built Cari ran only against a scripted mock, so whether `COACH_MODEL` accepts the request as sent (`output_config.effort`, refusal details) and how its words read are unchecked. The key comes from an `ANTHROPIC_API_KEY=` line the owner puts in the main tree's gitignored `zombies/site/.env.local`; copy it into the worktree's without printing it, and if it is absent, say so in the report.
 - [ ] Each fetch, post and poll has a loading state drawn in the boards' language (no blank screen, no spinner the boards do not use), an empty state, and an error state that says what failed and lets the reader retry.
 - [ ] Nothing weird: no console errors or warnings, no layout shift as data arrives, no flash of signed-out or empty content, no double submit on a slow click, no message duplicated or reordered by the 2 s poll, no scroll jump in the transcript when a line arrives, focus and keyboard order that make sense, touch targets of 44 px, and the phone layout without horizontal scroll.
 - [ ] Take the "Radio log" tag out of the header, leaving the wordmark, the language switch and the name chip (owner, 2026-11-15), and out of the frozen boards in `zombies/site/design/` and the design-system doc's header.
@@ -75,7 +57,7 @@ The owner wants the site to feel good to use before the group plays on it (2026-
 - Forbidden: new features or screens; changing what a screen does rather than how it feels; step or hint numbers in the UI.
 
 **Touches:** `zombies/site/src/`, `zombies/site/index.html`, `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
-**After:** Start a run and get prepared hints from Cari in a shared chat; Point zombies.enbraile.vip at the site and publish the test map
+**After:** Point zombies.enbraile.vip at the site and publish the test map
 
 ## Follow progress and threads the way ee-coach does
 
@@ -93,7 +75,6 @@ Progress reports, open threads and the session rules that need run state: `On su
 - Forbidden: listing threads to players; naming what a blocked step lacks before its ladder does; a way to close or end a run.
 
 **Touches:** `zombies/site/`, `docs/zombies/site/`
-**After:** Start a run and get prepared hints from Cari in a shared chat
 
 ## Hold on gaps and take REVISION and card feedback
 

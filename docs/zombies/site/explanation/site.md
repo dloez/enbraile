@@ -1,6 +1,6 @@
 # The Zombies Site
 
-The site in `zombies/site/`, for `zombies.enbraile.vip`, where the group will start runs on a map and talk to the coach, Cari. Today it lists the maps Claude has published, and members start or join a run on one and talk in its shared chat; Cari's answers and hints come next ([Zombies Coach](../../../work-in-progress/zombies-coach/discovery.md)). Its look is in the [Site Design System](../reference/design-system.md).
+The site in `zombies/site/`, for `zombies.enbraile.vip`, where the group will start runs on a map and talk to the coach, Cari. Today it lists the maps Claude has published, and members start or join a run on one and talk in its shared chat, where Cari answers with the prepared hints; following progress, holds and feedback come next ([Zombies Coach](../../../work-in-progress/zombies-coach/discovery.md)). Its look is in the [Site Design System](../reference/design-system.md).
 
 ## How It Is Built
 
@@ -12,10 +12,13 @@ Maps live in their own Postgres database, never pkmn's, through Drizzle with `pg
 |-------|-------|
 | `maps` | One row per published map, keyed by game and map slug, with its latest version |
 | `bundle_versions` | Every published bundle, numbered per map, with the SHA-256 of its canonical JSON |
-| `runs` | One row per run: its map, the language Cari speaks, and who started it |
+| `runs` | One row per run: its map, the language Cari speaks, who started it, when Cari last asked the round, and the lease that lets one of Cari's replies run at a time |
 | `run_members` | Each time a person joined a run, with when they left it; a unique index over the rows not left keeps a person in one run at a time |
 | `messages` | The run's chat, each line from a member or from Cari |
 | `run_knowledge` | The knowledge entries known in a run; an entry without a row is unknown |
+| `hint_cards` | A hint card: the ladder it belongs to (a step, or one of its parts) and the Cari line it hangs under |
+| `deliveries` | Every rung given, in order: its card, ladder, rung, Alt, level, the wording as delivered, its `mentions` and `reveals`, the bundle version and who asked |
+| `coach_calls` | Every Claude call: model, tokens, latency, stop reason, refusal and its category, the rules code caught the model breaking, and any error |
 
 ## Map Bundles
 
@@ -33,11 +36,25 @@ A member starts a run from a map's row on the maps page, choosing the language C
 
 A new run's knowledge marks are the latest bundle's `known` entries plus every entry known in the starter's earlier runs on that map; each member who joins adds what was known in their own earlier runs there.
 
-The run page polls `GET /api/runs/<id>/messages?after=<last id>` every 2 seconds for new lines and the current members, and `POST /api/runs/<id>/messages` adds a member's line. Both answer 403 to anyone not in the run. Cari does not answer yet.
+The run page polls `GET /api/runs/<id>/messages?after=<last id>&rungsAfter=<last rung id>` every 2 seconds for new lines, the current members and every hint card that gained a rung or arrived with a new line, each card carrying its rungs' wording and whether it shows More. `POST /api/runs/<id>/messages` adds a member's line and answers with Cari's reply as it is spoken. Both answer 403 to anyone not in the run.
+
+## Cari
+
+Cari is Claude, `COACH_MODEL` (Haiku 5.5, `claude-haiku-5-5`, unless set) with `ANTHROPIC_API_KEY`, called by the function on every member's line; without a key she stays silent. The model never writes a hint: it acts through three tools, and code decides what each may do.
+
+- **`give_hint`** hands over the next rung of one ladder, or one of that rung's Alts. Code gives only a rung whose `mentions` are all known in the run (its `reveals` may still be unknown, since it is the line meant to give them away), one per reply, level 4 only when the model says the players asked for the answer, and records the delivery and adds the rung's `mentions` and `reveals` to `run_knowledge` in the same transaction.
+- **`mark_known`** takes the players' words; code marks known every unknown entry whose name, in either language and without its article, appears both in them and in a member's line among the last 24, so the model cannot mark something only a rung named.
+- **`ask_round`** adds the run's fixed question about the round to the reply, at most once every 10 minutes and never in a reply that gives a hint.
+
+The prompt is a system prompt distilled from the ee-coach skill's session rules, then the run's state: its language, the names of the entries known, each opened ladder with the rungs given and the next rung and Alts code would allow, and the first rung of each ladder not opened yet whose `mentions` are known, leaving out optional steps. An Alt whose `when` names an unknown entry is left out. Ladders are named by handles (`s2`, `s2p1`), never by their step's title, so the dossier and the titles stay out of it, and an unknown entry's name reaches the model only inside a rung meant to reveal it, which is one of the rungs it may give. The last 24 lines of the chat are the conversation, with each card's rungs under Cari's line in brackets.
+
+Her own words are streamed to the asker sentence by sentence as newline-delimited JSON, while the run page shows her row "transmitting" with the blinking caret; a sentence naming an unknown entry or holding brackets is dropped and recorded as a violation instead. When the reply ends, her line and its card are stored together and every member's next poll shows them. A card's More asks `POST /api/runs/<id>/cards/<card>/more`, which gives the ladder's next rung onto the same card in code, without a model call, when that rung is allowed; when it is not, the model is told More was pressed and chooses an Alt or asks what they see. More shows only on the newest card of its ladder, and never when the next rung is level 4.
+
+Each Claude call is a row in `coach_calls`, and each rung a row in `deliveries`, so a run's whole hint history can be read back against its marks.
 
 ## Hosting
 
-Vercel serves the site from the owner's Hobby team as the project `enbraile-zombies`: the Vite build's static `dist/` and the API as a Vercel Function (`api/index.ts`) in the same project, as pkmn's and the DJ panel's are. `vercel.json` runs the function in Frankfurt (`fra1`), beside its Neon database (`aws-eu-central-1`), and rewrites every path but `/api/` and `/assets/` to `/index.html`. The database is the Neon project `zombies`, its own and never pkmn's, with a `main` branch for production and a `dev` branch for previews. The `zombies-site.yml` workflow deploys pushes to `main` touching `zombies/site/` to production, and other branches' pushes as previews, which Vercel's Deployment Protection keeps to the team ([How to Deploy the Vercel Projects](../../../general/how-to/deploy-vercel-projects.md)). `zombies.enbraile.vip` is on the project's domains and is to be a DNS-only (grey-cloud) `CNAME` to the Vercel target in the `enbraile.vip` zone on the owner's Cloudflare account; until the owner adds that record the name does not resolve. It is DNS-only for the reason pkmn's is: Cloudflare's proxied IPs are blocked by Spanish ISPs during LaLiga matches ([The pkmn Site → Decisions](../../../pkmn/site/explanation/site.md#decisions)). The root site lists the domain in its `trustedOrigins`, so sign-in returns to it. Setting it up is in [How to Run and Deploy the Site](../how-to/run-and-deploy-the-site.md#8-set-up-production-once).
+Vercel serves the site from the owner's Hobby team as the project `enbraile-zombies`: the Vite build's static `dist/` and the API as a Vercel Function (`api/index.ts`) in the same project, as pkmn's and the DJ panel's are. `vercel.json` runs the function in Frankfurt (`fra1`), beside its Neon database (`aws-eu-central-1`), and rewrites every path but `/api/` and `/assets/` to `/index.html`. The database is the Neon project `zombies`, its own and never pkmn's, with a `main` branch for production and a `dev` branch for previews. The `zombies-site.yml` workflow deploys pushes to `main` touching `zombies/site/` to production, and other branches' pushes as previews, which Vercel's Deployment Protection keeps to the team ([How to Deploy the Vercel Projects](../../../general/how-to/deploy-vercel-projects.md)). The function also reads `ANTHROPIC_API_KEY` and `COACH_MODEL`, set in Production. `zombies.enbraile.vip` is on the project's domains and is to be a DNS-only (grey-cloud) `CNAME` to the Vercel target in the `enbraile.vip` zone on the owner's Cloudflare account; until the owner adds that record the name does not resolve. It is DNS-only for the reason pkmn's is: Cloudflare's proxied IPs are blocked by Spanish ISPs during LaLiga matches ([The pkmn Site → Decisions](../../../pkmn/site/explanation/site.md#decisions)). The root site lists the domain in its `trustedOrigins`, so sign-in returns to it. Setting it up is in [How to Run and Deploy the Site](../how-to/run-and-deploy-the-site.md#8-set-up-production-once).
 
 ## Decisions
 
@@ -61,4 +78,11 @@ Vercel serves the site from the owner's Hobby team as the project `enbraile-zomb
 - **Runs stay open:** there is no way to close or end a run. _(owner, 2026-11-15)_
 - **Knowledge follows the people:** a run's marks start from the bundle's baseline and the starter's earlier runs on the map, and each member who joins adds what their own earlier runs on it knew, so the marks are never lowered by who joins. _(the agent's choice, 2026-11-15)_
 - **One link per run:** `/runs/<id>` is both the run and its join page, chosen by whether the reader is in it, so a link sent to a friend opens the run sheet the boards draw. _(the agent's choice, 2026-11-15)_
+- **Ladders by handle:** the model sees a ladder as `s<n>` or `s<n>p<m>` from the bundle's order rather than its step's title, since titles name things the players may not know. _(the agent's choice, 2026-11-15)_
+- **More in code first:** a card's More gives the next rung without a model call when the knowledge marks allow it, so it is instant and deterministic, and goes to the model only when they do not; an Alt is chosen by the model from what the players said in the chat. _(the agent's choice, 2026-11-15)_
+- **The answer is asked for in words:** More never gives level 4; the model gives it only with `answer` set, when the players asked for it in the chat, as the skill's "Level 4 only when they clearly ask for the answer". _(the agent's choice, 2026-11-15)_
+- **Marks from the players' words:** `mark_known` takes what the players said and code matches it against the knowledge names and the members' recent lines, so the model needs no list of unknown entries to mark one and cannot mark one the players never named. _(the agent's choice, 2026-11-15)_
+- **Sentence-by-sentence streaming:** Cari's words reach the asker a sentence at a time rather than token by token, so a sentence naming an unknown entry is dropped before anyone reads it. _(the agent's choice, 2026-11-15)_
+- **One reply at a time per run:** a lease on the run's row, held up to 60 seconds, waited on up to 30 (a line still waiting then gets no reply) and released only by the reply that took it, keeps two members' questions from getting two rungs of one ladder at once; Neon's pooled connections rule out a session advisory lock. _(the agent's choice, 2026-11-15)_
+- **A card per reply:** a hint asked for in the chat comes on a new card under Cari's line, and More adds the next rung to the card it was pressed on, as the boards draw it. _(the agent's choice, 2026-11-15)_
 - **Neon from the Vercel Marketplace, without its variables:** the Neon organization is managed by Vercel and refuses a project made with `neonctl`, so the `zombies` project comes from the integration with `--no-connect`, and `DATABASE_URL` is set by hand per environment with `sslmode=verify-full`, as pkmn's table has it, rather than the integration's own variables. _(the agent's choice, 2026-11-15)_

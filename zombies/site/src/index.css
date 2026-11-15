@@ -713,7 +713,7 @@ a:hover {
 }
 
 .run {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   min-height: 0;
   height: calc(100vh - 48px);
@@ -832,6 +832,7 @@ a:hover {
 }
 
 .who {
+  align-self: start;
   font-stretch: 62%;
   font-weight: 800;
   font-size: 19px;
@@ -903,6 +904,92 @@ a:hover {
 
 .cmp input::placeholder {
   color: var(--mute);
+}
+
+.ty {
+  font-family: var(--type);
+  color: var(--mute);
+}
+
+.caret {
+  display: inline-block;
+  width: 10px;
+  height: 18px;
+  background: var(--red);
+  vertical-align: -3px;
+  margin-left: 6px;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
+}
+
+.slip {
+  margin-top: 12px;
+  background: var(--slip);
+  border: 1px solid var(--ink);
+  max-width: 640px;
+}
+
+.txt:empty + .slip {
+  margin-top: 0;
+}
+
+.slip-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--ink);
+  font: 700 11px var(--type);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.slip-h b {
+  font-family: var(--sans);
+  font-stretch: 62%;
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+}
+
+.rung {
+  margin: 0;
+  padding: 14px 16px;
+  font: 400 17px/1.5 var(--type);
+  overflow-wrap: anywhere;
+}
+
+.rung + .rung {
+  border-top: 1px dashed var(--mute);
+}
+
+.rung-old {
+  color: var(--mute);
+  font-size: 15px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.slip-f {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--ink);
+}
+
+.slip-f .b {
+  min-height: 46px;
 }
 
 @media (max-width: 1180px) {
@@ -1286,5 +1373,28 @@ a:hover {
 
   .none {
     min-height: 40px;
+  }
+
+  .slip {
+    margin-top: 8px;
+  }
+
+  .slip-h {
+    padding: 0 10px;
+    height: 30px;
+    font-size: 10px;
+  }
+
+  .rung {
+    font-size: 15px;
+    padding: 11px 12px;
+  }
+
+  .rung-old {
+    font-size: 13px;
+  }
+
+  .slip-f {
+    flex-direction: column;
   }
 }

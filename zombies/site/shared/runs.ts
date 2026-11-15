@@ -21,9 +21,13 @@ export type RunSheet = {
   yourRun: { id: string; name: Record<Language, string> } | null;
 };
 
-export type Message = { id: number; author: "member" | "cari"; name: string; you: boolean; text: string; at: string };
+export type Message = { id: number; author: "member" | "cari"; name: string; you: boolean; text: string; at: string; card: number | null };
 
-export type Transcript = { messages: Message[]; members: Member[] };
+export type Card = { id: number; rungs: { id: number; text: string }[]; at: string; more: boolean };
+
+export type Transcript = { messages: Message[]; members: Member[]; cards: Card[] };
+
+export type ReplyEvent = { type: "text"; text: string } | { type: "done" };
 
 export const startRunSchema = z.object({ game: z.string().min(1), map: z.string().min(1), language: z.enum(languages).default("es") });
 

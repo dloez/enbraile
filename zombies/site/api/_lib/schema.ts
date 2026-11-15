@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { foreignKey, index, integer, jsonb, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { boolean, foreignKey, index, integer, jsonb, pgTable, primaryKey, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
 import type { Bundle, Language } from "../../shared/bundle.js";
 
 export const maps = pgTable(
@@ -37,6 +37,8 @@ export const runs = pgTable(
     language: text("language").$type<Language>().notNull(),
     startedBy: text("started_by").notNull(),
     startedByName: text("started_by_name").notNull(),
+    roundAskedAt: timestamp("round_asked_at", { withTimezone: true }),
+    coachBusyUntil: timestamp("coach_busy_until", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [foreignKey({ columns: [table.game, table.map], foreignColumns: [maps.game, maps.map] }), index().on(table.game, table.map)],
@@ -87,4 +89,67 @@ export const runKnowledge = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.runId, table.knowledgeId] })],
+);
+
+export const hintCards = pgTable(
+  "hint_cards",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    messageId: integer("message_id").references(() => messages.id),
+    stepId: text("step_id").notNull(),
+    partId: text("part_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index().on(table.runId, table.stepId), index().on(table.messageId)],
+);
+
+export const deliveries = pgTable(
+  "deliveries",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    cardId: integer("card_id")
+      .notNull()
+      .references(() => hintCards.id),
+    stepId: text("step_id").notNull(),
+    partId: text("part_id"),
+    rung: integer("rung").notNull(),
+    alt: integer("alt"),
+    level: integer("level").notNull(),
+    text: text("text").notNull(),
+    mentions: jsonb("mentions").$type<string[]>().notNull(),
+    reveals: jsonb("reveals").$type<string[]>().notNull(),
+    bundleVersion: integer("bundle_version").notNull(),
+    askedBy: text("asked_by"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index().on(table.runId, table.id), index().on(table.cardId)],
+);
+
+export const coachCalls = pgTable(
+  "coach_calls",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    model: text("model").notNull(),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
+    cacheWriteTokens: integer("cache_write_tokens").notNull().default(0),
+    latencyMs: integer("latency_ms").notNull(),
+    stopReason: text("stop_reason"),
+    refused: boolean("refused").notNull().default(false),
+    refusalCategory: text("refusal_category"),
+    violations: jsonb("violations").$type<string[]>().notNull().default([]),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index().on(table.runId, table.id)],
 );

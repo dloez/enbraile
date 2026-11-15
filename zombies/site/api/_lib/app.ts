@@ -1,13 +1,44 @@
 import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { messageSchema, startRunSchema } from "../../shared/runs.js";
+import { messageSchema, startRunSchema, type ReplyEvent } from "../../shared/runs.js";
+import { coachTurn, type Ask } from "./coach.js";
 import { requireEnv } from "./env.js";
 import { storeVersion } from "./maps.js";
 import { isActiveMember, joinRun, mapsPage, postMessage, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 
 const noStore = { "cache-control": "private, no-store" };
+
+const cursor = (value: string | undefined) => {
+  const parsed = Number(value ?? 0);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
+};
+
+function reply(runId: string, viewer: Viewer, ask: Ask): Response {
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let open = true;
+      const send = (event: ReplyEvent) => {
+        if (!open) return;
+        try {
+          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        } catch {
+          open = false;
+        }
+      };
+      try {
+        await coachTurn(runId, viewer, ask, send);
+      } catch (error) {
+        console.error("coach turn failed", error);
+      }
+      send({ type: "done" });
+      if (open) controller.close();
+    },
+  });
+  return new Response(body, { status: 200, headers: { ...noStore, "content-type": "application/x-ndjson", "x-accel-buffering": "no" } });
+}
 
 function isAdmin(header: string | undefined): boolean {
   const expected = Buffer.from(`Bearer ${requireEnv("ZOMBIES_ADMIN_TOKEN")}`);
@@ -66,8 +97,7 @@ member.get("/runs/:id/messages", async (c) => {
   const viewer = c.get("viewer");
   const id = c.req.param("id");
   if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
-  const after = Number(c.req.query("after") ?? 0);
-  return c.json(await transcript(viewer, id, Number.isInteger(after) && after > 0 ? after : 0), 200, noStore);
+  return c.json(await transcript(viewer, id, cursor(c.req.query("after")), cursor(c.req.query("rungsAfter"))), 200, noStore);
 });
 
 member.post("/runs/:id/messages", async (c) => {
@@ -77,7 +107,16 @@ member.post("/runs/:id/messages", async (c) => {
   const parsed = messageSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidMessage" }, 400, noStore);
   await postMessage(viewer, id, parsed.data.text);
-  return c.json({ ok: true }, 201, noStore);
+  return reply(id, viewer, { kind: "message" });
+});
+
+member.post("/runs/:id/cards/:card/more", async (c) => {
+  const viewer = c.get("viewer");
+  const id = c.req.param("id");
+  if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
+  const card = cursor(c.req.param("card"));
+  if (!card) return c.json({ error: "noSuchCard" }, 404, noStore);
+  return reply(id, viewer, { kind: "more", cardId: card });
 });
 
 const dev = new Hono();
