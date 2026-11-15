@@ -1,6 +1,6 @@
 # Zombies Site Design System
 
-The visual system of `zombies/site/`: its tokens, type, layout shell, components and recurring patterns. Until the site is built the frozen boards in `zombies/site/design/` are the source of truth and this doc describes them; once it is built the code is, and this doc changes in the same commit as it does, as pkmn's does ([pkmn Site Design System](../../../pkmn/site/reference/design-system.md)). Why the site has these screens is in [Zombies Coach → Runs and the site](../../../work-in-progress/zombies-coach/discovery.md#runs-and-the-site).
+The visual system of `zombies/site/`: its tokens, type, layout shell, components and recurring patterns. For a screen not built yet the frozen boards in `zombies/site/design/` are the source of truth and this doc describes them; for one that is built the code is, and this doc changes in the same commit as it does, as pkmn's does ([pkmn Site Design System](../../../pkmn/site/reference/design-system.md)). Built so far: the header and the maps page's map cards, with the tokens in `src/index.css` and the fonts bundled through `@fontsource`. Why the site has these screens is in [Zombies Coach → Runs and the site](../../../work-in-progress/zombies-coach/discovery.md#runs-and-the-site).
 
 ## Boards
 
@@ -62,9 +62,13 @@ The boards between them draw both languages: `maps`, `start-run` and `join-run` 
 | `paper`, `paper-ink` | `#e6dcc0`, `#211c12` | A hint card's face and its text, the More button's face |
 | `note` | `#d8c48d` | A revision: the composer's dashed border and send button in revision mode, a sent revision's dashed bubble and chip |
 
+### Built-only tokens
+
+`src/index.css` adds tokens for values the boards write raw: `blood-glow` (the bottom-right glow), `chip-ground` (a tag chip over map art), `quiet`, `quiet-hi` and `edge` (the quiet button, its hover and its dark bottom edge), `title-shadow`, and the art tints `teal-*`, `rust-*` and `furnace-*` for the map silhouettes.
+
 ### People
 
-Each member's avatar is a filled circle in their own colour with their initial in `ink`. Board colours: `#f0b23c`, `#7fe3c4`, `#e58ab0`, `#9fb6ff`, `#c7e36b`; the site assigns them per person.
+Each member's avatar is a filled circle in their own colour with their initial in `ink`. Board colours: `#f0b23c`, `#7fe3c4`, `#e58ab0`, `#9fb6ff`, `#c7e36b`, as tokens `person-1` to `person-5`; the site assigns them per person.
 
 ## Typography
 
@@ -82,7 +86,7 @@ Cards and the rail's voice panel are `panel` with a 2px `line` border, 16px radi
 
 ## Layout Shell
 
-- **Header**: `ink`, 64px (60px phone), a 3px `blood` bottom line with four drips hanging from it. Desktop: the wordmark `zombies` in stencil 30px with `.enbraile.vip` in mono, then at the right the language switch (`EN ▾`, mono, bordered, 40px) and the reader's avatar. Phone: the wordmark, the switch and a menu button; inside a run the wordmark gives way to a back arrow to the maps and the map's name.
+- **Header**: `ink`, 64px (60px phone), a 3px `blood` bottom line with four drips hanging from it. Desktop: the wordmark `zombies` in stencil 30px with `.enbraile.vip` in mono, then at the right the language switch (`EN ▾`, mono, bordered, 40px) and the reader's avatar. Phone: the wordmark, the switch and a menu button (built with the reader's avatar in its place until the menu has something to hold); inside a run the wordmark gives way to a back arrow to the maps and the map's name.
 - **Pages**: the maps page in a 64px gutter (16px phone), a three-column grid of map cards with their tops aligned; on a phone one column.
 - **A run, desktop**: a 320px rail at the left (the map's art and name with the run's language chip, the members with a headset beside each one in the call, and the voice panel at the bottom) and the chat in an 820px column to its right, newest at the bottom, the composer under it. Older messages fade out at the top of the column.
 - **A run, phone**: the run's header, a strip with the members' stacked avatars and the run's language, the voice panel as a slim bar under it, the chat, and the composer at the bottom.
@@ -92,7 +96,7 @@ Cards and the rail's voice panel are `panel` with a 2px `line` border, 16px radi
 
 | Component | Board | Shape |
 |-----------|-------|-------|
-| Map card | `maps` | The map's art (260px, 150px phone) with a mono tag chip at its top left and the name in stencil over its foot; under it a Runs label, one run row each or a dashed "No runs yet", and Start a run in `blood` at the foot |
+| Map card | `maps` | The map's art (260px, 150px phone) with a mono tag chip at its top left and the name in stencil over its foot; under it a Runs label, one run row each or a dashed "No runs yet", and Start a run in `blood` at the foot (built without Start a run until runs exist) |
 | Run row | `maps` | A `well` row: the members' stacked avatars, the starter's name, the run's language chip, and Join in mint; the reader's own run has a mint border, a "You" chip and an arrow button instead |
 | Your-run banner | `maps` | An amber-tinted band with Cari's radio, "Your run" and the map's name, then the members and Back to the run on desktop, an arrow alone on a phone, above the cards |
 | Language choice | `start-run` | A segmented control: each option a mono code chip (`ES`, `EN`) and the language's own name; Español first and chosen |

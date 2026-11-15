@@ -1,0 +1,76 @@
+{
+  "game": "test",
+  "map": "harrow-station",
+  "name": { "es": "Estación Harrow", "en": "Harrow Station" },
+  "test": true,
+  "art": "teal",
+  "knowledge": [
+    { "id": "platform", "name": { "es": "el andén", "en": "the platform" }, "mark": "known" },
+    { "id": "signal-box", "name": { "es": "la caseta de señales", "en": "the signal box" }, "mark": "known" },
+    { "id": "lantern", "name": { "es": "el farol", "en": "the lantern" }, "mark": "unknown" },
+    { "id": "clock", "name": { "es": "el reloj parado", "en": "the stopped clock" }, "mark": "unknown" },
+    { "id": "night-train", "name": { "es": "el tren nocturno", "en": "the night train" }, "mark": "unknown" }
+  ],
+  "steps": [
+    {
+      "id": "light-the-lantern",
+      "title": "Light the lantern in the signal box",
+      "conditions": ["The power is on"],
+      "onSuccess": { "es": "La luz del farol tiembla. Algo en la estación se ha despertado.", "en": "The lantern's light flickers. Something in the station has woken." },
+      "ladder": [
+        { "level": 1, "text": { "es": "La caseta de señales guarda algo más que palancas.", "en": "The signal box holds more than levers." }, "mentions": ["signal-box"] },
+        { "level": 2, "text": { "es": "Busca algo que dé luz en la caseta de señales.", "en": "Look for something that gives light in the signal box." }, "mentions": ["signal-box"], "alt": { "text": { "es": "Mira en los estantes altos de la caseta.", "en": "Check the high shelves of the box." }, "mentions": ["signal-box"] } },
+        { "level": 3, "text": { "es": "Hay un farol apagado colgado sobre la puerta de la caseta.", "en": "An unlit lantern hangs above the signal box door." }, "mentions": ["signal-box"], "reveals": ["lantern"] },
+        { "level": 4, "text": { "es": "Interactúa con el farol sobre la puerta con la corriente encendida.", "en": "Interact with the lantern above the door with the power on." }, "mentions": ["lantern"] }
+      ]
+    },
+    {
+      "id": "wind-the-clock",
+      "title": "Wind the stopped clock on the platform",
+      "requires": ["light-the-lantern"],
+      "onSuccess": { "es": "Las agujas vuelven a moverse. A lo lejos suena un silbato.", "en": "The hands move again. A whistle sounds in the distance." },
+      "ladder": [
+        { "level": 1, "text": { "es": "El andén lleva mucho tiempo esperando.", "en": "The platform has been waiting a long time." }, "mentions": ["platform"] },
+        { "level": 2, "text": { "es": "En el andén, algo marca una hora que ya pasó.", "en": "On the platform, something shows an hour long gone." }, "mentions": ["platform"], "reveals": ["clock"] },
+        { "level": 3, "text": { "es": "El reloj parado del andén necesita cuerda.", "en": "The stopped clock on the platform needs winding." }, "mentions": ["clock"] }
+      ],
+      "parts": [
+        {
+          "id": "find-the-key",
+          "title": "Find the winding key",
+          "ladder": [
+            { "level": 1, "text": { "es": "Lo que da cuerda no está junto al reloj.", "en": "What winds it is not beside the clock." }, "mentions": ["clock"] },
+            { "level": 2, "text": { "es": "La luz nueva de la caseta enseña lo que antes no se veía.", "en": "The box's new light shows what was hidden before." }, "mentions": ["signal-box", "lantern"] }
+          ]
+        }
+      ],
+      "headsUps": [
+        { "when": "Before the key is used", "text": { "es": "La llave solo sirve una vez.", "en": "The key works only once." }, "mentions": ["clock"] }
+      ]
+    },
+    {
+      "id": "wave-the-lantern",
+      "title": "Wave the lantern at the empty track",
+      "optional": true,
+      "requires": ["light-the-lantern"],
+      "onSuccess": { "es": "Algo responde desde el túnel con una luz verde.", "en": "Something answers from the tunnel with a green light." },
+      "ladder": [
+        { "level": 1, "text": { "es": "Las vías vacías también escuchan.", "en": "The empty tracks listen too." }, "mentions": [] }
+      ]
+    },
+    {
+      "id": "board-the-night-train",
+      "title": "Board the night train",
+      "requires": ["wind-the-clock"],
+      "onSuccess": { "es": "Las puertas se cierran detrás de vosotros. Fin del trayecto.", "en": "The doors close behind you. End of the line." },
+      "ladder": [
+        { "level": 1, "text": { "es": "El silbato no sonó para nada.", "en": "The whistle did not sound for nothing." }, "mentions": [] },
+        { "level": 2, "text": { "es": "Volved al andén cuando el reloj marque la hora.", "en": "Go back to the platform when the clock strikes the hour." }, "mentions": ["platform", "clock"], "reveals": ["night-train"] },
+        { "level": 3, "text": { "es": "Subid al tren nocturno cuando se detenga en el andén.", "en": "Board the night train when it stops at the platform." }, "mentions": ["night-train", "platform"] }
+      ]
+    }
+  ],
+  "calibration": ["A made-up map for local and preview checks; no real map's content."],
+  "dossier": "# Harrow Station (test map)\n\nMade up. Light the lantern above the signal box door with the power on; the lantern's light shows the winding key in the box; wind the stopped clock on the platform; board the night train when it stops. Waving the lantern at the track is optional.",
+  "sources": [{ "title": "Made up for the zombies site's checks" }]
+}
