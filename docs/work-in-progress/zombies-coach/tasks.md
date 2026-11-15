@@ -40,7 +40,7 @@ The Vercel project, its Neon database, the workflow and the root's `trustedOrigi
 
 ## Rebuild the site's look from the Radio log boards
 
-The owner found the first boards "very AI" and asked for another angle (2026-11-15). The "Radio log" page of the Claude design canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) redraws every screen as the group's radio log: a run as a timestamped transcript table, hints as typed dispatch slips with tick-box feedback, the level-3 zone as a marked survey sheet, condensed Archivo with Courier Prime, five flat inks, square corners and no glows, gradients, drips or silhouettes. It replaces the first take ([Discovery → Runs and the site](discovery.md#runs-and-the-site)).
+The owner found the first boards "very AI" and asked for another angle (2026-11-15). The "Radio log" page of the Claude design canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) redraws every screen as the group's radio log: a run as a timestamped transcript table, hints as typed dispatch slips with tick-box feedback, the level-3 zone as a marked survey sheet, condensed Archivo with Courier Prime, five flat inks, square corners and no glows, gradients, drips or silhouettes. The owner chose it over the first take (2026-11-15), which it replaces ([Discovery → Runs and the site](discovery.md#runs-and-the-site)).
 
 **Do:**
 - [ ] Freeze the canvas's `v2/*.dc.html` boards into `zombies/site/design/`, replacing the first take's files (kebab-case names as now: `maps.dc.html`, `run-zone-phone.dc.html`).
