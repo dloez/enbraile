@@ -5,7 +5,7 @@ import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, 
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
-import { audits, bundleVersions, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runHistory, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { audits, bundleVersions, callLines, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runHistory, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -407,9 +407,9 @@ export async function runList() {
   const ids = rows.map((row) => row.id);
   if (!ids.length) return [];
   const members = await db.select({ runId: runMembers.runId, name: runMembers.name }).from(runMembers).where(inArray(runMembers.runId, ids));
-  const tally = async (table: typeof messages | typeof runHistory | typeof gaps | typeof feedback | typeof deliveries) =>
+  const tally = async (table: typeof messages | typeof runHistory | typeof callLines | typeof gaps | typeof feedback | typeof deliveries) =>
     new Map((await db.select({ runId: table.runId, n: count() }).from(table).where(inArray(table.runId, ids)).groupBy(table.runId)).map((entry) => [entry.runId, entry.n]));
-  const [lines, earlier, held, notes, rungs] = await Promise.all([tally(messages), tally(runHistory), tally(gaps), tally(feedback), tally(deliveries)]);
+  const [lines, earlier, spoken, held, notes, rungs] = await Promise.all([tally(messages), tally(runHistory), tally(callLines), tally(gaps), tally(feedback), tally(deliveries)]);
   const lastLine = new Map(
     (await db.select({ runId: messages.runId, at: max(messages.createdAt) }).from(messages).where(inArray(messages.runId, ids)).groupBy(messages.runId)).map((entry) => [entry.runId, entry.at]),
   );
@@ -422,7 +422,7 @@ export async function runList() {
     createdAt: row.createdAt,
     lastLineAt: lastLine.get(row.id) ?? null,
     members: [...new Set(members.filter((member) => member.runId === row.id).map((member) => member.name))],
-    counts: { history: earlier.get(row.id) ?? 0, messages: lines.get(row.id) ?? 0, deliveries: rungs.get(row.id) ?? 0, gaps: held.get(row.id) ?? 0, feedback: notes.get(row.id) ?? 0 },
+    counts: { history: earlier.get(row.id) ?? 0, messages: lines.get(row.id) ?? 0, call: spoken.get(row.id) ?? 0, deliveries: rungs.get(row.id) ?? 0, gaps: held.get(row.id) ?? 0, feedback: notes.get(row.id) ?? 0 },
   }));
 }
 
@@ -432,10 +432,11 @@ export async function runLog(runId: string) {
   const [map] = await db.select({ latestVersion: maps.latestVersion }).from(maps).where(and(eq(maps.game, run.game), eq(maps.map, run.map)));
   const bundle = await latestBundle(db, run.game, run.map);
   const names = new Map((bundle?.knowledge ?? []).map((entry) => [entry.id, entry.name]));
-  const [members, earlier, lines, cards, rungs, notes, held, marks, steps, headsUps, calls, findings] = await Promise.all([
+  const [members, earlier, lines, spoken, cards, rungs, notes, held, marks, steps, headsUps, calls, findings] = await Promise.all([
     db.select().from(runMembers).where(eq(runMembers.runId, runId)).orderBy(asc(runMembers.id)),
     db.select().from(runHistory).where(eq(runHistory.runId, runId)).orderBy(asc(runHistory.saidAt), asc(runHistory.id)),
     db.select().from(messages).where(eq(messages.runId, runId)).orderBy(asc(messages.id)),
+    db.select().from(callLines).where(eq(callLines.runId, runId)).orderBy(asc(callLines.saidAt), asc(callLines.id)),
     db.select().from(hintCards).where(eq(hintCards.runId, runId)).orderBy(asc(hintCards.id)),
     db.select().from(deliveries).where(eq(deliveries.runId, runId)).orderBy(asc(deliveries.id)),
     db.select().from(feedback).where(eq(feedback.runId, runId)).orderBy(asc(feedback.id)),
@@ -452,6 +453,7 @@ export async function runLog(runId: string) {
     members: strip(members),
     history: strip(earlier),
     messages: strip(lines),
+    call: strip(spoken),
     cards: strip(cards),
     deliveries: strip(rungs),
     feedback: strip(notes),
@@ -610,6 +612,9 @@ export async function runEvents(runId: string, after: string): Promise<RunEvents
       select case when m.author = 'member' then 'line' else 'cari' end as kind, m.id, m.created_at as at,
         jsonb_build_object('name', m.name, 'text', m.text, 'by', m.posted_by, 'cards', (select coalesce(jsonb_agg(c.id order by c.id), '[]'::jsonb) from ${hintCards} c where c.message_id = m.id)) as data
       from ${messages} m where m.run_id = ${runId} and m.kind = 'chat'
+      union all
+      select 'call', l.id, l.created_at, jsonb_build_object('name', l.name, 'text', l.text, 'discordId', l.discord_id)
+      from ${callLines} l where l.run_id = ${runId}
       union all
       select 'hint', d.id, d.created_at,
         jsonb_build_object('card', d.card_id, 'step', d.step_id, 'part', d.part_id, 'rung', d.rung, 'alt', d.alt, 'level', d.level, 'text', d.text, 'version', d.bundle_version, 'askedBy', d.asked_by)

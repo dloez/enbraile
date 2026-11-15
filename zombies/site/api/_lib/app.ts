@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { type Context, Hono } from "hono";
 import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { asRevision, historyImportSchema, messageSchema, ratingSchema, runImportSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent } from "../../shared/runs.js";
+import { asRevision, callLineSchema, historyImportSchema, messageSchema, ratingSchema, runImportSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent } from "../../shared/runs.js";
 import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
@@ -10,7 +10,7 @@ import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
 import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
-import { bringCari, callState, voiceTurn } from "./voice.js";
+import { bringCari, callState, keepCallLine, voiceTurn } from "./voice.js";
 
 const noStore = { "cache-control": "private, no-store" };
 
@@ -137,6 +137,13 @@ voice.post("/", async (c) => {
   const parsed = voiceSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
   return c.json({ reply: await voiceTurn(parsed.data.userId, parsed.data.text) }, 200, noStore);
+});
+
+voice.post("/transcript", async (c) => {
+  if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
+  const parsed = callLineSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidLine" }, 400, noStore);
+  return c.json({ kept: await keepCallLine(parsed.data) }, 200, noStore);
 });
 
 const images = new Hono();

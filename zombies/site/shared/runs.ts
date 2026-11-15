@@ -53,6 +53,7 @@ export type Transcript = { history: Message[]; messages: Message[]; members: Mem
 
 export type RunEvent = { id: number; at: string } & (
   | { kind: "line" | "cari"; name: string; text: string; cards: number[]; by: "claude" | null }
+  | { kind: "call"; name: string; text: string; discordId: string }
   | { kind: "audit"; message: number | null; findings: string[] }
   | { kind: "hint"; card: number; step: string; part: string | null; rung: number; alt: number | null; level: number; text: string; version: number; askedBy: string | null }
   | { kind: "revision"; name: string; text: string; message: number | null; refersTo: number | null; card: number | null; delivery: number | null }
@@ -73,6 +74,17 @@ export type CallState = { reachable: boolean; channel: VoiceChannel | null; cari
 export type JoinRefusal = "notInVoice" | "noAccess" | "full" | "botOffline";
 
 export const voiceSchema = z.object({ userId: z.string().min(1), text: z.string().trim().min(1).max(2000) });
+
+export const callLineSchema = z.object({
+  userId: z.string().min(1),
+  name: z.string().trim().min(1).max(200),
+  text: z.string().trim().min(1).max(4000),
+  at: z.iso.datetime(),
+  ms: z.number().int().nonnegative().nullable(),
+  broughtBy: z.string().min(1).nullable(),
+});
+
+export type CallLine = z.infer<typeof callLineSchema>;
 
 export type ReplyEvent = { type: "text"; text: string } | { type: "failed" } | { type: "done" };
 

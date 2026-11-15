@@ -86,7 +86,7 @@ npm run runs
 npm run runs -- <run id>
 ```
 
-The first lists every run with its map, members and counts; the second writes the whole run (its log, gaps, feedback, marks and Claude calls) to `zombies/maps/<game>/<map>/runs/<id>.json`, gitignored, and prints only its counts. Both read `ZOMBIES_URL` and `CLAUDE_TOKEN`, as `publish` does.
+The first lists every run with its map, members and counts; the second writes the whole run (its log, the lines said in its call, gaps, feedback, marks and Claude calls) to `zombies/maps/<game>/<map>/runs/<id>.json`, gitignored, and prints only its counts. Both read `ZOMBIES_URL` and `CLAUDE_TOKEN`, as `publish` does.
 
 To follow a run while it is played:
 

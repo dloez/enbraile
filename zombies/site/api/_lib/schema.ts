@@ -109,6 +109,23 @@ export const runHistory = pgTable(
   (table) => [index().on(table.runId, table.id)],
 );
 
+export const callLines = pgTable(
+  "call_lines",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    discordId: text("discord_id").notNull(),
+    name: text("name").notNull(),
+    text: text("text").notNull(),
+    ms: integer("ms"),
+    saidAt: timestamp("said_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index().on(table.runId, table.id)],
+);
+
 export const runKnowledge = pgTable(
   "run_knowledge",
   {

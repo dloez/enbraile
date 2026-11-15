@@ -1,9 +1,9 @@
 import { and, asc, eq, gt, isNull, max } from "drizzle-orm";
 import type { Viewer } from "../../shared/bundle.js";
-import { asRevision, type CallState, type JoinRefusal } from "../../shared/runs.js";
+import { asRevision, type CallLine, type CallState, type JoinRefusal } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { postMessage, postRevision } from "./runs.js";
-import { deliveries, runMembers } from "./schema.js";
+import { callLines, deliveries, runMembers } from "./schema.js";
 
 const botTimeoutMs = 5000;
 
@@ -36,6 +36,13 @@ export async function voiceTurn(discordId: string, text: string): Promise<string
     .orderBy(asc(deliveries.id));
   const reply = [said.trim(), ...hints.map((hint) => hint.text)].filter(Boolean).join(" ");
   return reply || null;
+}
+
+export async function keepCallLine(line: CallLine): Promise<boolean> {
+  const run = (await speakerOf(line.userId)) ?? (line.broughtBy ? await speakerOf(line.broughtBy) : null);
+  if (!run) return false;
+  await db.insert(callLines).values({ runId: run.runId, discordId: line.userId, name: line.name, text: line.text, ms: line.ms, saidAt: new Date(line.at) });
+  return true;
 }
 
 function bot(path: string, init?: { method: "POST"; body: unknown }): Promise<Response> | null {

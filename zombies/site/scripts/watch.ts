@@ -25,6 +25,8 @@ function line(event: RunEvent): string {
   switch (event.kind) {
     case "line":
       return `${at} line ${event.name}`;
+    case "call":
+      return `${at} call ${event.name}`;
     case "cari":
       return `${at} cari${event.by ? ` (${event.by})` : ""}${event.cards.length ? ` with card ${event.cards.join(", ")}` : ""}`;
     case "audit":
