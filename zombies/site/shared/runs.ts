@@ -52,7 +52,8 @@ export type GapContext = {
 export type Transcript = { messages: Message[]; members: Member[]; cards: Card[] };
 
 export type RunEvent = { id: number; at: string } & (
-  | { kind: "line" | "cari"; name: string; text: string; cards: number[] }
+  | { kind: "line" | "cari"; name: string; text: string; cards: number[]; by: "claude" | null }
+  | { kind: "audit"; message: number | null; findings: string[] }
   | { kind: "hint"; card: number; step: string; part: string | null; rung: number; alt: number | null; level: number; text: string; version: number; askedBy: string | null }
   | { kind: "revision"; name: string; text: string; message: number | null; refersTo: number | null; card: number | null; delivery: number | null }
   | { kind: "rating"; name: string; rating: Rating; card: number; delivery: number | null }
@@ -97,3 +98,13 @@ export const runImportSchema = z.object({
 });
 
 export type RunImport = z.infer<typeof runImportSchema>;
+
+export const stepInSchema = z
+  .object({
+    text: z.string().max(1000).default(""),
+    hint: z.object({ step: handle, part: handle.nullable().default(null), alt: z.number().int().min(0).nullable().default(null), answer: z.boolean().default(false) }).nullable().default(null),
+    gap: z.number().int().positive().nullable().default(null),
+  })
+  .refine((value) => value.text.trim() !== "" || value.hint !== null, { message: "text or hint is required" });
+
+export type StepIn = z.infer<typeof stepInSchema>;

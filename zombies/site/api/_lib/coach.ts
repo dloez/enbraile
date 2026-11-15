@@ -1,10 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { and, count, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Bundle, Language } from "../../shared/bundle.js";
-import type { ReplyEvent } from "../../shared/runs.js";
+import type { ReplyEvent, StepIn } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
-import { bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { audits, bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 const defaultModel = "claude-haiku-5-5";
 const maxTokens = 1024;
@@ -485,6 +485,14 @@ async function logCall(runId: string, log: CallLog): Promise<void> {
 
 const sentenceEnd = /[.!?…:;]["»”')]*\s+|\n+/g;
 
+const named = "pasos?|pistas?|tarjetas?|steps?|hints?|rungs?|cards?";
+const graded = "pistas?|tarjetas?|hints?|rungs?|cards?";
+const amount = "\\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|two|three|four|five|six|seven|eight|nine|ten";
+const ordinal = "primer[oa]?|segund[oa]|tercer[oa]?|cuart[oa]|quint[oa]|ultim[oa]|penultim[oa]|first|second|third|fourth|fifth|last";
+const numbered = new RegExp(`\\b(?:(?:${named})\\s+(?:no?\\s*)?(?:${amount})|(?:${amount}|${ordinal})\\s+(?:${graded})|\\d+\\s*/\\s*\\d+)\\b`);
+
+const showsNumber = (text: string) => numbered.test(text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[º°#.]/g, " "));
+
 const flat = (text: string) =>
   text
     .normalize("NFD")
@@ -541,6 +549,10 @@ class Speech {
       this.violations.push("named-unknown");
       return;
     }
+    if (showsNumber(text)) {
+      this.violations.push("number-shown");
+      return;
+    }
     this.add(text);
   }
 }
@@ -584,13 +596,43 @@ async function noteTried(state: State): Promise<void> {
     .where(inArray(gaps.id, state.held.map((entry) => entry.id)));
 }
 
-async function finish(state: State, speech: Speech, cards: number[]): Promise<void> {
-  const text = speech.spoken.join(" ");
-  if (!text && !cards.length) return;
-  await db.transaction(async (tx) => {
-    const [message] = await tx.insert(messages).values({ runId: state.runId, author: "cari", name: "Cari", text }).returning({ id: messages.id });
+async function finish(state: State, text: string, cards: number[], postedBy: "claude" | null = null): Promise<number | null> {
+  if (!text && !cards.length) return null;
+  return db.transaction(async (tx) => {
+    const [message] = await tx.insert(messages).values({ runId: state.runId, author: "cari", name: "Cari", text, postedBy }).returning({ id: messages.id });
     if (cards.length) await tx.update(hintCards).set({ messageId: message!.id }).where(inArray(hintCards.id, cards));
+    return message!.id;
   });
+}
+
+type Handed = { ladder: Ladder; deliveryId: number };
+
+async function skippedRungs(runId: string, handed: Handed[]): Promise<boolean> {
+  if (!handed.length) return false;
+  const ids = new Set(handed.map((entry) => entry.deliveryId));
+  const rows = await db
+    .select({ id: deliveries.id, stepId: deliveries.stepId, partId: deliveries.partId, rung: deliveries.rung })
+    .from(deliveries)
+    .where(eq(deliveries.runId, runId))
+    .orderBy(deliveries.id);
+  const shown = new Map<string, Set<number>>();
+  let skipped = false;
+  for (const row of rows) {
+    const key = ladderKey(row.stepId, row.partId);
+    const before = shown.get(key) ?? new Set<number>();
+    if (ids.has(row.id) && [...Array(row.rung).keys()].some((rung) => !before.has(rung))) skipped = true;
+    before.add(row.rung);
+    shown.set(key, before);
+  }
+  return skipped;
+}
+
+async function audit(state: State, text: string, handed: Handed[], openBefore: Set<string>, caught: string[]): Promise<string[]> {
+  const findings = [...caught];
+  if (namedIn(text, unknownEntries(state)).length) findings.push("unknown-in-reply");
+  if (await skippedRungs(state.runId, handed)) findings.push("rung-skipped");
+  if (handed.some((entry) => entry.ladder.optional && !openBefore.has(keyOf(entry.ladder)))) findings.push("optional-offered");
+  return [...new Set(findings)];
 }
 
 async function moreTarget(runId: string, cardId: number, state: State): Promise<{ ladder: Ladder; latest: boolean } | null> {
@@ -655,6 +697,9 @@ export async function coachTurn(
     const asked = typeof lastTurn.content === "string" ? lastTurn.content : "";
     const recent = conversation.flatMap((turn) => (typeof turn.content === "string" ? turn.content.split("\n") : [])).slice(-recentLines);
     const violations: string[] = [];
+    const caught: string[] = [];
+    const handed: Handed[] = [];
+    const openBefore = new Set(state.ladders.filter((ladder) => isOpen(state, ladder)).map(keyOf));
     const speech = new Speech(state, emit, violations);
     const cards: number[] = [];
     let hinted = false;
@@ -683,6 +728,8 @@ export async function coachTurn(
         speech.flush();
       } catch (error) {
         log.error = error instanceof Error ? error.message : String(error);
+        log.violations = violations.splice(0);
+        caught.push(...log.violations);
         log.latencyMs = Date.now() - started;
         await logCall(runId, log);
         failed = true;
@@ -693,6 +740,8 @@ export async function coachTurn(
       log.stopReason = response.stop_reason;
       if (response.stop_reason === "refusal") {
         log.refused = true;
+        log.violations = violations.splice(0);
+        caught.push(...log.violations);
         log.refusalCategory = response.stop_details?.category ?? null;
         await logCall(runId, log);
         break;
@@ -700,6 +749,7 @@ export async function coachTurn(
       conversation.push({ role: "assistant", content: response.content });
       if (response.stop_reason !== "tool_use") {
         log.violations = violations.splice(0);
+        caught.push(...log.violations);
         await logCall(runId, log);
         break;
       }
@@ -736,6 +786,7 @@ export async function coachTurn(
               const result = await deliver(state, aimed, alt, input.answer === true, sameLadder, askedBy.discordId || null);
               if (result.ok) {
                 hinted = true;
+                handed.push({ ladder: aimed, deliveryId: result.deliveryId });
                 if (sameLadder === null) cards.push(result.cardId);
                 const answered = state.held.find((entry) => entry.number === input.gap);
                 if (answered) await answer(answered.id, result.deliveryId);
@@ -777,6 +828,7 @@ export async function coachTurn(
               const result = await deliver(state, chosen, null, false, null, askedBy.discordId || null);
               if (result.ok) {
                 hinted = true;
+                handed.push({ ladder: chosen, deliveryId: result.deliveryId });
                 cards.push(result.cardId);
                 said.push(`Handed over the first hint of ${chosen.handle} on a card.`);
               } else said.push("Nothing else handed over.");
@@ -841,14 +893,18 @@ export async function coachTurn(
         results.push({ type: "tool_result", tool_use_id: block.id, content });
       }
       log.violations = violations.splice(0);
+      caught.push(...log.violations);
       await logCall(runId, log);
       conversation.push({ role: "user", content: results });
     }
     if (round && hinted) await db.update(runs).set({ roundAskedAt: askedBefore }).where(eq(runs.id, runId));
     else if (round) speech.add(roundQuestion[state.language]);
     if (!failed) await noteTried(state);
+    const text = speech.spoken.join(" ");
+    const findings = await audit(state, text, handed, openBefore, caught);
+    const messageId = retried && !cards.length ? null : await finish(state, text, cards);
+    if (findings.length) await db.insert(audits).values({ runId, messageId, findings });
     if (retried && !cards.length) return "ok";
-    await finish(state, speech, cards);
     if (failed && !speech.spoken.length && !cards.length) emit({ type: "failed" });
     return "ok";
   } finally {
@@ -883,4 +939,62 @@ export async function retryHeld(game: string, map: string): Promise<{ waiting: n
     }),
   );
   return { waiting: outcomes.length, answered: outcomes.filter(Boolean).length };
+}
+
+export type StepInResult = { ok: true; message: number; card: number | null } | { ok: false; error: string };
+
+const refusals: Record<string, string> = { "answer-unasked": "answerUnasked", "no-such-alt": "noSuchAlt", "unknown-mention": "unknownMention" };
+
+export async function stepIn(runId: string, input: StepIn): Promise<StepInResult> {
+  const lease = await acquire(runId);
+  if (!lease) return { ok: false, error: "busy" };
+  try {
+    const state = await loadState(runId);
+    if (!state) return { ok: false, error: "noSuchRun" };
+    const text = input.text.replace(/\s+/g, " ").trim();
+    let aimed: { ladder: Ladder; alt: number | null } | null = null;
+    const known = new Set(state.known);
+    if (input.hint) {
+      const hint = input.hint;
+      const ladder = state.ladders.find((entry) => entry.stepId === hint.step && entry.partId === hint.part);
+      if (!ladder) return { ok: false, error: "noSuchLadder" };
+      if (isDone(state, ladder)) return { ok: false, error: "ladderDone" };
+      if (!isReady(stepOf(state, ladder), state.done)) return { ok: false, error: "notReady" };
+      if (ladder.optional && !isOpen(state, ladder)) return { ok: false, error: "optional" };
+      const rung = ladder.rungs[state.given.get(keyOf(ladder)) ?? 0];
+      if (!rung) return { ok: false, error: "nothingMore" };
+      if (rung.level === 4 && !hint.answer) return { ok: false, error: "answerUnasked" };
+      const line = lineAt(rung, hint.alt);
+      if (!line) return { ok: false, error: "noSuchAlt" };
+      if (!speakable(line, state.known)) return { ok: false, error: "unknownMention" };
+      for (const id of [...line.mentions, ...line.reveals]) known.add(id);
+      aimed = { ladder, alt: hint.alt };
+    }
+    if (!text && !aimed) return { ok: false, error: "empty" };
+    if (text.includes("[") || text.includes("]")) return { ok: false, error: "brackets" };
+    if (namedIn(text, state.bundle.knowledge.filter((entry) => !known.has(entry.id))).length) return { ok: false, error: "namesUnknown" };
+    if (showsNumber(text)) return { ok: false, error: "numberShown" };
+    const gap = input.gap === null ? undefined : await openGap(runId, input.gap);
+    if (input.gap !== null && !aimed) return { ok: false, error: "gapWithoutHint" };
+    if (input.gap !== null && !gap) return { ok: false, error: "noSuchGap" };
+    let card: number | null = null;
+    if (aimed) {
+      const result = await deliver(state, aimed.ladder, aimed.alt, input.hint?.answer === true, null, null);
+      if (!result.ok) return { ok: false, error: (result.violation && refusals[result.violation]) ?? "nothingMore" };
+      card = result.cardId;
+      if (gap) await answer(gap.id, result.deliveryId);
+    }
+    const message = await finish(state, text, card === null ? [] : [card], "claude");
+    return { ok: true, message: message!, card };
+  } finally {
+    await release(runId, lease);
+  }
+}
+
+async function openGap(runId: string, gapId: number): Promise<{ id: number } | undefined> {
+  const [row] = await db
+    .select({ id: gaps.id })
+    .from(gaps)
+    .where(and(eq(gaps.id, gapId), eq(gaps.runId, runId), isNull(gaps.answeredAt)));
+  return row;
 }

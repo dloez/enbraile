@@ -1,22 +1,5 @@
 # Zombies Coach — Tasks
 
-## Audit every reply and step in as Cari
-
-The watch loop checks each live reply against the rules and Claude can post into a run as Cari when Haiku is lost ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
-
-**Do:**
-- [ ] Code-side checks recorded on each reply (an unknown named, a rung skipped, an optional offered, a number shown), surfaced in `watch`; the skill's audit of what code cannot judge.
-- [ ] `POST /api/claude/runs/<id>/say` behind `CLAUDE_TOKEN` posting as Cari, attributed to Claude.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; a forced violation on the test map shows in `watch`; a step-in message shows in both browsers.
-- Human-run: on a game night, see a step-in arrive in the run.
-- Reuse: the watch stream and call log.
-- Neighbors: the hold path.
-- Forbidden: step-ins that bypass the knowledge marks.
-
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
-
 ## Ask Cari by voice in the Discord call
 
 The site side: the site's offer brings Cari into the run's voice channel, and «cari …» heard by the bot's `zombies` module becomes a line in the speaker's run, answered in the chat and spoken back ([Discovery → Voice](discovery.md#voice)).

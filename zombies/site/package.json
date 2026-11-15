@@ -13,7 +13,8 @@
     "compile": "tsx scripts/compile.ts",
     "runs": "tsx --env-file-if-exists=.env.local scripts/runs.ts",
     "import": "tsx --env-file-if-exists=.env.local scripts/import.ts",
-    "watch": "tsx --env-file-if-exists=.env.local scripts/watch.ts"
+    "watch": "tsx --env-file-if-exists=.env.local scripts/watch.ts",
+    "say": "tsx --env-file-if-exists=.env.local scripts/say.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.3.0",

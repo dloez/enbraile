@@ -92,7 +92,15 @@ To follow a run while it is played:
 npm run watch -- <run id>
 ```
 
-It prints one spoiler-free line per event (a line, a hint, a gap, a revision, a rating, a new version) and keeps every event with its text in `zombies/maps/<game>/<map>/runs/<id>.events.jsonl`, gitignored, until it is stopped. Run it under `Monitor` from Claude Code, as the ee-coach skill's [Watch a run](../../../../.claude/skills/ee-coach/SKILL.md#watch-a-run-from-claude-code) does.
+It prints one spoiler-free line per event (a line, a hint, a gap, a revision, a rating, a reply's audit findings, a step-in, a new version) and keeps every event with its text in `zombies/maps/<game>/<map>/runs/<id>.events.jsonl`, gitignored, until it is stopped. Run it under `Monitor` from Claude Code, as the ee-coach skill's [Watch a run](../../../../.claude/skills/ee-coach/SKILL.md#watch-a-run-from-claude-code) does.
+
+To post in a run as Cari, write the step-in to a JSON file in the map's gitignored dir (`{ "text": ..., "hint": { "step": ..., "part": null, "alt": null }, "gap": null }`, as [The Zombies Site → Map Bundles](../explanation/site.md#map-bundles) describes), then:
+
+```sh
+npm run say -- <run id> <file>
+```
+
+It prints the new line's and card's IDs, or the refusal's code.
 
 To carry a session coached from the terminal over to the site, write the map dir's gitignored `import.json` from its `session.md` and `knowledge.md` in a subagent ([ee-coach → Move a terminal session to the site](../../../../.claude/skills/ee-coach/SKILL.md#move-a-terminal-session-to-the-site)), then:
 

@@ -26,7 +26,9 @@ function line(event: RunEvent): string {
     case "line":
       return `${at} line ${event.name}`;
     case "cari":
-      return `${at} cari${event.cards.length ? ` with card ${event.cards.join(", ")}` : ""}`;
+      return `${at} cari${event.by ? ` (${event.by})` : ""}${event.cards.length ? ` with card ${event.cards.join(", ")}` : ""}`;
+    case "audit":
+      return `${at} audit ${event.message === null ? "on a reply never posted" : `on cari line ${event.message}`}: ${event.findings.join(", ")}`;
     case "hint":
       return `${at} hint on card ${event.card}, version ${event.version}`;
     case "revision":

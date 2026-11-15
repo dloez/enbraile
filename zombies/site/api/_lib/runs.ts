@@ -5,7 +5,7 @@ import type { Attempt, Card, MapPage, MapsPage, Member, Message, Rating, RunEven
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
-import { bundleVersions, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { audits, bundleVersions, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -425,7 +425,7 @@ export async function runLog(runId: string) {
   const [map] = await db.select({ latestVersion: maps.latestVersion }).from(maps).where(and(eq(maps.game, run.game), eq(maps.map, run.map)));
   const bundle = await latestBundle(db, run.game, run.map);
   const names = new Map((bundle?.knowledge ?? []).map((entry) => [entry.id, entry.name]));
-  const [members, lines, cards, rungs, notes, held, marks, steps, headsUps, calls] = await Promise.all([
+  const [members, lines, cards, rungs, notes, held, marks, steps, headsUps, calls, findings] = await Promise.all([
     db.select().from(runMembers).where(eq(runMembers.runId, runId)).orderBy(asc(runMembers.id)),
     db.select().from(messages).where(eq(messages.runId, runId)).orderBy(asc(messages.id)),
     db.select().from(hintCards).where(eq(hintCards.runId, runId)).orderBy(asc(hintCards.id)),
@@ -436,6 +436,7 @@ export async function runLog(runId: string) {
     db.select().from(runSteps).where(eq(runSteps.runId, runId)),
     db.select().from(headsUpsGiven).where(eq(headsUpsGiven.runId, runId)).orderBy(asc(headsUpsGiven.createdAt)),
     db.select().from(coachCalls).where(eq(coachCalls.runId, runId)).orderBy(asc(coachCalls.id)),
+    db.select().from(audits).where(eq(audits.runId, runId)).orderBy(asc(audits.id)),
   ]);
   const strip = <T extends { runId: string }>(rows: T[]) => rows.map(({ runId: _, ...rest }) => rest);
   return {
@@ -451,6 +452,7 @@ export async function runLog(runId: string) {
     steps: strip(steps),
     headsUps: strip(headsUps),
     calls: strip(calls),
+    audits: strip(findings),
   };
 }
 
@@ -570,7 +572,7 @@ export async function runEvents(runId: string, after: string): Promise<RunEvents
   const result = await db.execute<{ kind: RunEvent["kind"]; id: number; us: string; at: Date | string; data: Record<string, unknown> }>(sql`
     with events as (
       select case when m.author = 'member' then 'line' else 'cari' end as kind, m.id, m.created_at as at,
-        jsonb_build_object('name', m.name, 'text', m.text, 'cards', (select coalesce(jsonb_agg(c.id order by c.id), '[]'::jsonb) from ${hintCards} c where c.message_id = m.id)) as data
+        jsonb_build_object('name', m.name, 'text', m.text, 'by', m.posted_by, 'cards', (select coalesce(jsonb_agg(c.id order by c.id), '[]'::jsonb) from ${hintCards} c where c.message_id = m.id)) as data
       from ${messages} m where m.run_id = ${runId} and m.kind = 'chat'
       union all
       select 'hint', d.id, d.created_at,
@@ -603,6 +605,9 @@ export async function runEvents(runId: string, after: string): Promise<RunEvents
       from ${runSteps} s
       cross join lateral (values ('started', s.started_at), ('done', s.done_at), ('blocked', s.blocked_told_at)) p(status, at)
       where s.run_id = ${runId} and p.at is not null
+      union all
+      select 'audit', a.id, a.created_at, jsonb_build_object('message', a.message_id, 'findings', a.findings)
+      from ${audits} a where a.run_id = ${runId}
       union all
       select 'published', b.version, b.created_at, jsonb_build_object('version', b.version)
       from ${bundleVersions} b where b.game = ${run.game} and b.map = ${run.map} and b.created_at > ${run.createdAt}

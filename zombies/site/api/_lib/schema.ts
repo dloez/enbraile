@@ -87,6 +87,7 @@ export const messages = pgTable(
     discordId: text("discord_id"),
     name: text("name").notNull(),
     text: text("text").notNull(),
+    postedBy: text("posted_by").$type<"claude">(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index().on(table.runId, table.id)],
@@ -214,6 +215,20 @@ export const gaps = pgTable(
     triedVersion: integer("tried_version"),
     answeredAt: timestamp("answered_at", { withTimezone: true }),
     answerDeliveryId: integer("answer_delivery_id").references(() => deliveries.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index().on(table.runId, table.id)],
+);
+
+export const audits = pgTable(
+  "audits",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    messageId: integer("message_id").references(() => messages.id),
+    findings: jsonb("findings").$type<string[]>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index().on(table.runId, table.id)],

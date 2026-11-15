@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { type Context, Hono } from "hono";
 import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchema, type ReplyEvent } from "../../shared/runs.js";
+import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchema, stepInSchema, type ReplyEvent } from "../../shared/runs.js";
 import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
@@ -110,6 +110,15 @@ claude.get("/runs/:id/events", async (c) => {
   if (!/^\d{1,18}$/.test(after)) return c.json({ error: "invalidCursor" }, 400, noStore);
   const events = await runEvents(c.req.param("id"), after);
   return events ? c.json(events, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
+});
+
+claude.post("/runs/:id/say", async (c) => {
+  const parsed = stepInSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidStepIn", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) }, 400, noStore);
+  const { stepIn } = await import("./coach.js");
+  const result = await stepIn(c.req.param("id"), parsed.data);
+  if (result.ok) return c.json({ message: result.message, card: result.card }, 201, noStore);
+  return c.json({ error: result.error }, result.error === "noSuchRun" ? 404 : result.error === "busy" ? 409 : 400, noStore);
 });
 
 const images = new Hono();
