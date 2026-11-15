@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Attempt, Card, MapPage, MapsPage, Member, Message, Rating, RunImport, RunLink, RunSheet, Transcript } from "../../shared/runs.js";
+import type { Attempt, Card, MapPage, MapsPage, Member, Message, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
@@ -560,4 +560,58 @@ export async function importRun(input: RunImport): Promise<Imported> {
       counts: { members: input.members.length, known: learned.size, cards: cards.size, deliveries: input.deliveries.length, steps: progress.size, headsUps: headsUps.length },
     };
   });
+}
+
+const settleMs = 1000;
+
+export async function runEvents(runId: string, after: string): Promise<RunEvents | null> {
+  const [run] = await db.select({ game: runs.game, map: runs.map, createdAt: runs.createdAt }).from(runs).where(eq(runs.id, runId));
+  if (!run) return null;
+  const result = await db.execute<{ kind: RunEvent["kind"]; id: number; us: string; at: Date | string; data: Record<string, unknown> }>(sql`
+    with events as (
+      select case when m.author = 'member' then 'line' else 'cari' end as kind, m.id, m.created_at as at,
+        jsonb_build_object('name', m.name, 'text', m.text, 'cards', (select coalesce(jsonb_agg(c.id order by c.id), '[]'::jsonb) from ${hintCards} c where c.message_id = m.id)) as data
+      from ${messages} m where m.run_id = ${runId} and m.kind = 'chat'
+      union all
+      select 'hint', d.id, d.created_at,
+        jsonb_build_object('card', d.card_id, 'step', d.step_id, 'part', d.part_id, 'rung', d.rung, 'alt', d.alt, 'level', d.level, 'text', d.text, 'version', d.bundle_version, 'askedBy', d.asked_by)
+      from ${deliveries} d where d.run_id = ${runId}
+      union all
+      select 'revision', f.id, f.created_at,
+        jsonb_build_object('name', f.name, 'text', f.text, 'message', f.message_id, 'refersTo', f.refers_to, 'card', f.card_id, 'delivery', f.delivery_id)
+      from ${feedback} f where f.run_id = ${runId} and f.kind = 'revision'
+      union all
+      select 'rating', f.id, f.updated_at,
+        jsonb_build_object('name', f.name, 'rating', f.rating, 'card', f.card_id, 'delivery', f.delivery_id)
+      from ${feedback} f where f.run_id = ${runId} and f.kind = 'card'
+      union all
+      select 'gap', g.id, g.created_at,
+        jsonb_build_object('asked', g.asked, 'about', g.about, 'said', g.said, 'version', g.bundle_version, 'askedBy', g.asked_by)
+      from ${gaps} g where g.run_id = ${runId}
+      union all
+      select 'answered', g.id, g.answered_at,
+        jsonb_build_object('gap', g.id, 'delivery', g.answer_delivery_id)
+      from ${gaps} g where g.run_id = ${runId} and g.answered_at is not null
+      union all
+      select 'joined', j.id, j.joined_at, jsonb_build_object('name', j.name)
+      from ${runMembers} j where j.run_id = ${runId}
+      union all
+      select 'left', j.id, j.left_at, jsonb_build_object('name', j.name)
+      from ${runMembers} j where j.run_id = ${runId} and j.left_at is not null
+      union all
+      select 'progress', 0, p.at, jsonb_build_object('status', p.status, 'step', s.step_id, 'part', nullif(s.part_id, ''))
+      from ${runSteps} s
+      cross join lateral (values ('started', s.started_at), ('done', s.done_at), ('blocked', s.blocked_told_at)) p(status, at)
+      where s.run_id = ${runId} and p.at is not null
+      union all
+      select 'published', b.version, b.created_at, jsonb_build_object('version', b.version)
+      from ${bundleVersions} b where b.game = ${run.game} and b.map = ${run.map} and b.created_at > ${run.createdAt}
+    )
+    select kind, id, (extract(epoch from at) * 1000000)::bigint::text as us, at, data
+    from events
+    where (extract(epoch from at) * 1000000)::bigint > ${after}::bigint
+      and at <= now() - make_interval(secs => ${settleMs / 1000})
+    order by at, kind, id`);
+  const events = result.rows.map((row): RunEvent => ({ kind: row.kind, id: row.id, at: new Date(row.at).toISOString(), ...row.data }) as RunEvent);
+  return { run: { id: runId, game: run.game, map: run.map }, events, next: result.rows.at(-1)?.us ?? after };
 }

@@ -1,23 +1,5 @@
 # Zombies Coach — Tasks
 
-## Watch a run from Claude Code and fix things live
-
-A `watch` stream on the Claude API and a skill section so Claude follows a run while it is played: closing gaps with a checked line, applying revisions and card feedback, and fixing the dossier when players report something it contradicts, all in subagents, the terminal showing spoiler-free one-liners ([Discovery → Feedback and the watch loop](discovery.md#feedback-and-the-watch-loop)).
-
-**Do:**
-- [ ] `GET /api/claude/runs/<id>/events?after=` and `npm run watch -- <run>` printing one line per event, for `Monitor`.
-- [ ] A "Watch" section in the ee-coach skill: per event type, what to do, which subagent, publish, and what one line to print.
-- [ ] A held gap is answered on the run's next message, or posted at once if the run is waiting, once the new version lands.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; with a test-map run open in the Playwright MCP, a gap appears in `watch`, a new line is published and the run delivers it; a revision changes a rung and the next delivery uses it.
-- Human-run: on a game night, run the watch from Claude Code, send a `REVISION:` and see it applied without leaving the game.
-- Reuse: the Claude API, `compile` and `publish`.
-- Neighbors: the debrief in the ee-coach skill.
-- Forbidden: solutions or rung text printed in the main conversation.
-
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
-
 ## Move between pages without reloading what is already known
 
 The owner finds that going from a map back to the maps list, and between other pages, refreshes too much (2026-11-15). Navigation is client-side (`history.pushState` in `zombies/site/src/route.ts`), but every page starts in `loading` on mount (`usePage` in `zombies/site/src/App.tsx`), so each move unmounts the page, shows its skeleton and fetches it again, even for a page seen a second ago.
@@ -54,7 +36,6 @@ The watch loop checks each live reply against the rules and Claude can post into
 - Forbidden: step-ins that bypass the knowledge marks.
 
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
-**After:** Watch a run from Claude Code and fix things live
 
 ## Ask Cari by voice in the Discord call
 

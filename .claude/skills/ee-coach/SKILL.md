@@ -14,6 +14,7 @@ Which phase are you in?
 - Players named a map and no `zombies/maps/<game>/<map>/dossier.md` exists → **Prepare**
 - Dossier exists and players are playing or about to → **Session**
 - A session from here is to continue on the site → **Move a terminal session to the site**
+- The group is playing a run on the site and Claude is to follow it → **Watch a run from Claude Code**
 - Run ended or players comment on hint quality → **Debrief**
 
 Always read `zombies/CLAUDE.md` and `zombies/calibration.md` first, and the map's own `calibration.md` once the map is known. They record the standing rules, how this group likes its hints, and the hint wording examples from that map. Map files live in `zombies/maps/<game>/<map>/`, which is gitignored: nothing about any map goes into a tracked file.
@@ -106,6 +107,27 @@ To continue on `zombies.enbraile.vip` a session coached here, the map's bundle m
 3. `npm run runs -- <id>` and compare the run's file with `session.md` and `knowledge.md`: the marks with what is known or revealed, the rungs with the hints given, the progress with the open threads.
 
 Report counts only: rungs imported, marks, steps, and anything in the session no rung or entry matched. The old terminal session is not deleted until the owner has opened the run and confirmed it reads right.
+
+## Watch a run from Claude Code
+
+While the group plays on `zombies.enbraile.vip`, Claude can follow their run and fix things live: close the gaps Cari held on, apply revisions and card ratings, and fix the dossier when the players report something it contradicts. The terminal may be read by the players, so the main conversation only ever shows the one-liners below. Every event's text (the chat, the rungs, the questions) is read by subagents only, and they report back IDs, counts and versions, never wording.
+
+1. From `zombies/site/`, with `ZOMBIES_URL` and `CLAUDE_TOKEN` pointing at the site (production's token read from 1Password, as in [How to Run and Deploy the Site → Deploy](../../../docs/zombies/site/how-to/run-and-deploy-the-site.md#9-deploy)), `npm run runs` to find the run.
+2. Start `npm run watch -- <id>` under `Monitor`, persistent. Its first line says how many earlier events it wrote to the map's `runs/<id>.events.jsonl`, and a subagent reads them once for any gap not yet answered and any revision not yet applied, which are then handled as below; each later line is one event ([The Zombies Site → Map Bundles](../../../docs/zombies/site/explanation/site.md#map-bundles)).
+3. Act on each event as below, one subagent per action, and never more than one publishing to a map at a time, since each edits the same hints and every publish is a version all runs follow. Each publishing subagent runs `npm run compile -- ../maps/<game>/<map>/` and then `npm run publish -- ../maps/<game>/<map>/`, and returns only `publish`'s output.
+
+| Event | What to do | In a subagent that | Print |
+|---|---|---|---|
+| `gap <n> held` | Write the missing line | reads gap `<n>` in the events file and the run (`npm run runs -- <id>`), writes the line into `hints.md` and `hints.es.md` with `references/hint-craft.md`, its `Mentions` and `Reveals` checked against `knowledge.md`, blind-checks it (`references/research.md`), compiles and publishes | `gap <n>: line published, version <v>`, or `gap <n>: no line, <why without content>` |
+| `revision <n> from <name>` | Apply it | reads revision `<n>` and the Cari line it refers to, logs it as **Debrief** says (the map's `calibration.md` with the line, the general lesson in `zombies/calibration.md`), fixes the rung or the skill, compiles and publishes when a rung changed | `revision <n>: applied, version <v>`, or `revision <n>: logged` |
+| `rating obvious` or `rating vague` | Weigh it | reads the card's rungs, and rewrites the ladder's next rungs when the rating shows the same miss as the calibration notes, then compiles and publishes | `card <c>: rungs rewritten, version <v>`, or `card <c>: kept` |
+| `line <name>` | Every 10 member lines, or after a quiet stretch, check for mismatches | reads the lines since the last check for a report the dossier contradicts (something seen that should not be there, a step that went differently), re-checks it in `sources/`, fixes `dossier.md` and any rung built on the wrong fact, compiles and publishes | `dossier: <k> fixed, version <v>`, or `dossier: no mismatch` |
+| `gap <n> answered`, `hint`, `cari`, `published`, `rating right`, `joined`, `left`, `progress` | Nothing: context for the actions above | | nothing |
+| `watch: read failed` | Check the site and the token; the watch keeps retrying | | `watch: <status>` |
+
+A published line reaches the run by itself. When the run is still waiting on the question, Cari gives it at once (`publish` prints `held questions: 1 of 1 waiting runs answered at once`); otherwise she offers it on the players' next line, and `gap <n> answered` shows when she does. A rewritten rung is used the next time that rung is given, never retroactively on a card.
+
+Stop the `Monitor` when the night ends, then run the **Debrief** from the run's file.
 
 ## Debrief (after the run or on feedback)
 

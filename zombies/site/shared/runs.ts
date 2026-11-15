@@ -51,6 +51,20 @@ export type GapContext = {
 
 export type Transcript = { messages: Message[]; members: Member[]; cards: Card[] };
 
+export type RunEvent = { id: number; at: string } & (
+  | { kind: "line" | "cari"; name: string; text: string; cards: number[] }
+  | { kind: "hint"; card: number; step: string; part: string | null; rung: number; alt: number | null; level: number; text: string; version: number; askedBy: string | null }
+  | { kind: "revision"; name: string; text: string; message: number | null; refersTo: number | null; card: number | null; delivery: number | null }
+  | { kind: "rating"; name: string; rating: Rating; card: number; delivery: number | null }
+  | { kind: "gap"; asked: string; about: string; said: string; version: number; askedBy: string | null }
+  | { kind: "answered"; gap: number; delivery: number | null }
+  | { kind: "joined" | "left"; name: string }
+  | { kind: "progress"; status: "started" | "done" | "blocked"; step: string; part: string | null }
+  | { kind: "published"; version: number }
+);
+
+export type RunEvents = { run: { id: string; game: string; map: string }; events: RunEvent[]; next: string };
+
 export type ReplyEvent = { type: "text"; text: string } | { type: "failed" } | { type: "done" };
 
 export const startRunSchema = z.object({ game: z.string().min(1), map: z.string().min(1), language: z.enum(languages).default("es") });

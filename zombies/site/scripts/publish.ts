@@ -42,10 +42,11 @@ const response = await fetch(`${base}/api/claude/maps/${game}/${map}`, {
   headers: { authorization, "content-type": "application/json" },
   body: JSON.stringify(parsed.data),
 });
-const reply = (await response.json().catch(() => null)) as { version?: number; created?: boolean; error?: string; issues?: string[] } | null;
+const reply = (await response.json().catch(() => null)) as { version?: number; created?: boolean; held?: { waiting: number; answered: number }; error?: string; issues?: string[] } | null;
 if (!response.ok || !reply?.version) {
   console.error(`publish failed: ${response.status} ${reply?.error ?? ""}`);
   for (const issue of reply?.issues ?? []) console.error(issue);
   process.exit(1);
 }
 console.log(`${game}/${map}: version ${reply.version}${reply.created ? "" : ", unchanged"}`);
+if (reply.held?.waiting) console.log(`held questions: ${reply.held.answered} of ${reply.held.waiting} waiting runs answered at once`);

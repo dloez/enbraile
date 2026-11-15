@@ -4,7 +4,7 @@ import type { Bundle, Language } from "../../shared/bundle.js";
 import type { ReplyEvent } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
-import { bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runs, runSteps } from "./schema.js";
+import { bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 const defaultModel = "claude-haiku-5-5";
 const maxTokens = 1024;
@@ -54,6 +54,7 @@ Choosing a hint
 - The full answer only when they clearly ask for the answer, and then with answer: true.
 - On "what now?": if they have mentioned something half done, ask one open question about it, naming only what they mentioned; otherwise give the first hint of a ladder listed as ready.
 - If they ask about something no listed hint covers, call hold with what they asked about: code says a prepared line in your voice and records it, so the missing hint gets written. Never make a hint up, and never answer it in your own words.
+- Questions listed under "Held earlier" are ones you held on before new hints were written. When one of them is still what they need and a listed hint now answers it, give that hint with gap set to its number.
 
 Following their progress
 - A report that they finished something is also the question "what now?": always call record_progress with status done on its ladder, never just congratulate them. Code then says the prepared line about what they achieved and hands over the first hint of something else they can do now, so add no hint of your own and do not repeat either. Pass next with one of the ready ladders when what they said points at it, and quiet: true only when they made clear they already know what they are doing next.
@@ -80,6 +81,7 @@ const tools: Anthropic.Tool[] = [
         ladder: { type: "string", description: "The ladder's handle, such as s1 or s2p1." },
         alt: { type: "integer", minimum: 1, description: "The Alt's number, to give that Alt instead of the hint itself." },
         answer: { type: "boolean", description: "True only when the players clearly asked for the full answer." },
+        gap: { type: "integer", minimum: 1, description: "When this hint answers a question listed under Held earlier, that question's number." },
       },
       required: ["ladder"],
       additionalProperties: false,
@@ -164,7 +166,10 @@ type State = {
   started: Set<string>;
   told: Set<string>;
   headsUps: Set<string>;
+  held: Held[];
 };
+
+type Held = { id: number; number: number; asked: string };
 
 async function loadState(runId: string): Promise<State | null> {
   const [row] = await db
@@ -182,6 +187,11 @@ async function loadState(runId: string): Promise<State | null> {
     .orderBy(deliveries.id);
   const progress = await db.select().from(runSteps).where(eq(runSteps.runId, runId));
   const said = await db.select({ stepId: headsUpsGiven.stepId, position: headsUpsGiven.position }).from(headsUpsGiven).where(eq(headsUpsGiven.runId, runId));
+  const open = await db
+    .select({ id: gaps.id, asked: gaps.asked })
+    .from(gaps)
+    .where(and(eq(gaps.runId, runId), isNull(gaps.answeredAt), sql`coalesce(${gaps.triedVersion}, ${gaps.bundleVersion}) < ${row.version}`))
+    .orderBy(gaps.id);
   const given = new Map<string, number>();
   const givenLines = new Map<string, string[]>();
   for (const entry of rows) {
@@ -203,6 +213,7 @@ async function loadState(runId: string): Promise<State | null> {
     started: new Set(progress.filter((entry) => entry.startedAt).map((entry) => ladderKey(entry.stepId, entry.partId || null))),
     told: new Set(progress.filter((entry) => entry.blockedToldAt).map((entry) => entry.stepId)),
     headsUps: new Set(said.map((entry) => headsUpKey(entry.stepId, entry.position))),
+    held: open.map((entry, index) => ({ id: entry.id, number: index + 1, asked: entry.asked })),
   };
 }
 
@@ -285,6 +296,9 @@ function offers(state: State): string {
   });
   const knownNames = state.bundle.knowledge.filter((entry) => state.known.has(entry.id)).map((entry) => entry.name[lang]);
   const section = (title: string, lines: string[]) => `${title}\n${lines.length ? lines.join("\n") : "- none"}`;
+  const held = state.held.length
+    ? [section("Held earlier, with new hints written since (give one with give_hint and gap set to its number when it now answers the question):", state.held.map((entry) => `- ${entry.number}: they asked ${quote(entry.asked)}`))]
+    : [];
   return [
     `The run's language: ${languageNames[lang]}.`,
     `What the players know: ${knownNames.length ? knownNames.join("; ") : "nothing yet"}.`,
@@ -295,6 +309,7 @@ function offers(state: State): string {
     section("Blocked, not possible yet (say nothing unless they ask about it):", blocked),
     section("Done (never hint these again):", done),
     section("Heads-ups and conditions of the open threads (never say a condition; give a heads-up only with heads_up):", extras),
+    ...held,
   ].join("\n\n");
 }
 
@@ -352,7 +367,7 @@ async function release(runId: string, lease: Date): Promise<void> {
     .where(and(eq(runs.id, runId), eq(runs.coachBusyUntil, lease)));
 }
 
-type Delivered = { ok: true; cardId: number } | { ok: false; reason: string; violation?: string };
+type Delivered = { ok: true; cardId: number; deliveryId: number } | { ok: false; reason: string; violation?: string };
 
 async function deliver(state: State, ladder: Ladder, alt: number | null, answer: boolean, cardId: number | null, askedBy: string | null): Promise<Delivered> {
   const key = ladderKey(ladder.stepId, ladder.partId);
@@ -385,7 +400,7 @@ async function deliver(state: State, ladder: Ladder, alt: number | null, answer:
       card = created!.id;
     }
     const text = line.text[state.language];
-    await tx.insert(deliveries).values({
+    const [delivered] = await tx.insert(deliveries).values({
       runId: state.runId,
       cardId: card,
       stepId: ladder.stepId,
@@ -398,7 +413,7 @@ async function deliver(state: State, ladder: Ladder, alt: number | null, answer:
       reveals: line.reveals,
       bundleVersion: state.version,
       askedBy,
-    });
+    }).returning({ id: deliveries.id });
     const learned = [...new Set([...line.mentions, ...line.reveals])];
     if (learned.length)
       await tx
@@ -408,7 +423,7 @@ async function deliver(state: State, ladder: Ladder, alt: number | null, answer:
     for (const id of learned) state.known.add(id);
     state.given.set(key, index + 1);
     state.givenLines.set(key, [...(state.givenLines.get(key) ?? []), text]);
-    return { ok: true, cardId: card };
+    return { ok: true, cardId: card, deliveryId: delivered!.id };
   });
 }
 
@@ -530,7 +545,7 @@ class Speech {
   }
 }
 
-export type Ask = { kind: "message" } | { kind: "more"; cardId: number };
+export type Ask = { kind: "message" } | { kind: "more"; cardId: number } | { kind: "gap"; gapId: number };
 
 async function hold(state: State, askedBy: string, asked: string, about: string, recent: string[]): Promise<string> {
   const [held] = await db.select({ n: count() }).from(gaps).where(eq(gaps.runId, state.runId));
@@ -552,6 +567,21 @@ async function hold(state: State, askedBy: string, asked: string, about: string,
     },
   });
   return said;
+}
+
+async function answer(gapId: number, deliveryId: number): Promise<void> {
+  await db
+    .update(gaps)
+    .set({ answeredAt: new Date(), answerDeliveryId: deliveryId })
+    .where(and(eq(gaps.id, gapId), isNull(gaps.answeredAt)));
+}
+
+async function noteTried(state: State): Promise<void> {
+  if (!state.held.length) return;
+  await db
+    .update(gaps)
+    .set({ triedVersion: state.version })
+    .where(inArray(gaps.id, state.held.map((entry) => entry.id)));
 }
 
 async function finish(state: State, speech: Speech, cards: number[]): Promise<void> {
@@ -591,12 +621,14 @@ export async function coachTurn(
   try {
     const state = await loadState(runId);
     if (!state) return "notFound";
+    const retried = ask.kind === "gap" ? state.held.find((entry) => entry.id === ask.gapId) : undefined;
+    if (ask.kind === "gap" && !retried) return "notFound";
     let target: { cardId: number; ladder: Ladder } | null = null;
     if (ask.kind === "more") {
       const found = await moreTarget(runId, ask.cardId, state);
       if (!found) return "notFound";
       if (!found.latest || isDone(state, found.ladder) || !hasMore(found.ladder, state.given.get(ladderKey(found.ladder.stepId, found.ladder.partId)) ?? 0)) return "notLatest";
-      const direct = await deliver(state, found.ladder, null, false, ask.cardId, askedBy.discordId);
+      const direct = await deliver(state, found.ladder, null, false, ask.cardId, askedBy.discordId || null);
       if (direct.ok) return "ok";
       target = { cardId: ask.cardId, ladder: found.ladder };
     }
@@ -612,6 +644,11 @@ export async function coachTurn(
       conversation.push({
         role: "user",
         content: `${askedBy.name} pressed More on the card of ladder ${target.ladder.handle}; its next hint cannot be given as it stands.`,
+      });
+    if (retried)
+      conversation.push({
+        role: "user",
+        content: `(Not a player: new hints were written since you held on question ${retried.number} under Held earlier. If one of the hints you may give now answers it, give it with give_hint and gap: ${retried.number}, with at most a few words that you have it now. Otherwise reply with exactly ${silence})`,
       });
     const lastTurn = conversation[conversation.length - 1];
     if (lastTurn?.role !== "user") return "ok";
@@ -637,7 +674,7 @@ export async function coachTurn(
             { type: "text", text: systemPrompt },
             { type: "text", text: offers(state) },
           ],
-          tools,
+          tools: retried ? tools.filter((tool) => tool.name === "give_hint") : tools,
           output_config: { effort: "low" },
           messages: conversation,
         });
@@ -669,7 +706,7 @@ export async function coachTurn(
       const results: Anthropic.ToolResultBlockParam[] = [];
       for (const block of response.content) {
         if (block.type !== "tool_use") continue;
-        const input = (block.input ?? {}) as { ladder?: unknown; alt?: unknown; answer?: unknown; said?: unknown; status?: unknown; next?: unknown; quiet?: unknown; number?: unknown; about?: unknown };
+        const input = (block.input ?? {}) as { ladder?: unknown; alt?: unknown; answer?: unknown; gap?: unknown; said?: unknown; status?: unknown; next?: unknown; quiet?: unknown; number?: unknown; about?: unknown };
         let content: string;
         if (block.name === "give_hint") {
           const ladder = state.ladders.find((entry) => entry.handle === input.ladder);
@@ -696,10 +733,12 @@ export async function coachTurn(
             } else {
               const alt = !blocker && typeof input.alt === "number" && Number.isInteger(input.alt) ? input.alt - 1 : null;
               const sameLadder = target && target.ladder.handle === aimed.handle ? target.cardId : null;
-              const result = await deliver(state, aimed, alt, input.answer === true, sameLadder, askedBy.discordId);
+              const result = await deliver(state, aimed, alt, input.answer === true, sameLadder, askedBy.discordId || null);
               if (result.ok) {
                 hinted = true;
                 if (sameLadder === null) cards.push(result.cardId);
+                const answered = state.held.find((entry) => entry.number === input.gap);
+                if (answered) await answer(answered.id, result.deliveryId);
                 content = "Handed over on the card. Add at most a few words of your own, and never repeat, explain or extend the hint.";
               } else {
                 if (result.violation) violations.push(result.violation);
@@ -735,7 +774,7 @@ export async function coachTurn(
             const chosen = ready.find((entry) => entry.handle === input.next) ?? ready[0];
             if (input.quiet === true || hinted || !chosen) said.push(hinted ? "No other hint in this reply." : "Nothing else handed over.");
             else {
-              const result = await deliver(state, chosen, null, false, null, askedBy.discordId);
+              const result = await deliver(state, chosen, null, false, null, askedBy.discordId || null);
               if (result.ok) {
                 hinted = true;
                 cards.push(result.cardId);
@@ -782,7 +821,8 @@ export async function coachTurn(
             content = `Noted. If they reported finishing or starting something listed, call record_progress now. What you may use now:\n\n${offers(state)}`;
           } else content = "Nothing new to note.";
         } else if (block.name === "hold") {
-          if (hinted) content = "You already handed something over in this reply. Add nothing.";
+          if (retried) content = `Nothing to hold now. Reply with exactly ${silence}`;
+          else if (hinted) content = "You already handed something over in this reply. Add nothing.";
           else {
             hinted = true;
             speech.add(await hold(state, askedBy.discordId, asked, typeof input.about === "string" ? input.about : "", recent));
@@ -806,10 +846,41 @@ export async function coachTurn(
     }
     if (round && hinted) await db.update(runs).set({ roundAskedAt: askedBefore }).where(eq(runs.id, runId));
     else if (round) speech.add(roundQuestion[state.language]);
+    if (!failed) await noteTried(state);
+    if (retried && !cards.length) return "ok";
     await finish(state, speech, cards);
     if (failed && !speech.spoken.length && !cards.length) emit({ type: "failed" });
     return "ok";
   } finally {
     await release(runId, lease);
   }
+}
+
+export async function retryHeld(game: string, map: string): Promise<{ waiting: number; answered: number }> {
+  const result = await db.execute<{ runId: string; gapId: number; askedBy: string | null }>(sql`
+    select g.run_id as "runId", g.id as "gapId", g.asked_by as "askedBy"
+    from ${gaps} g
+    join ${runs} r on r.id = g.run_id
+    join ${maps} m on m.game = r.game and m.map = r.map
+    where r.game = ${game} and r.map = ${map}
+      and g.answered_at is null
+      and coalesce(g.tried_version, g.bundle_version) < m.latest_version
+      and g.id = (select max(x.id) from ${gaps} x where x.run_id = g.run_id)
+      and not exists (select 1 from ${messages} n where n.run_id = g.run_id and n.author = 'member' and n.kind = 'chat' and n.created_at > g.created_at)`);
+  const outcomes = await Promise.all(
+    result.rows.map(async (row) => {
+      const [member] = row.askedBy
+        ? await db
+            .select({ name: runMembers.name })
+            .from(runMembers)
+            .where(and(eq(runMembers.runId, row.runId), eq(runMembers.discordId, row.askedBy)))
+            .orderBy(desc(runMembers.id))
+            .limit(1)
+        : [];
+      await coachTurn(row.runId, { discordId: row.askedBy ?? "", name: member?.name ?? "" }, { kind: "gap", gapId: row.gapId }, () => {}).catch((error) => console.error("gap retry failed", error));
+      const [after] = await db.select({ answeredAt: gaps.answeredAt }).from(gaps).where(eq(gaps.id, row.gapId));
+      return Boolean(after?.answeredAt);
+    }),
+  );
+  return { waiting: outcomes.length, answered: outcomes.filter(Boolean).length };
 }

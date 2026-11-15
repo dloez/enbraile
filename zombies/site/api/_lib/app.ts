@@ -8,7 +8,7 @@ import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
-import { importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
+import { importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 
 const noStore = { "cache-control": "private, no-store" };
@@ -74,7 +74,10 @@ claude.put("/maps/:game/:map", async (c) => {
   const bundle = parsed.data;
   if (bundle.game !== c.req.param("game") || bundle.map !== c.req.param("map")) return c.json({ error: "pathMismatch" }, 400);
   if (bundle.image && !(await hasImage(bundle.image.digest))) return c.json({ error: "missingImage" }, 400, noStore);
-  return c.json(await storeVersion(bundle, "claude"), 200, noStore);
+  const stored = await storeVersion(bundle, "claude");
+  if (!stored.created) return c.json({ ...stored, held: { waiting: 0, answered: 0 } }, 200, noStore);
+  const { retryHeld } = await import("./coach.js");
+  return c.json({ ...stored, held: await retryHeld(bundle.game, bundle.map) }, 200, noStore);
 });
 
 claude.put("/images/:digest", async (c) => {
@@ -100,6 +103,13 @@ claude.post("/runs", async (c) => {
 claude.get("/runs/:id", async (c) => {
   const log = await runLog(c.req.param("id"));
   return log ? c.json(log, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
+});
+
+claude.get("/runs/:id/events", async (c) => {
+  const after = c.req.query("after") ?? "0";
+  if (!/^\d{1,18}$/.test(after)) return c.json({ error: "invalidCursor" }, 400, noStore);
+  const events = await runEvents(c.req.param("id"), after);
+  return events ? c.json(events, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
 });
 
 const images = new Hono();

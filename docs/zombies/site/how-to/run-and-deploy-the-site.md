@@ -75,7 +75,7 @@ It prints the counts of steps, ladders, rungs, Alts and knowledge entries and th
 npm run publish -- test-map
 ```
 
-The path is the map's dir, holding its `bundle.json`, relative to where the command is run; from `zombies/site/` a real map's is `../maps/<game>/<map>/`. When the bundle has an image it uploads that first and prints its size (`already stored` when the site has it); a file changed since `compile` stops it with a request to compile again. It then prints the version stored, or `unchanged` when the bundle equals the latest one, and every schema error when it is rejected. A bundle with an image needs a deployment that has the image route, so a map's first image is published after the code that shows it is in production.
+The path is the map's dir, holding its `bundle.json`, relative to where the command is run; from `zombies/site/` a real map's is `../maps/<game>/<map>/`. When the bundle has an image it uploads that first and prints its size (`already stored` when the site has it); a file changed since `compile` stops it with a request to compile again. It then prints the version stored, or `unchanged` when the bundle equals the latest one, and every schema error when it is rejected. A new version also offers the questions Cari held on in runs that are still waiting for an answer, and `publish` says how many of those runs it answered at once ([The Zombies Site → Cari](../explanation/site.md#cari)). A bundle with an image needs a deployment that has the image route, so a map's first image is published after the code that shows it is in production.
 
 ### 7. Read a run
 
@@ -85,6 +85,14 @@ npm run runs -- <run id>
 ```
 
 The first lists every run with its map, members and counts; the second writes the whole run (its log, gaps, feedback, marks and Claude calls) to `zombies/maps/<game>/<map>/runs/<id>.json`, gitignored, and prints only its counts. Both read `ZOMBIES_URL` and `CLAUDE_TOKEN`, as `publish` does.
+
+To follow a run while it is played:
+
+```sh
+npm run watch -- <run id>
+```
+
+It prints one spoiler-free line per event (a line, a hint, a gap, a revision, a rating, a new version) and keeps every event with its text in `zombies/maps/<game>/<map>/runs/<id>.events.jsonl`, gitignored, until it is stopped. Run it under `Monitor` from Claude Code, as the ee-coach skill's [Watch a run](../../../../.claude/skills/ee-coach/SKILL.md#watch-a-run-from-claude-code) does.
 
 To carry a session coached from the terminal over to the site, write the map dir's gitignored `import.json` from its `session.md` and `knowledge.md` in a subagent ([ee-coach → Move a terminal session to the site](../../../../.claude/skills/ee-coach/SKILL.md#move-a-terminal-session-to-the-site)), then:
 
