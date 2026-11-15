@@ -1,28 +1,5 @@
 # Zombies Coach — Tasks
 
-## Deploy the zombies site to zombies.enbraile.vip
-
-Put the locally built site online: a signed-in member opens `zombies.enbraile.vip` and sees the published test map ([Discovery → Anchor Areas](discovery.md#anchor-areas)).
-
-**Do:**
-- [ ] Neon project `zombies` (Frankfurt) with a `dev` branch for previews; its URLs as `DATABASE_URL` in Production and Preview.
-- [ ] Vercel project `enbraile-zombies` (root `zombies/site`, `fra1`); variables `DATABASE_URL`, `ROOT_URL`, `ZOMBIES_ADMIN_TOKEN` (generated, kept in 1Password; never let the value appear in the conversation or a command line).
-- [ ] `.github/workflows/zombies-site.yml` after `dj-panel.yml`, with the new project's ID.
-- [ ] `zombies.enbraile.vip` as a DNS-only CNAME in the Cloudflare `enbraile.vip` zone, added to the project's domains.
-- [ ] Add `https://zombies.enbraile.vip` to `trustedOrigins` in `home/site/api/_lib/auth.ts`, so sign-in returns to it.
-- [ ] Docs: the deploy section of `docs/zombies/site/how-to/run-and-deploy-the-site.md` (set up production once, deploy, roll back), the hosting paragraph of `docs/zombies/site/explanation/site.md`, and the project list in `docs/general/how-to/deploy-vercel-projects.md` ("three Vercel projects" becomes four).
-- [ ] Publish the test map to production with `ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site` and `home/site`; the workflow's run ends with a deployment URL; `curl -s https://zombies.enbraile.vip/api/maps` answers 401 signed out; a second production publish prints `unchanged`.
-- Human-run: after the first deploy, open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map; the 1Password item holds `ZOMBIES_ADMIN_TOKEN`.
-- Reuse: the workflow `.github/workflows/dj-panel.yml`; [How to Deploy the Vercel Projects](../../general/how-to/deploy-vercel-projects.md); pkmn's production setup in `docs/pkmn/site/how-to/run-and-deploy-the-site.md`.
-- Neighbors: `dj/panel/`, `home/site/`.
-- Forbidden: a connection to pkmn's database; secrets in the repo or printed in the conversation.
-
-**Touches:** `.github/workflows/zombies-site.yml`, `home/site/api/_lib/auth.ts`, `docs/zombies/site/`, `docs/general/how-to/deploy-vercel-projects.md`
-**After:** Build the zombies site locally and publish the test map
-
 ## Start a run and get prepared hints from Cari in a shared chat
 
 Members start or join a run on a map and talk to Cari; Haiku answers through tools, delivering only prepared rungs that code allows ([Discovery → Architecture](discovery.md#architecture)).
@@ -95,6 +72,29 @@ ee-coach's prepare writes the structured data the live coach needs and publishes
 - Forbidden: map content in tracked files; solutions printed in the main conversation.
 
 **Touches:** `.claude/skills/ee-coach/`, `zombies/site/scripts/`, `zombies/site/shared/`
+**After:** Build the zombies site locally and publish the test map
+
+## Deploy the zombies site to zombies.enbraile.vip
+
+Put the locally built site online: a signed-in member opens `zombies.enbraile.vip` and sees the published test map ([Discovery → Anchor Areas](discovery.md#anchor-areas)).
+
+**Do:**
+- [ ] Neon project `zombies` (Frankfurt) with a `dev` branch for previews; its URLs as `DATABASE_URL` in Production and Preview.
+- [ ] Vercel project `enbraile-zombies` (root `zombies/site`, `fra1`); variables `DATABASE_URL`, `ROOT_URL`, `ZOMBIES_ADMIN_TOKEN` (generated, kept in 1Password; never let the value appear in the conversation or a command line).
+- [ ] `.github/workflows/zombies-site.yml` after `dj-panel.yml`, with the new project's ID.
+- [ ] `zombies.enbraile.vip` as a DNS-only CNAME in the Cloudflare `enbraile.vip` zone, added to the project's domains.
+- [ ] Add `https://zombies.enbraile.vip` to `trustedOrigins` in `home/site/api/_lib/auth.ts`, so sign-in returns to it.
+- [ ] Docs: the deploy section of `docs/zombies/site/how-to/run-and-deploy-the-site.md` (set up production once, deploy, roll back), the hosting paragraph of `docs/zombies/site/explanation/site.md`, and the project list in `docs/general/how-to/deploy-vercel-projects.md` ("three Vercel projects" becomes four).
+- [ ] Publish the test map to production with `ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map`.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site` and `home/site`; the workflow's run ends with a deployment URL; `curl -s https://zombies.enbraile.vip/api/maps` answers 401 signed out; a second production publish prints `unchanged`.
+- Human-run: after the first deploy, open `https://zombies.enbraile.vip` signed out (redirects to `enbraile.vip` and back), then signed in, and see the test map; the 1Password item holds `ZOMBIES_ADMIN_TOKEN`.
+- Reuse: the workflow `.github/workflows/dj-panel.yml`; [How to Deploy the Vercel Projects](../../general/how-to/deploy-vercel-projects.md); pkmn's production setup in `docs/pkmn/site/how-to/run-and-deploy-the-site.md`.
+- Neighbors: `dj/panel/`, `home/site/`.
+- Forbidden: a connection to pkmn's database; secrets in the repo or printed in the conversation.
+
+**Touches:** `.github/workflows/zombies-site.yml`, `home/site/api/_lib/auth.ts`, `docs/zombies/site/`, `docs/general/how-to/deploy-vercel-projects.md`
 **After:** Build the zombies site locally and publish the test map
 
 ## Hold on gaps and take REVISION and card feedback
