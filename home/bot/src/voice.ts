@@ -3,6 +3,7 @@ import { client, guild } from "./discord.ts";
 
 export type VoiceEvent = { type: "lost" | "rejoined" | "gone" | "members" | "connected" } | { type: "moved"; channelId: string };
 export type Member = { id: string; name: string; avatar: string | null };
+export type HoldOptions = { listen?: boolean };
 
 const RECOVER_MS = 5_000;
 const READY_MS = 30_000;
@@ -10,7 +11,7 @@ const CHECK_MS = 15_000;
 const REJOIN_ATTEMPTS = 4;
 const SPEECH_LIMIT_MS = 60_000;
 
-const leases = new Set<string>();
+const leases = new Map<string, HoldOptions>();
 const watchers = new Set<(event: VoiceEvent) => void>();
 let connection: VoiceConnection | undefined;
 let channelId = "";
@@ -37,7 +38,7 @@ export const channel = () => channelId || null;
 async function connect(): Promise<void> {
   const server = await guild();
   connection?.destroy();
-  connection = joinVoiceChannel({ guildId: server.id, channelId, adapterCreator: server.voiceAdapterCreator, selfDeaf: false, selfMute: false });
+  connection = joinVoiceChannel({ guildId: server.id, channelId, adapterCreator: server.voiceAdapterCreator, selfDeaf: !listening(), selfMute: false });
   const joined = connection;
   joined.on("error", (error) => console.error("voice", error.message));
   joined.on(VoiceConnectionStatus.Disconnected, () => {
@@ -85,9 +86,16 @@ function disconnect(): void {
   failures = 0;
 }
 
-export async function hold(owner: string, nextChannel: string): Promise<void> {
-  leases.add(owner);
-  if (connection && channelId === nextChannel && connected()) return;
+export const listening = () => [...leases.values()].some((lease) => lease.listen);
+
+function updateDeafness(): void {
+  if (!connection || !channelId || connection.joinConfig.selfDeaf === !listening()) return;
+  connection.rejoin({ channelId, selfDeaf: !listening(), selfMute: false });
+}
+
+export async function hold(owner: string, nextChannel: string, options: HoldOptions = {}): Promise<void> {
+  leases.set(owner, options);
+  if (connection && channelId === nextChannel && connected()) return updateDeafness();
   channelId = nextChannel;
   try {
     await connect();
@@ -104,6 +112,7 @@ export const holding = (owner: string) => leases.has(owner);
 export function release(owner: string): void {
   leases.delete(owner);
   if (!leases.size) disconnect();
+  else updateDeafness();
 }
 
 export function play(player: AudioPlayer): void {

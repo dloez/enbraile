@@ -9,4 +9,4 @@ export * as claude from "./claude.ts";
 export const transcripts = { keep, active, configured };
 export type { Answer, Ask, Tool } from "./claude.ts";
 export * as voice from "./voice.ts";
-export type { Member, VoiceEvent } from "./voice.ts";
+export type { HoldOptions, Member, VoiceEvent } from "./voice.ts";
