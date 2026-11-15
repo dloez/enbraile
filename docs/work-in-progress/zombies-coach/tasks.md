@@ -92,42 +92,74 @@ The watch loop checks each live reply against the rules and Claude can post into
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
 **After:** Watch a run from Claude Code and fix things live
 
-## Ask Cari by voice in the Discord call
+## Add the zombies module to the bot
 
-A `zombies` module in the bot: the site's offer and `/cari` bring Cari into the run's voice channel; «cari …» goes to the site's API as the speaker and the answer is spoken and posted in the chat ([Discovery → Voice](discovery.md#voice)).
+The bot side of asking Cari by voice, split from "Ask Cari by voice in the Discord call" so it can run beside site work (2026-11-15): a `zombies` module in the bot that joins a run's voice channel, hears «cari …» and forwards it to the site as the speaker, and speaks the answer back ([Discovery → Voice](discovery.md#voice)).
 
 **Do:**
-- [ ] `zombies/bot/` module listed in `home/bot/src/modules.ts`: `/cari`, a `/zombies/join` route the site calls, `voice.hold("zombies", channel, { listen: true })`, `hearing.onTrigger("cari", …)`, `hearing.say`.
-- [ ] Site: `POST /api/voice` behind `INTERNAL_SECRET` (Discord ID + text → the speaker's run → reply), the join offer when a member is in a channel; `BOT_URL` and `INTERNAL_SECRET` in Vercel, `INTERNAL_SECRET` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.INTERNAL_SECRET}' | base64 -d | npx vercel env add INTERNAL_SECRET production` (owner, 2026-11-15).
+- [ ] `zombies/bot/` module listed in `home/bot/src/modules.ts`: `/cari`, a `/zombies/join` route the site calls (behind `INTERNAL_SECRET`), `voice.hold("zombies", channel, { listen: true })`, `hearing.onTrigger("cari", …)` sending the speaker's Discord ID and text to the site's `POST /api/voice`, and `hearing.say` with the reply.
 - [ ] Build it into the host as `dj/bot` is: `home/bot/tsconfig.json`'s `include`, the `COPY` lines of `home/bot/Dockerfile`, and the `paths` of `.github/workflows/home-bot.yml`.
-- [ ] Docs: `docs/zombies/bot/explanation/bot.md`, the bot doc's module list.
+- [ ] Docs: `docs/zombies/bot/explanation/bot.md`, its row in `docs/zombies/index.md`, and the module list in `docs/home/bot/explanation/bot.md`.
 
 **Acceptance:**
-- Claude-run: `npm run gate` in `home/bot` and `zombies/site`; a local bot against the local site answers a fake trigger with the run's reply.
-- Human-run: in a call, bring Cari in from the site, say «cari, una pista», hear the hint and see it in the chat; stop the bot and the site still answers typed questions.
+- Claude-run: `npm run gate` in `home/bot`; the bot starts locally with the module loaded and `/cari` registered; `/zombies/join` answers only with `INTERNAL_SECRET`; a fake trigger sends the request the site's `POST /api/voice` will take, seen by a local listener that prints it.
+- Human-run: none until the site part lands.
 - Reuse: `voice.hold`, `hearing.onTrigger`, `hearing.say` (`home/bot/src/sdk.ts`); the DJ's join (`dj/bot/src/player.ts`).
 - Neighbors: `dj/bot/`.
 - Forbidden: Claude calls from the bot; run state in the bot's SQLite.
 
-**Touches:** `zombies/bot/`, `home/bot/src/modules.ts`, `home/bot/tsconfig.json`, `home/bot/Dockerfile`, `.github/workflows/home-bot.yml`, `zombies/site/`, `docs/zombies/`, `docs/home/bot/explanation/bot.md`
+**Touches:** `zombies/bot/`, `home/bot/src/modules.ts`, `home/bot/tsconfig.json`, `home/bot/Dockerfile`, `.github/workflows/home-bot.yml`, `docs/zombies/bot/`, `docs/zombies/index.md`, `docs/home/bot/explanation/bot.md`
+
+## Let modules hear the call's transcript
+
+The host side of keeping a call's transcript, split from "Keep the call's transcript in the run" so it can run beside site work (2026-11-15): modules can subscribe to what the hearing worker transcribes ([Discovery → Voice](discovery.md#voice)).
+
+**Do:**
+- [ ] `hearing.onTranscript(handler)` in the host (`home/bot/src/hearing.ts`, exported in `sdk.ts`), called with each transcript line of a call whose transcripts a module keeps; documented in the bot doc.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `home/bot`; a module subscribed with `onTranscript` receives a transcript line fed through the worker's message path in a local run.
+- Human-run: none.
+- Reuse: `transcripts.keep`, the worker's transcript messages (`home/bot/src/hearing.ts`).
+- Neighbors: `hearing.onTrigger`.
+- Forbidden: transcript text reaching any Claude call.
+
+**Touches:** `home/bot/src/hearing.ts`, `home/bot/src/sdk.ts`, `docs/home/bot/explanation/bot.md`
+
+## Ask Cari by voice in the Discord call
+
+The site side: the site's offer brings Cari into the run's voice channel, and «cari …» heard by the bot's `zombies` module becomes a line in the speaker's run, answered in the chat and spoken back ([Discovery → Voice](discovery.md#voice)).
+
+**Do:**
+- [ ] Site: `POST /api/voice` behind `INTERNAL_SECRET` (Discord ID + text → the speaker's run → reply), and the join offer when a member is in a channel, calling the bot's `/zombies/join`; `BOT_URL` and `INTERNAL_SECRET` in Vercel, `INTERNAL_SECRET` from the cluster's `discord-bot-enbraile` secret; never let the value appear in the conversation or a command line: pipe it as `kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.INTERNAL_SECRET}' | base64 -d | npx vercel env add INTERNAL_SECRET production` (owner, 2026-11-15).
+- [ ] Docs: the voice parts of `docs/zombies/site/explanation/site.md`.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `home/bot` and `zombies/site`; a local bot against the local site answers a fake trigger with the run's reply.
+- Human-run: in a call, bring Cari in from the site, say «cari, una pista», hear the hint and see it in the chat; stop the bot and the site still answers typed questions.
+- Reuse: the module from "Add the zombies module to the bot".
+- Neighbors: `dj/panel/` calling the bot's API.
+- Forbidden: Claude calls from the bot; run state in the bot's SQLite.
+
+**Touches:** `zombies/site/`, `docs/zombies/site/`
+**After:** Add the zombies module to the bot
 
 ## Keep the call's transcript in the run
 
 While Cari is in the call for a run, what is said there goes into the run for the watch loop and debriefs ([Discovery → Voice](discovery.md#voice)).
 
 **Do:**
-- [ ] `hearing.onTranscript(handler)` in the host (`home/bot/src/hearing.ts`, exported in `sdk.ts`), documented in the bot doc.
-- [ ] The module asks `transcripts.keep("zombies", true)` while in a run's call and forwards lines to `POST /api/voice/transcript`; the run stores them; `watch` and the Claude read show them.
+- [ ] The module asks `transcripts.keep("zombies", true)` while in a run's call and forwards lines from `hearing.onTranscript` to `POST /api/voice/transcript`; the run stores them; `watch` and the Claude read show them.
 
 **Acceptance:**
 - Claude-run: `npm run gate` in both; a fake transcript reaches the run in a local pair.
 - Human-run: talk in the call during a run and see the lines in the Claude read, and that the coach model got only the «cari» requests (call log).
-- Reuse: `transcripts.keep`, the worker's transcript messages (`home/bot/src/hearing.ts`).
+- Reuse: `transcripts.keep`, `hearing.onTranscript`.
 - Neighbors: `onTrigger`.
 - Forbidden: transcript text in the coach model's prompt.
 
-**Touches:** `home/bot/src/hearing.ts`, `home/bot/src/sdk.ts`, `zombies/bot/`, `zombies/site/`, `docs/home/bot/explanation/bot.md`, `docs/zombies/`
-**After:** Ask Cari by voice in the Discord call
+**Touches:** `zombies/bot/`, `zombies/site/`, `docs/zombies/`
+**After:** Ask Cari by voice in the Discord call; Let modules hear the call's transcript
 
 ## Show a zone on the map for level-3 hints
 
