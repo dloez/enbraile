@@ -63,6 +63,8 @@ The owner wants the site to feel good to use before the group plays on it (2026-
 - [ ] Walk every built screen (maps, Start a run, join, the run page with Cari's hint slips and "more") through the Playwright MCP at desktop 1440×900 and phone 390×844, with two local members, on a normal and a throttled network.
 - [ ] Each fetch, post and poll has a loading state drawn in the boards' language (no blank screen, no spinner the boards do not use), an empty state, and an error state that says what failed and lets the reader retry.
 - [ ] Nothing weird: no console errors or warnings, no layout shift as data arrives, no flash of signed-out or empty content, no double submit on a slow click, no message duplicated or reordered by the 2 s poll, no scroll jump in the transcript when a line arrives, focus and keyboard order that make sense, touch targets of 44 px, and the phone layout without horizontal scroll.
+- [ ] Take the "Radio log" tag out of the header, leaving the wordmark, the language switch and the name chip (owner, 2026-11-15), and out of the frozen boards in `zombies/site/design/` and the design-system doc's header.
+- [ ] Spacing done properly on every screen at both widths: one spacing scale from the design system, consistent gutters, paddings and gaps between like elements, aligned edges and baselines, nothing cramped or floating; written into the design-system doc where it was not.
 - [ ] Fix what the walk finds in `zombies/site/src/`; a state the boards do not draw follows the design system's tokens and components, and is added to `docs/zombies/site/reference/design-system.md`.
 
 **Acceptance:**
@@ -72,7 +74,7 @@ The owner wants the site to feel good to use before the group plays on it (2026-
 - Neighbors: `pkmn/site/src/` for loading and error states already in the group's apps.
 - Forbidden: new features or screens; changing what a screen does rather than how it feels; step or hint numbers in the UI.
 
-**Touches:** `zombies/site/src/`, `zombies/site/index.html`, `docs/zombies/site/reference/design-system.md`
+**Touches:** `zombies/site/src/`, `zombies/site/index.html`, `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
 **After:** Start a run and get prepared hints from Cari in a shared chat; Point zombies.enbraile.vip at the site and publish the test map
 
 ## Follow progress and threads the way ee-coach does
