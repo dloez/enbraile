@@ -12,7 +12,6 @@ export function switchLang(): void {
 }
 
 const en = {
-  radioLog: "Radio log",
   maps: "Maps",
   onFile: (count: number) => `${count} ${count === 1 ? "map" : "maps"} on file`,
   plan: "Plan",
@@ -52,10 +51,13 @@ const en = {
   writeToCari: "Write to Cari…",
   send: "Send",
   noSuchRun: "— no such run on file —",
+  receiving: "— receiving —",
+  quiet: "— nothing on the log yet —",
+  notSent: "Your line didn't go through.",
+  noAnswer: "Cari didn't answer.",
 };
 
 const es: typeof en = {
-  radioLog: "Registro de radio",
   maps: "Mapas",
   onFile: (count: number) => `${count} ${count === 1 ? "mapa archivado" : "mapas archivados"}`,
   plan: "Plano",
@@ -95,6 +97,10 @@ const es: typeof en = {
   writeToCari: "Escribe a Cari…",
   send: "Enviar",
   noSuchRun: "— no hay ninguna partida así archivada —",
+  receiving: "— recibiendo —",
+  quiet: "— aún no hay nada en el registro —",
+  notSent: "Tu mensaje no ha llegado.",
+  noAnswer: "Cari no ha contestado.",
 };
 
 export const t = lang === "es" ? es : en;

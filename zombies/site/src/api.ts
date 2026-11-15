@@ -15,12 +15,16 @@ export function signIn(): void {
   location.href = `https://enbraile.vip/?return=${encodeURIComponent(location.href)}`;
 }
 
+const callMs = 10000;
+const openMs = 20000;
+
 async function call<T>(path: string, init?: { method: string; body?: unknown }): Promise<T> {
   const response = await fetch(`/api/${path}`, {
     credentials: "include",
     method: init?.method ?? "GET",
     headers: init?.body === undefined ? undefined : { "content-type": "application/json" },
     body: init?.body === undefined ? undefined : JSON.stringify(init.body),
+    signal: AbortSignal.timeout(callMs),
   });
   if (response.status === 401) throw new SignedOut();
   if (!response.ok) throw new Refused(response.status);
@@ -37,12 +41,15 @@ export const joinRun = (id: string) => call<{ id: string }>(`runs/${encodeURICom
 export type Listener = { opened: () => void; heard: (event: ReplyEvent) => void };
 
 async function listen(path: string, body: unknown, listener: Listener): Promise<void> {
+  const opening = new AbortController();
+  const timer = setTimeout(() => opening.abort(), openMs);
   const response = await fetch(`/api/${path}`, {
+    signal: opening.signal,
     credentials: "include",
     method: "POST",
     headers: body === undefined ? undefined : { "content-type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  }).finally(() => clearTimeout(timer));
   if (response.status === 401) throw new SignedOut();
   if (!response.ok || !response.body) throw new Refused(response.status);
   listener.opened();

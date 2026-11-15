@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import type { Member } from "../shared/runs";
 import { t } from "./i18n";
 import { navigate } from "./route";
@@ -72,4 +72,30 @@ export function LeaveNote({ name }: { name: string }) {
       </p>
     </div>
   );
+}
+
+export function useFit<T extends HTMLElement>(text: string) {
+  const ref = useRef<T>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    let width = -1;
+    const fit = () => {
+      if (element.clientWidth === width) return;
+      width = element.clientWidth;
+      element.style.fontSize = "";
+      if (element.scrollWidth <= width) return;
+      const size = parseFloat(getComputedStyle(element).fontSize);
+      element.style.fontSize = `${Math.floor((size * width) / element.scrollWidth)}px`;
+    };
+    fit();
+    void document.fonts.ready.then(() => {
+      width = -1;
+      fit();
+    });
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [text]);
+  return ref;
 }

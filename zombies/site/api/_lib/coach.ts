@@ -421,6 +421,7 @@ export async function coachTurn(
     const cards: number[] = [];
     let hinted = false;
     let round = false;
+    let failed = false;
     const askedBefore = state.roundAskedAt;
     for (let step = 0; step < maxSteps; step++) {
       const started = Date.now();
@@ -445,6 +446,7 @@ export async function coachTurn(
         log.error = error instanceof Error ? error.message : String(error);
         log.latencyMs = Date.now() - started;
         await logCall(runId, log);
+        failed = true;
         break;
       }
       log.latencyMs = Date.now() - started;
@@ -521,6 +523,7 @@ export async function coachTurn(
     if (round && hinted) await db.update(runs).set({ roundAskedAt: askedBefore }).where(eq(runs.id, runId));
     else if (round) speech.add(roundQuestion[state.language]);
     await finish(state, speech, cards);
+    if (failed && !speech.spoken.length && !cards.length) emit({ type: "failed" });
     return "ok";
   } finally {
     await release(runId, lease);

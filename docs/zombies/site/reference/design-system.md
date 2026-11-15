@@ -1,10 +1,10 @@
 # Zombies Site Design System
 
-The visual system of `zombies/site/`: its tokens, type, layout shell, components and recurring patterns. For a screen not built yet the frozen boards in `zombies/site/design/` are the source of truth and this doc describes them; for one that is built the code is, and this doc changes in the same commit as it does, as pkmn's does ([pkmn Site Design System](../../../pkmn/site/reference/design-system.md)). Built so far: the header, the maps page with its run rows and the reader's run, the start-run sheet, the join page, and a run's rail, transcript, composer, dispatch slips and transmitting row (without the voice panel, the revision toggle, the slips' feedback or zones, which come with their features), with the tokens in `src/index.css` and the fonts bundled through `@fontsource`. The rules these screens follow are in [The Zombies Site → Decisions](../explanation/site.md#decisions).
+The visual system of `zombies/site/`: its tokens, type, layout shell, components and recurring patterns. For a screen not built yet the frozen boards in `zombies/site/design/` are the source of truth and this doc describes them; for one that is built the code is, and this doc changes in the same commit as it does, as pkmn's does ([pkmn Site Design System](../../../pkmn/site/reference/design-system.md)). Built so far: the header, the maps page with its run rows and the reader's run, the start-run sheet, the join page, and a run's rail, transcript, composer, dispatch slips and transmitting row (without the voice panel, the revision toggle, the slips' feedback or zones, which come with their features), with their loading, empty and error states, the tokens in `src/index.css` and the fonts bundled through `@fontsource`. The rules these screens follow are in [The Zombies Site → Decisions](../explanation/site.md#decisions).
 
 ## Boards
 
-The look is the group's radio log: a run is a timestamped transcript, a hint is a typed dispatch slip, a level-3 zone is a marked survey sheet. The owner chose it over a first take of dark stencil boards on 2026-11-15 ([The Zombies Site → Decisions](../explanation/site.md#decisions)), and does not review the boards themselves, to see the site as a surprise. They follow the `.dc.html` board format of `pkmn/site/design/`: one fixed-size frame per board, 1440×900 for desktop and 390×844 for a phone. The same boards sit on the "Radio log" page of the Claude design canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) under PascalCase names in `v2/` (`v2/Maps.dc.html`, `v2/RunZonePhone.dc.html`), which the boards' links use; the canvas's "First take" page keeps the replaced boards. They never change; a later revision is drawn on the canvas and copied in again. Their maps (Harrow Station, Saltmarsh Asylum, Kessel Works), people, messages and hint text are made up, the plans are drawn shapes rather than any game's images, and their Google Fonts link stands for the bundled fonts.
+The look is the group's radio log: a run is a timestamped transcript, a hint is a typed dispatch slip, a level-3 zone is a marked survey sheet. The owner chose it over a first take of dark stencil boards on 2026-11-15 ([The Zombies Site → Decisions](../explanation/site.md#decisions)), and does not review the boards themselves, to see the site as a surprise. They follow the `.dc.html` board format of `pkmn/site/design/`: one fixed-size frame per board, 1440×900 for desktop and 390×844 for a phone. The same boards sit on the "Radio log" page of the Claude design canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) under PascalCase names in `v2/` (`v2/Maps.dc.html`, `v2/RunZonePhone.dc.html`), which the boards' links use; the canvas's "First take" page keeps the replaced boards. They never change; a later revision is drawn on the canvas and copied in again. The one exception: the header's "Radio log · enbraile.vip" tag was taken out of the boards here on 2026-11-15 at the owner's word, and the canvas copies still draw it. Their maps (Harrow Station, Saltmarsh Asylum, Kessel Works), people, messages and hint text are made up, the plans are drawn shapes rather than any game's images, and their Google Fonts link stands for the bundled fonts.
 
 | Board | Draws |
 |-------|-------|
@@ -67,12 +67,45 @@ Everything is square. Cards are not boxes but rows parted by rules: 1px `ink` be
 
 ## Layout Shell
 
-- **Header**: `ink`, 48px, cells parted by 1px `ink-rule`: the wordmark (a 9px red square and `ZOMBIES` in condensed 900 26px), the tag "Radio log · enbraile.vip" (desktop only), then at the right the language switch as two cells, `ES` and `EN`, the current one filled `on-ink`, and the reader's name in a filled chip. Inside a run on a phone the wordmark gives way to a back arrow to the maps and the map's name.
+- **Header**: `ink`, 48px, cells parted by 1px `ink-rule`: the wordmark (a 9px red square and `ZOMBIES` in condensed 900 26px), then at the right the language switch as two cells, `ES` and `EN`, the current one filled `on-ink`, and the reader's name in a filled chip. Inside a run on a phone the wordmark gives way to a back arrow to the maps and the map's name, cut with an ellipsis when it does not fit. The switch and the chip appear together once the reader is known (if that lookup fails the switch shows alone, beside the page's own error), and on a phone the wordmark's cell stays blank while a run's link loads, so neither moves or swaps once drawn.
 - **Maps page, desktop**: a 400px column at the left with "N maps on file" and the 128px title, and the reader's run at its foot; the list to its right under a 40px column heading (Plan, Map, Open runs) on a 140px / flexible / 400px grid, ending "End of file · enbraile.vip". Built with a 300px column and narrower grid under 1180px.
 - **Maps page, phone**: the title with "N maps on file" at its right over a rule, the reader's run as an `ink` band, then each map: its label and name with the plan (72px) at the right, its runs below.
 - **A run, desktop**: a 320px `ink` rail at the left (the run's language, the map's name, the members as rows with VOICE beside each one in the call, and the voice panel at its foot) and the transcript to its right: a heading row (Time, From, Transcript · map, the date), rows on a 100px / 128px / up to 700px grid with the newest at the bottom and earlier rows in `mute`, and the composer under them.
 - **A run, phone**: the run's header, a strip of member chips and the language, the voice panel as a 56px `ink` bar, the transcript as rows of time and message, and the composer at the bottom.
 - **Sheets**: Start a run slides in from the right as a 540px `sheet` panel with a 2px `ink` left edge over a `paper` scrim; on a phone a bottom sheet with a 3px `ink` top edge, its buttons stacked with the main one on top. Join a run is a page: the title and plan at the left, a 500px run sheet at the right.
+
+## Spacing
+
+Every padding, margin and gap is a step of one 4px scale, as `--sp-<n>` tokens in `src/index.css`, `<n>` counting fours: `--sp-1` 4px, `--sp-2` 8, `--sp-3` 12, `--sp-4` 16, `--sp-5` 20, `--sp-6` 24, `--sp-7` 28, `--sp-8` 32, `--sp-10` 40, `--sp-12` 48, `--sp-14` 56. The boards' in-between values (10, 14, 18, 22, 26px) are drawn at the nearest multiple of 8. Sizes (heights, widths, a button's minimum) are not spacing and stay in pixels, and so do the few offsets that line a baseline up (a transcript row's time, and its text under the name on a phone) or overlap two borders (stacked language options).
+
+| Where | Desktop | Under 1180px | Phone |
+|-------|---------|--------------|-------|
+| Page edge of a side column or sheet (maps column, join page, run sheet, start-run sheet) | 40px | 40px; the maps column 28px | 16px |
+| From a column's rule to the list or transcript beside it | 48px | 32px list, 24px transcript | 16px |
+| The run's rail | 28px | 24px | — |
+| Between like rows and blocks in a sheet (title, plan, options, note, actions) | 24px | 24px | 16–24px |
+| Inside a control (button sides, chip, slip head) | 16px, 4px, 16px | the same | 16px, 4px, 8px |
+
+## States
+
+Every fetch, post and poll has a loading, an empty and an error state, in the boards' language of italic Courier `mute` lines (the `none` style of "— none open —"):
+
+| State | Where | Shape |
+|-------|-------|-------|
+| Loading | The maps list, a run's link, a transcript's first poll | "— receiving —" (`— recibiendo —`) in the place the content will take; the maps title's count keeps its line while it waits |
+| Empty | The maps list, a map's runs, a transcript | "— no maps on file yet —", "— none open —", "— nothing on the log yet —" (`— aún no hay nada en el registro —`) |
+| Can't load | The maps list, a run's link | "Can't reach the site right now." with an outlined Retry, ending in the 3px `ink` rule; a run that does not exist says "— no such run on file —" with a link to the maps |
+| Trouble in a run | Above the composer, under a 1px `rule` | One line and an outlined Retry: "Can't reach the site right now." while polls fail (Retry polls at once), "Your line didn't go through." when a line was not stored (the line goes back into the composer, Retry sends it), "Cari didn't answer." when her reply failed (Retry sends the line again, or presses More again when the failed reply was a More) |
+| Starting or joining failed | The start-run and join sheets | "Can't reach the site right now." above the actions; the main action works again |
+| Sending | The transcript | The reader's line shows at once in `mute` until the run stores it, then Cari's transmitting row follows |
+
+Each request gives up after 10 seconds (20 for a reply to start streaming), so a hung server reads as an error rather than a page waiting forever. Buttons that post are disabled while their post runs, so a double click sends once. The transcript follows new lines only while the reader is at its foot; scrolled up to read, it stays put.
+
+## Focus and Fit
+
+- **Focus**: a 2px outline in the element's own text colour, 2px out, on keyboard focus only; the composer's field shows only its caret. The start-run sheet takes focus on its chosen language, keeps Tab inside itself, closes on Escape and gives focus back to the button that opened it.
+- **Touch targets**: every control is at least 44px in both directions, "You're in it" included.
+- **Title fit**: the maps title and a map's name in a map row, the reader's run, the start-run sheet, the join page and the run's rail keep their board sizes and shrink, only when needed, until their longest word fits the column; words never break.
 
 ## Components
 

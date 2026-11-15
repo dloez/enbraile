@@ -17,6 +17,17 @@
   --hover: rgba(21, 20, 15, 0.08);
   --sans: "Archivo Variable", system-ui, sans-serif;
   --type: "Courier Prime", ui-monospace, monospace;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 28px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-14: 56px;
 }
 
 * {
@@ -62,6 +73,11 @@ a:hover {
   color: var(--red);
 }
 
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 .cond {
   font-stretch: 62%;
   font-weight: 800;
@@ -91,7 +107,7 @@ a:hover {
 .hd > * {
   display: flex;
   align-items: center;
-  padding: 0 18px;
+  padding: 0 var(--sp-4);
   border-right: 1px solid var(--ink-rule);
 }
 
@@ -108,7 +124,7 @@ a:hover {
 }
 
 .wm {
-  gap: 10px;
+  gap: var(--sp-2);
   text-decoration: none;
   color: var(--on-ink);
 }
@@ -131,15 +147,6 @@ a:hover {
   letter-spacing: 0.02em;
   line-height: 1;
   text-transform: uppercase;
-}
-
-.hd .tag {
-  font-family: var(--type);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--on-ink-mute);
 }
 
 .lg button {
@@ -175,7 +182,7 @@ a:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
   height: 26px;
-  padding: 0 8px;
+  padding: 0 var(--sp-2);
   background: var(--on-ink);
   color: var(--ink);
   font: 700 12px/26px var(--type);
@@ -186,9 +193,9 @@ a:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--sp-2);
   min-height: 44px;
-  padding: 0 18px;
+  padding: 0 var(--sp-4);
   border: 0;
   background: var(--ink);
   color: var(--on-ink);
@@ -242,7 +249,7 @@ a:hover {
   width: 400px;
   flex: none;
   border-right: 1px solid var(--ink);
-  padding: 36px 40px 40px;
+  padding: var(--sp-10) var(--sp-10) var(--sp-10);
   display: flex;
   flex-direction: column;
 }
@@ -256,14 +263,13 @@ a:hover {
   font-size: 128px;
   font-weight: 900;
   line-height: 0.8;
-  margin-top: 14px;
-  overflow-wrap: anywhere;
+  margin-top: var(--sp-4);
 }
 
 .maps-list {
   flex: 1;
   min-width: 0;
-  padding: 20px 48px 0;
+  padding: var(--sp-5) var(--sp-12) 0;
   display: flex;
   flex-direction: column;
 }
@@ -272,7 +278,7 @@ a:hover {
 .mr {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr) 400px;
-  gap: 32px;
+  gap: var(--sp-8);
 }
 
 .colh {
@@ -283,7 +289,7 @@ a:hover {
 
 .mr {
   grid-template-areas: "plan name runs";
-  padding: 22px 0;
+  padding: var(--sp-6) 0;
   border-bottom: 1px solid var(--ink);
   align-items: start;
 }
@@ -312,7 +318,7 @@ a:hover {
 
 .mn h2 {
   font-size: 66px;
-  margin-top: 6px;
+  margin-top: var(--sp-2);
 }
 
 .runs {
@@ -328,18 +334,18 @@ a:hover {
 }
 
 .notice {
-  padding: 22px 0;
+  padding: var(--sp-6) 0;
   border-bottom: 3px solid var(--ink);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--sp-4);
 }
 
 .eof {
   display: flex;
   justify-content: space-between;
-  padding: 12px 0 24px;
+  padding: var(--sp-3) 0 var(--sp-6);
 }
 
 .hd .bk,
@@ -353,7 +359,7 @@ a:hover {
   justify-content: center;
   height: 22px;
   min-width: 30px;
-  padding: 0 5px;
+  padding: 0 var(--sp-1);
   border: 1px solid currentColor;
   font: 700 11px var(--type);
   letter-spacing: 0.06em;
@@ -375,14 +381,14 @@ a:hover {
 .tags {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: var(--sp-1);
 }
 
 .rl {
   display: grid;
   grid-template-columns: 104px minmax(0, 1fr) 38px 112px;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-2);
   min-height: 52px;
   border-top: 1px solid var(--rule);
 }
@@ -400,10 +406,14 @@ a:hover {
 }
 
 .rl .b {
-  padding: 0 14px;
+  padding: 0 var(--sp-4);
 }
 
 .here {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 44px;
   font: 700 12px var(--type);
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -415,16 +425,16 @@ a:hover {
 .act {
   display: flex;
   justify-content: flex-end;
-  padding-top: 10px;
+  padding-top: var(--sp-2);
 }
 
 .yr {
   margin-top: auto;
   border-top: 3px solid var(--ink);
-  padding-top: 14px;
+  padding-top: var(--sp-4);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--sp-4);
 }
 
 .yr h2 {
@@ -433,7 +443,7 @@ a:hover {
 
 .yr-m {
   display: flex;
-  gap: 10px;
+  gap: var(--sp-2);
   align-items: center;
 }
 
@@ -465,7 +475,7 @@ a:hover {
   z-index: 2;
   display: flex;
   flex-direction: column;
-  padding: 28px 40px 40px;
+  padding: var(--sp-7) var(--sp-10) var(--sp-10);
 }
 
 .sheet-top {
@@ -477,15 +487,14 @@ a:hover {
 .sheet-panel h2 {
   font-size: 104px;
   font-weight: 900;
-  margin-top: 10px;
+  margin-top: var(--sp-2);
   line-height: 0.8;
-  overflow-wrap: anywhere;
 }
 
 .sheet-map {
-  margin-top: 22px;
+  margin-top: var(--sp-6);
   border-top: 1px solid var(--ink);
-  padding-top: 12px;
+  padding-top: var(--sp-3);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -512,13 +521,13 @@ a:hover {
 
 .langs {
   border: 0;
-  margin: 26px 0 0;
+  margin: var(--sp-6) 0 0;
   padding: 0;
 }
 
 .langs legend {
   padding: 0;
-  margin-bottom: 10px;
+  margin-bottom: var(--sp-2);
 }
 
 .opt {
@@ -526,7 +535,7 @@ a:hover {
   grid-template-columns: 28px 52px 1fr;
   align-items: center;
   min-height: 64px;
-  padding: 0 18px;
+  padding: 0 var(--sp-4);
   border: 1.5px solid var(--ink);
   cursor: pointer;
   font-size: 20px;
@@ -562,7 +571,7 @@ a:hover {
 }
 
 .note {
-  margin-top: 26px;
+  margin-top: var(--sp-6);
   border: 1px solid var(--ink);
   display: grid;
   grid-template-columns: auto 1fr;
@@ -575,23 +584,23 @@ a:hover {
   font: 700 11px var(--type);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 12px 10px;
+  padding: var(--sp-3) var(--sp-2);
   display: flex;
   align-items: center;
 }
 
 .note p {
-  padding: 12px 14px;
+  padding: var(--sp-3) var(--sp-4);
   font-size: 15px;
   line-height: 1.4;
 }
 
 .sheet-actions {
   margin-top: auto;
-  padding-top: 26px;
+  padding-top: var(--sp-6);
   display: grid;
   grid-template-columns: 1fr 1.6fr;
-  gap: 10px;
+  gap: var(--sp-2);
 }
 
 .sheet-actions .b {
@@ -623,7 +632,7 @@ a:hover {
 .join-main {
   flex: 1;
   min-width: 0;
-  padding: 40px 56px;
+  padding: var(--sp-10);
   display: flex;
   flex-direction: column;
 }
@@ -632,20 +641,19 @@ a:hover {
   display: flex;
   justify-content: space-between;
   border-bottom: 1px solid var(--ink);
-  padding-bottom: 10px;
+  padding-bottom: var(--sp-2);
 }
 
 .join-main h1 {
   font-size: 172px;
   font-weight: 900;
   line-height: 0.8;
-  margin-top: 26px;
-  overflow-wrap: anywhere;
+  margin-top: var(--sp-6);
 }
 
 .join-plan {
   margin-top: auto;
-  padding-top: 26px;
+  padding-top: var(--sp-6);
   border: 0;
   background: transparent;
 }
@@ -662,7 +670,7 @@ a:hover {
   flex: none;
   border-left: 2px solid var(--ink);
   background: var(--sheet);
-  padding: 40px;
+  padding: var(--sp-10);
   display: flex;
   flex-direction: column;
 }
@@ -671,13 +679,13 @@ a:hover {
   display: grid;
   grid-template-columns: 130px 1fr;
   border-top: 1px solid var(--ink);
-  margin: 12px 0 0;
+  margin: var(--sp-3) 0 0;
 }
 
 .dl dt,
 .dl dd {
   margin: 0;
-  padding: 14px 0;
+  padding: var(--sp-4) 0;
   border-bottom: 1px solid var(--rule);
   min-height: 52px;
   display: flex;
@@ -687,16 +695,16 @@ a:hover {
 .dl dd {
   font-size: 17px;
   font-weight: 600;
-  gap: 10px;
+  gap: var(--sp-2);
   flex-wrap: wrap;
 }
 
 .join-actions {
   margin-top: auto;
-  padding-top: 26px;
+  padding-top: var(--sp-6);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-2);
 }
 
 .join-actions .b-red {
@@ -709,7 +717,26 @@ a:hover {
 }
 
 .solo {
-  padding-top: 40px;
+  padding-top: var(--sp-10);
+}
+
+.quiet {
+  padding: var(--sp-3) 0;
+}
+
+.sending .txt {
+  color: var(--mute);
+}
+
+.trouble {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin: 0 var(--sp-12);
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--rule);
 }
 
 .run {
@@ -726,7 +753,7 @@ a:hover {
   color: var(--on-ink);
   display: flex;
   flex-direction: column;
-  padding: 28px 28px 0;
+  padding: var(--sp-7) var(--sp-7) 0;
   overflow-y: auto;
 }
 
@@ -736,17 +763,16 @@ a:hover {
 
 .rail h2 {
   font-size: 76px;
-  margin-top: 12px;
-  overflow-wrap: anywhere;
+  margin-top: var(--sp-3);
 }
 
 .rail-lab {
-  margin-top: 28px;
+  margin-top: var(--sp-7);
 }
 
 .mem {
   list-style: none;
-  margin: 10px 0 28px;
+  margin: var(--sp-2) 0 var(--sp-7);
   padding: 0;
 }
 
@@ -793,17 +819,17 @@ a:hover {
   grid-template-columns: 100px 128px 1fr auto;
   align-items: center;
   border-bottom: 1px solid var(--ink);
-  margin: 0 48px;
+  margin: 0 var(--sp-12);
 }
 
 .rows {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  margin: 0 48px;
+  margin: 0 var(--sp-12);
   display: flex;
   flex-direction: column;
-  padding-bottom: 12px;
+  padding-bottom: var(--sp-3);
 }
 
 .rows > :first-child {
@@ -813,7 +839,7 @@ a:hover {
 .row {
   display: grid;
   grid-template-columns: 100px 128px minmax(0, 700px);
-  padding: 12px 0;
+  padding: var(--sp-3) 0;
   border-top: 1px solid var(--rule);
 }
 
@@ -846,7 +872,7 @@ a:hover {
   color: var(--red);
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--sp-2);
 }
 
 .who-cari::before {
@@ -879,9 +905,9 @@ a:hover {
   display: grid;
   grid-template-columns: 100px 1fr auto;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-2);
   border-top: 2px solid var(--ink);
-  margin: 0 48px;
+  margin: 0 var(--sp-12);
   height: 72px;
 }
 
@@ -917,7 +943,7 @@ a:hover {
   height: 18px;
   background: var(--red);
   vertical-align: -3px;
-  margin-left: 6px;
+  margin-left: var(--sp-2);
   animation: blink 1s steps(1) infinite;
 }
 
@@ -934,7 +960,7 @@ a:hover {
 }
 
 .slip {
-  margin-top: 12px;
+  margin-top: var(--sp-3);
   background: var(--slip);
   border: 1px solid var(--ink);
   max-width: 640px;
@@ -949,7 +975,7 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   height: 32px;
-  padding: 0 14px;
+  padding: 0 var(--sp-4);
   border-bottom: 1px solid var(--ink);
   font: 700 11px var(--type);
   letter-spacing: 0.12em;
@@ -966,7 +992,7 @@ a:hover {
 
 .rung {
   margin: 0;
-  padding: 14px 16px;
+  padding: var(--sp-4) var(--sp-4);
   font: 400 17px/1.5 var(--type);
   overflow-wrap: anywhere;
 }
@@ -978,8 +1004,8 @@ a:hover {
 .rung-old {
   color: var(--mute);
   font-size: 15px;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
 }
 
 .slip-f {
@@ -995,7 +1021,7 @@ a:hover {
 @media (max-width: 1180px) {
   .maps-head {
     width: 300px;
-    padding: 32px 28px;
+    padding: var(--sp-8) var(--sp-7);
   }
 
   .maps-head h1 {
@@ -1003,13 +1029,13 @@ a:hover {
   }
 
   .maps-list {
-    padding: 20px 32px 0;
+    padding: var(--sp-5) var(--sp-8) 0;
   }
 
   .colh,
   .mr {
     grid-template-columns: 120px minmax(0, 1fr) 260px;
-    gap: 24px;
+    gap: var(--sp-6);
   }
 
   .mn h2 {
@@ -1030,7 +1056,7 @@ a:hover {
 
   .rail {
     width: 260px;
-    padding: 24px 22px 0;
+    padding: var(--sp-6) var(--sp-6) 0;
   }
 
   .rail h2 {
@@ -1039,8 +1065,9 @@ a:hover {
 
   .trh,
   .rows,
+  .trouble,
   .cmp {
-    margin: 0 24px;
+    margin: 0 var(--sp-6);
   }
 
   .trh,
@@ -1055,11 +1082,7 @@ a:hover {
 
 @media (max-width: 720px) {
   .hd > * {
-    padding: 0 14px;
-  }
-
-  .hd .tag {
-    display: none;
+    padding: 0 var(--sp-4);
   }
 
   .lg button {
@@ -1068,12 +1091,12 @@ a:hover {
 
   .maps {
     flex-direction: column;
-    padding: 18px 16px 0;
+    padding: var(--sp-4) var(--sp-4) 0;
   }
 
   .maps-head {
     width: auto;
-    padding: 0 0 10px;
+    padding: 0 0 var(--sp-2);
     border-right: 0;
     border-bottom: 1px solid var(--ink);
   }
@@ -1082,7 +1105,7 @@ a:hover {
     flex-direction: row-reverse;
     justify-content: space-between;
     align-items: flex-end;
-    gap: 12px;
+    gap: var(--sp-3);
   }
 
   .yr {
@@ -1093,12 +1116,12 @@ a:hover {
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 10px;
+    gap: var(--sp-2);
     background: var(--ink);
     color: var(--on-ink);
     text-decoration: none;
-    padding: 12px 14px;
-    margin-top: 14px;
+    padding: var(--sp-3) var(--sp-4);
+    margin-top: var(--sp-4);
     min-height: 64px;
   }
 
@@ -1113,15 +1136,19 @@ a:hover {
   .yr-band .cond {
     display: block;
     font-size: 28px;
-    margin-top: 4px;
+    margin-top: var(--sp-1);
   }
 
-  .hd.in-run .wm,
-  .hd.in-run .tag {
+  .hd.in-run .wm {
     display: none;
   }
 
+  .hd.hd-wait .wm {
+    visibility: hidden;
+  }
+
   .hd.in-run .bk {
+    flex: none;
     display: flex;
     padding: 0;
     width: 48px;
@@ -1130,7 +1157,9 @@ a:hover {
   }
 
   .hd.in-run .ttl {
-    display: flex;
+    display: block;
+    line-height: 48px;
+    text-overflow: ellipsis;
     font-stretch: 62%;
     font-weight: 800;
     font-size: 22px;
@@ -1161,12 +1190,12 @@ a:hover {
     width: auto;
     border-left: 0;
     border-top: 3px solid var(--ink);
-    padding: 12px 16px 20px;
+    padding: var(--sp-3) var(--sp-4) var(--sp-5);
   }
 
   .sheet-panel h2 {
     font-size: 64px;
-    margin-top: 4px;
+    margin-top: var(--sp-1);
     line-height: 0.82;
   }
 
@@ -1175,18 +1204,18 @@ a:hover {
   }
 
   .langs {
-    margin-top: 22px;
+    margin-top: var(--sp-6);
   }
 
   .note {
-    margin-top: 18px;
+    margin-top: var(--sp-4);
   }
 
   .sheet-actions {
     display: flex;
     flex-direction: column-reverse;
-    gap: 8px;
-    padding-top: 18px;
+    gap: var(--sp-2);
+    padding-top: var(--sp-4);
   }
 
   .sheet-actions .b-line {
@@ -1195,7 +1224,7 @@ a:hover {
 
   .join {
     flex-direction: column;
-    padding: 18px 16px 20px;
+    padding: var(--sp-4) var(--sp-4) var(--sp-5);
   }
 
   .join-main {
@@ -1204,16 +1233,16 @@ a:hover {
   }
 
   .join-top {
-    padding-bottom: 8px;
+    padding-bottom: var(--sp-2);
   }
 
   .join-main h1 {
     font-size: 80px;
-    margin-top: 16px;
+    margin-top: var(--sp-4);
   }
 
   .join-plan {
-    margin-top: 16px;
+    margin-top: var(--sp-4);
     padding-top: 0;
   }
 
@@ -1231,16 +1260,12 @@ a:hover {
 
   .dl {
     grid-template-columns: 118px 1fr;
-    margin-top: 16px;
-  }
-
-  .note {
-    margin-top: 14px;
+    margin-top: var(--sp-4);
   }
 
   .join-actions {
-    gap: 8px;
-    padding-top: 18px;
+    gap: var(--sp-2);
+    padding-top: var(--sp-4);
   }
 
   .join-actions .b-red {
@@ -1265,9 +1290,9 @@ a:hover {
     flex: none;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--sp-2);
     height: 44px;
-    padding: 0 16px;
+    padding: 0 var(--sp-4);
     border-bottom: 1px solid var(--ink);
   }
 
@@ -1281,13 +1306,22 @@ a:hover {
 
   .rows {
     margin: 0;
-    padding: 0 16px 8px;
+    padding: 0 var(--sp-4) var(--sp-2);
+  }
+
+  .trouble {
+    margin: 0;
+    padding: var(--sp-2) var(--sp-4);
+  }
+
+  .maps-list.solo {
+    padding: var(--sp-6) var(--sp-4) 0;
   }
 
   .row {
     grid-template-columns: 54px minmax(0, 1fr);
     grid-template-areas: "t who" "t msg";
-    padding: 10px 0;
+    padding: var(--sp-2) 0;
   }
 
   .row .t {
@@ -1322,8 +1356,8 @@ a:hover {
   .cmp {
     margin: 0;
     grid-template-columns: 1fr auto;
-    gap: 6px;
-    padding: 0 12px 0 16px;
+    gap: var(--sp-2);
+    padding: 0 var(--sp-4);
     height: 64px;
     background: var(--paper);
   }
@@ -1337,7 +1371,7 @@ a:hover {
   }
 
   .cmp .b {
-    padding: 0 14px;
+    padding: 0 var(--sp-4);
   }
 
   .maps-head h1 {
@@ -1362,13 +1396,13 @@ a:hover {
   .mr {
     grid-template-columns: minmax(0, 1fr) 72px;
     grid-template-areas: "name plan" "runs runs";
-    gap: 6px 12px;
-    padding: 12px 0;
+    gap: var(--sp-2) var(--sp-3);
+    padding: var(--sp-3) 0;
   }
 
   .mn h2 {
     font-size: 34px;
-    margin-top: 4px;
+    margin-top: var(--sp-1);
   }
 
   .none {
@@ -1376,18 +1410,18 @@ a:hover {
   }
 
   .slip {
-    margin-top: 8px;
+    margin-top: var(--sp-2);
   }
 
   .slip-h {
-    padding: 0 10px;
+    padding: 0 var(--sp-2);
     height: 30px;
     font-size: 10px;
   }
 
   .rung {
     font-size: 15px;
-    padding: 11px 12px;
+    padding: var(--sp-3) var(--sp-3);
   }
 
   .rung-old {

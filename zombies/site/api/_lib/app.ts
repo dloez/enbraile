@@ -32,6 +32,7 @@ function reply(runId: string, viewer: Viewer, ask: Ask): Response {
         await coachTurn(runId, viewer, ask, send);
       } catch (error) {
         console.error("coach turn failed", error);
+        send({ type: "failed" });
       }
       send({ type: "done" });
       if (open) controller.close();

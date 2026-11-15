@@ -27,7 +27,7 @@ export type Card = { id: number; rungs: { id: number; text: string }[]; at: stri
 
 export type Transcript = { messages: Message[]; members: Member[]; cards: Card[] };
 
-export type ReplyEvent = { type: "text"; text: string } | { type: "done" };
+export type ReplyEvent = { type: "text"; text: string } | { type: "failed" } | { type: "done" };
 
 export const startRunSchema = z.object({ game: z.string().min(1), map: z.string().min(1), language: z.enum(languages).default("es") });
 

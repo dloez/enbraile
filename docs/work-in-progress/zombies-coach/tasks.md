@@ -1,27 +1,5 @@
 # Zombies Coach — Tasks
 
-## Review the site's frontend for UX, loading states and glitches
-
-The owner wants the site to feel good to use before the group plays on it (2026-11-15): every screen has a proper loading, empty and error state, and nothing odd happens in the browser. Review what is built so far in `zombies/site/src/` against the boards and fix what falls short.
-
-**Do:**
-- [ ] Walk every built screen (maps, Start a run, join, the run page with Cari's hint slips and "more") through the Playwright MCP at desktop 1440×900 and phone 390×844, with two local members, on a normal and a throttled network.
-- [ ] Run the walk against the real Haiku at least once: the coach pass that built Cari ran only against a scripted mock, so whether `COACH_MODEL` accepts the request as sent (`output_config.effort`, refusal details) and how its words read are unchecked. The key comes from an `ANTHROPIC_API_KEY=` line the owner puts in the main tree's gitignored `zombies/site/.env.local`; copy it into the worktree's without printing it, and if it is absent, say so in the report.
-- [ ] Each fetch, post and poll has a loading state drawn in the boards' language (no blank screen, no spinner the boards do not use), an empty state, and an error state that says what failed and lets the reader retry.
-- [ ] Nothing weird: no console errors or warnings, no layout shift as data arrives, no flash of signed-out or empty content, no double submit on a slow click, no message duplicated or reordered by the 2 s poll, no scroll jump in the transcript when a line arrives, focus and keyboard order that make sense, touch targets of 44 px, and the phone layout without horizontal scroll.
-- [ ] Take the "Radio log" tag out of the header, leaving the wordmark, the language switch and the name chip (owner, 2026-11-15), and out of the frozen boards in `zombies/site/design/` and the design-system doc's header.
-- [ ] Spacing done properly on every screen at both widths: one spacing scale from the design system, consistent gutters, paddings and gaps between like elements, aligned edges and baselines, nothing cramped or floating; written into the design-system doc where it was not.
-- [ ] Fix what the walk finds in `zombies/site/src/`; a state the boards do not draw follows the design system's tokens and components, and is added to `docs/zombies/site/reference/design-system.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; the walk above repeated after the fixes with no console error or warning, each screen's loading, empty and error state seen at both widths (the error by stopping the local API), and the report listing every issue found with its fix.
-- Human-run: the owner and a friend use the site on phones on `zombies.enbraile.vip` and nothing feels off.
-- Reuse: the boards in `zombies/site/design/`; `docs/zombies/site/reference/design-system.md`; the `verify-site` skill's way of driving a local stack, as a pattern.
-- Neighbors: `pkmn/site/src/` for loading and error states already in the group's apps.
-- Forbidden: new features or screens; changing what a screen does rather than how it feels; step or hint numbers in the UI.
-
-**Touches:** `zombies/site/src/`, `zombies/site/index.html`, `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
-
 ## Follow progress and threads the way ee-coach does
 
 Progress reports, open threads and the session rules that need run state: `On success` plus an L1 in the same reply, the players' order over the dossier's, `Requires`, optional steps never offered (and the one heads-up once they sink time), blocked threads silent until asked then a ladder at the blocker, part ladders, false-block checks, asking the round now and then, single-use resource heads-ups and retries ([Discovery → Architecture](discovery.md#architecture)).
