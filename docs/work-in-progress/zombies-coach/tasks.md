@@ -19,22 +19,25 @@ After 10 idle minutes a signed-out `/api/maps` on production took 4.0 s to its f
 
 **Touches:** `zombies/site/api/`, `zombies/site/package.json`, `zombies/site/package-lock.json`, `zombies/site/vercel.json`, `home/site/api/`, `home/site/package.json`, `home/site/package-lock.json`, `docs/zombies/site/explanation/site.md`, `docs/home/site/explanation/site.md`
 
-## Continue the Blood of the Dead session on the site
+## Call runs attempts and list a map's attempts
 
-Import the Blood of the Dead terminal session into production so the group continues it on the site, then retire the old workspace ([Discovery → Migration](discovery.md#migration)). The importer landed and the session imported locally (2 members, 23 rungs on 16 cards, 67 marks, 17 steps done, none with a requirement left undone); the gitignored `zombies/maps/bo4/blood-of-the-dead/import.json` is ready.
+The owner is not sold on runs as they show now (2026-11-15): a run is to be called an attempt, opening a map shows the list of its attempts, the ones that beat the easter egg are visually identifiable, and the one being played is easy to see. This also settles the question left by "Make the site's pages load fast", which hid runs nobody is in: a map's view lists every attempt again.
 
 **Do:**
-- [ ] With the owner's yes, run the import against production (`ZOMBIES_URL` the production site), using `import.json` with the players' real names and Discord IDs (the session names neither; the local import used "Jugador 1" and "Jugador 2").
-- [ ] Delete `~/workspace/zombies/` after the owner confirms the run reads right on the site.
+- [ ] Rename runs to attempts everywhere a player sees them: the UI copy in both languages ("attempt" / "intento"), the page URLs (`/attempts/<id>`), and the site docs' vocabulary; the internal tables and code names stay `runs` (the agent's choice, recorded in `docs/zombies/site/explanation/site.md`, so no migration renames data).
+- [ ] The map view lists all its attempts, newest first, each with who played it, its language and when it was last played; the maps list row says how many attempts a map has and how many are beaten.
+- [ ] An attempt is beaten once every required (non-optional) step of the map's bundle is recorded done in `run_steps`; it stays open, since nothing closes an attempt. A beaten attempt carries a distinct mark, and the attempt being played (someone in it; yours first) is highlighted at the top of the list.
+- [ ] Draw the map view's attempts list, the beaten mark and the playing highlight on the canvas [Zombies Site](https://claude.ai/artifact/1C4DeEgm1B7vsMmP4DsXSu) (its "Third take" `Map` and `MapPhone` boards) in the design system's look, freeze them into `zombies/site/design/`, then build them; update `docs/zombies/site/reference/design-system.md`.
+- [ ] Record the owner's decision (attempts, the list, beaten and playing marks) and the beaten rule as dated decisions, replacing "Only runs with someone in them are listed".
 
 **Acceptance:**
-- Human-run: open the imported run, ask for the next hint, and get what the terminal would have given; confirm deleting the old folder.
-- Forbidden: importing into production or deleting the old workspace before the owner's yes.
+- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at desktop and phone width with two local members on the test map: three attempts on one map (one beaten by recording every required step done, one being played, one left), each identifiable at a glance, the played one at the top; no player-facing "run" left (`grep -rniE '\bruns?\b|partida' zombies/site/src` finds only code identifiers).
+- Human-run: the owner opens Blood of the Dead's map view and finds the imported attempt, and later a beaten one, easy to pick out.
+- Reuse: `run_steps` and the bundle's `requires` and `optional`; the map view from the third take.
+- Neighbors: the backlog idea "zombies: the site as the hub of the group's runs", which this moves toward without scoping.
+- Forbidden: closing or ending an attempt; renaming database tables; step or hint numbers, or a count of steps left, in the UI.
 
-**Touches:** `zombies/maps/` (gitignored), `~/workspace/zombies/`
-**Needs the author:**
-- Import the Blood of the Dead session into production now? Give the two players' names and Discord IDs.
-- After opening the imported run and asking for a hint, may `~/workspace/zombies/` be deleted?
+**Touches:** `zombies/site/`, `docs/zombies/`
 
 ## Watch a run from Claude Code and fix things live
 
