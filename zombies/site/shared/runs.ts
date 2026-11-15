@@ -63,3 +63,20 @@ export function asRevision(text: string, flagged: boolean): string | null {
   if (stripped !== text.trim()) return stripped;
   return flagged ? text.trim() : null;
 }
+
+const handle = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+
+export const runImportSchema = z.object({
+  game: handle,
+  map: handle,
+  language: z.enum(languages).default("es"),
+  members: z.array(z.object({ discordId: z.string().min(1), name: z.string().trim().min(1) })).min(1),
+  known: z.array(handle).default([]),
+  deliveries: z
+    .array(z.object({ step: handle, part: handle.nullable().default(null), rung: z.number().int().min(0), alt: z.number().int().min(0).nullable().default(null), askedBy: z.string().min(1).nullable().default(null) }))
+    .default([]),
+  steps: z.array(z.object({ step: handle, part: handle.nullable().default(null), started: z.boolean().default(false), done: z.boolean().default(false), blockedTold: z.boolean().default(false) })).default([]),
+  headsUps: z.array(z.object({ step: handle, position: z.number().int().min(0) })).default([]),
+});
+
+export type RunImport = z.infer<typeof runImportSchema>;

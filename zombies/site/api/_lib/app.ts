@@ -1,11 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { asRevision, messageSchema, ratingSchema, startRunSchema, type ReplyEvent } from "../../shared/runs.js";
+import { asRevision, messageSchema, ratingSchema, runImportSchema, startRunSchema, type ReplyEvent } from "../../shared/runs.js";
 import { coachTurn, type Ask } from "./coach.js";
 import { requireEnv } from "./env.js";
 import { storeVersion } from "./maps.js";
-import { isActiveMember, joinRun, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
+import { importRun, isActiveMember, joinRun, mapsPage, postMessage, postRevision, rateCard, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 
 const noStore = { "cache-control": "private, no-store" };
@@ -68,6 +68,14 @@ claude.put("/maps/:game/:map", async (c) => {
 });
 
 claude.get("/runs", async (c) => c.json({ runs: await runList() }, 200, noStore));
+
+claude.post("/runs", async (c) => {
+  const parsed = runImportSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidImport", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) }, 400, noStore);
+  const imported = await importRun(parsed.data);
+  if ("error" in imported) return c.json(imported, imported.error === "noSuchMap" ? 404 : 400, noStore);
+  return c.json(imported, 201, noStore);
+});
 
 claude.get("/runs/:id", async (c) => {
   const log = await runLog(c.req.param("id"));

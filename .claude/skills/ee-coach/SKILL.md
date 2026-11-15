@@ -13,6 +13,7 @@ Which phase are you in?
 
 - Players named a map and no `zombies/maps/<game>/<map>/dossier.md` exists → **Prepare**
 - Dossier exists and players are playing or about to → **Session**
+- A session from here is to continue on the site → **Move a terminal session to the site**
 - Run ended or players comment on hint quality → **Debrief**
 
 Always read `zombies/CLAUDE.md` and `zombies/calibration.md` first, and the map's own `calibration.md` once the map is known. They record the standing rules, how this group likes its hints, and the hint wording examples from that map. Map files live in `zombies/maps/<game>/<map>/`, which is gitignored: nothing about any map goes into a tracked file.
@@ -95,6 +96,16 @@ Then stop. They know they can say `more`.
 **If what they describe doesn't match the dossier**, don't force it. Ask what they see. Guides get things wrong and patches change steps. Note the mismatch in `session.md`.
 
 **Keep `session.md` current** as you go: current step, hints given (level and wording), and any reaction ("too easy", "didn't get it", solved right after). A dropped session can be picked up from this file, and it is the raw material for the debrief.
+
+## Move a terminal session to the site
+
+To continue on `zombies.enbraile.vip` a session coached here, the map's bundle must be published and its improvised hints folded into the hints first (debrief below), since only prepared rungs can be imported. Then, in a subagent, since it reads the session and the bundle:
+
+1. Read `session.md`, `knowledge.md` and `bundle.json` in the map dir, and write `import.json` beside them in the shape `POST /api/claude/runs` takes ([The Zombies Site](../../../docs/zombies/site/explanation/site.md#map-bundles); the schema is `runImportSchema` in `zombies/site/shared/runs.ts`): `game`, `map`, `language`, `members` (each `{ "name" }` as the session names the players, the one who started first), `known` (every knowledge ID marked `known` or `revealed`), `deliveries` in the order given (`step` and `part` as bundle IDs, `rung` from 0 for level 1, `alt` as the index of the `Alt` used, `askedBy` left out), `steps` (each step or part `started`, `done` or `blockedTold` in the session's open threads) and `headsUps` (each prepared heads-up said, by step and position).
+2. From `zombies/site/`, `npm run import -- ../maps/<game>/<map> <name>=<discord id> ...`, with every member's Discord ID ([How to Run and Deploy the Site → Read a run](../../../docs/zombies/site/how-to/run-and-deploy-the-site.md#7-read-a-run)). Its issues name IDs and positions only; fix each and run it again.
+3. `npm run runs -- <id>` and compare the run's file with `session.md` and `knowledge.md`: the marks with what is known or revealed, the rungs with the hints given, the progress with the open threads.
+
+Report counts only: rungs imported, marks, steps, and anything in the session no rung or entry matched. The old terminal session is not deleted until the owner has opened the run and confirmed it reads right.
 
 ## Debrief (after the run or on feedback)
 

@@ -86,6 +86,14 @@ npm run runs -- <run id>
 
 The first lists every run with its map, members and counts; the second writes the whole run (its log, gaps, feedback, marks and Claude calls) to `zombies/maps/<game>/<map>/runs/<id>.json`, gitignored, and prints only its counts. Both read `ZOMBIES_URL` and `CLAUDE_TOKEN`, as `publish` does.
 
+To carry a session coached from the terminal over to the site, write the map dir's gitignored `import.json` from its `session.md` and `knowledge.md` in a subagent ([ee-coach → Move a terminal session to the site](../../../../.claude/skills/ee-coach/SKILL.md#move-a-terminal-session-to-the-site)), then:
+
+```sh
+npm run import -- ../maps/<game>/<map> <name>=<discord id> ...
+```
+
+Each member named in the file needs a Discord ID, from the file or from a `<name>=<discord id>` argument, which wins. It prints the new run's ID and counts only; check the run with `npm run runs -- <id>`.
+
 ### 8. Run the gate
 
 ```sh

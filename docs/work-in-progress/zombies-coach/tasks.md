@@ -22,20 +22,20 @@ The owner finds the maps page slow to load (2026-11-15). A load asks `/api/me` a
 
 ## Continue the Blood of the Dead session on the site
 
-Import the terminal session into a run so the group continues it on the site, then retire the old workspace ([Discovery → Migration](discovery.md#migration)).
+Import the Blood of the Dead terminal session into production so the group continues it on the site, then retire the old workspace ([Discovery → Migration](discovery.md#migration)). The importer landed and the session imported locally (2 members, 23 rungs on 16 cards, 67 marks, 17 steps done, none with a requirement left undone); the gitignored `zombies/maps/bo4/blood-of-the-dead/import.json` is ready.
 
 **Do:**
-- [ ] A Claude import of a run from a map's `session.md` and `knowledge.md` (members, marks, hints given, open threads), in a subagent.
+- [ ] With the owner's yes, run the import against production (`ZOMBIES_URL` the production site), using `import.json` with the players' real names and Discord IDs (the session names neither; the local import used "Jugador 1" and "Jugador 2").
 - [ ] Delete `~/workspace/zombies/` after the owner confirms the run reads right on the site.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; the imported run's revealed marks and hint log match `session.md` and `knowledge.md` (checked in a subagent, reporting counts only).
 - Human-run: open the imported run, ask for the next hint, and get what the terminal would have given; confirm deleting the old folder.
-- Reuse: the Claude API and bundle of earlier entries.
-- Neighbors: the publish script.
-- Forbidden: deleting the old workspace before the owner's yes.
+- Forbidden: importing into production or deleting the old workspace before the owner's yes.
 
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
+**Touches:** `zombies/maps/` (gitignored), `~/workspace/zombies/`
+**Needs the author:**
+- Import the Blood of the Dead session into production now? Give the two players' names and Discord IDs.
+- After opening the imported run and asking for a hint, may `~/workspace/zombies/` be deleted?
 
 ## Watch a run from Claude Code and fix things live
 
@@ -54,7 +54,6 @@ A `watch` stream on the Claude API and a skill section so Claude follows a run w
 - Forbidden: solutions or rung text printed in the main conversation.
 
 **Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
-**After:** Continue the Blood of the Dead session on the site
 
 ## Audit every reply and step in as Cari
 

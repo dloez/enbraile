@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "publish": "tsx --env-file-if-exists=.env.local scripts/publish.ts",
     "compile": "tsx scripts/compile.ts",
-    "runs": "tsx --env-file-if-exists=.env.local scripts/runs.ts"
+    "runs": "tsx --env-file-if-exists=.env.local scripts/runs.ts",
+    "import": "tsx --env-file-if-exists=.env.local scripts/import.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.3.0",

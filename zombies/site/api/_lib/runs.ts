@@ -1,10 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Card, MapsPage, Member, Message, OpenRun, Rating, RunSheet, Transcript } from "../../shared/runs.js";
+import type { Card, MapsPage, Member, Message, OpenRun, Rating, RunImport, RunSheet, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
-import { hasMore, ladderKey, laddersOf } from "./ladders.js";
+import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
 import { bundleVersions, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -378,4 +378,112 @@ export async function runLog(runId: string) {
     headsUps: strip(headsUps),
     calls: strip(calls),
   };
+}
+
+const carriedOver: Record<Language, string> = { es: "De la sesión anterior.", en: "From the last session." };
+
+export type Imported = { id: string; counts: Record<string, number> } | { error: string; issues: string[] };
+
+export async function importRun(input: RunImport): Promise<Imported> {
+  return db.transaction(async (tx) => {
+    const [version] = await tx.select({ version: maps.latestVersion }).from(maps).where(and(eq(maps.game, input.game), eq(maps.map, input.map)));
+    const bundle = await latestBundle(tx, input.game, input.map);
+    if (!bundle || !version) return { error: "noSuchMap", issues: [] };
+    const issues: string[] = [];
+    const entries = new Set(bundle.knowledge.map((entry) => entry.id));
+    for (const id of input.known) if (!entries.has(id)) issues.push(`known: ${id} names no knowledge entry`);
+    const ladders = new Map(laddersOf(bundle.steps).map((ladder) => [ladderKey(ladder.stepId, ladder.partId), ladder]));
+    const ids = new Set(input.members.map((member) => member.discordId));
+    if (ids.size !== input.members.length) issues.push("members: a Discord ID is listed twice");
+    const reached = new Map<string, number>();
+    input.deliveries.forEach((entry, index) => {
+      const key = ladderKey(entry.step, entry.part);
+      const ladder = ladders.get(key);
+      const rung = ladder?.rungs[entry.rung];
+      if (!ladder) issues.push(`deliveries.${index}: ${key} names no ladder`);
+      else if (!rung) issues.push(`deliveries.${index}: ${key} has no rung ${entry.rung}`);
+      else if (!lineAt(rung, entry.alt)) issues.push(`deliveries.${index}: ${key} rung ${entry.rung} has no alt ${entry.alt}`);
+      if ((reached.get(key) ?? -1) >= entry.rung) issues.push(`deliveries.${index}: ${key} rung ${entry.rung} comes after a later rung of its ladder`);
+      reached.set(key, Math.max(reached.get(key) ?? -1, entry.rung));
+      if (entry.askedBy !== null && !ids.has(entry.askedBy)) issues.push(`deliveries.${index}: askedBy is not a member`);
+    });
+    input.steps.forEach((entry, index) => {
+      if (!ladders.has(ladderKey(entry.step, entry.part))) issues.push(`steps.${index}: ${ladderKey(entry.step, entry.part)} names no ladder`);
+    });
+    input.headsUps.forEach((entry, index) => {
+      if (!bundle.steps.find((step) => step.id === entry.step)?.headsUps[entry.position]) issues.push(`headsUps.${index}: ${entry.step} has no heads-up ${entry.position}`);
+    });
+    if (issues.length) return { error: "invalidImport", issues };
+
+    const id = randomBytes(6).toString("base64url");
+    const [starter] = input.members;
+    await tx.insert(runs).values({ id, game: input.game, map: input.map, language: input.language, startedBy: starter!.discordId, startedByName: starter!.name });
+    for (const member of input.members) {
+      await lockPerson(tx, member.discordId);
+      await leaveCurrent(tx, member.discordId);
+      await addMember(tx, id, { discordId: member.discordId, name: member.name, image: null });
+    }
+    const learned = new Set([...bundle.knowledge.filter((entry) => entry.mark === "known").map((entry) => entry.id), ...input.known]);
+    const cards = new Map<string, number>();
+    for (const entry of input.deliveries) {
+      const key = ladderKey(entry.step, entry.part);
+      let card = cards.get(key);
+      if (card === undefined) {
+        const [message] = await tx.insert(messages).values({ runId: id, author: "cari", name: "Cari", text: carriedOver[input.language] }).returning({ id: messages.id });
+        const [created] = await tx.insert(hintCards).values({ runId: id, messageId: message!.id, stepId: entry.step, partId: entry.part }).returning({ id: hintCards.id });
+        card = created!.id;
+        cards.set(key, card);
+      }
+      const rung = ladders.get(key)!.rungs[entry.rung]!;
+      const line = lineAt(rung, entry.alt)!;
+      await tx.insert(deliveries).values({
+        runId: id,
+        cardId: card,
+        stepId: entry.step,
+        partId: entry.part,
+        rung: entry.rung,
+        alt: entry.alt,
+        level: rung.level,
+        text: line.text[input.language],
+        mentions: line.mentions,
+        reveals: line.reveals,
+        bundleVersion: version.version,
+        askedBy: entry.askedBy,
+      });
+      for (const known of [...line.mentions, ...line.reveals]) learned.add(known);
+    }
+    if (learned.size) await tx.insert(runKnowledge).values([...learned].map((knowledgeId) => ({ runId: id, knowledgeId })));
+    const now = new Date();
+    const progress = new Map<string, { stepId: string; partId: string; startedAt: Date | null; doneAt: Date | null; blockedToldAt: Date | null }>();
+    const rowOf = (stepId: string, partId: string | null) => {
+      const key = ladderKey(stepId, partId);
+      const row = progress.get(key) ?? { stepId, partId: partId ?? "", startedAt: null, doneAt: null, blockedToldAt: null };
+      progress.set(key, row);
+      return row;
+    };
+    for (const entry of input.steps) {
+      const row = rowOf(entry.step, entry.part);
+      if (entry.started) row.startedAt = now;
+      if (entry.blockedTold) row.blockedToldAt = now;
+      if (!entry.done) continue;
+      if (entry.part) row.doneAt = now;
+      else for (const stepId of withRequires(bundle.steps, entry.step)) rowOf(stepId, null).doneAt = now;
+    }
+    if (progress.size) await tx.insert(runSteps).values([...progress.values()].map((row) => ({ runId: id, ...row })));
+    const headsUps = [...new Map(input.headsUps.map((entry) => [`${entry.step}/${entry.position}`, entry])).values()];
+    if (headsUps.length)
+      await tx.insert(headsUpsGiven).values(
+        headsUps.map((entry) => ({
+          runId: id,
+          stepId: entry.step,
+          position: entry.position,
+          text: bundle.steps.find((step) => step.id === entry.step)!.headsUps[entry.position]!.text[input.language],
+          bundleVersion: version.version,
+        })),
+      );
+    return {
+      id,
+      counts: { members: input.members.length, known: learned.size, cards: cards.size, deliveries: input.deliveries.length, steps: progress.size, headsUps: headsUps.length },
+    };
+  });
 }
