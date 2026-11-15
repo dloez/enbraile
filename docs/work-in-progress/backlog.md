@@ -141,6 +141,27 @@ The Accounts section of [The pkmn Site](../pkmn/site/explanation/site.md#account
 
 **Touches:** `pkmn/site/src/league/eggs.tsx`, `pkmn/site/src/components/trainer-admin.tsx`
 
+### home/voice: configurable voices, with Castilian Chatterbox and a Richtofen voice
+
+The owner wants the voice worker's voices configurable (2026-11-16): an allow-list of enabled voices, loading only those (the owner games on this PC, so GPU memory matters), and a default; modules may pick one. Piper stays. In a call the owner compared Piper, Kokoro and Pocket TTS (robotic or flat) against Chatterbox Multilingual (clearly the best general voice, but Mexican Spanish; Resemble's Spain finetune fixes it). Zero-shot cloning of Richtofen (Chatterbox, RVC) failed on intonation; XTTS-v2 fine-tuned on about 2 h of his BO3 Castilian dub lines, extracted from the owner's own install, is "wayyyy better" (owner), and its first round is final (a second plateaued and dropped words). Research by another session, 2026-11-15/16, nothing committed.
+
+**Do:**
+- [ ] Voices configured in the worker (`home/voice/`): an allow-list and a default from the environment; only enabled voices load and warm up at start; the worker lists what it has. How a module picks one is the build's choice (e.g. `hearing.say(text, { voice })` with the worker's default as fallback), recorded as a dated decision and documented in the bot doc if `say` changes.
+- [ ] Chatterbox, Spain Spanish (no reference clip): `chatterbox-tts`, `chatterbox.mtl_tts.ChatterboxMultilingualTTS.from_local(dir, "cuda")`, `generate(text, language_id="es", audio_prompt_path=None, exaggeration=…, cfg_weight=…)` at `model.sr` (24 kHz). Build the local dir from `ResembleAI/chatterbox` (`ve.pt`, `conds.pt`, `s3gen.pt`, `Cangjie5_TC.json`) and `ResembleAI/Chatterbox-Multilingual-es-es` (MIT; `t3_es_es.safetensors` saved or linked as `t3_mtl23ls_v2.safetensors`, and `grapheme_mtl_merged_expanded_v1.json`); not its `s3gen_v3.pt`, which fails to load into the current S3Gen (`S3Token2Wav` state_dict error), while the base `s3gen.pt` keeps the accent (it lives in T3). Two presets the owner heard: default (exaggeration 0.5, cfg_weight 0.5) and expressive (0.8, 0.3).
+- [ ] Richtofen (fine-tuned XTTS-v2, `coqui-tts`): the bundle `/home/david/voice-lab/models/richtofen/` (`model.pth` 2.0 GB inference-only, `config.json` with training paths cleared, `vocab.json`, `refs/ref1..ref8.wav`), kept out of git (game-derived, XTTS CPML non-commercial): copied into a gitignored data dir or pointed at by an env var. Load with `XttsConfig().load_json`, `Xtts(cfg).load_checkpoint(cfg, checkpoint_path=…, vocab_path=…, use_deepspeed=False)`, `.cuda()`; conditioning once at start, `get_conditioning_latents(audio_path=[the 8 refs], gpt_cond_len=30, max_ref_length=60)`; speak with `inference(text, "es", lat, spk, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0)`, `o["wav"]` at 24 kHz. Those settings are the owner's pick of four.
+- [ ] Its known weakness, dropped or garbled words on long sentences: split replies into sentences, or check with the already-loaded Whisper and regenerate; the build's choice, recorded.
+- [ ] Environment: torch and torchaudio as CUDA 12.8 builds (`--index-url https://download.pytorch.org/whl/cu128`) for the RTX 5090; Chatterbox needs a warm-up (first call 12–20 s); write audio with `soundfile` (torchaudio.save wanted torchcodec); `coqui-tts[codec]` 0.28.0 plus `six`, torchcodec from the CPU index. Both ran on Python 3.11, untested on 3.13; `chatterbox-tts` and `coqui-tts` pin different torch/transformers, so check they fit one env or isolate them.
+- [ ] Docs: `docs/home/voice/explanation/voice.md` (How It Works, Measurements, and Decisions replacing "Piper with es_ES-davefx-medium", dated 2026-11-16, owner's choices marked as the owner's), the voice how-to (env vars, model downloads, the Richtofen bundle as a manual step), and a short how-to for remaking the Richtofen model from `~/voice-lab/scripts` and `pipeline.sh` (BO3 `zone/snd/es/*.sabs` FLAC extraction, speaker clustering, Whisper transcripts, XTTS fine-tune).
+
+**Acceptance:**
+- Claude-run: `uv run python -m py_compile worker.py` in `home/voice/` and `npm run gate` in `home/bot/`; the worker starts with only the enabled voices loaded (VRAM read back) and speaks one sentence in each enabled voice to a file; measured per-sentence warm time and peak VRAM recorded (earlier: Chatterbox 2.6–4.5 s, about 4.2 GB; Richtofen 1.6–2.7 s, about 2 GB).
+- Human-run: in a call, the owner hears each enabled voice, and a module's chosen voice.
+- Reuse: the worker's Piper path and Whisper warm-up (`home/voice/worker.py`); `hearing.say` (`home/bot/src/hearing.ts`).
+- Neighbors: `home/bot/src/sdk.ts`.
+- Forbidden: the Richtofen model, its refs or any game audio in git; loading a voice that is not enabled.
+
+**Touches:** `home/voice/`, `home/bot/src/hearing.ts`, `home/bot/src/sdk.ts`, `docs/home/voice/`, `docs/home/bot/explanation/bot.md`
+
 ## Ideas
 
 ### pkmn/site: a private Showdown tied to the site
