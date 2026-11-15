@@ -18,6 +18,7 @@ The owner found the radio-log site's flow awkward and its UI clumsy and hard to 
 - Forbidden: step or hint numbers in the UI; a way to end a run; real map content or any game's art in a board; dropping a state the UX review added.
 
 **Touches:** `zombies/site/design/`, `zombies/site/src/`, `zombies/site/index.html`, `zombies/site/package.json`, `zombies/site/package-lock.json`, `docs/zombies/site/`
+**Attempted once:** 2026-11-15, built and kept on branch `wq/rebuild-third-take` (commit `2806c7f`: boards frozen, map view, Your run pill, Copy link, dark restyle with every state kept, docs; the four tap counts checked in the browser), but its third validation failed on two defects: five phone rules keep their desktop step instead of rounding the phone board's in-between value to the nearest 8 as both docs say (the language option's gap, the join view's member-list margin, the Your run pill's padding, Join on an open-run row, the slip's top margin; `zombies/site/src/index.css` near lines 616, 667, 718/1334, 940, 1128); and the join view's phone title uses the map view's 52px and 12px top where `join-run-phone.dc.html` draws 56px and 24px, so `design-system.md` lines 58 and 103 are untrue. The next pass restores the branch, fixes both, and validates.
 
 ## Hold on gaps and take REVISION and card feedback
 
