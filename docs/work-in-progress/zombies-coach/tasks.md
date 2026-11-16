@@ -99,6 +99,7 @@ The owner wants Cari's words to sound like the voice saying them, at least for c
 **Do:**
 - [ ] A character per voice, kept beside the voice's settings: a short style brief for the coach's system prompt (for Richtofen: his manic, theatrical manner, in Castilian, as heard in the BO3 dub) and that voice's own wording of every fixed line in both languages; the plain voices keep today's Cari.
 - [ ] Which voice an attempt speaks with is chosen when starting it, beside the language, and can be changed in the attempt (the agent's choice, recorded as a dated decision); the coach prompt and the fixed lines follow it, and the voice reply asks the worker for it through `hearing.say`'s voice option.
+- [ ] The coach takes the name of the attempt's voice (owner, 2026-11-16): "Richtofen" when it is Richtofen, everywhere a player sees the coach's name (the chat's author, the slip header, the voice panel, the system prompt's name for itself); the plain voices keep "Cari". The wake word follows the name ("richtofen, …") with «cari» kept as an alias (the agent's choice, recorded), through the module's `hearing.onTrigger` words.
 - [ ] The audit and the sentence filters still apply unchanged: a character never names an unknown, shows a number or carries brackets.
 - [ ] Docs: the character in `docs/zombies/site/explanation/site.md` (Cari) and the voice choice in the design-system doc.
 
@@ -109,7 +110,7 @@ The owner wants Cari's words to sound like the voice saying them, at least for c
 - Neighbors: the voices task in the backlog.
 - Forbidden: the model writing or restyling hint text; a character that bypasses the audit or the knowledge marks.
 
-**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`
+**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`, `.claude/skills/ee-coach/`
 
 ## Decide whether hints get each voice's own wording
 
