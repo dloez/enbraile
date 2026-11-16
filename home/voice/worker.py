@@ -17,15 +17,15 @@ import nvidia.cublas
 import nvidia.cudnn
 
 for lib_dir in (nvidia.cublas.__path__[0], nvidia.cudnn.__path__[0]):
-    for so in sorted(glob.glob(f"{lib_dir}/lib/*.so*")):
+    for so in sorted(set(glob.glob(f"{lib_dir}/lib/*.so*")) - set(glob.glob(f"{lib_dir}/lib/libnvblas*"))):
         try:
             ctypes.CDLL(so, mode=ctypes.RTLD_GLOBAL)
         except OSError:
             pass
 
 import numpy as np  # noqa: E402
+import soundfile as sf  # noqa: E402
 from faster_whisper import WhisperModel  # noqa: E402
-from piper import PiperVoice  # noqa: E402
 from websockets.asyncio.client import connect  # noqa: E402
 from websockets.exceptions import ConnectionClosed  # noqa: E402
 
@@ -33,9 +33,19 @@ BOT_URL = os.environ["BOT_URL"].rstrip("/").replace("https://", "wss://").replac
 SECRET = os.environ["INTERNAL_SECRET"]
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "large-v3")
 LANGUAGE = os.environ.get("LANGUAGE", "es")
-VOICE = os.environ.get("VOICE", "es_ES-davefx-medium")
+PIPER_VOICE = os.environ.get("PIPER_VOICE", "es_ES-davefx-medium")
 DATA = Path(os.environ.get("DATA_DIR", Path(__file__).parent / "data"))
+RICHTOFEN_DIR = Path(os.environ.get("RICHTOFEN_DIR", DATA / "richtofen"))
+VOICES = [name.strip() for name in os.environ.get("VOICES", "piper").split(",") if name.strip()]
+DEFAULT_VOICE = os.environ.get("DEFAULT_VOICE", VOICES[0] if VOICES else "")
 FOLLOW_UP_S = 8
+CHATTERBOX_PRESETS = {"chatterbox": (0.5, 0.5), "chatterbox-expressive": (0.8, 0.3)}
+CHATTERBOX_BASE = ("ResembleAI/chatterbox", ["ve.pt", "conds.pt", "s3gen.pt", "Cangjie5_TC.json"])
+CHATTERBOX_SPAIN = ("ResembleAI/Chatterbox-Multilingual-es-es", ["t3_es_es.safetensors", "grapheme_mtl_merged_expanded_v1.json"])
+SENTENCE = re.compile(r"(?<=[.!?…])\s+")
+GAP_S = 0.15
+RICHTOFEN_HEARD = 0.8
+RICHTOFEN_TRIES = 3
 
 
 def log(*parts):
@@ -65,6 +75,103 @@ def chime():
     return opus(wav)
 
 
+def sentences(text):
+    return [part.strip() for part in SENTENCE.split(text.strip()) if part.strip()]
+
+
+def wav_bytes(samples, rate):
+    buffer = io.BytesIO()
+    sf.write(buffer, samples, rate, format="WAV")
+    return buffer.getvalue()
+
+
+def joined(parts, rate):
+    gap = np.zeros(int(rate * GAP_S), dtype=np.float32)
+    pieces = []
+    for part in parts:
+        pieces += [np.asarray(part, dtype=np.float32).reshape(-1), gap]
+    return np.concatenate(pieces[:-1]) if pieces else gap
+
+
+def heard_share(whisper, wav, text):
+    segments, _ = whisper.transcribe(io.BytesIO(wav), language=LANGUAGE, beam_size=5)
+    heard = {plain(word) for segment in segments for word in segment.text.split()}
+    words = [plain(word) for word in text.split() if plain(word)]
+    return sum(word in heard for word in words) / max(len(words), 1)
+
+
+class Piper:
+    def __init__(self, whisper):
+        from piper import PiperVoice
+
+        model_path = DATA / f"{PIPER_VOICE}.onnx"
+        if not model_path.exists():
+            subprocess.run([sys.executable, "-m", "piper.download_voices", "--data-dir", str(DATA), PIPER_VOICE], check=True)
+        self.voice = PiperVoice.load(str(model_path))
+
+    def wav(self, text, preset):
+        buffer = io.BytesIO()
+        with wave.open(buffer, "wb") as file:
+            self.voice.synthesize_wav(text, file)
+        return buffer.getvalue()
+
+
+class Chatterbox:
+    def __init__(self, whisper):
+        from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+        from huggingface_hub import hf_hub_download
+
+        folder = DATA / "chatterbox-es"
+        folder.mkdir(parents=True, exist_ok=True)
+        for repo, names in (CHATTERBOX_BASE, CHATTERBOX_SPAIN):
+            for name in names:
+                target = folder / ("t3_mtl23ls_v2.safetensors" if name == "t3_es_es.safetensors" else name)
+                if not target.exists():
+                    target.unlink(missing_ok=True)
+                    target.symlink_to(hf_hub_download(repo, name))
+        self.model = ChatterboxMultilingualTTS.from_local(folder, "cuda")
+        self.wav("Hola.", CHATTERBOX_PRESETS["chatterbox"])
+
+    def wav(self, text, preset):
+        exaggeration, cfg_weight = preset
+        parts = [self.model.generate(sentence, language_id="es", exaggeration=exaggeration, cfg_weight=cfg_weight).squeeze(0).numpy() for sentence in sentences(text)]
+        return wav_bytes(joined(parts, self.model.sr), self.model.sr)
+
+
+class Richtofen:
+    def __init__(self, whisper):
+        self.whisper = whisper
+        from TTS.tts.configs.xtts_config import XttsConfig
+        from TTS.tts.models.xtts import Xtts
+
+        config = XttsConfig()
+        config.load_json(str(RICHTOFEN_DIR / "config.json"))
+        self.model = Xtts.init_from_config(config)
+        self.model.load_checkpoint(config, checkpoint_path=str(RICHTOFEN_DIR / "model.pth"), vocab_path=str(RICHTOFEN_DIR / "vocab.json"), use_deepspeed=False)
+        self.model.cuda()
+        refs = [str(path) for path in sorted((RICHTOFEN_DIR / "refs").glob("*.wav"))]
+        self.latents, self.speaker = self.model.get_conditioning_latents(audio_path=refs, gpt_cond_len=30, max_ref_length=60)
+        self.wav("Hola.", None)
+
+    def sentence(self, text):
+        best, best_share = None, -1.0
+        for _ in range(RICHTOFEN_TRIES):
+            samples = self.model.inference(text, "es", self.latents, self.speaker, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0)["wav"]
+            share = heard_share(self.whisper, wav_bytes(samples, 24000), text)
+            if share > best_share:
+                best, best_share = samples, share
+            if share >= RICHTOFEN_HEARD:
+                break
+            log(f"richtofen said {share:.0%} of: {text}")
+        return best
+
+    def wav(self, text, preset):
+        return wav_bytes(joined([self.sentence(part) for part in sentences(text)], 24000), 24000)
+
+
+ENGINES = {"piper": (Piper, None), "richtofen": (Richtofen, None)} | {name: (Chatterbox, preset) for name, preset in CHATTERBOX_PRESETS.items()}
+
+
 def frame(header, body):
     head = json.dumps(header).encode()
     return struct.pack(">I", len(head)) + head + body
@@ -77,18 +184,28 @@ def unframe(data):
 
 class Worker:
     def __init__(self):
+        unknown = [name for name in VOICES if name not in ENGINES]
+        if unknown or not VOICES:
+            raise SystemExit(f"VOICES must name one or more of {', '.join(ENGINES)}; unknown: {', '.join(unknown) or 'none given'}")
+        if DEFAULT_VOICE not in VOICES:
+            raise SystemExit(f"DEFAULT_VOICE {DEFAULT_VOICE} is not in VOICES")
         DATA.mkdir(parents=True, exist_ok=True)
-        model_path = DATA / f"{VOICE}.onnx"
-        if not model_path.exists():
-            subprocess.run([sys.executable, "-m", "piper.download_voices", "--data-dir", str(DATA), VOICE], check=True)
         started = time.time()
         self.whisper = WhisperModel(WHISPER_MODEL, device="cuda", compute_type="float16")
         list(self.whisper.transcribe(np.random.uniform(-0.1, 0.1, 16000 * 3).astype(np.float32), language=LANGUAGE)[0])
-        self.voice = PiperVoice.load(str(model_path))
+        engines = {}
+        self.voices = {}
+        for name in VOICES:
+            kind, preset = ENGINES[name]
+            if kind not in engines:
+                loading = time.time()
+                engines[kind] = kind(self.whisper)
+                log(f"{kind.__name__.lower()} loaded in {time.time() - loading:.1f}s")
+            self.voices[name] = (engines[kind], preset)
         self.chime = chime()
         self.pending = {}
         self.triggers = {}
-        log(f"ready: {WHISPER_MODEL} and {VOICE} loaded in {time.time() - started:.1f}s")
+        log(f"ready: {WHISPER_MODEL} and voices {', '.join(VOICES)} (default {DEFAULT_VOICE}) loaded in {time.time() - started:.1f}s")
 
     def transcribe(self, clip):
         hotwords = " ".join(self.triggers) or None
@@ -110,16 +227,15 @@ class Worker:
                 return plain(spoken), rest
         return None, None
 
-    def speak(self, text):
-        buffer = io.BytesIO()
-        with wave.open(buffer, "wb") as file:
-            self.voice.synthesize_wav(text, file)
-        return opus(buffer.getvalue())
+    def speak(self, text, voice=None):
+        engine, preset = self.voices.get(voice or DEFAULT_VOICE, self.voices[DEFAULT_VOICE])
+        return opus(engine.wav(text, preset))
 
     async def serve(self):
         async for socket in connect(f"{BOT_URL}/voice/connect", additional_headers={"Authorization": f"Bearer {SECRET}"}, max_size=None):
             log("connected to", BOT_URL)
             try:
+                await socket.send(json.dumps({"type": "voices", "voices": VOICES, "default": DEFAULT_VOICE}))
                 async for message in socket:
                     if isinstance(message, bytes):
                         header, body = unframe(message)
@@ -131,7 +247,7 @@ class Worker:
                             self.triggers = {entry["word"]: entry["ack"] for entry in data["words"]}
                             log("triggers", ", ".join(self.triggers) or "none")
                         elif data.get("type") == "say":
-                            audio = await asyncio.to_thread(self.speak, data["text"])
+                            audio = await asyncio.to_thread(self.speak, data["text"], data.get("voice"))
                             await socket.send(frame({"type": "audio", "id": data["id"]}, audio))
             except ConnectionClosed:
                 log("disconnected, reconnecting")

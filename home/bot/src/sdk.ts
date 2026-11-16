@@ -4,7 +4,7 @@ export { db, getValue, setValue } from "./db.ts";
 export { ticketFor } from "./ticket.ts";
 export type { Locale, Module, Reply, Route, SlashCommand } from "./module.ts";
 export * as hearing from "./hearing.ts";
-export type { TranscriptLine, Trigger, TriggerOptions } from "./hearing.ts";
+export type { SayOptions, TranscriptLine, Trigger, TriggerOptions, Voices } from "./hearing.ts";
 export * as claude from "./claude.ts";
 export const transcripts = { keep, active, configured };
 export type { Answer, Ask, Tool } from "./claude.ts";
