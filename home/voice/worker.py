@@ -48,6 +48,7 @@ CHATTERBOX_SPAIN = ("ResembleAI/Chatterbox-Multilingual-es-es", ["t3_es_es.safet
 SENTENCE = re.compile(r"(?<=[.!?…])\s+")
 GAP_S = 0.15
 RICHTOFEN_HEARD = 0.8
+RICHTOFEN_CHECKED_WORDS = 3
 RICHTOFEN_TRIES = 3
 
 
@@ -186,6 +187,8 @@ class Richtofen:
         best, best_share = None, -1.0
         for _ in range(RICHTOFEN_TRIES):
             samples = self.model.inference(text, "es", self.latents, self.speaker, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0)["wav"]
+            if len(text.split()) < RICHTOFEN_CHECKED_WORDS:
+                return samples
             share = heard_share(self.whisper, wav_bytes(samples, 24000), text)
             if share > best_share:
                 best, best_share = samples, share

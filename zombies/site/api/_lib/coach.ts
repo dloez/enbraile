@@ -525,7 +525,8 @@ const englishWords = (text: string) => text.split(/[^a-z']+/).filter((word) => e
 
 const answerAsk = /\b(?:respuesta|solucion|answer|solution|dimelo|dinoslo|dime que (?:hago|hacemos|hay que hacer)|dinos que (?:hacer|hacemos|hay que hacer)|tell (?:me|us) what to do|just tell)\b/;
 
-const acceptance = /^(?!(?:no|nope|nah|todavia|aun|not)\b)(?:\S+\s+)?(?:si|vale|dale|venga|claro|porfa|por favor|yes|yeah|yep|ok|okay|sure|please|go on|do it)\b/;
+const acceptance =
+  /^(?!(?:no|nope|nah|todavia|aun|not)\b)(?:(?:\S+\s+)?(?:si|vale|dale|venga|claro|porfa|por favor|yes|yeah|yep|ok|okay|sure|please|go on|do it)\b|.*\b(?:quiero|queremos|la queremos|la quiero|dame|danos|damela|danosla|dimela|dinosla|dila|suelta|sueltala|want|give)\b)/;
 
 const acceptsOffer = (asked: string) => acceptance.test((asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/^[¡¿,.\s]+/, ""));
 

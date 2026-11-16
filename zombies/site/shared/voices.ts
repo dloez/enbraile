@@ -63,7 +63,7 @@ const richtofen: Character = {
       unheard: "¿Qué? ¡Hablad más claro, ratitas! Repetídmelo.",
       ack: "¡Anotado! Gracias.",
       carriedOver: "De la sesión anterior.",
-      answerOffer: "¡Achtung! Lo siguiente que tengo ya es la solución entera, ratitas. ¿La queréis o preferís seguir sufriendo?",
+      answerOffer: "Achtung, ratitas, lo siguiente que tengo ya es la solución entera. ¿La queréis o preferís seguir sufriendo?",
     },
     en: {
       round: "Ah, by the way! What round are you on, my dear test subjects?",
@@ -76,7 +76,7 @@ const richtofen: Character = {
       unheard: "What? Speak up, my little lab rats! Say it again.",
       ack: "Noted! Thank you.",
       carriedOver: "From the last session.",
-      answerOffer: "Achtung! What I have next is the whole solution, my little lab rats. Do you want it, or would you rather keep suffering?",
+      answerOffer: "Achtung, my little lab rats, what I have next is the whole solution. Do you want it, or would you rather keep suffering?",
     },
   },
 };
