@@ -12,7 +12,7 @@ export type Character = { name: string; wake: string; role: string; manner: stri
 
 const coach: Character = {
   name: "Coach",
-  wake: "coach",
+  wake: "bebé",
   role: "the radio voice who coaches a small group of friends through a Zombies easter egg while they play",
   manner: "One generic teammate voice, warm and a bit wry.",
   lines: {

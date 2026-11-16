@@ -8,7 +8,7 @@ A new `zombies` category in Enbraile that helps the group beat the easter eggs o
 
 1. In Claude Code the owner names a map; Claude researches it and prepares everything (the existing ee-coach prepare flow, moved into Enbraile).
 2. Claude publishes the map to `zombies.enbraile.vip`, where the group starts or joins a run and talks to the coach in a shared chat, with visual hints (a zone on a map image) on rungs that give a place.
-3. In Discord voice the group can say the attempt's wake word («coach …» or «richtofen …») and the coach answers in the call through the Enbraile bot.
+3. In Discord voice the group can say the attempt's wake word («bebé …» or «richtofen …») and the coach answers in the call through the Enbraile bot.
 4. While they play, Claude Code can watch the run and close gaps, apply revisions, audit replies and fix the dossier on the fly.
 
 Done looks like: a game night played from the site and voice with no terminal needed, every hint coming from prepared and checked lines, and the zombies workspace gone, everything useful living in Enbraile.
@@ -46,7 +46,7 @@ Done looks like: a game night played from the site and voice with no terminal ne
 
 ### Voice
 
-- **Q: How do the coach and the call meet?** **A:** When a run member is in a voice channel, the site offers to bring the coach in (through the bot's API, as DJ joins) and `/coach` does the same from Discord. The `zombies` bot module registers each character's wake word («coach», «richtofen»), maps the speaker to their run, sends the request to the site's API and speaks the answer with `hearing.say`; the reply is also posted in the run's chat. Typed questions get text answers only. _(owner, 2026-11-15)_
+- **Q: How do the coach and the call meet?** **A:** When a run member is in a voice channel, the site offers to bring the coach in (through the bot's API, as DJ joins) and `/coach` does the same from Discord. The `zombies` bot module registers each character's wake word («bebé», «richtofen»), maps the speaker to their run, sends the request to the site's API and speaks the answer with `hearing.say`; the reply is also posted in the run's chat. Typed questions get text answers only. _(owner, 2026-11-15)_
 - **Q: Transcripts?** **A:** While the coach is in the call for a run, the module asks the host to transcribe, and the lines said in its channel go into the run, for the watch loop and debriefs. The live model only gets text after the wake word. The host has no way for a module to read transcript lines today (`home/bot/src/transcripts.ts` writes them to B2 only), so it gains a `hearing.onTranscript`. _(owner; the primitive the agent's choice, 2026-11-15)_
 - **Q: Sound hints?** **A:** The coach's voice only; no chimes or clips on new hints, since a cue would itself carry meaning. _(owner, 2026-11-15)_
 

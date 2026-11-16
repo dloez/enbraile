@@ -112,7 +112,7 @@ Apply the answer to the entry above, so a wake word asked during another reply b
 
 **Acceptance:**
 - Claude-run: `npm run gate` in `zombies/site` and `home/bot`. Against a local site and bot, two `/api/voice` requests posted together for one run behave as decided: the second answer is spoken late, or the stream ends with no `say` before the bot's timeout with the answer in the chat.
-- Human-run: in a call, two members say «coach …» one right after the other, and the second answer arrives as decided.
+- Human-run: in a call, two members say «bebé …» one right after the other, and the second answer arrives as decided.
 - Reuse: the lease in `coach.ts` (`acquire`/`release`), `voiceTurn`.
 - Neighbors: the typed reply path, which keeps its 30 s wait.
 - Forbidden: a second lease mechanism; changing the typed chat's wait.
