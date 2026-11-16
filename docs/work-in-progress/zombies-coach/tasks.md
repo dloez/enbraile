@@ -37,25 +37,6 @@ The site's names lookup gives the bot 10 s for Discord's forced member fetches (
 
 **Touches:** `zombies/site/api/_lib/names.ts`, `docs/zombies/site/explanation/site.md`
 
-## Make level-3 zones point at the exact spot
-
-The owner finds the zone images generic (2026-11-16): for a hint that says where to use an item, the card shows the whole survey map without marking where exactly. Whether that card's rung had a zone at all (15 of Blood of the Dead's 42 L3 rungs have none), or its ellipse covers too much of a 1792×1536 map, is to be found in a subagent, reporting counts and sizes only.
-
-**Do:**
-- [ ] In a subagent, measure Blood of the Dead's zones (radius as a share of the image, how many cover more than a small area) and check whether the hint the owner means carries one; report counts only.
-- [ ] The card shows the survey map cropped and zoomed around the zone, with the full map available on a tap, and the zone drawn tight enough to read as one spot mid-round (the crop and minimum size are the build's choice, recorded); the boards' `run-zone` look stays.
-- [ ] Re-place every Blood of the Dead zone tightly at its exact spot and blind-check them again in a subagent (the place must be readable without revealing more than the rung says); compile and publish.
-- [ ] Docs: the Zones section of `docs/zombies/site/explanation/site.md`, the design system, and the skill's zone placing in `references/research.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; on the test map a zone card shows a zoomed crop with a tight mark at desktop and phone width; the subagent's before and after counts of zone sizes, and the blind check's verdicts, counts only.
-- Human-run: the owner asks for a level-3 hint in Blood of the Dead and can tell exactly where to go.
-- Reuse: `SurveyZone` (`src/art.tsx`), `zones.json` and `compile`.
-- Neighbors: the hint slip.
-- Forbidden: spoiler text in the main conversation; a zone on a level 1–2 rung; any map image in a tracked file.
-
-**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
-
 ## Show players' Discord avatars
 
 The owner wants players' real Discord icons (2026-11-16). The bot's `POST /zombies/names` already fetches each member from Discord by ID; their avatar comes with it. The site shows members as call-sign tags today.

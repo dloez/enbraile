@@ -91,17 +91,34 @@ export function MapArt({ map, label, className, large }: { map: Shown; label?: s
 
 const planBox = { width: 140, height: 96 };
 
-export function SurveyZone({ zone, art, label }: { zone: ShownZone; art: PublishedMap["art"]; label: string }) {
+const crop = { share: 0.4, aspect: 4 / 3, fill: 1 / 3, least: 0.025 };
+
+type Box = { x: number; y: number; w: number; h: number };
+
+function around(cx: number, cy: number, rx: number, ry: number, width: number, height: number): Box {
+  const wanted = Math.max(crop.share * width, (2 * rx) / crop.fill, ((2 * ry) / crop.fill) * crop.aspect);
+  const w = Math.min(wanted, width, height * crop.aspect);
+  const h = w / crop.aspect;
+  return { x: Math.min(Math.max(cx - w / 2, 0), width - w), y: Math.min(Math.max(cy - h / 2, 0), height - h), w, h };
+}
+
+export function SurveyZone({ zone, art, words }: { zone: ShownZone; art: PublishedMap["art"]; words: { zone: string; whole: string; near: string } }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const [whole, setWhole] = useState(false);
   const { width, height } = zone.survey ?? planBox;
-  const unit = width / 600;
+  const cx = zone.x * width;
+  const cy = zone.y * height;
+  const near = around(cx, cy, zone.rx * width, zone.ry * height, width, height);
+  const view = whole ? { x: 0, y: 0, w: width, h: height } : near;
+  const unit = view.w / 600;
   const hatch = 7 * unit;
   const cell = 20 * unit;
   const Plan = plans[art];
-  const shape = { cx: zone.x * width, cy: zone.y * height, rx: zone.rx * width, ry: zone.ry * height };
+  const least = crop.least * near.w;
+  const shape = { cx, cy, rx: Math.max(zone.rx * width, least), ry: Math.max(zone.ry * height, least) };
   return (
-    <div className="survey">
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
+    <button type="button" className={`survey${whole ? " survey-whole" : ""}`} aria-pressed={whole} aria-label={`${words.zone}. ${whole ? words.near : words.whole}`} onClick={() => setWhole(!whole)}>
+      <svg viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} aria-hidden="true">
         <defs>
           <pattern id={`${id}h`} width={hatch} height={hatch} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <path d={`M0 0V${hatch}`} className="survey-hatch" strokeWidth={1.6 * unit} />
@@ -125,6 +142,11 @@ export function SurveyZone({ zone, art, label }: { zone: ShownZone; art: Publish
         <ellipse {...shape} className="zone-edge" />
         <ellipse {...shape} className="zone-ring" />
       </svg>
-    </div>
+      <span className="survey-flip" aria-hidden="true">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+          <path d={whole ? "M2 6h4V2M14 10h-4v4M6 6 2 2M10 10l4 4" : "M2 6V2h4M14 10v4h-4M2 2l4 4M14 14l-4-4"} />
+        </svg>
+      </span>
+    </button>
   );
 }

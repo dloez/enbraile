@@ -22,10 +22,10 @@ function clock(at: string): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: string; rate: string; zone: string; ratings: Record<Rating, string> }> = {
+const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: string; rate: string; zone: { zone: string; whole: string; near: string }; ratings: Record<Rating, string> }> = {
   es: {
     dispatch: "Despacho",
-    zone: "Mapa con una zona marcada en rojo",
+    zone: { zone: "Mapa con un punto marcado en rojo", whole: "Ver el mapa entero", near: "Volver al punto" },
     more: "Más",
     transmitting: "transmitiendo",
     writing: "Cari escribe",
@@ -34,7 +34,7 @@ const cariWords: Record<Language, { dispatch: string; more: string; transmitting
   },
   en: {
     dispatch: "Dispatch",
-    zone: "Map with an area marked in red",
+    zone: { zone: "Map with a spot marked in red", whole: "Show the whole map", near: "Back to the spot" },
     more: "More",
     transmitting: "transmitting",
     writing: "Cari is writing",
@@ -144,7 +144,7 @@ function Slip({
       {card.rungs.map((rung, index) => (
         <div key={rung.id} className={index < card.rungs.length - 1 ? "rung-old" : undefined}>
           <p className="rung">{rung.text}</p>
-          {rung.zone && <SurveyZone zone={rung.zone} art={art} label={words.zone} />}
+          {rung.zone && <SurveyZone zone={rung.zone} art={art} words={words.zone} />}
         </div>
       ))}
       <div className="slip-f">

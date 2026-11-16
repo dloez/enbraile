@@ -139,13 +139,13 @@ One round of fixes is enough. The real calibration comes from the players. After
 
 ## 3b. Zones (one agent with dossier access, then a blind check)
 
-When there is a `survey.jpg`, a subagent with the dossier reads every level 3 rung, every Alt for one and every step's `L4 as spoken`, and gives a zone to each that sends the players to a place; levels 1 and 2 never get one, since a place drawn on a map is the strongest hint there is. It writes `zones.json` in the map dir, one entry per zoned rung, keyed by the rung's address as `compile` names it: `step <n> L3`, `step <n> L4`, `step <n> Alt <k>` (the step's k-th Alt line, in file order), `step <n> part <p> L3` and `step <n> part <p> Alt <k>`. Each is an ellipse over where the action happens, about a room's size, its centre and radii as fractions of the image's width and height:
+When there is a `survey.jpg`, a subagent with the dossier reads every level 3 rung, every Alt for one and every step's `L4 as spoken`, and gives a zone to each that sends the players to a place; levels 1 and 2 never get one, since a place drawn on a map is the strongest hint there is. It writes `zones.json` in the map dir, one entry per zoned rung, keyed by the rung's address as `compile` names it: `step <n> L3`, `step <n> L4`, `step <n> Alt <k>` (the step's k-th Alt line, in file order), `step <n> part <p> L3` and `step <n> part <p> Alt <k>`. Each is an ellipse tight over the exact spot where the action happens (the console, door or pedestal, not the room), radii about 0.01–0.025 of the image's width and above 0.04 only when the action really spans an area, its centre and radii as fractions of the image's width and height, since the site shows it in a crop zoomed around it ([The Zombies Site → Zones](../../../../docs/zombies/site/explanation/site.md#zones)):
 
 ```json
-{ "step 5 L3": { "x": 0.42, "y": 0.61, "rx": 0.05, "ry": 0.04 } }
+{ "step 5 L3": { "x": 0.42, "y": 0.61, "rx": 0.018, "ry": 0.021 } }
 ```
 
-It checks each placement by drawing the ellipse on the image (`uv run --with pillow`) and looking at the render. Then a fresh agent with no access to the dossier gets `hints.md` and each render, and says for each zoned rung whether the zone and the rung's text point to the same place, and whether the zone gives away more than the rung says (another step's place, a later rung's detail); the first agent fixes what fails against the dossier, one round. Both report addresses, counts and verdicts only.
+It checks each placement by drawing the ellipse on the image (`uv run --with pillow`) as the card shows it, cropped to a 4:3 window centred on the zone at least 40% of the image's width and wide enough that the zone spans at most a third of it, and also on the whole image, and looking at the renders. Then a fresh agent with no access to the dossier gets `hints.md` and each pair of renders, and says for each zoned rung whether the zone and the rung's text point to the same place, and whether the zone gives away more than the rung says (another step's place, a later rung's detail); the first agent fixes what fails against the dossier, one round. Both report addresses, counts and verdicts only.
 
 ## 4. Compile and publish
 
