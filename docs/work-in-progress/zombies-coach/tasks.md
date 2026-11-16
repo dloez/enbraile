@@ -18,6 +18,26 @@ The owner sees Cari leave voice chats and the "Traer a Cari" offer take long to 
 
 **Touches:** `zombies/bot/`, `zombies/site/src/RunPage.tsx`, `docs/zombies/`
 
+## Let Cari speak in the character of her voice
+
+The owner wants Cari's words to sound like the voice saying them, at least for customised voices like Richtofen (2026-11-16, top priority). Hint text stays exactly as prepared (the model never writes hint text), so the character lives in everything around the hints: Cari's own sentences and the fixed lines code says (holds, acknowledgements, the blocked-step line, "From the last session."). The voice worker's configurable voices have landed; when the backlog's "home/voice: modules load and unload voices on demand" lands too, the module asks for its attempt's voice through it.
+
+**Do:**
+- [ ] A character per voice, kept beside the voice's settings: a short style brief for the coach's system prompt (for Richtofen: his manic, theatrical manner, in Castilian, as heard in the BO3 dub) and that voice's own wording of every fixed line in both languages; the plain voices keep today's Cari.
+- [ ] Which voice an attempt speaks with is chosen when starting it, beside the language, and can be changed in the attempt (the agent's choice, recorded as a dated decision); the coach prompt and the fixed lines follow it, and the voice reply asks the worker for it through `hearing.say`'s voice option.
+- [ ] The coach takes the name of the attempt's voice (owner, 2026-11-16): "Richtofen" when it is Richtofen, everywhere a player sees the coach's name (the chat's author, the slip header, the voice panel, the system prompt's name for itself); the plain voices keep "Cari". The wake word follows the name ("richtofen, …") with «cari» kept as an alias (the agent's choice, recorded), through the module's `hearing.onTrigger` words.
+- [ ] The audit and the sentence filters still apply unchanged: a character never names an unknown, shows a number or carries brackets.
+- [ ] Docs: the character in `docs/zombies/site/explanation/site.md` (Cari) and the voice choice in the design-system doc.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site` (and `home/bot` if touched); locally on the test map with the real Haiku, an attempt set to Richtofen gets replies in his manner around unchanged prepared hints, a plain-voice attempt keeps today's Cari, and the audit finds nothing new.
+- Human-run: in a call, the owner hears Richtofen say Cari's words and finds they sound like him.
+- Reuse: the coach prompt (`api/_lib/coach.ts`); the fixed lines in code; the voice option on `hearing.say`.
+- Neighbors: the voices task in the backlog.
+- Forbidden: the model writing or restyling hint text; a character that bypasses the audit or the knowledge marks.
+
+**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`, `.claude/skills/ee-coach/`
+
 ## Stop players' names flipping between Discord and stored names
 
 The owner sees the real names and "Jugador" going back and forth (2026-11-16). `currentNames` (`zombies/site/api/_lib/names.ts`) caches per function instance, waits at most 1.5 s for the bot and falls back to the stored names on a timeout or failure; polls are served by different instances, so some replies carry Discord names and others the stored ones, and the page shows whatever the latest reply says.
@@ -91,26 +111,6 @@ The owner wants players' real Discord icons (2026-11-16). The bot's `POST /zombi
 
 **Touches:** `zombies/bot/`, `zombies/site/`, `docs/zombies/`
 **After:** Keep Cari in the call across bot restarts and show the offer sooner; Stop players' names flipping between Discord and stored names
-
-## Let Cari speak in the character of her voice
-
-The owner wants Cari's words to sound like the voice saying them, at least for customised voices like Richtofen (2026-11-16, top priority). Hint text stays exactly as prepared (the model never writes hint text), so the character lives in everything around the hints: Cari's own sentences and the fixed lines code says (holds, acknowledgements, the blocked-step line, "From the last session."). Needs the voice worker's configurable voices (backlog: "home/voice: configurable voices, with Castilian Chatterbox and a Richtofen voice") to have landed first.
-
-**Do:**
-- [ ] A character per voice, kept beside the voice's settings: a short style brief for the coach's system prompt (for Richtofen: his manic, theatrical manner, in Castilian, as heard in the BO3 dub) and that voice's own wording of every fixed line in both languages; the plain voices keep today's Cari.
-- [ ] Which voice an attempt speaks with is chosen when starting it, beside the language, and can be changed in the attempt (the agent's choice, recorded as a dated decision); the coach prompt and the fixed lines follow it, and the voice reply asks the worker for it through `hearing.say`'s voice option.
-- [ ] The coach takes the name of the attempt's voice (owner, 2026-11-16): "Richtofen" when it is Richtofen, everywhere a player sees the coach's name (the chat's author, the slip header, the voice panel, the system prompt's name for itself); the plain voices keep "Cari". The wake word follows the name ("richtofen, …") with «cari» kept as an alias (the agent's choice, recorded), through the module's `hearing.onTrigger` words.
-- [ ] The audit and the sentence filters still apply unchanged: a character never names an unknown, shows a number or carries brackets.
-- [ ] Docs: the character in `docs/zombies/site/explanation/site.md` (Cari) and the voice choice in the design-system doc.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site` (and `home/bot` if touched); locally on the test map with the real Haiku, an attempt set to Richtofen gets replies in his manner around unchanged prepared hints, a plain-voice attempt keeps today's Cari, and the audit finds nothing new.
-- Human-run: in a call, the owner hears Richtofen say Cari's words and finds they sound like him.
-- Reuse: the coach prompt (`api/_lib/coach.ts`); the fixed lines in code; the voice option on `hearing.say`.
-- Neighbors: the voices task in the backlog.
-- Forbidden: the model writing or restyling hint text; a character that bypasses the audit or the knowledge marks.
-
-**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`, `.claude/skills/ee-coach/`
 
 ## Decide whether hints get each voice's own wording
 

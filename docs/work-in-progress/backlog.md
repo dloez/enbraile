@@ -141,6 +141,24 @@ The Accounts section of [The pkmn Site](../pkmn/site/explanation/site.md#account
 
 **Touches:** `pkmn/site/src/league/eggs.tsx`, `pkmn/site/src/components/trainer-admin.tsx`
 
+### home/voice: modules load and unload voices on demand
+
+The owner wants voices loaded on demand, with modules deciding which voices are loaded and when (2026-11-16); for now the worker runs with Richtofen alone (`VOICES=richtofen` in the owner's `home/voice/.env.local`). Today `VOICES` is a fixed allow-list loaded at start (`home/voice/worker.py`, "home/voice: configurable voices" in `docs/home/voice/explanation/voice.md`), and a module only picks among loaded voices with `hearing.say(text, { voice })`.
+
+**Do:**
+- [ ] A module asks the host for the voices it needs and lets them go (a lease per module and voice, like `voice.hold`, the shape the build's choice, recorded); the host tells the worker, which loads a voice when the first module needs it and unloads it, freeing GPU memory, when none does; `VOICES` becomes the list of voices a module may ask for, and the worker starts with none loaded or with a configured warm one.
+- [ ] Loading takes seconds (Chatterbox about 40 s cold, Richtofen about 10–18 s): a `say` for a voice still loading waits for it or, past a limit, falls back to a loaded voice, logged; `hearing.voices()` reports loaded and loadable voices.
+- [ ] Docs: `docs/home/voice/explanation/voice.md` (How It Works, the protocol, Decisions), the run how-to, and the Speaking line in `docs/home/bot/explanation/bot.md`.
+
+**Acceptance:**
+- Claude-run: `uv run python -m py_compile worker.py` in `home/voice/` and `npm run gate` in `home/bot/`; with a local worker that never connects to the real bot, a scripted host asks for a voice, the worker loads it (GPU memory read back up), speaks a sentence to a file, and unloads it when released (memory read back down).
+- Human-run: in a call, a module's voice loads when the module needs it and the GPU frees when it is done.
+- Reuse: the worker's per-voice loaders; `voice.hold`'s leases (`home/bot/src/voice.ts`) as the pattern.
+- Neighbors: `hearing.say` and `hearing.voices` (`home/bot/src/hearing.ts`).
+- Forbidden: loading a voice no module asked for (beyond a configured warm one); the Richtofen model in git.
+
+**Touches:** `home/voice/`, `home/bot/src/hearing.ts`, `home/bot/src/sdk.ts`, `docs/home/voice/`, `docs/home/bot/explanation/bot.md`
+
 ## Ideas
 
 ### pkmn/site: a private Showdown tied to the site
