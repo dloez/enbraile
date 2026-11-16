@@ -18,6 +18,61 @@ The owner sees Cari leave voice chats and the "Traer a Cari" offer take long to 
 
 **Touches:** `zombies/bot/`, `zombies/site/src/RunPage.tsx`, `docs/zombies/`
 
+## Stop players' names flipping between Discord and stored names
+
+The owner sees the real names and "Jugador" going back and forth (2026-11-16). `currentNames` (`zombies/site/api/_lib/names.ts`) caches per function instance, waits at most 1.5 s for the bot and falls back to the stored names on a timeout or failure; polls are served by different instances, so some replies carry Discord names and others the stored ones, and the page shows whatever the latest reply says.
+
+**Do:**
+- [ ] Never go back from a resolved Discord name to a stored one while the page is open: the client keeps the last resolved name per Discord ID and a reply carrying only the stored name does not replace it.
+- [ ] On the server, store each resolved name back on the member row (and the line's author) so a fallback is the last Discord name, not the import's; and give the bot lookup enough time for Discord's forced fetches (measure it; the 1.5 s cap is a starting value).
+- [ ] Docs: the names paragraph in `docs/zombies/site/explanation/site.md`.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; locally with a fake bot that answers on alternate calls, the page shows the bot's names steadily after the first answer; after one answer, a member row holds the Discord name.
+- Human-run: the owner's Blood of the Dead attempt shows both real names without flicker.
+- Reuse: `currentNames`; the page store (`src/store.ts`).
+- Neighbors: "Show players' Discord avatars", which extends the same lookup.
+- Forbidden: a page that waits on the bot; Discord tokens on the site.
+
+**Touches:** `zombies/site/`, `docs/zombies/site/explanation/site.md`
+
+## Stop the layout moving when revision mode turns on
+
+The owner sees layout displacement when pressing Revision (2026-11-16): revision mode adds its line above the composer (`.mode` in `zombies/site/src/index.css`, shown by `src/RunPage.tsx`), which changes the composer's height and moves the transcript.
+
+**Do:**
+- [ ] Turning revision mode on or off moves nothing else on the page at any width: the mode line takes space reserved for it, or overlays without pushing, as the boards draw it; the composer and the transcript's bottom stay where they were.
+- [ ] Check the trouble line and the voice panel the same way, since they also appear above or beside the composer.
+- [ ] Docs: `docs/zombies/site/reference/design-system.md` (revision mode).
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1440×900 and 390×844, the composer's and the transcript's bounding boxes are identical before and after toggling Revision, and when the trouble line shows.
+- Human-run: the owner toggles Revision and nothing jumps.
+- Reuse: the composer and mode line in `src/RunPage.tsx`.
+- Neighbors: the full-width layout's single scroller.
+- Forbidden: dropping the mode line or any state.
+
+**Touches:** `zombies/site/src/`, `docs/zombies/site/reference/design-system.md`
+
+## Make level-3 zones point at the exact spot
+
+The owner finds the zone images generic (2026-11-16): for a hint that says where to use an item, the card shows the whole survey map without marking where exactly. Whether that card's rung had a zone at all (15 of Blood of the Dead's 42 L3 rungs have none), or its ellipse covers too much of a 1792×1536 map, is to be found in a subagent, reporting counts and sizes only.
+
+**Do:**
+- [ ] In a subagent, measure Blood of the Dead's zones (radius as a share of the image, how many cover more than a small area) and check whether the hint the owner means carries one; report counts only.
+- [ ] The card shows the survey map cropped and zoomed around the zone, with the full map available on a tap, and the zone drawn tight enough to read as one spot mid-round (the crop and minimum size are the build's choice, recorded); the boards' `run-zone` look stays.
+- [ ] Re-place every Blood of the Dead zone tightly at its exact spot and blind-check them again in a subagent (the place must be readable without revealing more than the rung says); compile and publish.
+- [ ] Docs: the Zones section of `docs/zombies/site/explanation/site.md`, the design system, and the skill's zone placing in `references/research.md`.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; on the test map a zone card shows a zoomed crop with a tight mark at desktop and phone width; the subagent's before and after counts of zone sizes, and the blind check's verdicts, counts only.
+- Human-run: the owner asks for a level-3 hint in Blood of the Dead and can tell exactly where to go.
+- Reuse: `SurveyZone` (`src/art.tsx`), `zones.json` and `compile`.
+- Neighbors: the hint slip.
+- Forbidden: spoiler text in the main conversation; a zone on a level 1–2 rung; any map image in a tracked file.
+
+**Touches:** `zombies/site/`, `.claude/skills/ee-coach/`, `docs/zombies/`
+
 ## Show players' Discord avatars
 
 The owner wants players' real Discord icons (2026-11-16). The bot's `POST /zombies/names` already fetches each member from Discord by ID; their avatar comes with it. The site shows members as call-sign tags today.
@@ -35,7 +90,7 @@ The owner wants players' real Discord icons (2026-11-16). The bot's `POST /zombi
 - Forbidden: a page that waits on avatars; Discord tokens on the site.
 
 **Touches:** `zombies/bot/`, `zombies/site/`, `docs/zombies/`
-**After:** Keep Cari in the call across bot restarts and show the offer sooner
+**After:** Keep Cari in the call across bot restarts and show the offer sooner; Stop players' names flipping between Discord and stored names
 
 ## Let Cari speak in the character of her voice
 
