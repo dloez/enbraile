@@ -34,24 +34,6 @@ The owner wants Cari's words to sound like the voice saying them, at least for c
 **Touches:** `docs/zombies/site/explanation/site.md`
 **After:** Let Cari speak in the character of her voice
 
-## Show players by their current Discord names
-
-The owner finds the player names fixed and wants them from Discord (2026-11-16, relayed by another session). A member's name is a snapshot taken when they join (`zombies/site/api/_lib/runs.ts:45`, the root's `/api/me` name) and never refreshed; imported attempts take the names typed on the command line (the Blood of the Dead attempt shows "Jugador 1" and "Jugador 2"), and imported history shows players as "Terminal".
-
-**Do:**
-- [ ] Resolve each member's current server display name by Discord ID when a page is read, through the bot, which already holds the guild's members (a route beside `/zombies/voice` behind `INTERNAL_SECRET`, batched per page, cached briefly on the site), falling back to the stored name when the bot does not answer; the same for a line's author in the chat.
-- [ ] The Blood of the Dead attempt then shows its two players' real names; imported history keeps "Terminal" (who typed a terminal line is unknown).
-- [ ] Docs: `docs/zombies/site/explanation/site.md` and `docs/zombies/bot/explanation/bot.md` (the new route), with the decision dated.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site` and `home/bot`; locally with a fake bot route, a member whose stored name differs shows the bot's name, and with the bot stopped the stored name; no page waits more than the site's timeout on the bot.
-- Human-run: the owner opens the Blood of the Dead attempt and sees both players' Discord names.
-- Reuse: the site's `BOT_URL` calls (`api/_lib/voice.ts`); the module's member lookup (`zombies/bot/src/`).
-- Neighbors: the DJ panel's calls to the bot.
-- Forbidden: Discord tokens on the site; a page that fails when the bot is down.
-
-**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`
-
 ## Remove Harrow Station from the production maps
 
 The owner wants the made-up test map gone from the maps page (2026-11-16, relayed by another session). Publishing only adds versions (`docs/zombies/site/explanation/site.md`, Bundles); nothing removes a map. The test map stays in the repo (`zombies/site/test-map/`), since local checks and the how-to's verification use it.

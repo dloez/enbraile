@@ -1,6 +1,7 @@
 import { and, asc, eq, gt, isNull, max } from "drizzle-orm";
 import type { Viewer } from "../../shared/bundle.js";
 import { asRevision, type CallLine, type CallState, type JoinRefusal } from "../../shared/runs.js";
+import { bot } from "./bot.js";
 import { db } from "./db.js";
 import { postMessage, postRevision } from "./runs.js";
 import { callLines, deliveries, runMembers } from "./schema.js";
@@ -50,23 +51,11 @@ export async function keepCallLine(line: CallLine): Promise<boolean> {
   return true;
 }
 
-function bot(path: string, init?: { method: "POST"; body: unknown }): Promise<Response> | null {
-  const url = process.env.BOT_URL;
-  const secret = process.env.INTERNAL_SECRET;
-  if (!url || !secret) return null;
-  return fetch(`${url.replace(/\/$/, "")}/zombies/${path}`, {
-    method: init?.method ?? "GET",
-    headers: { authorization: `Bearer ${secret}`, "content-type": "application/json" },
-    body: init ? JSON.stringify(init.body) : undefined,
-    signal: AbortSignal.timeout(botTimeoutMs),
-  });
-}
-
 const offline: CallState = { reachable: false, channel: null, cari: null };
 
 export async function callState(discordId: string): Promise<CallState> {
   try {
-    const response = await bot(`voice?userId=${encodeURIComponent(discordId)}`);
+    const response = await bot(`voice?userId=${encodeURIComponent(discordId)}`, botTimeoutMs);
     if (!response?.ok) return offline;
     const { channel, cari } = (await response.json()) as Omit<CallState, "reachable">;
     return { reachable: true, channel: channel ?? null, cari: cari ?? null };
@@ -78,7 +67,7 @@ export async function callState(discordId: string): Promise<CallState> {
 
 export async function bringCari(discordId: string): Promise<{ channelId: string } | { error: JoinRefusal }> {
   try {
-    const response = await bot("join", { method: "POST", body: { userId: discordId } });
+    const response = await bot("join", botTimeoutMs, { method: "POST", body: { userId: discordId } });
     if (!response || (!response.ok && response.status !== 409)) return { error: "botOffline" };
     return (await response.json()) as { channelId: string } | { error: JoinRefusal };
   } catch (error) {

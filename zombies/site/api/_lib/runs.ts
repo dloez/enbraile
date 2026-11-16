@@ -4,6 +4,7 @@ import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle
 import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
+import { currentNames } from "./names.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
 import { audits, bundleVersions, callLines, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runHistory, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
@@ -78,16 +79,12 @@ export async function joinRun(viewer: Viewer, runId: string): Promise<boolean> {
   });
 }
 
-async function activeMembers(viewer: Viewer, runIds: string[]): Promise<Map<string, Member[]>> {
-  const grouped = new Map<string, Member[]>();
-  if (!runIds.length) return grouped;
-  const rows = await db
-    .select({ runId: runMembers.runId, name: runMembers.name, discordId: runMembers.discordId })
+function activeMembers(runId: string) {
+  return db
+    .select({ name: runMembers.name, discordId: runMembers.discordId })
     .from(runMembers)
-    .where(and(activeMember, inArray(runMembers.runId, runIds)))
+    .where(and(activeMember, eq(runMembers.runId, runId)))
     .orderBy(asc(runMembers.joinedAt));
-  for (const row of rows) grouped.set(row.runId, [...(grouped.get(row.runId) ?? []), { name: row.name, you: row.discordId === viewer.discordId }]);
-  return grouped;
 }
 
 async function currentRunId(viewer: Viewer): Promise<string | null> {
@@ -106,7 +103,7 @@ function runOf(viewer: Viewer) {
     .where(and(eq(runMembers.discordId, viewer.discordId), activeMember));
 }
 
-type AttemptRow = { id: string; game: string; map: string; language: Language; startedBy: string; createdAt: Date; lastPlayed: Date; beaten: boolean };
+type AttemptRow = { id: string; game: string; map: string; language: Language; startedBy: string; starterId: string; createdAt: Date; lastPlayed: Date; beaten: boolean };
 
 async function attemptRows(only?: { game: string; map: string }): Promise<AttemptRow[]> {
   const where = only ? sql`where r.game = ${only.game} and r.map = ${only.map}` : sql``;
@@ -118,7 +115,7 @@ async function attemptRows(only?: { game: string; map: string }): Promise<Attemp
       cross join lateral jsonb_array_elements(b.bundle->'steps') step
       where not coalesce((step->>'optional')::boolean, false)
     )
-    select r.id, r.game, r.map, r.language, r.started_by_name as "startedBy", r.created_at as "createdAt",
+    select r.id, r.game, r.map, r.language, r.started_by_name as "startedBy", r.started_by as "starterId", r.created_at as "createdAt",
       greatest(r.created_at, (select max(x.created_at) from ${messages} x where x.run_id = r.id)) as "lastPlayed",
       not exists (
         select 1 from required q
@@ -169,17 +166,18 @@ export async function mapPage(viewer: Viewer, game: string, map: string, time: T
   ]);
   const found = published.find((entry) => entry.game === game && entry.map === map);
   if (!found) return null;
+  const named = await time("names", currentNames([...players.map((player) => player.discordId), ...rows.map((row) => row.starterId)]));
   const attempts: Attempt[] = rows.map((row) => {
     const people = new Map<string, { name: string; here: boolean }>();
     for (const player of players.filter((entry) => entry.runId === row.id)) {
       const here = player.leftAt === null || (people.get(player.discordId)?.here ?? false);
-      people.set(player.discordId, { name: player.name, here });
+      people.set(player.discordId, { name: named(player.discordId, player.name), here });
     }
     const ordered = [...people.entries()].sort(([, a], [, b]) => Number(b.here) - Number(a.here));
     return {
       id: row.id,
       language: row.language,
-      startedBy: row.startedBy,
+      startedBy: named(row.starterId, row.startedBy),
       members: ordered.map(([discordId, person]) => ({ name: person.name, you: discordId === viewer.discordId })),
       playing: ordered.some(([, person]) => person.here),
       you: current?.id === row.id,
@@ -196,19 +194,20 @@ export async function runSheet(viewer: Viewer, runId: string, time: Time): Promi
   const [[run], published, members, [current]] = await Promise.all([
     time("run", db.select().from(runs).where(eq(runs.id, runId))),
     time("maps", publishedMaps()),
-    time("members", activeMembers(viewer, [runId])),
+    time("members", activeMembers(runId)),
     time("mine", runOf(viewer)),
   ]);
   if (!run) return null;
   const map = published.find((entry) => entry.game === run.game && entry.map === run.map);
   if (!map) return null;
+  const named = await time("names", currentNames([...members.map((member) => member.discordId), run.startedBy]));
   return {
     viewer,
     id: run.id,
     map,
     language: run.language,
-    startedBy: run.startedByName,
-    members: members.get(runId) ?? [],
+    startedBy: named(run.startedBy, run.startedByName),
+    members: members.map((member): Member => ({ name: named(member.discordId, member.name), you: member.discordId === viewer.discordId })),
     you: current?.id === runId,
     yourRun: current && current.id !== runId ? linkOf(current, published) : null,
   };
@@ -310,7 +309,8 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
     .leftJoin(hintCards, eq(hintCards.messageId, messages.id))
     .where(and(eq(messages.runId, runId), gt(messages.id, after)))
     .orderBy(asc(messages.id));
-  const members = (await activeMembers(viewer, [runId])).get(runId) ?? [];
+  const members = await activeMembers(runId);
+  const named = await currentNames([...members.map((member) => member.discordId), ...rows.map((row) => row.message.discordId)]);
   const revisionIds = rows.filter((row) => row.message.kind === "revision").map((row) => row.message.id);
   const referred = new Map(
     revisionIds.length
@@ -330,14 +330,14 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
         id: row.id,
         author: row.author,
         revision: row.kind === "revision" ? { re: referred.get(row.id) ?? null } : null,
-        name: row.name,
+        name: named(row.discordId, row.name),
         you: row.discordId === viewer.discordId,
         text: row.text,
         at: row.createdAt.toISOString(),
         card,
       }),
     ),
-    members,
+    members: members.map((member): Member => ({ name: named(member.discordId, member.name), you: member.discordId === viewer.discordId })),
     cards: await cardsSince(
       viewer,
       runId,

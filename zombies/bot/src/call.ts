@@ -46,6 +46,12 @@ export function leave(): void {
   keepTranscripts();
 }
 
+export async function namesOf(ids: string[]): Promise<Record<string, string>> {
+  const server = await guild();
+  const found = await Promise.all(ids.map((id) => server.members.fetch({ user: id, force: true }).then((member) => [id, member.displayName] as const, () => null)));
+  return Object.fromEntries(found.filter((entry) => entry !== null));
+}
+
 export const here = () => (voice.holding(OWNER) ? voice.channel() : null);
 
 function site(path: string, body: unknown): Promise<Response> {

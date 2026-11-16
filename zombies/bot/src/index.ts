@@ -1,6 +1,8 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Locale, Module, Route, SlashCommand } from "../../../home/bot/src/sdk.ts";
-import { channelOf, here, join, leave, start } from "./call.ts";
+import { channelOf, here, join, leave, namesOf, start } from "./call.ts";
+
+const MAX_NAMES = 50;
 
 const text = {
   en: {
@@ -28,7 +30,7 @@ const command: SlashCommand = {
   run: cari,
 };
 
-const route: Route = async (method, path, _params, _input, userId) => {
+const route: Route = async (method, path, _params, input, userId) => {
   if (path === "voice" && method === "GET") {
     if (!userId) return [{ error: "badRequest" }, 400];
     return [{ channel: await channelOf(userId), cari: here() }];
@@ -37,6 +39,11 @@ const route: Route = async (method, path, _params, _input, userId) => {
     if (!userId) return [{ error: "badRequest" }, 400];
     const joined = await join(userId);
     return "error" in joined ? [joined, 409] : [joined];
+  }
+  if (path === "names" && method === "POST") {
+    const ids = Array.isArray(input.ids) ? [...new Set(input.ids.filter((id): id is string => typeof id === "string" && /^\d{1,20}$/.test(id)))] : [];
+    if (!ids.length || ids.length > MAX_NAMES) return [{ error: "badRequest" }, 400];
+    return [{ names: await namesOf(ids) }];
   }
   if (path === "leave" && method === "POST") {
     leave();
