@@ -41,7 +41,7 @@ What only prepared hints may say
 - Never judge what they found, saw or did: no praise ("well spotted", "good job"), and nothing like "that may matter", "that's right", "that's expected", "that's the one" or "that's part of it". Whether something matters is solution content.
 - Never use your own knowledge of this map or its easter egg, even when you know it: only what the hints say.
 - Hints reach them only through give_hint and repeat_hint. Never write a hint, a card, a tool name or a hint's words in your reply: to say a hint word for word, call repeat_hint.
-- Never mention answers, whether they asked for one, or offer one.
+- Never mention answers, whether they asked for one, or offer one: when they want more and only the full solution is left, call give_hint as usual and code offers it for you.
 - Never name, describe or imply any place, item, enemy, mechanic or step except those listed under "What the players know" or written in a hint already given.
 - Never tell them that something they see or did is or is not the thing a hint describes, or is or is not right. If a hint already given covers it, say that hint again; otherwise give the next hint or an Alt.
 - Never mention steps, numbers, levels, ladders, cards, tools, threads, or how many hints exist or remain. Never offer choices or lists of things to try.
@@ -525,6 +525,10 @@ const englishWords = (text: string) => text.split(/[^a-z']+/).filter((word) => e
 
 const answerAsk = /\b(?:respuesta|solucion|answer|solution|dimelo|dinoslo|dime que (?:hago|hacemos|hay que hacer)|dinos que (?:hacer|hacemos|hay que hacer)|tell (?:me|us) what to do|just tell)\b/;
 
+const acceptance = /^(?!(?:no|nope|nah|todavia|aun|not)\b)(?:\S+\s+)?(?:si|vale|dale|venga|claro|porfa|por favor|yes|yeah|yep|ok|okay|sure|please|go on|do it)\b/;
+
+const acceptsOffer = (asked: string) => acceptance.test((asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/^[¡¿,.\s]+/, ""));
+
 const asksAnswer = (asked: string) => answerAsk.test((asked.split("\n").at(-1) ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase());
 
 const runLength = 5;
@@ -790,6 +794,19 @@ export async function coachTurn(
     if (lastTurn?.role !== "user") return "ok";
     const asked = typeof lastTurn.content === "string" ? lastTurn.content : "";
     const addressed = ask.kind === "message" && (ask.spoken || isAddressed(asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? ""));
+    const offer = state.character.lines[state.language].answerOffer;
+    const before = conversation[conversation.length - 2];
+    const offered = before?.role === "assistant" && typeof before.content === "string" && before.content.includes(offer);
+    const wantsAnswer = asksAnswer(asked) || (offered && acceptsOffer(asked));
+    const offeredOn = state.ladders.find((ladder) => keyOf(ladder) === state.latest);
+    if (ask.kind === "message" && offered && acceptsOffer(asked) && offeredOn) {
+      const given = await deliver(state, offeredOn, null, true, null, askedBy.discordId || null);
+      if (given.ok) {
+        emit({ type: "hint", text: given.text });
+        await finish(state, "", [given.cardId]);
+        return "ok";
+      }
+    }
     const recent = conversation.flatMap((turn) => (typeof turn.content === "string" ? turn.content.split("\n") : [])).slice(-recentLines);
     const violations: string[] = [];
     const caught: string[] = [];
@@ -884,7 +901,7 @@ export async function coachTurn(
             } else {
               const alt = !blocker && typeof input.alt === "number" && Number.isInteger(input.alt) ? input.alt - 1 : null;
               const sameLadder = target && target.ladder.handle === aimed.handle ? target.cardId : null;
-              const result = await deliver(state, aimed, alt, input.answer === true && asksAnswer(asked), sameLadder, askedBy.discordId || null);
+              const result = await deliver(state, aimed, alt, wantsAnswer, sameLadder, askedBy.discordId || null);
               if (result.ok) {
                 hinted = true;
                 emit({ type: "hint", text: result.text });
@@ -894,6 +911,11 @@ export async function coachTurn(
                 if (answered) await answer(answered.id, result.deliveryId);
                 ended = true;
                 content = "Handed over on the card. Add at most a few words of your own, and never repeat, explain or extend the hint.";
+              } else if (result.violation === "answer-unasked") {
+                hinted = true;
+                ended = true;
+                speech.add(offer);
+                content = "Code offered them the full solution in your voice. Add nothing.";
               } else {
                 if (result.violation) violations.push(result.violation);
                 content = result.reason;
@@ -904,7 +926,12 @@ export async function coachTurn(
           const ladder = state.ladders.find((entry) => entry.handle === input.ladder);
           const last = ladder ? state.givenLines.get(keyOf(ladder))?.at(-1) : undefined;
           const onward = ladder && keyOf(ladder) === state.latest && state.latestSaid >= 2 && !hinted ? await deliver(state, ladder, null, false, null, askedBy.discordId || null) : null;
-          if (onward?.ok) {
+          if (onward && !onward.ok && onward.violation === "answer-unasked") {
+            hinted = true;
+            ended = true;
+            speech.add(offer);
+            content = "Code offered them the full solution in your voice instead of saying it a third time. Add nothing.";
+          } else if (onward?.ok) {
             hinted = true;
             ended = true;
             emit({ type: "hint", text: onward.text });

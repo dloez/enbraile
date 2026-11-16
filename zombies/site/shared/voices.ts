@@ -6,7 +6,7 @@ export type Voice = (typeof voices)[number];
 
 export const defaultVoice: Voice = "chatterbox";
 
-export type FixedLines = { round: string; notYet: string; hold: string[]; unheard: string; ack: string; carriedOver: string };
+export type FixedLines = { round: string; notYet: string; hold: string[]; unheard: string; ack: string; carriedOver: string; answerOffer: string };
 
 export type Character = { name: string; wake: string; role: string; manner: string; lines: Record<Language, FixedLines> };
 
@@ -27,6 +27,7 @@ const coach: Character = {
       unheard: "No te he entendido bien, ¿me lo repites?",
       ack: "Anotado, gracias.",
       carriedOver: "De la sesión anterior.",
+      answerOffer: "Lo siguiente que tengo ya es la solución entera de esto. ¿Os la digo?",
     },
     en: {
       round: "By the way, what round are you on?",
@@ -39,6 +40,7 @@ const coach: Character = {
       unheard: "I didn't catch that, can you say it again?",
       ack: "Noted, thanks.",
       carriedOver: "From the last session.",
+      answerOffer: "What I have next is the full solution to this. Do you want it?",
     },
   },
 };
@@ -59,8 +61,9 @@ const richtofen: Character = {
         "No pienso mandaros por mal camino sin estar seguro, ¡nein! Seguid, que ahora vuelvo.",
       ],
       unheard: "¿Qué? ¡Hablad más claro, ratitas! Repetídmelo.",
-      ack: "¡Anotado, ja! Gracias.",
-      carriedOver: "De la sesión anterior, ja.",
+      ack: "¡Anotado! Gracias.",
+      carriedOver: "De la sesión anterior.",
+      answerOffer: "¡Achtung! Lo siguiente que tengo ya es la solución entera, ratitas. ¿La queréis o preferís seguir sufriendo?",
     },
     en: {
       round: "Ah, by the way! What round are you on, my dear test subjects?",
@@ -71,8 +74,9 @@ const richtofen: Character = {
         "I will not send you the wrong way without being certain, nein! Keep going, I shall return.",
       ],
       unheard: "What? Speak up, my little lab rats! Say it again.",
-      ack: "Noted, ja! Thank you.",
-      carriedOver: "From the last session, ja.",
+      ack: "Noted! Thank you.",
+      carriedOver: "From the last session.",
+      answerOffer: "Achtung! What I have next is the whole solution, my little lab rats. Do you want it, or would you rather keep suffering?",
     },
   },
 };
