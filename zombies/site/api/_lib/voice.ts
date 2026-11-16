@@ -4,9 +4,11 @@ import { asRevision, type CallLine, type CallState, type JoinRefusal } from "../
 import { bot } from "./bot.js";
 import { db } from "./db.js";
 import { postMessage, postRevision } from "./runs.js";
-import { callLines, deliveries, runMembers } from "./schema.js";
+import { callLines, deliveries, runMembers, runs } from "./schema.js";
 
 const botTimeoutMs = 5000;
+
+const notHeard = { es: "No te he entendido bien, ¿me lo repites?", en: "I didn't catch that, can you say it again?" } as const;
 
 async function speakerOf(discordId: string): Promise<{ runId: string; viewer: Viewer } | null> {
   const [row] = await db
@@ -41,7 +43,9 @@ export async function voiceTurn(discordId: string, text: string): Promise<VoiceT
     .where(and(eq(deliveries.runId, runId), eq(deliveries.askedBy, discordId), gt(deliveries.id, before?.last ?? 0)))
     .orderBy(asc(deliveries.id));
   const reply = [said.trim(), ...hints.map((hint) => hint.text)].filter(Boolean).join(" ");
-  return { ok: true, reply: reply || null };
+  if (reply) return { ok: true, reply };
+  const [run] = await db.select({ language: runs.language }).from(runs).where(eq(runs.id, runId));
+  return { ok: true, reply: notHeard[run?.language === "en" ? "en" : "es"] };
 }
 
 export async function keepCallLine(line: CallLine): Promise<boolean> {

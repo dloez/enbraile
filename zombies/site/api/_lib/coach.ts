@@ -534,7 +534,7 @@ class Speech {
 
   private say(raw: string): void {
     const text = raw.replace(/\s+/g, " ").trim();
-    if (!text || text.replace(/[\s.…]/g, "") === "" || text.includes(silence)) return;
+    if (!text || text.replace(/[\s.…]/g, "") === "" || text.includes(silence) || /^\([^()]{0,40}\)$/.test(text)) return;
     if (text.includes("[") || text.includes("]")) {
       this.violations.push("brackets");
       return;
