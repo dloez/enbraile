@@ -1,0 +1,7 @@
+#!/usr/bin/awk -f
+$2 == "call" || $2 == "line" { n++; if (n % 10 == 0) { print $1 " " n " member and call lines"; fflush() } next }
+$2 == "hint" || $2 == "published" || $2 == "joined" || $2 == "left" || $2 == "progress" { next }
+$2 == "cari" && $3 == "(claude)" { next }
+$2 == "gap" && $4 == "answered" { next }
+$2 == "rating" && $3 == "right" { next }
+{ print; fflush() }

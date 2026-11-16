@@ -16,6 +16,6 @@ If the file is missing, ask the owner to create it with those two variables (the
 ## Steps
 
 1. `.claude/skills/watch-run/prod npm run runs` and match the run ID the user gave (an attempt ID like `hLzHV-JZ` is the run ID). Print only the run's map and member count.
-2. Start `.claude/skills/watch-run/prod npm run watch -- <id>` under `Monitor`, persistent, with a description naming the run.
+2. Start `.claude/skills/watch-run/prod npm run --silent watch -- <id> 2>&1 | .claude/skills/watch-run/filter` under `Monitor` (30-minute maximum; re-arm on each expiry), with a description naming the run. The filter drops the events ee-coach's table says to ignore and prints one line per 10 member and call lines instead of each one, so the session only wakes for something to act on (owner, 2026-11-16: a turn per call line was noise). The watch's first line, the earlier-events count, still comes through.
 3. Go on with ee-coach's watch steps from step 2 (earlier events read once by a subagent, then each event per the table), printing only the table's one-liners.
 4. When the night ends, stop the Monitor and run ee-coach's **Debrief** with the wrapper in front of `npm run runs -- <id>`.
