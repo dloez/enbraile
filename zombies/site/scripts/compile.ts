@@ -197,7 +197,7 @@ const parseKnowledge = (source: string) => {
   }
   const names = cells(header);
   const column = (prefix: string) => names.findIndex((name) => name.startsWith(prefix));
-  const [thing, status, spanish] = [column("Thing"), column("Status"), column("Spanish")];
+  const [thing, status, spanish, aliasesEn, aliasesEs] = [column("Thing"), column("Status"), column("Spanish"), column("Aliases (English)"), column("Aliases (Spanish)")];
   if (thing < 0 || status < 0) errors.push("knowledge.md: the table needs Thing and Status columns");
   return rows
     .map(cells)
@@ -208,7 +208,8 @@ const parseKnowledge = (source: string) => {
       const es = cell && !/^[-—–]$/.test(cell) ? cell.replace(/\*\*/g, "") : en;
       const mark = (row[status] ?? "").split(/\s/)[0]!.toLowerCase();
       if (!["known", "unknown", "revealed"].includes(mark)) errors.push(`knowledge.md: ${row[0]} has a status other than known, unknown or revealed`);
-      return { id: knowledgeId(row[0]!), name: { es, en }, mark: mark === "known" ? ("known" as const) : ("unknown" as const) };
+      const aliases = (index: number) => (index >= 0 ? (row[index] ?? "").split(";").map((alias) => alias.trim()).filter((alias) => alias && !/^[-—–]$/.test(alias)) : []);
+      return { id: knowledgeId(row[0]!), name: { es, en }, aliases: { es: aliases(aliasesEs), en: aliases(aliasesEn) }, mark: mark === "known" ? ("known" as const) : ("unknown" as const) };
     });
 };
 

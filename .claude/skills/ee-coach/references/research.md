@@ -72,10 +72,12 @@ List every named thing and fact the dossier uses: areas, items and parts, weapon
 ```markdown
 # What the players know: <Map>
 
-| ID | Thing | Kind | Status | How / when | First needed in |
-|---|---|---|---|---|---|
-| K01 | <name> | area / item / weapon / enemy / mechanic / step | known / unknown / revealed | <"said they know it", "hint 4·L2", "reported seeing it"> | Step N |
+| ID | Thing | Kind | Status | How / when | First needed in | Aliases (English) | Aliases (Spanish) |
+|---|---|---|---|---|---|---|---|
+| K01 | <name> | area / item / weapon / enemy / mechanic / step | known / unknown / revealed | <"said they know it", "hint 4·L2", "reported seeing it"> | Step N | <other ways players say it; separated by ;> | <…> |
 ```
+
+The two `Aliases` columns are optional: other ways the players would say the thing (word order, an article or preposition, singular and plural, the other language's or the colloquial name, a misheard form), separated by `;`, or `—`. The site matches them exactly like the name, whole words with accents, case and a leading article ignored, both to mark an entry known from the players' words and to drop a sentence of the coach's that names an entry still unknown ([The Zombies Site → Decisions](../../../../docs/zombies/site/explanation/site.md#decisions)). So an alias is a phrase or a name specific to the map, never a common word on its own (not `key` or `door` alone, but `the rusty key`-style phrases). Add them for anything players are likely to name before a hint does: what a step is about, and whatever its rungs reveal.
 
 - `unknown`: must not be mentioned to the players.
 - `known`: the players have said or shown they know it. Free to mention.

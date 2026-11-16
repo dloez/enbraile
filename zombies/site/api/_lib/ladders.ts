@@ -63,7 +63,9 @@ function core(name: string): string {
 
 export function namedIn(text: string, knowledge: Bundle["knowledge"]): string[] {
   const haystack = ` ${strip(text)} `;
-  return knowledge.filter((entry) => Object.values(entry.name).some((name) => haystack.includes(` ${core(name)} `))).map((entry) => entry.id);
+  return knowledge
+    .filter((entry) => [...Object.values(entry.name), ...Object.values(entry.aliases).flat()].some((name) => haystack.includes(` ${core(name)} `)))
+    .map((entry) => entry.id);
 }
 
 export const isReady = (step: Step, done: Set<string>) => step.requires.every((id) => done.has(id));

@@ -31,6 +31,7 @@ How you speak
 Hints
 - When they ask for help or a hint, or say they are stuck, hand over the next hint with give_hint at once: on the thread of the most recent hint unless they are clearly asking about something else. Never ask questions first and never refuse. The full solution is a hint like any other: give it when it is next.
 - When what they report matches an Alt's "when", give that Alt.
+- A theory or guess put to you ("I think we need…") about an open thread is asking too: give that thread's next hint, or the Alt whose "when" fits what they said, with give_hint at once. Never confirm, deny or comment on the theory in your own words; the hint does that.
 - To say a hint again, call repeat_hint. You may explain a hint already given using only its own words.
 - Anything about the solution comes only from hints. In your own words never say where to go, what to do, or whether something they found matters; never name anything not under "What the players know" or in a hint already given; never use your own knowledge of this map.
 - If they ask about something no hint covers, call hold. When a hint now answers a question under "Held earlier", give it with gap set.
@@ -38,7 +39,7 @@ Hints
 Progress
 - When what they report matches a thread's "Done when", call record_progress done on it, even when they also say they do not know what to do now: code says the prepared line and hands over the first hint of what comes next. That is how "we did it, now what?" gets its next hint. When they start something listed, call record_progress started. Never offer an optional step.
 - A thread's kind says how it finishes. Discovery: done as soon as they report finding or noticing its thing, even with "now what?". Execution: they know what to do and the hard part is doing it; done only when they report the outcome, and "we are doing it but it fails" gets its Alt or next hint, never a record of progress. Puzzle and arbitrary: done when they report the game reacting.
-- When they name something themselves, call mark_known with their words.
+- When they name something themselves, a theory included, call mark_known with their whole line as they said it.
 - Give a heads-up with heads_up only at the moment its "when" describes. Now and then call ask_round, never right after a hint.
 
 Anything else (hearing checks, greetings, jokes, general Zombies questions): answer briefly in your own words. Reply with exactly ${silence} only when they are talking among themselves.`;
@@ -476,7 +477,7 @@ const wordRuns = (line: string) => {
 };
 
 const judging =
-  /\b(?:(?:es|son|eso es|esa es|ese es|esto es|esta es|este es)\s+(?:justo\s+)?(?:lo|la|el|los|las)\s+que\s+(?:buscais|buscabais|os toca|teneis que|necesitais|hay que)|(?:bien visto|buen trabajo|bien pillado|vais bien|vais por buen camino|buen ojo)|ya os (?:la|lo|las|los) he (?:dicho|dado|repetido)|lo que importa (?:ahora )?es|eso no os (?:va a )?(?:servir|funcionar)|(?:that's|that is|it's|this is)\s+(?:exactly\s+)?(?:what|the one)\s+you(?:'re| are)?\s+(?:looking for|need|after)|well spotted|good job|nice find|you're on the right track|i've already told you|what matters (?:now )?is|that won't work for you)\b/;
+  /\b(?:(?:es|son|eso es|esa es|ese es|esto es|esta es|este es)\s+(?:justo\s+)?(?:lo|la|el|los|las)\s+que\s+(?:buscais|buscabais|os toca|teneis que|necesitais|hay que|(?:os|te) (?:he|habia) (?:dado|dicho))|(?:bien visto|buen trabajo|bien pillado|vais bien|vais por buen camino|buen ojo)|ya os (?:la|lo|las|los) he (?:dicho|dado|repetido)|lo que importa (?:ahora )?es|eso no os (?:va a )?(?:servir|funcionar)|(?:that's|that is|it's|this is)\s+(?:exactly\s+)?(?:what|the one)\s+(?:you(?:'re| are)?\s+(?:looking for|need|after)|i (?:gave|told) you)|well spotted|good job|nice find|you're on the right track|i've already told you|what matters (?:now )?is|that won't work for you)\b/;
 
 const hintRequest = /\b(?:dame|danos|dime|dinos|quiero|queremos|necesito|necesitamos|otra|siguiente|mas|nueva|give|another|next|more|need|want)\b.*\b(?:pista|pistas|hint|hints|ayuda|clue)\b|\b(?:pista|pistas|hint|hints|ayuda|clue)\b.*\b(?:mas facil|siguiente|otra|nueva|next|another|more|easier)\b|\b(?:ayudanos|ayudame|help us|help me)\b/;
 

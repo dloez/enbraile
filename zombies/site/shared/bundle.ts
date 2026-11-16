@@ -63,6 +63,7 @@ const step = z.object({
 const knowledge = z.object({
   id,
   name: worded,
+  aliases: z.object({ es: z.array(z.string().min(1)).default([]), en: z.array(z.string().min(1)).default([]) }).default({ es: [], en: [] }),
   mark: z.enum(["known", "unknown"]),
 });
 

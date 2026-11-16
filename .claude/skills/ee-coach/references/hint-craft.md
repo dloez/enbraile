@@ -58,6 +58,8 @@ Real steps with the wording the players settled on, and the rejected versions be
 
 When a step has separate parts to find (shield pieces, several skulls or relics), write one short ladder per part as well as the ladder for the whole step. In play, as soon as the players report one part found, stop climbing the whole-step ladder and switch to the ladder of the part still missing, starting at its L1. Never deliver a rung whose content they have already acted on: if a hint led them to one part but not the other, it was not enough for the other, and repeating it (or the next rung that still talks about the found part) reads as not listening. The players asked for exactly this (2026-11-15): "no tiene sentido volver a decir la misma pista si el jugador ya te ha comentado que con la misma pista ya tiene una pieza", preferring a new level 1 for the missing part over a trimmed level 2.
 
+The same holds for a step whose ladder folds two halves into one, such as what the trick is and how to get it: players often work out the first half alone, and the next rung then tells them what they just said. Give such a step an `Alt` for the rung that states the first half (or split it into parts), for when they already name it, holding a fresh level-1 nudge toward the second half only, which does not repeat the first (2026-11-16).
+
 ## Blocked threads
 
 Players may reach a step before its prerequisites. Don't close the door ("that's as far as it goes, you need X"): the players rejected that (2026-11-15). Say nothing until they ask or have clearly sunk a lot of time. Then a ladder aimed at the blocker, same voice rules as any other:
