@@ -94,7 +94,7 @@ npm run runs
 npm run runs -- <run id>
 ```
 
-The first lists every run with its map, members and counts; the second writes the whole run (its log, the lines said in its call, gaps, feedback, marks and Claude calls) to `zombies/maps/<game>/<map>/runs/<id>.json`, gitignored, and prints only its counts. Both read `ZOMBIES_URL` and `CLAUDE_TOKEN`, as `publish` does.
+The first lists every run with its map, members and counts; the second writes the whole run (its log, gaps, feedback, marks and Claude calls; the call's transcriptions are left out) to `zombies/maps/<game>/<map>/runs/<id>.json`, gitignored, and prints only its counts. Both read `ZOMBIES_URL` and `CLAUDE_TOKEN`, as `publish` does.
 
 To follow a run while it is played:
 
@@ -102,7 +102,7 @@ To follow a run while it is played:
 npm run watch -- <run id>
 ```
 
-It prints one spoiler-free line per event (a line, a hint, a gap, a revision, a rating, a reply's audit findings, a step-in, a new version) and keeps every event with its text in `zombies/maps/<game>/<map>/runs/<id>.events.jsonl`, gitignored, until it is stopped. For production, the `watch-run` skill (`.claude/skills/watch-run/`) prefixes it with a `prod` wrapper that loads `ZOMBIES_URL` and `CLAUDE_TOKEN` from the untracked `.env.production.local` without printing them. Run it under `Monitor` from Claude Code, as the ee-coach skill's [Watch a run](../../../../.claude/skills/ee-coach/SKILL.md#watch-a-run-from-claude-code) does.
+It prints one spoiler-free line per event, leaving out the call's transcriptions (a line, a hint, a gap, a revision, a rating, a reply's audit findings, a step-in, a new version) and keeps every event with its text in `zombies/maps/<game>/<map>/runs/<id>.events.jsonl`, gitignored, until it is stopped. For production, the `watch-run` skill (`.claude/skills/watch-run/`) prefixes it with a `prod` wrapper that loads `ZOMBIES_URL` and `CLAUDE_TOKEN` from the untracked `.env.production.local` without printing them. Run it under `Monitor` from Claude Code, as the ee-coach skill's [Watch a run](../../../../.claude/skills/ee-coach/SKILL.md#watch-a-run-from-claude-code) does.
 
 To post in a run as Cari, write the step-in to a JSON file in the map's gitignored dir (`{ "text": ..., "hint": { "step": ..., "part": null, "alt": null }, "gap": null }`, as [The Zombies Site → Map Bundles](../explanation/site.md#map-bundles) describes), then:
 

@@ -14,19 +14,20 @@ const pollMs = 2000;
 const base = requireEnv("ZOMBIES_URL");
 const authorization = `Bearer ${requireEnv("CLAUDE_TOKEN")}`;
 
-async function read(after: string): Promise<RunEvents | number> {
+type Watched = Exclude<RunEvent, { kind: "call" }>;
+
+async function read(after: string): Promise<(Omit<RunEvents, "events"> & { events: Watched[] }) | number> {
   const response = await fetch(`${base}/api/claude/runs/${encodeURIComponent(id!)}/events?after=${after}`, { headers: { authorization } }).catch(() => null);
   if (!response?.ok) return response?.status ?? 0;
-  return (await response.json()) as RunEvents;
+  const page = (await response.json()) as RunEvents;
+  return { ...page, events: page.events.filter((event): event is Watched => event.kind !== "call") };
 }
 
-function line(event: RunEvent): string {
+function line(event: Watched): string {
   const at = new Date(event.at).toLocaleTimeString("en-GB", { hour12: false });
   switch (event.kind) {
     case "line":
       return `${at} line ${event.name}`;
-    case "call":
-      return `${at} call ${event.name}`;
     case "cari":
       return `${at} cari${event.by ? ` (${event.by})` : ""}${event.cards.length ? ` with card ${event.cards.join(", ")}` : ""}`;
     case "audit":
