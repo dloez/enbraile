@@ -148,7 +148,7 @@ export type HistoryImport = z.infer<typeof historyImportSchema>;
 export const stepInSchema = z
   .object({
     text: z.string().max(1000).default(""),
-    hint: z.object({ step: handle, part: handle.nullable().default(null), alt: z.number().int().min(0).nullable().default(null), answer: z.boolean().default(false) }).nullable().default(null),
+    hint: z.object({ step: handle, part: handle.nullable().default(null), alt: z.number().int().min(0).nullable().default(null) }).nullable().default(null),
     gap: z.number().int().positive().nullable().default(null),
   })
   .refine((value) => value.text.trim() !== "" || value.hint !== null, { message: "text or hint is required" });
