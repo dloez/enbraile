@@ -296,14 +296,18 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
     const key = ladderKey(card.stepId, card.partId);
     const onLadder = rungs.filter((rung) => ladderKey(rung.stepId, rung.partId) === key);
     const given = onLadder.reduce((most, rung) => Math.max(most, rung.rung + 1), 0);
-    const latest = ladderCards.filter((other) => ladderKey(other.stepId, other.partId) === key).at(-1)?.id === card.id;
+    const siblings = ladderCards.filter((other) => ladderKey(other.stepId, other.partId) === key);
+    const latest = siblings.at(-1)?.id === card.id;
+    const finishedLadder = done.has(card.stepId) || done.has(key);
     const ladder = ladders.get(key);
     const own = onLadder.filter((rung) => rung.cardId === card.id);
     return {
       id: card.id,
       rungs: own.map((rung) => ({ id: rung.id, text: rung.text, zone: zoneOf(key, rung.rung, rung.alt) })),
       at: (own.at(-1)?.at ?? new Date()).toISOString(),
-      more: latest && ladder !== undefined && !done.has(card.stepId) && !done.has(key) && hasMore(ladder, given),
+      more: latest && ladder !== undefined && !finishedLadder && hasMore(ladder, given),
+      thread: siblings[0]?.id ?? card.id,
+      done: finishedLadder,
       rating: rated.get(card.id) ?? null,
     };
   });

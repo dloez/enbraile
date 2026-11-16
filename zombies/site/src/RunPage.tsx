@@ -23,9 +23,13 @@ function clock(at: string): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-const coachWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: (name: string) => string; rate: string; zone: { zone: string; whole: string; near: string }; ratings: Record<Rating, string> }> = {
+const coachWords: Record<Language, { dispatch: string; pinned: string; pins: string; earlier: string; fewer: string; more: string; transmitting: string; writing: (name: string) => string; rate: string; zone: { zone: string; whole: string; near: string }; ratings: Record<Rating, string> }> = {
   es: {
     dispatch: "Despacho",
+    pinned: "Fijada",
+    pins: "Pistas en curso",
+    earlier: "Ver las pistas anteriores",
+    fewer: "Ocultar las anteriores",
     zone: { zone: "Mapa con un punto marcado en rojo", whole: "Ver el mapa entero", near: "Volver al punto" },
     more: "Más",
     transmitting: "transmitiendo",
@@ -35,6 +39,10 @@ const coachWords: Record<Language, { dispatch: string; more: string; transmittin
   },
   en: {
     dispatch: "Dispatch",
+    pinned: "Pinned",
+    pins: "Hints in progress",
+    earlier: "Show the earlier hints",
+    fewer: "Hide the earlier ones",
     zone: { zone: "Map with a spot marked in red", whole: "Show the whole map", near: "Back to the spot" },
     more: "More",
     transmitting: "transmitting",
@@ -118,17 +126,40 @@ function Feedback({ card, language, rating, onRate }: { card: number; language: 
   );
 }
 
-function Slip({
-  card,
-  name,
-  language,
-  art,
-  busy,
-  rating,
-  onMore,
-  onRate,
-}: {
-  card: Card;
+type Rung = Card["rungs"][number];
+
+function Rungs({ rungs, art, language, newest }: { rungs: Rung[]; art: RunSheet["map"]["art"]; language: Language; newest?: (element: HTMLDivElement | null) => void }) {
+  const words = coachWords[language];
+  return (
+    <>
+      {rungs.map((rung, index) => {
+        const last = index === rungs.length - 1;
+        return (
+          <div key={rung.id} ref={last ? newest : undefined} className={last ? undefined : "rung-old"}>
+            <p className="rung">{rung.text}</p>
+            {rung.zone && <SurveyZone zone={rung.zone} art={art} words={words.zone} />}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+function SlipFoot({ card, language, busy, rating, onMore, onRate }: { card: Card; language: Language; busy: boolean; rating: Rating | null; onMore: (card: number) => void; onRate: (card: number, rating: Rating) => void }) {
+  const words = coachWords[language];
+  return (
+    <div className="slip-f">
+      {card.more && (
+        <button type="button" className="more" disabled={busy} onClick={() => onMore(card.id)}>
+          <Down /> {words.more}
+        </button>
+      )}
+      <Feedback card={card.id} language={language} rating={rating} onRate={onRate} />
+    </div>
+  );
+}
+
+type SlipProps = {
   name: string;
   language: Language;
   art: RunSheet["map"]["art"];
@@ -136,28 +167,52 @@ function Slip({
   rating: Rating | null;
   onMore: (card: number) => void;
   onRate: (card: number, rating: Rating) => void;
-}) {
+};
+
+function Slip({ card, name, language, art, busy, rating, onMore, onRate }: SlipProps & { card: Card }) {
   const words = coachWords[language];
   return (
-    <div className="slip" lang={language}>
+    <div className={card.done ? "slip" : "slip bare"} lang={language}>
       <div className="slip-h">
         <b>{words.dispatch}</b>
-        <span>{name} · {clock(card.at)}</span>
+        <span>
+          {!card.done && `${words.pinned} · `}
+          {name} · {clock(card.at)}
+        </span>
       </div>
-      {card.rungs.map((rung, index) => (
-        <div key={rung.id} className={index < card.rungs.length - 1 ? "rung-old" : undefined}>
-          <p className="rung">{rung.text}</p>
-          {rung.zone && <SurveyZone zone={rung.zone} art={art} words={words.zone} />}
-        </div>
-      ))}
-      <div className="slip-f">
-        {card.more && (
-          <button type="button" className="more" disabled={busy} onClick={() => onMore(card.id)}>
-            <Down /> {words.more}
-          </button>
-        )}
-        <Feedback card={card.id} language={language} rating={rating} onRate={onRate} />
+      <Rungs rungs={card.rungs} art={art} language={language} />
+      {card.done && <SlipFoot card={card} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />}
+    </div>
+  );
+}
+
+function PinnedSlip({ thread, name, language, art, busy, rating, onMore, onRate }: SlipProps & { thread: Card[] }) {
+  const words = coachWords[language];
+  const [open, setOpen] = useState(false);
+  const latest = thread[thread.length - 1]!;
+  const rungs = thread.flatMap((card) => card.rungs);
+  const count = rungs.length;
+  const newest = useCallback(
+    (element: HTMLDivElement | null) => {
+      if (element && count) element.scrollIntoView({ block: "nearest" });
+    },
+    [count],
+  );
+  return (
+    <div className={open ? "slip pin open" : "slip pin"} lang={language}>
+      <div className="slip-h">
+        <b>{words.dispatch}</b>
+        <span>
+          {name} · {clock(latest.at)}
+        </span>
       </div>
+      {count > 1 && (
+        <button type="button" className="fold" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
+          {open ? words.fewer : words.earlier}
+        </button>
+      )}
+      <Rungs rungs={rungs} art={art} language={language} newest={newest} />
+      <SlipFoot card={latest} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />
     </div>
   );
 }
@@ -475,6 +530,11 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   }, [loaded]);
 
   const shown = [...history, ...messages, ...(pending ? [pending] : [])];
+  const pinned = useMemo(() => {
+    const threads = new Map<number, Card[]>();
+    for (const card of [...cards.values()].sort((a, b) => a.id - b.id)) threads.set(card.thread, [...(threads.get(card.thread) ?? []), card]);
+    return [...threads.entries()].sort(([a], [b]) => a - b).map(([, thread]) => thread).filter((thread) => thread.length && !thread[thread.length - 1]!.done && thread.some((card) => card.rungs.length));
+  }, [cards]);
   const rungCount = [...cards.values()].reduce((sum, card) => sum + card.rungs.length, 0);
 
   useLayoutEffect(() => {
@@ -606,6 +666,22 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const slip = (card: Card, from: string) => (
     <Slip card={card} name={from} language={sheet.language} art={sheet.map.art} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
   );
+  const pinnedSlip = (thread: Card[]) => {
+    const latest = thread[thread.length - 1]!;
+    return (
+      <PinnedSlip
+        key={latest.thread}
+        thread={thread}
+        name={coach.name}
+        language={sheet.language}
+        art={sheet.map.art}
+        busy={airing !== null}
+        rating={rated.get(latest.id) ?? latest.rating}
+        onMore={more}
+        onRate={rate}
+      />
+    );
+  };
   const notice = trouble ?? (lost ? { text: t.failed, retry: () => void poll() } : null);
 
   return (
@@ -646,6 +722,11 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       </div>
       {voice && <VoiceBar voice={voice} coach={coach} />}
       <section className="main">
+        {pinned.length > 0 && (
+          <section className="pins" aria-label={coachWords[sheet.language].pins}>
+            {pinned.map(pinnedSlip)}
+          </section>
+        )}
         <div className={["rows", loaded && !settled && "arrive-all", notice && "rows-trouble"].filter(Boolean).join(" ")} ref={rows} onScroll={onScroll} aria-busy={!loaded}>
           {!loaded && <RowsSkeleton />}
           {loaded && !shown.length && airing === null && <p className="state quiet">{t.quiet}</p>}

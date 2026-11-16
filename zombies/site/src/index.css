@@ -1179,6 +1179,33 @@ a:hover {
   margin-top: auto;
 }
 
+.pins {
+  flex: none;
+  max-height: 45%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-6) var(--sp-12);
+  border-bottom: 1px solid var(--line);
+}
+
+.bare {
+  padding-bottom: var(--sp-4);
+}
+
+.pins .slip {
+  margin-top: 0;
+}
+
+.pins .survey {
+  max-width: 320px;
+}
+
+.fold {
+  display: none;
+}
+
 .row {
   display: grid;
   grid-template-columns: 88px minmax(0, 1fr);
@@ -1714,6 +1741,7 @@ a:hover {
   }
 
   .rows,
+  .pins,
   .cmp,
   .trouble,
   .mode {
@@ -2136,6 +2164,37 @@ a:hover {
 
   .slip {
     margin-top: var(--sp-2);
+  }
+
+  .pins {
+    max-height: 40%;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .pin:not(.open) .rung-old {
+    display: none;
+  }
+
+  .fold {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 var(--sp-4);
+    border: 0;
+    border-bottom: 1px dashed var(--slip-line);
+    background: none;
+    color: var(--slip-mute);
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .fold:focus-visible {
+    outline: 2px solid var(--slip-ink);
+    outline-offset: -2px;
   }
 
   .slip-h {

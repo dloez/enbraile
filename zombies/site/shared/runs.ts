@@ -50,7 +50,7 @@ export type Survey = { digest: string; width: number; height: number };
 
 export type ShownZone = Zone & { survey: Survey | null };
 
-export type Card = { id: number; rungs: { id: number; text: string; zone: ShownZone | null }[]; at: string; more: boolean; rating: Rating | null };
+export type Card = { id: number; rungs: { id: number; text: string; zone: ShownZone | null }[]; at: string; more: boolean; thread: number; done: boolean; rating: Rating | null };
 
 export type GapContext = {
   model: string;
