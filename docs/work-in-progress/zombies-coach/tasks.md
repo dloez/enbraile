@@ -34,22 +34,6 @@ The owner wants Cari's words to sound like the voice saying them, at least for c
 **Touches:** `docs/zombies/site/explanation/site.md`
 **After:** Let Cari speak in the character of her voice
 
-## Remove Harrow Station from the production maps
-
-The owner wants the made-up test map gone from the maps page (2026-11-16, relayed by another session). Publishing only adds versions (`docs/zombies/site/explanation/site.md`, Bundles); nothing removes a map. The test map stays in the repo (`zombies/site/test-map/`), since local checks and the how-to's verification use it.
-
-**Do:**
-- [ ] Delete the map for good, with its versions and any attempts on it (owner, 2026-11-16): a Claude route behind `CLAUDE_TOKEN` and `npm run unpublish -- <game>/<map>`, then remove `test/harrow-station` from production; docs in `site.md` and the how-to.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; locally, an unpublished map leaves the maps page and its versions and attempts are gone; on production, `/api/maps` signed in no longer lists Harrow Station.
-- Human-run: the owner no longer sees Harrow Station on the site.
-- Reuse: the Claude API (`api/_lib/app.ts`).
-- Neighbors: `publish`.
-- Forbidden: deleting any other map's data; removing `zombies/site/test-map/`.
-
-**Touches:** `zombies/site/`, `docs/zombies/site/`
-
 ## Measure a signed-in production load
 
 Every production figure in `docs/zombies/site/explanation/site.md` was taken signed out or on a preview. `:139` says the owner's `Server-Timing` split (cold and warm), the zombies database's Neon wake and the session read in pkmn's database "are still not measured". `:152` says production after the bundled function "is not measured". `:226` leaves the `pg`-versus-serverless-driver choice to "the `Server-Timing` figures from a signed-in production load". `docs/home/site/explanation/site.md`'s Load Time table still reads "not deployed yet" for the root's bundled `/api/me`, though a2803a1 is on `origin/main` and has deployed.

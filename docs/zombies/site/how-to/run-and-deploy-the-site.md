@@ -79,6 +79,14 @@ npm run publish -- test-map
 
 The path is the map's dir, holding its `bundle.json`, relative to where the command is run; from `zombies/site/` a real map's is `../maps/<game>/<map>/`. When the bundle has an announcement or survey image it uploads each first and prints its size (`already stored` when the site has it); a file changed since `compile` stops it with a request to compile again. It then prints the version stored, or `unchanged` when the bundle equals the latest one, and every schema error when it is rejected. A new version also offers the questions Cari held on in runs that are still waiting for an answer, and `publish` says how many of those runs it answered at once ([The Zombies Site → Cari](../explanation/site.md#cari)). A bundle with an image needs a deployment that has the image route, so a map's first image is published after the code that shows it is in production; likewise a bundle with zones or a survey image is published only once the code that shows zones is in production.
 
+To remove a published map for good, with every version and every attempt on it:
+
+```sh
+npm run unpublish -- <game>/<map>
+```
+
+It prints the counts of versions, runs and images deleted, or `noSuchMap` when the map is not published; nothing undoes it but Neon's point-in-time restore ([The Zombies Site → Map Bundles](../explanation/site.md#map-bundles)). Like `publish`, it reads `ZOMBIES_URL` and `CLAUDE_TOKEN`.
+
 ### 7. Read a run
 
 ```sh
@@ -177,10 +185,16 @@ With the item in another vault, put that vault's name in place of `Private` here
 
 Push to `main`. The `zombies-site.yml` workflow deploys every push to `main` that touches `zombies/site/` to production, and another branch's push gets a preview, whose URL ends the workflow's run ([How to Deploy the Vercel Projects](../../../general/how-to/deploy-vercel-projects.md)). Vercel's build runs `npm run build && npm run db:migrate` (`buildCommand` in `vercel.json`) against that environment's `DATABASE_URL`, so a deploy migrates its own branch before it goes live, and a failed build migrates nothing.
 
-Then publish the maps to production, with the token read from 1Password into the shell:
+Then publish the real maps to production, with the token read from 1Password into the shell; the test map stays local ([The Zombies Site → Decisions](../explanation/site.md#decisions)):
 
 ```sh
-CLAUDE_TOKEN="$(op read 'op://Private/zombies claude token/password')" ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- test-map
+CLAUDE_TOKEN="$(op read 'op://Private/zombies claude token/password')" ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- ../maps/<game>/<map>/
+```
+
+`unpublish` runs against production the same way:
+
+```sh
+CLAUDE_TOKEN="$(op read 'op://Private/zombies claude token/password')" ZOMBIES_URL=https://zombies.enbraile.vip npm run unpublish -- <game>/<map>
 ```
 
 ### Inspect deployments and the database from the shell
@@ -193,4 +207,4 @@ Use Instant Rollback on the previous production deployment in the Vercel dashboa
 
 ## Verification
 
-The maps page shows Harrow Station with a Test map tag and "No attempts yet". Locally, with two members in `DEV_USER_ID`, one opens Harrow Station's row and starts an attempt there, and the other opens its link (`/attempts/<id>`) or its row on the map's view, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking Cari for a hint brings a card both see, and its More adds the next rung; the third rung of the lantern step shows its zone on the station's drawn plan under its text; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. With `BOT_URL` and `INTERNAL_SECRET` set to a local bot, a member in a voice channel sees the voice panel at the rail's foot (a bar under the strip on a phone) with **Bring Cari in**, and a «cari» request posted to `/api/voice` with the secret, as the bot sends it, answers `{ reply }` with Cari's words and any hint, and shows the line and the card in the chat. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the same page at `https://zombies.enbraile.vip`.
+The maps page shows Harrow Station with a Test map tag and "No attempts yet". Locally, with two members in `DEV_USER_ID`, one opens Harrow Station's row and starts an attempt there, and the other opens its link (`/attempts/<id>`) or its row on the map's view, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking Cari for a hint brings a card both see, and its More adds the next rung; the third rung of the lantern step shows its zone on the station's drawn plan under its text; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. `npm run unpublish -- test/harrow-station` prints `test/harrow-station: deleted, 1 versions, <n> runs, 0 images`, the maps page no longer lists it, its attempts answer `noSuchRun`, and publishing it once more brings it back as version 1. With `BOT_URL` and `INTERNAL_SECRET` set to a local bot, a member in a voice channel sees the voice panel at the rail's foot (a bar under the strip on a phone) with **Bring Cari in**, and a «cari» request posted to `/api/voice` with the secret, as the bot sends it, answers `{ reply }` with Cari's words and any hint, and shows the line and the card in the chat. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the published real maps at `https://zombies.enbraile.vip`, without Harrow Station.

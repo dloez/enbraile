@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Bundle, PublishedMap } from "../../shared/bundle.js";
 import { db } from "./db.js";
 import type { ImageType } from "../../shared/image.js";
-import { bundleVersions, mapImages, maps } from "./schema.js";
+import { audits, bundleVersions, callLines, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, mapImages, maps, messages, runHistory, runKnowledge, runMembers, runSteps, runs } from "./schema.js";
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
@@ -68,4 +68,37 @@ export async function hasImage(digest: string): Promise<boolean> {
 export async function imageOf(digest: string): Promise<{ type: ImageType; bytes: Buffer } | undefined> {
   const [row] = await db.select({ type: mapImages.type, bytes: mapImages.bytes }).from(mapImages).where(eq(mapImages.digest, digest));
   return row;
+}
+
+const runTables = [feedback, audits, gaps, deliveries, hintCards, headsUpsGiven, runSteps, coachCalls, runKnowledge, callLines, runHistory, messages, runMembers];
+
+export async function deleteMap(game: string, map: string): Promise<{ versions: number; runs: number; images: number } | undefined> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`${game}/${map}`}))`);
+    const [current] = await tx.select().from(maps).where(and(eq(maps.game, game), eq(maps.map, map)));
+    if (!current) return undefined;
+    const ids = (await tx.select({ id: runs.id }).from(runs).where(and(eq(runs.game, game), eq(runs.map, map)))).map((row) => row.id);
+    if (ids.length) {
+      for (const table of runTables) await tx.delete(table).where(inArray(table.runId, ids));
+      await tx.delete(runs).where(inArray(runs.id, ids));
+    }
+    const versions = await tx
+      .delete(bundleVersions)
+      .where(and(eq(bundleVersions.game, game), eq(bundleVersions.map, map)))
+      .returning({ image: sql<string | null>`${bundleVersions.bundle}->'image'->>'digest'`, survey: sql<string | null>`${bundleVersions.bundle}->'survey'->>'digest'` });
+    await tx.delete(maps).where(and(eq(maps.game, game), eq(maps.map, map)));
+    const digests = [...new Set(versions.flatMap((row) => [row.image, row.survey]).filter((digest): digest is string => Boolean(digest)))];
+    const images = digests.length
+      ? await tx
+          .delete(mapImages)
+          .where(
+            and(
+              inArray(mapImages.digest, digests),
+              sql`not exists (select 1 from ${bundleVersions} where ${bundleVersions.bundle}->'image'->>'digest' = ${mapImages.digest} or ${bundleVersions.bundle}->'survey'->>'digest' = ${mapImages.digest})`,
+            ),
+          )
+          .returning({ digest: mapImages.digest })
+      : [];
+    return { versions: versions.length, runs: ids.length, images: images.length };
+  });
 }

@@ -7,7 +7,7 @@ import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { imageFacts, maxImageBytes } from "../../shared/image.js";
-import { hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
+import { deleteMap, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
 import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 import { bringCari, callState, keepCallLine, voiceTurn } from "./voice.js";
@@ -79,6 +79,11 @@ claude.put("/maps/:game/:map", async (c) => {
   if (!stored.created) return c.json({ ...stored, held: { waiting: 0, answered: 0 } }, 200, noStore);
   const { retryHeld } = await import("./coach.js");
   return c.json({ ...stored, held: await retryHeld(bundle.game, bundle.map) }, 200, noStore);
+});
+
+claude.delete("/maps/:game/:map", async (c) => {
+  const deleted = await deleteMap(c.req.param("game"), c.req.param("map"));
+  return deleted ? c.json(deleted, 200, noStore) : c.json({ error: "noSuchMap" }, 404, noStore);
 });
 
 claude.put("/images/:digest", async (c) => {
