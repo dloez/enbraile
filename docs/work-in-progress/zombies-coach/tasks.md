@@ -23,18 +23,16 @@ The owner finds the player names fixed and wants them from Discord (2026-11-16, 
 The owner wants the made-up test map gone from the maps page (2026-11-16, relayed by another session). Publishing only adds versions (`docs/zombies/site/explanation/site.md`, Bundles); nothing removes a map. The test map stays in the repo (`zombies/site/test-map/`), since local checks and the how-to's verification use it.
 
 **Do:**
-- [ ] As the owner answers below: a Claude route behind `CLAUDE_TOKEN` and `npm run unpublish -- <game>/<map>`, then remove `test/harrow-station` from production; docs in `site.md` and the how-to.
+- [ ] Delete the map for good, with its versions and any attempts on it (owner, 2026-11-16): a Claude route behind `CLAUDE_TOKEN` and `npm run unpublish -- <game>/<map>`, then remove `test/harrow-station` from production; docs in `site.md` and the how-to.
 
 **Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; locally, an unpublished map leaves the maps page and its attempts behave as answered; on production, `/api/maps` signed in no longer lists Harrow Station.
+- Claude-run: `npm run gate` in `zombies/site`; locally, an unpublished map leaves the maps page and its versions and attempts are gone; on production, `/api/maps` signed in no longer lists Harrow Station.
 - Human-run: the owner no longer sees Harrow Station on the site.
 - Reuse: the Claude API (`api/_lib/app.ts`).
 - Neighbors: `publish`.
-- Forbidden: deleting production data before the owner's answer; removing `zombies/site/test-map/`.
+- Forbidden: deleting any other map's data; removing `zombies/site/test-map/`.
 
 **Touches:** `zombies/site/`, `docs/zombies/site/`
-**Needs the author:**
-- Hide the map (it leaves the site, its versions and any test attempts stay in the database and publishing again brings it back; recommended), or delete it with its versions and attempts for good?
 
 ## Measure a signed-in production load
 
