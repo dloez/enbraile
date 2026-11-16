@@ -141,23 +141,6 @@ The Accounts section of [The pkmn Site](../pkmn/site/explanation/site.md#account
 
 **Touches:** `pkmn/site/src/league/eggs.tsx`, `pkmn/site/src/components/trainer-admin.tsx`
 
-### home/bot: hear a whole phrase after the wake word
-
-The owner finds long phrases are not heard (2026-11-16). The bot ends a speaker's clip after 800 ms of silence (`SILENCE_MS` in `home/bot/src/listen.ts`, capped at `MAX_MS` 30 s), so a phrase with a natural pause («cari… ¿dónde está la…») is split into clips, and only the clip holding the wake word reaches the module; what follows the pause arrives as a clip with no trigger and is dropped.
-
-**Do:**
-- [ ] After a clip that holds a module's trigger word, keep collecting the same speaker's next clips while their pauses stay short (a follow window, its length the build's choice, recorded), and hand the module one trigger with the joined text; a clip with no trigger word outside such a window behaves as now.
-- [ ] Measure the delay this adds to a reply and keep it small; record the window and the figures in `docs/home/voice/explanation/voice.md` or the bot doc, wherever trigger matching is described.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `home/bot/` (and `uv run python -m py_compile worker.py` in `home/voice/` if the worker changes); locally, a scripted trigger clip followed by a second clip from the same speaker after a 1–2 s pause reaches the module as one text, and a second speaker's clip is never joined.
-- Human-run: in a call, the owner says a long question with a pause after «cari» and Cari answers the whole of it.
-- Reuse: `listen.ts`, the trigger matching (`home/bot/src/hearing.ts`, worker's `trigger` messages).
-- Neighbors: transcripts, which keep every clip regardless.
-- Forbidden: joining clips from different speakers; holding back clips with no trigger.
-
-**Touches:** `home/bot/src/listen.ts`, `home/bot/src/hearing.ts`, `home/voice/worker.py`, `docs/home/`
-
 ## Ideas
 
 ### pkmn/site: a private Showdown tied to the site

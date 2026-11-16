@@ -11,13 +11,19 @@ export type TriggerOptions = { ack?: boolean };
 export type SayOptions = { voice?: string };
 export type Voices = { voices: string[]; loaded: string[]; default: string | null };
 type Registration = { word: string; ack: boolean; handler: (trigger: Trigger) => void };
+type Follow = { word: string; parts: string[]; since: number; received: number; timer: ReturnType<typeof setTimeout> | null };
+type Speaker = { open: boolean; closedAt: number; sent: number[]; heardAt: number; follow: Follow | null };
 export type TranscriptLine = transcripts.Line;
 
 const BEAT_MS = 10_000;
 const SAY_TIMEOUT_MS = 60_000;
+const FOLLOW_MS = 1_200;
+const FOLLOW_WAIT_MS = 5_000;
+const FOLLOW_MAX_MS = 30_000;
 
 const registrations = new Set<Registration>();
 const holds = new Map<string, Set<string>>();
+const speakers = new Map<string, Speaker>();
 const listeners = new Set<(line: TranscriptLine) => void>();
 const waiting = new Map<number, { resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
 let worker: WebSocket | null = null;
@@ -108,6 +114,64 @@ export function say(text: string, { voice }: SayOptions = {}): Promise<void> {
   });
 }
 
+function speaker(userId: string): Speaker {
+  let found = speakers.get(userId);
+  if (!found) {
+    found = { open: false, closedAt: 0, sent: [], heardAt: 0, follow: null };
+    speakers.set(userId, found);
+  }
+  return found;
+}
+
+function dispatch(trigger: Trigger, heldMs: number): void {
+  console.log("trigger", JSON.stringify(trigger), `held ${heldMs}ms`);
+  for (const registration of registrations) {
+    if (registration.word !== trigger.word) continue;
+    try {
+      registration.handler(trigger);
+    } catch (error) {
+      console.error("trigger handler", trigger.word, (error as Error).message);
+    }
+  }
+}
+
+function finish(userId: string): void {
+  const follow = speaker(userId).follow;
+  if (!follow) return;
+  if (follow.timer) clearTimeout(follow.timer);
+  speaker(userId).follow = null;
+  dispatch({ word: follow.word, userId, text: follow.parts.filter(Boolean).join(" ") }, Date.now() - follow.received);
+}
+
+function settle(userId: string): void {
+  const state = speaker(userId);
+  const follow = state.follow;
+  if (!follow) return;
+  if (follow.timer) clearTimeout(follow.timer);
+  follow.timer = null;
+  const now = Date.now();
+  const total = FOLLOW_MAX_MS - (now - follow.received);
+  const left = state.open ? total : Math.min(total, (state.sent.length ? FOLLOW_WAIT_MS : FOLLOW_MS) - (now - state.closedAt));
+  if (left <= 0) return finish(userId);
+  follow.timer = setTimeout(() => settle(userId), left);
+}
+
+function opened(userId: string): void {
+  speaker(userId).open = true;
+  settle(userId);
+}
+
+function closed(userId: string, clip: Buffer | null, startedAt: number): void {
+  const state = speaker(userId);
+  state.open = false;
+  state.closedAt = Date.now();
+  if (clip && worker) {
+    worker.send(frame({ type: "clip", user: userId, at: startedAt }, clip));
+    state.sent.push(startedAt);
+  }
+  settle(userId);
+}
+
 function frame(header: Record<string, unknown>, body: Buffer): Buffer {
   const head = Buffer.from(JSON.stringify(header));
   const size = Buffer.alloc(4);
@@ -150,21 +214,23 @@ function received(data: Buffer, binary: boolean): void {
     entry.reject(new Error(message.error ?? "the voice worker could not speak"));
     return;
   }
-  if (message.type === "transcript" && message.user && message.text) {
-    heard(message.user, message.text, message.at ?? Date.now(), message.ms ?? null).catch((error: Error) => console.error("transcript", error.message));
+  if (message.type === "transcript" && message.user) {
+    const at = message.at ?? Date.now();
+    const state = speaker(message.user);
+    state.sent = state.sent.filter((sentAt) => sentAt > at);
+    if (message.text) {
+      if (state.follow && at > state.follow.since) state.follow.parts.push(message.text);
+      state.heardAt = at;
+      heard(message.user, message.text, at, message.ms ?? null).catch((error: Error) => console.error("transcript", error.message));
+    }
+    settle(message.user);
     return;
   }
   if (message.type !== "trigger" || !message.word || !message.user) return;
-  const trigger = { word: message.word, userId: message.user, text: message.text ?? "" };
-  console.log("trigger", JSON.stringify(trigger));
-  for (const registration of registrations) {
-    if (registration.word !== message.word) continue;
-    try {
-      registration.handler(trigger);
-    } catch (error) {
-      console.error("trigger handler", message.word, (error as Error).message);
-    }
-  }
+  const state = speaker(message.user);
+  if (state.follow) return;
+  state.follow = { word: message.word, parts: [message.text ?? ""], since: state.heardAt, received: Date.now(), timer: null };
+  settle(message.user);
 }
 
 function accept(socket: WebSocket): void {
@@ -185,6 +251,10 @@ function accept(socket: WebSocket): void {
     if (worker !== socket) return;
     worker = null;
     offered = { voices: [], loaded: [], default: null };
+    for (const [userId, state] of speakers) {
+      state.sent = [];
+      finish(userId);
+    }
     for (const [id, entry] of waiting) {
       clearTimeout(entry.timer);
       entry.reject(new Error("the voice worker disconnected"));
@@ -208,7 +278,7 @@ export const hearing: Module = {
   connect: accept,
   start: async () =>
     listen(
-      (userId, clip, startedAt) => worker?.send(frame({ type: "clip", user: userId, at: startedAt }, clip)),
+      { opened, closed },
       () => worker !== null && voice.listening() && (registrations.size > 0 || transcripts.active() || (transcripts.kept() && listeners.size > 0)),
     ),
   stop: () => transcripts.flush(),

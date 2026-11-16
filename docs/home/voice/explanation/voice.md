@@ -14,14 +14,14 @@ Each message on the socket is JSON text or a binary frame: a 4-byte big-endian h
 | Bot | `{"type": "triggers", "words": [{"word": …, "ack": …}]}` | The trigger words modules registered; sent on connect and on every change |
 | Bot | `{"type": "want", "voices": [names]}` | The voices modules hold; sent on connect and on every change |
 | Bot | binary `{"type": "clip", "user": id, "at": ms}` + Ogg Opus | One person's speech, up to a pause of 0.8 s, and when it started |
-| Worker | `{"type": "transcript", "user": id, "text": …, "at": ms, "ms": …}` | What was said, for the bot's transcripts |
+| Worker | `{"type": "transcript", "user": id, "text": …, "at": ms, "ms": …}` | What was said, for the bot's transcripts; empty when the clip held no speech, which tells the bot the clip is done |
 | Worker | binary `{"type": "audio", "id": "ack"}` + Ogg Opus | Play now: a trigger word with `ack` was heard |
 | Worker | `{"type": "trigger", "word": …, "user": id, "text": …}` | A trigger word and the words after it |
 | Bot | `{"type": "say", "id": n, "text": …, "voice": name}` | Say this, in that voice (`voice` optional: the default) |
 | Worker | binary `{"type": "audio", "id": n}` + Ogg Opus | The spoken text |
 | Worker | `{"type": "failed", "id": n, "error": …}` | It could not say it: no voice is loaded, or the voice failed |
 
-A clip is transcribed in Spanish with voice activity filtering, the trigger words as hotwords. Every non-empty transcript goes back to the bot. A trigger word is found anywhere in the transcript, by comparing each word lowercased, without accents or punctuation, and by sound: k is read as c, y as i, "th" as t and doubled letters as one, so Whisper's "Kari" is «cari» and "Richthofen" is «richtofen»; a trigger of six letters or more also allows one letter off (two from nine), while a shorter one must match exactly, so "caro" never wakes «cari». The request is everything after it. A word alone, or with less than two letters after it, waits: that person's next clip within 8 s is the request. The worker has no trigger word of its own, and with none registered nothing triggers. It keeps nothing and logs triggers and what happens to its voices ([run how-to](../how-to/run-the-voice-worker.md)).
+A clip is transcribed in Spanish with voice activity filtering, the trigger words as hotwords. Every transcript goes back to the bot, an empty one too. A trigger word is found anywhere in the transcript, by comparing each word lowercased, without accents or punctuation, and by sound: k is read as c, y as i, "th" as t and doubled letters as one, so Whisper's "Kari" is «cari» and "Richthofen" is «richtofen»; a trigger of six letters or more also allows one letter off (two from nine), while a shorter one must match exactly, so "caro" never wakes «cari». The request is everything after it. A word alone, or with less than two letters after it, waits: that person's next clip within 8 s is the request. The worker has no trigger word of its own, and with none registered nothing triggers. It keeps nothing and logs triggers and what happens to its voices ([run how-to](../how-to/run-the-voice-worker.md)).
 
 ### Voices
 

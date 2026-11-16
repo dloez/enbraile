@@ -401,9 +401,9 @@ class Worker:
     async def on_clip(self, socket, user, clip, spoken_at):
         started = time.time()
         text, duration = await asyncio.to_thread(self.transcribe, clip)
+        await socket.send(json.dumps({"type": "transcript", "user": user, "text": text, "at": spoken_at, "ms": round(duration * 1000)}))
         if not text:
             return
-        await socket.send(json.dumps({"type": "transcript", "user": user, "text": text, "at": spoken_at, "ms": round(duration * 1000)}))
         word, request = self.trigger(user, text)
         if word and request is None and self.triggers.get(word):
             await socket.send(frame({"type": "audio", "id": "ack"}, self.chime))

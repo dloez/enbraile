@@ -7,7 +7,9 @@ const SILENCE_MS = 800;
 const MIN_PACKETS = 20;
 const MAX_MS = 30_000;
 
-export function listen(onClip: (userId: string, clip: Buffer, startedAt: number) => void, enabled: () => boolean): void {
+export type ListenEvents = { opened: (userId: string) => void; closed: (userId: string, clip: Buffer | null, startedAt: number) => void };
+
+export function listen(events: ListenEvents, enabled: () => boolean): void {
   let bound: VoiceReceiver | null = null;
   const bind = () => {
     const receiver = voice.receiver();
@@ -17,6 +19,7 @@ export function listen(onClip: (userId: string, clip: Buffer, startedAt: number)
     receiver.speaking.on("start", (userId) => {
       if (!enabled() || open.has(userId) || client.users.cache.get(userId)?.bot) return;
       open.add(userId);
+      events.opened(userId);
       const packets: Buffer[] = [];
       const startedAt = Date.now();
       const stream = receiver.subscribe(userId, { end: { behavior: EndBehaviorType.AfterSilence, duration: SILENCE_MS } });
@@ -27,7 +30,7 @@ export function listen(onClip: (userId: string, clip: Buffer, startedAt: number)
         finished = true;
         clearTimeout(cap);
         open.delete(userId);
-        if (packets.length >= MIN_PACKETS) onClip(userId, oggOpus(packets), startedAt);
+        events.closed(userId, packets.length >= MIN_PACKETS ? oggOpus(packets) : null, startedAt);
       };
       stream.on("data", (packet: Buffer) => packets.push(packet));
       stream.once("end", finish);
