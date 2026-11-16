@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)/zombies/site"
+set -a
+. ./.env.production.local
+set +a
+: "${ZOMBIES_URL:?missing in .env.production.local}" "${CLAUDE_TOKEN:?missing in .env.production.local}"
+exec "$@"
