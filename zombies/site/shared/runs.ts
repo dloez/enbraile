@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { languages, type Language, type PublishedMap, type Viewer, type Zone } from "./bundle.js";
 
-export type Member = { name: string; you: boolean };
+export type Person = { name: string; who: string | null; live: boolean };
+
+export type Member = Person & { you: boolean };
 
 export type RunLink = { id: string; name: Record<Language, string> };
 
@@ -9,7 +11,7 @@ export type MapSummary = PublishedMap & { attempts: number; beaten: number; you:
 
 export type MapsPage = { viewer: Viewer; maps: MapSummary[]; yourRun: RunLink | null };
 
-export type Attempt = { id: string; language: Language; startedBy: string; members: Member[]; playing: boolean; you: boolean; beaten: boolean; lastPlayed: string };
+export type Attempt = { id: string; language: Language; startedBy: Person; members: Member[]; playing: boolean; you: boolean; beaten: boolean; lastPlayed: string };
 
 export type MapPage = { viewer: Viewer; map: PublishedMap; attempts: Attempt[]; yourRun: RunLink | null };
 
@@ -18,7 +20,7 @@ export type RunSheet = {
   id: string;
   map: PublishedMap;
   language: Language;
-  startedBy: string;
+  startedBy: Person;
   members: Member[];
   you: boolean;
   yourRun: RunLink | null;
@@ -33,6 +35,8 @@ export type Message = {
   author: "member" | "cari";
   revision: { re: string | null } | null;
   name: string;
+  who: string | null;
+  live: boolean;
   you: boolean;
   text: string;
   at: string;

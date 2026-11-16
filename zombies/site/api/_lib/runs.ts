@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
+import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Person, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { currentNames } from "./names.js";
@@ -168,17 +168,17 @@ export async function mapPage(viewer: Viewer, game: string, map: string, time: T
   if (!found) return null;
   const named = await time("names", currentNames([...players.map((player) => player.discordId), ...rows.map((row) => row.starterId)]));
   const attempts: Attempt[] = rows.map((row) => {
-    const people = new Map<string, { name: string; here: boolean }>();
+    const people = new Map<string, { person: Person; here: boolean }>();
     for (const player of players.filter((entry) => entry.runId === row.id)) {
       const here = player.leftAt === null || (people.get(player.discordId)?.here ?? false);
-      people.set(player.discordId, { name: named(player.discordId, player.name), here });
+      people.set(player.discordId, { person: named(player.discordId, player.name), here });
     }
     const ordered = [...people.entries()].sort(([, a], [, b]) => Number(b.here) - Number(a.here));
     return {
       id: row.id,
       language: row.language,
       startedBy: named(row.starterId, row.startedBy),
-      members: ordered.map(([discordId, person]) => ({ name: person.name, you: discordId === viewer.discordId })),
+      members: ordered.map(([discordId, { person }]) => ({ ...person, you: discordId === viewer.discordId })),
       playing: ordered.some(([, person]) => person.here),
       you: current?.id === row.id,
       beaten: row.beaten,
@@ -207,7 +207,7 @@ export async function runSheet(viewer: Viewer, runId: string, time: Time): Promi
     map,
     language: run.language,
     startedBy: named(run.startedBy, run.startedByName),
-    members: members.map((member): Member => ({ name: named(member.discordId, member.name), you: member.discordId === viewer.discordId })),
+    members: members.map((member): Member => ({ ...named(member.discordId, member.name), you: member.discordId === viewer.discordId })),
     you: current?.id === runId,
     yourRun: current && current.id !== runId ? linkOf(current, published) : null,
   };
@@ -298,7 +298,7 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
 
 async function historyOf(runId: string): Promise<Message[]> {
   const rows = await db.select().from(runHistory).where(eq(runHistory.runId, runId)).orderBy(asc(runHistory.saidAt), asc(runHistory.id));
-  return rows.map((row) => ({ id: -1 - row.id, author: row.author, revision: null, name: row.name, you: false, text: row.text, at: row.saidAt.toISOString(), card: null }));
+  return rows.map((row) => ({ id: -1 - row.id, author: row.author, revision: null, name: row.name, who: null, live: false, you: false, text: row.text, at: row.saidAt.toISOString(), card: null }));
 }
 
 export async function transcript(viewer: Viewer, runId: string, after: number, rungsAfter: number): Promise<Transcript> {
@@ -330,14 +330,14 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
         id: row.id,
         author: row.author,
         revision: row.kind === "revision" ? { re: referred.get(row.id) ?? null } : null,
-        name: named(row.discordId, row.name),
+        ...named(row.author === "member" ? row.discordId : null, row.name),
         you: row.discordId === viewer.discordId,
         text: row.text,
         at: row.createdAt.toISOString(),
         card,
       }),
     ),
-    members: members.map((member): Member => ({ name: named(member.discordId, member.name), you: member.discordId === viewer.discordId })),
+    members: members.map((member): Member => ({ ...named(member.discordId, member.name), you: member.discordId === viewer.discordId })),
     cards: await cardsSince(
       viewer,
       runId,

@@ -20,23 +20,22 @@ The owner wants Cari's words to sound like the voice saying them, at least for c
 
 **Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`, `.claude/skills/ee-coach/`
 
-## Stop players' names flipping between Discord and stored names
+## Time the bot's names lookup in production and set its limit
 
-The owner sees the real names and "Jugador" going back and forth (2026-11-16). `currentNames` (`zombies/site/api/_lib/names.ts`) caches per function instance, waits at most 1.5 s for the bot and falls back to the stored names on a timeout or failure; polls are served by different instances, so some replies carry Discord names and others the stored ones, and the page shows whatever the latest reply says.
+The site's names lookup gives the bot 10 s for Discord's forced member fetches (`lookupMs` in `zombies/site/api/_lib/names.ts`), while a reply waits at most 1.5 s; the 10 s is a starting value, since the fetches could not be timed without the real bot ([The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions), "Names never go back to stored ones on an open page"). Each lookup logs `bot names` with its count of IDs, its time in ms and whether the bot answered.
 
 **Do:**
-- [ ] Never go back from a resolved Discord name to a stored one while the page is open: the client keeps the last resolved name per Discord ID and a reply carrying only the stored name does not replace it.
-- [ ] On the server, store each resolved name back on the member row (and the line's author) so a fallback is the last Discord name, not the import's; and give the bot lookup enough time for Discord's forced fetches (measure it; the 1.5 s cap is a starting value).
-- [ ] Docs: the names paragraph in `docs/zombies/site/explanation/site.md`.
+- [ ] After a deploy and a game night, read the `bot names` lines from the production site's logs (Vercel) and note the times by count of IDs, the slowest included.
+- [ ] Set `lookupMs` from them with headroom, and decide from the same figures whether the 1.5 s a reply waits still fits; record the figures and the values in the names paragraph and that decision in `docs/zombies/site/explanation/site.md`.
 
 **Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; locally with a fake bot that answers on alternate calls, the page shows the bot's names steadily after the first answer; after one answer, a member row holds the Discord name.
-- Human-run: the owner's Blood of the Dead attempt shows both real names without flicker.
-- Reuse: `currentNames`; the page store (`src/store.ts`).
-- Neighbors: "Show players' Discord avatars", which extends the same lookup.
-- Forbidden: a page that waits on the bot; Discord tokens on the site.
+- Claude-run: `npm run gate` in `zombies/site`; the doc quotes the measured times and the values set from them.
+- Human-run: none.
+- Reuse: the `bot names` log line.
+- Neighbors: none.
+- Forbidden: guessing the limit without the log; a page that waits on the bot longer than it does now.
 
-**Touches:** `zombies/site/`, `docs/zombies/site/explanation/site.md`
+**Touches:** `zombies/site/api/_lib/names.ts`, `docs/zombies/site/explanation/site.md`
 
 ## Make level-3 zones point at the exact spot
 
@@ -74,7 +73,6 @@ The owner wants players' real Discord icons (2026-11-16). The bot's `POST /zombi
 - Forbidden: a page that waits on avatars; Discord tokens on the site.
 
 **Touches:** `zombies/bot/`, `zombies/site/`, `docs/zombies/`
-**After:** Stop players' names flipping between Discord and stored names
 
 ## Decide whether hints get each voice's own wording
 

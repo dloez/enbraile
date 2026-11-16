@@ -6,7 +6,7 @@ import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
 import { SurveyZone } from "./art";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
-import { forget, known, load as fetchPage, openFreshMs, runSource } from "./store";
+import { forget, known, learn, load as fetchPage, openFreshMs, runSource, nameOf } from "./store";
 import { Arrow, Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
@@ -47,7 +47,7 @@ function JoinView({ sheet, arrive, onJoined }: { sheet: RunSheet; arrive: boolea
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const name = sheet.map.name[lang];
-  const starter = sheet.members.findIndex((member) => member.name === sheet.startedBy);
+  const starter = sheet.members.findIndex((member) => (member.who && member.who === sheet.startedBy.who) || member.name === sheet.startedBy.name);
 
   const join = () => {
     setBusy(true);
@@ -63,7 +63,7 @@ function JoinView({ sheet, arrive, onJoined }: { sheet: RunSheet; arrive: boolea
 
   return (
     <main className={arrive ? "page two join arrive" : "page two join"}>
-      <MapHead back eyebrow={t.runOf(sheet.startedBy)} name={name} map={sheet.map} label={sheet.map.image ? t.artOf(name) : t.planOf(name)} />
+      <MapHead back eyebrow={t.runOf(nameOf(sheet.startedBy))} name={name} map={sheet.map} label={sheet.map.image ? t.artOf(name) : t.planOf(name)} />
       <div className="side">
         <div className="card join-card">
           <div className="join-grid">
@@ -72,8 +72,8 @@ function JoinView({ sheet, arrive, onJoined }: { sheet: RunSheet; arrive: boolea
               <ul className="mem">
                 {sheet.members.map((member, index) => (
                   <li key={index}>
-                    <Chip name={member.name} you={member.you} />
-                    {member.name}
+                    <Chip name={nameOf(member)} you={member.you} />
+                    {nameOf(member)}
                     {index === starter && <span className="m wide"> {t.startedIt}</span>}
                   </li>
                 ))}
@@ -184,7 +184,7 @@ function Row({ message, card, old, slip }: { message: Message; card: Card | unde
         <span className="t">{time}</span>
         <div>
           <p className="who who-rev">
-            {message.name}
+            {nameOf(message)}
             <span className="t t-in">{time}</span>
             <span className="tag">{t.revision}</span>
           </p>
@@ -195,7 +195,7 @@ function Row({ message, card, old, slip }: { message: Message; card: Card | unde
     );
   }
   return (
-    <Line at={message.at} cari={cari} name={cari ? "Cari" : message.name} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
+    <Line at={message.at} cari={cari} name={cari ? "Cari" : nameOf(message)} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
       <p className="msg">{message.text}</p>
       {card && slip(card)}
     </Line>
@@ -407,6 +407,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
     polling.current++;
     try {
       const reply = await fetchTranscript(sheet.id, last.current, lastRung.current);
+      learn([...reply.members, ...reply.messages]);
       setMembers(reply.members);
       if (reply.history.length) setHistory(reply.history);
       setLoaded(true);
@@ -513,6 +514,8 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       author: "member",
       revision: revision === null ? null : { re: null },
       name: you?.name ?? "",
+      who: you?.who ?? null,
+      live: you?.live ?? false,
       you: true,
       text: revision ?? text,
       at: new Date().toISOString(),
@@ -583,8 +586,8 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           <ul className="mem">
             {members.map((member, index) => (
               <li key={index}>
-                <Chip name={member.name} you={member.you} />
-                {member.name}
+                <Chip name={nameOf(member)} you={member.you} />
+                {nameOf(member)}
                 {member.you && <span className="y"> {t.you}</span>}
               </li>
             ))}

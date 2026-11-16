@@ -7,7 +7,7 @@ import { languageNames, lang, playedAt, switchLang, t } from "./i18n";
 import { mapPath, navigate, place, runPath, usePath } from "./route";
 import { RunPage } from "./RunPage";
 import { Bar, MapBelowSkeleton, MapSkeleton, MapsSkeleton } from "./skeletons";
-import { forget, known, load as fetchPage, mapSource, mapsSource, openFreshMs, runSource, type Source } from "./store";
+import { forget, known, load as fetchPage, mapSource, mapsSource, openFreshMs, runSource, nameOf, type Source } from "./store";
 import { Arrow, Back, Check, Chevron, Chips, initials, LeaveNote, Link, Notice, type RunLink, useFit } from "./ui";
 
 const languages: Language[] = ["es", "en"];
@@ -191,11 +191,11 @@ function AttemptRow({ attempt, busy, onJoin }: { attempt: Attempt; busy: boolean
             )}
           </span>
         )}
-        <span className="who">{t.runOf(attempt.startedBy)}</span>
+        <span className="who">{t.runOf(nameOf(attempt.startedBy))}</span>
         <span className="m">
           {attempt.members.length > 0 && (
             <span className="wide">
-              {attempt.members.map((member) => member.name).join(", ")}
+              {attempt.members.map(nameOf).join(", ")}
               {" · "}
             </span>
           )}

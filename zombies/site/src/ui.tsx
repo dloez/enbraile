@@ -4,7 +4,7 @@ import type { Member, RunLink } from "../shared/runs";
 import { MapArt } from "./art";
 import { t } from "./i18n";
 import { navigate } from "./route";
-import { prefetch } from "./store";
+import { prefetch, nameOf } from "./store";
 
 export type { RunLink };
 
@@ -25,7 +25,7 @@ export function Chips({ members }: { members: Member[] }) {
   return (
     <span className="chips">
       {members.map((member, index) => (
-        <Chip key={index} name={member.name} you={member.you} />
+        <Chip key={index} name={nameOf(member)} you={member.you} />
       ))}
     </span>
   );

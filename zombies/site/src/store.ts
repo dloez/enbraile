@@ -1,4 +1,4 @@
-import type { MapPage, MapsPage, RunSheet } from "../shared/runs";
+import type { MapPage, MapsPage, Person, RunSheet } from "../shared/runs";
 import { fetchMap, fetchMaps, fetchRun } from "./api";
 import { place } from "./route";
 
@@ -9,10 +9,33 @@ const pointFreshMs = 15000;
 
 const pages = new Map<string, { page: unknown; at: number }>();
 const flying = new Map<string, Promise<unknown>>();
+const names = new Map<string, string>();
+
+export function learn(people: Person[]): void {
+  for (const person of people) if (person.who && person.live) names.set(person.who, person.name);
+}
+
+export function nameOf(person: Person): string {
+  return (person.who && names.get(person.who)) || person.name;
+}
 
 export const mapsSource: Source<MapsPage> = { key: "maps", fetch: fetchMaps };
-export const mapSource = (game: string, map: string): Source<MapPage> => ({ key: `map ${game}/${map}`, fetch: () => fetchMap(game, map) });
-export const runSource = (id: string): Source<RunSheet> => ({ key: `run ${id}`, fetch: () => fetchRun(id) });
+export const mapSource = (game: string, map: string): Source<MapPage> => ({
+  key: `map ${game}/${map}`,
+  fetch: () =>
+    fetchMap(game, map).then((page) => {
+      learn(page.attempts.flatMap((attempt) => [attempt.startedBy, ...attempt.members]));
+      return page;
+    }),
+});
+export const runSource = (id: string): Source<RunSheet> => ({
+  key: `run ${id}`,
+  fetch: () =>
+    fetchRun(id).then((sheet) => {
+      learn([sheet.startedBy, ...sheet.members]);
+      return sheet;
+    }),
+});
 
 export function known<T>(source: Source<T>): T | undefined {
   return pages.get(source.key)?.page as T | undefined;
