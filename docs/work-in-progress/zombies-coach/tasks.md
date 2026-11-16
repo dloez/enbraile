@@ -1,23 +1,5 @@
 # Zombies Coach — Tasks
 
-## Keep Cari in the call across bot restarts and show the offer sooner
-
-The owner sees Cari leave voice chats and the "Traer a Cari" offer take long to show (2026-11-16). Cari leaves when the call empties (`zombies/bot/src/call.ts:93`, by design), when the bot restarts (the host keeps leases only in memory, `home/bot/src/voice.ts`, so a new pod holds nothing and never comes back; every bot deploy does this), and when rejoining fails `REJOIN_ATTEMPTS` times (`voice.ts:72`). The attempt page asks the bot whether the reader is in a channel only every 10 s (`zombies/site/src/RunPage.tsx:13`), and nothing answers while the bot restarts.
-
-**Do:**
-- [ ] The zombies module remembers the call it holds (channel and who brought Cari in) in the bot's data dir and, on start, holds it again if people are still in that channel; it forgets it when it leaves on purpose (the call empties, `/zombies/leave`). That is call state, not run state, which stays on the site.
-- [ ] The attempt page shows the offer within a couple of seconds of the reader joining a channel: ask on page focus and when the panel first shows, then poll faster while the reader is not in a channel (the cadence is the build's choice, recorded).
-- [ ] Docs: `docs/zombies/bot/explanation/bot.md` and the Voice section of `docs/zombies/site/explanation/site.md`, with the decisions dated.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `home/bot` and `zombies/site`; locally, a module holding a call writes it down and a restarted module with that record asks the host to hold the same channel; the offer appears within the new cadence after a fake bot starts reporting the reader's channel.
-- Human-run: during a call with Cari in, the bot is redeployed and Cari comes back by herself; joining a channel shows "Traer a Cari" within seconds.
-- Reuse: `voice.hold`, `voice.holding` (`home/bot/src/sdk.ts`); the module's `here()` lookup.
-- Neighbors: the DJ module, which also holds calls.
-- Forbidden: run state in the bot's SQLite or data dir; keeping Cari in an empty call.
-
-**Touches:** `zombies/bot/`, `zombies/site/src/RunPage.tsx`, `docs/zombies/`
-
 ## Let Cari speak in the character of her voice
 
 The owner wants Cari's words to sound like the voice saying them, at least for customised voices like Richtofen (2026-11-16, top priority). Hint text stays exactly as prepared (the model never writes hint text), so the character lives in everything around the hints: Cari's own sentences and the fixed lines code says (holds, acknowledgements, the blocked-step line, "From the last session."). The voice worker's configurable voices have landed; when the backlog's "home/voice: modules load and unload voices on demand" lands too, the module asks for its attempt's voice through it.
@@ -110,7 +92,7 @@ The owner wants players' real Discord icons (2026-11-16). The bot's `POST /zombi
 - Forbidden: a page that waits on avatars; Discord tokens on the site.
 
 **Touches:** `zombies/bot/`, `zombies/site/`, `docs/zombies/`
-**After:** Keep Cari in the call across bot restarts and show the offer sooner; Stop players' names flipping between Discord and stored names
+**After:** Stop players' names flipping between Discord and stored names
 
 ## Decide whether hints get each voice's own wording
 

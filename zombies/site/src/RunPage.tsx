@@ -251,9 +251,11 @@ function useVoice(id: string): Voice | null {
   const [state, setState] = useState<CallState | null>(null);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
+  const looking = useRef(false);
 
   const look = useCallback(() => {
-    if (document.hidden) return;
+    if (document.hidden || looking.current) return;
+    looking.current = true;
     fetchCall(id)
       .then((next) => {
         setState(next);
@@ -261,20 +263,30 @@ function useVoice(id: string): Voice | null {
       })
       .catch((error: unknown) => {
         if (error instanceof SignedOut) signIn();
+      })
+      .finally(() => {
+        looking.current = false;
       });
   }, [id]);
 
+  const channel = state?.reachable ? state.channel : null;
+  const inChannel = channel !== null;
+
   useEffect(() => {
     look();
-    const timer = setInterval(look, callPollMs);
+    window.addEventListener("focus", look);
     document.addEventListener("visibilitychange", look);
     return () => {
-      clearInterval(timer);
+      window.removeEventListener("focus", look);
       document.removeEventListener("visibilitychange", look);
     };
   }, [look]);
 
-  const channel = state?.reachable ? state.channel : null;
+  useEffect(() => {
+    const timer = setInterval(look, inChannel ? callPollMs : pollMs);
+    return () => clearInterval(timer);
+  }, [look, inChannel]);
+
   if (!channel) return null;
 
   const bring = () => {

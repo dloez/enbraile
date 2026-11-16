@@ -23,6 +23,7 @@ The module deploys with the host: see [The Enbraile Bot → Deploying](../../../
 
 - **The site's address defaults to production:** the bot's cluster manifest in `dloez` needs no new variable, and a local run overrides it with `ZOMBIES_URL`. _(the agent's choice, 2026-11-15)_
 - **A `voice` route beside `join`:** the site offers to bring Cari in only when a member is in a channel, and only the bot can see voice states. _(the agent's choice, 2026-11-15)_
+- **Cari is not brought back after a bot restart:** the host keeps its leases only in memory, so a deploy drops her from the call and she stays out until someone brings her in again; that is acceptable, and the module keeps no record of the call it held. _(owner, 2026-11-16)_
 - **The lease drops when the call empties,** since a listening lease left behind would keep the bot in an empty channel hearing nothing. _(the agent's choice, 2026-11-15)_
 - **The chime on «cari» stays on** (the trigger's default `ack`): it only says the word was heard, which the voice tests asked for, not that a hint is new, so it is not one of the sound cues the site's "Cari's voice only" rules out ([The Zombies Site → Decisions](../../site/explanation/site.md#decisions)). _(the agent's choice, 2026-11-15)_
 - **Each call line goes to the site as it is heard,** one request per sentence and none retried: sentences come seconds apart, and the bucket keeps the full call when it is configured. _(the agent's choice, 2026-11-15)_
