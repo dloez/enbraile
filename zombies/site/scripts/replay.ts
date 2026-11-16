@@ -7,13 +7,14 @@ import { imageFacts } from "../shared/image.js";
 import { runImportSchema } from "../shared/runs.js";
 import { db } from "../api/_lib/db.js";
 import { storeImage, storeVersion } from "../api/_lib/maps.js";
-import { importRun, joinRun, postMessage } from "../api/_lib/runs.js";
+import { importRun, joinRun, postMessage, setVoice } from "../api/_lib/runs.js";
+import { voices } from "../shared/voices.js";
 import { coachTurn } from "../api/_lib/coach.js";
 import { coachCalls, deliveries } from "../api/_lib/schema.js";
 
-const [dir, recorded, label = "replay"] = process.argv.slice(2);
+const [dir, recorded, label = "replay", voice] = process.argv.slice(2);
 if (!dir || !recorded) {
-  console.error("usage: npm run replay -- <map dir> <recorded run id> [label]");
+  console.error("usage: npm run replay -- <map dir> <recorded run id> [label] [voice]");
   process.exit(1);
 }
 if (!process.env.DATABASE_URL?.includes("localhost")) {
@@ -38,6 +39,11 @@ const members = [...new Map(log.members.map((member) => [member.discordId, { dis
 const imported = await importRun(runImportSchema.parse({ ...JSON.parse(await readFile(join(root, "import.json"), "utf8")), members }));
 if ("error" in imported) throw new Error(`import failed: ${imported.error}`);
 const runId = imported.id;
+if (voice) {
+  const chosen = voices.find((entry) => entry === voice);
+  if (!chosen) throw new Error(`no voice ${voice}: ${voices.join(", ")}`);
+  await setVoice(runId, chosen);
+}
 const lines = log.messages.filter((message) => message.author === "member" && message.kind === "chat" && message.discordId);
 
 const joined = new Set<string>();
@@ -76,7 +82,7 @@ for (const line of lines) {
 
 const file = join(root, "replays", `${recorded}-${label}.json`);
 await mkdir(dirname(file), { recursive: true });
-await writeFile(file, `${JSON.stringify({ run: runId, recorded, label, model: process.env.COACH_MODEL || "default", turns }, null, 2)}\n`);
+await writeFile(file, `${JSON.stringify({ run: runId, recorded, label, model: process.env.COACH_MODEL || "default", voice: voice ?? "default", turns }, null, 2)}\n`);
 const firsts = turns.map((turn) => turn.firstMs).filter((ms): ms is number => ms !== null);
 const median = (values: number[]) => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] ?? 0;
 console.log(`${relative(process.env.INIT_CWD ?? process.cwd(), file)}: ${turns.length} turns, first words median ${(median(firsts) / 1000).toFixed(1)}s, done median ${(median(turns.map((turn) => turn.totalMs)) / 1000).toFixed(1)}s`);

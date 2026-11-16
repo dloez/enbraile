@@ -127,10 +127,10 @@ npm run import -- ../maps/<game>/<map> --history <run id>
 To check a change to the coach before a game night, replay a recorded run through it locally. With the local stack up and migrated (steps 2 to 4; `DATABASE_URL` must point at localhost, or it refuses) and `ANTHROPIC_API_KEY` set, write the recorded run with `npm run runs -- <id>` against the site it was played on, then:
 
 ```sh
-npm run replay -- ../maps/<game>/<map> <recorded run id> [label]
+npm run replay -- ../maps/<game>/<map> <recorded run id> [label] [voice]
 ```
 
-It publishes the map dir's `bundle.json` (and its images) to the local database, imports the dir's `import.json` with the recorded run's members, then posts every member chat line of `runs/<id>.json` as spoken and runs the coach on each, calling the real model (cents per run). It prints only each line's time to first words and to done, its calls, hints and violations, then the medians, and writes everything (lines, replies, hint texts, calls) to the map dir's gitignored `replays/<id>-<label>.json`. That file holds hint text, so only a context-free subagent reads it, judging spoilers and quality and reporting counts; `COACH_MODEL` set for the run is recorded in the file, so models can be compared on the same run ([The Zombies Site → Decisions](../explanation/site.md#decisions)).
+It publishes the map dir's `bundle.json` (and its images) to the local database, imports the dir's `import.json` with the recorded run's members, then posts every member chat line of `runs/<id>.json` as spoken and runs the coach on each, calling the real model (cents per run). It prints only each line's time to first words and to done, its calls, hints and violations, then the medians, and writes everything (lines, replies, hint texts, calls) to the map dir's gitignored `replays/<id>-<label>.json`. That file holds hint text, so only a context-free subagent reads it, judging spoilers and quality and reporting counts; `COACH_MODEL` set for the run and the `voice` given (a character's voice, such as `richtofen`, for its manner) are recorded in the file, so models and characters can be compared on the same run ([The Zombies Site → Decisions](../explanation/site.md#decisions)).
 
 ### 8. Run the gate
 
