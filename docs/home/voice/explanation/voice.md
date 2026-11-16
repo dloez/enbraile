@@ -21,7 +21,7 @@ Each message on the socket is JSON text or a binary frame: a 4-byte big-endian h
 | Worker | binary `{"type": "audio", "id": n}` + Ogg Opus | The spoken text |
 | Worker | `{"type": "failed", "id": n, "error": …}` | It could not say it: no voice is loaded, or the voice failed |
 
-A clip is transcribed in Spanish with voice activity filtering, the trigger words as hotwords. Every non-empty transcript goes back to the bot. A trigger word is found anywhere in the transcript, by comparing each word lowercased, without accents or punctuation; the request is everything after it. A word alone, or with less than two letters after it, waits: that person's next clip within 8 s is the request. The worker has no trigger word of its own, and with none registered nothing triggers. It keeps nothing and logs triggers and what happens to its voices ([run how-to](../how-to/run-the-voice-worker.md)).
+A clip is transcribed in Spanish with voice activity filtering, the trigger words as hotwords. Every non-empty transcript goes back to the bot. A trigger word is found anywhere in the transcript, by comparing each word lowercased, without accents or punctuation, and by sound: k is read as c, y as i, "th" as t and doubled letters as one, so Whisper's "Kari" is «cari» and "Richthofen" is «richtofen»; a trigger of six letters or more also allows one letter off (two from nine), while a shorter one must match exactly, so "caro" never wakes «cari». The request is everything after it. A word alone, or with less than two letters after it, waits: that person's next clip within 8 s is the request. The worker has no trigger word of its own, and with none registered nothing triggers. It keeps nothing and logs triggers and what happens to its voices ([run how-to](../how-to/run-the-voice-worker.md)).
 
 ### Voices
 
@@ -86,6 +86,7 @@ The research before the build, by another session on 2026-11-15/16: in a call th
 
 ## Decisions
 
+- **Trigger words match by sound:** in the owner's calls Whisper wrote «cari» as "Kari" 13 times against 16 as "cari", and «richtofen» as "Richthofen" 4 times and "Rictofen" once, all of which the exact match missed; matching by sound, with one or two letters' slack for long words only, catches them without waking on "caro". _(owner reported it, the matching the agent's choice, 2026-11-16)_
 - **faster-whisper large-v3 on CTranslate2, not turbo:** turbo is twice as fast, but large-v3 already answers in a quarter of a second; accuracy matters more. _(owner asked for faster-whisper on CTranslate2, 2026-11-15; the model the agent's choice)_
 - **PyAV 16.1.0:** PyAV 19, the newest, dropped an argument faster-whisper 1.2.1 passes, and 14 has no wheels for Python 3.13. _(forced by the versions, 2026-11-15)_
 - **Voices configurable, with a list of the voices modules may ask for and a default:** the owner games on this PC, so GPU memory matters; modules may pick a voice. Piper stays. _(owner, 2026-11-16)_

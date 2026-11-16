@@ -59,6 +59,32 @@ def plain(word):
     return re.sub(r"[^a-z]", "", unicodedata.normalize("NFD", word.lower()).encode("ascii", "ignore").decode())
 
 
+def sound(word):
+    word = plain(word).replace("th", "t").replace("k", "c").replace("y", "i")
+    return re.sub(r"(.)\1+", r"\1", word)
+
+
+def distance(a, b):
+    row = list(range(len(b) + 1))
+    for i, x in enumerate(a, 1):
+        prev, row[0] = row[0], i
+        for j, y in enumerate(b, 1):
+            prev, row[j] = row[j], min(row[j] + 1, row[j - 1] + 1, prev + (x != y))
+    return row[-1]
+
+
+def wake(spoken, triggers):
+    heard = sound(spoken)
+    if not heard:
+        return None
+    for word in triggers:
+        target = sound(word)
+        allowed = 0 if len(target) < 6 else 1 if len(target) < 9 else 2
+        if heard == target or (allowed and distance(heard, target) <= allowed):
+            return word
+    return None
+
+
 def opus(wav_bytes):
     return subprocess.run(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", "pipe:0", "-ac", "2", "-ar", "48000", "-c:a", "libopus", "-b:a", "96k", "-f", "ogg", "pipe:1"],
@@ -318,12 +344,13 @@ class Worker:
         if word and now - at < FOLLOW_UP_S and words:
             return word, text
         for index, spoken in enumerate(words):
-            if plain(spoken) in self.triggers:
+            matched = wake(spoken, self.triggers)
+            if matched:
                 rest = " ".join(words[index + 1 :]).strip(" ,.;:¿?¡!")
                 if len(plain(rest)) < 2:
-                    self.pending[user] = (plain(spoken), now)
-                    return plain(spoken), None
-                return plain(spoken), rest
+                    self.pending[user] = (matched, now)
+                    return matched, None
+                return matched, rest
         return None, None
 
     def speak(self, text, name):
