@@ -6,7 +6,7 @@ export type Voice = (typeof voices)[number];
 
 export const defaultVoice: Voice = "chatterbox";
 
-export type FixedLines = { round: string; notYet: string; hold: string[]; unheard: string; ack: string; carriedOver: string; answerOffer: string };
+export type FixedLines = { round: string; hold: string[]; unheard: string; ack: string; carriedOver: string };
 
 export type Character = { name: string; wake: string; role: string; manner: string; lines: Record<Language, FixedLines> };
 
@@ -18,7 +18,6 @@ const coach: Character = {
   lines: {
     es: {
       round: "Por cierto, ¿en qué ronda vais?",
-      notYet: "Esto no se mueve… y no creo que sea por falta de ganas. Igual no es el momento.",
       hold: [
         "Uf, eso no lo tengo claro ahora mismo. Dame un momento y seguid a lo vuestro.",
         "Ahí me pillas. Lo miro y os digo; mientras, ¿qué tenéis delante?",
@@ -27,11 +26,9 @@ const coach: Character = {
       unheard: "No te he entendido bien, ¿me lo repites?",
       ack: "Anotado, gracias.",
       carriedOver: "De la sesión anterior.",
-      answerOffer: "Lo siguiente que tengo ya es la solución entera de esto. ¿Os la digo?",
     },
     en: {
       round: "By the way, what round are you on?",
-      notYet: "This isn't budging… and I don't think it's for lack of trying. Maybe it isn't the moment.",
       hold: [
         "Hm, I'm not sure about that one right now. Give me a moment and keep at it.",
         "You've got me there. I'll check and get back to you; meanwhile, what are you looking at?",
@@ -40,7 +37,6 @@ const coach: Character = {
       unheard: "I didn't catch that, can you say it again?",
       ack: "Noted, thanks.",
       carriedOver: "From the last session.",
-      answerOffer: "What I have next is the full solution to this. Do you want it?",
     },
   },
 };
@@ -54,7 +50,6 @@ const richtofen: Character = {
   lines: {
     es: {
       round: "¡Ah, por cierto! ¿En qué ronda vais, mis queridos sujetos de prueba?",
-      notYet: "¡Nein, nein! Esto no se mueve… y no es por falta de ganas, ja. Quizá aún no es el momento.",
       hold: [
         "¡Hmm! Eso no lo tengo claro ahora mismo… Dadme un momento y seguid a lo vuestro, ratitas.",
         "¡Ah, ahí me habéis pillado! Lo investigo y os digo; mientras, ¿qué tenéis delante?",
@@ -63,11 +58,9 @@ const richtofen: Character = {
       unheard: "¿Qué? ¡Hablad más claro, ratitas! Repetídmelo.",
       ack: "¡Anotado! Gracias.",
       carriedOver: "De la sesión anterior.",
-      answerOffer: "Achtung, ratitas, lo siguiente que tengo ya es la solución entera. ¿La queréis o preferís seguir sufriendo?",
     },
     en: {
       round: "Ah, by the way! What round are you on, my dear test subjects?",
-      notYet: "Nein, nein! This isn't budging… and not for lack of trying, ja. Perhaps it is not yet the moment.",
       hold: [
         "Hmm! I am not sure of that one right now… Give me a moment and keep at it, my little lab rats.",
         "Ah, you have caught me there! I shall look into it and report back; meanwhile, what are you looking at?",
@@ -76,7 +69,6 @@ const richtofen: Character = {
       unheard: "What? Speak up, my little lab rats! Say it again.",
       ack: "Noted! Thank you.",
       carriedOver: "From the last session.",
-      answerOffer: "Achtung, my little lab rats, what I have next is the whole solution. Do you want it, or would you rather keep suffering?",
     },
   },
 };

@@ -41,7 +41,7 @@ export function lineAt(rung: Rung, alt: number | null): Line | null {
 
 export function hasMore(ladder: Ladder, given: number): boolean {
   const next = ladder.rungs[given];
-  return next !== undefined && next.level < 4;
+  return next !== undefined;
 }
 
 function strip(text: string): string {
