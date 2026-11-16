@@ -36,7 +36,7 @@ Hints
 - If they ask about something no hint covers, call hold. When a hint now answers a question under "Held earlier", give it with gap set.
 
 Progress
-- When they say they finished something, call record_progress done on it: code says the prepared line and hands over what comes next. When they start something listed, call record_progress started. Never offer an optional step.
+- When what they report matches a thread's "Done when", call record_progress done on it, even when they also say they do not know what to do now: code says the prepared line and hands over the first hint of what comes next. That is how "we did it, now what?" gets its next hint. When they start something listed, call record_progress started. Never offer an optional step.
 - When they name something themselves, call mark_known with their words.
 - Give a heads-up with heads_up only at the moment its "when" describes. Now and then call ask_round, never right after a hint.
 
@@ -45,7 +45,7 @@ Anything else (hearing checks, greetings, jokes, general Zombies questions): ans
 const tools: Anthropic.Tool[] = [
   {
     name: "give_hint",
-    description: "Hand the players the next prepared hint of one ladder, or one of that hint's Alts. It appears on a card under your reply.",
+    description: "Hand the players the next prepared hint of one ladder, or one of that hint's Alts. It appears on a card under your reply. If what they just reported matches that thread's \"Done when\", call record_progress done instead: the step is finished and code hands over the next step's first hint.",
     input_schema: {
       type: "object",
       properties: {
@@ -251,7 +251,8 @@ function offers(state: State): string {
     } else if (!isReady(step, state.done)) {
       if (ladder.partId === null && (isOpen(state, ladder) || (title && !ladder.optional))) blocked.push(`- ${label}`);
     } else if (isOpen(state, ladder)) {
-      const lines = [`- ${label}. ${count > 0 ? `Given so far: ${(state.givenLines.get(key) ?? []).map(quote).join(" then ")}.` : "Started by the players, no hint given yet."}`];
+      const finished = ladder.partId === null && step.doneWhen && !namedIn(step.doneWhen, unknown).length ? ` Done when they report: ${quote(step.doneWhen)}.` : "";
+      const lines = [`- ${label}.${finished} ${count > 0 ? `Given so far: ${(state.givenLines.get(key) ?? []).map(quote).join(" then ")}.` : "Started by the players, no hint given yet."}`];
       if (!next) lines.push("  Nothing more on this ladder.");
       else {
         if (speakable(next, state.known)) lines.push(`  Next hint: ${quote(next.text[lang])}.`);
@@ -261,7 +262,7 @@ function offers(state: State): string {
       }
       opened.push(lines.join("\n"));
     } else if (isFresh(state, ladder)) {
-      fresh.push(`- ${label}: ${quote(next!.text[lang])}`);
+      fresh.push(`- ${label}: ${quote(next!.text[lang])}${step.doneWhen && !namedIn(step.doneWhen, unknown).length ? ` Done when they report: ${quote(step.doneWhen)}.` : ""}`);
     } else if (ladder.optional && ladder.partId === null && title) {
       optional.push(`- ${label}`);
     }
@@ -482,6 +483,10 @@ const asksHint = (asked: string) => {
   return hintRequest.test(line) && !hintRepeat.test(line);
 };
 
+const progressReport = /\b(?:ya|hemos|tenemos|encontrado|encontramos|conseguido|conseguimos|hecho|le dimos|le hemos dado|done|found|got|we have|did it)\b/;
+
+const reportsProgress = (asked: string) => progressReport.test((asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase());
+
 const asksRound = /\b(?:que|cual|what|which)\s+(?:ronda|round)\b/;
 
 const showsNumber = (text: string) => numbered.test(text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[º°#.]/g, " "));
@@ -585,7 +590,7 @@ class Speech {
     const handed = new Set([...this.state.givenLines.values()].flat().map(flat));
     const lines = [
       ...this.state.ladders.flatMap((ladder) => ladder.rungs.flatMap((rung) => [rung.text[lang], ...rung.alts.map((alt) => alt.text[lang])])),
-      ...this.state.bundle.steps.flatMap((step) => [step.onSuccess.text[lang], ...step.headsUps.map((headsUp) => headsUp.text[lang])]),
+      ...this.state.bundle.steps.flatMap((step) => [step.onSuccess.text[lang], ...step.headsUps.map((headsUp) => headsUp.text[lang]), ...(step.doneWhen ? [step.doneWhen] : [])]),
     ];
     this.unhanded = new Set(lines.map(flat).filter((line) => !handed.has(line)).flatMap(wordRuns));
     return this.unhanded;
@@ -735,7 +740,7 @@ export async function coachTurn(
     if (lastTurn?.role !== "user") return "ok";
     const asked = typeof lastTurn.content === "string" ? lastTurn.content : "";
     const addressed = ask.kind === "message" && (ask.spoken || isAddressed(asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? ""));
-    if (ask.kind === "message" && asksHint(asked)) {
+    if (ask.kind === "message" && asksHint(asked) && !reportsProgress(asked)) {
       const latest = state.ladders.find((ladder) => keyOf(ladder) === state.latest);
       const aimed = latest && !isDone(state, latest) && latest.rungs[state.given.get(keyOf(latest)) ?? 0] ? latest : firstHints(state)[0];
       const given = aimed ? await deliver(state, aimed, null, null, askedBy.discordId || null) : null;

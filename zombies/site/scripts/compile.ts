@@ -14,6 +14,7 @@ type HeadsUp = { when: string; text: string; mentions: string[] };
 type Step = {
   number: number;
   title: string;
+  doneWhen: string;
   requires: number[];
   optional: boolean;
   ladder: Ladder;
@@ -72,7 +73,7 @@ const parseSteps = (source: string, file: string) => {
     const where = `${file}:${index + 1}`;
     const heading = rawLine.match(/^## \S+ (\d+)\b/);
     if (heading) {
-      step = { number: Number((heading[1] ?? "")), title: "", requires: [], optional: false, ladder: { rungs: [], alts: [] }, parts: [], headsUps: [], onSuccess: null };
+      step = { number: Number((heading[1] ?? "")), title: "", doneWhen: "", requires: [], optional: false, ladder: { rungs: [], alts: [] }, parts: [], headsUps: [], onSuccess: null };
       part = null;
       steps.push(step);
       return;
@@ -86,9 +87,10 @@ const parseSteps = (source: string, file: string) => {
     const nested = /^\s+-\s/.test(rawLine);
     const item = rawLine.replace(/^\s*-\s+/, "");
     if (!/^\s*-\s/.test(rawLine)) {
-      const field = rawLine.match(/^(Spoiler-free title|Requires|Optional):\s*(.*)$/);
+      const field = rawLine.match(/^(Spoiler-free title|Done when|Requires|Optional):\s*(.*)$/);
       if (!field) return;
       if ((field[1] ?? "") === "Spoiler-free title") current.title = (field[2] ?? "").trim();
+      if ((field[1] ?? "") === "Done when") current.doneWhen = (field[2] ?? "").trim();
       if ((field[1] ?? "") === "Optional") current.optional = /^yes$/i.test((field[2] ?? "").trim());
       if ((field[1] ?? "") === "Requires") {
         const value = (field[2] ?? "").trim().replace(/\.$/, "");
@@ -347,6 +349,7 @@ const steps = hints.en.map((en) => {
   if (!es) errors.push(`${where}: missing from hints.es.md`);
   if (!en.title) errors.push(`${where}: no Spoiler-free title`);
   if (!en.onSuccess) errors.push(`${where}: no On success line`);
+  if (!en.doneWhen) warnings.push(`${where}: no Done when line, so the live coach cannot tell from the players' words that the step is done`);
   if (es && !es.onSuccess) errors.push(`${where}: no On success line in hints.es.md`);
   for (const required of en.requires) if (!stepNumbers.has(required)) errors.push(`${where}: Requires step ${required}, which hints.md lacks`);
   if (es && (es.parts.length !== en.parts.length || es.headsUps.length !== en.headsUps.length)) errors.push(`${where}: the Spanish copy has a different set of Part ladders or Heads-ups`);
@@ -354,6 +357,7 @@ const steps = hints.en.map((en) => {
   return {
     id: `step-${en.number}`,
     title: en.title || where,
+    ...(en.doneWhen ? { doneWhen: en.doneWhen } : {}),
     requires: en.requires.map((number) => `step-${number}`),
     conditions: conditions.get(en.number) ?? [],
     optional: en.optional,

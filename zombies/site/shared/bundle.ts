@@ -47,6 +47,7 @@ const headsUp = z.object({
 const step = z.object({
   id,
   title: z.string().min(1),
+  doneWhen: z.string().min(1).optional(),
   requires: z.array(id).default([]),
   conditions: z.array(z.string().min(1)).default([]),
   optional: z.boolean().default(false),

@@ -97,6 +97,7 @@ In `hints.md`, every rung, `Alt`, `Heads-up` and `On success` line, and the doss
 
 ## Step 1 (<type>)
 Spoiler-free title: <something that could be said aloud, e.g. "Getting started">
+Done when: <what the players would report when the step is done, in the ways they might say it, e.g. "they say they found, hit or shot the thing, or saw it react, even if they add they don't know what to do next">
 Requires: <Step 3, Step 4> | none
 Optional: yes
 - L1: … Mentions: K01
@@ -114,6 +115,8 @@ Optional: yes
 Levels 1 to 3 only; level 4 is the dossier's "L4 as spoken", kept out of this file so the blind check never reads an answer.
 
 **The shape is strict**, because `compile` (section 4) reads it into the site's bundle and rejects anything else: one line per item, the labels exactly as above, and nothing else inside a step but plain prose lines, which it ignores; a heading that is not a step ends the step, so keep a step's lines under its own heading. `Requires` names only steps, by number, that must be done first (items and rounds stay in the dossier); `none` when there are none. `Optional: yes` appears only on optional steps. Each `Alt` names the rung it replaces, and a step may have several. A `Part ladder` holds only its indented `L<n>` and `Alt for L<n>` lines, and is used when players report one part of a multi-part step found. The dossier's step headings keep their numbers (`## Step <n>: …`), its `L4 as spoken` stays on one line, and a step's `Conditions` are written as indented `- ` items under that field, one per condition, which the bundle carries as they stand. Card text never carries a step, hint or level number (no "Step 5", "L2", "2/4"): `compile` rejects it. Write every rung using the components, the two tests, and the per-type handling from `hint-craft.md`, and respect anything `zombies/calibration.md` says about this group.
+
+**`Done when`** is for the live coach, which sees steps only by handle, never by title: it is how the coach tells from the players' own words that a step is done, records it and hands over the next step's first hint. Write it in English from the dossier's `Confirmation` and the step's goal, covering the different ways players report it ("found it", "hit it", "it reacted", "we did it but don't know what now"). Name only what the players already know while on that step; the site withholds a `Done when` that names something still unknown. `compile` warns about a step without one.
 
 **`On success` lines** are said the moment players report the step done, immediately followed by the next step's L1. So an `On success` line is one short sentence, in the same teammate voice as the low rungs, that makes clear what they achieved or what it changed in the game, and nothing else: no advice they cannot act on, no teaser that repeats what the next L1 is about to say, no bare praise.
 
