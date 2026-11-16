@@ -601,7 +601,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       </div>
       {voice && <VoiceBar voice={voice} />}
       <section className="main">
-        <div className={loaded && !settled ? "rows arrive-all" : "rows"} ref={rows} onScroll={onScroll} aria-busy={!loaded}>
+        <div className={["rows", loaded && !settled && "arrive-all", notice && "rows-trouble"].filter(Boolean).join(" ")} ref={rows} onScroll={onScroll} aria-busy={!loaded}>
           {!loaded && <RowsSkeleton />}
           {loaded && !shown.length && airing === null && <p className="state quiet">{t.quiet}</p>}
           {shown.map((message, index) => (
@@ -615,16 +615,18 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           ))}
           {airing !== null && <Transmitting text={airing.text} at={airing.at} language={sheet.language} />}
         </div>
-        {notice && (
-          <div className="trouble" role="alert">
-            <p className="state">{notice.text}</p>
-            <button type="button" className="b b-ghost" onClick={notice.retry} disabled={airing !== null}>
-              {t.retry}
-            </button>
-          </div>
-        )}
         <form className={revising ? "cmp cmp-rev" : "cmp"} onSubmit={send}>
-          {revising && <p className="mode">{t.revisionMode}</p>}
+          <div className="over">
+            {notice && (
+              <div className="trouble" role="alert">
+                <p className="state">{notice.text}</p>
+                <button type="button" className="b b-ghost" onClick={notice.retry} disabled={airing !== null}>
+                  {t.retry}
+                </button>
+              </div>
+            )}
+            {revising && <p className="mode">{t.revisionMode}</p>}
+          </div>
           <div className="cmp-in">
             <input
               className="field"

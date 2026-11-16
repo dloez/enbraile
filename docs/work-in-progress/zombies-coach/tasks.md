@@ -38,24 +38,6 @@ The owner sees the real names and "Jugador" going back and forth (2026-11-16). `
 
 **Touches:** `zombies/site/`, `docs/zombies/site/explanation/site.md`
 
-## Stop the layout moving when revision mode turns on
-
-The owner sees layout displacement when pressing Revision (2026-11-16): revision mode adds its line above the composer (`.mode` in `zombies/site/src/index.css`, shown by `src/RunPage.tsx`), which changes the composer's height and moves the transcript.
-
-**Do:**
-- [ ] Turning revision mode on or off moves nothing else on the page at any width: the mode line takes space reserved for it, or overlays without pushing, as the boards draw it; the composer and the transcript's bottom stay where they were.
-- [ ] Check the trouble line and the voice panel the same way, since they also appear above or beside the composer.
-- [ ] Docs: `docs/zombies/site/reference/design-system.md` (revision mode).
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`; through the Playwright MCP at 1440×900 and 390×844, the composer's and the transcript's bounding boxes are identical before and after toggling Revision, and when the trouble line shows.
-- Human-run: the owner toggles Revision and nothing jumps.
-- Reuse: the composer and mode line in `src/RunPage.tsx`.
-- Neighbors: the full-width layout's single scroller.
-- Forbidden: dropping the mode line or any state.
-
-**Touches:** `zombies/site/src/`, `docs/zombies/site/reference/design-system.md`
-
 ## Make level-3 zones point at the exact spot
 
 The owner finds the zone images generic (2026-11-16): for a hint that says where to use an item, the card shows the whole survey map without marking where exactly. Whether that card's rung had a zone at all (15 of Blood of the Dead's 42 L3 rungs have none), or its ellipse covers too much of a 1792×1536 map, is to be found in a subagent, reporting counts and sizes only.

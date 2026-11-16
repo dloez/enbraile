@@ -1457,14 +1457,28 @@ a:hover {
   outline-offset: 2px;
 }
 
+.over {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 1px;
+  display: flex;
+  flex-direction: column;
+}
+
+.rows-trouble {
+  padding-bottom: calc(var(--sp-8) + 72px);
+}
+
 .trouble {
-  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
   padding: var(--sp-3) var(--sp-12);
   border-top: 1px solid var(--line);
+  background: var(--bg);
 }
 
 .trouble .b {
@@ -1472,6 +1486,7 @@ a:hover {
 }
 
 .cmp {
+  position: relative;
   flex: none;
   padding: var(--sp-3) var(--sp-12) var(--sp-5);
   border-top: 1px solid var(--line);
@@ -1485,10 +1500,12 @@ a:hover {
 }
 
 .mode {
+  padding: var(--sp-1) var(--sp-12);
   font-size: 15px;
+  line-height: 20px;
   font-weight: 700;
   color: var(--blue-tx);
-  margin-bottom: var(--sp-2);
+  background: var(--bg);
 }
 
 .cmp-rev .field {
@@ -1548,7 +1565,7 @@ a:hover {
   border-color: var(--text);
 }
 
-.cmp .b {
+.cmp-in .b {
   min-height: 56px;
 }
 
@@ -1596,7 +1613,8 @@ a:hover {
 
   .rows,
   .cmp,
-  .trouble {
+  .trouble,
+  .mode {
     padding-left: var(--sp-6);
     padding-right: var(--sp-6);
   }
@@ -1982,7 +2000,11 @@ a:hover {
 
   .rows {
     gap: var(--sp-5);
-    padding: var(--sp-4) var(--sp-4) var(--sp-5);
+    padding: var(--sp-4) var(--sp-4) var(--sp-8);
+  }
+
+  .rows-trouble {
+    padding-bottom: calc(var(--sp-8) + 64px);
   }
 
   .row {
@@ -2038,6 +2060,10 @@ a:hover {
     padding: var(--sp-2) var(--sp-4);
   }
 
+  .mode {
+    padding: var(--sp-1) var(--sp-4);
+  }
+
   .cmp {
     padding: var(--sp-3) var(--sp-4) var(--sp-4);
   }
@@ -2078,7 +2104,7 @@ a:hover {
     padding: 0 var(--sp-4);
   }
 
-  .cmp .b {
+  .cmp-in .b {
     min-height: 52px;
     padding: 0 var(--sp-4);
   }
