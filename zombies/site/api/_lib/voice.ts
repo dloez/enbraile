@@ -2,13 +2,12 @@ import { and, asc, eq, gt, isNull, max } from "drizzle-orm";
 import type { Viewer } from "../../shared/bundle.js";
 import { asRevision, type CallLine, type CallState, type JoinRefusal } from "../../shared/runs.js";
 import { characterOf, type Voice } from "../../shared/voices.js";
-import { bot } from "./bot.js";
+import { bot, inBackground } from "./bot.js";
 import { db } from "./db.js";
 import { postMessage, postRevision } from "./runs.js";
 import { callLines, deliveries, runMembers, runs } from "./schema.js";
 
 const botTimeoutMs = 5000;
-
 
 async function speakerOf(discordId: string): Promise<{ runId: string; viewer: Viewer } | null> {
   const [row] = await db
@@ -84,4 +83,19 @@ export async function bringCari(discordId: string, voice: Voice): Promise<{ chan
     console.error("bot join", (error as Error).message);
     return { error: "botOffline" };
   }
+}
+
+export function speakInCall(runId: string, text: string): void {
+  if (!text.trim() || !process.env.BOT_URL) return;
+  const sent = (async () => {
+    const [run] = await db.select({ voice: runs.voice }).from(runs).where(eq(runs.id, runId));
+    const members = await db
+      .select({ discordId: runMembers.discordId })
+      .from(runMembers)
+      .where(and(eq(runMembers.runId, runId), isNull(runMembers.leftAt)));
+    if (!run || !members.length) return;
+    const response = await bot("say", botTimeoutMs, { method: "POST", body: { text, voice: run.voice, userIds: members.map((member) => member.discordId) } });
+    if (response && !response.ok && response.status !== 409) throw new Error(`bot answered ${response.status}`);
+  })().catch((error) => console.error("bot say", runId, (error as Error).message));
+  inBackground(sent);
 }

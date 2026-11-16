@@ -1,11 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { and, count, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, isNull, lt, max, or, sql } from "drizzle-orm";
 import type { Bundle, Language } from "../../shared/bundle.js";
 import type { ReplyEvent, StepIn } from "../../shared/runs.js";
 import { characterOf, wakeWords, type Character } from "../../shared/voices.js";
 import { db } from "./db.js";
 import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
 import { audits, bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { speakInCall } from "./voice.js";
 
 const defaultModel = "claude-haiku-5-5";
 const maxTokens = 1024;
@@ -927,7 +928,17 @@ export async function retryHeld(game: string, map: string): Promise<{ waiting: n
             .orderBy(desc(runMembers.id))
             .limit(1)
         : [];
-      await coachTurn(row.runId, { discordId: row.askedBy ?? "", name: member?.name ?? "" }, { kind: "gap", gapId: row.gapId }, () => {}).catch((error) => console.error("gap retry failed", error));
+      const [before] = await db.select({ last: max(deliveries.id) }).from(deliveries).where(eq(deliveries.runId, row.runId));
+      let said = "";
+      await coachTurn(row.runId, { discordId: row.askedBy ?? "", name: member?.name ?? "" }, { kind: "gap", gapId: row.gapId }, (event) => {
+        if (event.type === "text") said += event.text;
+      }).catch((error) => console.error("gap retry failed", error));
+      const hints = await db
+        .select({ text: deliveries.text })
+        .from(deliveries)
+        .where(and(eq(deliveries.runId, row.runId), row.askedBy ? eq(deliveries.askedBy, row.askedBy) : isNull(deliveries.askedBy), gt(deliveries.id, before?.last ?? 0)))
+        .orderBy(asc(deliveries.id));
+      if (hints.length) speakInCall(row.runId, [said.trim(), ...hints.map((hint) => hint.text)].filter(Boolean).join(" "));
       const [after] = await db.select({ answeredAt: gaps.answeredAt }).from(gaps).where(eq(gaps.id, row.gapId));
       return Boolean(after?.answeredAt);
     }),
@@ -946,7 +957,7 @@ export async function stepIn(runId: string, input: StepIn): Promise<StepInResult
     const state = await loadState(runId);
     if (!state) return { ok: false, error: "noSuchRun" };
     const text = input.text.replace(/\s+/g, " ").trim();
-    let aimed: { ladder: Ladder; alt: number | null } | null = null;
+    let aimed: { ladder: Ladder; alt: number | null; text: string } | null = null;
     const known = new Set(state.known);
     if (input.hint) {
       const hint = input.hint;
@@ -962,7 +973,7 @@ export async function stepIn(runId: string, input: StepIn): Promise<StepInResult
       if (!line) return { ok: false, error: "noSuchAlt" };
       if (!speakable(line, state.known)) return { ok: false, error: "unknownMention" };
       for (const id of [...line.mentions, ...line.reveals]) known.add(id);
-      aimed = { ladder, alt: hint.alt };
+      aimed = { ladder, alt: hint.alt, text: line.text[state.language] };
     }
     if (!text && !aimed) return { ok: false, error: "empty" };
     if (text.includes("[") || text.includes("]")) return { ok: false, error: "brackets" };
@@ -979,6 +990,7 @@ export async function stepIn(runId: string, input: StepIn): Promise<StepInResult
       if (gap) await answer(gap.id, result.deliveryId);
     }
     const message = await finish(state, text, card === null ? [] : [card], "claude");
+    speakInCall(runId, [text, aimed?.text ?? ""].filter(Boolean).join(" "));
     return { ok: true, message: message!, card };
   } finally {
     await release(runId, lease);

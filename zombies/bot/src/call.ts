@@ -83,6 +83,13 @@ export async function namesOf(ids: string[]): Promise<{ names: Record<string, st
   };
 }
 
+export function speak(text: string, named: string | null, userIds: string[]): boolean {
+  if (!voice.holding(OWNER) || !voice.members().some((member) => userIds.includes(member.id))) return false;
+  keepVoice(named);
+  hearing.say(text, heldVoice === null ? {} : { voice: heldVoice }).catch((error: Error) => console.error("zombies say", error.message));
+  return true;
+}
+
 export const here = () => (voice.holding(OWNER) ? voice.channel() : null);
 
 function site(path: string, body: unknown): Promise<Response> {
