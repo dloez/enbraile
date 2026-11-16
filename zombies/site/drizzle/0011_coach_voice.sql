@@ -1,0 +1,1 @@
+ALTER TABLE "runs" ADD COLUMN "voice" text DEFAULT 'chatterbox' NOT NULL;

@@ -1,25 +1,5 @@
 # Zombies Coach — Tasks
 
-## Let Cari speak in the character of her voice
-
-The owner wants Cari's words to sound like the voice saying them, at least for customised voices like Richtofen (2026-11-16, top priority). Hint text stays exactly as prepared (the model never writes hint text), so the character lives in everything around the hints: Cari's own sentences and the fixed lines code says (holds, acknowledgements, the blocked-step line, "From the last session."). The voice worker's configurable voices have landed; when the backlog's "home/voice: modules load and unload voices on demand" lands too, the module asks for its attempt's voice through it.
-
-**Do:**
-- [ ] A character per voice, kept beside the voice's settings: a short style brief for the coach's system prompt (for Richtofen: his manic, theatrical manner, in Castilian, as heard in the BO3 dub) and that voice's own wording of every fixed line in both languages; the plain voices keep today's Cari.
-- [ ] Which voice an attempt speaks with is chosen when starting it, beside the language, and can be changed in the attempt (the agent's choice, recorded as a dated decision); the coach prompt and the fixed lines follow it, and the voice reply asks the worker for it through `hearing.say`'s voice option.
-- [ ] The coach takes the name of the attempt's voice (owner, 2026-11-16): "Richtofen" when it is Richtofen, everywhere a player sees the coach's name (the chat's author, the slip header, the voice panel, the system prompt's name for itself); the plain voices keep "Cari". The wake word follows the name ("richtofen, …") with «cari» kept as an alias (the agent's choice, recorded), through the module's `hearing.onTrigger` words.
-- [ ] The audit and the sentence filters still apply unchanged: a character never names an unknown, shows a number or carries brackets.
-- [ ] Docs: the character in `docs/zombies/site/explanation/site.md` (Cari) and the voice choice in the design-system doc.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site` (and `home/bot` if touched); locally on the test map with the real Haiku, an attempt set to Richtofen gets replies in his manner around unchanged prepared hints, a plain-voice attempt keeps today's Cari, and the audit finds nothing new.
-- Human-run: in a call, the owner hears Richtofen say Cari's words and finds they sound like him.
-- Reuse: the coach prompt (`api/_lib/coach.ts`); the fixed lines in code; the voice option on `hearing.say`.
-- Neighbors: the voices task in the backlog.
-- Forbidden: the model writing or restyling hint text; a character that bypasses the audit or the knowledge marks.
-
-**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`, `.claude/skills/ee-coach/`
-
 ## Time the bot's names lookup in production and set its limit
 
 The site's names lookup gives the bot 10 s for Discord's forced member fetches (`lookupMs` in `zombies/site/api/_lib/names.ts`), while a reply waits at most 1.5 s; the 10 s is a starting value, since the fetches could not be timed without the real bot ([The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions), "Names never go back to stored ones on an open page"). Each lookup logs `bot names` with its count of IDs, its time in ms and whether the bot answered.
@@ -50,7 +30,6 @@ The site's names lookup gives the bot 10 s for Discord's forced member fetches (
 - Forbidden: building per-voice hint wordings before this is answered.
 
 **Touches:** `docs/zombies/site/explanation/site.md`
-**After:** Let Cari speak in the character of her voice
 
 ## Measure a signed-in production load
 

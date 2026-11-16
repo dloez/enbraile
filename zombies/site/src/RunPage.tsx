@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Language, Viewer } from "../shared/bundle";
 import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type Member, type Message, type Rating, type RunSheet } from "../shared/runs";
-import { askMore, bringCari, fetchCall, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
+import { askMore, bringCari, changeVoice, fetchCall, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
 import { SurveyZone } from "./art";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
+import { characterOf, voiceNames, voices, type Character, type Voice as CoachVoice } from "../shared/voices";
 import { forget, known, learn, load as fetchPage, openFreshMs, runSource, nameOf } from "./store";
 import { Arrow, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, type RunLink, useFit } from "./ui";
 
@@ -22,13 +23,13 @@ function clock(at: string): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: string; rate: string; zone: { zone: string; whole: string; near: string }; ratings: Record<Rating, string> }> = {
+const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: (name: string) => string; rate: string; zone: { zone: string; whole: string; near: string }; ratings: Record<Rating, string> }> = {
   es: {
     dispatch: "Despacho",
     zone: { zone: "Mapa con un punto marcado en rojo", whole: "Ver el mapa entero", near: "Volver al punto" },
     more: "Más",
     transmitting: "transmitiendo",
-    writing: "Cari escribe",
+    writing: (name: string) => `${name} escribe`,
     rate: "Valora esta pista",
     ratings: { obvious: "Demasiado obvia", right: "Justa", vague: "Demasiado vaga" },
   },
@@ -37,7 +38,7 @@ const cariWords: Record<Language, { dispatch: string; more: string; transmitting
     zone: { zone: "Map with a spot marked in red", whole: "Show the whole map", near: "Back to the spot" },
     more: "More",
     transmitting: "transmitting",
-    writing: "Cari is writing",
+    writing: (name: string) => `${name} is writing`,
     rate: "Rate this hint",
     ratings: { obvious: "Too obvious", right: "Right", vague: "Too vague" },
   },
@@ -80,7 +81,7 @@ function JoinView({ sheet, arrive, onJoined }: { sheet: RunSheet; arrive: boolea
               </ul>
             </div>
             <div>
-              <span className="lab">{t.cariSpeaks}</span>
+              <span className="lab">{t.speaks(characterOf(sheet.voice).name)}</span>
               <p className="val">{languageNames[sheet.language]}</p>
             </div>
           </div>
@@ -119,6 +120,7 @@ function Feedback({ card, language, rating, onRate }: { card: number; language: 
 
 function Slip({
   card,
+  name,
   language,
   art,
   busy,
@@ -127,6 +129,7 @@ function Slip({
   onRate,
 }: {
   card: Card;
+  name: string;
   language: Language;
   art: RunSheet["map"]["art"];
   busy: boolean;
@@ -139,7 +142,7 @@ function Slip({
     <div className="slip" lang={language}>
       <div className="slip-h">
         <b>{words.dispatch}</b>
-        <span>Cari · {clock(card.at)}</span>
+        <span>{name} · {clock(card.at)}</span>
       </div>
       {card.rungs.map((rung, index) => (
         <div key={rung.id} className={index < card.rungs.length - 1 ? "rung-old" : undefined}>
@@ -176,7 +179,7 @@ function Line({ at, cari, name, person, className, children }: { at: string; car
   );
 }
 
-function Row({ message, card, old, slip }: { message: Message; card: Card | undefined; old: boolean; slip: (card: Card) => ReactNode }) {
+function Row({ message, card, old, coach, slip }: { message: Message; card: Card | undefined; old: boolean; coach: string; slip: (card: Card, name: string) => ReactNode }) {
   const cari = message.author === "cari";
   if (message.revision) {
     const time = clock(message.at);
@@ -191,26 +194,26 @@ function Row({ message, card, old, slip }: { message: Message; card: Card | unde
             <span className="tag">{t.revision}</span>
           </p>
           <p className="revmsg">{message.text}</p>
-          <span className="re">{t.re(message.revision.re && clock(message.revision.re))}</span>
+          <span className="re">{t.re(coach, message.revision.re && clock(message.revision.re))}</span>
         </div>
       </div>
     );
   }
   return (
-    <Line at={message.at} cari={cari} name={cari ? "Cari" : nameOf(message)} person={cari ? undefined : message} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
+    <Line at={message.at} cari={cari} name={nameOf(message)} person={cari ? undefined : message} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
       <p className="msg">{message.text}</p>
-      {card && slip(card)}
+      {card && slip(card, message.name)}
     </Line>
   );
 }
 
-function Transmitting({ text, at, language }: { text: string; at: string; language: Language }) {
+function Transmitting({ text, at, name, language }: { text: string; at: string; name: string; language: Language }) {
   const words = cariWords[language];
   return (
-    <Line at={at} cari name="Cari" className="row">
+    <Line at={at} cari name={name} className="row">
       <p className={text ? "msg" : "typing"} lang={language}>
         {text || words.transmitting}
-        <span className="caret" role="img" aria-label={words.writing} />
+        <span className="caret" role="img" aria-label={words.writing(name)} />
       </p>
     </Line>
   );
@@ -249,7 +252,7 @@ function CopyLink({ id, icon }: { id: string; icon: boolean }) {
 
 type Voice = { channel: VoiceChannel; here: boolean; busy: boolean; refused: string | null; bring: () => void };
 
-function useVoice(id: string): Voice | null {
+function useVoice(id: string, coach: string): Voice | null {
   const [state, setState] = useState<CallState | null>(null);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
@@ -296,12 +299,12 @@ function useVoice(id: string): Voice | null {
     setRefused(null);
     bringCari(id)
       .then((joined) => {
-        if ("error" in joined) setRefused(t.joinRefused[joined.error]);
+        if ("error" in joined) setRefused(t.joinRefused(coach)[joined.error]);
         else setState((current) => current && { ...current, cari: joined.channelId });
       })
       .catch((error: unknown) => {
         if (error instanceof SignedOut) return signIn();
-        setRefused(t.joinRefused.botOffline);
+        setRefused(t.joinRefused(coach).botOffline);
       })
       .finally(() => setBusy(false));
   };
@@ -309,10 +312,10 @@ function useVoice(id: string): Voice | null {
   return { channel, here: state?.cari === channel.id, busy, refused, bring };
 }
 
-function voiceLine(voice: Voice): string {
+function voiceLine(voice: Voice, coach: Character): string {
   const { channel } = voice;
-  if (voice.here) return t.cariIsIn(channel.name);
-  return channel.reason ? t.cantJoin[channel.reason](channel.name) : t.youreInChannel(channel.name);
+  if (voice.here) return t.isIn(coach.name, channel.name);
+  return channel.reason ? t.cantJoin[channel.reason](coach.name, channel.name) : t.youreInChannel(channel.name);
 }
 
 function Meter({ bars }: { bars: number }) {
@@ -325,17 +328,17 @@ function Meter({ bars }: { bars: number }) {
   );
 }
 
-function VoicePanel({ voice }: { voice: Voice }) {
+function VoicePanel({ voice, coach }: { voice: Voice; coach: Character }) {
   return (
     <section className={voice.here ? "voice on" : "voice"} aria-label={t.voiceChannel}>
       <div>
         <span className="lab">{voice.here ? t.onAir : t.voiceChannel}</span>
-        <p className="big">{voiceLine(voice)}</p>
+        <p className="big">{voiceLine(voice, coach)}</p>
       </div>
       {voice.here && <Meter bars={20} />}
       {!voice.here && voice.channel.canJoin && (
         <button type="button" className="b b-red" disabled={voice.busy} onClick={voice.bring}>
-          {t.bringCari}
+          {t.bring(coach.name)}
           <Arrow size={20} />
         </button>
       )}
@@ -344,12 +347,12 @@ function VoicePanel({ voice }: { voice: Voice }) {
           {voice.refused}
         </p>
       )}
-      {voice.here && <p className="state">{t.sayCari}</p>}
+      {voice.here && <p className="state">{t.sayWake(coach.wake)}</p>}
     </section>
   );
 }
 
-function VoiceBar({ voice }: { voice: Voice }) {
+function VoiceBar({ voice, coach }: { voice: Voice; coach: Character }) {
   return (
     <section className={voice.here ? "vb on" : "vb"} aria-label={t.voiceChannel}>
       {!voice.here && <Mic />}
@@ -358,26 +361,38 @@ function VoiceBar({ voice }: { voice: Voice }) {
           <>
             {t.onAir}
             <br />
-            <span className="state">{voiceLine(voice)}</span>
+            <span className="state">{voiceLine(voice, coach)}</span>
           </>
         ) : (
-          (voice.refused ?? voiceLine(voice))
+          (voice.refused ?? voiceLine(voice, coach))
         )}
       </p>
       <span className="sp" />
       {voice.here && <Meter bars={14} />}
       {!voice.here && voice.channel.canJoin && (
         <button type="button" className="b b-red" disabled={voice.busy} onClick={voice.bring}>
-          {t.bringCari}
+          {t.bring(coach.name)}
         </button>
       )}
     </section>
   );
 }
 
+function VoiceSelect({ voice, onPick, label, className }: { voice: CoachVoice; onPick: (voice: CoachVoice) => void; label?: string; className?: string }) {
+  return (
+    <select className={className} aria-label={label} value={voice} onChange={(event) => onPick(event.target.value as CoachVoice)}>
+      {voices.map((code) => (
+        <option key={code} value={code}>
+          {voiceNames[code][lang]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 type Trouble = { text: string; retry: () => void };
 
-type Log = { history: Message[]; messages: Message[]; cards: Map<number, Card>; members: Member[]; rated: Map<number, Rating>; last: number; lastRung: number };
+type Log = { history: Message[]; messages: Message[]; cards: Map<number, Card>; members: Member[]; rated: Map<number, Rating>; voice: CoachVoice; last: number; lastRung: number };
 
 const logs = new Map<string, Log>();
 
@@ -396,6 +411,9 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const [trouble, setTrouble] = useState<Trouble | null>(null);
   const [revising, setRevising] = useState(false);
   const [rated, setRated] = useState<Map<number, Rating>>(log?.rated ?? new Map());
+  const [voiceChoice, setVoiceChoice] = useState<CoachVoice>(log?.voice ?? sheet.voice);
+  const choosing = useRef(0);
+  const coach = characterOf(voiceChoice);
   const last = useRef(log?.last ?? 0);
   const lastRung = useRef(log?.lastRung ?? 0);
   const rows = useRef<HTMLDivElement>(null);
@@ -403,7 +421,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const polling = useRef(0);
   const name = sheet.map.name[lang];
   const title = useFit<HTMLHeadingElement>(name);
-  const voice = useVoice(sheet.id);
+  const voice = useVoice(sheet.id, coach.name);
 
   const poll = useCallback(async () => {
     polling.current++;
@@ -411,6 +429,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       const reply = await fetchTranscript(sheet.id, last.current, lastRung.current);
       learn([...reply.members, ...reply.messages]);
       setMembers(reply.members);
+      if (choosing.current === 0) setVoiceChoice(reply.voice);
       if (reply.history.length) setHistory(reply.history);
       setLoaded(true);
       setLost(false);
@@ -446,8 +465,8 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   }, [poll]);
 
   useEffect(() => {
-    if (loaded) logs.set(sheet.id, { history, messages, cards, members, rated, last: last.current, lastRung: lastRung.current });
-  }, [sheet.id, loaded, history, messages, cards, members, rated]);
+    if (loaded) logs.set(sheet.id, { history, messages, cards, members, rated, voice: voiceChoice, last: last.current, lastRung: lastRung.current });
+  }, [sheet.id, loaded, history, messages, cards, members, rated, voiceChoice]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -497,11 +516,11 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
         setAiring((current) => current && { ...current, text: said });
       },
     })
-      .then(() => failed && setTrouble({ text: t.noAnswer, retry }))
+      .then(() => failed && setTrouble({ text: t.noAnswer(coach.name), retry }))
       .catch((error: unknown) => {
         if (error instanceof SignedOut) return signIn();
         if (!opened) unsent?.();
-        setTrouble({ text: opened ? t.noAnswer : t.notSent, retry });
+        setTrouble({ text: opened ? t.noAnswer(coach.name) : t.notSent, retry });
       })
       .then(poll)
       .finally(() => setAiring(null));
@@ -561,6 +580,21 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
     });
   };
 
+  const pick = (next: CoachVoice) => {
+    const before = voiceChoice;
+    setVoiceChoice(next);
+    choosing.current++;
+    changeVoice(sheet.id, next)
+      .catch((error: unknown) => {
+        if (error instanceof SignedOut) return signIn();
+        setVoiceChoice(before);
+        setTrouble({ text: t.notChanged, retry: () => pick(next) });
+      })
+      .finally(() => {
+        choosing.current--;
+      });
+  };
+
   const more = (card: number) => {
     if (airing !== null) return;
     void listen(
@@ -569,8 +603,8 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
     );
   };
 
-  const slip = (card: Card) => (
-    <Slip card={card} language={sheet.language} art={sheet.map.art} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
+  const slip = (card: Card, from: string) => (
+    <Slip card={card} name={from} language={sheet.language} art={sheet.map.art} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
   );
   const notice = trouble ?? (lost ? { text: t.failed, retry: () => void poll() } : null);
 
@@ -582,8 +616,12 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           <h2 ref={title} className="cond">
             {name}
           </h2>
-          <p className="sub">{t.cariSpeaksIn[sheet.language]}</p>
+          <p className="sub">{t.speaksIn(coach.name, sheet.language)}</p>
         </div>
+        <label className="pick">
+          <span className="lab">{t.voice}</span>
+          <VoiceSelect voice={voiceChoice} onPick={pick} />
+        </label>
         <div>
           <span className="lab">{t.inTheRun}</span>
           <ul className="mem">
@@ -597,15 +635,16 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           </ul>
           <CopyLink id={sheet.id} icon={false} />
         </div>
-        {voice && <VoicePanel voice={voice} />}
+        {voice && <VoicePanel voice={voice} coach={coach} />}
       </aside>
       <div className="strip">
         <Chips members={members} />
-        <span className="m">{t.cariSpeaksIn[sheet.language]}</span>
+        <VoiceSelect voice={voiceChoice} onPick={pick} label={t.voice} className="pick-m" />
+        <span className="m">· {languageNames[sheet.language]}</span>
         <span className="sp" />
         <CopyLink id={sheet.id} icon />
       </div>
-      {voice && <VoiceBar voice={voice} />}
+      {voice && <VoiceBar voice={voice} coach={coach} />}
       <section className="main">
         <div className={["rows", loaded && !settled && "arrive-all", notice && "rows-trouble"].filter(Boolean).join(" ")} ref={rows} onScroll={onScroll} aria-busy={!loaded}>
           {!loaded && <RowsSkeleton />}
@@ -616,10 +655,11 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
               message={message}
               card={message.card === null ? undefined : cards.get(message.card)}
               old={index < shown.length - freshRows}
+              coach={coach.name}
               slip={slip}
             />
           ))}
-          {airing !== null && <Transmitting text={airing.text} at={airing.at} language={sheet.language} />}
+          {airing !== null && <Transmitting text={airing.text} at={airing.at} name={coach.name} language={sheet.language} />}
         </div>
         <form className={revising ? "cmp cmp-rev" : "cmp"} onSubmit={send}>
           <div className="over">
@@ -636,8 +676,8 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           <div className="cmp-in">
             <input
               className="field"
-              aria-label={revising ? t.revision : t.messageForCari}
-              placeholder={revising ? t.commentOnCoaching : t.writeToCari}
+              aria-label={revising ? t.revision : t.messageFor(coach.name)}
+              placeholder={revising ? t.commentOnCoaching : t.writeTo(coach.name)}
               value={draft}
               maxLength={2000}
               onChange={(event) => setDraft(event.target.value)}

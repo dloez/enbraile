@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { languages, type Language, type PublishedMap, type Viewer, type Zone } from "./bundle.js";
+import { defaultVoice, voices, type Voice } from "./voices.js";
 
 export type Person = { name: string; who: string | null; live: boolean; avatar: string | null };
 
@@ -11,7 +12,7 @@ export type MapSummary = PublishedMap & { attempts: number; beaten: number; you:
 
 export type MapsPage = { viewer: Viewer; maps: MapSummary[]; yourRun: RunLink | null };
 
-export type Attempt = { id: string; language: Language; startedBy: Person; members: Member[]; playing: boolean; you: boolean; beaten: boolean; lastPlayed: string };
+export type Attempt = { id: string; language: Language; voice: Voice; startedBy: Person; members: Member[]; playing: boolean; you: boolean; beaten: boolean; lastPlayed: string };
 
 export type MapPage = { viewer: Viewer; map: PublishedMap; attempts: Attempt[]; yourRun: RunLink | null };
 
@@ -20,6 +21,7 @@ export type RunSheet = {
   id: string;
   map: PublishedMap;
   language: Language;
+  voice: Voice;
   startedBy: Person;
   members: Member[];
   you: boolean;
@@ -58,7 +60,7 @@ export type GapContext = {
   recent: string[];
 };
 
-export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[] };
+export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice };
 
 export type RunEvent = { id: number; at: string } & (
   | { kind: "line" | "cari"; name: string; text: string; cards: number[]; by: "claude" | null }
@@ -82,7 +84,9 @@ export type CallState = { reachable: boolean; channel: VoiceChannel | null; cari
 
 export type JoinRefusal = "notInVoice" | "noAccess" | "full" | "botOffline";
 
-export const voiceSchema = z.object({ userId: z.string().min(1), text: z.string().trim().min(1).max(2000) });
+export const voiceSchema = z.object({ userId: z.string().min(1), text: z.string().trim().min(1).max(2000), word: z.string().trim().toLowerCase().min(1).default("cari") });
+
+export const coachVoiceSchema = z.object({ userId: z.string().min(1) });
 
 export const callLineSchema = z.object({
   userId: z.string().min(1),
@@ -97,7 +101,9 @@ export type CallLine = z.infer<typeof callLineSchema>;
 
 export type ReplyEvent = { type: "text"; text: string } | { type: "failed" } | { type: "done" };
 
-export const startRunSchema = z.object({ game: z.string().min(1), map: z.string().min(1), language: z.enum(languages).default("es") });
+export const startRunSchema = z.object({ game: z.string().min(1), map: z.string().min(1), language: z.enum(languages).default("es"), voice: z.enum(voices).default(defaultVoice) });
+
+export const runVoiceSchema = z.object({ voice: z.enum(voices) });
 
 export const messageSchema = z.object({ text: z.string().trim().min(1).max(2000), revision: z.boolean().default(false) });
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Language, PublishedMap, Viewer } from "../shared/bundle";
 import type { Attempt, MapPage as MapPageData, MapSummary } from "../shared/runs";
+import { characterOf, defaultVoice, voiceNames, voices, type Voice } from "../shared/voices";
 import { joinRun, Refused, SignedOut, signIn, startRun } from "./api";
 import { MapArt } from "./art";
 import { languageNames, lang, playedAt, switchLang, t } from "./i18n";
@@ -199,7 +200,7 @@ function AttemptRow({ attempt, busy, onJoin }: { attempt: Attempt; busy: boolean
               {" · "}
             </span>
           )}
-          {t.cariSpeaksIn[attempt.language]}
+          {t.speaksIn(characterOf(attempt.voice).name, attempt.language)}
           {" · "}
           {playedAt(attempt.lastPlayed)}
         </span>
@@ -255,6 +256,7 @@ function MapBanner({ map, counts }: { map: PublishedMap; counts: Counts }) {
 function MapBelow({ page, arrive }: { page: MapPageData; arrive: boolean }) {
   const { map, attempts, yourRun } = page;
   const [language, setLanguage] = useState<Language>("es");
+  const [voice, setVoice] = useState<Voice>(defaultVoice);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<"start" | "join" | null>(null);
   const others = attempts.some((attempt) => !attempt.you);
@@ -293,7 +295,16 @@ function MapBelow({ page, arrive }: { page: MapPageData; arrive: boolean }) {
         <h2>{t.startARun}</h2>
         <div className="card">
           <fieldset className="seg">
-            <legend>{t.cariSpeaks}</legend>
+            <legend>{t.voice}</legend>
+            {voices.map((code) => (
+              <label key={code}>
+                <input type="radio" name="voice" checked={voice === code} onChange={() => setVoice(code)} />
+                {voiceNames[code][lang]}
+              </label>
+            ))}
+          </fieldset>
+          <fieldset className="seg">
+            <legend>{t.speaks(characterOf(voice).name)}</legend>
             {languages.map((code) => (
               <label key={code}>
                 <input type="radio" name="lang" checked={language === code} onChange={() => setLanguage(code)} />
@@ -306,7 +317,7 @@ function MapBelow({ page, arrive }: { page: MapPageData; arrive: boolean }) {
               {t.failed}
             </p>
           )}
-          <button type="button" className="b b-red wide-b" disabled={busy} onClick={() => act("start", () => startRun(map.game, map.map, language))}>
+          <button type="button" className="b b-red wide-b" disabled={busy} onClick={() => act("start", () => startRun(map.game, map.map, language, voice))}>
             {t.startRun}
           </button>
         </div>

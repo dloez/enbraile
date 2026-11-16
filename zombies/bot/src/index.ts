@@ -6,13 +6,13 @@ const MAX_NAMES = 50;
 
 const text = {
   en: {
-    joined: "Cari is in your channel. Say «cari» and your question.",
+    joined: (name: string, wake: string) => `${name} is in your channel. Say «${wake}» and your question.`,
     notInVoice: "Join a voice channel first.",
     noAccess: "I can't reach your voice channel. Give my role access to it.",
     full: "Your voice channel is full.",
   },
   es: {
-    joined: "Cari está en tu canal. Di «cari» y tu pregunta.",
+    joined: (name: string, wake: string) => `${name} está en tu canal. Di «${wake}» y tu pregunta.`,
     notInVoice: "Entra primero en un canal de voz.",
     noAccess: "No puedo acceder a tu canal de voz. Dale acceso a mi rol.",
     full: "Tu canal de voz está lleno.",
@@ -21,7 +21,7 @@ const text = {
 
 async function cari(interaction: ChatInputCommandInteraction, locale: Locale): Promise<string> {
   const joined = await join(interaction.user.id);
-  return "error" in joined ? text[locale][joined.error] : text[locale].joined;
+  return "error" in joined ? text[locale][joined.error] : text[locale].joined(joined.coach.name, joined.coach.wake);
 }
 
 const command: SlashCommand = {
@@ -37,7 +37,7 @@ const route: Route = async (method, path, _params, input, userId) => {
   }
   if (path === "join" && method === "POST") {
     if (!userId) return [{ error: "badRequest" }, 400];
-    const joined = await join(userId);
+    const joined = await join(userId, typeof input.voice === "string" ? input.voice : null);
     return "error" in joined ? [joined, 409] : [joined];
   }
   if (path === "names" && method === "POST") {

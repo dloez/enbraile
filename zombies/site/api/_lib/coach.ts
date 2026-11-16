@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { and, count, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Bundle, Language } from "../../shared/bundle.js";
 import type { ReplyEvent, StepIn } from "../../shared/runs.js";
+import { characterOf, wakeWords, type Character } from "../../shared/voices.js";
 import { db } from "./db.js";
 import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
 import { audits, bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
@@ -17,31 +18,13 @@ const leasePollMs = 300;
 const silence = "(silence)";
 
 const languageNames: Record<Language, string> = { es: "Spanish", en: "English" };
-const roundQuestion: Record<Language, string> = { es: "Por cierto, ¿en qué ronda vais?", en: "By the way, what round are you on?" };
-const notYet: Record<Language, string> = {
-  es: "Esto no se mueve… y no creo que sea por falta de ganas. Igual no es el momento.",
-  en: "This isn't budging… and I don't think it's for lack of trying. Maybe it isn't the moment.",
-};
-
-const holdLines: Record<Language, string[]> = {
-  es: [
-    "Uf, eso no lo tengo claro ahora mismo. Dame un momento y seguid a lo vuestro.",
-    "Ahí me pillas. Lo miro y os digo; mientras, ¿qué tenéis delante?",
-    "No quiero liaros con eso sin estar segura. Seguid, que ahora vuelvo.",
-  ],
-  en: [
-    "Hm, I'm not sure about that one right now. Give me a moment and keep at it.",
-    "You've got me there. I'll check and get back to you; meanwhile, what are you looking at?",
-    "I don't want to send you the wrong way on that. Keep going, I'll be back.",
-  ],
-};
 
 const recentLines = 8;
 
-const systemPrompt = `You are Cari, the radio voice who coaches a small group of friends through a Zombies easter egg while they play. You have beaten it before; they want to solve it themselves with as little help as possible. They are mid-round, so be short and immediate.
+const systemPrompt = (character: Character) => `You are ${character.name}, ${character.role}. You have beaten it before; they want to solve it themselves with as little help as possible. They are mid-round, so be short and immediate.
 
 How you speak
-- Speak only the run's language, given below. One generic teammate voice, warm and a bit wry. One or two short sentences at most.
+- Speak only the run's language, given below. ${character.manner} One or two short sentences at most.
 - You never write hints. Everything that moves them toward the solution is a prepared hint you hand over with give_hint, which the players see on a card. Your own words are only a brief lead-in or acknowledgement, one question about what they last saw or tried, or nothing.
 - Never name, describe or imply any place, item, enemy, mechanic or step except those listed under "What the players know" or written in a hint already given. Never paraphrase, preview, repeat or explain a hint.
 - Never mention steps, numbers, levels, ladders, cards, tools, threads, or how many hints exist or remain. Never offer choices or lists of things to try.
@@ -69,7 +52,7 @@ Following their progress
 Keeping track
 - When the players name or describe something themselves, call mark_known with their own words before choosing a hint.
 - Now and then call ask_round to learn their round, but never right after a hint or just as they start on something.
-- If their message is them talking among themselves and needs nothing from you, reply with exactly ${silence}`;
+- Whenever they speak to you or ask you anything, answer: a hint, hold, or a short line of your own, asking them to say it again when you could not make out what they meant. Reply with exactly ${silence} only when their message is them talking among themselves, not to you.`;
 
 const tools: Anthropic.Tool[] = [
   {
@@ -155,6 +138,7 @@ const model = () => process.env.COACH_MODEL || defaultModel;
 type State = {
   runId: string;
   language: Language;
+  character: Character;
   roundAskedAt: Date | null;
   bundle: Bundle;
   version: number;
@@ -173,7 +157,7 @@ type Held = { id: number; number: number; asked: string };
 
 async function loadState(runId: string): Promise<State | null> {
   const [row] = await db
-    .select({ language: runs.language, roundAskedAt: runs.roundAskedAt, bundle: bundleVersions.bundle, version: bundleVersions.version })
+    .select({ language: runs.language, voice: runs.voice, roundAskedAt: runs.roundAskedAt, bundle: bundleVersions.bundle, version: bundleVersions.version })
     .from(runs)
     .innerJoin(maps, and(eq(maps.game, runs.game), eq(maps.map, runs.map)))
     .innerJoin(bundleVersions, and(eq(bundleVersions.game, maps.game), eq(bundleVersions.map, maps.map), eq(bundleVersions.version, maps.latestVersion)))
@@ -202,6 +186,7 @@ async function loadState(runId: string): Promise<State | null> {
   return {
     runId,
     language: row.language,
+    character: characterOf(row.voice),
     roundAskedAt: row.roundAskedAt,
     bundle: row.bundle,
     version: row.version,
@@ -557,11 +542,15 @@ class Speech {
   }
 }
 
-export type Ask = { kind: "message" } | { kind: "more"; cardId: number } | { kind: "gap"; gapId: number };
+const addressing = new RegExp(`[?¿]|\\b(?:${wakeWords.join("|")})\\b`, "i");
+
+const isAddressed = (line: string) => addressing.test(line);
+
+export type Ask = { kind: "message"; spoken: boolean } | { kind: "more"; cardId: number } | { kind: "gap"; gapId: number };
 
 async function hold(state: State, askedBy: string, asked: string, about: string, recent: string[]): Promise<string> {
   const [held] = await db.select({ n: count() }).from(gaps).where(eq(gaps.runId, state.runId));
-  const lines = holdLines[state.language];
+  const lines = state.character.lines[state.language].hold;
   const said = lines[(held?.n ?? 0) % lines.length]!;
   await db.insert(gaps).values({
     runId: state.runId,
@@ -599,7 +588,7 @@ async function noteTried(state: State): Promise<void> {
 async function finish(state: State, text: string, cards: number[], postedBy: "claude" | null = null): Promise<number | null> {
   if (!text && !cards.length) return null;
   return db.transaction(async (tx) => {
-    const [message] = await tx.insert(messages).values({ runId: state.runId, author: "cari", name: "Cari", text, postedBy }).returning({ id: messages.id });
+    const [message] = await tx.insert(messages).values({ runId: state.runId, author: "cari", name: state.character.name, text, postedBy }).returning({ id: messages.id });
     if (cards.length) await tx.update(hintCards).set({ messageId: message!.id }).where(inArray(hintCards.id, cards));
     return message!.id;
   });
@@ -695,6 +684,7 @@ export async function coachTurn(
     const lastTurn = conversation[conversation.length - 1];
     if (lastTurn?.role !== "user") return "ok";
     const asked = typeof lastTurn.content === "string" ? lastTurn.content : "";
+    const addressed = ask.kind === "message" && (ask.spoken || isAddressed(asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? ""));
     const recent = conversation.flatMap((turn) => (typeof turn.content === "string" ? turn.content.split("\n") : [])).slice(-recentLines);
     const violations: string[] = [];
     const caught: string[] = [];
@@ -716,7 +706,7 @@ export async function coachTurn(
           model: model(),
           max_tokens: maxTokens,
           system: [
-            { type: "text", text: systemPrompt },
+            { type: "text", text: systemPrompt(state.character) },
             { type: "text", text: offers(state) },
           ],
           tools: retried ? tools.filter((tool) => tool.name === "give_hint") : tools,
@@ -772,7 +762,7 @@ export async function coachTurn(
             content = "That is already done. Never hint it again.";
           } else if (!isReady(step, state.done) && !state.told.has(step.id)) {
             await tellBlocked(state, step.id);
-            speech.add(notYet[state.language]);
+            speech.add(state.character.lines[state.language].notYet);
             hinted = true;
             content = "Said for you, in your voice, that it is not the moment. Add nothing about it. If they ask about it again or want more, call give_hint on the same ladder.";
           } else {
@@ -887,7 +877,7 @@ export async function coachTurn(
             round = true;
             state.roundAskedAt = new Date();
             await db.update(runs).set({ roundAskedAt: state.roundAskedAt }).where(eq(runs.id, runId));
-            content = `Asked for you at the end of your reply: "${roundQuestion[state.language]}". Do not ask it again.`;
+            content = `Asked for you at the end of your reply: "${state.character.lines[state.language].round}". Do not ask it again.`;
           }
         } else content = `No tool named ${block.name}.`;
         results.push({ type: "tool_result", tool_use_id: block.id, content });
@@ -898,7 +888,11 @@ export async function coachTurn(
       conversation.push({ role: "user", content: results });
     }
     if (round && hinted) await db.update(runs).set({ roundAskedAt: askedBefore }).where(eq(runs.id, runId));
-    else if (round) speech.add(roundQuestion[state.language]);
+    else if (round) speech.add(state.character.lines[state.language].round);
+    if (!failed && addressed && !speech.spoken.length && !cards.length) {
+      caught.push("silent-to-addressed");
+      speech.add(state.character.lines[state.language].unheard);
+    }
     if (!failed) await noteTried(state);
     const text = speech.spoken.join(" ");
     const findings = await audit(state, text, handed, openBefore, caught);

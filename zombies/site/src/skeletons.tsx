@@ -236,6 +236,12 @@ export function RunSkeleton() {
             <Bar w="9em" />
           </p>
         </div>
+        <div className="pick">
+          <span className="lab">
+            <Bar w="3em" />
+          </span>
+          <span className="skeleton" />
+        </div>
         <div>
           <span className="lab">
             <Bar w="6em" />
@@ -252,8 +258,11 @@ export function RunSkeleton() {
           <Chip />
           <Chip />
         </span>
+        <span className="pick-m">
+          <Bar w="4em" />
+        </span>
         <span className="m">
-          <Bar w="9em" />
+          <Bar w="5em" />
         </span>
         <span className="sp" />
         <span className="ib skeleton" />

@@ -2,15 +2,15 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { type Context, Hono } from "hono";
 import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { asRevision, callLineSchema, historyImportSchema, messageSchema, ratingSchema, runImportSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent } from "../../shared/runs.js";
+import { asRevision, callLineSchema, coachVoiceSchema, historyImportSchema, messageSchema, ratingSchema, runImportSchema, runVoiceSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent } from "../../shared/runs.js";
 import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { deleteMap, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
-import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, startRun, transcript } from "./runs.js";
+import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
-import { bringCari, callState, keepCallLine, voiceTurn } from "./voice.js";
+import { bringCari, callState, coachVoice, keepCallLine, voiceTurn } from "./voice.js";
 
 const noStore = { "cache-control": "private, no-store" };
 
@@ -141,8 +141,15 @@ voice.post("/", async (c) => {
   if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
   const parsed = voiceSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
-  const turn = await voiceTurn(parsed.data.userId, parsed.data.text);
-  return turn.ok ? c.json({ reply: turn.reply }, 200, noStore) : c.json({ error: "turnFailed" }, 500, noStore);
+  const turn = await voiceTurn(parsed.data.userId, parsed.data.text, parsed.data.word);
+  return c.json(turn, 200, noStore);
+});
+
+voice.post("/coach", async (c) => {
+  if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
+  const parsed = coachVoiceSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
+  return c.json({ voice: await coachVoice(parsed.data.userId) }, 200, noStore);
 });
 
 voice.post("/transcript", async (c) => {
@@ -181,13 +188,22 @@ member.get("/maps/:game/:map", async (c) => {
 member.post("/runs", async (c) => {
   const parsed = startRunSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidRun" }, 400, noStore);
-  const id = await startRun(c.get("viewer"), parsed.data.game, parsed.data.map, parsed.data.language);
+  const id = await startRun(c.get("viewer"), parsed.data.game, parsed.data.map, parsed.data.language, parsed.data.voice);
   return id ? c.json({ id }, 201, noStore) : c.json({ error: "noSuchMap" }, 404, noStore);
 });
 
 member.get("/runs/:id", async (c) => {
   const sheet = await runSheet(c.get("viewer"), c.req.param("id"), timed(c));
   return sheet ? c.json(sheet, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
+});
+
+member.patch("/runs/:id", async (c) => {
+  const viewer = c.get("viewer");
+  const id = c.req.param("id");
+  if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
+  const parsed = runVoiceSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
+  return (await setVoice(id, parsed.data.voice)) ? c.json({ voice: parsed.data.voice }, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
 });
 
 member.post("/runs/:id/join", async (c) =>
@@ -214,7 +230,7 @@ member.post("/runs/:id/messages", async (c) => {
     return ack ? said(ack) : c.json({ error: "noSuchRun" }, 404, noStore);
   }
   await postMessage(viewer, id, parsed.data.text);
-  return reply(id, viewer, { kind: "message" });
+  return reply(id, viewer, { kind: "message", spoken: false });
 });
 
 member.post("/runs/:id/cards/:card/more", async (c) => {
@@ -245,7 +261,9 @@ member.get("/runs/:id/voice", async (c) => {
 member.post("/runs/:id/voice/join", async (c) => {
   const viewer = c.get("viewer");
   if (!(await isActiveMember(viewer, c.req.param("id")))) return c.json({ error: "notInRun" }, 403, noStore);
-  const joined = await bringCari(viewer.discordId);
+  const coach = await runVoice(c.req.param("id"));
+  if (!coach) return c.json({ error: "noSuchRun" }, 404, noStore);
+  const joined = await bringCari(viewer.discordId, coach);
   return "error" in joined ? c.json(joined, joined.error === "botOffline" ? 503 : 409, noStore) : c.json(joined, 200, noStore);
 });
 

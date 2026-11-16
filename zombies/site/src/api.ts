@@ -1,4 +1,5 @@
 import type { Language } from "../shared/bundle";
+import type { Voice } from "../shared/voices";
 import type { CallState, JoinRefusal, MapPage, MapsPage, Rating, ReplyEvent, RunSheet, Transcript } from "../shared/runs";
 
 export class SignedOut extends Error {}
@@ -34,7 +35,8 @@ export const fetchMap = (game: string, map: string) => call<MapPage>(`maps/${enc
 export const fetchRun = (id: string) => call<RunSheet>(`runs/${encodeURIComponent(id)}`);
 export const fetchTranscript = (id: string, after: number, rungsAfter: number) =>
   call<Transcript>(`runs/${encodeURIComponent(id)}/messages?after=${after}&rungsAfter=${rungsAfter}`);
-export const startRun = (game: string, map: string, language: Language) => call<{ id: string }>("runs", { method: "POST", body: { game, map, language } });
+export const startRun = (game: string, map: string, language: Language, voice: Voice) => call<{ id: string }>("runs", { method: "POST", body: { game, map, language, voice } });
+export const changeVoice = (id: string, voice: Voice) => call<{ voice: Voice }>(`runs/${encodeURIComponent(id)}`, { method: "PATCH", body: { voice } });
 export const joinRun = (id: string) => call<{ id: string }>(`runs/${encodeURIComponent(id)}/join`, { method: "POST" });
 export const rateCard = (id: string, card: number, rating: Rating) => call<{ rating: Rating }>(`runs/${encodeURIComponent(id)}/cards/${card}/feedback`, { method: "PUT", body: { rating } });
 export const fetchCall = (id: string) => call<CallState>(`runs/${encodeURIComponent(id)}/voice`);

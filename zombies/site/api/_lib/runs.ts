@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
 import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Person, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
+import { characterOf, defaultVoice, type Voice } from "../../shared/voices.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { currentNames } from "./names.js";
@@ -46,20 +47,30 @@ async function addMember(tx: Tx, runId: string, viewer: Viewer): Promise<void> {
   await tx.insert(runMembers).values({ runId, discordId: viewer.discordId, name: viewer.name, image: viewer.image });
 }
 
-export async function startRun(viewer: Viewer, game: string, map: string, language: Language): Promise<string | null> {
+export async function startRun(viewer: Viewer, game: string, map: string, language: Language, voice: Voice): Promise<string | null> {
   return db.transaction(async (tx) => {
     await lockPerson(tx, viewer.discordId);
     const bundle = await latestBundle(tx, game, map);
     if (!bundle) return null;
     const id = randomBytes(6).toString("base64url");
     await leaveCurrent(tx, viewer.discordId);
-    await tx.insert(runs).values({ id, game, map, language, startedBy: viewer.discordId, startedByName: viewer.name });
+    await tx.insert(runs).values({ id, game, map, language, voice, startedBy: viewer.discordId, startedByName: viewer.name });
     await addMember(tx, id, viewer);
     const baseline = bundle.knowledge.filter((entry) => entry.mark === "known").map((entry) => ({ runId: id, knowledgeId: entry.id }));
     if (baseline.length) await tx.insert(runKnowledge).values(baseline).onConflictDoNothing();
     await learnFromEarlierRuns(tx, id, game, map, viewer.discordId);
     return id;
   });
+}
+
+export async function runVoice(runId: string): Promise<Voice | null> {
+  const [run] = await db.select({ voice: runs.voice }).from(runs).where(eq(runs.id, runId));
+  return run?.voice ?? null;
+}
+
+export async function setVoice(runId: string, voice: Voice): Promise<boolean> {
+  const updated = await db.update(runs).set({ voice }).where(eq(runs.id, runId)).returning({ id: runs.id });
+  return updated.length > 0;
 }
 
 export async function joinRun(viewer: Viewer, runId: string): Promise<boolean> {
@@ -103,7 +114,7 @@ function runOf(viewer: Viewer) {
     .where(and(eq(runMembers.discordId, viewer.discordId), activeMember));
 }
 
-type AttemptRow = { id: string; game: string; map: string; language: Language; startedBy: string; starterId: string; createdAt: Date; lastPlayed: Date; beaten: boolean };
+type AttemptRow = { id: string; game: string; map: string; language: Language; voice: Voice; startedBy: string; starterId: string; createdAt: Date; lastPlayed: Date; beaten: boolean };
 
 async function attemptRows(only?: { game: string; map: string }): Promise<AttemptRow[]> {
   const where = only ? sql`where r.game = ${only.game} and r.map = ${only.map}` : sql``;
@@ -115,7 +126,7 @@ async function attemptRows(only?: { game: string; map: string }): Promise<Attemp
       cross join lateral jsonb_array_elements(b.bundle->'steps') step
       where not coalesce((step->>'optional')::boolean, false)
     )
-    select r.id, r.game, r.map, r.language, r.started_by_name as "startedBy", r.started_by as "starterId", r.created_at as "createdAt",
+    select r.id, r.game, r.map, r.language, r.voice, r.started_by_name as "startedBy", r.started_by as "starterId", r.created_at as "createdAt",
       greatest(r.created_at, (select max(x.created_at) from ${messages} x where x.run_id = r.id)) as "lastPlayed",
       not exists (
         select 1 from required q
@@ -177,6 +188,7 @@ export async function mapPage(viewer: Viewer, game: string, map: string, time: T
     return {
       id: row.id,
       language: row.language,
+      voice: row.voice,
       startedBy: named(row.starterId, row.startedBy),
       members: ordered.map(([discordId, { person }]) => ({ ...person, you: discordId === viewer.discordId })),
       playing: ordered.some(([, person]) => person.here),
@@ -206,6 +218,7 @@ export async function runSheet(viewer: Viewer, runId: string, time: Time): Promi
     id: run.id,
     map,
     language: run.language,
+    voice: run.voice,
     startedBy: named(run.startedBy, run.startedByName),
     members: members.map((member): Member => ({ ...named(member.discordId, member.name), you: member.discordId === viewer.discordId })),
     you: current?.id === runId,
@@ -309,7 +322,7 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
     .leftJoin(hintCards, eq(hintCards.messageId, messages.id))
     .where(and(eq(messages.runId, runId), gt(messages.id, after)))
     .orderBy(asc(messages.id));
-  const members = await activeMembers(runId);
+  const [members, [run]] = await Promise.all([activeMembers(runId), db.select({ voice: runs.voice }).from(runs).where(eq(runs.id, runId))]);
   const named = await currentNames([...members.map((member) => member.discordId), ...rows.map((row) => row.message.discordId)]);
   const revisionIds = rows.filter((row) => row.message.kind === "revision").map((row) => row.message.id);
   const referred = new Map(
@@ -345,6 +358,7 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
       rungsAfter,
       rows.some((row) => row.card !== null),
     ),
+    voice: run?.voice ?? defaultVoice,
   };
 }
 
@@ -353,11 +367,9 @@ export async function postMessage(viewer: Viewer, runId: string, text: string): 
   return row!.id;
 }
 
-const acknowledgement: Record<Language, string> = { es: "Anotado, gracias.", en: "Noted, thanks." };
-
 export async function postRevision(viewer: Viewer, runId: string, text: string): Promise<string | null> {
   return db.transaction(async (tx) => {
-    const [run] = await tx.select({ language: runs.language }).from(runs).where(eq(runs.id, runId));
+    const [run] = await tx.select({ language: runs.language, voice: runs.voice }).from(runs).where(eq(runs.id, runId));
     if (!run) return null;
     const [last] = await tx
       .select({ id: messages.id, card: hintCards.id })
@@ -384,8 +396,9 @@ export async function postRevision(viewer: Viewer, runId: string, text: string):
       deliveryId: rung?.id ?? null,
       text,
     });
-    const said = acknowledgement[run.language];
-    await tx.insert(messages).values({ runId, author: "cari", kind: "ack", name: "Cari", text: said });
+    const character = characterOf(run.voice);
+    const said = character.lines[run.language].ack;
+    await tx.insert(messages).values({ runId, author: "cari", kind: "ack", name: character.name, text: said });
     return said;
   });
 }
@@ -425,6 +438,7 @@ export async function runList() {
     game: row.game,
     map: row.map,
     language: row.language,
+    voice: row.voice,
     startedBy: row.startedByName,
     createdAt: row.createdAt,
     lastLineAt: lastLine.get(row.id) ?? null,
@@ -474,8 +488,6 @@ export async function runLog(runId: string) {
   };
 }
 
-const carriedOver: Record<Language, string> = { es: "De la sesión anterior.", en: "From the last session." };
-
 export type Imported = { id: string; counts: Record<string, number> } | { error: string; issues: string[] };
 
 export async function importRun(input: RunImport): Promise<Imported> {
@@ -519,11 +531,12 @@ export async function importRun(input: RunImport): Promise<Imported> {
     }
     const learned = new Set([...bundle.knowledge.filter((entry) => entry.mark === "known").map((entry) => entry.id), ...input.known]);
     const cards = new Map<string, number>();
+    const coach = characterOf(defaultVoice);
     for (const entry of input.deliveries) {
       const key = ladderKey(entry.step, entry.part);
       let card = cards.get(key);
       if (card === undefined) {
-        const [message] = await tx.insert(messages).values({ runId: id, author: "cari", name: "Cari", text: carriedOver[input.language] }).returning({ id: messages.id });
+        const [message] = await tx.insert(messages).values({ runId: id, author: "cari", name: coach.name, text: coach.lines[input.language].carriedOver }).returning({ id: messages.id });
         const [created] = await tx.insert(hintCards).values({ runId: id, messageId: message!.id, stepId: entry.step, partId: entry.part }).returning({ id: hintCards.id });
         card = created!.id;
         cards.set(key, card);

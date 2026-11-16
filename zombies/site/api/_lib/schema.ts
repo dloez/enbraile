@@ -3,6 +3,7 @@ import { boolean, customType, foreignKey, index, integer, jsonb, pgTable, primar
 import type { Bundle, Language } from "../../shared/bundle.js";
 import type { ImageType } from "../../shared/image.js";
 import type { GapContext, Rating } from "../../shared/runs.js";
+import type { Voice } from "../../shared/voices.js";
 
 export const maps = pgTable(
   "maps",
@@ -47,6 +48,7 @@ export const runs = pgTable(
     game: text("game").notNull(),
     map: text("map").notNull(),
     language: text("language").$type<Language>().notNull(),
+    voice: text("voice").$type<Voice>().notNull().default("chatterbox"),
     startedBy: text("started_by").notNull(),
     startedByName: text("started_by_name").notNull(),
     roundAskedAt: timestamp("round_asked_at", { withTimezone: true }),
