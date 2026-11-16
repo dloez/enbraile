@@ -9,15 +9,16 @@
 ## Steps
 
 1. From `home/voice/`: `uv sync`. It installs torch with CUDA 12.8, so the first sync downloads several GB.
-2. Choose the voices in `.env.local`: `VOICES`, comma-separated, from `piper`, `chatterbox`, `chatterbox-expressive` and `richtofen` (default `piper`), and `DEFAULT_VOICE` (default the first). Only these load; each costs GPU memory ([measurements](../explanation/voice.md#measurements)).
-3. `uv run --env-file .env.local worker.py`. The first start downloads Whisper large-v3 (about 3 GB), the Piper voice if enabled, and the Chatterbox files from Hugging Face if a Chatterbox voice is enabled. It logs each voice engine's load time, then `ready` with the voices and the default, then `connected to` the bot.
-4. Leave it running while the group plays. It logs the trigger words the bot sends (`triggers …`), each trigger it hears (`trigger <word> <user id>: <text>`) and each Richtofen try Whisper heard less than 80 % of (`richtofen said …`).
+2. Choose the voices in `.env.local`: `VOICES`, the ones modules may ask for, comma-separated, from `piper`, `chatterbox`, `chatterbox-expressive` and `richtofen` (default `piper`); `DEFAULT_VOICE` (default the first); and `WARM_VOICES`, the ones loaded from the start and kept (default the default voice; `WARM_VOICES=` for none). The others load only while a module holds them; each loaded voice costs GPU memory ([measurements](../explanation/voice.md#measurements)).
+3. `uv run --env-file .env.local worker.py`. The first start downloads Whisper large-v3 (about 3 GB), the Piper voice if enabled, and the Chatterbox files from Hugging Face if a Chatterbox voice is enabled. It logs each warm voice engine's load time, then `ready` with the voices, the default and the loaded ones, then `connected to` the bot.
+4. Leave it running while the group plays. It logs the trigger words the bot sends (`triggers …`), the voices modules hold (`wanted voices …`), each engine it loads or unloads (`… loaded in`, `… unloaded`, `… failed to load: …`), each trigger it hears (`trigger <word> <user id>: <text>`), each `say` spoken in another voice than asked (`voice <name> … speaking with <voice>`) or that failed (`say in <name> failed: …`) and each Richtofen try Whisper heard less than 80 % of (`richtofen said …`).
 
-Optional variables: `WHISPER_MODEL` (`large-v3`), `LANGUAGE` (`es`), `PIPER_VOICE` (`es_ES-davefx-medium`), `RICHTOFEN_DIR` (`<DATA_DIR>/richtofen`) and `DATA_DIR` (`home/voice/data`).
+Optional variables: `LOAD_WAIT_S` (`30`, how long a `say` waits for its voice to load), `WHISPER_MODEL` (`large-v3`), `LANGUAGE` (`es`), `PIPER_VOICE` (`es_ES-davefx-medium`), `RICHTOFEN_DIR` (`<DATA_DIR>/richtofen`) and `DATA_DIR` (`home/voice/data`).
 
 ## Verification
 
-- The bot's log says `voice worker connected`, then `voices …` with the enabled voices (`kubectl -n dj logs deploy/dj`).
+- The bot's log says `voice worker connected`, then `voices …` with the voices modules may ask for and the loaded ones (`kubectl -n dj logs deploy/dj`).
+- A module that holds a voice makes the worker log `wanted voices …` and `… loaded in`; `nvidia-smi` shows the memory go up, and down again after `… unloaded` once no module holds it.
 - With a module that registers a trigger word, saying the word in the bot's call logs a `trigger` line on the worker and calls the module.
 - A module's `hearing.say` is heard in the call, in the voice it named or the default.
 - With transcripts configured, a JSON Lines object appears in the bucket within a minute of talking in the bot's call.

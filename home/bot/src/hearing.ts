@@ -9,25 +9,53 @@ import * as voice from "./voice.ts";
 export type Trigger = { word: string; userId: string; text: string };
 export type TriggerOptions = { ack?: boolean };
 export type SayOptions = { voice?: string };
-export type Voices = { voices: string[]; default: string | null };
+export type Voices = { voices: string[]; loaded: string[]; default: string | null };
 type Registration = { word: string; ack: boolean; handler: (trigger: Trigger) => void };
 export type TranscriptLine = transcripts.Line;
 
 const BEAT_MS = 10_000;
-const SAY_TIMEOUT_MS = 30_000;
+const SAY_TIMEOUT_MS = 60_000;
 
 const registrations = new Set<Registration>();
+const holds = new Map<string, Set<string>>();
 const listeners = new Set<(line: TranscriptLine) => void>();
 const waiting = new Map<number, { resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
 let worker: WebSocket | null = null;
 let said = 0;
-let offered: Voices = { voices: [], default: null };
+let offered: Voices = { voices: [], loaded: [], default: null };
 
 const plain = (word: string) => word.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "");
 
 export const available = () => worker !== null;
 
-export const voices = (): Voices => ({ voices: [...offered.voices], default: offered.default });
+export const voices = (): Voices => ({ voices: [...offered.voices], loaded: [...offered.loaded], default: offered.default });
+
+const wanted = () => [...holds].filter(([, owners]) => owners.size > 0).map(([name]) => name);
+
+function sendWanted(): void {
+  worker?.send(JSON.stringify({ type: "want", voices: wanted() }));
+}
+
+export function hold(owner: string, name: string): void {
+  if (offered.voices.length && !offered.voices.includes(name)) throw new Error(`the voice worker may not load "${name}"`);
+  const owners = holds.get(name) ?? new Set<string>();
+  const added = !owners.size;
+  owners.add(owner);
+  holds.set(name, owners);
+  if (added) sendWanted();
+}
+
+export const holding = (owner: string, name: string) => holds.get(name)?.has(owner) ?? false;
+
+export function release(owner: string, name?: string): void {
+  let changed = false;
+  for (const [voiceName, owners] of holds) {
+    if (name !== undefined && voiceName !== name) continue;
+    if (owners.delete(owner) && !owners.size) changed = true;
+    if (!owners.size) holds.delete(voiceName);
+  }
+  if (changed) sendWanted();
+}
 
 function sendTriggers(): void {
   const words = new Map<string, boolean>();
@@ -67,7 +95,7 @@ async function heard(userId: string, text: string, at: number, ms: number | null
 
 export function say(text: string, { voice }: SayOptions = {}): Promise<void> {
   if (!worker) return Promise.reject(new Error("the voice worker is not connected"));
-  if (voice !== undefined && !offered.voices.includes(voice)) return Promise.reject(new Error(`the voice worker has no voice "${voice}"`));
+  if (voice !== undefined && !offered.voices.includes(voice)) return Promise.reject(new Error(`the voice worker may not load "${voice}"`));
   const id = ++said;
   worker.send(JSON.stringify({ type: "say", id, text, ...(voice === undefined ? {} : { voice }) }));
   transcripts.recordBot(text);
@@ -108,10 +136,18 @@ function received(data: Buffer, binary: boolean): void {
     entry.resolve();
     return;
   }
-  const message = JSON.parse(String(data)) as { type: string; word?: string; user?: string; text?: string; at?: number; ms?: number; voices?: string[]; default?: string };
+  const message = JSON.parse(String(data)) as { type: string; id?: number; error?: string; word?: string; user?: string; text?: string; at?: number; ms?: number; voices?: string[]; loaded?: string[]; default?: string };
   if (message.type === "voices" && Array.isArray(message.voices)) {
-    offered = { voices: message.voices, default: message.default ?? null };
-    console.log("voices", offered.voices.join(", "), "default", offered.default);
+    offered = { voices: message.voices, loaded: message.loaded ?? [], default: message.default ?? null };
+    console.log("voices", offered.voices.join(", "), "loaded", offered.loaded.join(", ") || "none", "default", offered.default);
+    return;
+  }
+  if (message.type === "failed" && typeof message.id === "number") {
+    const entry = waiting.get(message.id);
+    if (!entry) return;
+    clearTimeout(entry.timer);
+    waiting.delete(message.id);
+    entry.reject(new Error(message.error ?? "the voice worker could not speak"));
     return;
   }
   if (message.type === "transcript" && message.user && message.text) {
@@ -136,6 +172,7 @@ function accept(socket: WebSocket): void {
   worker = socket;
   console.log("voice worker connected");
   sendTriggers();
+  sendWanted();
   let alive = true;
   socket.on("pong", () => (alive = true));
   const beat = setInterval(() => {
@@ -147,7 +184,7 @@ function accept(socket: WebSocket): void {
     clearInterval(beat);
     if (worker !== socket) return;
     worker = null;
-    offered = { voices: [], default: null };
+    offered = { voices: [], loaded: [], default: null };
     for (const [id, entry] of waiting) {
       clearTimeout(entry.timer);
       entry.reject(new Error("the voice worker disconnected"));

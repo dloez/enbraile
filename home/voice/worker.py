@@ -1,5 +1,6 @@
 import asyncio
 import ctypes
+import gc
 import glob
 import io
 import json
@@ -38,6 +39,8 @@ DATA = Path(os.environ.get("DATA_DIR", Path(__file__).parent / "data"))
 RICHTOFEN_DIR = Path(os.environ.get("RICHTOFEN_DIR", DATA / "richtofen"))
 VOICES = [name.strip() for name in os.environ.get("VOICES", "piper").split(",") if name.strip()]
 DEFAULT_VOICE = os.environ.get("DEFAULT_VOICE", VOICES[0] if VOICES else "")
+WARM_VOICES = [name.strip() for name in os.environ.get("WARM_VOICES", DEFAULT_VOICE).split(",") if name.strip()]
+LOAD_WAIT_S = float(os.environ.get("LOAD_WAIT_S", "30"))
 FOLLOW_UP_S = 8
 CHATTERBOX_PRESETS = {"chatterbox": (0.5, 0.5), "chatterbox-expressive": (0.8, 0.3)}
 CHATTERBOX_BASE = ("ResembleAI/chatterbox", ["ve.pt", "conds.pt", "s3gen.pt", "Cangjie5_TC.json"])
@@ -184,28 +187,124 @@ def unframe(data):
 
 class Worker:
     def __init__(self):
-        unknown = [name for name in VOICES if name not in ENGINES]
+        unknown = [name for name in VOICES + WARM_VOICES if name not in ENGINES]
         if unknown or not VOICES:
             raise SystemExit(f"VOICES must name one or more of {', '.join(ENGINES)}; unknown: {', '.join(unknown) or 'none given'}")
         if DEFAULT_VOICE not in VOICES:
             raise SystemExit(f"DEFAULT_VOICE {DEFAULT_VOICE} is not in VOICES")
+        outside = [name for name in WARM_VOICES if name not in VOICES]
+        if outside:
+            raise SystemExit(f"WARM_VOICES {', '.join(outside)} not in VOICES")
         DATA.mkdir(parents=True, exist_ok=True)
         started = time.time()
         self.whisper = WhisperModel(WHISPER_MODEL, device="cuda", compute_type="float16")
         list(self.whisper.transcribe(np.random.uniform(-0.1, 0.1, 16000 * 3).astype(np.float32), language=LANGUAGE)[0])
-        engines = {}
-        self.voices = {}
-        for name in VOICES:
-            kind, preset = ENGINES[name]
-            if kind not in engines:
-                loading = time.time()
-                engines[kind] = kind(self.whisper)
-                log(f"{kind.__name__.lower()} loaded in {time.time() - loading:.1f}s")
-            self.voices[name] = (engines[kind], preset)
+        self.engines = {}
+        self.broken = set()
+        self.wanted = set()
+        for kind in self.kinds(WARM_VOICES):
+            self.load(kind)
         self.chime = chime()
         self.pending = {}
         self.triggers = {}
-        log(f"ready: {WHISPER_MODEL} and voices {', '.join(VOICES)} (default {DEFAULT_VOICE}) loaded in {time.time() - started:.1f}s")
+        self.socket = None
+        self.turn = asyncio.Lock()
+        self.using = asyncio.Lock()
+        self.changed = asyncio.Condition()
+        self.wake = asyncio.Event()
+        log(f"ready: {WHISPER_MODEL}, voices {', '.join(VOICES)} (default {DEFAULT_VOICE}), loaded {', '.join(self.loaded()) or 'none'} in {time.time() - started:.1f}s")
+
+    @staticmethod
+    def kinds(names):
+        return list(dict.fromkeys(ENGINES[name][0] for name in names))
+
+    def loaded(self):
+        return [name for name in VOICES if ENGINES[name][0] in self.engines]
+
+    def target(self):
+        return [name for name in VOICES if name in self.wanted or name in WARM_VOICES]
+
+    def loading(self, name):
+        kind = ENGINES[name][0]
+        return name in self.target() and kind not in self.engines and kind not in self.broken
+
+    def load(self, kind):
+        started = time.time()
+        try:
+            self.engines[kind] = kind(self.whisper)
+        except Exception as error:
+            self.broken.add(kind)
+            log(f"{kind.__name__.lower()} failed to load: {error}")
+            self.free()
+            return
+        log(f"{kind.__name__.lower()} loaded in {time.time() - started:.1f}s")
+
+    def unload(self, kind):
+        del self.engines[kind]
+        self.free()
+        log(f"{kind.__name__.lower()} unloaded")
+
+    @staticmethod
+    def free():
+        gc.collect()
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    async def announce(self):
+        if self.socket:
+            try:
+                await self.socket.send(json.dumps({"type": "voices", "voices": VOICES, "default": DEFAULT_VOICE, "loaded": self.loaded()}))
+            except ConnectionClosed:
+                pass
+        async with self.changed:
+            self.changed.notify_all()
+
+    async def reconcile(self):
+        while True:
+            await self.wake.wait()
+            self.wake.clear()
+            needed = self.kinds(self.target())
+            for kind in [kind for kind in self.engines if kind not in needed]:
+                async with self.using:
+                    if kind not in self.kinds(self.target()):
+                        self.unload(kind)
+                await self.announce()
+            for kind in needed:
+                if self.wake.is_set():
+                    break
+                if kind not in self.engines and kind not in self.broken:
+                    await asyncio.to_thread(self.load, kind)
+                    await self.announce()
+
+    async def want(self, names):
+        unknown = [name for name in names if name not in VOICES]
+        if unknown:
+            log("asked for voices it may not load:", ", ".join(unknown))
+        wanted = {name for name in names if name in VOICES}
+        if wanted != self.wanted:
+            log("wanted voices", ", ".join(sorted(wanted)) or "none")
+        self.wanted = wanted
+        self.broken.clear()
+        self.wake.set()
+        async with self.changed:
+            self.changed.notify_all()
+
+    async def voice_for(self, name):
+        try:
+            async with asyncio.timeout(LOAD_WAIT_S):
+                async with self.changed:
+                    await self.changed.wait_for(lambda: name in self.loaded() or not self.loading(name))
+        except TimeoutError:
+            pass
+        if name in self.loaded():
+            return name
+        loaded = self.loaded()
+        fallback = DEFAULT_VOICE if DEFAULT_VOICE in loaded else (loaded[0] if loaded else None)
+        reason = f"still loading after {LOAD_WAIT_S:.0f}s" if self.loading(name) else "not loaded"
+        log(f"voice {name} {reason}, speaking with {fallback or 'nothing'}")
+        return fallback
 
     def transcribe(self, clip):
         hotwords = " ".join(self.triggers) or None
@@ -227,15 +326,34 @@ class Worker:
                 return plain(spoken), rest
         return None, None
 
-    def speak(self, text, voice=None):
-        engine, preset = self.voices.get(voice or DEFAULT_VOICE, self.voices[DEFAULT_VOICE])
-        return opus(engine.wav(text, preset))
+    def speak(self, text, name):
+        kind, preset = ENGINES[name]
+        return opus(self.engines[kind].wav(text, preset))
+
+    async def on_say(self, socket, id, text, voice):
+        async with self.turn:
+            name = voice if voice in VOICES else DEFAULT_VOICE
+            if name not in self.loaded():
+                name = await self.voice_for(name)
+            async with self.using:
+                if name not in self.loaded():
+                    await socket.send(json.dumps({"type": "failed", "id": id, "error": "no voice is loaded"}))
+                    return
+                try:
+                    audio = await asyncio.to_thread(self.speak, text, name)
+                except Exception as error:
+                    log(f"say in {name} failed: {error}")
+                    await socket.send(json.dumps({"type": "failed", "id": id, "error": f"{name} could not speak"}))
+                    return
+            await socket.send(frame({"type": "audio", "id": id}, audio))
 
     async def serve(self):
+        asyncio.create_task(self.reconcile())
         async for socket in connect(f"{BOT_URL}/voice/connect", additional_headers={"Authorization": f"Bearer {SECRET}"}, max_size=None):
             log("connected to", BOT_URL)
+            self.socket = socket
             try:
-                await socket.send(json.dumps({"type": "voices", "voices": VOICES, "default": DEFAULT_VOICE}))
+                await self.announce()
                 async for message in socket:
                     if isinstance(message, bytes):
                         header, body = unframe(message)
@@ -246,9 +364,10 @@ class Worker:
                         if data.get("type") == "triggers":
                             self.triggers = {entry["word"]: entry["ack"] for entry in data["words"]}
                             log("triggers", ", ".join(self.triggers) or "none")
+                        elif data.get("type") == "want":
+                            await self.want(data["voices"])
                         elif data.get("type") == "say":
-                            audio = await asyncio.to_thread(self.speak, data["text"], data.get("voice"))
-                            await socket.send(frame({"type": "audio", "id": data["id"]}, audio))
+                            asyncio.create_task(self.on_say(socket, data["id"], data["text"], data.get("voice")))
             except ConnectionClosed:
                 log("disconnected, reconnecting")
 
