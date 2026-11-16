@@ -44,10 +44,13 @@ const headsUp = z.object({
   mentions: z.array(id).default([]),
 });
 
+export const stepKinds = ["discovery", "puzzle", "arbitrary", "execution"] as const;
+
 const step = z.object({
   id,
   title: z.string().min(1),
   doneWhen: z.string().min(1).optional(),
+  kind: z.enum(stepKinds).optional(),
   requires: z.array(id).default([]),
   conditions: z.array(z.string().min(1)).default([]),
   optional: z.boolean().default(false),

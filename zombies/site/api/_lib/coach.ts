@@ -37,6 +37,7 @@ Hints
 
 Progress
 - When what they report matches a thread's "Done when", call record_progress done on it, even when they also say they do not know what to do now: code says the prepared line and hands over the first hint of what comes next. That is how "we did it, now what?" gets its next hint. When they start something listed, call record_progress started. Never offer an optional step.
+- A thread's kind says how it finishes. Discovery: done as soon as they report finding or noticing its thing, even with "now what?". Execution: they know what to do and the hard part is doing it; done only when they report the outcome, and "we are doing it but it fails" gets its Alt or next hint, never a record of progress. Puzzle and arbitrary: done when they report the game reacting.
 - When they name something themselves, call mark_known with their words.
 - Give a heads-up with heads_up only at the moment its "when" describes. Now and then call ask_round, never right after a hint.
 
@@ -231,6 +232,9 @@ const firstHints = (state: State) => state.ladders.filter((ladder) => ladder.par
 
 const quote = (text: string) => `"${text.replace(/\s+/g, " ").trim()}"`;
 
+const doneLine = (step: Bundle["steps"][number], unknown: Bundle["knowledge"]) =>
+  `${step.kind ? ` Kind: ${step.kind}.` : ""}${step.doneWhen && !namedIn(step.doneWhen, unknown).length ? ` Done when they report: ${quote(step.doneWhen)}.` : ""}`;
+
 function offers(state: State): string {
   const lang = state.language;
   const unknown = unknownEntries(state);
@@ -251,7 +255,7 @@ function offers(state: State): string {
     } else if (!isReady(step, state.done)) {
       if (ladder.partId === null && (isOpen(state, ladder) || (title && !ladder.optional))) blocked.push(`- ${label}`);
     } else if (isOpen(state, ladder)) {
-      const finished = ladder.partId === null && step.doneWhen && !namedIn(step.doneWhen, unknown).length ? ` Done when they report: ${quote(step.doneWhen)}.` : "";
+      const finished = ladder.partId === null ? doneLine(step, unknown) : "";
       const lines = [`- ${label}.${finished} ${count > 0 ? `Given so far: ${(state.givenLines.get(key) ?? []).map(quote).join(" then ")}.` : "Started by the players, no hint given yet."}`];
       if (!next) lines.push("  Nothing more on this ladder.");
       else {
@@ -262,7 +266,7 @@ function offers(state: State): string {
       }
       opened.push(lines.join("\n"));
     } else if (isFresh(state, ladder)) {
-      fresh.push(`- ${label}: ${quote(next!.text[lang])}${step.doneWhen && !namedIn(step.doneWhen, unknown).length ? ` Done when they report: ${quote(step.doneWhen)}.` : ""}`);
+      fresh.push(`- ${label}: ${quote(next!.text[lang])}${doneLine(step, unknown)}`);
     } else if (ladder.optional && ladder.partId === null && title) {
       optional.push(`- ${label}`);
     }

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { z } from "zod";
-import { bundleSchema, languages, zoneLevel, zoneSchema, type Language, type Zone } from "../shared/bundle.js";
+import { bundleSchema, languages, stepKinds, zoneLevel, zoneSchema, type Language, type Zone } from "../shared/bundle.js";
 import { imageFacts, maxImageBytes } from "../shared/image.js";
 
 type Line = { text: string; mentions: string[]; reveals: string[] };
@@ -14,6 +14,7 @@ type HeadsUp = { when: string; text: string; mentions: string[] };
 type Step = {
   number: number;
   title: string;
+  kind: string;
   doneWhen: string;
   requires: number[];
   optional: boolean;
@@ -71,9 +72,9 @@ const parseSteps = (source: string, file: string) => {
   let part: Part | null = null;
   source.split("\n").forEach((rawLine, index) => {
     const where = `${file}:${index + 1}`;
-    const heading = rawLine.match(/^## \S+ (\d+)\b/);
+    const heading = rawLine.match(/^## \S+ (\d+)\b(?:\s*\(([^)]*)\))?/);
     if (heading) {
-      step = { number: Number((heading[1] ?? "")), title: "", doneWhen: "", requires: [], optional: false, ladder: { rungs: [], alts: [] }, parts: [], headsUps: [], onSuccess: null };
+      step = { number: Number((heading[1] ?? "")), title: "", kind: (heading[2] ?? "").trim().toLowerCase(), doneWhen: "", requires: [], optional: false, ladder: { rungs: [], alts: [] }, parts: [], headsUps: [], onSuccess: null };
       part = null;
       steps.push(step);
       return;
@@ -349,6 +350,7 @@ const steps = hints.en.map((en) => {
   if (!es) errors.push(`${where}: missing from hints.es.md`);
   if (!en.title) errors.push(`${where}: no Spoiler-free title`);
   if (!en.onSuccess) errors.push(`${where}: no On success line`);
+  if (!stepKinds.some((kind) => kind === en.kind)) warnings.push(`${where}: its heading's type is not one of ${stepKinds.join(", ")}, so the live coach gets no kind for it`);
   if (!en.doneWhen) warnings.push(`${where}: no Done when line, so the live coach cannot tell from the players' words that the step is done`);
   if (es && !es.onSuccess) errors.push(`${where}: no On success line in hints.es.md`);
   for (const required of en.requires) if (!stepNumbers.has(required)) errors.push(`${where}: Requires step ${required}, which hints.md lacks`);
@@ -358,6 +360,7 @@ const steps = hints.en.map((en) => {
     id: `step-${en.number}`,
     title: en.title || where,
     ...(en.doneWhen ? { doneWhen: en.doneWhen } : {}),
+    ...(stepKinds.some((kind) => kind === en.kind) ? { kind: en.kind } : {}),
     requires: en.requires.map((number) => `step-${number}`),
     conditions: conditions.get(en.number) ?? [],
     optional: en.optional,
