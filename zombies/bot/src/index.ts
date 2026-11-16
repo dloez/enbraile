@@ -19,21 +19,21 @@ const text = {
   },
 };
 
-async function cari(interaction: ChatInputCommandInteraction, locale: Locale): Promise<string> {
+async function bringCoach(interaction: ChatInputCommandInteraction, locale: Locale): Promise<string> {
   const joined = await join(interaction.user.id);
   return "error" in joined ? text[locale][joined.error] : text[locale].joined(joined.coach.name, joined.coach.wake);
 }
 
 const command: SlashCommand = {
-  data: { name: "cari", description: "Bring Cari into your voice channel", description_localizations: { "es-ES": "Trae a Cari a tu canal de voz", "es-419": "Trae a Cari a tu canal de voz" } },
+  data: { name: "coach", description: "Bring Coach into your voice channel", description_localizations: { "es-ES": "Trae a Coach a tu canal de voz", "es-419": "Trae a Coach a tu canal de voz" } },
   ephemeral: true,
-  run: cari,
+  run: bringCoach,
 };
 
 const route: Route = async (method, path, _params, input, userId) => {
   if (path === "voice" && method === "GET") {
     if (!userId) return [{ error: "badRequest" }, 400];
-    return [{ channel: await channelOf(userId), cari: here() }];
+    return [{ channel: await channelOf(userId), coach: here() }];
   }
   if (path === "join" && method === "POST") {
     if (!userId) return [{ error: "badRequest" }, 400];

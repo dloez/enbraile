@@ -13,7 +13,7 @@ The players name a map, Claude researches several guides and prepares a cross-ch
 | `.claude/skills/watch-run/` | Watching a production run in one step: its `prod` wrapper runs a site command with `zombies/site/.env.production.local` loaded, unprinted, then hands off to ee-coach | Yes |
 | `zombies/maps/<game>/<map>/` | `sources/`, `dossier.md`, `knowledge.md`, `hints.md`, `session.md`, `import.json`, `history.json`, `map.json`, `zones.json`, `bundle.json`, the announcement image `art.jpg`, the overhead survey image `survey.jpg`, the map's own `calibration.md`, and Spanish copies | No, gitignored ([why](../general/explanation/repository-layout.md#decisions)) |
 
-A site, `zombies.enbraile.vip`, is being built in `zombies/site/`, where members start or join an attempt (stored as a run) on a published map and talk in its chat, and which deploys to Vercel. The bot's [zombies module](bot/explanation/bot.md) brings Cari into the run's voice call. What is still open for both is scoped in [Zombies Coach](../work-in-progress/zombies-coach/discovery.md).
+A site, `zombies.enbraile.vip`, is being built in `zombies/site/`, where members start or join an attempt (stored as a run) on a published map and talk in its chat, and which deploys to Vercel. The bot's [zombies module](bot/explanation/bot.md) brings the coach into the run's voice call. What is still open for both is scoped in [Zombies Coach](../work-in-progress/zombies-coach/discovery.md).
 
 ## Site
 
@@ -27,4 +27,4 @@ A site, `zombies.enbraile.vip`, is being built in `zombies/site/`, where members
 
 | Document | Type | Description |
 |----------|------|-------------|
-| [The Zombies Bot Module](bot/explanation/bot.md) | Explanation | How the bot brings Cari into a run's voice call, hears «cari …» and speaks the site's answer |
+| [The Zombies Bot Module](bot/explanation/bot.md) | Explanation | How the bot brings the coach into a run's voice call, hears its wake word and speaks the site's answer |

@@ -20,13 +20,13 @@ The site's names lookup gives the bot 10 s for Discord's forced member fetches (
 ## Decide whether hints get each voice's own wording
 
 **Needs the author:**
-- Should prepared hints also get a wording per character (Richtofen's version of every rung, written and blind-checked at prepare like the hints are, roughly doubling a map's prepare work), or do hints stay in one plain wording while only Cari's own words take the character?
+- Should prepared hints also get a wording per character (Richtofen's version of every rung, written and blind-checked at prepare like the hints are, roughly doubling a map's prepare work), or do hints stay in one plain wording while only the coach's own words take the character?
 
 **Acceptance:**
 - Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md`.
 - Human-run: none.
 - Reuse: none.
-- Neighbors: "Let Cari speak in the character of her voice".
+- Neighbors: "Let the coach speak in the character of its voice".
 - Forbidden: building per-voice hint wordings before this is answered.
 
 **Touches:** `docs/zombies/site/explanation/site.md`
@@ -49,19 +49,19 @@ Every production figure in `docs/zombies/site/explanation/site.md` was taken sig
 
 **Touches:** `docs/zombies/site/explanation/site.md`, `docs/home/site/explanation/site.md`
 
-## Play a game night on the site and read how Cari did
+## Play a game night on the site and read how the coach did
 
 The discovery's goal is a game night played from the site and voice with no terminal needed, every hint coming from prepared, checked lines, and Haiku "to start; the group will report whether it is enough" ([Discovery → Goal](discovery.md#goal), [Architecture](discovery.md#architecture)). None of it has been measured. The three Blood of the Dead runs on file are imports. Their reads hold no Claude call, no gap, no feedback and no audit finding. No watch events file exists, so the watch loop has never followed a real attempt. Blood of the Dead's local bundle now holds 58 zones and its survey image, and the zones entry's human check (is a zone readable mid-round) was never run. So nothing shows whether Haiku keeps to the rules on a real map (how often code drops a sentence for brackets, repeats, an unknown named or a number), how often it holds, how long a reply takes, or whether the group finds the hints right.
 
 **Do:**
 - [ ] Before the night, publish Blood of the Dead to production from its dir (`unchanged` if the zones version is already there), in a subagent that returns only `publish`'s output.
 - [ ] During the night, follow the attempt with `npm run watch -- <id>` under `Monitor`, as the ee-coach skill's Watch a run says.
-- [ ] After the night, `npm run runs -- <id>`. A subagent tallies from the run's file, counts only: Cari's replies, Claude calls with their median and maximum latency, each violation kind code caught, audits by finding, refusals, gaps held and answered, revisions, ratings by value, rungs by level, and the voice turns. Then the ee-coach debrief folds the feedback into calibration and the hints.
-- [ ] Record the counts, dated, in a section of `docs/zombies/site/explanation/site.md` on how Cari did.
+- [ ] After the night, `npm run runs -- <id>`. A subagent tallies from the run's file, counts only: the coach's replies, Claude calls with their median and maximum latency, each violation kind code caught, audits by finding, refusals, gaps held and answered, revisions, ratings by value, rungs by level, and the voice turns. Then the ee-coach debrief folds the feedback into calibration and the hints.
+- [ ] Record the counts, dated, in a section of `docs/zombies/site/explanation/site.md` on how the coach did.
 
 **Acceptance:**
 - Claude-run: the counts are in `site.md`, with the run's ID and date, and no hint text or question in them. The debrief's calibration changes are committed. Map-specific changes stay in the gitignored map dir.
-- Human-run: the group plays a Blood of the Dead night on `zombies.enbraile.vip`, asking Cari in the chat and by «cari» in the call, with nobody at the terminal. They judge a level-3 zone mid-round, rate cards and send at least one revision.
+- Human-run: the group plays a Blood of the Dead night on `zombies.enbraile.vip`, asking the coach in the chat and by its wake word in the call, with nobody at the terminal. They judge a level-3 zone mid-round, rate cards and send at least one revision.
 - Reuse: `npm run watch`, `npm run runs`, the ee-coach skill's Watch a run and Debrief sections.
 - Neighbors: the Load Time section's way of recording dated figures.
 - Forbidden: hint text, questions or solution content in the conversation or a tracked file; switching `COACH_MODEL`.
@@ -73,7 +73,7 @@ The discovery's goal is a game night played from the site and voice with no term
 The discovery chose Haiku 5.5 "to start; the group will report whether it is enough", with a switch to Sonnet being config ([Discovery → Architecture](discovery.md#architecture)). The game night's counts (violations caught, holds, audits, ratings) and the group's impressions are what that report rests on.
 
 **Needs the author:**
-- With the game night's counts in hand, does Cari stay on Haiku, or does `COACH_MODEL` move to Sonnet in Production?
+- With the game night's counts in hand, does the coach stay on Haiku, or does `COACH_MODEL` move to Sonnet in Production?
 
 **Acceptance:**
 - Claude-run: the answer recorded as a dated owner decision in `docs/zombies/site/explanation/site.md`. If it is Sonnet, Production's `COACH_MODEL` is set with `npx vercel env`, and the Hosting paragraph and the how-to's variable table say so.
@@ -83,11 +83,11 @@ The discovery chose Haiku 5.5 "to start; the group will report whether it is eno
 - Forbidden: a model switch before this is answered; a model chosen per reply in code.
 
 **Touches:** `docs/zombies/site/`
-**After:** Play a game night on the site and read how Cari did
+**After:** Play a game night on the site and read how the coach did
 
-## Decide whether a «cari» asked during another reply is spoken late or not at all
+## Decide whether a wake word asked during another reply is spoken late or not at all
 
-A voice turn waits up to 30 s for the run's lease (`zombies/site/api/_lib/coach.ts:15`), then runs the whole Claude turn, up to 4 tool rounds (`:11`). The bot gives up after 25 s for the whole request (`zombies/bot/src/call.ts:8`). A «cari» asked while another member's reply runs, or a slow turn on its own, therefore lands in the chat with its answer but is not spoken (`docs/zombies/site/explanation/site.md:108` names only the lease case). The game night's latency figures say how often this happens.
+A voice turn waits up to 30 s for the run's lease (`zombies/site/api/_lib/coach.ts:15`), then runs the whole Claude turn, up to 4 tool rounds (`:11`). The bot gives up after 25 s for the whole request (`zombies/bot/src/call.ts:8`). A wake word asked while another member's reply runs, or a slow turn on its own, therefore lands in the chat with its answer but is not spoken (`docs/zombies/site/explanation/site.md:108` names only the lease case). The game night's latency figures say how often this happens.
 
 **Needs the author:**
 - When a spoken question cannot be answered within the bot's wait, should the bot wait longer and speak the answer late (raise the bot's timeout above the lease wait plus a turn), or should the site stop waiting sooner and leave the answer in the chat only, as it is now but by design?
@@ -100,11 +100,11 @@ A voice turn waits up to 30 s for the run's lease (`zombies/site/api/_lib/coach.
 - Forbidden: changing the timeouts before this is answered.
 
 **Touches:** `docs/zombies/site/explanation/site.md`
-**After:** Play a game night on the site and read how Cari did
+**After:** Play a game night on the site and read how the coach did
 
 ## Make the voice turn's wait match the decision
 
-Apply the answer to the entry above, so a «cari» asked during another reply behaves as decided instead of falling between the site's 30 s lease wait and the bot's 25 s timeout.
+Apply the answer to the entry above, so a wake word asked during another reply behaves as decided instead of falling between the site's 30 s lease wait and the bot's 25 s timeout.
 
 **Do:**
 - [ ] Set the bot's `SITE_TIMEOUT_MS` (`zombies/bot/src/call.ts:8`) and the voice turn's lease wait (`zombies/site/api/_lib/coach.ts`, used by `voiceTurn` in `api/_lib/voice.ts`) so that one covers the other the decided way.
@@ -112,10 +112,10 @@ Apply the answer to the entry above, so a «cari» asked during another reply be
 
 **Acceptance:**
 - Claude-run: `npm run gate` in `zombies/site` and `home/bot`. Against a local site and bot, two `/api/voice` requests posted together for one run behave as decided: the second answer is spoken late, or `{ reply: null }` comes back before the bot's timeout with the answer in the chat.
-- Human-run: in a call, two members say «cari …» one right after the other, and the second answer arrives as decided.
+- Human-run: in a call, two members say «coach …» one right after the other, and the second answer arrives as decided.
 - Reuse: the lease in `coach.ts` (`acquire`/`release`), `voiceTurn`.
 - Neighbors: the typed reply path, which keeps its 30 s wait.
 - Forbidden: a second lease mechanism; changing the typed chat's wait.
 
 **Touches:** `zombies/bot/src/call.ts`, `zombies/site/api/_lib/coach.ts`, `zombies/site/api/_lib/voice.ts`, `docs/zombies/`
-**After:** Decide whether a «cari» asked during another reply is spoken late or not at all
+**After:** Decide whether a wake word asked during another reply is spoken late or not at all

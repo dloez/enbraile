@@ -375,7 +375,7 @@ export async function postRevision(viewer: Viewer, runId: string, text: string):
       .select({ id: messages.id, card: hintCards.id })
       .from(messages)
       .leftJoin(hintCards, eq(hintCards.messageId, messages.id))
-      .where(and(eq(messages.runId, runId), eq(messages.author, "cari"), ne(messages.kind, "ack")))
+      .where(and(eq(messages.runId, runId), eq(messages.author, "coach"), ne(messages.kind, "ack")))
       .orderBy(desc(messages.id), desc(hintCards.id))
       .limit(1);
     const [rung] = last?.card
@@ -398,7 +398,7 @@ export async function postRevision(viewer: Viewer, runId: string, text: string):
     });
     const character = characterOf(run.voice);
     const said = character.lines[run.language].ack;
-    await tx.insert(messages).values({ runId, author: "cari", kind: "ack", name: character.name, text: said });
+    await tx.insert(messages).values({ runId, author: "coach", kind: "ack", name: character.name, text: said });
     return said;
   });
 }
@@ -536,7 +536,7 @@ export async function importRun(input: RunImport): Promise<Imported> {
       const key = ladderKey(entry.step, entry.part);
       let card = cards.get(key);
       if (card === undefined) {
-        const [message] = await tx.insert(messages).values({ runId: id, author: "cari", name: coach.name, text: coach.lines[input.language].carriedOver }).returning({ id: messages.id });
+        const [message] = await tx.insert(messages).values({ runId: id, author: "coach", name: coach.name, text: coach.lines[input.language].carriedOver }).returning({ id: messages.id });
         const [created] = await tx.insert(hintCards).values({ runId: id, messageId: message!.id, stepId: entry.step, partId: entry.part }).returning({ id: hintCards.id });
         card = created!.id;
         cards.set(key, card);
@@ -615,10 +615,10 @@ export async function importHistory(runId: string, input: HistoryImport): Promis
     });
     if (issues.length) return { error: "invalidHistory", issues };
     await tx.insert(runHistory).values(
-      input.lines.map((line) => ({ runId, author: line.author, name: line.author === "cari" ? "Cari" : terminalName, text: line.text, saidAt: new Date(line.at) })),
+      input.lines.map((line) => ({ runId, author: line.author, name: line.author === "coach" ? characterOf(defaultVoice).name : terminalName, text: line.text, saidAt: new Date(line.at) })),
     );
-    const said = (author: "member" | "cari") => input.lines.filter((line) => line.author === author).length;
-    return { counts: { lines: input.lines.length, member: said("member"), cari: said("cari") } };
+    const said = (author: "member" | "coach") => input.lines.filter((line) => line.author === author).length;
+    return { counts: { lines: input.lines.length, member: said("member"), coach: said("coach") } };
   });
 }
 
@@ -629,7 +629,7 @@ export async function runEvents(runId: string, after: string): Promise<RunEvents
   if (!run) return null;
   const result = await db.execute<{ kind: RunEvent["kind"]; id: number; us: string; at: Date | string; data: Record<string, unknown> }>(sql`
     with events as (
-      select case when m.author = 'member' then 'line' else 'cari' end as kind, m.id, m.created_at as at,
+      select case when m.author = 'member' then 'line' else 'coach' end as kind, m.id, m.created_at as at,
         jsonb_build_object('name', m.name, 'text', m.text, 'by', m.posted_by, 'cards', (select coalesce(jsonb_agg(c.id order by c.id), '[]'::jsonb) from ${hintCards} c where c.message_id = m.id)) as data
       from ${messages} m where m.run_id = ${runId} and m.kind = 'chat'
       union all

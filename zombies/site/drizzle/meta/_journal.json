@@ -85,6 +85,13 @@
       "when": 1794789069853,
       "tag": "0011_coach_voice",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794845443285,
+      "tag": "0012_coach_author",
+      "breakpoints": true
     }
   ]
 }

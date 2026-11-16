@@ -7,10 +7,10 @@ export type Coach = { name: string; wake: string };
 
 const OWNER = "zombies";
 const COACHES: Record<string, Coach & { unheard: string }> = {
-  cari: { name: "Cari", wake: "cari", unheard: "No te he entendido bien, ¿me lo repites?" },
+  coach: { name: "Coach", wake: "coach", unheard: "No te he entendido bien, ¿me lo repites?" },
   richtofen: { name: "Richtofen", wake: "richtofen", unheard: "¿Qué? ¡Hablad más claro, ratitas! Repetídmelo." },
 };
-const coachOf = (named: string | null) => (named === "richtofen" ? COACHES.richtofen! : COACHES.cari!);
+const coachOf = (named: string | null) => (named === "richtofen" ? COACHES.richtofen! : COACHES.coach!);
 const SITE_TIMEOUT_MS = 25_000;
 const AVATAR = { size: 128, extension: "webp" } as const;
 

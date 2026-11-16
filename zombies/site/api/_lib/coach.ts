@@ -319,7 +319,7 @@ async function history(runId: string): Promise<Anthropic.MessageParam[]> {
     : [];
   const turns: Anthropic.MessageParam[] = [];
   for (const row of rows) {
-    const role = row.author === "cari" ? "assistant" : "user";
+    const role = row.author === "coach" ? "assistant" : "user";
     const hints = cardLines.filter((line) => line.messageId === row.id).map((line) => `[hint given: ${quote(line.text)}]`);
     const text = role === "user" ? `${row.name}: ${row.text}` : [row.text, ...hints].filter(Boolean).join("\n");
     if (!text) continue;
@@ -589,7 +589,7 @@ async function noteTried(state: State): Promise<void> {
 async function finish(state: State, text: string, cards: number[], postedBy: "claude" | null = null): Promise<number | null> {
   if (!text && !cards.length) return null;
   return db.transaction(async (tx) => {
-    const [message] = await tx.insert(messages).values({ runId: state.runId, author: "cari", name: state.character.name, text, postedBy }).returning({ id: messages.id });
+    const [message] = await tx.insert(messages).values({ runId: state.runId, author: "coach", name: state.character.name, text, postedBy }).returning({ id: messages.id });
     if (cards.length) await tx.update(hintCards).set({ messageId: message!.id }).where(inArray(hintCards.id, cards));
     return message!.id;
   });

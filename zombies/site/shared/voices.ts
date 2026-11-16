@@ -10,9 +10,9 @@ export type FixedLines = { round: string; notYet: string; hold: string[]; unhear
 
 export type Character = { name: string; wake: string; role: string; manner: string; lines: Record<Language, FixedLines> };
 
-const cari: Character = {
-  name: "Cari",
-  wake: "cari",
+const coach: Character = {
+  name: "Coach",
+  wake: "coach",
   role: "the radio voice who coaches a small group of friends through a Zombies easter egg while they play",
   manner: "One generic teammate voice, warm and a bit wry.",
   lines: {
@@ -77,13 +77,13 @@ const richtofen: Character = {
   },
 };
 
-export const characterOf = (voice: Voice): Character => (voice === "richtofen" ? richtofen : cari);
+export const characterOf = (voice: Voice): Character => (voice === "richtofen" ? richtofen : coach);
 
 export const wakeWords = [...new Set(voices.map((voice) => characterOf(voice).wake))];
 
 export const voiceNames: Record<Voice, Record<Language, string>> = {
-  chatterbox: { es: "Cari", en: "Cari" },
-  "chatterbox-expressive": { es: "Cari, más viva", en: "Cari, livelier" },
-  piper: { es: "Cari, robótica", en: "Cari, robotic" },
+  chatterbox: { es: "Coach", en: "Coach" },
+  "chatterbox-expressive": { es: "Coach, más viva", en: "Coach, livelier" },
+  piper: { es: "Coach, robótica", en: "Coach, robotic" },
   richtofen: { es: "Richtofen", en: "Richtofen" },
 };

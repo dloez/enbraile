@@ -26,7 +26,7 @@ export async function voiceTurn(discordId: string, text: string, word: string): 
   if (!speaker) return silent;
   const { runId, viewer } = speaker;
   const [run] = await db.select({ voice: runs.voice, language: runs.language }).from(runs).where(eq(runs.id, runId));
-  if (!run || (word !== "cari" && word !== characterOf(run.voice).wake)) return silent;
+  if (!run || word !== characterOf(run.voice).wake) return silent;
   const revision = asRevision(text, false);
   if (revision === "") return { reply: characterOf(run.voice).lines[run.language].unheard, voice: run.voice };
   if (revision !== null) return { reply: await postRevision(viewer, runId, revision), voice: run.voice };
@@ -60,21 +60,21 @@ export async function keepCallLine(line: CallLine): Promise<boolean> {
   return true;
 }
 
-const offline: CallState = { reachable: false, channel: null, cari: null };
+const offline: CallState = { reachable: false, channel: null, coach: null };
 
 export async function callState(discordId: string): Promise<CallState> {
   try {
     const response = await bot(`voice?userId=${encodeURIComponent(discordId)}`, botTimeoutMs);
     if (!response?.ok) return offline;
-    const { channel, cari } = (await response.json()) as Omit<CallState, "reachable">;
-    return { reachable: true, channel: channel ?? null, cari: cari ?? null };
+    const { channel, coach } = (await response.json()) as Omit<CallState, "reachable">;
+    return { reachable: true, channel: channel ?? null, coach: coach ?? null };
   } catch (error) {
     console.error("bot voice", (error as Error).message);
     return offline;
   }
 }
 
-export async function bringCari(discordId: string, voice: Voice): Promise<{ channelId: string } | { error: JoinRefusal }> {
+export async function bringCoach(discordId: string, voice: Voice): Promise<{ channelId: string } | { error: JoinRefusal }> {
   try {
     const response = await bot("join", botTimeoutMs, { method: "POST", body: { userId: discordId, voice } });
     if (!response || (!response.ok && response.status !== 409)) return { error: "botOffline" };

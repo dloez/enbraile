@@ -34,7 +34,7 @@ export type Rating = (typeof ratings)[number];
 
 export type Message = {
   id: number;
-  author: "member" | "cari";
+  author: "member" | "coach";
   revision: { re: string | null } | null;
   name: string;
   who: string | null;
@@ -63,7 +63,7 @@ export type GapContext = {
 export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice };
 
 export type RunEvent = { id: number; at: string } & (
-  | { kind: "line" | "cari"; name: string; text: string; cards: number[]; by: "claude" | null }
+  | { kind: "line" | "coach"; name: string; text: string; cards: number[]; by: "claude" | null }
   | { kind: "call"; name: string; text: string; discordId: string }
   | { kind: "audit"; message: number | null; findings: string[] }
   | { kind: "hint"; card: number; step: string; part: string | null; rung: number; alt: number | null; level: number; text: string; version: number; askedBy: string | null }
@@ -80,11 +80,11 @@ export type RunEvents = { run: { id: string; game: string; map: string }; events
 
 export type VoiceChannel = { id: string; name: string; canJoin: boolean; reason: "noAccess" | "full" | null };
 
-export type CallState = { reachable: boolean; channel: VoiceChannel | null; cari: string | null };
+export type CallState = { reachable: boolean; channel: VoiceChannel | null; coach: string | null };
 
 export type JoinRefusal = "notInVoice" | "noAccess" | "full" | "botOffline";
 
-export const voiceSchema = z.object({ userId: z.string().min(1), text: z.string().trim().min(1).max(2000), word: z.string().trim().toLowerCase().min(1).default("cari") });
+export const voiceSchema = z.object({ userId: z.string().min(1), text: z.string().trim().min(1).max(2000), word: z.string().trim().toLowerCase().min(1) });
 
 export const coachVoiceSchema = z.object({ userId: z.string().min(1) });
 
@@ -136,7 +136,7 @@ export type RunImport = z.infer<typeof runImportSchema>;
 
 export const historyImportSchema = z.object({
   lines: z
-    .array(z.object({ author: z.enum(["member", "cari"]), text: z.string().trim().min(1).max(20000), at: z.iso.datetime({ offset: true }) }))
+    .array(z.object({ author: z.enum(["member", "coach"]), text: z.string().trim().min(1).max(20000), at: z.iso.datetime({ offset: true }) }))
     .min(1)
     .max(5000),
 });

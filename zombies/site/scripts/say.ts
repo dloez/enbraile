@@ -19,4 +19,4 @@ if (!response.ok) {
   for (const issue of result.issues ?? []) console.error(`  ${issue}`);
   process.exit(1);
 }
-console.log(`said: cari line ${result.message}${result.card ? ` with card ${result.card}` : ""}`);
+console.log(`said: coach line ${result.message}${result.card ? ` with card ${result.card}` : ""}`);

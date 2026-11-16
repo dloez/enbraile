@@ -1205,11 +1205,11 @@ a:hover {
   line-height: 1.4;
 }
 
-.who-cari {
+.who-coach {
   color: var(--red-tx);
 }
 
-.who-cari::before {
+.who-coach::before {
   content: "";
   width: 9px;
   height: 9px;
@@ -1277,7 +1277,7 @@ a:hover {
   color: var(--mute);
 }
 
-.old .who-cari::before {
+.old .who-coach::before {
   background: var(--mute);
 }
 

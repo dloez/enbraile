@@ -39,9 +39,9 @@ Copy `.env.example` to `.env.local` and fill it in:
 | `CLAUDE_TOKEN` | Any long random string, e.g. `openssl rand -hex 24`; the bearer token of Claude's `/api/claude/` routes |
 | `ZOMBIES_URL` | Where `publish` sends bundles and `runs` reads runs: `http://localhost:8789` |
 | `DEV_USER_ID` | One or more members, comma-separated, each `<id>` or `<id>:<name>` (e.g. `111:Marina,222:Teo`), to be signed in without the root site |
-| `ANTHROPIC_API_KEY` | An Anthropic API key for Cari; without one she stays silent |
-| `COACH_MODEL` | The model Cari runs on; `claude-haiku-5-5` when empty |
-| `BOT_URL` | Where the bot's API is, for bringing Cari into a call and showing members by their current Discord names and avatars: `http://localhost:8080` for a local bot; without it the run page offers no call and members show under their stored names and initials |
+| `ANTHROPIC_API_KEY` | An Anthropic API key for the coach; without one it stays silent |
+| `COACH_MODEL` | The model the coach runs on; `claude-haiku-5-5` when empty |
+| `BOT_URL` | Where the bot's API is, for bringing the coach into a call and showing members by their current Discord names and avatars: `http://localhost:8080` for a local bot; without it the run page offers no call and members show under their stored names and initials |
 | `INTERNAL_SECRET` | The bot's `INTERNAL_SECRET`, the bearer token both ways between the site and the bot; any long random string, the same in the bot's `.env.local`, which sets `ZOMBIES_URL=http://localhost:8789` |
 
 ### 4. Migrate
@@ -77,7 +77,7 @@ It prints the counts of steps, ladders, rungs, Alts and knowledge entries, the s
 npm run publish -- test-map
 ```
 
-The path is the map's dir, holding its `bundle.json`, relative to where the command is run; from `zombies/site/` a real map's is `../maps/<game>/<map>/`. When the bundle has an announcement or survey image it uploads each first and prints its size (`already stored` when the site has it); a file changed since `compile` stops it with a request to compile again. It then prints the version stored, or `unchanged` when the bundle equals the latest one, and every schema error when it is rejected. A new version also offers the questions Cari held on in runs that are still waiting for an answer, and `publish` says how many of those runs it answered at once ([The Zombies Site → Cari](../explanation/site.md#cari)). A bundle with an image needs a deployment that has the image route, so a map's first image is published after the code that shows it is in production; likewise a bundle with zones or a survey image is published only once the code that shows zones is in production.
+The path is the map's dir, holding its `bundle.json`, relative to where the command is run; from `zombies/site/` a real map's is `../maps/<game>/<map>/`. When the bundle has an announcement or survey image it uploads each first and prints its size (`already stored` when the site has it); a file changed since `compile` stops it with a request to compile again. It then prints the version stored, or `unchanged` when the bundle equals the latest one, and every schema error when it is rejected. A new version also offers the questions the coach held on in runs that are still waiting for an answer, and `publish` says how many of those runs it answered at once ([The Zombies Site → The Coach](../explanation/site.md#the-coach)). A bundle with an image needs a deployment that has the image route, so a map's first image is published after the code that shows it is in production; likewise a bundle with zones or a survey image is published only once the code that shows zones is in production.
 
 To remove a published map for good, with every version and every attempt on it:
 
@@ -104,7 +104,7 @@ npm run watch -- <run id>
 
 It prints one spoiler-free line per event, leaving out the call's transcriptions (a line, a hint, a gap, a revision, a rating, a reply's audit findings, a step-in, a new version) and keeps every event with its text in `zombies/maps/<game>/<map>/runs/<id>.events.jsonl`, gitignored, until it is stopped. For production, the `watch-run` skill (`.claude/skills/watch-run/`) prefixes it with a `prod` wrapper that loads `ZOMBIES_URL` and `CLAUDE_TOKEN` from the untracked `.env.production.local` without printing them. Run it under `Monitor` from Claude Code, as the ee-coach skill's [Watch a run](../../../../.claude/skills/ee-coach/SKILL.md#watch-a-run-from-claude-code) does.
 
-To post in a run as Cari, write the step-in to a JSON file in the map's gitignored dir (`{ "text": ..., "hint": { "step": ..., "part": null, "alt": null }, "gap": null }`, as [The Zombies Site → Map Bundles](../explanation/site.md#map-bundles) describes), then:
+To post in a run as the coach, write the step-in to a JSON file in the map's gitignored dir (`{ "text": ..., "hint": { "step": ..., "part": null, "alt": null }, "gap": null }`, as [The Zombies Site → Map Bundles](../explanation/site.md#map-bundles) describes), then:
 
 ```sh
 npm run say -- <run id> <file>
@@ -156,7 +156,7 @@ unset v
 
 and the same with `dev` for `--environment preview`. The value goes through a variable rather than a straight pipe because `vercel env add` reads its stdin before a piped `npx neonctl` has written anything. `DEV_USER_ID` stays unset in Vercel, so every deployment asks the root site who is signed in; `ZOMBIES_URL` belongs to the shell running `publish` and `runs`, not to the project.
 
-Hand Cari's key from the cluster to Vercel the same way, never printing it:
+Hand the coach's key from the cluster to Vercel the same way, never printing it:
 
 ```sh
 kubectl -n dj get secret discord-bot-enbraile -o jsonpath='{.data.ANTHROPIC_API_KEY}' | base64 -d | npx vercel env add ANTHROPIC_API_KEY production
@@ -207,4 +207,4 @@ Use Instant Rollback on the previous production deployment in the Vercel dashboa
 
 ## Verification
 
-The maps page shows Harrow Station with a Test map tag and "No attempts yet". Locally, with two members in `DEV_USER_ID`, one opens Harrow Station's row and starts an attempt there, and the other opens its link (`/attempts/<id>`) or its row on the map's view, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking Cari for a hint brings a card both see, and its More adds the next rung; the third rung of the lantern step shows its zone on the station's drawn plan under its text; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. `npm run unpublish -- test/harrow-station` prints `test/harrow-station: deleted, 1 versions, <n> runs, 0 images`, the maps page no longer lists it, its attempts answer `noSuchRun`, and publishing it once more brings it back as version 1. With `BOT_URL` and `INTERNAL_SECRET` set to a local bot, a member in a voice channel sees the voice panel at the rail's foot (a bar under the strip on a phone) with **Bring Cari in**, and a «cari» request posted to `/api/voice` with the secret, as the bot sends it, answers `{ reply }` with Cari's words and any hint, and shows the line and the card in the chat. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the published real maps at `https://zombies.enbraile.vip`, without Harrow Station.
+The maps page shows Harrow Station with a Test map tag and "No attempts yet". Locally, with two members in `DEV_USER_ID`, one opens Harrow Station's row and starts an attempt there, and the other opens its link (`/attempts/<id>`) or its row on the map's view, joins, and sees the first one's lines within 2 seconds. With `ANTHROPIC_API_KEY` set, asking the coach for a hint brings a card both see, and its More adds the next rung; the third rung of the lantern step shows its zone on the station's drawn plan under its text; `select step_id, rung, mentions, reveals from deliveries order by id` reads back what was given. Publishing it again prints `version 1, unchanged`. `npm run unpublish -- test/harrow-station` prints `test/harrow-station: deleted, 1 versions, <n> runs, 0 images`, the maps page no longer lists it, its attempts answer `noSuchRun`, and publishing it once more brings it back as version 1. With `BOT_URL` and `INTERNAL_SECRET` set to a local bot, a member in a voice channel sees the voice panel at the rail's foot (a bar under the strip on a phone) with **Bring Coach in**, and a «coach» request posted to `/api/voice` with the secret and `word` `coach`, as the bot sends it, answers `{ reply }` with the coach's words and any hint, and shows the line and the card in the chat. In production, `curl -s -o /dev/null -w '%{http_code}' https://zombies.enbraile.vip/api/maps` answers `401` signed out, and a signed-in member sees the published real maps at `https://zombies.enbraile.vip`, without Harrow Station.

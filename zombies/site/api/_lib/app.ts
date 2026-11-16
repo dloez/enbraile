@@ -10,7 +10,7 @@ import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { deleteMap, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
 import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
-import { bringCari, callState, coachVoice, keepCallLine, voiceTurn } from "./voice.js";
+import { bringCoach, callState, coachVoice, keepCallLine, voiceTurn } from "./voice.js";
 
 const noStore = { "cache-control": "private, no-store" };
 
@@ -263,7 +263,7 @@ member.post("/runs/:id/voice/join", async (c) => {
   if (!(await isActiveMember(viewer, c.req.param("id")))) return c.json({ error: "notInRun" }, 403, noStore);
   const coach = await runVoice(c.req.param("id"));
   if (!coach) return c.json({ error: "noSuchRun" }, 404, noStore);
-  const joined = await bringCari(viewer.discordId, coach);
+  const joined = await bringCoach(viewer.discordId, coach);
   return "error" in joined ? c.json(joined, joined.error === "botOffline" ? 503 : 409, noStore) : c.json(joined, 200, noStore);
 });
 

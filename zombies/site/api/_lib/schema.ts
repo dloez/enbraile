@@ -84,7 +84,7 @@ export const messages = pgTable(
     runId: text("run_id")
       .notNull()
       .references(() => runs.id),
-    author: text("author").$type<"member" | "cari">().notNull(),
+    author: text("author").$type<"member" | "coach">().notNull(),
     kind: text("kind").$type<"chat" | "revision" | "ack">().notNull().default("chat"),
     discordId: text("discord_id"),
     name: text("name").notNull(),
@@ -102,7 +102,7 @@ export const runHistory = pgTable(
     runId: text("run_id")
       .notNull()
       .references(() => runs.id),
-    author: text("author").$type<"member" | "cari">().notNull(),
+    author: text("author").$type<"member" | "coach">().notNull(),
     name: text("name").notNull(),
     text: text("text").notNull(),
     saidAt: timestamp("said_at", { withTimezone: true }).notNull(),

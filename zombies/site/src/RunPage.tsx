@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Language, Viewer } from "../shared/bundle";
 import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type Member, type Message, type Rating, type RunSheet } from "../shared/runs";
-import { askMore, bringCari, changeVoice, fetchCall, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
+import { askMore, bringCoach, changeVoice, fetchCall, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
 import { SurveyZone } from "./art";
@@ -23,7 +23,7 @@ function clock(at: string): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-const cariWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: (name: string) => string; rate: string; zone: { zone: string; whole: string; near: string }; ratings: Record<Rating, string> }> = {
+const coachWords: Record<Language, { dispatch: string; more: string; transmitting: string; writing: (name: string) => string; rate: string; zone: { zone: string; whole: string; near: string }; ratings: Record<Rating, string> }> = {
   es: {
     dispatch: "Despacho",
     zone: { zone: "Mapa con un punto marcado en rojo", whole: "Ver el mapa entero", near: "Volver al punto" },
@@ -104,7 +104,7 @@ function JoinView({ sheet, arrive, onJoined }: { sheet: RunSheet; arrive: boolea
 }
 
 function Feedback({ card, language, rating, onRate }: { card: number; language: Language; rating: Rating | null; onRate: (card: number, rating: Rating) => void }) {
-  const words = cariWords[language];
+  const words = coachWords[language];
   return (
     <fieldset className="fb">
       <legend>{words.rate}</legend>
@@ -137,7 +137,7 @@ function Slip({
   onMore: (card: number) => void;
   onRate: (card: number, rating: Rating) => void;
 }) {
-  const words = cariWords[language];
+  const words = coachWords[language];
   return (
     <div className="slip" lang={language}>
       <div className="slip-h">
@@ -162,13 +162,13 @@ function Slip({
   );
 }
 
-function Line({ at, cari, name, person, className, children }: { at: string; cari: boolean; name: string; person?: Member; className: string; children: ReactNode }) {
+function Line({ at, fromCoach, name, person, className, children }: { at: string; fromCoach: boolean; name: string; person?: Member; className: string; children: ReactNode }) {
   const time = clock(at);
   return (
     <div className={className}>
       <span className="t">{time}</span>
       <div>
-        <p className={cari ? "who who-cari" : "who"}>
+        <p className={fromCoach ? "who who-coach" : "who"}>
           {person && <PersonChip person={person} you={person.you} small />}
           {name}
           <span className="t t-in">{time}</span>
@@ -180,7 +180,7 @@ function Line({ at, cari, name, person, className, children }: { at: string; car
 }
 
 function Row({ message, card, old, coach, slip }: { message: Message; card: Card | undefined; old: boolean; coach: string; slip: (card: Card, name: string) => ReactNode }) {
-  const cari = message.author === "cari";
+  const fromCoach = message.author === "coach";
   if (message.revision) {
     const time = clock(message.at);
     return (
@@ -200,7 +200,7 @@ function Row({ message, card, old, coach, slip }: { message: Message; card: Card
     );
   }
   return (
-    <Line at={message.at} cari={cari} name={nameOf(message)} person={cari ? undefined : message} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
+    <Line at={message.at} fromCoach={fromCoach} name={nameOf(message)} person={fromCoach ? undefined : message} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
       <p className="msg">{message.text}</p>
       {card && slip(card, message.name)}
     </Line>
@@ -208,9 +208,9 @@ function Row({ message, card, old, coach, slip }: { message: Message; card: Card
 }
 
 function Transmitting({ text, at, name, language }: { text: string; at: string; name: string; language: Language }) {
-  const words = cariWords[language];
+  const words = coachWords[language];
   return (
-    <Line at={at} cari name={name} className="row">
+    <Line at={at} fromCoach name={name} className="row">
       <p className={text ? "msg" : "typing"} lang={language}>
         {text || words.transmitting}
         <span className="caret" role="img" aria-label={words.writing(name)} />
@@ -297,10 +297,10 @@ function useVoice(id: string, coach: string): Voice | null {
   const bring = () => {
     setBusy(true);
     setRefused(null);
-    bringCari(id)
+    bringCoach(id)
       .then((joined) => {
         if ("error" in joined) setRefused(t.joinRefused(coach)[joined.error]);
-        else setState((current) => current && { ...current, cari: joined.channelId });
+        else setState((current) => current && { ...current, coach: joined.channelId });
       })
       .catch((error: unknown) => {
         if (error instanceof SignedOut) return signIn();
@@ -309,7 +309,7 @@ function useVoice(id: string, coach: string): Voice | null {
       .finally(() => setBusy(false));
   };
 
-  return { channel, here: state?.cari === channel.id, busy, refused, bring };
+  return { channel, here: state?.coach === channel.id, busy, refused, bring };
 }
 
 function voiceLine(voice: Voice, coach: Character): string {

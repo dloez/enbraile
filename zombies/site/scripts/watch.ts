@@ -28,10 +28,10 @@ function line(event: Watched): string {
   switch (event.kind) {
     case "line":
       return `${at} line ${event.name}`;
-    case "cari":
-      return `${at} cari${event.by ? ` (${event.by})` : ""}${event.cards.length ? ` with card ${event.cards.join(", ")}` : ""}`;
+    case "coach":
+      return `${at} coach${event.by ? ` (${event.by})` : ""}${event.cards.length ? ` with card ${event.cards.join(", ")}` : ""}`;
     case "audit":
-      return `${at} audit ${event.message === null ? "on a reply never posted" : `on cari line ${event.message}`}: ${event.findings.join(", ")}`;
+      return `${at} audit ${event.message === null ? "on a reply never posted" : `on coach line ${event.message}`}: ${event.findings.join(", ")}`;
     case "hint":
       return `${at} hint on card ${event.card}, version ${event.version}`;
     case "revision":

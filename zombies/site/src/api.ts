@@ -41,7 +41,7 @@ export const joinRun = (id: string) => call<{ id: string }>(`runs/${encodeURICom
 export const rateCard = (id: string, card: number, rating: Rating) => call<{ rating: Rating }>(`runs/${encodeURIComponent(id)}/cards/${card}/feedback`, { method: "PUT", body: { rating } });
 export const fetchCall = (id: string) => call<CallState>(`runs/${encodeURIComponent(id)}/voice`);
 
-export async function bringCari(id: string): Promise<{ channelId: string } | { error: JoinRefusal }> {
+export async function bringCoach(id: string): Promise<{ channelId: string } | { error: JoinRefusal }> {
   const response = await fetch(`/api/runs/${encodeURIComponent(id)}/voice/join`, { credentials: "include", method: "POST", signal: AbortSignal.timeout(callMs) });
   if (response.status === 401) throw new SignedOut();
   if (response.ok || response.status === 409 || response.status === 503) return (await response.json()) as { channelId: string } | { error: JoinRefusal };
