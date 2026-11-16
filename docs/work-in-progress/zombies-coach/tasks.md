@@ -1,5 +1,39 @@
 # Zombies Coach — Tasks
 
+## Let Cari speak in the character of her voice
+
+The owner wants Cari's words to sound like the voice saying them, at least for customised voices like Richtofen (2026-11-16, top priority). Hint text stays exactly as prepared (the model never writes hint text), so the character lives in everything around the hints: Cari's own sentences and the fixed lines code says (holds, acknowledgements, the blocked-step line, "From the last session."). Needs the voice worker's configurable voices (backlog: "home/voice: configurable voices, with Castilian Chatterbox and a Richtofen voice") to have landed first.
+
+**Do:**
+- [ ] A character per voice, kept beside the voice's settings: a short style brief for the coach's system prompt (for Richtofen: his manic, theatrical manner, in Castilian, as heard in the BO3 dub) and that voice's own wording of every fixed line in both languages; the plain voices keep today's Cari.
+- [ ] Which voice an attempt speaks with is chosen when starting it, beside the language, and can be changed in the attempt (the agent's choice, recorded as a dated decision); the coach prompt and the fixed lines follow it, and the voice reply asks the worker for it through `hearing.say`'s voice option.
+- [ ] The audit and the sentence filters still apply unchanged: a character never names an unknown, shows a number or carries brackets.
+- [ ] Docs: the character in `docs/zombies/site/explanation/site.md` (Cari) and the voice choice in the design-system doc.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site` (and `home/bot` if touched); locally on the test map with the real Haiku, an attempt set to Richtofen gets replies in his manner around unchanged prepared hints, a plain-voice attempt keeps today's Cari, and the audit finds nothing new.
+- Human-run: in a call, the owner hears Richtofen say Cari's words and finds they sound like him.
+- Reuse: the coach prompt (`api/_lib/coach.ts`); the fixed lines in code; the voice option on `hearing.say`.
+- Neighbors: the voices task in the backlog.
+- Forbidden: the model writing or restyling hint text; a character that bypasses the audit or the knowledge marks.
+
+**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`
+
+## Decide whether hints get each voice's own wording
+
+**Needs the author:**
+- Should prepared hints also get a wording per character (Richtofen's version of every rung, written and blind-checked at prepare like the hints are, roughly doubling a map's prepare work), or do hints stay in one plain wording while only Cari's own words take the character?
+
+**Acceptance:**
+- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md`.
+- Human-run: none.
+- Reuse: none.
+- Neighbors: "Let Cari speak in the character of her voice".
+- Forbidden: building per-voice hint wordings before this is answered.
+
+**Touches:** `docs/zombies/site/explanation/site.md`
+**After:** Let Cari speak in the character of her voice
+
 ## Show players by their current Discord names
 
 The owner finds the player names fixed and wants them from Discord (2026-11-16, relayed by another session). A member's name is a snapshot taken when they join (`zombies/site/api/_lib/runs.ts:45`, the root's `/api/me` name) and never refreshed; imported attempts take the names typed on the command line (the Blood of the Dead attempt shows "Jugador 1" and "Jugador 2"), and imported history shows players as "Terminal".
