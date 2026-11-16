@@ -1,5 +1,41 @@
 # Zombies Coach — Tasks
 
+## Show players by their current Discord names
+
+The owner finds the player names fixed and wants them from Discord (2026-11-16, relayed by another session). A member's name is a snapshot taken when they join (`zombies/site/api/_lib/runs.ts:45`, the root's `/api/me` name) and never refreshed; imported attempts take the names typed on the command line (the Blood of the Dead attempt shows "Jugador 1" and "Jugador 2"), and imported history shows players as "Terminal".
+
+**Do:**
+- [ ] Resolve each member's current server display name by Discord ID when a page is read, through the bot, which already holds the guild's members (a route beside `/zombies/voice` behind `INTERNAL_SECRET`, batched per page, cached briefly on the site), falling back to the stored name when the bot does not answer; the same for a line's author in the chat.
+- [ ] The Blood of the Dead attempt then shows its two players' real names; imported history keeps "Terminal" (who typed a terminal line is unknown).
+- [ ] Docs: `docs/zombies/site/explanation/site.md` and `docs/zombies/bot/explanation/bot.md` (the new route), with the decision dated.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site` and `home/bot`; locally with a fake bot route, a member whose stored name differs shows the bot's name, and with the bot stopped the stored name; no page waits more than the site's timeout on the bot.
+- Human-run: the owner opens the Blood of the Dead attempt and sees both players' Discord names.
+- Reuse: the site's `BOT_URL` calls (`api/_lib/voice.ts`); the module's member lookup (`zombies/bot/src/`).
+- Neighbors: the DJ panel's calls to the bot.
+- Forbidden: Discord tokens on the site; a page that fails when the bot is down.
+
+**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`
+
+## Remove Harrow Station from the production maps
+
+The owner wants the made-up test map gone from the maps page (2026-11-16, relayed by another session). Publishing only adds versions (`docs/zombies/site/explanation/site.md`, Bundles); nothing removes a map. The test map stays in the repo (`zombies/site/test-map/`), since local checks and the how-to's verification use it.
+
+**Do:**
+- [ ] As the owner answers below: a Claude route behind `CLAUDE_TOKEN` and `npm run unpublish -- <game>/<map>`, then remove `test/harrow-station` from production; docs in `site.md` and the how-to.
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site`; locally, an unpublished map leaves the maps page and its attempts behave as answered; on production, `/api/maps` signed in no longer lists Harrow Station.
+- Human-run: the owner no longer sees Harrow Station on the site.
+- Reuse: the Claude API (`api/_lib/app.ts`).
+- Neighbors: `publish`.
+- Forbidden: deleting production data before the owner's answer; removing `zombies/site/test-map/`.
+
+**Touches:** `zombies/site/`, `docs/zombies/site/`
+**Needs the author:**
+- Hide the map (it leaves the site, its versions and any test attempts stay in the database and publishing again brings it back; recommended), or delete it with its versions and attempts for good?
+
 ## Measure a signed-in production load
 
 Every production figure in `docs/zombies/site/explanation/site.md` was taken signed out or on a preview. `:139` says the owner's `Server-Timing` split (cold and warm), the zombies database's Neon wake and the session read in pkmn's database "are still not measured". `:152` says production after the bundled function "is not measured". `:226` leaves the `pg`-versus-serverless-driver choice to "the `Server-Timing` figures from a signed-in production load". `docs/home/site/explanation/site.md`'s Load Time table still reads "not deployed yet" for the root's bundled `/api/me`, though a2803a1 is on `origin/main` and has deployed.
