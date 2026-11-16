@@ -1,11 +1,11 @@
-import { and, asc, eq, gt, isNull, max } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { Viewer } from "../../shared/bundle.js";
-import { asRevision, type CallLine, type CallState, type JoinRefusal } from "../../shared/runs.js";
+import { asRevision, type CallLine, type CallState, type JoinRefusal, type VoiceEvent } from "../../shared/runs.js";
 import { characterOf, type Voice } from "../../shared/voices.js";
 import { bot, inBackground } from "./bot.js";
 import { db } from "./db.js";
 import { postMessage, postRevision } from "./runs.js";
-import { callLines, deliveries, runMembers, runs } from "./schema.js";
+import { callLines, runMembers, runs } from "./schema.js";
 
 const botTimeoutMs = 5000;
 
@@ -17,33 +17,32 @@ async function speakerOf(discordId: string): Promise<{ runId: string; viewer: Vi
   return row ? { runId: row.runId, viewer: { discordId, name: row.name, image: row.image } } : null;
 }
 
-export type VoiceTurn = { reply: string | null; voice: Voice | null };
-
-const silent: VoiceTurn = { reply: null, voice: null };
-
-export async function voiceTurn(discordId: string, text: string, word: string): Promise<VoiceTurn> {
+export async function voiceTurn(discordId: string, text: string, word: string, send: (event: VoiceEvent) => void): Promise<void> {
   const speaker = await speakerOf(discordId);
-  if (!speaker) return silent;
+  if (!speaker) return;
   const { runId, viewer } = speaker;
   const [run] = await db.select({ voice: runs.voice, language: runs.language }).from(runs).where(eq(runs.id, runId));
-  if (!run || word !== characterOf(run.voice).wake) return silent;
+  if (!run || word !== characterOf(run.voice).wake) return;
+  const lines = characterOf(run.voice).lines[run.language];
+  send({ type: "voice", voice: run.voice });
   const revision = asRevision(text, false);
-  if (revision === "") return { reply: characterOf(run.voice).lines[run.language].unheard, voice: run.voice };
-  if (revision !== null) return { reply: await postRevision(viewer, runId, revision), voice: run.voice };
-  const [before] = await db.select({ last: max(deliveries.id) }).from(deliveries).where(eq(deliveries.runId, runId));
-  await postMessage(viewer, runId, text);
+  if (revision === "") return send({ type: "say", text: lines.unheard });
+  if (revision !== null) {
+    const acknowledged = await postRevision(viewer, runId, revision);
+    if (acknowledged) send({ type: "say", text: acknowledged });
+    return;
+  }
+  await postMessage(viewer, runId, text, true);
   const { coachTurn } = await import("./coach.js");
-  let said = "";
+  let spoke = false;
   await coachTurn(runId, viewer, { kind: "message", spoken: true }, (event) => {
-    if (event.type === "text") said += event.text;
+    if (event.type !== "text" && event.type !== "hint") return;
+    const said = event.text.trim();
+    if (!said) return;
+    spoke = true;
+    send({ type: "say", text: said });
   });
-  const hints = await db
-    .select({ text: deliveries.text })
-    .from(deliveries)
-    .where(and(eq(deliveries.runId, runId), eq(deliveries.askedBy, discordId), gt(deliveries.id, before?.last ?? 0)))
-    .orderBy(asc(deliveries.id));
-  const reply = [said.trim(), ...hints.map((hint) => hint.text)].filter(Boolean).join(" ");
-  return { reply: reply || characterOf(run.voice).lines[run.language].unheard, voice: run.voice };
+  if (!spoke) send({ type: "say", text: lines.unheard });
 }
 
 export async function coachVoice(discordId: string): Promise<Voice | null> {

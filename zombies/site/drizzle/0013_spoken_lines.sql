@@ -1,0 +1,1 @@
+ALTER TABLE "messages" ADD COLUMN "spoken" boolean DEFAULT false NOT NULL;

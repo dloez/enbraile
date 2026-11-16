@@ -113,23 +113,44 @@ async function coachVoice(userId: string): Promise<string | null> {
   }
 }
 
-async function ask(userId: string, text: string, word: string): Promise<{ reply: string; voice: string | null } | null> {
-  const response = await site("voice", { userId, text, word });
-  if (!response.ok) throw new Error(`site answered ${response.status}`);
-  const { reply, voice: named } = (await response.json()) as { reply?: unknown; voice?: unknown };
-  if (typeof reply !== "string" || !reply.trim()) return null;
-  return { reply, voice: typeof named === "string" ? named : null };
+type VoiceEvent = { type?: unknown; voice?: unknown; text?: unknown };
+
+async function* events(body: ReadableStream<Uint8Array>): AsyncGenerator<VoiceEvent> {
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for await (const chunk of body) {
+    buffer += decoder.decode(chunk, { stream: true });
+    let end = buffer.indexOf("\n");
+    while (end >= 0) {
+      const line = buffer.slice(0, end).trim();
+      buffer = buffer.slice(end + 1);
+      if (line) yield JSON.parse(line) as VoiceEvent;
+      end = buffer.indexOf("\n");
+    }
+  }
 }
 
 async function heard(userId: string, text: string, word: string): Promise<void> {
   if (!voice.holding(OWNER) || !text.trim()) return;
-  const answer = await ask(userId, text, word).catch(async (error: Error) => {
-    await hearing.say(coachOf(heldVoice).unheard, heldVoice === null ? {} : { voice: heldVoice });
+  const queued: Promise<void>[] = [];
+  const speakLine = (line: string) => queued.push(hearing.say(line, heldVoice === null ? {} : { voice: heldVoice }).catch((error: Error) => console.error("zombies say", error.message)));
+  let answering = false;
+  try {
+    const response = await site("voice", { userId, text, word });
+    if (!response.ok || !response.body) throw new Error(`site answered ${response.status}`);
+    for await (const event of events(response.body)) {
+      if (event.type === "voice") {
+        answering = true;
+        keepVoice(typeof event.voice === "string" ? event.voice : null);
+      } else if (event.type === "say" && typeof event.text === "string" && event.text.trim()) speakLine(event.text);
+    }
+  } catch (error) {
+    if (!queued.length) speakLine(coachOf(heldVoice).unheard);
+    await Promise.all(queued);
     throw error;
-  });
-  if (!answer) return;
-  keepVoice(answer.voice);
-  await hearing.say(answer.reply, heldVoice === null ? {} : { voice: heldVoice });
+  }
+  if (answering && !queued.length) speakLine(coachOf(heldVoice).unheard);
+  await Promise.all(queued);
 }
 
 async function said(line: TranscriptLine): Promise<void> {

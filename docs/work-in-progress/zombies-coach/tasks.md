@@ -51,7 +51,7 @@ Every production figure in `docs/zombies/site/explanation/site.md` was taken sig
 
 ## Play a game night on the site and read how the coach did
 
-The discovery's goal is a game night played from the site and voice with no terminal needed, every hint coming from prepared, checked lines, and Haiku "to start; the group will report whether it is enough" ([Discovery → Goal](discovery.md#goal), [Architecture](discovery.md#architecture)). None of it has been measured. The three Blood of the Dead runs on file are imports. Their reads hold no Claude call, no gap, no feedback and no audit finding. No watch events file exists, so the watch loop has never followed a real attempt. Blood of the Dead's local bundle now holds 58 zones and its survey image, and the zones entry's human check (is a zone readable mid-round) was never run. So nothing shows whether Haiku keeps to the rules on a real map (how often code drops a sentence for brackets, repeats, an unknown named or a number), how often it holds, how long a reply takes, or whether the group finds the hints right.
+The discovery's goal is a game night played from the site and voice with no terminal needed, every hint coming from prepared, checked lines, and Haiku "to start; the group will report whether it is enough" ([Discovery → Goal](discovery.md#goal), [Architecture](discovery.md#architecture)). None of it has been measured. The three Blood of the Dead runs on file are imports. Their reads hold no Claude call, no gap, no feedback and no audit finding. No watch events file exists, so the watch loop has never followed a real attempt. Blood of the Dead's local bundle now holds 58 zones and its survey image, and the zones entry's human check (is a zone readable mid-round) was never run. A replay of a recorded run (2026-11-16, [The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions)) measured reply latency and judged spoilers offline, but not a live night: so nothing shows whether Haiku keeps to the rules on a real map (how often code drops a sentence for brackets, repeats, an unknown named or a number), how often it holds, how long a reply takes, or whether the group finds the hints right.
 
 **Do:**
 - [ ] Before the night, publish Blood of the Dead to production from its dir (`unchanged` if the zones version is already there), in a subagent that returns only `publish`'s output.
@@ -70,7 +70,7 @@ The discovery's goal is a game night played from the site and voice with no term
 
 ## Decide whether Haiku is enough to coach live
 
-The discovery chose Haiku 5.5 "to start; the group will report whether it is enough", with a switch to Sonnet being config ([Discovery → Architecture](discovery.md#architecture)). The game night's counts (violations caught, holds, audits, ratings) and the group's impressions are what that report rests on.
+The discovery chose Haiku 5.5 "to start; the group will report whether it is enough", with a switch to Sonnet being config ([Discovery → Architecture](discovery.md#architecture)). The game night's counts (violations caught, holds, audits, ratings) and the group's impressions are what that report rests on. A candidate model can also be measured before then: `npm run replay` with `COACH_MODEL` set runs it on a recorded run locally, and a context-free subagent judges the replay file against one on Haiku ([How to Run and Deploy the Site → Read a run](../../zombies/site/how-to/run-and-deploy-the-site.md#7-read-a-run)); Haiku with reasoning off is what the 2026-11-16 replays measured ([The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions)).
 
 **Needs the author:**
 - With the game night's counts in hand, does the coach stay on Haiku, or does `COACH_MODEL` move to Sonnet in Production?
@@ -111,7 +111,7 @@ Apply the answer to the entry above, so a wake word asked during another reply b
 - [ ] Update the Hearing lines in `docs/zombies/site/explanation/site.md:108` and `docs/zombies/bot/explanation/bot.md` ("A failed or slow request (25 s)…").
 
 **Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site` and `home/bot`. Against a local site and bot, two `/api/voice` requests posted together for one run behave as decided: the second answer is spoken late, or `{ reply: null }` comes back before the bot's timeout with the answer in the chat.
+- Claude-run: `npm run gate` in `zombies/site` and `home/bot`. Against a local site and bot, two `/api/voice` requests posted together for one run behave as decided: the second answer is spoken late, or the stream ends with no `say` before the bot's timeout with the answer in the chat.
 - Human-run: in a call, two members say «coach …» one right after the other, and the second answer arrives as decided.
 - Reuse: the lease in `coach.ts` (`acquire`/`release`), `voiceTurn`.
 - Neighbors: the typed reply path, which keeps its 30 s wait.

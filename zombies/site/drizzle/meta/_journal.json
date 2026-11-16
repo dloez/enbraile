@@ -92,6 +92,13 @@
       "when": 1794845443285,
       "tag": "0012_coach_author",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794847601071,
+      "tag": "0013_spoken_lines",
+      "breakpoints": true
     }
   ]
 }

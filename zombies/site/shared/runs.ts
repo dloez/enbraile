@@ -99,7 +99,9 @@ export const callLineSchema = z.object({
 
 export type CallLine = z.infer<typeof callLineSchema>;
 
-export type ReplyEvent = { type: "text"; text: string } | { type: "failed" } | { type: "done" };
+export type ReplyEvent = { type: "text"; text: string } | { type: "hint"; text: string } | { type: "failed" } | { type: "done" };
+
+export type VoiceEvent = { type: "voice"; voice: Voice } | { type: "say"; text: string } | { type: "done" };
 
 export const startRunSchema = z.object({ game: z.string().min(1), map: z.string().min(1), language: z.enum(languages).default("es"), voice: z.enum(voices).default(defaultVoice) });
 

@@ -86,6 +86,7 @@ export const messages = pgTable(
       .references(() => runs.id),
     author: text("author").$type<"member" | "coach">().notNull(),
     kind: text("kind").$type<"chat" | "revision" | "ack">().notNull().default("chat"),
+    spoken: boolean("spoken").notNull().default(false),
     discordId: text("discord_id"),
     name: text("name").notNull(),
     text: text("text").notNull(),

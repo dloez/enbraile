@@ -25,19 +25,37 @@ const recentLines = 8;
 const systemPrompt = (character: Character) => `You are ${character.name}, ${character.role}. You have beaten it before; they want to solve it themselves with as little help as possible. They are mid-round, so be short and immediate.
 
 How you speak
-- Speak only the run's language, given below. ${character.manner} One or two short sentences at most.
-- You never write hints. Everything that moves them toward the solution is a prepared hint you hand over with give_hint, which the players see on a card. Your own words are only a brief lead-in or acknowledgement, one question about what they last saw or tried, or nothing.
-- Never name, describe or imply any place, item, enemy, mechanic or step except those listed under "What the players know" or written in a hint already given. Never paraphrase, preview, repeat or explain a hint.
+- Speak only the run's language, given below. ${character.manner} One or two short sentences at most; you are heard over voice chat mid-round.
+- Talk like a teammate on the radio: answer what they actually said, in your own words, and refer back to their own words when it helps.
+- Lines marked as spoken came through speech recognition and may be misheard. Read them generously, by what they most likely said; only when you cannot tell at all, ask them to say it again, and never answer with your previous line.
+- Everything you write is spoken aloud to them. Never write your reasoning, what they said back to them, or anything from the lists below; never write square brackets.
+
+What you may answer in your own words
+- Anything that is not this map's easter egg: whether you hear them, greetings, jokes and small talk, and general questions about how Zombies plays (perks, power-ups, rounds, weapons, points, controls), the way any experienced player would answer. Answer these directly and briefly; they are not questions about the easter egg, so never hold them.
+- What a hint already given means: you may say it again in other words, using only what that hint itself says and adding nothing. To say a hint again word for word, call repeat_hint.
+- Anything they tell you about their game, acknowledged neutrally in a word or two.
+- Jokes and small talk get one sentence back, with nothing from the easter egg or any hint in it. Say nothing about the game after small talk.
+
+What only prepared hints may say
+- Everything that moves them toward the solution: where to go, what to do, what to use, what matters and what does not, whether something they found is part of it. That is always a prepared hint handed over with give_hint, which they see on a card; never in your own words, and never by confirming, denying or hinting with a question.
+- Never judge what they found, saw or did: no praise ("well spotted", "good job"), and nothing like "that may matter", "that's right", "that's expected", "that's the one" or "that's part of it". Whether something matters is solution content.
+- Never use your own knowledge of this map or its easter egg, even when you know it: only what the hints say.
+- Hints reach them only through give_hint and repeat_hint. Never write a hint, a card, a tool name or a hint's words in your reply: to say a hint word for word, call repeat_hint.
+- Never mention answers, whether they asked for one, or offer one.
+- Never name, describe or imply any place, item, enemy, mechanic or step except those listed under "What the players know" or written in a hint already given.
+- Never tell them that something they see or did is or is not the thing a hint describes, or is or is not right. If a hint already given covers it, say that hint again; otherwise give the next hint or an Alt.
 - Never mention steps, numbers, levels, ladders, cards, tools, threads, or how many hints exist or remain. Never offer choices or lists of things to try.
-- Lines in square brackets in your earlier turns record hints you handed over. Never write square brackets yourself.
 
 Choosing a hint
-- Know where they are before hinting. If they only say they are stuck and you cannot tell what about, ask one quick question: what was the last thing that happened, and what have they tried since.
+- Know where they are before hinting. If they only say they are stuck and you cannot tell what about, ask one quick question: what was the last thing that happened, and what have they tried since. Never ask a question you asked in either of your last two replies; use what they have said since.
+- When they report reaching, finding or seeing something and do not know what to do, hand over the next hint or a matching Alt rather than asking what happened; never tell them what to do in your own words.
+- Before replying to any report of what they did or what happened, check every Alt's "when" on the open threads, matching it by what most likely happened rather than by their exact words. If one matches, give that Alt with give_hint; never restate a hint instead, and never say in your own words what an Alt says.
+- When they say the hint is unclear without naming it, they mean the most recent hint: never ask which one. The first time, call repeat_hint on it or say it again in other words. If you already said it again in either of your last two replies, hand over the next hint of that ladder or a matching Alt: never say the same hint a third time, and never ask them anything more about it.
 - One hint at a time: the next hint of the ladder that matches what they are asking about, or one of its Alts when they already have what the hint would tell them or are in the situation the Alt names; prefer whichever names fewer new things.
 - Follow what they bring up, never your own order. When they report one part found, switch to the ladder of the part still missing.
-- The full answer only when they clearly ask for the answer, and then with answer: true.
+- The full answer only when their words literally ask for the answer or the solution, and then with answer: true.
 - On "what now?": if they have mentioned something half done, ask one open question about it, naming only what they mentioned; otherwise give the first hint of a ladder listed as ready.
-- If they ask about something no listed hint covers, call hold with what they asked about: code says a prepared line in your voice and records it, so the missing hint gets written. Never make a hint up, and never answer it in your own words.
+- If they ask about the easter egg and no listed hint covers it, call hold with what they asked about: code says a prepared line in your voice and records it, so the missing hint gets written. Never make a hint up, and never answer it in your own words. Small talk, general game questions and lines you could not make out are never held.
 - Questions listed under "Held earlier" are ones you held on before new hints were written. When one of them is still what they need and a listed hint now answers it, give that hint with gap set to its number.
 
 Following their progress
@@ -52,8 +70,8 @@ Following their progress
 
 Keeping track
 - When the players name or describe something themselves, call mark_known with their own words before choosing a hint.
-- Now and then call ask_round to learn their round, but never right after a hint or just as they start on something.
-- Whenever they speak to you or ask you anything, answer: a hint, hold, or a short line of your own, asking them to say it again when you could not make out what they meant. Reply with exactly ${silence} only when their message is them talking among themselves, not to you.`;
+- Now and then call ask_round to learn their round, but never right after a hint or just as they start on something. Never ask their round in your own words.
+- Whenever they speak to you or ask you anything, answer: a hint, a hint said again, hold, or a short line of your own. Reply with exactly ${silence} only when their message is them talking among themselves, not to you.`;
 
 const tools: Anthropic.Tool[] = [
   {
@@ -67,6 +85,16 @@ const tools: Anthropic.Tool[] = [
         answer: { type: "boolean", description: "True only when the players clearly asked for the full answer." },
         gap: { type: "integer", minimum: 1, description: "When this hint answers a question listed under Held earlier, that question's number." },
       },
+      required: ["ladder"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "repeat_hint",
+    description: "Say again, word for word, the last hint already handed over on one ladder, when the players ask to hear it again or did not catch it. Code says it in your reply.",
+    input_schema: {
+      type: "object",
+      properties: { ladder: { type: "string", description: "The ladder's handle, such as s1 or s2p1." } },
       required: ["ladder"],
       additionalProperties: false,
     },
@@ -147,6 +175,8 @@ type State = {
   known: Set<string>;
   given: Map<string, number>;
   givenLines: Map<string, string[]>;
+  latest: string | null;
+  latestSaid: number;
   done: Set<string>;
   started: Set<string>;
   told: Set<string>;
@@ -166,7 +196,7 @@ async function loadState(runId: string): Promise<State | null> {
   if (!row) return null;
   const known = await db.select({ id: runKnowledge.knowledgeId }).from(runKnowledge).where(eq(runKnowledge.runId, runId));
   const rows = await db
-    .select({ stepId: deliveries.stepId, partId: deliveries.partId, rung: deliveries.rung, text: deliveries.text })
+    .select({ stepId: deliveries.stepId, partId: deliveries.partId, rung: deliveries.rung, text: deliveries.text, createdAt: deliveries.createdAt })
     .from(deliveries)
     .where(eq(deliveries.runId, runId))
     .orderBy(deliveries.id);
@@ -177,6 +207,13 @@ async function loadState(runId: string): Promise<State | null> {
     .from(gaps)
     .where(and(eq(gaps.runId, runId), isNull(gaps.answeredAt), sql`coalesce(${gaps.triedVersion}, ${gaps.bundleVersion}) < ${row.version}`))
     .orderBy(gaps.id);
+  const last = rows.at(-1);
+  const since = last
+    ? await db
+        .select({ text: messages.text })
+        .from(messages)
+        .where(and(eq(messages.runId, runId), eq(messages.author, "coach"), gt(messages.createdAt, last.createdAt)))
+    : [];
   const given = new Map<string, number>();
   const givenLines = new Map<string, string[]>();
   for (const entry of rows) {
@@ -195,6 +232,8 @@ async function loadState(runId: string): Promise<State | null> {
     known: new Set(known.map((entry) => entry.id)),
     given,
     givenLines,
+    latest: last ? ladderKey(last.stepId, last.partId) : null,
+    latestSaid: last ? since.filter((row) => ` ${flat(row.text)} `.includes(` ${flat(last.text)} `)).length : 0,
     done: new Set(progress.filter((entry) => entry.doneAt).map((entry) => ladderKey(entry.stepId, entry.partId || null))),
     started: new Set(progress.filter((entry) => entry.startedAt).map((entry) => ladderKey(entry.stepId, entry.partId || null))),
     told: new Set(progress.filter((entry) => entry.blockedToldAt).map((entry) => entry.stepId)),
@@ -245,8 +284,8 @@ function offers(state: State): string {
   for (const ladder of state.ladders) {
     const key = keyOf(ladder);
     const step = stepOf(state, ladder);
-    const title = titleOf(state, ladder);
-    const label = `${ladder.partOf ? `${ladder.handle} (a part of ${ladder.partOf})` : ladder.handle}${title ? ` "${title}"` : ""}`;
+    const title = titleOf(state, ladder) !== null;
+    const label = `${ladder.partOf ? `${ladder.handle} (a part of ${ladder.partOf})` : ladder.handle}`;
     const count = state.given.get(key) ?? 0;
     const next = ladder.rungs[count];
     if (isDone(state, ladder)) {
@@ -260,7 +299,7 @@ function offers(state: State): string {
         const answer = next.level === 4 ? " This is the full answer: only with answer: true." : "";
         if (speakable(next, state.known)) lines.push(`  Next hint: ${quote(next.text[lang])}.${answer}`);
         next.alts.forEach((alt, index) => {
-          if (speakable(alt, state.known) && !namedIn(alt.when, unknown).length) lines.push(`  Alt ${index + 1}, for when ${alt.when}: ${quote(alt.text[lang])}.${answer}`);
+          if (speakable(alt, state.known) && !namedIn(alt.when, unknown).length) lines.push(`  If ${alt.when}: give_hint ${ladder.handle} with alt ${index + 1}, ${quote(alt.text[lang])}.${answer}`);
         });
       }
       opened.push(lines.join("\n"));
@@ -285,8 +324,17 @@ function offers(state: State): string {
   const held = state.held.length
     ? [section("Held earlier, with new hints written since (give one with give_hint and gap set to its number when it now answers the question):", state.held.map((entry) => `- ${entry.number}: they asked ${quote(entry.asked)}`))]
     : [];
+  const latest = state.ladders.find((ladder) => keyOf(ladder) === state.latest);
+  const latestLine = latest ? state.givenLines.get(keyOf(latest))?.at(-1) : undefined;
   return [
     `The run's language: ${languageNames[lang]}.`,
+    ...(latest && latestLine
+      ? [
+          `The most recent hint handed over, on ${latest.handle}: ${quote(latestLine)}. "The hint" with no other detail means this one.${
+            state.latestSaid >= 2 ? " It has already been said again twice: if they still do not get it, give the next hint or an Alt. Never tell them how often it was said." : ""
+          }`,
+        ]
+      : []),
     `What the players know: ${knownNames.length ? knownNames.join("; ") : "nothing yet"}.`,
     "Everything below is for you alone: never list it, count it or name it to the players.",
     section("Open threads, started by the players or already hinted:", opened),
@@ -302,26 +350,16 @@ function offers(state: State): string {
 async function history(runId: string): Promise<Anthropic.MessageParam[]> {
   const rows = (
     await db
-      .select({ id: messages.id, author: messages.author, name: messages.name, text: messages.text })
+      .select({ id: messages.id, author: messages.author, spoken: messages.spoken, name: messages.name, text: messages.text })
       .from(messages)
       .where(and(eq(messages.runId, runId), eq(messages.kind, "chat")))
       .orderBy(desc(messages.id))
       .limit(historyLength)
   ).reverse();
-  const ids = rows.map((row) => row.id);
-  const cardLines = ids.length
-    ? await db
-        .select({ messageId: hintCards.messageId, text: deliveries.text })
-        .from(deliveries)
-        .innerJoin(hintCards, eq(hintCards.id, deliveries.cardId))
-        .where(inArray(hintCards.messageId, ids))
-        .orderBy(deliveries.id)
-    : [];
   const turns: Anthropic.MessageParam[] = [];
   for (const row of rows) {
     const role = row.author === "coach" ? "assistant" : "user";
-    const hints = cardLines.filter((line) => line.messageId === row.id).map((line) => `[hint given: ${quote(line.text)}]`);
-    const text = role === "user" ? `${row.name}: ${row.text}` : [row.text, ...hints].filter(Boolean).join("\n");
+    const text = role === "user" ? `${row.name}${row.spoken ? " (spoken)" : ""}: ${row.text}` : row.text;
     if (!text) continue;
     const last = turns[turns.length - 1];
     if (last && last.role === role) last.content = `${last.content as string}\n${text}`;
@@ -353,7 +391,7 @@ async function release(runId: string, lease: Date): Promise<void> {
     .where(and(eq(runs.id, runId), eq(runs.coachBusyUntil, lease)));
 }
 
-type Delivered = { ok: true; cardId: number; deliveryId: number } | { ok: false; reason: string; violation?: string };
+type Delivered = { ok: true; cardId: number; deliveryId: number; text: string } | { ok: false; reason: string; violation?: string };
 
 async function deliver(state: State, ladder: Ladder, alt: number | null, answer: boolean, cardId: number | null, askedBy: string | null): Promise<Delivered> {
   const key = ladderKey(ladder.stepId, ladder.partId);
@@ -373,7 +411,7 @@ async function deliver(state: State, ladder: Ladder, alt: number | null, answer:
     const rung = ladder.rungs[index];
     if (!rung) return { ok: false, reason: "There is nothing more on that ladder." };
     if (rung.level === 4 && !answer)
-      return { ok: false, reason: "The next hint is the full answer; give it only when they clearly ask for the answer.", violation: "answer-unasked" };
+      return { ok: false, reason: "Not given: the next hint is the full answer, and they did not ask for it. Never mention answers, whether they asked for one, or offer one. Ask one short question about what they see, or give an Alt.", violation: "answer-unasked" };
     const line = lineAt(rung, alt);
     if (!line) return { ok: false, reason: "That hint has no such Alt.", violation: "no-such-alt" };
     const known = new Set(
@@ -409,7 +447,9 @@ async function deliver(state: State, ladder: Ladder, alt: number | null, answer:
     for (const id of learned) state.known.add(id);
     state.given.set(key, index + 1);
     state.givenLines.set(key, [...(state.givenLines.get(key) ?? []), text]);
-    return { ok: true, cardId: card, deliveryId: delivered!.id };
+    state.latest = key;
+    state.latestSaid = 0;
+    return { ok: true, cardId: card, deliveryId: delivered!.id, text };
   });
 }
 
@@ -477,6 +517,28 @@ const amount = "\\d+|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|two|three|
 const ordinal = "primer[oa]?|segund[oa]|tercer[oa]?|cuart[oa]|quint[oa]|ultim[oa]|penultim[oa]|first|second|third|fourth|fifth|last";
 const numbered = new RegExp(`\\b(?:(?:${named})\\s+(?:no?\\s*)?(?:${amount})|(?:${amount}|${ordinal})\\s+(?:${graded})|\\d+\\s*/\\s*\\d+)\\b`);
 
+const meta = /\bs\d+(?:p\d+)?\b|\b(?:alts?|ladders?|threads?|cards?|tarjetas?|escaleras?|the players|los jugadores|give_hint|repeat_hint|record_progress)\b/;
+
+const english = new Set(["the", "they", "they're", "is", "are", "and", "this", "that", "which", "what", "with", "their", "doesn't", "should", "would", "hint", "players", "next", "match", "matches"]);
+
+const englishWords = (text: string) => text.split(/[^a-z']+/).filter((word) => english.has(word)).length;
+
+const answerAsk = /\b(?:respuesta|solucion|answer|solution|dimelo|dinoslo|dime que (?:hago|hacemos|hay que hacer)|dinos que (?:hacer|hacemos|hay que hacer)|tell (?:me|us) what to do|just tell)\b/;
+
+const asksAnswer = (asked: string) => answerAsk.test((asked.split("\n").at(-1) ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase());
+
+const runLength = 5;
+
+const wordRuns = (line: string) => {
+  const words = line.split(" ").filter(Boolean);
+  return words.length < runLength ? [] : words.slice(0, words.length - runLength + 1).map((_, index) => words.slice(index, index + runLength).join(" "));
+};
+
+const judging =
+  /\b(?:(?:es|son|eso es|esa es|ese es|esto es|esta es|este es)\s+(?:justo\s+)?(?:lo|la|el|los|las)\s+que\s+(?:buscais|buscabais|os toca|teneis que|necesitais|hay que)|(?:bien visto|buen trabajo|bien pillado|vais bien|vais por buen camino|buen ojo)|ya os (?:la|lo|las|los) he (?:dicho|dado|repetido)|lo que importa (?:ahora )?es|eso no os (?:va a )?(?:servir|funcionar)|(?:that's|that is|it's|this is)\s+(?:exactly\s+)?(?:what|the one)\s+you(?:'re| are)?\s+(?:looking for|need|after)|well spotted|good job|nice find|you're on the right track|i've already told you|what matters (?:now )?is|that won't work for you)\b/;
+
+const asksRound = /\b(?:que|cual|what|which)\s+(?:ronda|round)\b/;
+
 const showsNumber = (text: string) => numbered.test(text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[º°#.]/g, " "));
 
 const flat = (text: string) =>
@@ -491,6 +553,8 @@ class Speech {
   readonly spoken: string[] = [];
   private readonly prepared: string[] = [];
   private buffer = "";
+  private unhanded: Set<string> | null = null;
+  private muted = false;
 
   constructor(
     private readonly state: State,
@@ -526,8 +590,36 @@ class Speech {
       return;
     }
     const repeated = flat(text);
-    if (repeated.split(" ").length >= 3 && [...this.prepared, ...[...this.state.givenLines.values()].flat().map(flat)].some((line) => ` ${line} `.includes(` ${repeated} `))) {
-      this.violations.push("repeated");
+    if (repeated.split(" ").length >= 3) {
+      const contains = (line: string) => ` ${flat(line)} `.includes(` ${repeated} `);
+      if (this.prepared.some((line) => ` ${line} `.includes(` ${repeated} `))) {
+        this.violations.push("repeated");
+        return;
+      }
+      const hint = [...this.state.givenLines.values()].flat().find(contains);
+      if (hint) {
+        this.violations.push("repeated");
+        this.add(hint);
+        return;
+      }
+    }
+    if (this.muted) return;
+    const plain = text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+    const caught =
+      meta.test(plain) || (this.state.language === "es" && englishWords(plain) >= 2)
+        ? "meta"
+        : judging.test(plain)
+          ? "judging"
+          : wordRuns(repeated).some((run) => this.unhandedRuns().has(run))
+            ? "echoes-unhanded"
+            : null;
+    if (caught) {
+      this.violations.push(caught);
+      this.muted = true;
+      return;
+    }
+    if (asksRound.test(plain)) {
+      this.violations.push("round-asked");
       return;
     }
     const unknown = this.state.bundle.knowledge.filter((entry) => !this.state.known.has(entry.id));
@@ -540,6 +632,18 @@ class Speech {
       return;
     }
     this.add(text);
+  }
+
+  private unhandedRuns(): Set<string> {
+    if (this.unhanded) return this.unhanded;
+    const lang = this.state.language;
+    const handed = new Set([...this.state.givenLines.values()].flat().map(flat));
+    const lines = [
+      ...this.state.ladders.flatMap((ladder) => ladder.rungs.flatMap((rung) => [rung.text[lang], ...rung.alts.map((alt) => alt.text[lang])])),
+      ...this.state.bundle.steps.flatMap((step) => [step.onSuccess.text[lang], ...step.headsUps.map((headsUp) => headsUp.text[lang])]),
+    ];
+    this.unhanded = new Set(lines.map(flat).filter((line) => !handed.has(line)).flatMap(wordRuns));
+    return this.unhanded;
   }
 }
 
@@ -694,6 +798,7 @@ export async function coachTurn(
     const speech = new Speech(state, emit, violations);
     const cards: number[] = [];
     let hinted = false;
+    let repeated = false;
     let headsUpSaid = false;
     let round = false;
     let failed = false;
@@ -707,11 +812,13 @@ export async function coachTurn(
           model: model(),
           max_tokens: maxTokens,
           system: [
-            { type: "text", text: systemPrompt(state.character) },
+            { type: "text", text: systemPrompt(state.character), cache_control: { type: "ephemeral" } },
             { type: "text", text: offers(state) },
           ],
           tools: retried ? tools.filter((tool) => tool.name === "give_hint") : tools,
+          thinking: { type: "disabled" },
           output_config: { effort: "low" },
+          cache_control: { type: "ephemeral" },
           messages: conversation,
         });
         for await (const event of stream) if (event.type === "content_block_delta" && event.delta.type === "text_delta") speech.push(event.delta.text);
@@ -745,8 +852,10 @@ export async function coachTurn(
         break;
       }
       const results: Anthropic.ToolResultBlockParam[] = [];
+      let complete = true;
       for (const block of response.content) {
         if (block.type !== "tool_use") continue;
+        let ended = false;
         const input = (block.input ?? {}) as { ladder?: unknown; alt?: unknown; answer?: unknown; gap?: unknown; said?: unknown; status?: unknown; next?: unknown; quiet?: unknown; number?: unknown; about?: unknown };
         let content: string;
         if (block.name === "give_hint") {
@@ -765,6 +874,7 @@ export async function coachTurn(
             await tellBlocked(state, step.id);
             speech.add(state.character.lines[state.language].notYet);
             hinted = true;
+            ended = true;
             content = "Said for you, in your voice, that it is not the moment. Add nothing about it. If they ask about it again or want more, call give_hint on the same ladder.";
           } else {
             const blocker = isReady(step, state.done) ? null : blockerOf(state.bundle.steps, step.id, state.done);
@@ -774,19 +884,40 @@ export async function coachTurn(
             } else {
               const alt = !blocker && typeof input.alt === "number" && Number.isInteger(input.alt) ? input.alt - 1 : null;
               const sameLadder = target && target.ladder.handle === aimed.handle ? target.cardId : null;
-              const result = await deliver(state, aimed, alt, input.answer === true, sameLadder, askedBy.discordId || null);
+              const result = await deliver(state, aimed, alt, input.answer === true && asksAnswer(asked), sameLadder, askedBy.discordId || null);
               if (result.ok) {
                 hinted = true;
+                emit({ type: "hint", text: result.text });
                 handed.push({ ladder: aimed, deliveryId: result.deliveryId });
                 if (sameLadder === null) cards.push(result.cardId);
                 const answered = state.held.find((entry) => entry.number === input.gap);
                 if (answered) await answer(answered.id, result.deliveryId);
+                ended = true;
                 content = "Handed over on the card. Add at most a few words of your own, and never repeat, explain or extend the hint.";
               } else {
                 if (result.violation) violations.push(result.violation);
                 content = result.reason;
               }
             }
+          }
+        } else if (block.name === "repeat_hint") {
+          const ladder = state.ladders.find((entry) => entry.handle === input.ladder);
+          const last = ladder ? state.givenLines.get(keyOf(ladder))?.at(-1) : undefined;
+          const onward = ladder && keyOf(ladder) === state.latest && state.latestSaid >= 2 && !hinted ? await deliver(state, ladder, null, false, null, askedBy.discordId || null) : null;
+          if (onward?.ok) {
+            hinted = true;
+            ended = true;
+            emit({ type: "hint", text: onward.text });
+            handed.push({ ladder: ladder!, deliveryId: onward.deliveryId });
+            cards.push(onward.cardId);
+            content = "It had been said twice already, so the next hint was handed over on a card instead. Add nothing.";
+          } else if (!last) content = "Nothing has been handed over on that ladder yet.";
+          else if (repeated) content = "Already said again in this reply.";
+          else {
+            repeated = true;
+            speech.add(last);
+            ended = true;
+            content = "Said again for you, word for word. Add nothing.";
           }
         } else if (block.name === "record_progress") {
           const ladder = state.ladders.find((entry) => entry.handle === input.ladder);
@@ -819,11 +950,13 @@ export async function coachTurn(
               const result = await deliver(state, chosen, null, false, null, askedBy.discordId || null);
               if (result.ok) {
                 hinted = true;
+                emit({ type: "hint", text: result.text });
                 handed.push({ ladder: chosen, deliveryId: result.deliveryId });
                 cards.push(result.cardId);
                 said.push(`Handed over the first hint of ${chosen.handle} on a card.`);
               } else said.push("Nothing else handed over.");
             }
+            ended = true;
             content = `${said.join(" ")} Your reply is complete: add nothing of your own.`;
           }
         } else if (block.name === "heads_up") {
@@ -846,6 +979,7 @@ export async function coachTurn(
             if (!inserted.length) content = "That heads-up was already given.";
             else {
               headsUpSaid = true;
+              ended = true;
               speech.add(text);
               content = "Said for you. Do not repeat it.";
             }
@@ -868,6 +1002,7 @@ export async function coachTurn(
           else if (hinted) content = "You already handed something over in this reply. Add nothing.";
           else {
             hinted = true;
+            ended = true;
             speech.add(await hold(state, askedBy.discordId, asked, typeof input.about === "string" ? input.about : "", recent));
             content = "Said for you in your voice, and recorded so the missing hint gets written. Your reply is complete: add nothing of your own.";
           }
@@ -878,14 +1013,17 @@ export async function coachTurn(
             round = true;
             state.roundAskedAt = new Date();
             await db.update(runs).set({ roundAskedAt: state.roundAskedAt }).where(eq(runs.id, runId));
+            ended = true;
             content = `Asked for you at the end of your reply: "${state.character.lines[state.language].round}". Do not ask it again.`;
           }
         } else content = `No tool named ${block.name}.`;
+        if (!ended) complete = false;
         results.push({ type: "tool_result", tool_use_id: block.id, content });
       }
       log.violations = violations.splice(0);
       caught.push(...log.violations);
       await logCall(runId, log);
+      if (complete) break;
       conversation.push({ role: "user", content: results });
     }
     if (round && hinted) await db.update(runs).set({ roundAskedAt: askedBefore }).where(eq(runs.id, runId));

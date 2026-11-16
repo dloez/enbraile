@@ -362,8 +362,8 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
   };
 }
 
-export async function postMessage(viewer: Viewer, runId: string, text: string): Promise<number> {
-  const [row] = await db.insert(messages).values({ runId, author: "member", discordId: viewer.discordId, name: viewer.name, text }).returning({ id: messages.id });
+export async function postMessage(viewer: Viewer, runId: string, text: string, spoken: boolean): Promise<number> {
+  const [row] = await db.insert(messages).values({ runId, author: "member", spoken, discordId: viewer.discordId, name: viewer.name, text }).returning({ id: messages.id });
   return row!.id;
 }
 

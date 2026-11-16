@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { type Context, Hono } from "hono";
 import { timing, wrapTime } from "hono/timing";
 import { bundleSchema, type Viewer } from "../../shared/bundle.js";
-import { asRevision, callLineSchema, coachVoiceSchema, historyImportSchema, messageSchema, ratingSchema, runImportSchema, runVoiceSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent } from "../../shared/runs.js";
+import { asRevision, callLineSchema, coachVoiceSchema, historyImportSchema, messageSchema, ratingSchema, runImportSchema, runVoiceSchema, startRunSchema, stepInSchema, voiceSchema, type ReplyEvent, type VoiceEvent } from "../../shared/runs.js";
 import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
@@ -24,31 +24,36 @@ const cursor = (value: string | undefined) => {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
 };
 
-function reply(runId: string, viewer: Viewer, ask: Ask): Response {
+function ndjson<T>(run: (send: (event: T) => void) => Promise<void>): Response {
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       let open = true;
-      const send = (event: ReplyEvent) => {
+      await run((event) => {
         if (!open) return;
         try {
           controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
         } catch {
           open = false;
         }
-      };
-      try {
-        const { coachTurn } = await import("./coach.js");
-        await coachTurn(runId, viewer, ask, send);
-      } catch (error) {
-        console.error("coach turn failed", error);
-        send({ type: "failed" });
-      }
-      send({ type: "done" });
+      });
       if (open) controller.close();
     },
   });
   return new Response(body, { status: 200, headers: { ...noStore, "content-type": "application/x-ndjson", "x-accel-buffering": "no" } });
+}
+
+function reply(runId: string, viewer: Viewer, ask: Ask): Response {
+  return ndjson<ReplyEvent>(async (send) => {
+    try {
+      const { coachTurn } = await import("./coach.js");
+      await coachTurn(runId, viewer, ask, send);
+    } catch (error) {
+      console.error("coach turn failed", error);
+      send({ type: "failed" });
+    }
+    send({ type: "done" });
+  });
 }
 
 function said(text: string): Response {
@@ -141,8 +146,15 @@ voice.post("/", async (c) => {
   if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
   const parsed = voiceSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
-  const turn = await voiceTurn(parsed.data.userId, parsed.data.text, parsed.data.word);
-  return c.json(turn, 200, noStore);
+  const { userId, text, word } = parsed.data;
+  return ndjson<VoiceEvent>(async (send) => {
+    try {
+      await voiceTurn(userId, text, word, send);
+    } catch (error) {
+      console.error("voice turn failed", error);
+    }
+    send({ type: "done" });
+  });
 });
 
 voice.post("/coach", async (c) => {
@@ -229,7 +241,7 @@ member.post("/runs/:id/messages", async (c) => {
     const ack = await postRevision(viewer, id, revision);
     return ack ? said(ack) : c.json({ error: "noSuchRun" }, 404, noStore);
   }
-  await postMessage(viewer, id, parsed.data.text);
+  await postMessage(viewer, id, parsed.data.text, false);
   return reply(id, viewer, { kind: "message", spoken: false });
 });
 
