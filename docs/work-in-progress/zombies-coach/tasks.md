@@ -1,5 +1,24 @@
 # Zombies Coach — Tasks
 
+## Speak Claude's step-ins and published answers in the call
+
+The owner notices that lines Claude sends as Cari are not read aloud, so the group may miss them when playing by voice (2026-11-16). Only replies to a spoken wake word are spoken, since they return to the bot in `POST /api/voice`'s answer; a step-in (`POST /api/claude/runs/:id/say`, `npm run say`) and a held question answered at once on publish post a coach line the bot never hears of.
+
+**Do:**
+- [ ] When the site posts a coach line that is not the answer to a voice turn (a step-in, a gap answered on publish), and the bot holds that attempt's call, the site asks the bot to say it: a new bot route beside `/zombies/join`, behind `INTERNAL_SECRET`, taking the text and the attempt's voice, which speaks with `hearing.say(text, { voice })`; the text spoken is the line plus any hint card it carries, as voice replies already are.
+- [ ] Whether replies to typed lines are also spoken while the coach is in the call is the build's choice, recorded (the owner asked for Claude's lines; typed chatter may not want a voice).
+- [ ] A failed or slow bot call never delays or fails the post; it is logged.
+- [ ] Docs: `docs/zombies/site/explanation/site.md` (Voice, the step-in) and `docs/zombies/bot/explanation/bot.md` (the new route).
+
+**Acceptance:**
+- Claude-run: `npm run gate` in `zombies/site` and `home/bot`; locally with a fake bot, a step-in and a publish-time gap answer each reach the bot's say route with the attempt's voice, and with the bot down the post still succeeds.
+- Human-run: during a call with the coach in, Claude steps in from the watch session and the group hears it.
+- Reuse: `bot()` (`zombies/site/api/_lib/bot.ts`), `stepIn` (`api/_lib/coach.ts`), the module's `hearing.say` with voice.
+- Neighbors: `POST /api/voice`.
+- Forbidden: speaking in a call the module does not hold; a post that waits on the bot.
+
+**Touches:** `zombies/site/`, `zombies/bot/`, `docs/zombies/`
+
 ## Time the bot's names lookup in production and set its limit
 
 The site's names lookup gives the bot 10 s for Discord's forced member fetches (`lookupMs` in `zombies/site/api/_lib/names.ts`), while a reply waits at most 1.5 s; the 10 s is a starting value, since the fetches could not be timed without the real bot ([The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions), "Names never go back to stored ones on an open page"). Each lookup logs `bot names` with its count of IDs, its time in ms and whether the bot answered.
