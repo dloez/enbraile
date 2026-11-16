@@ -6,6 +6,7 @@ export type Joined = { channelId: string } | { error: "notInVoice" | "noAccess" 
 
 const OWNER = "zombies";
 const SITE_TIMEOUT_MS = 25_000;
+const AVATAR = { size: 128, extension: "webp" } as const;
 
 const siteUrl = (process.env.ZOMBIES_URL ?? "https://zombies.enbraile.vip").replace(/\/$/, "");
 const secret = process.env.INTERNAL_SECRET ?? "";
@@ -46,10 +47,14 @@ export function leave(): void {
   keepTranscripts();
 }
 
-export async function namesOf(ids: string[]): Promise<Record<string, string>> {
+export async function namesOf(ids: string[]): Promise<{ names: Record<string, string>; avatars: Record<string, string> }> {
   const server = await guild();
-  const found = await Promise.all(ids.map((id) => server.members.fetch({ user: id, force: true }).then((member) => [id, member.displayName] as const, () => null)));
-  return Object.fromEntries(found.filter((entry) => entry !== null));
+  const found = await Promise.all(ids.map((id) => server.members.fetch({ user: id, force: true }).then((member) => ({ id, name: member.displayName, avatar: member.avatarURL(AVATAR) ?? member.user.avatarURL(AVATAR) }), () => null)));
+  const members = found.filter((entry) => entry !== null);
+  return {
+    names: Object.fromEntries(members.map((member) => [member.id, member.name])),
+    avatars: Object.fromEntries(members.flatMap((member) => (member.avatar ? [[member.id, member.avatar]] : []))),
+  };
 }
 
 export const here = () => (voice.holding(OWNER) ? voice.channel() : null);

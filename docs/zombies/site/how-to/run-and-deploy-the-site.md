@@ -41,7 +41,7 @@ Copy `.env.example` to `.env.local` and fill it in:
 | `DEV_USER_ID` | One or more members, comma-separated, each `<id>` or `<id>:<name>` (e.g. `111:Marina,222:Teo`), to be signed in without the root site |
 | `ANTHROPIC_API_KEY` | An Anthropic API key for Cari; without one she stays silent |
 | `COACH_MODEL` | The model Cari runs on; `claude-haiku-5-5` when empty |
-| `BOT_URL` | Where the bot's API is, for bringing Cari into a call and showing members by their current Discord names: `http://localhost:8080` for a local bot; without it the run page offers no call and members show under their stored names |
+| `BOT_URL` | Where the bot's API is, for bringing Cari into a call and showing members by their current Discord names and avatars: `http://localhost:8080` for a local bot; without it the run page offers no call and members show under their stored names and initials |
 | `INTERNAL_SECRET` | The bot's `INTERNAL_SECRET`, the bearer token both ways between the site and the bot; any long random string, the same in the bot's `.env.local`, which sets `ZOMBIES_URL=http://localhost:8789` |
 
 ### 4. Migrate

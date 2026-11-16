@@ -10,13 +10,22 @@ const pointFreshMs = 15000;
 const pages = new Map<string, { page: unknown; at: number }>();
 const flying = new Map<string, Promise<unknown>>();
 const names = new Map<string, string>();
+const avatars = new Map<string, string | null>();
 
 export function learn(people: Person[]): void {
-  for (const person of people) if (person.who && person.live) names.set(person.who, person.name);
+  for (const person of people)
+    if (person.who && person.live) {
+      names.set(person.who, person.name);
+      avatars.set(person.who, person.avatar);
+    }
 }
 
 export function nameOf(person: Person): string {
   return (person.who && names.get(person.who)) || person.name;
+}
+
+export function avatarOf(person: Person): string | null {
+  return person.who && avatars.has(person.who) ? (avatars.get(person.who) ?? null) : person.avatar;
 }
 
 export const mapsSource: Source<MapsPage> = { key: "maps", fetch: fetchMaps };

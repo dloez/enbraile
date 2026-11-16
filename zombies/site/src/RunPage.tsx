@@ -7,7 +7,7 @@ import { mapPath, runPath } from "./route";
 import { SurveyZone } from "./art";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
 import { forget, known, learn, load as fetchPage, openFreshMs, runSource, nameOf } from "./store";
-import { Arrow, Chip, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, type RunLink, useFit } from "./ui";
+import { Arrow, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
 const callPollMs = 10000;
@@ -72,7 +72,7 @@ function JoinView({ sheet, arrive, onJoined }: { sheet: RunSheet; arrive: boolea
               <ul className="mem">
                 {sheet.members.map((member, index) => (
                   <li key={index}>
-                    <Chip name={nameOf(member)} you={member.you} />
+                    <PersonChip person={member} you={member.you} />
                     {nameOf(member)}
                     {index === starter && <span className="m wide"> {t.startedIt}</span>}
                   </li>
@@ -159,13 +159,14 @@ function Slip({
   );
 }
 
-function Line({ at, cari, name, className, children }: { at: string; cari: boolean; name: string; className: string; children: ReactNode }) {
+function Line({ at, cari, name, person, className, children }: { at: string; cari: boolean; name: string; person?: Member; className: string; children: ReactNode }) {
   const time = clock(at);
   return (
     <div className={className}>
       <span className="t">{time}</span>
       <div>
         <p className={cari ? "who who-cari" : "who"}>
+          {person && <PersonChip person={person} you={person.you} small />}
           {name}
           <span className="t t-in">{time}</span>
         </p>
@@ -184,6 +185,7 @@ function Row({ message, card, old, slip }: { message: Message; card: Card | unde
         <span className="t">{time}</span>
         <div>
           <p className="who who-rev">
+            <PersonChip person={message} you={message.you} small />
             {nameOf(message)}
             <span className="t t-in">{time}</span>
             <span className="tag">{t.revision}</span>
@@ -195,7 +197,7 @@ function Row({ message, card, old, slip }: { message: Message; card: Card | unde
     );
   }
   return (
-    <Line at={message.at} cari={cari} name={cari ? "Cari" : nameOf(message)} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
+    <Line at={message.at} cari={cari} name={cari ? "Cari" : nameOf(message)} person={cari ? undefined : message} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
       <p className="msg">{message.text}</p>
       {card && slip(card)}
     </Line>
@@ -516,6 +518,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       name: you?.name ?? "",
       who: you?.who ?? null,
       live: you?.live ?? false,
+      avatar: you?.avatar ?? null,
       you: true,
       text: revision ?? text,
       at: new Date().toISOString(),
@@ -586,7 +589,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           <ul className="mem">
             {members.map((member, index) => (
               <li key={index}>
-                <Chip name={nameOf(member)} you={member.you} />
+                <PersonChip person={member} you={member.you} />
                 {nameOf(member)}
                 {member.you && <span className="y"> {t.you}</span>}
               </li>

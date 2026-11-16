@@ -1,10 +1,10 @@
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { PublishedMap } from "../shared/bundle";
-import type { Member, RunLink } from "../shared/runs";
+import type { Member, Person, RunLink } from "../shared/runs";
 import { MapArt } from "./art";
 import { t } from "./i18n";
 import { navigate } from "./route";
-import { prefetch, nameOf } from "./store";
+import { avatarOf, prefetch, nameOf } from "./store";
 
 export type { RunLink };
 
@@ -13,19 +13,31 @@ export function initials(name: string): string {
   return (letters || name).slice(0, 2).toUpperCase();
 }
 
-export function Chip({ name, you }: { name: string; you?: boolean }) {
+function Avatar({ src }: { src: string }) {
+  const [shown, setShown] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  if (failed === src) return null;
+  return <img className={shown === src ? "av on" : "av"} src={src} alt="" referrerPolicy="no-referrer" onLoad={() => setShown(src)} onError={() => setFailed(src)} />;
+}
+
+function Chip({ name, you, avatar, small }: { name: string; you?: boolean; avatar?: string | null; small?: boolean }) {
   return (
-    <span className={you ? "cs cs-me" : "cs"} title={name}>
+    <span className={["cs", you && "cs-me", small && "cs-sm"].filter(Boolean).join(" ")} title={name}>
       {initials(name)}
+      {avatar && <Avatar src={avatar} />}
     </span>
   );
+}
+
+export function PersonChip({ person, you, small }: { person: Person; you?: boolean; small?: boolean }) {
+  return <Chip name={nameOf(person)} you={you} avatar={avatarOf(person)} small={small} />;
 }
 
 export function Chips({ members }: { members: Member[] }) {
   return (
     <span className="chips">
       {members.map((member, index) => (
-        <Chip key={index} name={nameOf(member)} you={member.you} />
+        <PersonChip key={index} person={member} you={member.you} />
       ))}
     </span>
   );

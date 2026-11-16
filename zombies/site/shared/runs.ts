@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { languages, type Language, type PublishedMap, type Viewer, type Zone } from "./bundle.js";
 
-export type Person = { name: string; who: string | null; live: boolean };
+export type Person = { name: string; who: string | null; live: boolean; avatar: string | null };
 
 export type Member = Person & { you: boolean };
 
@@ -37,6 +37,7 @@ export type Message = {
   name: string;
   who: string | null;
   live: boolean;
+  avatar: string | null;
   you: boolean;
   text: string;
   at: string;

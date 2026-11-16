@@ -298,7 +298,7 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
 
 async function historyOf(runId: string): Promise<Message[]> {
   const rows = await db.select().from(runHistory).where(eq(runHistory.runId, runId)).orderBy(asc(runHistory.saidAt), asc(runHistory.id));
-  return rows.map((row) => ({ id: -1 - row.id, author: row.author, revision: null, name: row.name, who: null, live: false, you: false, text: row.text, at: row.saidAt.toISOString(), card: null }));
+  return rows.map((row) => ({ id: -1 - row.id, author: row.author, revision: null, name: row.name, who: null, live: false, avatar: null, you: false, text: row.text, at: row.saidAt.toISOString(), card: null }));
 }
 
 export async function transcript(viewer: Viewer, runId: string, after: number, rungsAfter: number): Promise<Transcript> {

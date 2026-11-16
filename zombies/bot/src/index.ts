@@ -43,7 +43,7 @@ const route: Route = async (method, path, _params, input, userId) => {
   if (path === "names" && method === "POST") {
     const ids = Array.isArray(input.ids) ? [...new Set(input.ids.filter((id): id is string => typeof id === "string" && /^\d{1,20}$/.test(id)))] : [];
     if (!ids.length || ids.length > MAX_NAMES) return [{ error: "badRequest" }, 400];
-    return [{ names: await namesOf(ids) }];
+    return [await namesOf(ids)];
   }
   if (path === "leave" && method === "POST") {
     leave();

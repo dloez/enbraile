@@ -37,24 +37,6 @@ The site's names lookup gives the bot 10 s for Discord's forced member fetches (
 
 **Touches:** `zombies/site/api/_lib/names.ts`, `docs/zombies/site/explanation/site.md`
 
-## Show players' Discord avatars
-
-The owner wants players' real Discord icons (2026-11-16). The bot's `POST /zombies/names` already fetches each member from Discord by ID; their avatar comes with it. The site shows members as call-sign tags today.
-
-**Do:**
-- [ ] The names route also returns each member's server avatar URL (or account avatar when they have none); the site keeps it with the name, with the same cache and fallback.
-- [ ] Show the avatar where players appear: the rail's members, the map view's attempt rows, and beside each player line in the chat, drawn in the design system's look (round, at the tag's size, the call-sign tag as the fallback when there is no avatar or the bot is down); update `docs/zombies/site/reference/design-system.md`.
-- [ ] Docs: the names route in `docs/zombies/bot/explanation/bot.md` and the site doc.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `home/bot` and `zombies/site`; locally with a fake bot, avatars show in the rail, the attempt rows and the chat, and with the bot stopped the tags return; no layout shift when an avatar loads.
-- Human-run: the owner sees both players' Discord icons in the Blood of the Dead attempt.
-- Reuse: `currentNames` (`zombies/site/api/_lib/names.ts`) and `namesOf` (`zombies/bot/src/call.ts`).
-- Neighbors: the root site's avatar (`/api/me` returns `image`).
-- Forbidden: a page that waits on avatars; Discord tokens on the site.
-
-**Touches:** `zombies/bot/`, `zombies/site/`, `docs/zombies/`
-
 ## Decide whether hints get each voice's own wording
 
 **Needs the author:**

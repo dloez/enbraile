@@ -10,16 +10,24 @@ const keptMs = 60_000;
 const downMs = 30_000;
 const batch = 50;
 
-const known = new Map<string, { name: string | null; until: number }>();
+type Found = { names: Record<string, string>; avatars: Record<string, string> };
+
+const known = new Map<string, { name: string | null; avatar: string | null; until: number }>();
 const asking = new Map<string, Promise<void>>();
 let downUntil = 0;
 
-async function ask(ids: string[]): Promise<Record<string, string> | null> {
+const strings = (values: Record<string, unknown> | undefined, valid: (value: string) => boolean): Record<string, string> =>
+  Object.fromEntries(Object.entries(values ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === "string" && valid(entry[1])));
+
+async function ask(ids: string[]): Promise<Found | null> {
   try {
     const response = await bot("names", lookupMs, { method: "POST", body: { ids } });
     if (!response?.ok) return null;
-    const { names } = (await response.json()) as { names?: Record<string, unknown> };
-    return Object.fromEntries(Object.entries(names ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim() !== ""));
+    const { names, avatars } = (await response.json()) as { names?: Record<string, unknown>; avatars?: Record<string, unknown> };
+    return {
+      names: strings(names, (name) => name.trim() !== ""),
+      avatars: strings(avatars, (avatar) => avatar.startsWith("https://cdn.discordapp.com/")),
+    };
   } catch (error) {
     console.error("bot names", (error as Error).message);
     return null;
@@ -36,15 +44,16 @@ async function keep(id: string, name: string): Promise<void> {
 
 async function lookUp(chunk: string[]): Promise<void> {
   const started = Date.now();
-  const names = await ask(chunk);
+  const found = await ask(chunk);
   const now = Date.now();
-  console.log("bot names", { ids: chunk.length, ms: now - started, answered: names !== null });
-  if (!names) {
+  console.log("bot names", { ids: chunk.length, ms: now - started, answered: found !== null });
+  if (!found) {
     downUntil = now + downMs;
     return;
   }
+  const { names, avatars } = found;
   const changed = chunk.filter((id) => names[id] && known.get(id)?.name !== names[id]);
-  for (const id of chunk) known.set(id, { name: names[id] ?? null, until: now + keptMs });
+  for (const id of chunk) known.set(id, { name: names[id] ?? null, avatar: (names[id] && avatars[id]) || null, until: now + keptMs });
   await Promise.all(changed.map((id) => keep(id, names[id]!))).catch((error: Error) => console.error("keep names", error.message));
 }
 
@@ -71,6 +80,6 @@ export async function currentNames(ids: Array<string | null>): Promise<Names> {
   const at = Date.now();
   return (discordId, stored) => {
     const entry = discordId ? known.get(discordId) : undefined;
-    return entry && entry.until > at && entry.name ? { name: entry.name, who: discordId, live: true } : { name: stored, who: discordId, live: false };
+    return entry && entry.until > at && entry.name ? { name: entry.name, who: discordId, live: true, avatar: entry.avatar } : { name: stored, who: discordId, live: false, avatar: null };
   };
 }
