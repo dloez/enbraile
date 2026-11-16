@@ -87,6 +87,14 @@ npm run unpublish -- <game>/<map>
 
 It prints the counts of versions, runs and images deleted, or `noSuchMap` when the map is not published; nothing undoes it but Neon's point-in-time restore ([The Zombies Site → Map Bundles](../explanation/site.md#map-bundles)). Like `publish`, it reads `ZOMBIES_URL` and `CLAUDE_TOKEN`.
 
+To remove one attempt and keep its map, save its log first (`npm run runs -- <id>`, [step 7](#7-read-a-run)), then:
+
+```sh
+npm run delete-run -- <id>
+```
+
+It prints the attempt's map and its count of chat lines, or `noSuchRun`; nothing undoes it but Neon's point-in-time restore.
+
 ### 7. Read a run
 
 ```sh
@@ -199,7 +207,7 @@ Then publish the real maps to production, with the token read from 1Password int
 CLAUDE_TOKEN="$(op read 'op://Private/zombies claude token/password')" ZOMBIES_URL=https://zombies.enbraile.vip npm run publish -- ../maps/<game>/<map>/
 ```
 
-`unpublish` runs against production the same way:
+`unpublish` and `delete-run` run against production the same way (or through `.claude/skills/watch-run/prod`):
 
 ```sh
 CLAUDE_TOKEN="$(op read 'op://Private/zombies claude token/password')" ZOMBIES_URL=https://zombies.enbraile.vip npm run unpublish -- <game>/<map>

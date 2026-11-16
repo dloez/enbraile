@@ -72,6 +72,18 @@ export async function imageOf(digest: string): Promise<{ type: ImageType; bytes:
 
 const runTables = [feedback, audits, gaps, deliveries, hintCards, headsUpsGiven, runSteps, coachCalls, runKnowledge, callLines, runHistory, messages, runMembers];
 
+export async function deleteRun(id: string): Promise<{ game: string; map: string; lines: number } | undefined> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`coach/${id}`}))`);
+    const [run] = await tx.select({ game: runs.game, map: runs.map }).from(runs).where(eq(runs.id, id));
+    if (!run) return undefined;
+    const lines = await tx.select({ id: messages.id }).from(messages).where(eq(messages.runId, id));
+    for (const table of runTables) await tx.delete(table).where(eq(table.runId, id));
+    await tx.delete(runs).where(eq(runs.id, id));
+    return { game: run.game, map: run.map, lines: lines.length };
+  });
+}
+
 export async function deleteMap(game: string, map: string): Promise<{ versions: number; runs: number; images: number } | undefined> {
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`${game}/${map}`}))`);

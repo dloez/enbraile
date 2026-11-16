@@ -7,7 +7,7 @@ import type { Ask } from "./coach.js";
 import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { imageFacts, maxImageBytes } from "../../shared/image.js";
-import { deleteMap, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
+import { deleteMap, deleteRun, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
 import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 import { bringCoach, callState, coachVoice, keepCallLine, voiceTurn } from "./voice.js";
@@ -102,6 +102,11 @@ claude.put("/images/:digest", async (c) => {
 });
 
 claude.get("/runs", async (c) => c.json({ runs: await runList() }, 200, noStore));
+
+claude.delete("/runs/:id", async (c) => {
+  const deleted = await deleteRun(c.req.param("id"));
+  return deleted ? c.json(deleted, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
+});
 
 claude.post("/runs", async (c) => {
   const parsed = runImportSchema.safeParse(await c.req.json().catch(() => null));
