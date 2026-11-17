@@ -2790,12 +2790,6 @@ a:hover {
   background-position: -1px -1px;
 }
 
-.rms-f {
-  padding: var(--sp-3) var(--sp-6) var(--sp-5);
-  border-top: 1px solid var(--line);
-  font-size: 14px;
-  color: var(--mute);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .rm-fresh .rm-dot,
@@ -2825,8 +2819,7 @@ a:hover {
   }
 
   .rms-h,
-  .rms-body,
-  .rms-f {
+  .rms-body {
     padding-left: var(--sp-4);
     padding-right: var(--sp-4);
   }
@@ -2954,9 +2947,3 @@ a:hover {
   background-position: -1px -1px;
 }
 
-.road-col-f {
-  padding: var(--sp-3) var(--sp-6) var(--sp-5);
-  border-top: 1px solid var(--line);
-  font-size: 14px;
-  color: var(--mute);
-}

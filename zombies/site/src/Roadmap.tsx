@@ -178,7 +178,6 @@ export function RoadmapColumn({ map, fresh, language }: { map: Roadmap | null; f
         <h2 className="cond">{map?.beaten ? t.roadmapBeaten : t.roadmapTitle}</h2>
       </div>
       <div className="road-col-b" ref={body}>{map && map.nodes.length ? <RoadmapGraph map={map} fresh={fresh} language={language} /> : <p className="state rmp-empty">{t.roadmapEmpty}</p>}</div>
-      <p className="road-col-f">{t.roadmapFix}</p>
     </aside>
   );
 }
@@ -202,7 +201,6 @@ export function RoadmapSheet({ map, fresh, language, onClose }: { map: Roadmap |
           </button>
         </div>
         <div className="rms-body">{map && map.nodes.length ? <RoadmapGraph map={map} fresh={fresh} language={language} /> : <p className="state">{t.roadmapEmpty}</p>}</div>
-        <p className="rms-f">{t.roadmapFix}</p>
       </div>
     </dialog>
   );
