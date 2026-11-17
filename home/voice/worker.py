@@ -402,7 +402,7 @@ class Worker:
         for index, spoken in enumerate(words):
             matched = wake(spoken, self.triggers)
             if matched:
-                rest = " ".join(words[index + 1 :]).strip(" ,.;:¿?¡!")
+                rest = " ".join(words[index + 1 :]).lstrip(" ,.;:")
                 if len(plain(rest)) < 2:
                     self.pending[user] = (matched, now)
                     return matched, None
