@@ -1,37 +1,5 @@
 # Zombies Coach — Tasks
 
-## Decide whether Kowakujo's zones may come from a guide site's marker data
-
-Kowakujo's survey image is unlabeled, so on 2026-11-17 prepare could place a zone on only 13 of its level 3 and 4 rungs: 76 that name a place still show no map (53 single spots that cannot be found on the image, 23 multi-place ones with a spot like that among them). The zone agent found a guide publisher's interactive map with marker data that would locate most of them, and its fetch was denied by the session's permissions, so it was not retried. Blood of the Dead has 2 such rungs left.
-
-**Needs the author:**
-- May prepare fetch that publisher's marker data (or a labeled overhead map) into the map's gitignored `sources/` to place these zones, or do they stay without a map?
-
-**Acceptance:**
-- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md`; if yes, the remaining rungs placed and blind-checked as `research.md` 3b says, `compile` printing no zones warning, and the map published.
-- Human-run: none.
-- Reuse: `research.md` 3b, the `prod` wrapper.
-- Neighbors: none.
-- Forbidden: fetching the marker data before this is answered; map content in a tracked file.
-
-**Touches:** `zombies/maps/` (gitignored), `docs/zombies/site/explanation/site.md`
-
-## Decide whether the call's transcripts are still kept
-
-The bot sends every line said in the call while the coach is in it, and the site stores each in `call_lines` (1,476 on the latest production attempt). Since 2026-11-17 no route returns them, so nothing reads them ([The Zombies Site → Voice](../../zombies/site/explanation/site.md#voice)), but they are still collected, and the owner raised the call as a privacy matter.
-
-**Needs the author:**
-- Keep collecting call lines (for nothing today), stop collecting them (the bot stops sending, the site drops the route and the table), and delete the ones stored?
-
-**Acceptance:**
-- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md` and `docs/zombies/bot/explanation/bot.md`; if they go, `npm run gate` in `zombies/site` and `home/bot` with the route, table and `hearing.onTranscript` handler removed and a migration dropping the table.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: "Claude Code never reads the call's transcriptions" in `site.md`'s Decisions.
-- Forbidden: deleting stored lines before this is answered.
-
-**Touches:** `zombies/site/api/_lib/`, `zombies/site/drizzle/`, `zombies/bot/src/call.ts`, `docs/zombies/`
-
 ## Tell a rung that cannot be placed from one that gives no place
 
 `zones.json`'s `null` means a rung gives no place, and `compile` stays quiet about it; the 2026-11-17 prepares also used it for rungs whose spot could not be found on the survey image (Kowakujo's 53 single spots and 23 multi-place rungs, two of Blood of the Dead's), so those name a place and show no map without any warning.
@@ -65,22 +33,21 @@ Both 2026-11-17 zone agents found files in their shared scratch folder overwritt
 
 **Touches:** `zombies/maps/` (gitignored)
 
-## Time a spoken step-in in a call and draw the phone's voice bar and queue
+## Draw the phone's voice bar and queue on the canvas
 
-The bot now speaks Claude's lines a sentence at a time ([The Zombies Bot Module](../../zombies/bot/explanation/bot.md)), but how soon a step-in is heard has not been measured, and the canvas has no phone board for the redrawn voice bar or the coach queue, while its RunZone boards still draw the old red on-air panel.
+The canvas has no phone board for the redrawn voice bar or the coach queue, and its RunZone boards still draw the old red on-air panel ([Site Design System](../../zombies/site/reference/design-system.md)).
 
 **Do:**
-- [ ] On a night with the coach in the call, time a step-in from `npm run say` to its first spoken word in Coach's and Richtofen's voices, and record it in the Speaking Claude's lines bullet of `site.md`.
-- [ ] Draw the phone attempt with the on-air bar and the queue on the canvas, as `v3/RunPhoneOnAir.dc.html`, and copy it into `zombies/site/design/`; note in the design-system doc that the RunZone boards' panel is superseded.
+- [ ] Draw the phone attempt with the on-air bar and the queue on the canvas, as `v3/RunPhoneOnAir.dc.html`, copy it into `zombies/site/design/`, and note in the design-system doc that the RunZone boards' panel is superseded.
 
 **Acceptance:**
-- Claude-run: the figure and how it was taken are in `site.md`; the board is on the canvas and in the repo.
-- Human-run: the group is in the call during the step-in.
-- Reuse: the `bot say` and `zombies voice timing` log lines.
-- Neighbors: "Time the bot's names lookup in production and set its limit".
-- Forbidden: a figure taken without a real call.
+- Claude-run: the board is on the canvas and in the repo, and the design-system doc lists it.
+- Human-run: none.
+- Reuse: the built `.vb` styles in `src/index.css`.
+- Neighbors: `v3/RunRoadmapWide.dc.html`.
+- Forbidden: any real map's content.
 
-**Touches:** `docs/zombies/`, `zombies/site/design/`
+**Touches:** `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
 
 ## Time the bot's names lookup in production and set its limit
 
