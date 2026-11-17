@@ -67,7 +67,7 @@ export type GapContext = {
 
 export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice; queue: Queued[]; roadmap: string; closed: boolean };
 
-export type RoadNode = { key: string; label: string | null; optional: boolean; done: boolean; at: string | null; by: Person | null; after: string[] };
+export type RoadNode = { key: string; label: string | null; optional: boolean; done: boolean; earlier: boolean; at: string | null; by: Person | null; after: string[] };
 
 export type Roadmap = { nodes: RoadNode[]; beaten: boolean };
 

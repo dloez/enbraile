@@ -111,6 +111,7 @@ export function RoadmapGraph({ map, fresh, language, compact }: { map: Roadmap; 
                   {node.by && <PersonChip person={node.by} you={false} small />}
                   {node.by && <span className="rm-by">{nameOf(node.by)}</span>}
                   {node.at && <time className="rm-at">{clock(node.at)}</time>}
+                  {node.earlier && <span className="rm-tag">{t.doneEarlier}</span>}
                   {node.optional && <span className="rm-tag">{t.sideTrail}</span>}
                 </>
               ) : (

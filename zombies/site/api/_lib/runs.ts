@@ -1,9 +1,10 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import { spotsOf, type Bundle, type Language, type PublishedMap, type Viewer } from "../../shared/bundle.js";
 import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Person, Queued, Rating, RoadNode, Roadmap, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
 import { characterOf, defaultVoice, type Voice } from "../../shared/voices.js";
 import { db } from "./db.js";
+import { requireEnv } from "./env.js";
 import { publishedMaps } from "./maps.js";
 import { currentNames } from "./names.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
@@ -241,8 +242,8 @@ export async function canRead(viewer: Viewer, runId: string): Promise<boolean> {
 export async function closeRun(viewer: Viewer, runId: string): Promise<boolean> {
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`coach/${runId}`}))`);
-    const [run] = await tx.select({ closedAt: runs.closedAt }).from(runs).where(eq(runs.id, runId));
-    if (!run || run.closedAt) return false;
+    const [run] = await tx.select({ closedAt: runs.closedAt, busyUntil: runs.coachBusyUntil }).from(runs).where(eq(runs.id, runId));
+    if (!run || run.closedAt || (run.busyUntil && run.busyUntil > new Date())) return false;
     const now = new Date();
     await tx.update(runs).set({ closedAt: now, closedBy: viewer.discordId, closedByName: viewer.name }).where(eq(runs.id, runId));
     await tx.update(runMembers).set({ leftAt: now }).where(and(eq(runMembers.runId, runId), activeMember));
@@ -463,7 +464,12 @@ export async function roadmap(runId: string): Promise<Roadmap | null> {
   const beaten = row.steps.some((step) => !step.optional) && row.steps.every((step) => step.optional || done.has(step.id));
   const shown = row.steps.filter((step) => beaten || done.has(step.id));
   const ids = new Set(shown.map((step) => step.id));
-  const key = (stepId: string) => createHash("sha256").update(`${runId}/${stepId}`).digest("hex").slice(0, 12);
+  const key = (stepId: string) => createHmac("sha256", requireEnv("CLAUDE_TOKEN")).update(`${runId}/${stepId}`).digest("hex").slice(0, 12);
+  const earlier = new Set(
+    progress.flatMap((entry) =>
+      withRequires(row.steps, entry.stepId).filter((required) => required !== entry.stepId && done.get(required)?.doneAt?.getTime() === entry.doneAt?.getTime()),
+    ),
+  );
   const named = await currentNames(progress.map((entry) => entry.doneBy));
   const nodes = shown.map((step): RoadNode & { order: number } => {
     const entry = done.get(step.id);
@@ -473,8 +479,9 @@ export async function roadmap(runId: string): Promise<Roadmap | null> {
       label,
       optional: step.optional,
       done: entry !== undefined,
-      at: entry?.doneAt?.toISOString() ?? null,
-      by: entry?.doneBy ? named(entry.doneBy, entry.doneByName ?? "") : null,
+      earlier: earlier.has(step.id),
+      at: earlier.has(step.id) ? null : (entry?.doneAt?.toISOString() ?? null),
+      by: entry?.doneBy && !earlier.has(step.id) ? named(entry.doneBy, entry.doneByName ?? "") : null,
       after: step.requires.filter((required) => ids.has(required)).map(key),
       order: entry?.doneAt?.getTime() ?? Number.MAX_SAFE_INTEGER,
     };
