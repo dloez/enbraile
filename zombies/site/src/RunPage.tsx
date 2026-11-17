@@ -185,7 +185,7 @@ function Slip({ card, pinned, still, name, language, art, busy, rating, onMore, 
         </span>
       </div>
       <Rungs rungs={card.rungs} art={art} language={language} />
-      {!pinned && !still && <SlipFoot card={card} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />}
+      {!still && <SlipFoot card={card} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />}
     </div>
   );
 }
