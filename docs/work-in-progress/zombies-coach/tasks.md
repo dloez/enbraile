@@ -5,7 +5,6 @@
 `zones.json`'s `null` means a rung gives no place, and `compile` stays quiet about it; the 2026-11-17 prepares also used it for rungs whose spot could not be found on the survey image (Kowakujo's 53 single spots and 23 multi-place rungs, two of Blood of the Dead's), so those name a place and show no map without any warning.
 
 **Do:**
-- [ ] Let `zones.json` mark a rung `"unplaced"`, which `compile` counts in a warning of its own and which carries no zone, and say in `research.md` 3b to use it instead of `null` for a spot that cannot be found.
 - [ ] In a subagent per map that reports addresses and counts only, turn the low-confidence `null`s into `"unplaced"`.
 
 **Acceptance:**

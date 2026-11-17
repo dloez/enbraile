@@ -155,7 +155,7 @@ When there is a `survey.jpg`, a subagent with the dossier reads every level 3 ru
 { "step 5 L3": { "x": 0.42, "y": 0.61, "rx": 0.018, "ry": 0.021 }, "step 5 L4": null }
 ```
 
-A rung that names several places (alternatives, or a set to visit) takes a list of up to eight ellipses instead of one, all drawn in one crop: `"step 7 L3": [{ "x": 0.2, "y": 0.4, "rx": 0.015, "ry": 0.018 }, { "x": 0.7, "y": 0.3, "rx": 0.015, "ry": 0.018 }]`. Mark `null` only a rung that gives no place, or whose spot no source lets you place with confidence; count the latter apart and report them, since they still read as a broken map.
+A rung that names several places (alternatives, or a set to visit) takes a list of up to eight ellipses instead of one, all drawn in one crop: `"step 7 L3": [{ "x": 0.2, "y": 0.4, "rx": 0.015, "ry": 0.018 }, { "x": 0.7, "y": 0.3, "rx": 0.015, "ry": 0.018 }]`. Mark `null` only a rung that gives no place. A rung that names a place you cannot find on the survey image or in any source is `"unplaced"`, which `compile` keeps warning about, since it still reads as a broken map.
 
 `compile` warns with the addresses of every level 3 or 4 rung and Alt that has neither, so prepare is done only when that warning is gone.
 
