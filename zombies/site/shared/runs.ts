@@ -44,7 +44,10 @@ export type Message = {
   text: string;
   at: string;
   card: number | null;
+  spoken: boolean;
 };
+
+export type Queued = { name: string; who: string | null; live: boolean; avatar: string | null; you: boolean; spoken: boolean; text: string | null; answering: boolean; at: string };
 
 export type Survey = { digest: string; width: number; height: number };
 
@@ -60,7 +63,7 @@ export type GapContext = {
   recent: string[];
 };
 
-export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice };
+export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice; queue: Queued[] };
 
 export type RunEvent = { id: number; at: string } & (
   | { kind: "line" | "coach"; name: string; text: string; cards: number[]; by: "claude" | null }
@@ -99,7 +102,7 @@ export const callLineSchema = z.object({
 
 export type CallLine = z.infer<typeof callLineSchema>;
 
-export type ReplyEvent = { type: "text"; text: string } | { type: "hint"; text: string } | { type: "failed" } | { type: "done" };
+export type ReplyEvent = { type: "text"; text: string } | { type: "hint"; text: string } | { type: "failed" } | { type: "busy" } | { type: "done" };
 
 export type VoiceEvent = { type: "voice"; voice: Voice } | { type: "say"; text: string } | { type: "done" };
 

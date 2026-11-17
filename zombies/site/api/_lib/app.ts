@@ -29,6 +29,7 @@ function ndjson<T>(run: (send: (event: T) => void) => Promise<void>): Response {
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       let open = true;
+      controller.enqueue(encoder.encode("\n"));
       await run((event) => {
         if (!open) return;
         try {
@@ -43,11 +44,12 @@ function ndjson<T>(run: (send: (event: T) => void) => Promise<void>): Response {
   return new Response(body, { status: 200, headers: { ...noStore, "content-type": "application/x-ndjson", "x-accel-buffering": "no" } });
 }
 
-function reply(runId: string, viewer: Viewer, ask: Ask): Response {
+function reply(runId: string, viewer: Viewer, ask: Ask, asking: { text: string | null; before?: () => Promise<void> }): Response {
   return ndjson<ReplyEvent>(async (send) => {
     try {
       const { coachTurn } = await import("./coach.js");
-      await coachTurn(runId, viewer, ask, send);
+      const ended = await coachTurn(runId, viewer, ask, send, { before: asking.before, asking: { text: asking.text, spoken: false } });
+      if (ended === "busy") send({ type: "busy" });
     } catch (error) {
       console.error("coach turn failed", error);
       send({ type: "failed" });
@@ -246,8 +248,8 @@ member.post("/runs/:id/messages", async (c) => {
     const ack = await postRevision(viewer, id, revision);
     return ack ? said(ack) : c.json({ error: "noSuchRun" }, 404, noStore);
   }
-  await postMessage(viewer, id, parsed.data.text, false);
-  return reply(id, viewer, { kind: "message", spoken: false });
+  const text = parsed.data.text;
+  return reply(id, viewer, { kind: "message", spoken: false }, { text, before: async () => void (await postMessage(viewer, id, text, false)) });
 });
 
 member.post("/runs/:id/cards/:card/more", async (c) => {
@@ -256,7 +258,7 @@ member.post("/runs/:id/cards/:card/more", async (c) => {
   if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
   const card = cursor(c.req.param("card"));
   if (!card) return c.json({ error: "noSuchCard" }, 404, noStore);
-  return reply(id, viewer, { kind: "more", cardId: card });
+  return reply(id, viewer, { kind: "more", cardId: card }, { text: null });
 });
 
 member.put("/runs/:id/cards/:card/feedback", async (c) => {

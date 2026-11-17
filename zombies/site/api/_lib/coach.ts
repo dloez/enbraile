@@ -5,7 +5,7 @@ import type { ReplyEvent, StepIn } from "../../shared/runs.js";
 import { anyOf, characterOf, wakeWords, type Character } from "../../shared/voices.js";
 import { db } from "./db.js";
 import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
-import { audits, bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { audits, bundleVersions, coachCalls, coachQueue, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 import { speakInCall } from "./voice.js";
 
 const defaultModel = "claude-haiku-5-5";
@@ -15,6 +15,10 @@ const historyLength = 24;
 const roundGapMs = 10 * 60 * 1000;
 const leaseMs = 60 * 1000;
 const leaseWaitMs = 30 * 1000;
+const requestTimeoutMs = 10 * 1000;
+const requestRetries = 1;
+const callDeadlineMs = 20 * 1000;
+const turnDeadlineMs = 45 * 1000;
 const leasePollMs = 300;
 const silence = "(silence)";
 
@@ -128,7 +132,7 @@ let client: Anthropic | null = null;
 
 function anthropic(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null;
-  client ??= new Anthropic();
+  client ??= new Anthropic({ timeout: requestTimeoutMs, maxRetries: requestRetries });
   return client;
 }
 
@@ -245,7 +249,7 @@ const reportTool: Anthropic.Tool = {
   },
 };
 
-async function detectProgress(api: Anthropic, state: State, recent: string[]): Promise<{ ladders: Ladder[]; log: CallLog }> {
+async function detectProgress(api: Anthropic, state: State, recent: string[], signal: AbortSignal): Promise<{ ladders: Ladder[]; log: CallLog }> {
   const candidates = state.ladders.filter((ladder) => reportable(state, ladder) && withRequires(state.bundle.steps, ladder.stepId).filter((stepId) => stepId !== ladder.stepId && !state.done.has(stepId)).length <= maxMissing);
   const log: CallLog = { stopReason: null, refused: false, refusalCategory: null, violations: [], error: null, latencyMs: 0, usage: null };
   if (!candidates.length) return { ladders: [], log };
@@ -260,7 +264,7 @@ async function detectProgress(api: Anthropic, state: State, recent: string[]): P
       tool_choice: { type: "tool", name: "report" },
       thinking: { type: "disabled" },
       messages: [{ role: "user", content: `Steps not recorded as finished:\n${listed}\n\nThe chat, oldest first; the last line is the newest:\n${recent.join("\n")}` }],
-    });
+    }, { signal: AbortSignal.any([signal, AbortSignal.timeout(callDeadlineMs)]) });
     log.latencyMs = Date.now() - started;
     log.usage = response.usage;
     log.stopReason = response.stop_reason;
@@ -369,8 +373,8 @@ async function history(runId: string): Promise<Anthropic.MessageParam[]> {
   return turns;
 }
 
-async function acquire(runId: string): Promise<Date | null> {
-  const deadline = Date.now() + leaseWaitMs;
+async function acquire(runId: string, waitMs = leaseWaitMs): Promise<Date | null> {
+  const deadline = Date.now() + waitMs;
   while (Date.now() < deadline) {
     const lease = new Date(Date.now() + leaseMs);
     const taken = await db
@@ -755,10 +759,21 @@ export async function coachTurn(
   askedBy: { discordId: string; name: string },
   ask: Ask,
   emit: (event: ReplyEvent) => void,
-): Promise<"ok" | "notFound" | "notLatest"> {
-  const lease = await acquire(runId);
-  if (!lease) return "ok";
+  options: { waitMs?: number; before?: () => Promise<void>; asking?: { text: string | null; spoken: boolean } } = {},
+): Promise<"ok" | "busy" | "notFound" | "notLatest"> {
+  const [queued] = options.asking
+    ? await db.insert(coachQueue).values({ runId, discordId: askedBy.discordId || null, name: askedBy.name, spoken: options.asking.spoken, text: options.asking.text }).returning({ id: coachQueue.id })
+    : [];
+  const dequeue = () => (queued ? db.delete(coachQueue).where(eq(coachQueue.id, queued.id)) : Promise.resolve());
+  const lease = await acquire(runId, options.waitMs);
+  if (!lease) {
+    await dequeue();
+    return "busy";
+  }
+  if (queued) await db.update(coachQueue).set({ startedAt: new Date() }).where(eq(coachQueue.id, queued.id));
+  const turnDeadline = AbortSignal.timeout(turnDeadlineMs);
   try {
+    await options.before?.();
     const state = await loadState(runId);
     if (!state) return "notFound";
     const retried = ask.kind === "gap" ? state.held.find((entry) => entry.id === ask.gapId) : undefined;
@@ -815,7 +830,7 @@ export async function coachTurn(
         .filter((sentence) => sentence.split(" ").length >= 3),
     );
     const chatLines = conversation.flatMap((turn) => (typeof turn.content === "string" ? turn.content.split("\n").map((line) => (turn.role === "assistant" ? `${state.character.name}: ${line}` : line)) : []));
-    let pending = ask.kind === "message" ? detectProgress(api, state, chatLines.slice(-recentLines)) : null;
+    let pending = ask.kind === "message" ? detectProgress(api, state, chatLines.slice(-recentLines), turnDeadline) : null;
     let held: ReplyEvent[] | null = pending ? [] : null;
     const out = (event: ReplyEvent) => (held ? held.push(event) : emit(event));
     let speech = new Speech(state, out, violations, earlier);
@@ -890,7 +905,7 @@ export async function coachTurn(
           output_config: { effort: "low" },
           cache_control: { type: "ephemeral" },
           messages: conversation,
-        });
+        }, { signal: AbortSignal.any([turnDeadline, AbortSignal.timeout(callDeadlineMs)]) });
         for await (const event of stream) if (event.type === "content_block_delta" && event.delta.type === "text_delta") speech.push(event.delta.text);
         response = await stream.finalMessage();
         speech.flush();
@@ -1116,6 +1131,7 @@ export async function coachTurn(
     if (failed && !speech.spoken.length && !cards.length) emit({ type: "failed" });
     return "ok";
   } finally {
+    await dequeue();
     await release(runId, lease);
   }
 }

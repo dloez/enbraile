@@ -3,7 +3,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Bundle, PublishedMap } from "../../shared/bundle.js";
 import { db } from "./db.js";
 import type { ImageType } from "../../shared/image.js";
-import { audits, bundleVersions, callLines, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, mapImages, maps, messages, runHistory, runKnowledge, runMembers, runSteps, runs } from "./schema.js";
+import { audits, bundleVersions, callLines, coachCalls, coachQueue, deliveries, feedback, gaps, headsUpsGiven, hintCards, mapImages, maps, messages, runHistory, runKnowledge, runMembers, runSteps, runs } from "./schema.js";
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
@@ -70,7 +70,7 @@ export async function imageOf(digest: string): Promise<{ type: ImageType; bytes:
   return row;
 }
 
-const runTables = [feedback, audits, gaps, deliveries, hintCards, headsUpsGiven, runSteps, coachCalls, runKnowledge, callLines, runHistory, messages, runMembers];
+const runTables = [coachQueue, feedback, audits, gaps, deliveries, hintCards, headsUpsGiven, runSteps, coachCalls, runKnowledge, callLines, runHistory, messages, runMembers];
 
 export async function deleteRun(id: string): Promise<{ game: string; map: string; lines: number } | undefined> {
   return db.transaction(async (tx) => {

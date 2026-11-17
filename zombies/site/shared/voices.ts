@@ -6,7 +6,7 @@ export type Voice = (typeof voices)[number];
 
 export const defaultVoice: Voice = "chatterbox";
 
-export type FixedLines = { round: string; hold: string[]; unheard: string[]; ack: string; carriedOver: string };
+export type FixedLines = { round: string; hold: string[]; unheard: string[]; busy: string[]; ack: string; carriedOver: string };
 
 export type Character = { name: string; wake: string; role: string; manner: string; examples: string[]; lines: Record<Language, FixedLines> };
 
@@ -25,6 +25,7 @@ const coach: Character = {
         "No quiero liaros con eso sin estar segura. Seguid, que ahora vuelvo.",
       ],
       unheard: ["No te he entendido bien, ¿me lo repites?", "Perdona, se me ha cortado. ¿Qué decías?", "No te he pillado, dímelo otra vez."],
+      busy: ["Un momento, que estoy contestando a otro. Pregúntamelo otra vez.", "Espera, que aún estoy con lo de antes. Repítemelo en nada.", "Dame un segundo, estoy con otra pregunta. Vuelve a decírmelo."],
       ack: "Anotado, gracias.",
       carriedOver: "De la sesión anterior.",
     },
@@ -36,6 +37,7 @@ const coach: Character = {
         "I don't want to send you the wrong way on that. Keep going, I'll be back.",
       ],
       unheard: ["I didn't catch that, can you say it again?", "Sorry, you cut out. What was that?", "I missed that, say it once more."],
+      busy: ["One moment, I'm still answering someone else. Ask me again.", "Hold on, I'm still on the last one. Say it again in a second.", "Give me a second, I'm on another question. Ask me once more."],
       ack: "Noted, thanks.",
       carriedOver: "From the last session.",
     },
@@ -65,6 +67,7 @@ const richtofen: Character = {
         "No pienso mandaros por mal camino sin estar seguro, ¡nein! Seguid, que ahora vuelvo.",
       ],
       unheard: ["¿Qué? Hablad más claro, que no os entiendo.", "¿Cómo? Repetídmelo, y esta vez vocalizad.", "Se ha perdido en el éter… otra vez, por favor."],
+      busy: ["¡Paciencia! Estoy atendiendo otra consulta. Preguntadme de nuevo.", "Un genio no puede contestar dos cosas a la vez… Repetídmelo enseguida.", "¡Silencio, que estoy con otra pregunta! Volved a preguntar en un momento."],
       ack: "¡Anotado! Gracias.",
       carriedOver: "De la sesión anterior.",
     },
@@ -76,6 +79,7 @@ const richtofen: Character = {
         "I will not send you the wrong way without being certain, nein! Keep going, I shall return.",
       ],
       unheard: ["What? Speak clearly, I cannot understand you.", "Pardon? Say it again, and this time enunciate.", "Lost in the ether… once more, please."],
+      busy: ["Patience! I am attending to another enquiry. Ask me again.", "Even a genius cannot answer two things at once… Repeat it in a moment.", "Silence, I am on another question! Ask again in a moment."],
       ack: "Noted! Thank you.",
       carriedOver: "From the last session.",
     },

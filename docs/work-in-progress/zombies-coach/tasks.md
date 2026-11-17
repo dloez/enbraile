@@ -1,42 +1,5 @@
 # Zombies Coach — Tasks
 
-## Say the coach is busy instead of dropping a line
-
-When another reply holds the run's lease past the 30 s wait, `coachTurn` returns `"ok"` with no event (`zombies/site/api/_lib/coach.ts:760`), so the asker's stream ends empty and the page looks exactly like a coach choosing silence: the line is posted and never answered ([The Zombies Site → The Coach](../../zombies/site/explanation/site.md#the-coach)). Found reading the code, 2026-11-17.
-
-**Do:**
-- [ ] Return `"busy"` from `coachTurn` when `acquire` gives no lease, and have the messages and More routes in `api/_lib/app.ts` send a `busy` event for it.
-- [ ] On the run page, a `busy` stream sets the trouble line ("<coach> was answering someone else; ask again") with the existing retry, worded in both languages in `src/i18n.ts`.
-- [ ] The voice route keeps its "say that again" line for this case; check `api/_lib/voice.ts` still says it.
-- [ ] Update The Coach and the "One reply at a time per run" decision in `site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site`. Locally, with `leaseWaitMs` temporarily lowered, two members' lines posted together on the test map: the second gets the busy line and its retry posts again; the temporary change is reverted before commit.
-- Human-run: none.
-- Reuse: the `Trouble` notice and `listen` in `src/RunPage.tsx`, `acquire` in `coach.ts`.
-- Neighbors: the `failed` event and its "did not answer" line.
-- Forbidden: a second lease mechanism; a typed line answered silently.
-
-**Touches:** `zombies/site/api/_lib/coach.ts`, `zombies/site/api/_lib/app.ts`, `zombies/site/src/RunPage.tsx`, `zombies/site/src/i18n.ts`, `docs/zombies/site/explanation/site.md`
-
-## Bound the coach's Claude call
-
-`new Anthropic()` (`zombies/site/api/_lib/coach.ts:131`) runs with the SDK's defaults, a 10-minute timeout and 2 retries, so one hung call holds the run's 60 s lease and the next member's line waits behind it, while a reply's first words normally come in about 1 s ([Decisions](../../zombies/site/explanation/site.md#decisions), "Reasoning off, measured"). Found reading the code, 2026-11-17.
-
-**Do:**
-- [ ] Give the client a request timeout and retry count that fit a live reply (about 15 s, one retry), the progress check's call included, as named constants beside `leaseMs`.
-- [ ] Check the lease (60 s) still covers the worst turn, `maxSteps` calls at that timeout; if it does not, say in `site.md` which wins and why.
-- [ ] Record the values and why in The Coach and a dated decision in `site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; locally with the timeout set to 1 ms a line ends in the `failed` event and its retry, and the lease is released (a second line right after is answered).
-- Human-run: none.
-- Reuse: the existing `failed` path in `api/_lib/app.ts`.
-- Neighbors: `AbortSignal.timeout` in `api/_lib/bot.ts`.
-- Forbidden: a timeout shorter than the measured maximum reply in `site.md`.
-
-**Touches:** `zombies/site/api/_lib/coach.ts`, `docs/zombies/site/explanation/site.md`
-
 ## Close and reopen an attempt
 
 Any member closes the attempt from its rail (the phone's strip) after a confirm; it becomes read-only, every member is released, the coach answers nothing, and it stays on its map's list marked closed; any member of it reopens it ([Decisions](../../zombies/site/explanation/site.md#decisions), "A closed attempt is read-only and can be reopened").
@@ -133,39 +96,6 @@ Once beaten, the roadmap shows every step, the optional ones not done dimmed, as
 **Touches:** `zombies/site/api/_lib/`, `zombies/site/src/`, `docs/zombies/site/explanation/site.md`
 **After:** Show the attempt's roadmap of done steps
 
-## Show who the coach is answering
-
-A member does not see that the coach is answering someone else, so their own line seems ignored. The poll carries the run's lease holder while a reply runs, and every member's page shows "<coach> is answering <name>…" in the transmitting row's style.
-
-**Do:**
-- [ ] Store who took the lease beside `coach_busy_until`, return it on the poll while the lease is live, show it on the page, and say so in Attempts in `site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; two dev members, one asks, the other's page shows the line within one poll and loses it when the reply lands.
-- Human-run: none.
-- Reuse: the lease row in `coach.ts`, the transmitting row in `src/RunPage.tsx`.
-- Neighbors: "Say the coach is busy instead of dropping a line".
-- Forbidden: a new table.
-
-**Touches:** `zombies/site/api/_lib/`, `zombies/site/src/`, `zombies/site/drizzle/`, `docs/zombies/site/explanation/site.md`
-**After:** Say the coach is busy instead of dropping a line
-
-## Ride out a dropped poll
-
-One failed poll sets `lost` and shows the failure notice (`zombies/site/src/RunPage.tsx` `poll`), so a phone on a patchy network flickers it during play. Show it only after three polls in a row fail, and back off to 5 s while lost.
-
-**Do:**
-- [ ] Count consecutive failures in `poll`, show the notice from the third, back off while lost, and say so in Attempts in `site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; with the dev API stopped for 3 s the page shows nothing, for 10 s it shows the notice, and restarting it clears it.
-- Human-run: none.
-- Reuse: the existing `lost` notice and retry.
-- Neighbors: the voice offer's poll cadence in the same file.
-- Forbidden: hiding a signed-out or 403 reply behind the count.
-
-**Touches:** `zombies/site/src/RunPage.tsx`, `docs/zombies/site/explanation/site.md`
-
 ## Time the bot's names lookup in production and set its limit
 
 The site's names lookup gives the bot 10 s for Discord's forced member fetches (`lookupMs` in `zombies/site/api/_lib/names.ts`), while a reply waits at most 1.5 s; the 10 s is a starting value, since the fetches could not be timed without the real bot ([The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions), "Names never go back to stored ones on an open page"). Each lookup logs `bot names` with its count of IDs, its time in ms and whether the bot answered.
@@ -250,38 +180,3 @@ The discovery chose Haiku 5.5 "to start; the group will report whether it is eno
 
 **Touches:** `docs/zombies/site/`
 **After:** Play a game night on the site and read how the coach did
-
-## Decide whether a wake word asked during another reply is spoken late or not at all
-
-A voice turn waits up to 30 s for the run's lease (`zombies/site/api/_lib/coach.ts:15`), then runs the whole Claude turn, up to 4 tool rounds (`:11`). The bot gives up after 25 s for the whole request (`zombies/bot/src/call.ts:8`). A wake word asked while another member's reply runs, or a slow turn on its own, therefore lands in the chat with its answer but is not spoken (`docs/zombies/site/explanation/site.md:108` names only the lease case). The game night's latency figures say how often this happens.
-
-**Needs the author:**
-- When a spoken question cannot be answered within the bot's wait, should the bot wait longer and speak the answer late (raise the bot's timeout above the lease wait plus a turn), or should the site stop waiting sooner and leave the answer in the chat only, as it is now but by design?
-
-**Acceptance:**
-- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md`. The next entry's Do matches it.
-- Human-run: none.
-- Reuse: none.
-- Neighbors: "One reply at a time per run" in `site.md`'s Decisions.
-- Forbidden: changing the timeouts before this is answered.
-
-**Touches:** `docs/zombies/site/explanation/site.md`
-**After:** Play a game night on the site and read how the coach did
-
-## Make the voice turn's wait match the decision
-
-Apply the answer to the entry above, so a wake word asked during another reply behaves as decided instead of falling between the site's 30 s lease wait and the bot's 25 s timeout.
-
-**Do:**
-- [ ] Set the bot's `SITE_TIMEOUT_MS` (`zombies/bot/src/call.ts:8`) and the voice turn's lease wait (`zombies/site/api/_lib/coach.ts`, used by `voiceTurn` in `api/_lib/voice.ts`) so that one covers the other the decided way.
-- [ ] Update the Hearing lines in `docs/zombies/site/explanation/site.md:108` and `docs/zombies/bot/explanation/bot.md` ("A failed or slow request (25 s)…").
-
-**Acceptance:**
-- Claude-run: `npm run gate` in `zombies/site` and `home/bot`. Against a local site and bot, two `/api/voice` requests posted together for one run behave as decided: the second answer is spoken late, or the stream ends with no `say` before the bot's timeout with the answer in the chat.
-- Human-run: in a call, two members say «bebé …» one right after the other, and the second answer arrives as decided.
-- Reuse: the lease in `coach.ts` (`acquire`/`release`), `voiceTurn`.
-- Neighbors: the typed reply path, which keeps its 30 s wait.
-- Forbidden: a second lease mechanism; changing the typed chat's wait.
-
-**Touches:** `zombies/bot/src/call.ts`, `zombies/site/api/_lib/coach.ts`, `zombies/site/api/_lib/voice.ts`, `docs/zombies/`
-**After:** Decide whether a wake word asked during another reply is spoken late or not at all

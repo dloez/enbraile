@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Language, Viewer } from "../shared/bundle";
-import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type Member, type Message, type Rating, type RunSheet } from "../shared/runs";
+import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type Member, type Message, type Queued, type Rating, type RunSheet } from "../shared/runs";
 import { askMore, bringCoach, changeVoice, fetchCall, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
@@ -11,6 +11,8 @@ import { forget, known, learn, load as fetchPage, openFreshMs, runSource, nameOf
 import { Arrow, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
+const lostPollMs = 5000;
+const lostAfterMs = 8000;
 const callPollMs = 10000;
 const freshRows = 4;
 
@@ -217,7 +219,7 @@ function PinnedSlip({ thread, name, language, art, busy, rating, onMore, onRate 
   );
 }
 
-function Line({ at, fromCoach, name, person, className, children }: { at: string; fromCoach: boolean; name: string; person?: Member; className: string; children: ReactNode }) {
+function Line({ at, fromCoach, name, person, spoken, className, children }: { at: string; fromCoach: boolean; name: string; person?: Member; spoken?: boolean; className: string; children: ReactNode }) {
   const time = clock(at);
   return (
     <div className={className}>
@@ -226,6 +228,12 @@ function Line({ at, fromCoach, name, person, className, children }: { at: string
         <p className={fromCoach ? "who who-coach" : "who"}>
           {person && <PersonChip person={person} you={person.you} small />}
           {name}
+          {spoken && (
+            <span className="said" title={t.byVoice}>
+              <Mic size={14} />
+              <span className="sr">{t.byVoice}</span>
+            </span>
+          )}
           <span className="t t-in">{time}</span>
         </p>
         {children}
@@ -255,7 +263,7 @@ function Row({ message, card, old, coach, slip }: { message: Message; card: Card
     );
   }
   return (
-    <Line at={message.at} fromCoach={fromCoach} name={nameOf(message)} person={fromCoach ? undefined : message} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
+    <Line at={message.at} fromCoach={fromCoach} name={nameOf(message)} person={fromCoach ? undefined : message} spoken={message.spoken} className={old ? "row old" : message.id === -1 ? "row sending" : "row"}>
       <p className="msg">{message.text}</p>
       {card && slip(card, message.name)}
     </Line>
@@ -271,6 +279,29 @@ function Transmitting({ text, at, name, language }: { text: string; at: string; 
         <span className="caret" role="img" aria-label={words.writing(name)} />
       </p>
     </Line>
+  );
+}
+
+function Queue({ queue, coach }: { queue: Queued[]; coach: string }) {
+  const shown = queue.filter((entry) => entry.spoken || !entry.you);
+  if (!shown.length) return null;
+  return (
+    <ol className="queue" aria-label={t.queue} aria-live="polite">
+      {shown.map((entry, index) => (
+        <li key={`${entry.at}-${index}`} className={entry.answering ? "q-now" : "q-wait"}>
+          <PersonChip person={entry} you={entry.you} small />
+          <span className="q-who">{entry.answering ? t.answering(coach, nameOf(entry)) : t.waiting(nameOf(entry))}</span>
+          {entry.spoken && (
+            <span className="said" title={t.byVoice}>
+              <Mic size={14} />
+              <span className="sr">{t.byVoice}</span>
+            </span>
+          )}
+          {entry.text && <q className="q-text">{entry.text}</q>}
+          {entry.answering && <span className="caret" aria-hidden="true" />}
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -369,13 +400,12 @@ function useVoice(id: string, coach: string): Voice | null {
 
 function voiceLine(voice: Voice, coach: Character): string {
   const { channel } = voice;
-  if (voice.here) return t.isIn(coach.name, channel.name);
   return channel.reason ? t.cantJoin[channel.reason](coach.name, channel.name) : t.youreInChannel(channel.name);
 }
 
-function Meter({ bars }: { bars: number }) {
+function Meter({ bars, live }: { bars: number; live: boolean }) {
   return (
-    <div className="meter" aria-hidden="true">
+    <div className={live ? "meter live" : "meter"} aria-hidden="true">
       {Array.from({ length: bars }, (_, index) => (
         <i key={index} />
       ))}
@@ -383,15 +413,57 @@ function Meter({ bars }: { bars: number }) {
   );
 }
 
-function VoicePanel({ voice, coach }: { voice: Voice; coach: Character }) {
+function airState(queue: Queued[], coach: Character): { live: boolean; text: string } {
+  const now = queue.find((entry) => entry.answering && entry.spoken);
+  return now ? { live: true, text: t.speakingTo(coach.name, nameOf(now)) } : { live: false, text: t.listening(coach.name) };
+}
+
+function Wake({ wake }: { wake: string }) {
   return (
-    <section className={voice.here ? "voice on" : "voice"} aria-label={t.voiceChannel}>
+    <p className="wake">
+      <span>{t.say}</span>
+      <kbd>«{wake}»</kbd>
+      <span>{t.andAsk}</span>
+    </p>
+  );
+}
+
+function Lamp() {
+  return <span className="lamp" aria-hidden="true" />;
+}
+
+function VoicePanel({ voice, coach, queue }: { voice: Voice; coach: Character; queue: Queued[] }) {
+  if (voice.here) {
+    const air = airState(queue, coach);
+    return (
+      <section className="voice on" aria-label={t.voiceChannel}>
+        <div className="air-h">
+          <span className="air">
+            <Lamp />
+            {t.onAir}
+          </span>
+          <span className="chan">
+            <Mic size={14} />
+            {voice.channel.name}
+          </span>
+        </div>
+        <div className="air-who">
+          <Meter bars={10} live={air.live} />
+          <p className="state" aria-live="polite">
+            {air.text}
+          </p>
+        </div>
+        <Wake wake={coach.wake} />
+      </section>
+    );
+  }
+  return (
+    <section className="voice" aria-label={t.voiceChannel}>
       <div>
-        <span className="lab">{voice.here ? t.onAir : t.voiceChannel}</span>
+        <span className="lab">{t.voiceChannel}</span>
         <p className="big">{voiceLine(voice, coach)}</p>
       </div>
-      {voice.here && <Meter bars={20} />}
-      {!voice.here && voice.channel.canJoin && (
+      {voice.channel.canJoin && (
         <button type="button" className="b b-red" disabled={voice.busy} onClick={voice.bring}>
           {t.bring(coach.name)}
           <Arrow size={20} />
@@ -402,29 +474,38 @@ function VoicePanel({ voice, coach }: { voice: Voice; coach: Character }) {
           {voice.refused}
         </p>
       )}
-      {voice.here && <p className="state">{t.sayWake(coach.wake)}</p>}
     </section>
   );
 }
 
-function VoiceBar({ voice, coach }: { voice: Voice; coach: Character }) {
+function VoiceBar({ voice, coach, queue }: { voice: Voice; coach: Character; queue: Queued[] }) {
+  if (voice.here) {
+    const air = airState(queue, coach);
+    return (
+      <section className="vb on" aria-label={t.voiceChannel}>
+        <span className="air">
+          <Lamp />
+          <span className="sr">{t.onAir}</span>
+        </span>
+        <p>
+          <span className="state" aria-live="polite">
+            {air.text}
+          </span>
+          <br />
+          <span className="chan">{voice.channel.name}</span>
+        </p>
+        <span className="sp" />
+        <Meter bars={8} live={air.live} />
+        <kbd className="wake-k">«{coach.wake}»</kbd>
+      </section>
+    );
+  }
   return (
-    <section className={voice.here ? "vb on" : "vb"} aria-label={t.voiceChannel}>
-      {!voice.here && <Mic />}
-      <p>
-        {voice.here ? (
-          <>
-            {t.onAir}
-            <br />
-            <span className="state">{voiceLine(voice, coach)}</span>
-          </>
-        ) : (
-          (voice.refused ?? voiceLine(voice, coach))
-        )}
-      </p>
+    <section className="vb" aria-label={t.voiceChannel}>
+      <Mic />
+      <p>{voice.refused ?? voiceLine(voice, coach)}</p>
       <span className="sp" />
-      {voice.here && <Meter bars={14} />}
-      {!voice.here && voice.channel.canJoin && (
+      {voice.channel.canJoin && (
         <button type="button" className="b b-red" disabled={voice.busy} onClick={voice.bring}>
           {t.bring(coach.name)}
         </button>
@@ -459,6 +540,8 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const [members, setMembers] = useState<Member[]>(log?.members ?? sheet.members);
   const [loaded, setLoaded] = useState(log !== undefined);
   const [lost, setLost] = useState(false);
+  const [queue, setQueue] = useState<Queued[]>([]);
+  const lastOk = useRef(Date.now());
   const [settled, setSettled] = useState(log !== undefined);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<Message | null>(null);
@@ -487,6 +570,8 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       if (choosing.current === 0) setVoiceChoice(reply.voice);
       if (reply.history.length) setHistory(reply.history);
       setLoaded(true);
+      setQueue(reply.queue);
+      lastOk.current = Date.now();
       setLost(false);
       if (reply.cards.length) {
         lastRung.current = Math.max(lastRung.current, ...reply.cards.flatMap((card) => card.rungs.map((rung) => rung.id)));
@@ -501,7 +586,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
     } catch (error) {
       if (error instanceof SignedOut) signIn();
       else if (error instanceof Refused && error.status === 403) location.reload();
-      else setLost(true);
+      else if (Date.now() - lastOk.current >= lostAfterMs) setLost(true);
     } finally {
       polling.current--;
     }
@@ -510,14 +595,26 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   useEffect(() => {
     void poll();
     const tick = () => document.hidden || polling.current > 0 || void poll();
-    const timer = setInterval(tick, pollMs);
+    const timer = setInterval(tick, lost ? lostPollMs : pollMs);
     const onShow = () => document.hidden || polling.current > 0 || void poll();
     document.addEventListener("visibilitychange", onShow);
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onShow);
     };
-  }, [poll]);
+  }, [poll, lost]);
+
+  useEffect(() => {
+    const timer = setInterval(() => !document.hidden && Date.now() - lastOk.current >= lostAfterMs && setLost(true), 1000);
+    const onShow = () => {
+      if (!document.hidden) lastOk.current = Math.max(lastOk.current, Date.now() - pollMs);
+    };
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onShow);
+    };
+  }, []);
 
   useEffect(() => {
     if (loaded) logs.set(sheet.id, { history, messages, cards, members, rated, voice: voiceChoice, last: last.current, lastRung: lastRung.current });
@@ -566,6 +663,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
     stick.current = true;
     let opened = false;
     let failed = false;
+    let busy = false;
     let said = "";
     return start({
       opened: () => {
@@ -574,12 +672,18 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       },
       heard: (event) => {
         if (event.type === "failed") failed = true;
+        if (event.type === "busy") busy = true;
         if (event.type !== "text") return;
         said += event.text;
         setAiring((current) => current && { ...current, text: said });
       },
     })
-      .then(() => failed && setTrouble({ text: t.noAnswer(coach.name), retry }))
+      .then(() => {
+        if (busy) {
+          unsent?.();
+          setTrouble({ text: t.busyCoach(coach.name), retry });
+        } else if (failed) setTrouble({ text: t.noAnswer(coach.name), retry });
+      })
       .catch((error: unknown) => {
         if (error instanceof SignedOut) return signIn();
         if (!opened) unsent?.();
@@ -605,6 +709,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       text: revision ?? text,
       at: new Date().toISOString(),
       card: null,
+      spoken: false,
     });
     void listen(
       (listener) => sendMessage(sheet.id, text, flagged, listener),
@@ -714,7 +819,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           </ul>
           <CopyLink id={sheet.id} icon={false} />
         </div>
-        {voice && <VoicePanel voice={voice} coach={coach} />}
+        {voice && <VoicePanel voice={voice} coach={coach} queue={queue} />}
       </aside>
       <div className="strip">
         <Chips members={members} />
@@ -723,7 +828,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
         <span className="sp" />
         <CopyLink id={sheet.id} icon />
       </div>
-      {voice && <VoiceBar voice={voice} coach={coach} />}
+      {voice && <VoiceBar voice={voice} coach={coach} queue={queue} />}
       <section className="main">
         {pinned.length > 0 && (
           <section className="pins" aria-label={coachWords[sheet.language].pins}>
@@ -745,6 +850,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           ))}
           {airing !== null && <Transmitting text={airing.text} at={airing.at} name={coach.name} language={sheet.language} />}
         </div>
+        <Queue queue={queue} coach={coach.name} />
         <form className={revising ? "cmp cmp-rev" : "cmp"} onSubmit={send}>
           <div className="over">
             {notice && (

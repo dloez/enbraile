@@ -8,6 +8,7 @@ import { postMessage, postRevision } from "./runs.js";
 import { callLines, runMembers, runs } from "./schema.js";
 
 const botTimeoutMs = 5000;
+const voiceLeaseWaitMs = 12 * 1000;
 
 async function speakerOf(discordId: string): Promise<{ runId: string; viewer: Viewer } | null> {
   const [row] = await db
@@ -32,16 +33,22 @@ export async function voiceTurn(discordId: string, text: string, word: string, s
     if (acknowledged) send({ type: "say", text: acknowledged });
     return;
   }
-  await postMessage(viewer, runId, text, true);
   const { coachTurn } = await import("./coach.js");
   let spoke = false;
-  await coachTurn(runId, viewer, { kind: "message", spoken: true }, (event) => {
-    if (event.type !== "text" && event.type !== "hint") return;
-    const said = event.text.trim();
-    if (!said) return;
-    spoke = true;
-    send({ type: "say", text: said });
-  });
+  const ended = await coachTurn(
+    runId,
+    viewer,
+    { kind: "message", spoken: true },
+    (event) => {
+      if (event.type !== "text" && event.type !== "hint") return;
+      const said = event.text.trim();
+      if (!said) return;
+      spoke = true;
+      send({ type: "say", text: said });
+    },
+    { waitMs: voiceLeaseWaitMs, before: async () => void (await postMessage(viewer, runId, text, true)), asking: { text, spoken: true } },
+  );
+  if (ended === "busy") return send({ type: "say", text: anyOf(lines.busy) });
   if (!spoke) send({ type: "say", text: anyOf(lines.unheard) });
 }
 

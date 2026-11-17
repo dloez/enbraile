@@ -96,6 +96,23 @@ export const messages = pgTable(
   (table) => [index().on(table.runId, table.id)],
 );
 
+export const coachQueue = pgTable(
+  "coach_queue",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    discordId: text("discord_id"),
+    name: text("name").notNull(),
+    spoken: boolean("spoken").notNull().default(false),
+    text: text("text"),
+    askedAt: timestamp("asked_at", { withTimezone: true }).notNull().defaultNow(),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+  },
+  (table) => [index().on(table.runId, table.id)],
+);
+
 export const runHistory = pgTable(
   "run_history",
   {

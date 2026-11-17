@@ -99,6 +99,13 @@
       "when": 1794847601071,
       "tag": "0013_spoken_lines",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794925122916,
+      "tag": "0014_coach_queue",
+      "breakpoints": true
     }
   ]
 }

@@ -1068,21 +1068,104 @@ a:hover {
   justify-content: space-between;
 }
 
-.voice.on,
-.vb.on {
-  background: var(--red);
-  color: var(--on-red);
-}
-
-.voice.on .lab {
-  color: var(--on-red);
-}
-
 .voice .state,
 .vb .state {
   font-size: 15px;
   font-weight: 400;
   color: inherit;
+}
+
+.voice.on {
+  background: var(--surf-2);
+  box-shadow: inset 0 0 0 1px var(--red), 0 0 0 4px rgb(194 58 32 / 0.14);
+  gap: var(--sp-5);
+}
+
+.air-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.air {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+  padding: 2px var(--sp-2) 2px 6px;
+  border-radius: 4px;
+  background: var(--red);
+  color: var(--on-red);
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lamp {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--on-red);
+  box-shadow: 0 0 6px 1px rgb(255 255 255 / 0.7);
+  animation: lamp 2s ease-in-out infinite;
+}
+
+@keyframes lamp {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.chan {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--mute);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chan svg {
+  flex: none;
+}
+
+.air-who {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.air-who .state {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.wake {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px var(--sp-2);
+  font-size: 15px;
+  color: var(--mute);
+}
+
+.wake kbd,
+.wake-k {
+  font-family: var(--type);
+  font-size: 20px;
+  font-weight: 700;
+  padding: 2px var(--sp-2);
+  border-radius: 4px;
+  background: var(--slip);
+  color: var(--slip-ink);
+  box-shadow: 0 2px 0 var(--slip-line);
 }
 
 .vb {
@@ -1091,18 +1174,24 @@ a:hover {
 
 .meter {
   display: flex;
-  gap: 4px;
-  align-items: flex-end;
+  gap: 3px;
+  align-items: center;
   height: 28px;
+  flex: none;
+  color: var(--red-tx);
 }
 
 .meter i {
   display: block;
-  width: 5px;
+  width: 4px;
   height: 100%;
   border-radius: 2px;
   background: currentColor;
-  transform-origin: bottom;
+  transform: scaleY(0.14);
+  transition: transform 0.3s ease;
+}
+
+.meter.live i {
   animation: level 1.2s ease-in-out infinite;
 }
 
@@ -1129,7 +1218,12 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .meter i {
+  .meter.live i {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+
+  .lamp {
     animation: none;
   }
 }
@@ -1614,6 +1708,61 @@ a:hover {
   min-height: 44px;
 }
 
+.said {
+  display: inline-flex;
+  align-items: center;
+  color: var(--mute);
+}
+
+.queue {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-2) var(--sp-12);
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  flex: none;
+}
+
+.queue li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 32px;
+  font-size: 15px;
+  color: var(--mute);
+  min-width: 0;
+}
+
+.queue .q-now {
+  color: var(--text);
+}
+
+.queue .q-who {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.queue .q-now .q-who {
+  color: var(--red-tx);
+}
+
+.queue .q-text {
+  font-family: var(--type);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.queue .caret {
+  height: 14px;
+  width: 8px;
+  flex: none;
+}
+
 .cmp {
   position: relative;
   flex: none;
@@ -1744,6 +1893,7 @@ a:hover {
   .pins,
   .cmp,
   .trouble,
+  .queue,
   .mode {
     padding-left: var(--sp-6);
     padding-right: var(--sp-6);
@@ -2092,6 +2242,25 @@ a:hover {
     font-size: 16px;
     font-weight: 700;
     line-height: 1.25;
+    min-width: 0;
+  }
+
+  .vb.on {
+    box-shadow: inset 0 -2px 0 var(--red);
+  }
+
+  .vb .chan {
+    display: block;
+    font-weight: 400;
+  }
+
+  .vb .air {
+    padding: 6px;
+  }
+
+  .wake-k {
+    font-size: 16px;
+    flex: none;
   }
 
   .vb .b {
@@ -2227,6 +2396,10 @@ a:hover {
 
   .cmp {
     padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  }
+
+  .queue {
+    padding: var(--sp-2) var(--sp-4);
   }
 
   .cmp-in {

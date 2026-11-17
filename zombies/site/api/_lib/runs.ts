@@ -1,16 +1,17 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Person, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
+import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Person, Queued, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
 import { characterOf, defaultVoice, type Voice } from "../../shared/voices.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
 import { currentNames } from "./names.js";
 import { hasMore, ladderKey, laddersOf, lineAt, withRequires } from "./ladders.js";
-import { audits, bundleVersions, callLines, coachCalls, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runHistory, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { audits, bundleVersions, callLines, coachCalls, coachQueue, deliveries, feedback, gaps, headsUpsGiven, hintCards, maps, messages, runHistory, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+const queueStaleMs = 2 * 60 * 1000;
 const activeMember = isNull(runMembers.leftAt);
 
 export type Time = <T>(name: string, work: Promise<T>) => Promise<T>;
@@ -315,7 +316,7 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
 
 async function historyOf(runId: string): Promise<Message[]> {
   const rows = await db.select().from(runHistory).where(eq(runHistory.runId, runId)).orderBy(asc(runHistory.saidAt), asc(runHistory.id));
-  return rows.map((row) => ({ id: -1 - row.id, author: row.author, revision: null, name: row.name, who: null, live: false, avatar: null, you: false, text: row.text, at: row.saidAt.toISOString(), card: null }));
+  return rows.map((row) => ({ id: -1 - row.id, author: row.author, revision: null, name: row.name, who: null, live: false, avatar: null, you: false, text: row.text, at: row.saidAt.toISOString(), card: null, spoken: false }));
 }
 
 export async function transcript(viewer: Viewer, runId: string, after: number, rungsAfter: number): Promise<Transcript> {
@@ -326,8 +327,16 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
     .leftJoin(hintCards, eq(hintCards.messageId, messages.id))
     .where(and(eq(messages.runId, runId), gt(messages.id, after)))
     .orderBy(asc(messages.id));
-  const [members, [run]] = await Promise.all([activeMembers(runId), db.select({ voice: runs.voice }).from(runs).where(eq(runs.id, runId))]);
-  const named = await currentNames([...members.map((member) => member.discordId), ...rows.map((row) => row.message.discordId)]);
+  const [members, [run], queue] = await Promise.all([
+    activeMembers(runId),
+    db.select({ voice: runs.voice }).from(runs).where(eq(runs.id, runId)),
+    db
+      .select()
+      .from(coachQueue)
+      .where(and(eq(coachQueue.runId, runId), gt(coachQueue.askedAt, new Date(Date.now() - queueStaleMs))))
+      .orderBy(asc(coachQueue.id)),
+  ]);
+  const named = await currentNames([...members.map((member) => member.discordId), ...rows.map((row) => row.message.discordId), ...queue.map((entry) => entry.discordId)]);
   const revisionIds = rows.filter((row) => row.message.kind === "revision").map((row) => row.message.id);
   const referred = new Map(
     revisionIds.length
@@ -352,6 +361,17 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
         text: row.text,
         at: row.createdAt.toISOString(),
         card,
+        spoken: row.spoken,
+      }),
+    ),
+    queue: queue.map(
+      (entry): Queued => ({
+        ...named(entry.discordId, entry.name),
+        you: entry.discordId === viewer.discordId,
+        spoken: entry.spoken,
+        text: entry.text,
+        answering: entry.startedAt !== null,
+        at: (entry.startedAt ?? entry.askedAt).toISOString(),
       }),
     ),
     members: members.map((member): Member => ({ ...named(member.discordId, member.name), you: member.discordId === viewer.discordId })),

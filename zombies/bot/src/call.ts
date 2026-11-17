@@ -99,10 +99,16 @@ export async function namesOf(ids: string[]): Promise<{ names: Record<string, st
   };
 }
 
+const sentencesOf = (text: string): string[] =>
+  text
+    .split(/(?<=[.!?…])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
 export function speak(text: string, named: string | null, userIds: string[]): boolean {
   if (!voice.holding(OWNER) || !voice.members().some((member) => userIds.includes(member.id))) return false;
   keepVoice(named);
-  hearing.say(text, heldVoice === null ? {} : { voice: heldVoice }).catch((error: Error) => console.error("zombies say", error.message));
+  for (const sentence of sentencesOf(text)) hearing.say(sentence, heldVoice === null ? {} : { voice: heldVoice }).catch((error: Error) => console.error("zombies say", error.message));
   return true;
 }
 
