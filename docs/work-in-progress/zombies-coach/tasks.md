@@ -16,22 +16,6 @@
 
 **Touches:** `zombies/site/scripts/compile.ts`, `.claude/skills/ee-coach/references/research.md`, `zombies/maps/` (gitignored)
 
-## Blind-check Blood of the Dead's zone lists again from private folders
-
-Both 2026-11-17 zone agents found files in their shared scratch folder overwritten by the other while they worked; Blood of the Dead's 12 zone lists that passed then are published.
-
-**Do:**
-- [ ] In a subagent working only in a folder of its own, render and blind-check every zone list of Blood of the Dead as `research.md` 3b says, fixing and publishing only what fails.
-
-**Acceptance:**
-- Claude-run: the subagent reports passes and failures by address only; anything fixed is published through the `prod` wrapper.
-- Human-run: none.
-- Reuse: `research.md` 3b.
-- Neighbors: none.
-- Forbidden: a shared scratch folder between agents; map content in the conversation.
-
-**Touches:** `zombies/maps/` (gitignored)
-
 ## Time the bot's names lookup in production and set its limit
 
 The site's names lookup gives the bot 10 s for Discord's forced member fetches (`lookupMs` in `zombies/site/api/_lib/names.ts`), while a reply waits at most 1.5 s; the 10 s is a starting value, since the fetches could not be timed without the real bot ([The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions), "Names never go back to stored ones on an open page"). Each lookup logs `bot names` with its count of IDs, its time in ms and whether the bot answered.
