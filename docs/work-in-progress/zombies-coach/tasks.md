@@ -32,22 +32,6 @@ Both 2026-11-17 zone agents found files in their shared scratch folder overwritt
 
 **Touches:** `zombies/maps/` (gitignored)
 
-## Draw the phone's voice bar and queue on the canvas
-
-The canvas has no phone board for the redrawn voice bar or the coach queue, and its RunZone boards still draw the old red on-air panel ([Site Design System](../../zombies/site/reference/design-system.md)).
-
-**Do:**
-- [ ] Draw the phone attempt with the on-air bar and the queue on the canvas, as `v3/RunPhoneOnAir.dc.html`, copy it into `zombies/site/design/`, and note in the design-system doc that the RunZone boards' panel is superseded.
-
-**Acceptance:**
-- Claude-run: the board is on the canvas and in the repo, and the design-system doc lists it.
-- Human-run: none.
-- Reuse: the built `.vb` styles in `src/index.css`.
-- Neighbors: `v3/RunRoadmapWide.dc.html`.
-- Forbidden: any real map's content.
-
-**Touches:** `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
-
 ## Time the bot's names lookup in production and set its limit
 
 The site's names lookup gives the bot 10 s for Discord's forced member fetches (`lookupMs` in `zombies/site/api/_lib/names.ts`), while a reply waits at most 1.5 s; the 10 s is a starting value, since the fetches could not be timed without the real bot ([The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions), "Names never go back to stored ones on an open page"). Each lookup logs `bot names` with its count of IDs, its time in ms and whether the bot answered.
