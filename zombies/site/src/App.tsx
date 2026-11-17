@@ -176,7 +176,7 @@ function AttemptRow({ attempt, busy, onJoin }: { attempt: Attempt; busy: boolean
     <>
       <Chips members={attempt.members} />
       <span className="run-t">
-        {(attempt.playing || attempt.beaten) && (
+        {(attempt.playing || attempt.beaten || attempt.closed) && (
           <span className="marks">
             {attempt.playing && (
               <span className="live-tag">
@@ -190,6 +190,7 @@ function AttemptRow({ attempt, busy, onJoin }: { attempt: Attempt; busy: boolean
                 {t.beaten}
               </span>
             )}
+            {attempt.closed && <span className="shut">{t.closedMark}</span>}
           </span>
         )}
         <span className="who">{t.runOf(nameOf(attempt.startedBy))}</span>
@@ -207,11 +208,11 @@ function AttemptRow({ attempt, busy, onJoin }: { attempt: Attempt; busy: boolean
       </span>
     </>
   );
-  if (attempt.you)
+  if (attempt.you || attempt.closed)
     return (
       <Link to={runPath(attempt.id)} className={`run${live}`}>
         {body}
-        <span className="go go-open">{t.open}</span>
+        <span className="go go-open">{attempt.closed ? t.read : t.open}</span>
       </Link>
     );
   return (

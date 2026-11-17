@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Language, Viewer } from "../shared/bundle";
 import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type Member, type Message, type Queued, type Rating, type Roadmap, type RunSheet } from "../shared/runs";
-import { askMore, bringCoach, changeVoice, fetchCall, fetchRoadmap, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
+import { askMore, bringCoach, changeVoice, closeRun, fetchCall, fetchRoadmap, reopenRun, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
 import { SurveyZone } from "./art";
@@ -9,7 +9,7 @@ import { RoadmapPanel, RoadmapSheet, useFresh } from "./Roadmap";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
 import { characterOf, voiceNames, voices, type Character, type Voice as CoachVoice } from "../shared/voices";
 import { forget, known, learn, load as fetchPage, openFreshMs, runSource, nameOf } from "./store";
-import { Arrow, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, Route, type RunLink, useFit } from "./ui";
+import { Arrow, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, Route, Shut, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
 const lostPollMs = 5000;
@@ -163,6 +163,7 @@ function SlipFoot({ card, language, busy, rating, onMore, onRate }: { card: Card
 }
 
 type SlipProps = {
+  still?: boolean;
   name: string;
   language: Language;
   art: RunSheet["map"]["art"];
@@ -172,7 +173,7 @@ type SlipProps = {
   onRate: (card: number, rating: Rating) => void;
 };
 
-function Slip({ card, pinned, name, language, art, busy, rating, onMore, onRate }: SlipProps & { card: Card; pinned: boolean }) {
+function Slip({ card, pinned, still, name, language, art, busy, rating, onMore, onRate }: SlipProps & { card: Card; pinned: boolean }) {
   const words = coachWords[language];
   return (
     <div className={pinned ? "slip bare" : "slip"} lang={language}>
@@ -184,12 +185,12 @@ function Slip({ card, pinned, name, language, art, busy, rating, onMore, onRate 
         </span>
       </div>
       <Rungs rungs={card.rungs} art={art} language={language} />
-      {!pinned && <SlipFoot card={card} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />}
+      {!pinned && !still && <SlipFoot card={card} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />}
     </div>
   );
 }
 
-function PinnedSlip({ thread, name, language, art, busy, rating, onMore, onRate }: SlipProps & { thread: Card[] }) {
+function PinnedSlip({ thread, still, name, language, art, busy, rating, onMore, onRate }: SlipProps & { thread: Card[] }) {
   const words = coachWords[language];
   const [open, setOpen] = useState(false);
   const latest = thread[thread.length - 1]!;
@@ -215,7 +216,7 @@ function PinnedSlip({ thread, name, language, art, busy, rating, onMore, onRate 
         </button>
       )}
       <Rungs rungs={rungs} art={art} language={language} newest={newest} />
-      <SlipFoot card={latest} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />
+      {!still && <SlipFoot card={latest} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />}
     </div>
   );
 }
@@ -306,6 +307,46 @@ function Queue({ queue, coach }: { queue: Queued[]; coach: string }) {
   );
 }
 
+function CloseDialog({ coach, busy, onClose, onCancel }: { coach: string; busy: boolean; onClose: () => void; onCancel: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    if (element && !element.open) element.showModal();
+  }, []);
+  return (
+    <dialog ref={dialog} className="confirm" aria-labelledby="close-title" onClose={onCancel}>
+      <h2 id="close-title" className="cond">
+        {t.closeTitle}
+      </h2>
+      <p>{t.closeBody(coach)}</p>
+      <div className="confirm-b">
+        <button type="button" className="b b-ghost" onClick={onCancel}>
+          {t.keepPlaying}
+        </button>
+        <button type="button" className="b b-red" disabled={busy} onClick={onClose}>
+          {t.closeAttempt}
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
+function ClosedBar({ closed, canReopen, busy, onReopen }: { closed: NonNullable<RunSheet["closed"]>; canReopen: boolean; busy: boolean; onReopen: () => void }) {
+  const by = nameOf(closed.by);
+  return (
+    <div className="closed-bar">
+      <p>
+        <b>{by ? t.closedBy(by, clock(closed.at)) : t.closedNoBy(clock(closed.at))}</b> {canReopen && t.reopenHint}
+      </p>
+      {canReopen && (
+        <button type="button" className="b" disabled={busy} onClick={onReopen}>
+          {t.reopen}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function CopyLink({ id, icon }: { id: string; icon: boolean }) {
   const [said, setSaid] = useState<string | null>(null);
   useEffect(() => {
@@ -339,14 +380,14 @@ function CopyLink({ id, icon }: { id: string; icon: boolean }) {
 
 type Voice = { channel: VoiceChannel; here: boolean; busy: boolean; refused: string | null; bring: () => void };
 
-function useVoice(id: string, coach: string): Voice | null {
+function useVoice(id: string, coach: string, off: boolean): Voice | null {
   const [state, setState] = useState<CallState | null>(null);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
   const looking = useRef(false);
 
   const look = useCallback(() => {
-    if (document.hidden || looking.current) return;
+    if (off || document.hidden || looking.current) return;
     looking.current = true;
     fetchCall(id)
       .then((next) => {
@@ -359,9 +400,9 @@ function useVoice(id: string, coach: string): Voice | null {
       .finally(() => {
         looking.current = false;
       });
-  }, [id]);
+  }, [id, off]);
 
-  const channel = state?.reachable ? state.channel : null;
+  const channel = state?.reachable && !off ? state.channel : null;
   const inChannel = channel !== null;
 
   useEffect(() => {
@@ -533,7 +574,10 @@ type Log = { history: Message[]; messages: Message[]; cards: Map<number, Card>; 
 
 const logs = new Map<string, Log>();
 
-function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
+function RunView({ sheet, arrive, onChanged }: { sheet: RunSheet; arrive: boolean; onChanged: () => void }) {
+  const closed = sheet.closed;
+  const [closing, setClosing] = useState<"ask" | "busy" | null>(null);
+  const [reopening, setReopening] = useState(false);
   const [log] = useState(() => logs.get(sheet.id));
   const [history, setHistory] = useState<Message[]>(log?.history ?? []);
   const [messages, setMessages] = useState<Message[]>(log?.messages ?? []);
@@ -564,7 +608,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const polling = useRef(0);
   const name = sheet.map.name[lang];
   const title = useFit<HTMLHeadingElement>(name);
-  const voice = useVoice(sheet.id, coach.name);
+  const voice = useVoice(sheet.id, coach.name, Boolean(closed));
 
   const poll = useCallback(async () => {
     polling.current++;
@@ -576,6 +620,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       if (reply.history.length) setHistory(reply.history);
       setLoaded(true);
       setQueue(reply.queue);
+      if (reply.closed !== Boolean(closed)) onChanged();
       if (reply.roadmap !== roadMark.current) {
         roadMark.current = reply.roadmap;
         fetchRoadmap(sheet.id)
@@ -598,12 +643,12 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       }
     } catch (error) {
       if (error instanceof SignedOut) signIn();
-      else if (error instanceof Refused && error.status === 403) location.reload();
+      else if (error instanceof Refused && error.status === 403) onChanged();
       else if (Date.now() - lastOk.current >= lostAfterMs) setLost(true);
     } finally {
       polling.current--;
     }
-  }, [sheet.id]);
+  }, [sheet.id, closed, onChanged]);
 
   useEffect(() => {
     void poll();
@@ -776,6 +821,28 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       });
   };
 
+  const close = () => {
+    setClosing("busy");
+    closeRun(sheet.id)
+      .then(onChanged)
+      .catch((error: unknown) => {
+        if (error instanceof SignedOut) return signIn();
+        setClosing(null);
+        setTrouble({ text: t.notClosed, retry: close });
+      });
+  };
+
+  const reopen = () => {
+    setReopening(true);
+    reopenRun(sheet.id)
+      .then(onChanged)
+      .catch((error: unknown) => {
+        if (error instanceof SignedOut) return signIn();
+        setReopening(false);
+        setTrouble({ text: t.notReopened, retry: reopen });
+      });
+  };
+
   const more = (card: number) => {
     if (airing !== null) return;
     void listen(
@@ -785,7 +852,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   };
 
   const slip = (card: Card, from: string) => (
-    <Slip card={card} pinned={!card.done && card.thread === pinnedThread} name={from} language={sheet.language} art={sheet.map.art} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
+    <Slip card={card} pinned={!card.done && card.thread === pinnedThread} still={Boolean(closed)} name={from} language={sheet.language} art={sheet.map.art} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
   );
   const pinnedSlip = (thread: Card[]) => {
     const latest = thread[thread.length - 1]!;
@@ -793,6 +860,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       <PinnedSlip
         key={latest.thread}
         thread={thread}
+        still={Boolean(closed)}
         name={coach.name}
         language={sheet.language}
         art={sheet.map.art}
@@ -815,10 +883,12 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           </h2>
           <p className="sub">{t.speaksIn(coach.name, sheet.language)}</p>
         </div>
-        <label className="pick">
-          <span className="lab">{t.voice}</span>
-          <VoiceSelect voice={voiceChoice} onPick={pick} />
-        </label>
+        {!closed && (
+          <label className="pick">
+            <span className="lab">{t.voice}</span>
+            <VoiceSelect voice={voiceChoice} onPick={pick} />
+          </label>
+        )}
         <div>
           <span className="lab">{t.inTheRun}</span>
           <ul className="mem">
@@ -833,20 +903,31 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           <CopyLink id={sheet.id} icon={false} />
         </div>
         <RoadmapPanel map={road} fresh={fresh} language={sheet.language} onOpen={() => setRoadOpen(true)} />
-        {voice && <VoicePanel voice={voice} coach={coach} queue={queue} />}
+        {!closed && (
+          <button type="button" className="b b-ghost close-b" onClick={() => setClosing("ask")}>
+            {t.closeAttempt}
+          </button>
+        )}
+        {voice && !closed && <VoicePanel voice={voice} coach={coach} queue={queue} />}
       </aside>
       <div className="strip">
         <Chips members={members} />
-        <VoiceSelect voice={voiceChoice} onPick={pick} label={t.voice} className="pick-m" />
+        {!closed && <VoiceSelect voice={voiceChoice} onPick={pick} label={t.voice} className="pick-m" />}
         <span className="m">· {languageNames[sheet.language]}</span>
         <span className="sp" />
         <button type="button" className={fresh.size ? "ib rm-ib rm-ib-new" : "ib rm-ib"} aria-label={t.roadmap} onClick={() => setRoadOpen(true)}>
           <Route />
         </button>
         <CopyLink id={sheet.id} icon />
+        {!closed && (
+          <button type="button" className="ib" aria-label={t.closeAttempt} onClick={() => setClosing("ask")}>
+            <Shut />
+          </button>
+        )}
       </div>
+      {closing && <CloseDialog coach={coach.name} busy={closing === "busy"} onClose={close} onCancel={() => setClosing(null)} />}
       {roadOpen && <RoadmapSheet map={road} fresh={fresh} language={sheet.language} onClose={() => setRoadOpen(false)} />}
-      {voice && <VoiceBar voice={voice} coach={coach} queue={queue} />}
+      {voice && !closed && <VoiceBar voice={voice} coach={coach} queue={queue} />}
       <section className="main">
         {pinned.length > 0 && (
           <section className="pins" aria-label={coachWords[sheet.language].pins}>
@@ -868,7 +949,20 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           ))}
           {airing !== null && <Transmitting text={airing.text} at={airing.at} name={coach.name} language={sheet.language} />}
         </div>
-        <Queue queue={queue} coach={coach.name} />
+        {!closed && <Queue queue={queue} coach={coach.name} />}
+        {closed ? (
+          <>
+            {notice && (
+              <div className="trouble" role="alert">
+                <p className="state">{notice.text}</p>
+                <button type="button" className="b b-ghost" onClick={notice.retry}>
+                  {t.retry}
+                </button>
+              </div>
+            )}
+            <ClosedBar closed={closed} canReopen={sheet.wasMember} busy={reopening} onReopen={reopen} />
+          </>
+        ) : (
         <form className={revising ? "cmp cmp-rev" : "cmp"} onSubmit={send}>
           <div className="over">
             {notice && (
@@ -899,6 +993,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
             </button>
           </div>
         </form>
+        )}
       </section>
     </div>
   );
@@ -980,5 +1075,5 @@ export function RunPage({
         </Notice>
       </main>
     );
-  return state.sheet.you ? <RunView sheet={state.sheet} arrive={!atOnce} /> : <JoinView sheet={state.sheet} arrive={!atOnce} onJoined={retry} />;
+  return state.sheet.you || state.sheet.closed ? <RunView key={state.sheet.closed?.at ?? "open"} sheet={state.sheet} arrive={!atOnce} onChanged={retry} /> : <JoinView sheet={state.sheet} arrive={!atOnce} onJoined={retry} />;
 }

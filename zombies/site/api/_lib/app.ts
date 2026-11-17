@@ -8,7 +8,7 @@ import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { deleteMap, deleteRun, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
-import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, roadmap, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
+import { canRead, closeRun, importHistory, importRun, reopenRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, roadmap, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 import { bringCoach, callState, coachVoice, keepCallLine, voiceTurn } from "./voice.js";
 
@@ -229,10 +229,23 @@ member.post("/runs/:id/join", async (c) =>
   (await joinRun(c.get("viewer"), c.req.param("id"))) ? c.json({ id: c.req.param("id") }, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore),
 );
 
-member.get("/runs/:id/messages", async (c) => {
+member.post("/runs/:id/close", async (c) => {
   const viewer = c.get("viewer");
   const id = c.req.param("id");
   if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
+  return (await closeRun(viewer, id)) ? c.json({ id }, 200, noStore) : c.json({ error: "closed" }, 409, noStore);
+});
+
+member.post("/runs/:id/reopen", async (c) => {
+  const reopened = await reopenRun(c.get("viewer"), c.req.param("id"));
+  if (reopened === "ok") return c.json({ id: c.req.param("id") }, 200, noStore);
+  return c.json({ error: reopened }, reopened === "noSuchRun" ? 404 : 403, noStore);
+});
+
+member.get("/runs/:id/messages", async (c) => {
+  const viewer = c.get("viewer");
+  const id = c.req.param("id");
+  if (!(await canRead(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
   return c.json(await transcript(viewer, id, cursor(c.req.query("after")), cursor(c.req.query("rungsAfter"))), 200, noStore);
 });
 
@@ -274,7 +287,7 @@ member.put("/runs/:id/cards/:card/feedback", async (c) => {
 member.get("/runs/:id/roadmap", async (c) => {
   const viewer = c.get("viewer");
   const id = c.req.param("id");
-  if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
+  if (!(await canRead(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
   const map = await roadmap(id);
   return map ? c.json(map, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
 });

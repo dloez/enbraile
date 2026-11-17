@@ -12,7 +12,7 @@ export type MapSummary = PublishedMap & { attempts: number; beaten: number; you:
 
 export type MapsPage = { viewer: Viewer; maps: MapSummary[]; yourRun: RunLink | null };
 
-export type Attempt = { id: string; language: Language; voice: Voice; startedBy: Person; members: Member[]; playing: boolean; you: boolean; beaten: boolean; lastPlayed: string };
+export type Attempt = { id: string; language: Language; voice: Voice; startedBy: Person; members: Member[]; playing: boolean; you: boolean; beaten: boolean; closed: boolean; lastPlayed: string };
 
 export type MapPage = { viewer: Viewer; map: PublishedMap; attempts: Attempt[]; yourRun: RunLink | null };
 
@@ -26,6 +26,8 @@ export type RunSheet = {
   members: Member[];
   you: boolean;
   yourRun: RunLink | null;
+  closed: { at: string; by: Person } | null;
+  wasMember: boolean;
 };
 
 export const ratings = ["obvious", "right", "vague"] as const;
@@ -63,7 +65,7 @@ export type GapContext = {
   recent: string[];
 };
 
-export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice; queue: Queued[]; roadmap: string };
+export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice; queue: Queued[]; roadmap: string; closed: boolean };
 
 export type RoadNode = { key: string; label: string | null; optional: boolean; done: boolean; at: string | null; by: Person | null; after: string[] };
 
@@ -78,6 +80,7 @@ export type RunEvent = { id: number; at: string } & (
   | { kind: "gap"; asked: string; about: string; said: string; version: number; askedBy: string | null }
   | { kind: "answered"; gap: number; delivery: number | null }
   | { kind: "joined" | "left"; name: string }
+  | { kind: "closed"; name: string }
   | { kind: "progress"; status: "started" | "done" | "blocked"; step: string; part: string | null }
   | { kind: "published"; version: number }
 );

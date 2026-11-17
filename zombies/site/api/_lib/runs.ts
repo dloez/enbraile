@@ -78,7 +78,7 @@ export async function joinRun(viewer: Viewer, runId: string): Promise<boolean> {
   return db.transaction(async (tx) => {
     await lockPerson(tx, viewer.discordId);
     const [run] = await tx.select().from(runs).where(eq(runs.id, runId));
-    if (!run) return false;
+    if (!run || run.closedAt) return false;
     const [current] = await tx
       .select({ runId: runMembers.runId })
       .from(runMembers)
@@ -115,7 +115,7 @@ function runOf(viewer: Viewer) {
     .where(and(eq(runMembers.discordId, viewer.discordId), activeMember));
 }
 
-type AttemptRow = { id: string; game: string; map: string; language: Language; voice: Voice; startedBy: string; starterId: string; createdAt: Date; lastPlayed: Date; beaten: boolean };
+type AttemptRow = { id: string; game: string; map: string; language: Language; voice: Voice; startedBy: string; starterId: string; createdAt: Date; lastPlayed: Date; beaten: boolean; closed: boolean };
 
 async function attemptRows(only?: { game: string; map: string }): Promise<AttemptRow[]> {
   const where = only ? sql`where r.game = ${only.game} and r.map = ${only.map}` : sql``;
@@ -133,7 +133,8 @@ async function attemptRows(only?: { game: string; map: string }): Promise<Attemp
         select 1 from required q
         where q.game = r.game and q.map = r.map
           and not exists (select 1 from ${runSteps} s where s.run_id = r.id and s.step_id = q.step_id and s.part_id = '' and s.done_at is not null)
-      ) as beaten
+      ) as beaten,
+      r.closed_at is not null as closed
     from ${runs} r
     ${where}
     order by r.created_at desc`);
@@ -195,6 +196,7 @@ export async function mapPage(viewer: Viewer, game: string, map: string, time: T
       playing: ordered.some(([, person]) => person.here),
       you: current?.id === row.id,
       beaten: row.beaten,
+      closed: row.closed,
       lastPlayed: row.lastPlayed.toISOString(),
     };
   });
@@ -213,7 +215,8 @@ export async function runSheet(viewer: Viewer, runId: string, time: Time): Promi
   if (!run) return null;
   const map = published.find((entry) => entry.game === run.game && entry.map === run.map);
   if (!map) return null;
-  const named = await time("names", currentNames([...members.map((member) => member.discordId), run.startedBy]));
+  const [ever] = await db.select({ id: runMembers.id }).from(runMembers).where(and(eq(runMembers.runId, runId), eq(runMembers.discordId, viewer.discordId))).limit(1);
+  const named = await time("names", currentNames([...members.map((member) => member.discordId), run.startedBy, run.closedBy]));
   return {
     viewer,
     id: run.id,
@@ -224,7 +227,44 @@ export async function runSheet(viewer: Viewer, runId: string, time: Time): Promi
     members: members.map((member): Member => ({ ...named(member.discordId, member.name), you: member.discordId === viewer.discordId })),
     you: current?.id === runId,
     yourRun: current && current.id !== runId ? linkOf(current, published) : null,
+    closed: run.closedAt ? { at: run.closedAt.toISOString(), by: named(run.closedBy, run.closedByName ?? "") } : null,
+    wasMember: ever !== undefined,
   };
+}
+
+export async function canRead(viewer: Viewer, runId: string): Promise<boolean> {
+  if (await isActiveMember(viewer, runId)) return true;
+  const [run] = await db.select({ closedAt: runs.closedAt }).from(runs).where(eq(runs.id, runId));
+  return Boolean(run?.closedAt);
+}
+
+export async function closeRun(viewer: Viewer, runId: string): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`coach/${runId}`}))`);
+    const [run] = await tx.select({ closedAt: runs.closedAt }).from(runs).where(eq(runs.id, runId));
+    if (!run || run.closedAt) return false;
+    const now = new Date();
+    await tx.update(runs).set({ closedAt: now, closedBy: viewer.discordId, closedByName: viewer.name }).where(eq(runs.id, runId));
+    await tx.update(runMembers).set({ leftAt: now }).where(and(eq(runMembers.runId, runId), activeMember));
+    return true;
+  });
+}
+
+export async function reopenRun(viewer: Viewer, runId: string): Promise<"ok" | "noSuchRun" | "notMember"> {
+  return db.transaction(async (tx) => {
+    await lockPerson(tx, viewer.discordId);
+    const [run] = await tx.select().from(runs).where(eq(runs.id, runId));
+    if (!run) return "noSuchRun";
+    const [ever] = await tx.select({ id: runMembers.id }).from(runMembers).where(and(eq(runMembers.runId, runId), eq(runMembers.discordId, viewer.discordId))).limit(1);
+    if (!ever) return "notMember";
+    await tx.update(runs).set({ closedAt: null, closedBy: null, closedByName: null }).where(eq(runs.id, runId));
+    const [current] = await tx.select({ runId: runMembers.runId }).from(runMembers).where(and(eq(runMembers.discordId, viewer.discordId), activeMember));
+    if (current?.runId === runId) return "ok";
+    await leaveCurrent(tx, viewer.discordId);
+    await addMember(tx, runId, viewer);
+    await learnFromEarlierRuns(tx, runId, run.game, run.map, viewer.discordId);
+    return "ok";
+  });
 }
 
 export async function isActiveMember(viewer: Viewer, runId: string): Promise<boolean> {
@@ -329,7 +369,7 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
     .orderBy(asc(messages.id));
   const [members, [run], queue, mark] = await Promise.all([
     activeMembers(runId),
-    db.select({ voice: runs.voice }).from(runs).where(eq(runs.id, runId)),
+    db.select({ voice: runs.voice, closedAt: runs.closedAt }).from(runs).where(eq(runs.id, runId)),
     db
       .select()
       .from(coachQueue)
@@ -385,6 +425,7 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
     ),
     voice: run?.voice ?? defaultVoice,
     roadmap: mark,
+    closed: Boolean(run?.closedAt),
   };
 }
 
@@ -746,6 +787,9 @@ export async function runEvents(runId: string, after: string): Promise<RunEvents
       union all
       select 'published', b.version, b.created_at, jsonb_build_object('version', b.version)
       from ${bundleVersions} b where b.game = ${run.game} and b.map = ${run.map} and b.created_at > ${run.createdAt}
+      union all
+      select 'closed', 0, r.closed_at, jsonb_build_object('name', r.closed_by_name)
+      from ${runs} r where r.id = ${runId} and r.closed_at is not null
     )
     select kind, id, (extract(epoch from at) * 1000000)::bigint::text as us, at, data
     from events

@@ -17,27 +17,6 @@
 
 **Touches:** `zombies/maps/` (gitignored)
 
-## Close and reopen an attempt
-
-Any member closes the attempt from its rail (the phone's strip) after a confirm; it becomes read-only, every member is released, the coach answers nothing, and it stays on its map's list marked closed; any member of it reopens it ([Decisions](../../zombies/site/explanation/site.md#decisions), "A closed attempt is read-only and can be reopened").
-
-**Do:**
-- [ ] A Drizzle migration adding `closed_at` and `closed_by` to `runs`.
-- [ ] `POST /api/runs/<id>/close` (member only): under the run's coach lease, sets them and marks every open `run_members` row left. `POST /api/runs/<id>/reopen` (anyone who was ever a member) clears them and joins the reader, leaving their current attempt as join does.
-- [ ] Refuse on a closed run: posting a line, More, rating, voice change, join, voice join, `/api/voice` (the speaker is in no run then, so it gets `done`), Claude's `say`; `GET` routes still answer.
-- [ ] The run page: a Close attempt control with a confirm, a closed attempt shown as its log without composer, More or ratings, and Reopen; the map view's list and the maps page's counts mark it closed; the watch stream gets `closed` and `reopened` events, `npm run runs` carries the fields.
-- [ ] Mock the control and the closed state as boards in `zombies/site/design/` first, in the third take's look, and add them to the design-system doc.
-- [ ] Rewrite Attempts and the closing decisions in `site.md`, and the how-to if a command changed.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; through the `verify-site`-style local stack with two dev members on the test map: close from one, the other's next poll shows it closed and its composer gone, a line post answers 403/409, the map view marks it, reopen from the other and both can play again; `watch` prints the two events.
-- Human-run: on production, close the group's attempt after a night and reopen it.
-- Reuse: `joinRun`'s leave-the-current-attempt path in `api/_lib/runs.ts`, `acquire`/`release` in `coach.ts`.
-- Neighbors: `delete-run`'s locking under the coach lease.
-- Forbidden: deleting anything on close; closing without a confirm; a closed run counted as "someone is in it".
-
-**Touches:** `zombies/site/drizzle/`, `zombies/site/api/_lib/`, `zombies/site/src/`, `zombies/site/shared/runs.ts`, `zombies/site/scripts/watch.ts`, `zombies/site/design/`, `docs/zombies/site/`
-
 ## Write the milestone labels of both published maps
 
 The roadmap shows each done step's prepared `Milestone` line, read by `compile` and carried in the bundle ([The Zombies Site → Roadmap](../../zombies/site/explanation/site.md#roadmap)); a step without one shows a redacted bar. Kowakujo and Blood of the Dead have none yet.

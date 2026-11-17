@@ -41,6 +41,7 @@ function line(event: RunEvent): string {
       return `${at} gap ${event.gap} answered`;
     case "joined":
     case "left":
+    case "closed":
       return `${at} ${event.kind} ${event.name}`;
     case "progress":
       return `${at} progress ${event.status}`;

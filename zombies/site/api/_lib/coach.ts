@@ -165,7 +165,7 @@ async function loadState(runId: string): Promise<State | null> {
     .from(runs)
     .innerJoin(maps, and(eq(maps.game, runs.game), eq(maps.map, runs.map)))
     .innerJoin(bundleVersions, and(eq(bundleVersions.game, maps.game), eq(bundleVersions.map, maps.map), eq(bundleVersions.version, maps.latestVersion)))
-    .where(eq(runs.id, runId));
+    .where(and(eq(runs.id, runId), isNull(runs.closedAt)));
   if (!row) return null;
   const known = await db.select({ id: runKnowledge.knowledgeId }).from(runKnowledge).where(eq(runKnowledge.runId, runId));
   const rows = await db
@@ -1158,6 +1158,7 @@ export async function retryHeld(game: string, map: string): Promise<{ waiting: n
     join ${runs} r on r.id = g.run_id
     join ${maps} m on m.game = r.game and m.map = r.map
     where r.game = ${game} and r.map = ${map}
+      and r.closed_at is null
       and g.answered_at is null
       and coalesce(g.tried_version, g.bundle_version) < m.latest_version
       and g.id = (select max(x.id) from ${gaps} x where x.run_id = g.run_id)
@@ -1199,7 +1200,10 @@ export async function stepIn(runId: string, input: StepIn): Promise<StepInResult
   if (!lease) return { ok: false, error: "busy" };
   try {
     const state = await loadState(runId);
-    if (!state) return { ok: false, error: "noSuchRun" };
+    if (!state) {
+      const [run] = await db.select({ closedAt: runs.closedAt }).from(runs).where(eq(runs.id, runId));
+      return { ok: false, error: run?.closedAt ? "closed" : "noSuchRun" };
+    }
     const text = input.text.replace(/\s+/g, " ").trim();
     const progress = input.progress.map((entry) => ({ ladder: state.ladders.find((ladder) => ladder.stepId === entry.step && ladder.partId === entry.part), status: entry.status }));
     if (progress.some((entry) => !entry.ladder)) return { ok: false, error: "noSuchLadder" };

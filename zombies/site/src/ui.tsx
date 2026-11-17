@@ -88,6 +88,13 @@ export const Mic = ({ size = 20 }: { size?: number }) => (
   </Icon>
 );
 
+export const Shut = () => (
+  <Icon size={20} width={2}>
+    <rect x="4" y="4" width="16" height="16" rx="3" />
+    <path d="M9 9l6 6M15 9l-6 6" />
+  </Icon>
+);
+
 export const Route = () => (
   <Icon size={20} width={2}>
     <circle cx="6" cy="5" r="2" />
