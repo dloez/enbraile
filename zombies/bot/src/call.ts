@@ -6,23 +6,27 @@ export type Joined = { channelId: string; coach: Coach } | { error: "notInVoice"
 export type Coach = { name: string; wake: string };
 
 const OWNER = "zombies";
-const COACHES: Record<string, Coach & { unheard: string; voice: string; acks: string[] }> = {
+const COACHES: Record<string, Coach & { unheard: string[]; voice: string; acks: string[] }> = {
   "bebé": {
     name: "Coach",
     wake: "bebé",
-    unheard: "No te he entendido bien, ¿me lo repites?",
+    unheard: ["No te he entendido bien, ¿me lo repites?", "Perdona, se me ha cortado. ¿Qué decías?", "No te he pillado, dímelo otra vez."],
     voice: "chatterbox",
     acks: ["Mmm…", "A ver…", "Vale, un segundo.", "Ajá, déjame pensar.", "Mmm, veamos."],
   },
   richtofen: {
     name: "Richtofen",
     wake: "richtofen",
-    unheard: "¿Qué? ¡Hablad más claro, ratitas! Repetídmelo.",
+    unheard: ["¿Qué? Hablad más claro, que no os entiendo.", "¿Cómo? Repetídmelo, y esta vez vocalizad.", "Se ha perdido en el éter… otra vez, por favor."],
     voice: "richtofen",
-    acks: ["Mmm… interesante.", "Ach, veamos…", "Ah, sí, sí…", "Un momento, ratitas.", "Hmm, ¿qué tenemos aquí?"],
+    acks: ["Mmm… interesante.", "Ach, veamos…", "Ah, sí, sí…", "Un momento…", "Hmm, ¿qué tenemos aquí?"],
   },
 };
 const coachOf = (named: string | null) => (named === "richtofen" ? COACHES.richtofen! : COACHES["bebé"]!);
+const unheardOf = (named: string | null) => {
+  const lines = coachOf(named).unheard;
+  return lines[Math.floor(Math.random() * lines.length)]!;
+};
 const SITE_TIMEOUT_MS = 25_000;
 const AVATAR = { size: 128, extension: "webp" } as const;
 
@@ -157,11 +161,11 @@ async function heard(userId: string, text: string, word: string): Promise<void> 
       } else if (event.type === "say" && typeof event.text === "string" && event.text.trim()) speakLine(event.text);
     }
   } catch (error) {
-    if (!queued.length) speakLine(coachOf(heldVoice).unheard);
+    if (!queued.length) speakLine(unheardOf(heldVoice));
     await Promise.all(queued);
     throw error;
   }
-  if (answering && !queued.length) speakLine(coachOf(heldVoice).unheard);
+  if (answering && !queued.length) speakLine(unheardOf(heldVoice));
   await Promise.all(queued);
 }
 

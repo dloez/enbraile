@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { and, asc, count, desc, eq, gt, inArray, isNull, lt, max, or, sql } from "drizzle-orm";
 import type { Bundle, Language } from "../../shared/bundle.js";
 import type { ReplyEvent, StepIn } from "../../shared/runs.js";
-import { characterOf, wakeWords, type Character } from "../../shared/voices.js";
+import { anyOf, characterOf, wakeWords, type Character } from "../../shared/voices.js";
 import { db } from "./db.js";
 import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
 import { audits, bundleVersions, coachCalls, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
@@ -23,7 +23,7 @@ const languageNames: Record<Language, string> = { es: "Spanish", en: "English" }
 const recentLines = 8;
 const maxMissing = 2;
 
-const systemPrompt = (character: Character) => `You are ${character.name}, ${character.role}. You have beaten it before; they want to solve it themselves, with your prepared hints when they ask. ${character.manner}
+const systemPrompt = (character: Character) => `You are ${character.name}, ${character.role}. You have beaten it before; they want to solve it themselves, with your prepared hints when they ask. ${character.manner}${character.examples.length ? ` Examples: ${character.examples.map((line) => `«${line}»`).join(" ")}` : ""}
 
 How you speak
 - They are mid-round on voice chat: one or two short sentences, in the run's language only. Lines marked spoken came through speech recognition; read them by what they most likely said.
@@ -810,8 +810,7 @@ export async function coachTurn(
     const handed: Handed[] = [];
     const openBefore = new Set(state.ladders.filter((ladder) => isOpen(state, ladder)).map(keyOf));
     const earlier = new Set(
-      conversation
-        .flatMap((turn) => (turn.role === "assistant" && typeof turn.content === "string" ? turn.content.split(sentenceEnd) : []))
+      [...conversation.flatMap((turn) => (turn.role === "assistant" && typeof turn.content === "string" ? turn.content.split(sentenceEnd) : [])), ...state.character.examples.flatMap((line) => line.split(sentenceEnd))]
         .map(flat)
         .filter((sentence) => sentence.split(" ").length >= 3),
     );
@@ -1106,7 +1105,7 @@ export async function coachTurn(
     else if (round) speech.add(state.character.lines[state.language].round);
     if (!failed && addressed && !speech.spoken.length && !cards.length) {
       caught.push("silent-to-addressed");
-      speech.add(state.character.lines[state.language].unheard);
+      speech.add(anyOf(state.character.lines[state.language].unheard));
     }
     if (!failed) await noteTried(state);
     const text = speech.spoken.join(" ");

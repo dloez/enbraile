@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { Viewer } from "../../shared/bundle.js";
 import { asRevision, type CallLine, type CallState, type JoinRefusal, type VoiceEvent } from "../../shared/runs.js";
-import { characterOf, type Voice } from "../../shared/voices.js";
+import { anyOf, characterOf, type Voice } from "../../shared/voices.js";
 import { bot, inBackground } from "./bot.js";
 import { db } from "./db.js";
 import { postMessage, postRevision } from "./runs.js";
@@ -26,7 +26,7 @@ export async function voiceTurn(discordId: string, text: string, word: string, s
   const lines = characterOf(run.voice).lines[run.language];
   send({ type: "voice", voice: run.voice });
   const revision = asRevision(text, false, true);
-  if (revision === "") return send({ type: "say", text: lines.unheard });
+  if (revision === "") return send({ type: "say", text: anyOf(lines.unheard) });
   if (revision !== null) {
     const acknowledged = await postRevision(viewer, runId, revision);
     if (acknowledged) send({ type: "say", text: acknowledged });
@@ -42,7 +42,7 @@ export async function voiceTurn(discordId: string, text: string, word: string, s
     spoke = true;
     send({ type: "say", text: said });
   });
-  if (!spoke) send({ type: "say", text: lines.unheard });
+  if (!spoke) send({ type: "say", text: anyOf(lines.unheard) });
 }
 
 export async function coachVoice(discordId: string): Promise<Voice | null> {
