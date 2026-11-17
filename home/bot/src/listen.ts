@@ -3,7 +3,7 @@ import { client } from "./discord.ts";
 import { oggOpus } from "./ogg.ts";
 import * as voice from "./voice.ts";
 
-const SILENCE_MS = 800;
+const SILENCE_MS = 500;
 const MIN_PACKETS = 20;
 const MAX_MS = 30_000;
 

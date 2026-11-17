@@ -151,6 +151,8 @@ async function heard(userId: string, text: string, word: string): Promise<void> 
   const queued: Promise<void>[] = [];
   const speakLine = (line: string) => queued.push(hearing.say(line, heldVoice === null ? {} : { voice: heldVoice }).catch((error: Error) => console.error("zombies say", error.message)));
   let answering = false;
+  const started = Date.now();
+  let firstSay: number | null = null;
   try {
     const response = await site("voice", { userId, text, word });
     if (!response.ok || !response.body) throw new Error(`site answered ${response.status}`);
@@ -158,8 +160,12 @@ async function heard(userId: string, text: string, word: string): Promise<void> 
       if (event.type === "voice") {
         answering = true;
         keepVoice(typeof event.voice === "string" ? event.voice : null);
-      } else if (event.type === "say" && typeof event.text === "string" && event.text.trim()) speakLine(event.text);
+      } else if (event.type === "say" && typeof event.text === "string" && event.text.trim()) {
+        firstSay ??= Date.now() - started;
+        speakLine(event.text);
+      }
     }
+    console.log("zombies voice timing", `first sentence ${firstSay ?? "-"}ms, site done ${Date.now() - started}ms`);
   } catch (error) {
     if (!queued.length) speakLine(unheardOf(heldVoice));
     await Promise.all(queued);

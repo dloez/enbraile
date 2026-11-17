@@ -1,4 +1,4 @@
-import { Readable } from "node:stream";
+import { PassThrough, Readable } from "node:stream";
 import { createAudioResource, StreamType } from "@discordjs/voice";
 import type { WebSocket } from "ws";
 import { listen } from "./listen.ts";
@@ -19,6 +19,8 @@ export type TranscriptLine = transcripts.Line;
 const BEAT_MS = 10_000;
 const SAY_TIMEOUT_MS = 60_000;
 const FOLLOW_MS = 1_200;
+const STATEMENT_MS = 500;
+const STATEMENT_WORDS = 3;
 const FOLLOW_WAIT_MS = 5_000;
 const FOLLOW_MAX_MS = 30_000;
 
@@ -26,6 +28,7 @@ const registrations = new Set<Registration>();
 const holds = new Map<string, Set<string>>();
 const speakers = new Map<string, Speaker>();
 const listeners = new Set<(line: TranscriptLine) => void>();
+const streams = new Map<number, PassThrough>();
 const waiting = new Map<number, { resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
 let worker: WebSocket | null = null;
 let said = 0;
@@ -155,7 +158,9 @@ function settle(userId: string): void {
   follow.timer = null;
   const now = Date.now();
   const total = FOLLOW_MAX_MS - (now - follow.received);
-  const left = state.open ? total : Math.min(total, (state.sent.length ? FOLLOW_WAIT_MS : FOLLOW_MS) - (now - state.closedAt));
+  const last = follow.parts.filter(Boolean).join(" ").trim();
+  const settled = state.sent.length ? FOLLOW_WAIT_MS : /[?？]["»”')]*$/.test(last) ? 0 : /[.!…]["»”')]*$/.test(last) && last.split(/\s+/).length >= STATEMENT_WORDS ? STATEMENT_MS : FOLLOW_MS;
+  const left = state.open ? total : Math.min(total, settled - (now - state.closedAt));
   if (left <= 0) return finish(userId);
   follow.timer = setTimeout(() => settle(userId), left);
 }
@@ -196,7 +201,18 @@ function received(data: Buffer, binary: boolean): void {
   if (binary) {
     const { header, body } = unframe(data);
     if (header.type !== "audio") return;
-    play(body);
+    if (header.stream === true && typeof header.id === "number") {
+      let stream = streams.get(header.id);
+      if (!stream) {
+        stream = new PassThrough();
+        streams.set(header.id, stream);
+        voice.speak(createAudioResource(stream, { inputType: StreamType.OggOpus }));
+      }
+      if (body.length) stream.write(body);
+      if (header.end !== true) return;
+      stream.end();
+      streams.delete(header.id);
+    } else play(body);
     const entry = typeof header.id === "number" ? waiting.get(header.id) : undefined;
     if (!entry) return;
     clearTimeout(entry.timer);
@@ -211,6 +227,8 @@ function received(data: Buffer, binary: boolean): void {
     return;
   }
   if (message.type === "failed" && typeof message.id === "number") {
+    streams.get(message.id)?.end();
+    streams.delete(message.id);
     const entry = waiting.get(message.id);
     if (!entry) return;
     clearTimeout(entry.timer);
@@ -259,6 +277,8 @@ function accept(socket: WebSocket): void {
       state.sent = [];
       finish(userId);
     }
+    for (const stream of streams.values()) stream.end();
+    streams.clear();
     for (const [id, entry] of waiting) {
       clearTimeout(entry.timer);
       entry.reject(new Error("the voice worker disconnected"));

@@ -51,6 +51,8 @@ GAP_S = 0.15
 RICHTOFEN_HEARD = 0.8
 RICHTOFEN_CHECKED_WORDS = 3
 RICHTOFEN_TRIES = 3
+RICHTOFEN_STREAM_WORDS = int(os.environ.get("RICHTOFEN_STREAM_WORDS", "0"))
+STREAM_GAP_S = 0.15
 
 
 def log(*parts):
@@ -200,6 +202,16 @@ class Richtofen:
 
     def wav(self, text, preset):
         return wav_bytes(joined([self.sentence(part) for part in sentences(text)], 24000), 24000)
+
+    def streams(self, text):
+        return RICHTOFEN_STREAM_WORDS > 0 and all(len(part.split()) <= RICHTOFEN_STREAM_WORDS for part in sentences(text))
+
+    def stream(self, text):
+        for index, part in enumerate(sentences(text)):
+            if index:
+                yield np.zeros(int(24000 * STREAM_GAP_S), dtype=np.float32)
+            for chunk in self.model.inference_stream(part, "es", self.latents, self.speaker, stream_chunk_size=20, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0, enable_text_splitting=False):
+                yield chunk.detach().float().cpu().numpy().reshape(-1)
 
 
 ENGINES = {"piper": (Piper, None), "richtofen": (Richtofen, None)} | {name: (Chatterbox, preset) for name, preset in CHATTERBOX_PRESETS.items()}
@@ -401,6 +413,49 @@ class Worker:
         kind, preset = ENGINES[name]
         return opus(self.engines[kind].wav(text, preset))
 
+    async def stream_say(self, socket, id, engine, text):
+        loop = asyncio.get_running_loop()
+        queue = asyncio.Queue()
+        encoder = subprocess.Popen(
+            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-f", "f32le", "-ar", "24000", "-ac", "1", "-i", "pipe:0", "-ac", "2", "-ar", "48000", "-c:a", "libopus", "-b:a", "96k", "-page_duration", "20000", "-flush_packets", "1", "-f", "ogg", "pipe:1"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+        )
+
+        def produce():
+            try:
+                for chunk in engine.stream(text):
+                    encoder.stdin.write(chunk.astype(np.float32).tobytes())
+                    encoder.stdin.flush()
+            finally:
+                encoder.stdin.close()
+
+        def drain():
+            while True:
+                data = encoder.stdout.read1(16384)
+                loop.call_soon_threadsafe(queue.put_nowait, data)
+                if not data:
+                    return
+
+        started = time.time()
+        producing = asyncio.create_task(asyncio.to_thread(produce))
+        draining = asyncio.create_task(asyncio.to_thread(drain))
+        first = None
+        while True:
+            data = await queue.get()
+            if not data:
+                break
+            if first is None:
+                first = time.time() - started
+            await socket.send(frame({"type": "audio", "id": id, "stream": True}, data))
+        await draining
+        try:
+            await producing
+        finally:
+            encoder.wait()
+        await socket.send(frame({"type": "audio", "id": id, "stream": True, "end": True}, b""))
+        log(f"streamed in {time.time() - started:.2f}s, first audio after {first or 0:.2f}s")
+
     async def on_say(self, socket, id, text, voice):
         async with self.turn:
             name = voice if voice in VOICES else DEFAULT_VOICE
@@ -409,6 +464,14 @@ class Worker:
             async with self.using:
                 if name not in self.loaded():
                     await socket.send(json.dumps({"type": "failed", "id": id, "error": "no voice is loaded"}))
+                    return
+                engine = self.engines[ENGINES[name][0]]
+                if hasattr(engine, "streams") and engine.streams(text):
+                    try:
+                        await self.stream_say(socket, id, engine, text)
+                    except Exception as error:
+                        log(f"stream in {name} failed: {error}")
+                        await socket.send(json.dumps({"type": "failed", "id": id, "error": f"{name} could not speak"}))
                     return
                 try:
                     audio = await asyncio.to_thread(self.speak, text, name)
