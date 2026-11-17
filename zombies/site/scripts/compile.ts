@@ -313,18 +313,21 @@ const image = meta.data.image ? await readImage(meta.data.image) : undefined;
 const survey = meta.data.survey ? await readImage(meta.data.survey) : undefined;
 
 const zonesSource = await readOptional("zones.json");
-const zonesParsed = z.record(z.string(), zoneSchema).safeParse(zonesSource === null ? {} : parseJson(zonesSource));
+const zonesParsed = z.record(z.string(), zoneSchema.nullable()).safeParse(zonesSource === null ? {} : parseJson(zonesSource));
 if (!zonesParsed.success) {
-  console.error("zones.json: needs to be JSON mapping a rung, such as \"step 5 L3\", \"step 5 part 1 L3\" or \"step 5 Alt 2\", to { x, y, rx, ry }, each a fraction of the survey image from 0 to 1");
+  console.error("zones.json: needs to be JSON mapping a rung, such as \"step 5 L3\", \"step 5 part 1 L3\" or \"step 5 Alt 2\", to { x, y, rx, ry }, each a fraction of the survey image from 0 to 1, or to null for a rung that gives no place");
   process.exit(1);
 }
-const zones: Record<string, Zone> = zonesParsed.data;
-if (Object.keys(zones).length && !survey) errors.push("zones.json: zones need a survey image named in map.json");
+const zones: Record<string, Zone | null> = zonesParsed.data;
+if (Object.values(zones).some(Boolean) && !survey) errors.push("zones.json: zones need a survey image named in map.json");
 const placed = new Set<string>();
+const undecided: string[] = [];
 const zoneAt = (address: string, level: number, alt = false) => {
   const zone = zones[address];
-  if (!zone) return {};
+  if (zone === undefined && survey && level >= zoneLevel) undecided.push(address);
+  if (zone === undefined) return {};
   placed.add(address);
+  if (zone === null) return {};
   if (level < zoneLevel) {
     errors.push(`zones.json: ${address} is ${alt ? "an Alt for " : ""}a level ${level} rung; a zone goes only on level ${zoneLevel} and up`);
     return {};
@@ -377,6 +380,7 @@ const steps = hints.en.map((en) => {
 });
 
 for (const address of Object.keys(zones)) if (!placed.has(address)) errors.push(`zones.json: ${address} names no rung`);
+if (undecided.length) warnings.push(`zones.json: ${undecided.length} rungs of level ${zoneLevel} and up have no zone and are not marked null (gives no place), so a place they give shows no map: ${undecided.join(", ")}`);
 
 const lines = steps.flatMap((step) => [step.onSuccess, ...[step.ladder, ...step.parts.map((part) => part.ladder)].flatMap((ladder) => ladder.flatMap((rung) => [rung, ...rung.alts]))]);
 const unknown = new Set(knowledge.filter((entry) => entry.mark === "unknown").map((entry) => entry.id));

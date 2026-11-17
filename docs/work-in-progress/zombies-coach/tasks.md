@@ -1,5 +1,22 @@
 # Zombies Coach — Tasks
 
+## Publish the zones for every place-giving rung of both maps
+
+`compile` now warns about every level 3 or 4 rung with no zone decision ([Decisions](../../zombies/site/explanation/site.md#decisions), "Every place-giving rung has its zone, checked by compile"); Kowakujo was published with zones on 6 of its 90 level 3 and 4 rungs, Blood of the Dead with 46 of 80.
+
+**Do:**
+- [ ] In subagents that report addresses and counts only, place or `null` every undecided rung of both maps with the render check and the blind check of `research.md` 3b, until `compile` prints no zones warning.
+- [ ] Publish both to production through the `watch-run` skill's `prod` wrapper, quoting only `publish`'s output.
+
+**Acceptance:**
+- Claude-run: `npm run compile` on both map dirs prints no `warning: zones`; `publish` prints a new version for each.
+- Human-run: on the next night, a level 3 hint that names a place shows its map.
+- Reuse: `research.md` 3b, the `prod` wrapper.
+- Neighbors: none.
+- Forbidden: hint text or place names in the conversation or a tracked file.
+
+**Touches:** `zombies/maps/` (gitignored)
+
 ## Close and reopen an attempt
 
 Any member closes the attempt from its rail (the phone's strip) after a confirm; it becomes read-only, every member is released, the coach answers nothing, and it stays on its map's list marked closed; any member of it reopens it ([Decisions](../../zombies/site/explanation/site.md#decisions), "A closed attempt is read-only and can be reopened").
