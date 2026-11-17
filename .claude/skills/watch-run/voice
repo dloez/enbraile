@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+dir="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)/home/voice"
+log="$dir/data/worker.log"
+pattern='python[0-9.]* worker\.py'
+
+if pgrep -f "$pattern" >/dev/null; then
+  echo "voice worker: already running"
+  exit 0
+fi
+if [ ! -f "$dir/.env.local" ]; then
+  echo "voice worker: home/voice/.env.local is missing, so it cannot start"
+  exit 1
+fi
+
+mkdir -p "$dir/data"
+start=0
+[ -f "$log" ] && start=$(wc -l <"$log")
+(cd "$dir" && setsid nohup uv run --env-file .env.local worker.py >>"$log" 2>&1 </dev/null &)
+
+for _ in $(seq 1 120); do
+  sleep 1
+  if tail -n +"$((start + 1))" "$log" | grep -q "connected to"; then
+    echo "voice worker: started and connected to the bot"
+    exit 0
+  fi
+  if ! pgrep -f "$pattern" >/dev/null && ! pgrep -f "uv run --env-file .env.local worker.py" >/dev/null; then
+    echo "voice worker: exited while starting; last lines of home/voice/data/worker.log:"
+    tail -n 5 "$log"
+    exit 1
+  fi
+done
+echo "voice worker: started, not connected after 120 s (a first start downloads models); log in home/voice/data/worker.log"
