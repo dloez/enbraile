@@ -7,10 +7,11 @@ import * as transcripts from "./transcripts.ts";
 import * as voice from "./voice.ts";
 
 export type Trigger = { word: string; userId: string; text: string };
-export type TriggerOptions = { ack?: boolean };
+export type Ack = boolean | { voice: string; lines: string[] };
+export type TriggerOptions = { ack?: Ack };
 export type SayOptions = { voice?: string };
 export type Voices = { voices: string[]; loaded: string[]; default: string | null };
-type Registration = { word: string; ack: boolean; handler: (trigger: Trigger) => void };
+type Registration = { word: string; ack: Ack; handler: (trigger: Trigger) => void };
 type Follow = { word: string; parts: string[]; since: number; received: number; timer: ReturnType<typeof setTimeout> | null };
 type Speaker = { open: boolean; closedAt: number; sent: number[]; heardAt: number; follow: Follow | null };
 export type TranscriptLine = transcripts.Line;
@@ -64,8 +65,11 @@ export function release(owner: string, name?: string): void {
 }
 
 function sendTriggers(): void {
-  const words = new Map<string, boolean>();
-  for (const registration of registrations) words.set(registration.word, (words.get(registration.word) ?? false) || registration.ack);
+  const words = new Map<string, Ack>();
+  for (const registration of registrations) {
+    const before = words.get(registration.word) ?? false;
+    words.set(registration.word, typeof registration.ack === "object" ? registration.ack : typeof before === "object" ? before : before || registration.ack);
+  }
   worker?.send(JSON.stringify({ type: "triggers", words: [...words].map(([word, ack]) => ({ word, ack })) }));
 }
 

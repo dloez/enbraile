@@ -5,6 +5,7 @@ import glob
 import io
 import json
 import os
+import random
 import re
 import struct
 import subprocess
@@ -234,6 +235,9 @@ class Worker:
         for kind in self.kinds(WARM_VOICES):
             self.load(kind)
         self.chime = chime()
+        self.clips = {}
+        self.preparing = asyncio.Lock()
+        self.last_ack = {}
         self.pending = {}
         self.triggers = {}
         self.socket = None
@@ -281,7 +285,44 @@ class Worker:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
+    def ack(self, word):
+        spec = self.triggers.get(word)
+        if not isinstance(spec, dict):
+            return self.chime
+        ready = [line for line in spec["lines"] if (spec["voice"], line) in self.clips]
+        if not ready:
+            return self.chime
+        fresh = [line for line in ready if line != self.last_ack.get(word)] or ready
+        line = random.choice(fresh)
+        self.last_ack[word] = line
+        return self.clips[(spec["voice"], line)]
+
+    async def prepare_acks(self):
+        async with self.preparing:
+            await self.make_acks()
+
+    async def make_acks(self):
+        for spec in list(self.triggers.values()):
+            if not isinstance(spec, dict) or spec.get("voice") not in self.loaded():
+                continue
+            for line in spec.get("lines", []):
+                key = (spec["voice"], line)
+                if key in self.clips:
+                    continue
+                async with self.turn:
+                    async with self.using:
+                        if spec["voice"] not in self.loaded():
+                            break
+                        try:
+                            self.clips[key] = await asyncio.to_thread(self.speak, line, spec["voice"])
+                        except Exception as error:
+                            log(f"ack in {spec['voice']} failed: {error}")
+                            break
+            if any((spec["voice"], line) in self.clips for line in spec.get("lines", [])):
+                log(f"acks ready in {spec['voice']}: {sum((spec['voice'], line) in self.clips for line in spec['lines'])}")
+
     async def announce(self):
+        asyncio.create_task(self.prepare_acks())
         if self.socket:
             try:
                 await self.socket.send(json.dumps({"type": "voices", "voices": VOICES, "default": DEFAULT_VOICE, "loaded": self.loaded()}))
@@ -394,6 +435,7 @@ class Worker:
                         if data.get("type") == "triggers":
                             self.triggers = {entry["word"]: entry["ack"] for entry in data["words"]}
                             log("triggers", ", ".join(self.triggers) or "none")
+                            asyncio.create_task(self.prepare_acks())
                         elif data.get("type") == "want":
                             await self.want(data["voices"])
                         elif data.get("type") == "say":
@@ -409,10 +451,10 @@ class Worker:
             return
         word, request = self.trigger(user, text)
         if word and request is None and self.triggers.get(word):
-            await socket.send(frame({"type": "audio", "id": "ack"}, self.chime))
+            await socket.send(frame({"type": "audio", "id": "ack"}, self.ack(word)))
         if word and request is not None:
             if self.triggers.get(word) and request != text:
-                await socket.send(frame({"type": "audio", "id": "ack"}, self.chime))
+                await socket.send(frame({"type": "audio", "id": "ack"}, self.ack(word)))
             log(f"trigger {word} {user} ({time.time() - started:.2f}s): {request}")
             await socket.send(json.dumps({"type": "trigger", "word": word, "user": user, "text": request}))
 

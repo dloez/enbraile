@@ -4,18 +4,18 @@ The ears and the voice of the [Enbraile bot](../../bot/explanation/bot.md#hearin
 
 ## How It Works
 
-On start, `worker.py` loads Whisper large-v3 through faster-whisper on the GPU (float16), runs it once on noise so the first real clip does not wait for the GPU to warm up, loads the warm voices (`WARM_VOICES`) and makes the chime with ffmpeg. It then opens a WebSocket to `<BOT_URL>/voice/connect` with `INTERNAL_SECRET`, tells the bot which voices it may load and which are loaded, and keeps the socket open, reconnecting with backoff when it drops. Other voices load when a module asks for them ([Voices](#voices)).
+On start, `worker.py` loads Whisper large-v3 through faster-whisper on the GPU (float16), runs it once on noise so the first real clip does not wait for the GPU to warm up, loads the warm voices (`WARM_VOICES`) and makes the chime with ffmpeg. Each trigger whose `ack` carries lines in a voice has those lines spoken once in that voice as soon as it is loaded, one at a time between replies, and kept in memory for the life of the process (it logs `acks ready in <voice>: <n>`). It then opens a WebSocket to `<BOT_URL>/voice/connect` with `INTERNAL_SECRET`, tells the bot which voices it may load and which are loaded, and keeps the socket open, reconnecting with backoff when it drops. Other voices load when a module asks for them ([Voices](#voices)).
 
 Each message on the socket is JSON text or a binary frame: a 4-byte big-endian header length, a JSON header, then the audio.
 
 | From | Message | Meaning |
 |------|---------|---------|
 | Worker | `{"type": "voices", "voices": [names], "default": name, "loaded": [names]}` | The voices it may load, the one it speaks with when none is named, and the ones loaded now; sent on connect and after every load and unload |
-| Bot | `{"type": "triggers", "words": [{"word": …, "ack": …}]}` | The trigger words modules registered; sent on connect and on every change |
+| Bot | `{"type": "triggers", "words": [{"word": …, "ack": true | false | {"voice": …, "lines": […]}}]}` | The trigger words modules registered; sent on connect and on every change |
 | Bot | `{"type": "want", "voices": [names]}` | The voices modules hold; sent on connect and on every change |
 | Bot | binary `{"type": "clip", "user": id, "at": ms}` + Ogg Opus | One person's speech, up to a pause of 0.8 s, and when it started |
 | Worker | `{"type": "transcript", "user": id, "text": …, "at": ms, "ms": …}` | What was said, for the bot's transcripts; empty when the clip held no speech, which tells the bot the clip is done |
-| Worker | binary `{"type": "audio", "id": "ack"}` + Ogg Opus | Play now: a trigger word with `ack` was heard |
+| Worker | binary `{"type": "audio", "id": "ack"}` + Ogg Opus | Play now: a trigger word with `ack` was heard; one of its lines when they are made, else the chime |
 | Worker | `{"type": "trigger", "word": …, "user": id, "text": …}` | A trigger word and the words after it |
 | Bot | `{"type": "say", "id": n, "text": …, "voice": name}` | Say this, in that voice (`voice` optional: the default) |
 | Worker | binary `{"type": "audio", "id": n}` + Ogg Opus | The spoken text |

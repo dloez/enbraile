@@ -6,9 +6,21 @@ export type Joined = { channelId: string; coach: Coach } | { error: "notInVoice"
 export type Coach = { name: string; wake: string };
 
 const OWNER = "zombies";
-const COACHES: Record<string, Coach & { unheard: string }> = {
-  "bebé": { name: "Coach", wake: "bebé", unheard: "No te he entendido bien, ¿me lo repites?" },
-  richtofen: { name: "Richtofen", wake: "richtofen", unheard: "¿Qué? ¡Hablad más claro, ratitas! Repetídmelo." },
+const COACHES: Record<string, Coach & { unheard: string; voice: string; acks: string[] }> = {
+  "bebé": {
+    name: "Coach",
+    wake: "bebé",
+    unheard: "No te he entendido bien, ¿me lo repites?",
+    voice: "chatterbox",
+    acks: ["Mmm…", "A ver…", "Vale, un segundo.", "Ajá, déjame pensar.", "Mmm, veamos."],
+  },
+  richtofen: {
+    name: "Richtofen",
+    wake: "richtofen",
+    unheard: "¿Qué? ¡Hablad más claro, ratitas! Repetídmelo.",
+    voice: "richtofen",
+    acks: ["Mmm… interesante.", "Ach, veamos…", "Ah, sí, sí…", "Un momento, ratitas.", "Hmm, ¿qué tenemos aquí?"],
+  },
 };
 const coachOf = (named: string | null) => (named === "richtofen" ? COACHES.richtofen! : COACHES["bebé"]!);
 const SITE_TIMEOUT_MS = 25_000;
@@ -161,9 +173,13 @@ async function said(line: TranscriptLine): Promise<void> {
 
 export function start(): () => void {
   const unhear = Object.keys(COACHES).map((word) =>
-    hearing.onTrigger(word, ({ userId, text }) => {
-      heard(userId, text, word).catch((error: Error) => console.error("zombies voice", userId, error.message));
-    }),
+    hearing.onTrigger(
+      word,
+      ({ userId, text }) => {
+        heard(userId, text, word).catch((error: Error) => console.error("zombies voice", userId, error.message));
+      },
+      { ack: { voice: COACHES[word]!.voice, lines: COACHES[word]!.acks } },
+    ),
   );
   const unlisten = hearing.onTranscript((line) => {
     said(line).catch((error: Error) => console.error("zombies transcript", line.userId, error.message));
