@@ -169,19 +169,19 @@ type SlipProps = {
   onRate: (card: number, rating: Rating) => void;
 };
 
-function Slip({ card, name, language, art, busy, rating, onMore, onRate }: SlipProps & { card: Card }) {
+function Slip({ card, pinned, name, language, art, busy, rating, onMore, onRate }: SlipProps & { card: Card; pinned: boolean }) {
   const words = coachWords[language];
   return (
-    <div className={card.done ? "slip" : "slip bare"} lang={language}>
+    <div className={pinned ? "slip bare" : "slip"} lang={language}>
       <div className="slip-h">
         <b>{words.dispatch}</b>
         <span>
-          {!card.done && `${words.pinned} · `}
+          {pinned && `${words.pinned} · `}
           {name} · {clock(card.at)}
         </span>
       </div>
       <Rungs rungs={card.rungs} art={art} language={language} />
-      {card.done && <SlipFoot card={card} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />}
+      {!pinned && <SlipFoot card={card} language={language} busy={busy} rating={rating} onMore={onMore} onRate={onRate} />}
     </div>
   );
 }
@@ -533,8 +533,11 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const pinned = useMemo(() => {
     const threads = new Map<number, Card[]>();
     for (const card of [...cards.values()].sort((a, b) => a.id - b.id)) threads.set(card.thread, [...(threads.get(card.thread) ?? []), card]);
-    return [...threads.entries()].sort(([a], [b]) => a - b).map(([, thread]) => thread).filter((thread) => thread.length && !thread[thread.length - 1]!.done && thread.some((card) => card.rungs.length));
+    const open = [...threads.values()].filter((thread) => thread.length && !thread[thread.length - 1]!.done && thread.some((card) => card.rungs.length));
+    const newest = open.sort((a, b) => b[b.length - 1]!.id - a[a.length - 1]!.id)[0];
+    return newest ? [newest] : [];
   }, [cards]);
+  const pinnedThread = pinned[0]?.[0]?.thread ?? null;
   const rungCount = [...cards.values()].reduce((sum, card) => sum + card.rungs.length, 0);
 
   useLayoutEffect(() => {
@@ -664,7 +667,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   };
 
   const slip = (card: Card, from: string) => (
-    <Slip card={card} name={from} language={sheet.language} art={sheet.map.art} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
+    <Slip card={card} pinned={!card.done && card.thread === pinnedThread} name={from} language={sheet.language} art={sheet.map.art} busy={airing !== null} rating={rated.get(card.id) ?? card.rating} onMore={more} onRate={rate} />
   );
   const pinnedSlip = (thread: Card[]) => {
     const latest = thread[thread.length - 1]!;

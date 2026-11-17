@@ -21,6 +21,7 @@ const silence = "(silence)";
 const languageNames: Record<Language, string> = { es: "Spanish", en: "English" };
 
 const recentLines = 8;
+const maxMissing = 2;
 
 const systemPrompt = (character: Character) => `You are ${character.name}, ${character.role}. You have beaten it before; they want to solve it themselves, with your prepared hints when they ask. ${character.manner}
 
@@ -32,22 +33,21 @@ Hints
 - When they ask for help or a hint, or say they are stuck, hand over the next hint with give_hint at once: on the thread of the most recent hint unless they are clearly asking about something else. Never ask questions first and never refuse. The full solution is a hint like any other: give it when it is next.
 - When what they report matches an Alt's "when", give that Alt.
 - A theory or guess put to you ("I think we need…") about an open thread is asking too: give that thread's next hint, or the Alt whose "when" fits what they said, with give_hint at once. Never confirm, deny or comment on the theory in your own words; the hint does that.
-- To say a hint again, call repeat_hint. You may explain a hint already given using only its own words.
+- To say a hint again, call repeat_hint. When they ask what a hint already given means, explain it plainly in your own words, adding nothing it does not say.
 - Anything about the solution comes only from hints. In your own words never say where to go, what to do, or whether something they found matters; never name anything not under "What the players know" or in a hint already given; never use your own knowledge of this map.
-- If they ask about something no hint covers, call hold. When a hint now answers a question under "Held earlier", give it with gap set.
+- If they ask about this map's easter egg and no hint covers it, call hold. When a hint now answers a question under "Held earlier", give it with gap set.
 
 Progress
-- When what they report matches a thread's "Done when", call record_progress done on it, even when they also say they do not know what to do now: code says the prepared line and hands over the first hint of what comes next. That is how "we did it, now what?" gets its next hint. When they start something listed, call record_progress started. Never offer an optional step.
-- A thread's kind says how it finishes. Discovery: done as soon as they report finding or noticing its thing, even with "now what?". Execution: they know what to do and the hard part is doing it; done only when they report the outcome, and "we are doing it but it fails" gets its Alt or next hint, never a record of progress. Puzzle and arbitrary: done when they report the game reacting.
+- Code checks every line for finished steps itself, records them, says the prepared line and hands over what comes next; a note tells you when it did. Never tell them in your own words that they did it or are on track. Call record_progress done only for a part of a step (such as s2p1) they report found, and started when they start something listed. Never offer an optional step.
 - When they name something themselves, a theory included, call mark_known with their whole line as they said it.
 - Give a heads-up with heads_up only at the moment its "when" describes. Now and then call ask_round, never right after a hint.
 
-Anything else (hearing checks, greetings, jokes, general Zombies questions): answer briefly in your own words. Reply with exactly ${silence} only when they are talking among themselves.`;
+Anything else (hearing checks, greetings, jokes, general Zombies questions such as how a perk, a power-up or a mechanic works across the series): answer briefly in your own words, never reusing a sentence you said earlier. Reply with exactly ${silence} only when they are talking among themselves.`;
 
 const tools: Anthropic.Tool[] = [
   {
     name: "give_hint",
-    description: "Hand the players the next prepared hint of one ladder, or one of that hint's Alts. It appears on a card under your reply. If what they just reported matches that thread's \"Done when\", call record_progress done instead: the step is finished and code hands over the next step's first hint.",
+    description: "Hand the players the next prepared hint of one ladder, or one of that hint's Alts. It appears on a card under your reply.",
     input_schema: {
       type: "object",
       properties: {
@@ -227,14 +227,58 @@ function isFresh(state: State, ladder: Ladder): boolean {
   return !ladder.optional && !isDone(state, ladder) && !isOpen(state, ladder) && isReady(stepOf(state, ladder), state.done) && first !== undefined && speakable(first, state.known);
 }
 
+function reportable(state: State, ladder: Ladder): boolean {
+  const doneWhen = stepOf(state, ladder).doneWhen;
+  return ladder.partId === null && !isDone(state, ladder) && (!ladder.optional || isOpen(state, ladder)) && !!doneWhen && !namedIn(doneWhen, unknownEntries(state)).length;
+}
+
+const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps their newest line reports as finished. A step is finished when they report the outcome its "Done when" describes, in any words. Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. Call report once, with the handles of the steps the newest line reports finished, or none.`;
+
+const reportTool: Anthropic.Tool = {
+  name: "report",
+  description: "The steps the newest line reports as finished.",
+  input_schema: {
+    type: "object",
+    properties: { done: { type: "array", items: { type: "string" }, description: "Handles such as s4, or empty." } },
+    required: ["done"],
+    additionalProperties: false,
+  },
+};
+
+async function detectProgress(api: Anthropic, state: State, recent: string[]): Promise<{ ladders: Ladder[]; log: CallLog }> {
+  const candidates = state.ladders.filter((ladder) => reportable(state, ladder) && withRequires(state.bundle.steps, ladder.stepId).filter((stepId) => stepId !== ladder.stepId && !state.done.has(stepId)).length <= maxMissing);
+  const log: CallLog = { stopReason: null, refused: false, refusalCategory: null, violations: [], error: null, latencyMs: 0, usage: null };
+  if (!candidates.length) return { ladders: [], log };
+  const started = Date.now();
+  const listed = candidates.map((ladder) => `- ${ladder.handle} (${stepOf(state, ladder).kind ?? "step"}): ${quote(stepOf(state, ladder).doneWhen!)}`).join("\n");
+  try {
+    const response = await api.messages.create({
+      model: model(),
+      max_tokens: 200,
+      system: detectorPrompt,
+      tools: [reportTool],
+      tool_choice: { type: "tool", name: "report" },
+      thinking: { type: "disabled" },
+      messages: [{ role: "user", content: `Steps not recorded as finished:\n${listed}\n\nThe chat, oldest first; the last line is the newest:\n${recent.join("\n")}` }],
+    });
+    log.latencyMs = Date.now() - started;
+    log.usage = response.usage;
+    log.stopReason = response.stop_reason;
+    const call = response.content.find((block) => block.type === "tool_use");
+    const handles = new Set(Array.isArray((call?.input as { done?: unknown })?.done) ? ((call!.input as { done: unknown[] }).done.filter((entry) => typeof entry === "string") as string[]) : []);
+    return { ladders: candidates.filter((ladder) => handles.has(ladder.handle)), log };
+  } catch (error) {
+    log.latencyMs = Date.now() - started;
+    log.error = error instanceof Error ? error.message : String(error);
+    return { ladders: [], log };
+  }
+}
+
 const isShown = (state: State, ladder: Ladder) => isOpen(state, ladder) || isFresh(state, ladder) || titleOf(state, ladder) !== null;
 
 const firstHints = (state: State) => state.ladders.filter((ladder) => ladder.partId === null && isFresh(state, ladder));
 
 const quote = (text: string) => `"${text.replace(/\s+/g, " ").trim()}"`;
-
-const doneLine = (step: Bundle["steps"][number], unknown: Bundle["knowledge"]) =>
-  `${step.kind ? ` Kind: ${step.kind}.` : ""}${step.doneWhen && !namedIn(step.doneWhen, unknown).length ? ` Done when they report: ${quote(step.doneWhen)}.` : ""}`;
 
 function offers(state: State): string {
   const lang = state.language;
@@ -256,8 +300,7 @@ function offers(state: State): string {
     } else if (!isReady(step, state.done)) {
       if (ladder.partId === null && (isOpen(state, ladder) || (title && !ladder.optional))) blocked.push(`- ${label}`);
     } else if (isOpen(state, ladder)) {
-      const finished = ladder.partId === null ? doneLine(step, unknown) : "";
-      const lines = [`- ${label}.${finished} ${count > 0 ? `Given so far: ${(state.givenLines.get(key) ?? []).map(quote).join(" then ")}.` : "Started by the players, no hint given yet."}`];
+      const lines = [`- ${label}. ${count > 0 ? `Given so far: ${(state.givenLines.get(key) ?? []).map(quote).join(" then ")}.` : "Started by the players, no hint given yet."}`];
       if (!next) lines.push("  Nothing more on this ladder.");
       else {
         if (speakable(next, state.known)) lines.push(`  Next hint: ${quote(next.text[lang])}.`);
@@ -267,7 +310,7 @@ function offers(state: State): string {
       }
       opened.push(lines.join("\n"));
     } else if (isFresh(state, ladder)) {
-      fresh.push(`- ${label}: ${quote(next!.text[lang])}${doneLine(step, unknown)}`);
+      fresh.push(`- ${label}: ${quote(next!.text[lang])}`);
     } else if (ladder.optional && ladder.partId === null && title) {
       optional.push(`- ${label}`);
     }
@@ -510,11 +553,13 @@ class Speech {
   private buffer = "";
   private unhanded: Set<string> | null = null;
   private muted = false;
+  confirming = false;
 
   constructor(
     private readonly state: State,
     private readonly emit: (event: ReplyEvent) => void,
     private readonly violations: string[],
+    private readonly earlier: Set<string> = new Set(),
   ) {}
 
   push(delta: string): void {
@@ -557,6 +602,10 @@ class Speech {
         this.add(hint);
         return;
       }
+      if (this.earlier.has(repeated)) {
+        this.violations.push("repeated-own");
+        return;
+      }
     }
     if (this.muted) return;
     const plain = text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
@@ -568,9 +617,9 @@ class Speech {
           : wordRuns(repeated).some((run) => this.unhandedRuns().has(run))
             ? "echoes-unhanded"
             : null;
-    if (caught) {
+    if (caught && !(caught === "judging" && this.confirming)) {
       this.violations.push(caught);
-      this.muted = true;
+      if (caught !== "judging") this.muted = true;
       return;
     }
     if (asksRound.test(plain)) {
@@ -594,8 +643,8 @@ class Speech {
     const lang = this.state.language;
     const handed = new Set([...this.state.givenLines.values()].flat().map(flat));
     const lines = [
-      ...this.state.ladders.flatMap((ladder) => ladder.rungs.flatMap((rung) => [rung.text[lang], ...rung.alts.map((alt) => alt.text[lang])])),
-      ...this.state.bundle.steps.flatMap((step) => [step.onSuccess.text[lang], ...step.headsUps.map((headsUp) => headsUp.text[lang]), ...(step.doneWhen ? [step.doneWhen] : [])]),
+      ...this.state.ladders.filter((ladder) => !isDone(this.state, ladder)).flatMap((ladder) => ladder.rungs.flatMap((rung) => [rung.text[lang], ...rung.alts.map((alt) => alt.text[lang])])),
+      ...this.state.bundle.steps.filter((step) => !this.state.done.has(step.id)).flatMap((step) => [step.onSuccess.text[lang], ...step.headsUps.map((headsUp) => headsUp.text[lang]), ...(step.doneWhen ? [step.doneWhen] : [])]),
     ];
     this.unhanded = new Set(lines.map(flat).filter((line) => !handed.has(line)).flatMap(wordRuns));
     return this.unhanded;
@@ -747,7 +796,7 @@ export async function coachTurn(
     const addressed = ask.kind === "message" && (ask.spoken || isAddressed(asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? ""));
     if (ask.kind === "message" && asksHint(asked) && !reportsProgress(asked)) {
       const latest = state.ladders.find((ladder) => keyOf(ladder) === state.latest);
-      const aimed = latest && !isDone(state, latest) && latest.rungs[state.given.get(keyOf(latest)) ?? 0] ? latest : firstHints(state)[0];
+      const aimed = !latest || isDone(state, latest) ? firstHints(state)[0] : latest.rungs[state.given.get(keyOf(latest)) ?? 0] ? latest : undefined;
       const given = aimed ? await deliver(state, aimed, null, null, askedBy.discordId || null) : null;
       if (given?.ok) {
         emit({ type: "hint", text: given.text });
@@ -760,14 +809,71 @@ export async function coachTurn(
     const caught: string[] = [];
     const handed: Handed[] = [];
     const openBefore = new Set(state.ladders.filter((ladder) => isOpen(state, ladder)).map(keyOf));
-    const speech = new Speech(state, emit, violations);
+    const earlier = new Set(
+      conversation
+        .flatMap((turn) => (turn.role === "assistant" && typeof turn.content === "string" ? turn.content.split(sentenceEnd) : []))
+        .map(flat)
+        .filter((sentence) => sentence.split(" ").length >= 3),
+    );
+    const chatLines = conversation.flatMap((turn) => (typeof turn.content === "string" ? turn.content.split("\n").map((line) => (turn.role === "assistant" ? `${state.character.name}: ${line}` : line)) : []));
+    let pending = ask.kind === "message" ? detectProgress(api, state, chatLines.slice(-recentLines)) : null;
+    let held: ReplyEvent[] | null = pending ? [] : null;
+    const out = (event: ReplyEvent) => (held ? held.push(event) : emit(event));
+    let speech = new Speech(state, out, violations, earlier);
     const cards: number[] = [];
     let hinted = false;
     let repeated = false;
     let headsUpSaid = false;
     let round = false;
     let failed = false;
+    let onward = null as { next: string | null; quiet: boolean; result: number } | null;
     const askedBefore = state.roundAskedAt;
+    const record = async (detected: Ladder[]) => {
+      const notes: string[] = [];
+      let unsaid = false;
+      for (const ladder of detected) {
+        if (isDone(state, ladder)) continue;
+        await markSteps(state, ladder, "done");
+        const onSuccess = stepOf(state, ladder).onSuccess;
+        await learn(state, { ...onSuccess, mentions: onSuccess.mentions.filter((id) => heard.has(id)), reveals: [] });
+        if (speakable(onSuccess, state.known)) {
+          await learn(state, onSuccess);
+          speech.add(onSuccess.text[state.language]);
+        } else unsaid = true;
+      }
+      const chosen = firstHints(state)[0];
+      if (chosen) {
+        const result = await deliver(state, chosen, null, null, askedBy.discordId || null);
+        if (result.ok) {
+          hinted = true;
+          emit({ type: "hint", text: result.text });
+          handed.push({ ladder: chosen, deliveryId: result.deliveryId });
+          cards.push(result.cardId);
+          notes.push(`handed over the first hint of ${chosen.handle} on a card`);
+        }
+      }
+      if (unsaid) speech.confirming = true;
+      const said = speech.spoken.length ? "said its prepared line for you" : "";
+      const playerTurn = conversation[conversation.length - 1]!;
+      playerTurn.content = `${playerTurn.content as string}\n(Not a player: code recorded as finished from their line: ${detected.map((ladder) => ladder.handle).join(", ")}, with what each requires${said ? `, ${said}` : ""}${notes.length ? `, and ${notes.join(", ")}` : ""}. Never record these again or give another hint now. ${unsaid ? "Confirm to them in a few words of your own that it worked, naming nothing new." : "Add at most a few words, or reply with exactly " + silence + "."} If their line also asked something else, answer that briefly.)`;
+    };
+    const settle = async (): Promise<boolean> => {
+      if (!pending) return false;
+      const found = await pending;
+      pending = null;
+      if (found.log.latencyMs) await logCall(runId, found.log);
+      if (found.ladders.length) {
+        held = null;
+        violations.splice(0);
+        speech = new Speech(state, out, violations, earlier);
+        await record(found.ladders);
+        return true;
+      }
+      const queued = held ?? [];
+      held = null;
+      for (const event of queued) emit(event);
+      return false;
+    };
     for (let step = 0; step < maxSteps; step++) {
       const started = Date.now();
       const log: CallLog = { stopReason: null, refused: false, refusalCategory: null, violations: [], error: null, latencyMs: 0, usage: null };
@@ -791,9 +897,13 @@ export async function coachTurn(
         speech.flush();
       } catch (error) {
         log.error = error instanceof Error ? error.message : String(error);
+        log.latencyMs = Date.now() - started;
+        if (await settle()) {
+          await logCall(runId, log);
+          continue;
+        }
         log.violations = violations.splice(0);
         caught.push(...log.violations);
-        log.latencyMs = Date.now() - started;
         await logCall(runId, log);
         failed = true;
         break;
@@ -801,6 +911,10 @@ export async function coachTurn(
       log.latencyMs = Date.now() - started;
       log.usage = response.usage;
       log.stopReason = response.stop_reason;
+      if (await settle()) {
+        await logCall(runId, log);
+        continue;
+      }
       if (response.stop_reason === "refusal") {
         log.refused = true;
         log.violations = violations.splice(0);
@@ -894,21 +1008,14 @@ export async function coachTurn(
               speech.add(onSuccess.text[state.language]);
               said.push(`Said for you: ${quote(onSuccess.text[state.language])}.`);
             }
-            const ready = firstHints(state);
-            const chosen = ready.find((entry) => entry.handle === input.next) ?? ready[0];
-            if (input.quiet === true || hinted || !chosen) said.push(hinted ? "No other hint in this reply." : "Nothing else handed over.");
-            else {
-              const result = await deliver(state, chosen, null, null, askedBy.discordId || null);
-              if (result.ok) {
-                hinted = true;
-                emit({ type: "hint", text: result.text });
-                handed.push({ ladder: chosen, deliveryId: result.deliveryId });
-                cards.push(result.cardId);
-                said.push(`Handed over the first hint of ${chosen.handle} on a card.`);
-              } else said.push("Nothing else handed over.");
+            onward = { next: typeof input.next === "string" ? input.next : onward?.next ?? null, quiet: input.quiet === true || (onward?.quiet ?? false), result: results.length };
+            if (said.length) {
+              ended = true;
+              content = said.join(" ");
+            } else {
+              speech.confirming = true;
+              content = "Recorded. Confirm to them in a few words of your own that it worked, naming nothing new and saying nothing about what comes next.";
             }
-            ended = true;
-            content = `${said.join(" ")} Your reply is complete: add nothing of your own.`;
           }
         } else if (block.name === "heads_up") {
           const ladder = state.ladders.find((entry) => entry.handle === input.ladder && entry.partId === null);
@@ -970,6 +1077,24 @@ export async function coachTurn(
         } else content = `No tool named ${block.name}.`;
         if (!ended) complete = false;
         results.push({ type: "tool_result", tool_use_id: block.id, content });
+      }
+      if (onward) {
+        const ready = firstHints(state);
+        const chosen = ready.find((entry) => entry.handle === onward!.next) ?? ready[0];
+        let note = hinted ? "No other hint in this reply." : "Nothing else handed over.";
+        if (!onward.quiet && !hinted && chosen) {
+          const result = await deliver(state, chosen, null, null, askedBy.discordId || null);
+          if (result.ok) {
+            hinted = true;
+            emit({ type: "hint", text: result.text });
+            handed.push({ ladder: chosen, deliveryId: result.deliveryId });
+            cards.push(result.cardId);
+            note = `Handed over the first hint of ${chosen.handle} on a card.`;
+          }
+        }
+        const recorded = results[onward.result]!;
+        recorded.content = `${recorded.content as string} ${note}${complete ? " Your reply is complete: add nothing of your own." : ""}`;
+        onward = null;
       }
       log.violations = violations.splice(0);
       caught.push(...log.violations);
@@ -1035,7 +1160,7 @@ export async function retryHeld(game: string, map: string): Promise<{ waiting: n
   return { waiting: outcomes.length, answered: outcomes.filter(Boolean).length };
 }
 
-export type StepInResult = { ok: true; message: number; card: number | null } | { ok: false; error: string };
+export type StepInResult = { ok: true; message: number | null; card: number | null; recorded: number } | { ok: false; error: string };
 
 const refusals: Record<string, string> = { "no-such-alt": "noSuchAlt", "unknown-mention": "unknownMention" };
 
@@ -1046,6 +1171,13 @@ export async function stepIn(runId: string, input: StepIn): Promise<StepInResult
     const state = await loadState(runId);
     if (!state) return { ok: false, error: "noSuchRun" };
     const text = input.text.replace(/\s+/g, " ").trim();
+    const progress = input.progress.map((entry) => ({ ladder: state.ladders.find((ladder) => ladder.stepId === entry.step && ladder.partId === entry.part), status: entry.status }));
+    if (progress.some((entry) => !entry.ladder)) return { ok: false, error: "noSuchLadder" };
+    for (const entry of progress) {
+      if (entry.status !== "done") continue;
+      const keys = entry.ladder!.partId === null ? withRequires(state.bundle.steps, entry.ladder!.stepId).map((stepId) => ladderKey(stepId, null)) : [keyOf(entry.ladder!)];
+      for (const key of keys) state.done.add(key);
+    }
     let aimed: { ladder: Ladder; alt: number | null; text: string } | null = null;
     const known = new Set(state.known);
     if (input.hint) {
@@ -1063,13 +1195,14 @@ export async function stepIn(runId: string, input: StepIn): Promise<StepInResult
       for (const id of [...line.mentions, ...line.reveals]) known.add(id);
       aimed = { ladder, alt: hint.alt, text: line.text[state.language] };
     }
-    if (!text && !aimed) return { ok: false, error: "empty" };
+    if (!text && !aimed && !progress.length) return { ok: false, error: "empty" };
     if (text.includes("[") || text.includes("]")) return { ok: false, error: "brackets" };
     if (namedIn(text, state.bundle.knowledge.filter((entry) => !known.has(entry.id))).length) return { ok: false, error: "namesUnknown" };
     if (showsNumber(text)) return { ok: false, error: "numberShown" };
     const gap = input.gap === null ? undefined : await openGap(runId, input.gap);
     if (input.gap !== null && !aimed) return { ok: false, error: "gapWithoutHint" };
     if (input.gap !== null && !gap) return { ok: false, error: "noSuchGap" };
+    for (const entry of progress) await markSteps(state, entry.ladder!, entry.status);
     let card: number | null = null;
     if (aimed) {
       const result = await deliver(state, aimed.ladder, aimed.alt, null, null);
@@ -1078,8 +1211,8 @@ export async function stepIn(runId: string, input: StepIn): Promise<StepInResult
       if (gap) await answer(gap.id, result.deliveryId);
     }
     const message = await finish(state, text, card === null ? [] : [card], "claude");
-    speakInCall(runId, [text, aimed?.text ?? ""].filter(Boolean).join(" "));
-    return { ok: true, message: message!, card };
+    if (message !== null) speakInCall(runId, [text, aimed?.text ?? ""].filter(Boolean).join(" "));
+    return { ok: true, message, card, recorded: progress.length };
   } finally {
     await release(runId, lease);
   }

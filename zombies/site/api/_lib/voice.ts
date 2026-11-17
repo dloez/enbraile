@@ -25,7 +25,7 @@ export async function voiceTurn(discordId: string, text: string, word: string, s
   if (!run || word !== characterOf(run.voice).wake) return;
   const lines = characterOf(run.voice).lines[run.language];
   send({ type: "voice", voice: run.voice });
-  const revision = asRevision(text, false);
+  const revision = asRevision(text, false, true);
   if (revision === "") return send({ type: "say", text: lines.unheard });
   if (revision !== null) {
     const acknowledged = await postRevision(viewer, runId, revision);

@@ -13,10 +13,10 @@ const response = await fetch(`${requireEnv("ZOMBIES_URL")}/api/claude/runs/${enc
   headers: { authorization: `Bearer ${requireEnv("CLAUDE_TOKEN")}`, "content-type": "application/json" },
   body,
 });
-const result = (await response.json().catch(() => ({}))) as { message?: number; card?: number | null; error?: string; issues?: string[] };
+const result = (await response.json().catch(() => ({}))) as { message?: number | null; card?: number | null; recorded?: number; error?: string; issues?: string[] };
 if (!response.ok) {
   console.error(`say: refused, ${result.error ?? response.status}`);
   for (const issue of result.issues ?? []) console.error(`  ${issue}`);
   process.exit(1);
 }
-console.log(`said: coach line ${result.message}${result.card ? ` with card ${result.card}` : ""}`);
+console.log(`${result.message ? `said: coach line ${result.message}${result.card ? ` with card ${result.card}` : ""}` : "said nothing"}${result.recorded ? `, ${result.recorded} progress recorded` : ""}`);

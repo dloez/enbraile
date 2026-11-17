@@ -113,8 +113,10 @@ export const ratingSchema = z.object({ rating: z.enum(ratings) });
 
 const revisionMark = /^\s*revisi[oó]n\s*:\s*/i;
 
-export function asRevision(text: string, flagged: boolean): string | null {
-  const stripped = text.replace(revisionMark, "").trim();
+const spokenRevisionMark = /^\s*revisi[oó]n\b[\s:,.;-]*/i;
+
+export function asRevision(text: string, flagged: boolean, spoken = false): string | null {
+  const stripped = text.replace(spoken ? spokenRevisionMark : revisionMark, "").trim();
   if (stripped !== text.trim()) return stripped;
   return flagged ? text.trim() : null;
 }
@@ -150,7 +152,8 @@ export const stepInSchema = z
     text: z.string().max(1000).default(""),
     hint: z.object({ step: handle, part: handle.nullable().default(null), alt: z.number().int().min(0).nullable().default(null) }).nullable().default(null),
     gap: z.number().int().positive().nullable().default(null),
+    progress: z.array(z.object({ step: handle, part: handle.nullable().default(null), status: z.enum(["started", "done"]) })).default([]),
   })
-  .refine((value) => value.text.trim() !== "" || value.hint !== null, { message: "text or hint is required" });
+  .refine((value) => value.text.trim() !== "" || value.hint !== null || value.progress.length > 0, { message: "text, hint or progress is required" });
 
 export type StepIn = z.infer<typeof stepInSchema>;
