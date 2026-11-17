@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Intento con hoja de ruta · ancho</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,700..900&amp;family=Atkinson+Hyperlegible+Next:wght@400;700&amp;family=Courier+Prime:wght@400;700&amp;display=swap">
+<style>
+body{margin:0;background:#15140f}
+.r{--bg:#15140f;--surf:#1e1d16;--surf-2:#29281f;--line:#36342a;--line-2:#4b483b;--text:#ede8dc;--text-hi:#fff;--mute:#aca593;--plan:#d6cfbf;--red:#c23a20;--red-hi:#d4492e;--red-tx:#f27c60;--blue:#3a57c9;--blue-tx:#9db0ff;--slip:#ebdfb0;--slip-ink:#1b1a14;--slip-mute:#5b5443;--slip-line:#c9bb88;
+font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-serif;font-size:17px;line-height:1.5;color:var(--text);background:var(--bg);box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+.r *{box-sizing:border-box}
+.r h1,.r h2,.r p,.r ul,.r ol{margin:0;padding:0}
+.r ul,.r ol{list-style:none}
+.cond{font-family:'Archivo',sans-serif;font-stretch:68%;font-weight:800;text-transform:uppercase;line-height:.92;letter-spacing:.01em}
+.ty{font-family:'Courier Prime',ui-monospace,monospace}
+.lab{font-size:15px;font-weight:700;color:var(--mute);line-height:1.3;display:block}
+.hd{flex:none;height:64px;background:var(--surf);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 24px}
+.wm{display:flex;align-items:center;gap:10px;min-height:44px;color:var(--text);text-decoration:none}
+.wm i{width:10px;height:10px;background:var(--red-tx);display:block}
+.wm b{font-family:'Archivo',sans-serif;font-stretch:68%;font-weight:900;font-size:26px;letter-spacing:.03em;text-transform:uppercase;line-height:1}
+.sp{flex:1}
+.lg{display:flex;border-radius:8px;box-shadow:inset 0 0 0 1px var(--line-2);overflow:hidden}
+.lg button{min-width:52px;height:44px;border:0;background:transparent;color:var(--mute);font:700 15px 'Atkinson Hyperlegible Next',system-ui,sans-serif}
+.lg button[aria-pressed="true"]{background:var(--text);color:var(--bg)}
+.cs{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--surf-2);box-shadow:inset 0 0 0 1px var(--line-2);font-size:13px;font-weight:700;color:var(--text);flex:none;line-height:1}
+.cs-s{width:22px;height:22px;font-size:10px}
+.cs-me{background:var(--text);color:var(--bg);box-shadow:none}
+.b{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border:0;border-radius:8px;background:var(--text);color:var(--bg);font:700 17px 'Atkinson Hyperlegible Next',system-ui,sans-serif;white-space:nowrap}
+.b-ghost{background:transparent;color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+.rail{width:340px;flex:none;background:var(--surf);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:28px;padding:32px 24px 24px}
+.rail h1{font-size:56px;margin-top:8px}
+.rail .sub{font-size:16px;color:var(--mute);margin-top:12px}
+.mem{display:flex;flex-direction:column;margin-top:8px}
+.mem li{display:flex;align-items:center;gap:12px;min-height:48px;font-size:17px;font-weight:700}
+.mem .y{font-weight:400;color:var(--mute)}
+.rm{position:relative;margin-top:12px}
+.rm svg{position:absolute;top:0;left:0;overflow:visible}
+.rm li{height:56px;display:flex;flex-direction:column;justify-content:center;gap:2px;padding-left:52px}
+.rm-label{font-family:'Archivo',sans-serif;font-size:17px;font-weight:700;line-height:1.2;color:var(--text-hi)}
+.rm-new .rm-label{color:var(--red-tx)}
+.rm-redacted{display:block;width:9em;height:14px;border-radius:2px;background:repeating-linear-gradient(-45deg,var(--line-2) 0 6px,var(--surf-2) 6px 10px)}
+.rm-meta{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute)}
+.rm-meta .ty{font-size:13px}
+.voice{margin-top:auto;background:var(--surf-2);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:20px;box-shadow:inset 0 0 0 1px var(--red),0 0 0 4px rgba(194,58,32,.14)}
+.air-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.air{display:inline-flex;align-items:center;gap:8px;padding:2px 8px 2px 6px;border-radius:4px;background:var(--red);color:#fff;font-family:'Archivo',sans-serif;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.lamp{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 6px 1px rgba(255,255,255,.7)}
+.chan{display:inline-flex;align-items:center;gap:6px;color:var(--mute);font-size:14px}
+.air-who{display:flex;align-items:center;gap:12px}
+.air-who p{font-weight:700;font-size:15px}
+.meter{display:flex;gap:3px;align-items:center;height:28px;color:var(--red-tx)}
+.meter i{display:block;width:4px;border-radius:2px;background:currentColor}
+.wake{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 8px;font-size:15px;color:var(--mute)}
+.wake kbd{font-family:'Courier Prime',ui-monospace,monospace;font-size:20px;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--slip);color:var(--slip-ink);box-shadow:0 2px 0 var(--slip-line)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.rows{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:24px;padding:24px 48px 32px}
+.rows>:first-child{margin-top:auto}
+.row{display:grid;grid-template-columns:88px minmax(0,1fr);column-gap:16px}
+.row .t{font-family:'Courier Prime',ui-monospace,monospace;font-size:14px;color:var(--mute);padding-top:2px}
+.who{font-size:16px;font-weight:700;line-height:1.4;display:flex;align-items:center;gap:8px}
+.who-c{color:var(--red-tx)}
+.who-c::before{content:"";width:9px;height:9px;background:var(--red-tx);display:block}
+.said{display:inline-flex;color:var(--mute)}
+.msg{font-size:17px;line-height:1.55;margin-top:2px;max-width:52em}
+.slip{margin-top:12px;background:var(--slip);color:var(--slip-ink);border-radius:8px;max-width:52em}
+.slip-h{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px dashed var(--slip-line);font-family:'Courier Prime',ui-monospace,monospace;font-size:14px}
+.slip-h b{font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.slip-h span{color:var(--slip-mute)}
+.rung{padding:16px 20px 20px;font-size:18px;line-height:1.55}
+.queue{flex:none;display:flex;flex-direction:column;gap:4px;padding:8px 48px;border-top:1px solid var(--line);background:var(--bg)}
+.queue li{display:flex;align-items:center;gap:8px;min-height:32px;font-size:15px;color:var(--mute)}
+.queue .q-who{font-weight:700;white-space:nowrap}
+.queue .q-now{color:var(--text)}
+.queue .q-now .q-who{color:var(--red-tx)}
+.queue q{font-family:'Courier Prime',ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.caret{display:inline-block;width:8px;height:14px;background:var(--red-tx)}
+.cmp{flex:none;border-top:1px solid var(--line);background:var(--surf);padding:16px 48px 20px}
+.cmp-in{display:flex;align-items:center;gap:12px}
+.field{flex:1;min-width:0;height:56px;border-radius:10px;background:var(--surf-2);border:1px solid var(--line-2);padding:0 18px;font:400 17px 'Atkinson Hyperlegible Next',system-ui,sans-serif;color:var(--text)}
+.field::placeholder{color:var(--mute)}
+.revb{display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:0 18px;border:0;border-radius:10px;background:transparent;box-shadow:inset 0 0 0 1px var(--line-2);color:var(--text);font:700 16px 'Atkinson Hyperlegible Next',system-ui,sans-serif}
+.cmp .b{min-height:56px}
+a{color:var(--text)}a:hover{color:#fff}
+</style>
+</helmet>
+<div class="r" style="width: 1920px; height: 1080px">
+<header class="hd"><a class="wm" href="MapsWide.dc.html"><i></i><b>Zombies</b></a><span class="sp"></span><div class="lg" role="group" aria-label="Idioma"><button aria-pressed="true">ES</button><button aria-pressed="false">EN</button></div><span class="cs cs-me" role="img" aria-label="Teo">TE</span></header>
+<div style="flex:1;display:flex;min-height:0">
+<aside class="rail">
+<div><span class="lab">Tu intento</span><h1 class="cond">Harrow Station</h1><p class="sub">Coach habla español</p></div>
+<div><span class="lab">En el intento</span>
+<ul class="mem"><li><span class="cs">MA</span>Marina</li><li><span class="cs cs-me">TE</span>Teo <span class="y">tú</span></li></ul>
+</div>
+<section aria-label="Hoja de ruta"><span class="lab">Hoja de ruta</span>
+<div class="rm">
+<svg width="44" height="168" viewBox="0 0 44 168" aria-hidden="true">
+<path d="M14 28V140" fill="none" stroke="#f27c60" stroke-width="3" stroke-linecap="round"/>
+<path d="M14 28C14 48 36 42 36 62V84" fill="none" stroke="#9db0ff" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 6"/>
+<circle cx="14" cy="28" r="9" fill="#f27c60" stroke="#1e1d16" stroke-width="3"/><path d="M10 28l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="29" y="77" width="14" height="14" rx="2" transform="rotate(45 36 84)" fill="#9db0ff" stroke="#1e1d16" stroke-width="3"/><path d="M32 84l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="14" cy="140" r="20" fill="none" stroke="#f27c60" stroke-width="2" opacity=".35"/>
+<circle cx="14" cy="140" r="9" fill="#f27c60" stroke="#1e1d16" stroke-width="3"/><path d="M10 140l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<ol>
+<li><span class="rm-label">Farol encendido</span><span class="rm-meta"><span class="cs cs-s">MA</span>Marina <span class="ty">22:14</span></span></li>
+<li><span class="rm-label">Señal al túnel</span><span class="rm-meta"><span class="ty">22:21 desvío</span></span></li>
+<li class="rm-new"><span class="rm-label">El reloj vuelve a andar</span><span class="rm-meta"><span class="cs cs-s cs-me">TE</span>Teo <span class="ty">22:48</span></span></li>
+</ol>
+</div>
+<button class="b b-ghost" style="width:100%;min-height:44px;margin-top:12px">Ver la hoja de ruta entera</button>
+</section>
+<section class="voice" aria-label="Canal de voz">
+<div class="air-h"><span class="air"><span class="lamp"></span>En el aire</span><span class="chan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>General</span></div>
+<div class="air-who"><div class="meter" aria-hidden="true"><i style="height:30%"></i><i style="height:70%"></i><i style="height:100%"></i><i style="height:55%"></i><i style="height:85%"></i><i style="height:40%"></i><i style="height:95%"></i><i style="height:60%"></i><i style="height:35%"></i><i style="height:75%"></i></div><p>Coach contesta a Marina</p></div>
+<p class="wake"><span>Di</span><kbd>«bebé»</kbd><span>y tu pregunta</span></p>
+</section>
+</aside>
+<section class="main">
+<div class="rows">
+<div class="row"><span class="t">22:46</span><div><p class="who"><span class="cs cs-s cs-me">TE</span>Teo</p><p class="msg">Hemos dado cuerda al reloj del andén y las agujas se mueven.</p></div></div>
+<div class="row"><span class="t">22:46</span><div><p class="who who-c">Coach</p><p class="msg">Las agujas vuelven a moverse. A lo lejos suena un silbato.</p><div class="slip"><div class="slip-h"><b>Despacho</b><span>Coach · 22:46</span></div><p class="rung">Ese silbato no viene del andén. Seguid el sonido.</p></div></div></div>
+<div class="row"><span class="t">22:49</span><div><p class="who"><span class="cs cs-s">MA</span>Marina<span class="said" title="dicho por voz"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span></p><p class="msg">¿El silbato sale del túnel o de la taquilla?</p></div></div>
+</div>
+<ol class="queue" aria-label="Cola del coach">
+<li class="q-now"><span class="cs cs-s">MA</span><span class="q-who">Coach está contestando a Marina</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><q>¿El silbato sale del túnel o de la taquilla?</q><span class="caret" aria-hidden="true"></span></li>
+<li><span class="cs cs-s">LU</span><span class="q-who">Lucía espera turno</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><q>oye, ¿y la palanca de las vías?</q></li>
+</ol>
+<div class="cmp"><div class="cmp-in"><input class="field" aria-label="Mensaje para Coach" placeholder="Escribe a Coach…"><button class="revb" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4"/></svg>Revisión</button><button class="b">Enviar</button></div></div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
