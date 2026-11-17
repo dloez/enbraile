@@ -141,7 +141,7 @@ claude.post("/runs/:id/say", async (c) => {
   if (!parsed.success) return c.json({ error: "invalidStepIn", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) }, 400, noStore);
   const { stepIn } = await import("./coach.js");
   const result = await stepIn(c.req.param("id"), parsed.data);
-  if (result.ok) return c.json({ message: result.message, card: result.card }, 201, noStore);
+  if (result.ok) return c.json({ message: result.message, card: result.card, recorded: result.recorded }, 201, noStore);
   return c.json({ error: result.error }, result.error === "noSuchRun" ? 404 : result.error === "busy" ? 409 : 400, noStore);
 });
 
