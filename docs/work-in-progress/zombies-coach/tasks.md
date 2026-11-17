@@ -1,38 +1,20 @@
 # Zombies Coach — Tasks
 
-## Publish the zones for every place-giving rung of both maps
+## Decide whether Kowakujo's zones may come from a guide site's marker data
 
-`compile` now warns about every level 3 or 4 rung with no zone decision ([Decisions](../../zombies/site/explanation/site.md#decisions), "Every place-giving rung has its zone, checked by compile"); Kowakujo was published with zones on 6 of its 90 level 3 and 4 rungs, Blood of the Dead with 46 of 80.
+Kowakujo's survey image is unlabeled, so on 2026-11-17 prepare could place a zone on only 13 of its level 3 and 4 rungs: 76 that name a place still show no map (53 single spots that cannot be found on the image, 23 multi-place ones with a spot like that among them). The zone agent found a guide publisher's interactive map with marker data that would locate most of them, and its fetch was denied by the session's permissions, so it was not retried. Blood of the Dead has 2 such rungs left.
 
-**Do:**
-- [ ] In subagents that report addresses and counts only, place or `null` every undecided rung of both maps with the render check and the blind check of `research.md` 3b, until `compile` prints no zones warning.
-- [ ] Publish both to production through the `watch-run` skill's `prod` wrapper, quoting only `publish`'s output.
+**Needs the author:**
+- May prepare fetch that publisher's marker data (or a labeled overhead map) into the map's gitignored `sources/` to place these zones, or do they stay without a map?
 
 **Acceptance:**
-- Claude-run: `npm run compile` on both map dirs prints no `warning: zones`; `publish` prints a new version for each.
-- Human-run: on the next night, a level 3 hint that names a place shows its map.
+- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md`; if yes, the remaining rungs placed and blind-checked as `research.md` 3b says, `compile` printing no zones warning, and the map published.
+- Human-run: none.
 - Reuse: `research.md` 3b, the `prod` wrapper.
 - Neighbors: none.
-- Forbidden: hint text or place names in the conversation or a tracked file.
+- Forbidden: fetching the marker data before this is answered; map content in a tracked file.
 
-**Touches:** `zombies/maps/` (gitignored)
-
-## Write the milestone labels of both published maps
-
-The roadmap shows each done step's prepared `Milestone` line, read by `compile` and carried in the bundle ([The Zombies Site → Roadmap](../../zombies/site/explanation/site.md#roadmap)); a step without one shows a redacted bar. Kowakujo and Blood of the Dead have none yet.
-
-**Do:**
-- [ ] In a subagent per map that reports counts only, write each step's `Milestone` line in `hints.md` and `hints.es.md` as `research.md` says, blind-check them, and compile until no milestone warning remains.
-- [ ] Publish both through the `prod` wrapper, quoting only `publish`'s output.
-
-**Acceptance:**
-- Claude-run: `npm run compile` on both map dirs prints no `no Milestone line` warning; `publish` prints a new version for each.
-- Human-run: on the next night, the roadmap's steps carry their labels.
-- Reuse: `research.md`'s `Milestone` lines, the `prod` wrapper.
-- Neighbors: "Publish the zones for every place-giving rung of both maps", whose publish can be the same one.
-- Forbidden: milestone text in the conversation or a tracked file; labels written by the live model.
-
-**Touches:** `zombies/maps/` (gitignored)
+**Touches:** `zombies/maps/` (gitignored), `docs/zombies/site/explanation/site.md`
 
 ## Time the bot's names lookup in production and set its limit
 
