@@ -322,7 +322,7 @@ const survey = meta.data.survey ? await readImage(meta.data.survey) : undefined;
 const zonesSource = await readOptional("zones.json");
 const zonesParsed = z.record(z.string(), z.union([zonesSchema, z.literal("unplaced")]).nullable()).safeParse(zonesSource === null ? {} : parseJson(zonesSource));
 if (!zonesParsed.success) {
-  console.error("zones.json: needs to be JSON mapping a rung, such as \"step 5 L3\", \"step 5 part 1 L3\" or \"step 5 Alt 2\", to { x, y, rx, ry }, each a fraction of the survey image from 0 to 1, to a list of those for a rung that names several places, to "unplaced" for a rung whose place could not be found, or to null for a rung that gives no place");
+  console.error("zones.json: needs to be JSON mapping a rung, such as \"step 5 L3\", \"step 5 part 1 L3\" or \"step 5 Alt 2\", to { x, y, rx, ry }, each a fraction of the survey image from 0 to 1, to a list of those for a rung that names several places, to \"unplaced\" for a rung whose place could not be found, or to null for a rung that gives no place");
   process.exit(1);
 }
 const zones: Record<string, Zones | "unplaced" | null> = zonesParsed.data;
