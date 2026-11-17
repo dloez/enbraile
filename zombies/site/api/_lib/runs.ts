@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
-import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
+import { spotsOf, type Bundle, type Language, type PublishedMap, type Viewer } from "../../shared/bundle.js";
 import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Person, Queued, Rating, RoadNode, Roadmap, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
 import { characterOf, defaultVoice, type Voice } from "../../shared/voices.js";
 import { db } from "./db.js";
@@ -278,7 +278,7 @@ async function cardsSince(viewer: Viewer, runId: string, after: number, rungsAft
   const zoneOf = (key: string, index: number, alt: number | null): ShownZone | null => {
     const rung = ladders.get(key)?.rungs[index];
     const zone = rung && (alt === null ? rung.zone : rung.alts[alt]?.zone);
-    return zone ? { ...zone, survey } : null;
+    return zone ? { spots: spotsOf(zone), survey } : null;
   };
   const done = new Set(
     (await db.select({ stepId: runSteps.stepId, partId: runSteps.partId }).from(runSteps).where(and(eq(runSteps.runId, runId), isNotNull(runSteps.doneAt)))).map((entry) =>

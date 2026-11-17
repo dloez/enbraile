@@ -20,13 +20,19 @@ export const zoneSchema = z.object({ x: fraction, y: fraction, rx: fraction.posi
 
 export type Zone = z.infer<typeof zoneSchema>;
 
+export const zonesSchema = z.union([zoneSchema, z.array(zoneSchema).min(1).max(8)]);
+
+export type Zones = z.infer<typeof zonesSchema>;
+
+export const spotsOf = (zones: Zones): Zone[] => (Array.isArray(zones) ? zones : [zones]);
+
 export const zoneLevel = 3;
 
-const alt = line.extend({ when: z.string().min(1), zone: zoneSchema.optional() });
+const alt = line.extend({ when: z.string().min(1), zone: zonesSchema.optional() });
 
 const rung = line.extend({
   level: z.number().int().min(1).max(4),
-  zone: zoneSchema.optional(),
+  zone: zonesSchema.optional(),
   alts: z.array(alt).default([]),
 });
 

@@ -91,12 +91,13 @@ export function MapArt({ map, label, className, large }: { map: Shown; label?: s
 
 const planBox = { width: 140, height: 96 };
 
-const crop = { share: 0.4, aspect: 4 / 3, fill: 1 / 3, least: 0.025 };
+const crop = { share: 0.4, aspect: 4 / 3, fill: 1 / 3, spread: 0.75, least: 0.025 };
 
 type Box = { x: number; y: number; w: number; h: number };
 
-function around(cx: number, cy: number, rx: number, ry: number, width: number, height: number): Box {
-  const wanted = Math.max(crop.share * width, (2 * rx) / crop.fill, ((2 * ry) / crop.fill) * crop.aspect);
+function around(cx: number, cy: number, rx: number, ry: number, width: number, height: number, several = false): Box {
+  const fill = several ? crop.spread : crop.fill;
+  const wanted = Math.max(crop.share * width, (2 * rx) / fill, ((2 * ry) / fill) * crop.aspect);
   const w = Math.min(wanted, width, height * crop.aspect);
   const h = w / crop.aspect;
   return { x: Math.min(Math.max(cx - w / 2, 0), width - w), y: Math.min(Math.max(cy - h / 2, 0), height - h), w, h };
@@ -106,16 +107,18 @@ export function SurveyZone({ zone, art, words }: { zone: ShownZone; art: Publish
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const [whole, setWhole] = useState(false);
   const { width, height } = zone.survey ?? planBox;
-  const cx = zone.x * width;
-  const cy = zone.y * height;
-  const near = around(cx, cy, zone.rx * width, zone.ry * height, width, height);
+  const left = Math.min(...zone.spots.map((spot) => (spot.x - spot.rx) * width));
+  const right = Math.max(...zone.spots.map((spot) => (spot.x + spot.rx) * width));
+  const top = Math.min(...zone.spots.map((spot) => (spot.y - spot.ry) * height));
+  const bottom = Math.max(...zone.spots.map((spot) => (spot.y + spot.ry) * height));
+  const near = around((left + right) / 2, (top + bottom) / 2, (right - left) / 2, (bottom - top) / 2, width, height, zone.spots.length > 1);
   const view = whole ? { x: 0, y: 0, w: width, h: height } : near;
   const unit = view.w / 600;
   const hatch = 7 * unit;
   const cell = 20 * unit;
   const Plan = plans[art];
   const least = crop.least * near.w;
-  const shape = { cx, cy, rx: Math.max(zone.rx * width, least), ry: Math.max(zone.ry * height, least) };
+  const shapes = zone.spots.map((spot) => ({ cx: spot.x * width, cy: spot.y * height, rx: Math.max(spot.rx * width, least), ry: Math.max(spot.ry * height, least) }));
   return (
     <button type="button" className={`survey${whole ? " survey-whole" : ""}`} aria-pressed={whole} aria-label={`${words.zone}. ${whole ? words.near : words.whole}`} onClick={() => setWhole(!whole)}>
       <svg viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} aria-hidden="true">
@@ -137,10 +140,14 @@ export function SurveyZone({ zone, art, words }: { zone: ShownZone; art: Publish
             </g>
           </>
         )}
-        <ellipse {...shape} fill={`url(#${id}h)`} fillOpacity={0.55} />
-        <ellipse {...shape} className="zone-halo" />
-        <ellipse {...shape} className="zone-edge" />
-        <ellipse {...shape} className="zone-ring" />
+        {shapes.map((shape, index) => (
+          <g key={index}>
+            <ellipse {...shape} fill={`url(#${id}h)`} fillOpacity={0.55} />
+            <ellipse {...shape} className="zone-halo" />
+            <ellipse {...shape} className="zone-edge" />
+            <ellipse {...shape} className="zone-ring" />
+          </g>
+        ))}
       </svg>
       <span className="survey-flip" aria-hidden="true">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">

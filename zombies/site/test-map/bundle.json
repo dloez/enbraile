@@ -73,7 +73,7 @@
       "ladder": [
         { "level": 1, "text": { "es": "El silbato no sonó para nada.", "en": "The whistle did not sound for nothing." }, "mentions": [] },
         { "level": 2, "text": { "es": "Volved al andén cuando el reloj marque la hora.", "en": "Go back to the platform when the clock strikes the hour." }, "mentions": ["platform", "clock"], "reveals": ["night-train"] },
-        { "level": 3, "text": { "es": "Subid al tren nocturno cuando se detenga en el andén.", "en": "Board the night train when it stops at the platform." }, "mentions": ["night-train", "platform"] }
+        { "level": 3, "text": { "es": "Subid al tren nocturno cuando se detenga en el andén.", "en": "Board the night train when it stops at the platform." }, "mentions": ["night-train", "platform"], "zone": [{ "x": 0.42, "y": 0.72, "rx": 0.03, "ry": 0.03 }, { "x": 0.7, "y": 0.72, "rx": 0.03, "ry": 0.03 }] }
       ]
     }
   ],

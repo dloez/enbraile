@@ -51,7 +51,7 @@ export type Queued = { name: string; who: string | null; live: boolean; avatar: 
 
 export type Survey = { digest: string; width: number; height: number };
 
-export type ShownZone = Zone & { survey: Survey | null };
+export type ShownZone = { spots: Zone[]; survey: Survey | null };
 
 export type Card = { id: number; rungs: { id: number; text: string; zone: ShownZone | null }[]; at: string; more: boolean; thread: number; done: boolean; rating: Rating | null };
 
