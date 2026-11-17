@@ -5,7 +5,6 @@ requires-python = ">=3.13"
 dependencies = [
   "av==16.1.0",
   "chatterbox-tts==0.1.7",
-  "coqui-tts[codec]==0.28.0",
   "ctranslate2==4.9.0",
   "faster-whisper==1.2.1",
   "numpy==2.5.4",
@@ -16,6 +15,19 @@ dependencies = [
   "torchcodec==0.17.0",
   "torchaudio==2.11.0",
   "websockets==17.4",
+  "hyperpyyaml==1.2.3",
+  "openai-whisper==20250625",
+  "x-transformers==2.11.24",
+  "modelscope==1.31.0",
+  "inflect==7.6.0",
+  "hydra-core==1.3.8",
+  "lightning==2.6.6",
+  "gdown==6.5.1",
+  "matplotlib==3.11.2",
+  "wget==3.2",
+  "pyarrow==26.0.1",
+  "pyworld==0.3.5",
+  "num2words==0.5.14",
 ]
 
 [tool.uv]

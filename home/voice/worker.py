@@ -4,6 +4,7 @@ import gc
 import glob
 import io
 import json
+import logging
 import os
 import random
 import re
@@ -12,8 +13,10 @@ import subprocess
 import sys
 import time
 import unicodedata
+import warnings
 import wave
 from pathlib import Path
+from types import SimpleNamespace
 
 import nvidia.cublas
 import nvidia.cudnn
@@ -27,6 +30,7 @@ for lib_dir in (nvidia.cublas.__path__[0], nvidia.cudnn.__path__[0]):
 
 import numpy as np  # noqa: E402
 import soundfile as sf  # noqa: E402
+from num2words import num2words  # noqa: E402
 from faster_whisper import WhisperModel  # noqa: E402
 from websockets.asyncio.client import connect  # noqa: E402
 from websockets.exceptions import ConnectionClosed  # noqa: E402
@@ -37,7 +41,13 @@ WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "large-v3")
 LANGUAGE = os.environ.get("LANGUAGE", "es")
 PIPER_VOICE = os.environ.get("PIPER_VOICE", "es_ES-davefx-medium")
 DATA = Path(os.environ.get("DATA_DIR", Path(__file__).parent / "data"))
-RICHTOFEN_DIR = Path(os.environ.get("RICHTOFEN_DIR", DATA / "richtofen"))
+RICHTOFEN_DIR = Path(os.environ.get("RICHTOFEN_DIR", DATA / "richtofen-cosyvoice"))
+RICHTOFEN_HOP = int(os.environ.get("RICHTOFEN_HOP", "16"))
+RICHTOFEN_STEPS = int(os.environ.get("RICHTOFEN_STEPS", "5"))
+RICHTOFEN_POLL_S = 0.01
+COSYVOICE_REPO = "https://github.com/FunAudioLLM/CosyVoice.git"
+COSYVOICE_COMMIT = "074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc"
+COSYVOICE_INSTRUCT = "You are a helpful assistant.<|endofprompt|>"
 VOICES = [name.strip() for name in os.environ.get("VOICES", "piper").split(",") if name.strip()]
 DEFAULT_VOICE = os.environ.get("DEFAULT_VOICE", VOICES[0] if VOICES else "")
 WARM_VOICES = [name.strip() for name in os.environ.get("WARM_VOICES", DEFAULT_VOICE).split(",") if name.strip()]
@@ -48,11 +58,6 @@ CHATTERBOX_BASE = ("ResembleAI/chatterbox", ["ve.pt", "conds.pt", "s3gen.pt", "C
 CHATTERBOX_SPAIN = ("ResembleAI/Chatterbox-Multilingual-es-es", ["t3_es_es.safetensors", "grapheme_mtl_merged_expanded_v1.json"])
 SENTENCE = re.compile(r"(?<=[.!?…])\s+")
 GAP_S = 0.15
-RICHTOFEN_HEARD = 0.8
-RICHTOFEN_CHECKED_WORDS = 3
-RICHTOFEN_TRIES = 3
-RICHTOFEN_STREAM_WORDS = int(os.environ.get("RICHTOFEN_STREAM_WORDS", "12"))
-STREAM_GAP_S = 0.15
 
 
 def log(*parts):
@@ -135,6 +140,7 @@ SHORT_WORDS = 3
 
 def spoken_form(text):
     text = SOUNDED_RE.sub(lambda match: SOUNDED[match.group(0).lower()], text)
+    text = re.sub(r"\d+", lambda match: num2words(int(match.group(0)), lang="es"), text)
     text = re.sub(r"…+|\.{3,}", ",", text)
     text = re.sub(r",\s*([.!?])", r"\1", text).strip()
     return re.sub(r",$", ".", text)
@@ -167,11 +173,29 @@ def joined(parts, rate):
     return np.concatenate(pieces[:-1]) if pieces else gap
 
 
-def heard_share(whisper, wav, text):
-    segments, _ = whisper.transcribe(io.BytesIO(wav), language=LANGUAGE, beam_size=5)
-    heard = {plain(word) for segment in segments for word in segment.text.split()}
-    words = [plain(word) for word in text.split() if plain(word)]
-    return sum(word in heard for word in words) / max(len(words), 1)
+class PolledTime:
+    @staticmethod
+    def sleep(seconds):
+        time.sleep(min(seconds, RICHTOFEN_POLL_S))
+
+
+def one_step(self, xs, masks, cache=None):
+    outs = self.model(inputs_embeds=xs, output_hidden_states=True, return_dict=True, use_cache=True, past_key_values=cache)
+    return outs.hidden_states[-1], outs.past_key_values
+
+
+def cosyvoice_code():
+    folder = DATA / "cosyvoice"
+    stamp = folder / ".commit"
+    if not stamp.exists() or stamp.read_text() != COSYVOICE_COMMIT:
+        subprocess.run(["rm", "-rf", str(folder)], check=True)
+        subprocess.run(["git", "clone", "--quiet", COSYVOICE_REPO, str(folder)], check=True)
+        subprocess.run(["git", "-C", str(folder), "checkout", "--quiet", COSYVOICE_COMMIT], check=True)
+        subprocess.run(["git", "-C", str(folder), "submodule", "update", "--quiet", "--init", "--recursive"], check=True)
+        stamp.write_text(COSYVOICE_COMMIT)
+    for path in (folder / "third_party" / "Matcha-TTS", folder):
+        if str(path) not in sys.path:
+            sys.path.insert(0, str(path))
 
 
 class Piper:
@@ -214,45 +238,43 @@ class Chatterbox:
 
 class Richtofen:
     def __init__(self, whisper):
-        self.whisper = whisper
-        from TTS.tts.configs.xtts_config import XttsConfig
-        from TTS.tts.models.xtts import Xtts
+        cosyvoice_code()
+        import cosyvoice.cli.cosyvoice as cosyvoice_cli
+        import cosyvoice.cli.model as cosyvoice_model
+        import cosyvoice.llm.llm as cosyvoice_llm
+        import torch
+        AutoModel = cosyvoice_cli.AutoModel
 
-        config = XttsConfig()
-        config.load_json(str(RICHTOFEN_DIR / "config.json"))
-        self.model = Xtts.init_from_config(config)
-        self.model.load_checkpoint(config, checkpoint_path=str(RICHTOFEN_DIR / "model.pth"), vocab_path=str(RICHTOFEN_DIR / "vocab.json"), use_deepspeed=False)
-        self.model.cuda()
-        refs = [str(path) for path in sorted((RICHTOFEN_DIR / "refs").glob("*.wav"))]
-        self.latents, self.speaker = self.model.get_conditioning_latents(audio_path=refs, gpt_cond_len=30, max_ref_length=60)
+        cosyvoice_model.time = PolledTime
+        cosyvoice_cli.tqdm = lambda items, **kwargs: items
+        logging.getLogger().setLevel(logging.WARNING)
+        warnings.filterwarnings("ignore", category=FutureWarning, module=r"cosyvoice\.")
+        qwen = cosyvoice_llm.Qwen2ForCausalLM
+        cosyvoice_llm.Qwen2ForCausalLM = SimpleNamespace(from_pretrained=lambda path: qwen.from_pretrained(path, dtype=torch.float32))
+        cosyvoice_llm.Qwen2Encoder.forward_one_step = one_step
+        self.tts = AutoModel(model_dir=str(RICHTOFEN_DIR))
+        self.rate = self.tts.sample_rate
+        decoder = self.tts.model.flow.decoder
+        forward = decoder.forward
+        decoder.forward = lambda *args, **kwargs: forward(*args, **{**kwargs, "n_timesteps": RICHTOFEN_STEPS})
+        reference = (RICHTOFEN_DIR / "ref.txt").read_text().strip()
+        if not self.tts.add_zero_shot_spk(f"{COSYVOICE_INSTRUCT}{reference}", str(RICHTOFEN_DIR / "ref.wav"), "richtofen"):
+            raise RuntimeError("the richtofen reference clip did not load")
         self.wav("Hola.", None)
 
-    def sentence(self, text):
-        best, best_share = None, -1.0
-        for _ in range(RICHTOFEN_TRIES):
-            samples = self.model.inference(spoken_form(text), "es", self.latents, self.speaker, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0)["wav"]
-            if len(text.split()) < RICHTOFEN_CHECKED_WORDS:
-                return samples
-            share = heard_share(self.whisper, wav_bytes(samples, 24000), text)
-            if share > best_share:
-                best, best_share = samples, share
-            if share >= RICHTOFEN_HEARD:
-                break
-            log(f"richtofen said {share:.0%} of: {text}")
-        return best
-
-    def wav(self, text, preset):
-        return wav_bytes(joined([self.sentence(part) for part in merged(sentences(text))], 24000), 24000)
-
-    def streams(self, text):
-        return RICHTOFEN_STREAM_WORDS > 0 and all(len(part.split()) <= RICHTOFEN_STREAM_WORDS for part in merged(sentences(text)))
+    def part(self, text):
+        self.tts.model.token_hop_len = RICHTOFEN_HOP
+        for chunk in self.tts.inference_zero_shot(spoken_form(text), "", "", zero_shot_spk_id="richtofen", stream=True, text_frontend=False):
+            yield chunk["tts_speech"].float().cpu().numpy().reshape(-1)
 
     def stream(self, text):
         for index, part in enumerate(merged(sentences(text))):
             if index:
-                yield np.zeros(int(24000 * STREAM_GAP_S), dtype=np.float32)
-            for chunk in self.model.inference_stream(spoken_form(part), "es", self.latents, self.speaker, stream_chunk_size=20, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0, enable_text_splitting=False):
-                yield chunk.detach().float().cpu().numpy().reshape(-1)
+                yield np.zeros(int(self.rate * GAP_S), dtype=np.float32)
+            yield from self.part(part)
+
+    def wav(self, text, preset):
+        return wav_bytes(np.concatenate(list(self.stream(text))), self.rate)
 
 
 ENGINES = {"piper": (Piper, None), "richtofen": (Richtofen, None)} | {name: (Chatterbox, preset) for name, preset in CHATTERBOX_PRESETS.items()}
@@ -507,7 +529,7 @@ class Worker:
                     await socket.send(json.dumps({"type": "failed", "id": id, "error": "no voice is loaded"}))
                     return
                 engine = self.engines[ENGINES[name][0]]
-                if hasattr(engine, "streams") and engine.streams(text):
+                if hasattr(engine, "stream"):
                     try:
                         await self.stream_say(socket, id, engine, text)
                     except Exception as error:
