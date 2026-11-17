@@ -532,11 +532,10 @@ export async function runLog(runId: string) {
   const [map] = await db.select({ latestVersion: maps.latestVersion }).from(maps).where(and(eq(maps.game, run.game), eq(maps.map, run.map)));
   const bundle = await latestBundle(db, run.game, run.map);
   const names = new Map((bundle?.knowledge ?? []).map((entry) => [entry.id, entry.name]));
-  const [members, earlier, lines, spoken, cards, rungs, notes, held, marks, steps, headsUps, calls, findings] = await Promise.all([
+  const [members, earlier, lines, cards, rungs, notes, held, marks, steps, headsUps, calls, findings] = await Promise.all([
     db.select().from(runMembers).where(eq(runMembers.runId, runId)).orderBy(asc(runMembers.id)),
     db.select().from(runHistory).where(eq(runHistory.runId, runId)).orderBy(asc(runHistory.saidAt), asc(runHistory.id)),
     db.select().from(messages).where(eq(messages.runId, runId)).orderBy(asc(messages.id)),
-    db.select().from(callLines).where(eq(callLines.runId, runId)).orderBy(asc(callLines.saidAt), asc(callLines.id)),
     db.select().from(hintCards).where(eq(hintCards.runId, runId)).orderBy(asc(hintCards.id)),
     db.select().from(deliveries).where(eq(deliveries.runId, runId)).orderBy(asc(deliveries.id)),
     db.select().from(feedback).where(eq(feedback.runId, runId)).orderBy(asc(feedback.id)),
@@ -553,7 +552,6 @@ export async function runLog(runId: string) {
     members: strip(members),
     history: strip(earlier),
     messages: strip(lines),
-    call: strip(spoken),
     cards: strip(cards),
     deliveries: strip(rungs),
     feedback: strip(notes),
@@ -711,9 +709,6 @@ export async function runEvents(runId: string, after: string): Promise<RunEvents
       select case when m.author = 'member' then 'line' else 'coach' end as kind, m.id, m.created_at as at,
         jsonb_build_object('name', m.name, 'text', m.text, 'by', m.posted_by, 'cards', (select coalesce(jsonb_agg(c.id order by c.id), '[]'::jsonb) from ${hintCards} c where c.message_id = m.id)) as data
       from ${messages} m where m.run_id = ${runId} and m.kind = 'chat'
-      union all
-      select 'call', l.id, l.created_at, jsonb_build_object('name', l.name, 'text', l.text, 'discordId', l.discord_id)
-      from ${callLines} l where l.run_id = ${runId}
       union all
       select 'hint', d.id, d.created_at,
         jsonb_build_object('card', d.card_id, 'step', d.step_id, 'part', d.part_id, 'rung', d.rung, 'alt', d.alt, 'level', d.level, 'text', d.text, 'version', d.bundle_version, 'askedBy', d.asked_by)

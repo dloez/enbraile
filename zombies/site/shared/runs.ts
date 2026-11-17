@@ -71,7 +71,6 @@ export type Roadmap = { nodes: RoadNode[]; beaten: boolean };
 
 export type RunEvent = { id: number; at: string } & (
   | { kind: "line" | "coach"; name: string; text: string; cards: number[]; by: "claude" | null }
-  | { kind: "call"; name: string; text: string; discordId: string }
   | { kind: "audit"; message: number | null; findings: string[] }
   | { kind: "hint"; card: number; step: string; part: string | null; rung: number; alt: number | null; level: number; text: string; version: number; askedBy: string | null }
   | { kind: "revision"; name: string; text: string; message: number | null; refersTo: number | null; card: number | null; delivery: number | null }

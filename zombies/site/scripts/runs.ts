@@ -26,7 +26,7 @@ if (!id) {
         .join(", ")}`,
     );
 } else {
-  const { call: _, ...log } = await claude<{ run: { game: string; map: string } } & Record<string, unknown>>(`runs/${encodeURIComponent(id)}`);
+  const log = await claude<{ run: { game: string; map: string } } & Record<string, unknown>>(`runs/${encodeURIComponent(id)}`);
   const file = resolve(dirname(fileURLToPath(import.meta.url)), "../../maps", log.run.game, log.run.map, "runs", `${id}.json`);
   await mkdir(dirname(file), { recursive: true });
   await writeFile(file, `${JSON.stringify(log, null, 2)}\n`);

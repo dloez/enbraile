@@ -14,16 +14,13 @@ const pollMs = 2000;
 const base = requireEnv("ZOMBIES_URL");
 const authorization = `Bearer ${requireEnv("CLAUDE_TOKEN")}`;
 
-type Watched = Exclude<RunEvent, { kind: "call" }>;
-
-async function read(after: string): Promise<(Omit<RunEvents, "events"> & { events: Watched[] }) | number> {
+async function read(after: string): Promise<RunEvents | number> {
   const response = await fetch(`${base}/api/claude/runs/${encodeURIComponent(id!)}/events?after=${after}`, { headers: { authorization } }).catch(() => null);
   if (!response?.ok) return response?.status ?? 0;
-  const page = (await response.json()) as RunEvents;
-  return { ...page, events: page.events.filter((event): event is Watched => event.kind !== "call") };
+  return (await response.json()) as RunEvents;
 }
 
-function line(event: Watched): string {
+function line(event: RunEvent): string {
   const at = new Date(event.at).toLocaleTimeString("en-GB", { hour12: false });
   switch (event.kind) {
     case "line":
