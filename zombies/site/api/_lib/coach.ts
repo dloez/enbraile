@@ -6,6 +6,7 @@ import { anyOf, characterOf, wakeWords, type Character } from "../../shared/voic
 import { db } from "./db.js";
 import { blockerOf, hasMore, isReady, ladderKey, laddersOf, lineAt, namedIn, speakable, withRequires, type Ladder, type Line } from "./ladders.js";
 import { audits, bundleVersions, coachCalls, coachQueue, deliveries, gaps, headsUpsGiven, hintCards, maps, messages, runKnowledge, runMembers, runs, runSteps } from "./schema.js";
+import { inBackground } from "./bot.js";
 import { speakInCall } from "./voice.js";
 
 const defaultModel = "claude-haiku-5-5";
@@ -130,13 +131,13 @@ const tools: Anthropic.Tool[] = [
 
 let client: Anthropic | null = null;
 
-function anthropic(): Anthropic | null {
+export function anthropic(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   client ??= new Anthropic({ timeout: requestTimeoutMs, maxRetries: requestRetries });
   return client;
 }
 
-const model = () => process.env.COACH_MODEL || defaultModel;
+export const model = () => process.env.COACH_MODEL || defaultModel;
 
 type State = {
   runId: string;
@@ -472,6 +473,17 @@ async function markSteps(state: State, ladder: Ladder, status: "started" | "done
   const reported = (key: { stepId: string; partId: string }) =>
     status === "done" && state.reporter && key.stepId === ladder.stepId && key.partId === (ladder.partId ?? "") ? { doneBy: state.reporter.discordId, doneByName: state.reporter.name } : {};
   const set = status === "done" ? { doneAt: now } : { startedAt: now };
+  const doneBefore =
+    status === "done" && keys.length > 1
+      ? new Set(
+          (
+            await db
+              .select({ stepId: runSteps.stepId })
+              .from(runSteps)
+              .where(and(eq(runSteps.runId, state.runId), eq(runSteps.partId, ""), inArray(runSteps.stepId, keys.map((key) => key.stepId)), sql`${runSteps.doneAt} is not null`))
+          ).map((row) => row.stepId),
+        )
+      : null;
   await db
     .insert(runSteps)
     .values(keys.map((key) => ({ runId: state.runId, ...key, ...set, ...reported(key) })))
@@ -486,7 +498,13 @@ async function markSteps(state: State, ladder: Ladder, status: "started" | "done
             }
           : { startedAt: sql`coalesce(${runSteps.startedAt}, excluded.started_at)` },
     });
+  const implied = doneBefore !== null && keys.some((key) => key.stepId !== ladder.stepId && !doneBefore.has(key.stepId));
   for (const key of keys) (status === "done" ? state.done : state.started).add(ladderKey(key.stepId, key.partId || null));
+  const api = anthropic();
+  if (implied && api) {
+    const { dateEarlierSteps } = await import("./dating.js");
+    inBackground(dateEarlierSteps(api, model(), state.runId).catch((error: Error) => console.error("steps dated", state.runId, error.message)));
+  }
 }
 
 type CallLog = {

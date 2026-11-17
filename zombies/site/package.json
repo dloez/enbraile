@@ -17,6 +17,7 @@
     "import": "tsx --env-file-if-exists=.env.local scripts/import.ts",
     "watch": "tsx --env-file-if-exists=.env.local scripts/watch.ts",
     "say": "tsx --env-file-if-exists=.env.local scripts/say.ts",
+    "date-steps": "tsx --env-file-if-exists=.env.local scripts/date-steps.ts",
     "replay": "tsx --env-file-if-exists=.env.local scripts/replay.ts"
   },
   "dependencies": {

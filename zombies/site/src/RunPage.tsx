@@ -900,14 +900,17 @@ function RunView({ sheet, arrive, onChanged }: { sheet: RunSheet; arrive: boolea
               </li>
             ))}
           </ul>
-          <CopyLink id={sheet.id} icon={false} />
+          <div className="acts">
+            <CopyLink id={sheet.id} icon={false} />
+            {!closed && (
+              <button type="button" className="b close-b" onClick={() => setClosing("ask")}>
+                <Shut />
+                {t.closeShort}
+              </button>
+            )}
+          </div>
         </div>
         <RoadmapPanel map={road} fresh={fresh} language={sheet.language} onOpen={() => setRoadOpen(true)} />
-        {!closed && (
-          <button type="button" className="b b-ghost close-b" onClick={() => setClosing("ask")}>
-            {t.closeAttempt}
-          </button>
-        )}
         {voice && !closed && <VoicePanel voice={voice} coach={coach} queue={queue} />}
       </aside>
       <div className="strip">
@@ -920,7 +923,7 @@ function RunView({ sheet, arrive, onChanged }: { sheet: RunSheet; arrive: boolea
         </button>
         <CopyLink id={sheet.id} icon />
         {!closed && (
-          <button type="button" className="ib" aria-label={t.closeAttempt} onClick={() => setClosing("ask")}>
+          <button type="button" className="ib ib-close" aria-label={t.closeAttempt} onClick={() => setClosing("ask")}>
             <Shut />
           </button>
         )}

@@ -138,6 +138,14 @@ claude.get("/runs/:id/events", async (c) => {
   return events ? c.json(events, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
 });
 
+claude.post("/runs/:id/date-steps", async (c) => {
+  const { anthropic, model } = await import("./coach.js");
+  const api = anthropic();
+  if (!api) return c.json({ error: "noModel" }, 503, noStore);
+  const { dateEarlierSteps } = await import("./dating.js");
+  return c.json(await dateEarlierSteps(api, model(), c.req.param("id")), 200, noStore);
+});
+
 claude.post("/runs/:id/say", async (c) => {
   const parsed = stepInSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidStepIn", issues: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) }, 400, noStore);

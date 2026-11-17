@@ -15,6 +15,7 @@
     {
       "id": "light-the-lantern",
       "title": "Light the lantern in the signal box",
+      "doneWhen": "They say the lantern is lit, glows or flickers, even if they ask what to do next.",
       "conditions": ["The power is on"],
       "onSuccess": { "text": { "es": "La luz del farol tiembla. Algo en la estación se ha despertado.", "en": "The lantern's light flickers. Something in the station has woken." }, "mentions": ["lantern"] },
       "milestone": { "text": { "es": "Farol encendido", "en": "Lantern lit" }, "mentions": ["lantern"] },
@@ -28,6 +29,7 @@
     {
       "id": "wind-the-clock",
       "title": "Wind the stopped clock on the platform",
+      "doneWhen": "They say they wound the clock, or that its hands move again, even if they ask what to do next.",
       "requires": ["light-the-lantern"],
       "onSuccess": { "text": { "es": "Las agujas vuelven a moverse. A lo lejos suena un silbato.", "en": "The hands move again. A whistle sounds in the distance." }, "mentions": ["clock"] },
       "milestone": { "text": { "es": "El reloj vuelve a andar", "en": "The clock runs again" }, "mentions": ["clock"] },
@@ -67,6 +69,7 @@
     {
       "id": "board-the-night-train",
       "title": "Board the night train",
+      "doneWhen": "They say they boarded the night train or are inside it with the doors closed.",
       "requires": ["wind-the-clock"],
       "onSuccess": { "text": { "es": "Las puertas se cierran detrás de vosotros. Fin del trayecto.", "en": "The doors close behind you. End of the line." }, "mentions": ["night-train"] },
       "milestone": { "text": { "es": "A bordo del tren nocturno", "en": "Aboard the night train" }, "mentions": ["night-train"] },
