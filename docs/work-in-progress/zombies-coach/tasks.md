@@ -16,6 +16,72 @@ Kowakujo's survey image is unlabeled, so on 2026-11-17 prepare could place a zon
 
 **Touches:** `zombies/maps/` (gitignored), `docs/zombies/site/explanation/site.md`
 
+## Decide whether the call's transcripts are still kept
+
+The bot sends every line said in the call while the coach is in it, and the site stores each in `call_lines` (1,476 on the latest production attempt). Since 2026-11-17 no route returns them, so nothing reads them ([The Zombies Site → Voice](../../zombies/site/explanation/site.md#voice)), but they are still collected, and the owner raised the call as a privacy matter.
+
+**Needs the author:**
+- Keep collecting call lines (for nothing today), stop collecting them (the bot stops sending, the site drops the route and the table), and delete the ones stored?
+
+**Acceptance:**
+- Claude-run: the answer recorded as a dated decision in `docs/zombies/site/explanation/site.md` and `docs/zombies/bot/explanation/bot.md`; if they go, `npm run gate` in `zombies/site` and `home/bot` with the route, table and `hearing.onTranscript` handler removed and a migration dropping the table.
+- Human-run: none.
+- Reuse: none.
+- Neighbors: "Claude Code never reads the call's transcriptions" in `site.md`'s Decisions.
+- Forbidden: deleting stored lines before this is answered.
+
+**Touches:** `zombies/site/api/_lib/`, `zombies/site/drizzle/`, `zombies/bot/src/call.ts`, `docs/zombies/`
+
+## Tell a rung that cannot be placed from one that gives no place
+
+`zones.json`'s `null` means a rung gives no place, and `compile` stays quiet about it; the 2026-11-17 prepares also used it for rungs whose spot could not be found on the survey image (Kowakujo's 53 single spots and 23 multi-place rungs, two of Blood of the Dead's), so those name a place and show no map without any warning.
+
+**Do:**
+- [ ] Let `zones.json` mark a rung `"unplaced"`, which `compile` counts in a warning of its own and which carries no zone, and say in `research.md` 3b to use it instead of `null` for a spot that cannot be found.
+- [ ] In a subagent per map that reports addresses and counts only, turn the low-confidence `null`s into `"unplaced"`.
+
+**Acceptance:**
+- Claude-run: `npm run gate`; `compile` on Kowakujo prints an unplaced count matching the prepare's report.
+- Human-run: none.
+- Reuse: `zoneAt` in `scripts/compile.ts`.
+- Neighbors: the undecided zones warning.
+- Forbidden: map content in a tracked file.
+
+**Touches:** `zombies/site/scripts/compile.ts`, `.claude/skills/ee-coach/references/research.md`, `zombies/maps/` (gitignored)
+
+## Blind-check Blood of the Dead's zone lists again from private folders
+
+Both 2026-11-17 zone agents found files in their shared scratch folder overwritten by the other while they worked; Blood of the Dead's 12 zone lists that passed then are published.
+
+**Do:**
+- [ ] In a subagent working only in a folder of its own, render and blind-check every zone list of Blood of the Dead as `research.md` 3b says, fixing and publishing only what fails.
+
+**Acceptance:**
+- Claude-run: the subagent reports passes and failures by address only; anything fixed is published through the `prod` wrapper.
+- Human-run: none.
+- Reuse: `research.md` 3b.
+- Neighbors: none.
+- Forbidden: a shared scratch folder between agents; map content in the conversation.
+
+**Touches:** `zombies/maps/` (gitignored)
+
+## Time a spoken step-in in a call and draw the phone's voice bar and queue
+
+The bot now speaks Claude's lines a sentence at a time ([The Zombies Bot Module](../../zombies/bot/explanation/bot.md)), but how soon a step-in is heard has not been measured, and the canvas has no phone board for the redrawn voice bar or the coach queue, while its RunZone boards still draw the old red on-air panel.
+
+**Do:**
+- [ ] On a night with the coach in the call, time a step-in from `npm run say` to its first spoken word in Coach's and Richtofen's voices, and record it in the Speaking Claude's lines bullet of `site.md`.
+- [ ] Draw the phone attempt with the on-air bar and the queue on the canvas, as `v3/RunPhoneOnAir.dc.html`, and copy it into `zombies/site/design/`; note in the design-system doc that the RunZone boards' panel is superseded.
+
+**Acceptance:**
+- Claude-run: the figure and how it was taken are in `site.md`; the board is on the canvas and in the repo.
+- Human-run: the group is in the call during the step-in.
+- Reuse: the `bot say` and `zombies voice timing` log lines.
+- Neighbors: "Time the bot's names lookup in production and set its limit".
+- Forbidden: a figure taken without a real call.
+
+**Touches:** `docs/zombies/`, `zombies/site/design/`
+
 ## Time the bot's names lookup in production and set its limit
 
 The site's names lookup gives the bot 10 s for Discord's forced member fetches (`lookupMs` in `zombies/site/api/_lib/names.ts`), while a reply waits at most 1.5 s; the 10 s is a starting value, since the fetches could not be timed without the real bot ([The Zombies Site → Decisions](../../zombies/site/explanation/site.md#decisions), "Names never go back to stored ones on an open page"). Each lookup logs `bot names` with its count of IDs, its time in ms and whether the bot answered.
