@@ -9,7 +9,7 @@ import { RoadmapColumn, RoadmapPanel, RoadmapSheet, useFresh } from "./Roadmap";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
 import { characterOf, voiceNames, voices, type Character, type Voice as CoachVoice } from "../shared/voices";
 import { forget, known, learn, load as fetchPage, openFreshMs, runSource, nameOf } from "./store";
-import { Arrow, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, Route, Shut, type RunLink, useFit } from "./ui";
+import { Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, Route, Shut, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
 const lostPollMs = 5000;
@@ -176,7 +176,7 @@ type SlipProps = {
 function Slip({ card, pinned, still, name, language, art, busy, rating, onMore, onRate }: SlipProps & { card: Card; pinned: boolean }) {
   const words = coachWords[language];
   return (
-    <div className={pinned ? "slip bare" : "slip"} lang={language}>
+    <div className="slip" lang={language}>
       <div className="slip-h">
         <b>{words.dispatch}</b>
         <span>
@@ -385,14 +385,20 @@ function useVoice(id: string, coach: string, off: boolean): Voice | null {
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<string | null>(null);
   const looking = useRef(false);
+  const misses = useRef(0);
 
   const look = useCallback(() => {
     if (off || document.hidden || looking.current) return;
     looking.current = true;
     fetchCall(id)
       .then((next) => {
-        setState(next);
-        setRefused(null);
+        if (!next.reachable || !next.channel) {
+          misses.current++;
+          if (misses.current < 2) return;
+        }
+        misses.current = 0;
+        setState((current) => (current && JSON.stringify(current) === JSON.stringify(next) ? current : next));
+        if (next.coach && next.coach === next.channel?.id) setRefused(null);
       })
       .catch((error: unknown) => {
         if (error instanceof SignedOut) signIn();
@@ -455,100 +461,33 @@ function Meter({ bars, live }: { bars: number; live: boolean }) {
   );
 }
 
-function airState(queue: Queued[], coach: Character): { live: boolean; text: string } {
-  const now = queue.find((entry) => entry.answering && entry.spoken);
-  return now ? { live: true, text: t.speakingTo(coach.name, nameOf(now)) } : { live: false, text: t.listening(coach.name) };
-}
-
-function Wake({ wake }: { wake: string }) {
-  return (
-    <p className="wake">
-      <span>{t.say}</span>
-      <kbd>«{wake}»</kbd>
-      <span>{t.andAsk}</span>
-    </p>
-  );
-}
-
-function Lamp() {
-  return <span className="lamp" aria-hidden="true" />;
-}
-
-function VoicePanel({ voice, coach, queue }: { voice: Voice; coach: Character; queue: Queued[] }) {
+function VoiceStrip({ voice, coach, queue }: { voice: Voice; coach: Character; queue: Queued[] }) {
   if (voice.here) {
-    const air = airState(queue, coach);
+    const now = queue.find((entry) => entry.answering && entry.spoken);
     return (
-      <section className="voice on" aria-label={t.voiceChannel}>
-        <div className="air-h">
-          <span className="air">
-            <Lamp />
-            {t.onAir}
-          </span>
-          <span className="chan">
-            <Mic size={14} />
-            {voice.channel.name}
-          </span>
-        </div>
-        <div className="air-who">
-          <Meter bars={10} live={air.live} />
-          <p className="state" aria-live="polite">
-            {air.text}
-          </p>
-        </div>
-        <Wake wake={coach.wake} />
-      </section>
-    );
-  }
-  return (
-    <section className="voice" aria-label={t.voiceChannel}>
-      <div>
-        <span className="lab">{t.voiceChannel}</span>
-        <p className="big">{voiceLine(voice, coach)}</p>
-      </div>
-      {voice.channel.canJoin && (
-        <button type="button" className="b b-red" disabled={voice.busy} onClick={voice.bring}>
-          {t.bring(coach.name)}
-          <Arrow size={20} />
-        </button>
-      )}
-      {voice.refused && (
-        <p className="state" role="alert">
-          {voice.refused}
-        </p>
-      )}
-    </section>
-  );
-}
-
-function VoiceBar({ voice, coach, queue }: { voice: Voice; coach: Character; queue: Queued[] }) {
-  if (voice.here) {
-    const air = airState(queue, coach);
-    return (
-      <section className="vb on" aria-label={t.voiceChannel}>
-        <span className="air">
-          <Lamp />
+      <section className="vs vs-on" aria-label={t.voiceChannel}>
+        <span className="vs-lamp" aria-hidden="true" />
+        <p className="vs-t">
+          <b>{now ? t.speakingTo(coach.name, nameOf(now)) : t.isOn(coach.name, voice.channel.name)}</b>
           <span className="sr">{t.onAir}</span>
-        </span>
-        <p>
-          <span className="state" aria-live="polite">
-            {air.text}
-          </span>
-          <br />
-          <span className="chan">{voice.channel.name}</span>
         </p>
+        {now && <Meter bars={6} live />}
         <span className="sp" />
-        <Meter bars={8} live={air.live} />
-        <kbd className="wake-k">«{coach.wake}»</kbd>
+        <p className="vs-wake">
+          <span className="wide">{t.say}</span>
+          <kbd>«{coach.wake}»</kbd>
+          <span className="wide">{t.andAsk}</span>
+        </p>
       </section>
     );
   }
   return (
-    <section className="vb" aria-label={t.voiceChannel}>
-      <Mic />
-      <p>{voice.refused ?? voiceLine(voice, coach)}</p>
+    <section className="vs" aria-label={t.voiceChannel}>
+      <Mic size={18} />
+      <p className="vs-t">{voice.refused ?? voiceLine(voice, coach)}</p>
       <span className="sp" />
       {voice.channel.canJoin && (
-        <button type="button" className="b b-red" disabled={voice.busy} onClick={voice.bring}>
+        <button type="button" className="b b-red vs-b" disabled={voice.busy} onClick={voice.bring}>
           {t.bring(coach.name)}
         </button>
       )}
@@ -911,7 +850,6 @@ function RunView({ sheet, arrive, onChanged }: { sheet: RunSheet; arrive: boolea
           </div>
         </div>
         <RoadmapPanel map={road} fresh={fresh} language={sheet.language} onOpen={() => setRoadOpen(true)} />
-        {voice && !closed && <VoicePanel voice={voice} coach={coach} queue={queue} />}
       </aside>
       <div className="strip">
         <Chips members={members} />
@@ -930,8 +868,8 @@ function RunView({ sheet, arrive, onChanged }: { sheet: RunSheet; arrive: boolea
       </div>
       {closing && <CloseDialog coach={coach.name} busy={closing === "busy"} onClose={close} onCancel={() => setClosing(null)} />}
       {roadOpen && <RoadmapSheet map={road} fresh={fresh} language={sheet.language} onClose={() => setRoadOpen(false)} />}
-      {voice && !closed && <VoiceBar voice={voice} coach={coach} queue={queue} />}
       <section className="main">
+        {voice && !closed && <VoiceStrip voice={voice} coach={coach} queue={queue} />}
         {pinned.length > 0 && (
           <section className="pins" aria-label={coachWords[sheet.language].pins}>
             {pinned.map(pinnedSlip)}
