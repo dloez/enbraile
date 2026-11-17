@@ -112,6 +112,7 @@ Optional: yes
   - Alt for L1 (<situation>): … Mentions: …
 - Heads-up (<when to give it>): <lockout or missable warning to give unprompted, if any> Mentions: …
 - On success: <what to tell them when they report the confirmation signal> Mentions: …
+- Milestone: <a few words naming what they achieved, for the roadmap> Mentions: …
 ```
 
 Levels 1 to 3 only; level 4 is the dossier's "L4 as spoken", kept out of this file so the blind check never reads an answer.
@@ -123,6 +124,8 @@ Levels 1 to 3 only; level 4 is the dossier's "L4 as spoken", kept out of this fi
 **`Done when`** is for the live coach's progress check, a separate call that sees steps only by handle, never by title, and never speaks: it is how the coach tells from the players' own words that a step is done, records it and hands over the next step's first hint. Write it in English from the dossier's `Confirmation` and the step's goal, covering the different ways players report it ("found it", "hit it", "it reacted", "we did it but don't know what now"). Name only what the players already know while on that step; the site withholds a `Done when` that names something still unknown. `compile` warns about a step without one.
 
 **`On success` lines** are said the moment players report the step done, immediately followed by the next step's L1. So an `On success` line is one short sentence, in the same teammate voice as the low rungs, that makes clear what they achieved or what it changed in the game, and nothing else: no advice they cannot act on, no teaser that repeats what the next L1 is about to say, no bare praise.
+
+**`Milestone` lines** label the step's node on the attempt's roadmap, which shows the players only the steps recorded done ([The Zombies Site → Decisions](../../../../docs/zombies/site/explanation/site.md#decisions), "A roadmap of done steps only"). Two to five words naming what they achieved, as a heading rather than a sentence («Farol encendido», "Lantern lit"), naming only what the players know once the step is done and never pointing at what comes next; it never reveals, and the site shows a redacted bar while it mentions anything still unknown in the run. Write it in both files and include it in the blind check. `compile` warns about a step without one.
 
 **This file is the script for the session.** The coach delivers these lines word for word, so write them as finished text a player will read, not as notes. The point is that every hint the players get was written with the full guide in view and checked in advance, instead of being made up mid-round. Cover the predictable situations with `Alt` lines (players who already found the place, already have the item, are playing solo) so the coach rarely has to go off script.
 

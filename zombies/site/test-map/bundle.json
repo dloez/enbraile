@@ -17,6 +17,7 @@
       "title": "Light the lantern in the signal box",
       "conditions": ["The power is on"],
       "onSuccess": { "text": { "es": "La luz del farol tiembla. Algo en la estación se ha despertado.", "en": "The lantern's light flickers. Something in the station has woken." }, "mentions": ["lantern"] },
+      "milestone": { "text": { "es": "Farol encendido", "en": "Lantern lit" }, "mentions": ["lantern"] },
       "ladder": [
         { "level": 1, "text": { "es": "La caseta de señales guarda algo más que palancas.", "en": "The signal box holds more than levers." }, "mentions": ["signal-box"] },
         { "level": 2, "text": { "es": "Busca algo que dé luz en la caseta de señales.", "en": "Look for something that gives light in the signal box." }, "mentions": ["signal-box"], "alts": [{ "when": "They already looked around the box", "text": { "es": "Mira en los estantes altos de la caseta.", "en": "Check the high shelves of the box." }, "mentions": ["signal-box"] }] },
@@ -29,6 +30,7 @@
       "title": "Wind the stopped clock on the platform",
       "requires": ["light-the-lantern"],
       "onSuccess": { "text": { "es": "Las agujas vuelven a moverse. A lo lejos suena un silbato.", "en": "The hands move again. A whistle sounds in the distance." }, "mentions": ["clock"] },
+      "milestone": { "text": { "es": "El reloj vuelve a andar", "en": "The clock runs again" }, "mentions": ["clock"] },
       "ladder": [
         { "level": 1, "text": { "es": "El andén lleva mucho tiempo esperando.", "en": "The platform has been waiting a long time." }, "mentions": ["platform"] },
         { "level": 2, "text": { "es": "En el andén, algo marca una hora que ya pasó.", "en": "On the platform, something shows an hour long gone." }, "mentions": ["platform"], "reveals": ["clock"] },
@@ -54,6 +56,7 @@
       "optional": true,
       "requires": ["light-the-lantern"],
       "onSuccess": { "text": { "es": "Algo responde desde el túnel con una luz verde.", "en": "Something answers from the tunnel with a green light." } },
+      "milestone": { "text": { "es": "Señal al túnel", "en": "Signal to the tunnel" } },
       "ladder": [
         { "level": 1, "text": { "es": "Las vías vacías también escuchan.", "en": "The empty tracks listen too." }, "mentions": [] }
       ],
@@ -66,6 +69,7 @@
       "title": "Board the night train",
       "requires": ["wind-the-clock"],
       "onSuccess": { "text": { "es": "Las puertas se cierran detrás de vosotros. Fin del trayecto.", "en": "The doors close behind you. End of the line." }, "mentions": ["night-train"] },
+      "milestone": { "text": { "es": "A bordo del tren nocturno", "en": "Aboard the night train" }, "mentions": ["night-train"] },
       "ladder": [
         { "level": 1, "text": { "es": "El silbato no sonó para nada.", "en": "The whistle did not sound for nothing." }, "mentions": [] },
         { "level": 2, "text": { "es": "Volved al andén cuando el reloj marque la hora.", "en": "Go back to the platform when the clock strikes the hour." }, "mentions": ["platform", "clock"], "reveals": ["night-train"] },

@@ -1,7 +1,7 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, max, ne, sql } from "drizzle-orm";
 import type { Bundle, Language, PublishedMap, Viewer } from "../../shared/bundle.js";
-import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Person, Queued, Rating, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
+import type { Attempt, Card, HistoryImport, MapPage, MapsPage, Member, Message, Person, Queued, Rating, RoadNode, Roadmap, RunEvent, RunEvents, RunImport, RunLink, RunSheet, ShownZone, Transcript } from "../../shared/runs.js";
 import { characterOf, defaultVoice, type Voice } from "../../shared/voices.js";
 import { db } from "./db.js";
 import { publishedMaps } from "./maps.js";
@@ -327,7 +327,7 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
     .leftJoin(hintCards, eq(hintCards.messageId, messages.id))
     .where(and(eq(messages.runId, runId), gt(messages.id, after)))
     .orderBy(asc(messages.id));
-  const [members, [run], queue] = await Promise.all([
+  const [members, [run], queue, mark] = await Promise.all([
     activeMembers(runId),
     db.select({ voice: runs.voice }).from(runs).where(eq(runs.id, runId)),
     db
@@ -335,6 +335,7 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
       .from(coachQueue)
       .where(and(eq(coachQueue.runId, runId), gt(coachQueue.askedAt, new Date(Date.now() - queueStaleMs))))
       .orderBy(asc(coachQueue.id)),
+    roadmapMark(runId),
   ]);
   const named = await currentNames([...members.map((member) => member.discordId), ...rows.map((row) => row.message.discordId), ...queue.map((entry) => entry.discordId)]);
   const revisionIds = rows.filter((row) => row.message.kind === "revision").map((row) => row.message.id);
@@ -383,7 +384,61 @@ export async function transcript(viewer: Viewer, runId: string, after: number, r
       rows.some((row) => row.card !== null),
     ),
     voice: run?.voice ?? defaultVoice,
+    roadmap: mark,
   };
+}
+
+async function roadmapMark(runId: string): Promise<string> {
+  const [row] = await db
+    .select({
+      count: sql<number>`(select count(*) from ${runSteps} s where s.run_id = ${runs.id} and s.part_id = '' and s.done_at is not null)`,
+      last: sql<string | null>`(select max(s.done_at)::text from ${runSteps} s where s.run_id = ${runs.id} and s.part_id = '')`,
+      known: sql<number>`(select count(*) from ${runKnowledge} k where k.run_id = ${runs.id})`,
+      version: maps.latestVersion,
+    })
+    .from(runs)
+    .innerJoin(maps, and(eq(maps.game, runs.game), eq(maps.map, runs.map)))
+    .where(eq(runs.id, runId));
+  return row ? `${row.version}/${row.count}/${row.known}/${row.last ?? ""}` : "";
+}
+
+export async function roadmap(runId: string): Promise<Roadmap | null> {
+  const [row] = await db
+    .select({ language: runs.language, steps: sql<Bundle["steps"]>`${bundleVersions.bundle}->'steps'` })
+    .from(runs)
+    .innerJoin(maps, and(eq(maps.game, runs.game), eq(maps.map, runs.map)))
+    .innerJoin(bundleVersions, and(eq(bundleVersions.game, maps.game), eq(bundleVersions.map, maps.map), eq(bundleVersions.version, maps.latestVersion)))
+    .where(eq(runs.id, runId));
+  if (!row) return null;
+  const [progress, marks] = await Promise.all([
+    db
+      .select({ stepId: runSteps.stepId, doneAt: runSteps.doneAt, doneBy: runSteps.doneBy, doneByName: runSteps.doneByName })
+      .from(runSteps)
+      .where(and(eq(runSteps.runId, runId), eq(runSteps.partId, ""), isNotNull(runSteps.doneAt))),
+    db.select({ id: runKnowledge.knowledgeId }).from(runKnowledge).where(eq(runKnowledge.runId, runId)),
+  ]);
+  const known = new Set(marks.map((mark) => mark.id));
+  const done = new Map(progress.map((entry) => [entry.stepId, entry]));
+  const beaten = row.steps.some((step) => !step.optional) && row.steps.every((step) => step.optional || done.has(step.id));
+  const shown = row.steps.filter((step) => beaten || done.has(step.id));
+  const ids = new Set(shown.map((step) => step.id));
+  const key = (stepId: string) => createHash("sha256").update(`${runId}/${stepId}`).digest("hex").slice(0, 12);
+  const named = await currentNames(progress.map((entry) => entry.doneBy));
+  const nodes = shown.map((step): RoadNode & { order: number } => {
+    const entry = done.get(step.id);
+    const label = step.milestone && step.milestone.mentions.every((id) => known.has(id)) ? step.milestone.text[row.language] : null;
+    return {
+      key: key(step.id),
+      label,
+      optional: step.optional,
+      done: entry !== undefined,
+      at: entry?.doneAt?.toISOString() ?? null,
+      by: entry?.doneBy ? named(entry.doneBy, entry.doneByName ?? "") : null,
+      after: step.requires.filter((required) => ids.has(required)).map(key),
+      order: entry?.doneAt?.getTime() ?? Number.MAX_SAFE_INTEGER,
+    };
+  });
+  return { nodes: nodes.sort((a, b) => a.order - b.order).map(({ order: _order, ...node }) => node), beaten };
 }
 
 export async function postMessage(viewer: Viewer, runId: string, text: string, spoken: boolean): Promise<number> {

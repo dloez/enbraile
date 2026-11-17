@@ -231,6 +231,8 @@ export const runSteps = pgTable(
     partId: text("part_id").notNull().default(""),
     startedAt: timestamp("started_at", { withTimezone: true }),
     doneAt: timestamp("done_at", { withTimezone: true }),
+    doneBy: text("done_by"),
+    doneByName: text("done_by_name"),
     blockedToldAt: timestamp("blocked_told_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

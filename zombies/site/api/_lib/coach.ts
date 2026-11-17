@@ -154,6 +154,7 @@ type State = {
   started: Set<string>;
   headsUps: Set<string>;
   held: Held[];
+  reporter: { discordId: string; name: string } | null;
 };
 
 type Held = { id: number; number: number; asked: string };
@@ -203,6 +204,7 @@ async function loadState(runId: string): Promise<State | null> {
     started: new Set(progress.filter((entry) => entry.startedAt).map((entry) => ladderKey(entry.stepId, entry.partId || null))),
     headsUps: new Set(said.map((entry) => headsUpKey(entry.stepId, entry.position))),
     held: open.map((entry, index) => ({ id: entry.id, number: index + 1, asked: entry.asked })),
+    reporter: null,
   };
 }
 
@@ -467,11 +469,23 @@ async function learn(state: State, line: Line): Promise<void> {
 async function markSteps(state: State, ladder: Ladder, status: "started" | "done"): Promise<void> {
   const now = new Date();
   const keys = status === "done" && ladder.partId === null ? withRequires(state.bundle.steps, ladder.stepId).map((stepId) => ({ stepId, partId: "" })) : [{ stepId: ladder.stepId, partId: ladder.partId ?? "" }];
+  const reported = (key: { stepId: string; partId: string }) =>
+    status === "done" && state.reporter && key.stepId === ladder.stepId && key.partId === (ladder.partId ?? "") ? { doneBy: state.reporter.discordId, doneByName: state.reporter.name } : {};
   const set = status === "done" ? { doneAt: now } : { startedAt: now };
   await db
     .insert(runSteps)
-    .values(keys.map((key) => ({ runId: state.runId, ...key, ...set })))
-    .onConflictDoUpdate({ target: [runSteps.runId, runSteps.stepId, runSteps.partId], set: status === "done" ? { doneAt: sql`coalesce(${runSteps.doneAt}, excluded.done_at)` } : { startedAt: sql`coalesce(${runSteps.startedAt}, excluded.started_at)` } });
+    .values(keys.map((key) => ({ runId: state.runId, ...key, ...set, ...reported(key) })))
+    .onConflictDoUpdate({
+      target: [runSteps.runId, runSteps.stepId, runSteps.partId],
+      set:
+        status === "done"
+          ? {
+              doneAt: sql`coalesce(${runSteps.doneAt}, excluded.done_at)`,
+              doneBy: sql`case when ${runSteps.doneAt} is null then excluded.done_by else ${runSteps.doneBy} end`,
+              doneByName: sql`case when ${runSteps.doneAt} is null then excluded.done_by_name else ${runSteps.doneByName} end`,
+            }
+          : { startedAt: sql`coalesce(${runSteps.startedAt}, excluded.started_at)` },
+    });
   for (const key of keys) (status === "done" ? state.done : state.started).add(ladderKey(key.stepId, key.partId || null));
 }
 
@@ -776,6 +790,7 @@ export async function coachTurn(
     await options.before?.();
     const state = await loadState(runId);
     if (!state) return "notFound";
+    if (askedBy.discordId) state.reporter = askedBy;
     const retried = ask.kind === "gap" ? state.held.find((entry) => entry.id === ask.gapId) : undefined;
     if (ask.kind === "gap" && !retried) return "notFound";
     let target: { cardId: number; ladder: Ladder } | null = null;

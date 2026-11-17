@@ -63,7 +63,11 @@ export type GapContext = {
   recent: string[];
 };
 
-export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice; queue: Queued[] };
+export type Transcript = { history: Message[]; messages: Message[]; members: Member[]; cards: Card[]; voice: Voice; queue: Queued[]; roadmap: string };
+
+export type RoadNode = { key: string; label: string | null; optional: boolean; done: boolean; at: string | null; by: Person | null; after: string[] };
+
+export type Roadmap = { nodes: RoadNode[]; beaten: boolean };
 
 export type RunEvent = { id: number; at: string } & (
   | { kind: "line" | "coach"; name: string; text: string; cards: number[]; by: "claude" | null }

@@ -55,6 +55,7 @@ const step = z.object({
   conditions: z.array(z.string().min(1)).default([]),
   optional: z.boolean().default(false),
   onSuccess: line,
+  milestone: line.optional(),
   ladder,
   parts: z.array(part).default([]),
   headsUps: z.array(headsUp).default([]),
@@ -125,6 +126,7 @@ export const bundleSchema = z
       const path = ["steps", index];
       for (const required of value.requires) if (!steps.has(required) || required === value.id) ctx.addIssue({ code: "custom", message: `${required} names no other step`, path: [...path, "requires"] });
       checkLine(value.onSuccess, [...path, "onSuccess"]);
+      if (value.milestone) checkLine(value.milestone, [...path, "milestone"]);
       checkLadder(value.ladder, [...path, "ladder"]);
       for (const repeated of unique(value.parts.map((entry) => entry.id))) ctx.addIssue({ code: "custom", message: `part ${repeated} is listed twice`, path: [...path, "parts"] });
       value.parts.forEach((entry, partIndex) => checkLadder(entry.ladder, [...path, "parts", partIndex, "ladder"]));

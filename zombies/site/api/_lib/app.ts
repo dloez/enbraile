@@ -8,7 +8,7 @@ import { warmPool } from "./db.js";
 import { requireEnv } from "./env.js";
 import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { deleteMap, deleteRun, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
-import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
+import { importHistory, importRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, roadmap, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
 import { bringCoach, callState, coachVoice, keepCallLine, voiceTurn } from "./voice.js";
 
@@ -269,6 +269,14 @@ member.put("/runs/:id/cards/:card/feedback", async (c) => {
   const card = cursor(c.req.param("card"));
   if (!parsed.success || !card) return c.json({ error: "invalidFeedback" }, 400, noStore);
   return (await rateCard(viewer, id, card, parsed.data.rating)) ? c.json({ rating: parsed.data.rating }, 200, noStore) : c.json({ error: "noSuchCard" }, 404, noStore);
+});
+
+member.get("/runs/:id/roadmap", async (c) => {
+  const viewer = c.get("viewer");
+  const id = c.req.param("id");
+  if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
+  const map = await roadmap(id);
+  return map ? c.json(map, 200, noStore) : c.json({ error: "noSuchRun" }, 404, noStore);
 });
 
 member.get("/runs/:id/voice", async (c) => {

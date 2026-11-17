@@ -22,6 +22,7 @@ type Step = {
   parts: Part[];
   headsUps: HeadsUp[];
   onSuccess: Line | null;
+  milestone: Line | null;
 };
 
 const errors: string[] = [];
@@ -74,7 +75,7 @@ const parseSteps = (source: string, file: string) => {
     const where = `${file}:${index + 1}`;
     const heading = rawLine.match(/^## \S+ (\d+)\b(?:\s*\(([^)]*)\))?/);
     if (heading) {
-      step = { number: Number((heading[1] ?? "")), title: "", kind: (heading[2] ?? "").trim().toLowerCase(), doneWhen: "", requires: [], optional: false, ladder: { rungs: [], alts: [] }, parts: [], headsUps: [], onSuccess: null };
+      step = { number: Number((heading[1] ?? "")), title: "", kind: (heading[2] ?? "").trim().toLowerCase(), doneWhen: "", requires: [], optional: false, ladder: { rungs: [], alts: [] }, parts: [], headsUps: [], onSuccess: null, milestone: null };
       part = null;
       steps.push(step);
       return;
@@ -143,7 +144,13 @@ const parseSteps = (source: string, file: string) => {
       current.onSuccess = parseLine((success[1] ?? ""), where);
       return;
     }
-    errors.push(`${where}: unknown line; expected L<n>, Alt for L<n> (<when>), Part ladder, Heads-up (<when>) or On success`);
+    const milestone = item.match(/^Milestone:\s*(.*)$/);
+    if (milestone) {
+      current.milestone = parseLine((milestone[1] ?? ""), where);
+      if (current.milestone.reveals.length) errors.push(`${where}: a Milestone never reveals`);
+      return;
+    }
+    errors.push(`${where}: unknown line; expected L<n>, Alt for L<n> (<when>), Part ladder, Heads-up (<when>), On success or Milestone`);
   });
   return steps;
 };
@@ -357,6 +364,8 @@ const steps = hints.en.map((en) => {
   if (!stepKinds.some((kind) => kind === en.kind)) warnings.push(`${where}: its heading's type is not one of ${stepKinds.join(", ")}, so the live coach gets no kind for it`);
   if (!en.doneWhen) warnings.push(`${where}: no Done when line, so the live coach cannot tell from the players' words that the step is done`);
   if (es && !es.onSuccess) errors.push(`${where}: no On success line in hints.es.md`);
+  if (!en.milestone) warnings.push(`${where}: no Milestone line, so its node on the roadmap has no label`);
+  if (en.milestone && es && !es.milestone) errors.push(`${where}: no Milestone line in hints.es.md`);
   for (const required of en.requires) if (!stepNumbers.has(required)) errors.push(`${where}: Requires step ${required}, which hints.md lacks`);
   if (es && (es.parts.length !== en.parts.length || es.headsUps.length !== en.headsUps.length)) errors.push(`${where}: the Spanish copy has a different set of Part ladders or Heads-ups`);
   const blank = { text: "", mentions: [], reveals: [] };
@@ -369,6 +378,7 @@ const steps = hints.en.map((en) => {
     conditions: conditions.get(en.number) ?? [],
     optional: en.optional,
     onSuccess: pairLines(en.onSuccess ?? blank, es?.onSuccess ?? blank, `${where} On success`),
+    ...(en.milestone ? { milestone: pairLines(en.milestone, es?.milestone ?? blank, `${where} Milestone`) } : {}),
     ladder: pairLadder(en.ladder, es?.ladder, where),
     parts: en.parts.map((part, index) => ({ id: `part-${index + 1}`, title: part.title, ladder: pairLadder(part.ladder, es?.parts[index]?.ladder, `${where} part ${index + 1}`) })),
     headsUps: en.headsUps.map((headsUp, index) => {
@@ -382,7 +392,7 @@ const steps = hints.en.map((en) => {
 for (const address of Object.keys(zones)) if (!placed.has(address)) errors.push(`zones.json: ${address} names no rung`);
 if (undecided.length) warnings.push(`zones.json: ${undecided.length} rungs of level ${zoneLevel} and up have no zone and are not marked null (gives no place), so a place they give shows no map: ${undecided.join(", ")}`);
 
-const lines = steps.flatMap((step) => [step.onSuccess, ...[step.ladder, ...step.parts.map((part) => part.ladder)].flatMap((ladder) => ladder.flatMap((rung) => [rung, ...rung.alts]))]);
+const lines = steps.flatMap((step) => [step.onSuccess, ...(step.milestone ? [step.milestone] : []), ...[step.ladder, ...step.parts.map((part) => part.ladder)].flatMap((ladder) => ladder.flatMap((rung) => [rung, ...rung.alts]))]);
 const unknown = new Set(knowledge.filter((entry) => entry.mark === "unknown").map((entry) => entry.id));
 const revealed = new Set(lines.flatMap((line) => line.reveals));
 const stranded = [...new Set(lines.flatMap((line) => line.mentions))].filter((id) => unknown.has(id) && !revealed.has(id)).sort();

@@ -38,80 +38,22 @@ Any member closes the attempt from its rail (the phone's strip) after a confirm;
 
 **Touches:** `zombies/site/drizzle/`, `zombies/site/api/_lib/`, `zombies/site/src/`, `zombies/site/shared/runs.ts`, `zombies/site/scripts/watch.ts`, `zombies/site/design/`, `docs/zombies/site/`
 
-## Design the roadmap tree
+## Write the milestone labels of both published maps
 
-The attempt gets a tree of its done steps, branched by `requires`, revealed whole once beaten ([Decisions](../../zombies/site/explanation/site.md#decisions), "A roadmap of done steps only"). The owner wants it visually interesting, and does not review boards beforehand ([Discovery → Runs and the site](discovery.md#runs-and-the-site)). It must reveal nothing not done: no empty slots, no count, no open-thread marker, and its shape may follow only edges between done steps.
-
-**Do:**
-- [ ] Draw it with Claude design as boards in `zombies/site/design/`, in the third take's warm dark look with the slips and survey-sheet identity: where it lives in the rail and on a phone, a node lighting up when a step is recorded (who reported it, when), optional steps as side trails, a node whose label is withheld, the beaten reveal, and a closed attempt's tree. Use the made-up Harrow Station steps only.
-- [ ] Add the tree's components and motion to `docs/zombies/site/reference/design-system.md`.
-
-**Acceptance:**
-- Claude-run: the boards open in a browser; the design-system doc names each component; no real map's text in any tracked file.
-- Human-run: none (the owner sees it built, by his choice).
-- Reuse: the third take's tokens and slip components in the design system.
-- Neighbors: the `run-zone` boards.
-- Forbidden: a node, outline or counter for a step not done before beaten; step or hint numbers.
-
-**Touches:** `zombies/site/design/`, `docs/zombies/site/reference/design-system.md`
-
-## Prepare a milestone label for every step
-
-Each step gets a short label per language naming what was achieved, shown on its roadmap node ([Decisions](../../zombies/site/explanation/site.md#decisions), "A roadmap of done steps only").
+The roadmap shows each done step's prepared `Milestone` line, read by `compile` and carried in the bundle ([The Zombies Site → Roadmap](../../zombies/site/explanation/site.md#roadmap)); a step without one shows a redacted bar. Kowakujo and Blood of the Dead have none yet.
 
 **Do:**
-- [ ] In the ee-coach skill's `references/research.md` and `hint-craft.md`: a `- Milestone: <a few words> Mentions: …` line per step in `hints.md` and `hints.es.md`, naming only what the players know once the step is done, never a hint toward the next; blind-checked with the hints.
-- [ ] `compile` reads it as a line (both languages, `mentions`), warns on a step without one; `shared/bundle.ts` takes `milestone` as optional on a step and checks its mentions like any line.
-- [ ] Give the test map's steps their milestones in `zombies/site/test-map/`.
-- [ ] In a subagent that returns only `compile`'s output, write Blood of the Dead's milestones, blind-check them, compile and publish to production.
-- [ ] Update Map Bundles in `site.md` and the research reference.
+- [ ] In a subagent per map that reports counts only, write each step's `Milestone` line in `hints.md` and `hints.es.md` as `research.md` says, blind-check them, and compile until no milestone warning remains.
+- [ ] Publish both through the `prod` wrapper, quoting only `publish`'s output.
 
 **Acceptance:**
-- Claude-run: `npm run gate`; `npm run compile` on the test map and Blood of the Dead with no milestone warning; no real map's text in the conversation or a tracked file.
-- Human-run: none.
-- Reuse: `parseLine` and the line pairing in `scripts/compile.ts`, `checkLine` in `shared/bundle.ts`.
-- Neighbors: the `On success` line.
-- Forbidden: labels generated at runtime by the model.
+- Claude-run: `npm run compile` on both map dirs prints no `no Milestone line` warning; `publish` prints a new version for each.
+- Human-run: on the next night, the roadmap's steps carry their labels.
+- Reuse: `research.md`'s `Milestone` lines, the `prod` wrapper.
+- Neighbors: "Publish the zones for every place-giving rung of both maps", whose publish can be the same one.
+- Forbidden: milestone text in the conversation or a tracked file; labels written by the live model.
 
-**Touches:** `.claude/skills/ee-coach/references/`, `zombies/site/scripts/compile.ts`, `zombies/site/shared/bundle.ts`, `zombies/site/test-map/`, `docs/zombies/site/explanation/site.md`
-**After:** Design the roadmap tree
-
-## Show the attempt's roadmap of done steps
-
-Build the boards' tree on the run page from what `run_steps` records done ([Decisions](../../zombies/site/explanation/site.md#decisions), "A roadmap of done steps only").
-
-**Do:**
-- [ ] The run's poll and `/api/runs/<id>` carry `roadmap`: for each step recorded done (whole step, not parts), its ID-free node key, its milestone in the run's language (withheld when it mentions an unknown entry), when and by whose line it was recorded, whether it is optional, and edges only between done steps from `requires`. Nothing about any step not done.
-- [ ] Draw it as the boards do, a node appearing with its motion on the poll that brings it.
-- [ ] Rewrite "Progress kept in `run_steps`, never shown" and add a Roadmap section to `site.md`, saying exactly which fields reach the browser.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; on the local stack with the test map, step-ins recording steps done make nodes appear on both members' pages; a context-free subagent reads the `roadmap` field of a reply mid-run and confirms it names no step not done.
-- Human-run: on a game night, the group says whether the tree matches what they did, and corrects a missing step with a revision.
-- Reuse: `run_steps`, the knowledge check the coach uses for unknown names (`namedIn`).
-- Neighbors: the pinned slip in `src/RunPage.tsx`.
-- Forbidden: a step not done, its count or its handle in any browser reply.
-
-**Touches:** `zombies/site/api/_lib/`, `zombies/site/shared/runs.ts`, `zombies/site/src/`, `docs/zombies/site/explanation/site.md`
-**After:** Prepare a milestone label for every step
-
-## Reveal the whole tree once an attempt is beaten
-
-Once beaten, the roadmap shows every step, the optional ones not done dimmed, as the boards draw the reveal; a label still mentioning an unknown entry stays withheld.
-
-**Do:**
-- [ ] Add the not-done steps to `roadmap` only when the attempt is beaten, and draw the reveal.
-- [ ] Say so in the Roadmap section of `site.md`.
-
-**Acceptance:**
-- Claude-run: `npm run gate`; on the test map, recording the last required step done reveals the rest on both pages.
-- Human-run: none.
-- Reuse: the beaten query in `api/_lib/maps.ts`.
-- Neighbors: the roadmap above.
-- Forbidden: any not-done step in a reply before beaten.
-
-**Touches:** `zombies/site/api/_lib/`, `zombies/site/src/`, `docs/zombies/site/explanation/site.md`
-**After:** Show the attempt's roadmap of done steps
+**Touches:** `zombies/maps/` (gitignored)
 
 ## Time the bot's names lookup in production and set its limit
 

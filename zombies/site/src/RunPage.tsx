@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Language, Viewer } from "../shared/bundle";
-import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type Member, type Message, type Queued, type Rating, type RunSheet } from "../shared/runs";
-import { askMore, bringCoach, changeVoice, fetchCall, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
+import { asRevision, ratings, type CallState, type Card, type VoiceChannel, type Member, type Message, type Queued, type Rating, type Roadmap, type RunSheet } from "../shared/runs";
+import { askMore, bringCoach, changeVoice, fetchCall, fetchRoadmap, type Listener, fetchTranscript, joinRun, rateCard, Refused, sendMessage, SignedOut, signIn } from "./api";
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
 import { SurveyZone } from "./art";
+import { RoadmapPanel, RoadmapSheet, useFresh } from "./Roadmap";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
 import { characterOf, voiceNames, voices, type Character, type Voice as CoachVoice } from "../shared/voices";
 import { forget, known, learn, load as fetchPage, openFreshMs, runSource, nameOf } from "./store";
-import { Arrow, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, type RunLink, useFit } from "./ui";
+import { Arrow, Chips, Down, LeaveNote, Link, LinkIcon, MapHead, Mic, Notice, Pencil, PersonChip, Route, type RunLink, useFit } from "./ui";
 
 const pollMs = 2000;
 const lostPollMs = 5000;
@@ -541,6 +542,10 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
   const [loaded, setLoaded] = useState(log !== undefined);
   const [lost, setLost] = useState(false);
   const [queue, setQueue] = useState<Queued[]>([]);
+  const [road, setRoad] = useState<Roadmap | null>(null);
+  const [roadOpen, setRoadOpen] = useState(false);
+  const roadMark = useRef<string | null>(null);
+  const fresh = useFresh(road);
   const lastOk = useRef(Date.now());
   const [settled, setSettled] = useState(log !== undefined);
   const [draft, setDraft] = useState("");
@@ -571,6 +576,14 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
       if (reply.history.length) setHistory(reply.history);
       setLoaded(true);
       setQueue(reply.queue);
+      if (reply.roadmap !== roadMark.current) {
+        roadMark.current = reply.roadmap;
+        fetchRoadmap(sheet.id)
+          .then(setRoad)
+          .catch(() => {
+            roadMark.current = null;
+          });
+      }
       lastOk.current = Date.now();
       setLost(false);
       if (reply.cards.length) {
@@ -819,6 +832,7 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
           </ul>
           <CopyLink id={sheet.id} icon={false} />
         </div>
+        <RoadmapPanel map={road} fresh={fresh} language={sheet.language} onOpen={() => setRoadOpen(true)} />
         {voice && <VoicePanel voice={voice} coach={coach} queue={queue} />}
       </aside>
       <div className="strip">
@@ -826,8 +840,12 @@ function RunView({ sheet, arrive }: { sheet: RunSheet; arrive: boolean }) {
         <VoiceSelect voice={voiceChoice} onPick={pick} label={t.voice} className="pick-m" />
         <span className="m">· {languageNames[sheet.language]}</span>
         <span className="sp" />
+        <button type="button" className={fresh.size ? "ib rm-ib rm-ib-new" : "ib rm-ib"} aria-label={t.roadmap} onClick={() => setRoadOpen(true)}>
+          <Route />
+        </button>
         <CopyLink id={sheet.id} icon />
       </div>
+      {roadOpen && <RoadmapSheet map={road} fresh={fresh} language={sheet.language} onClose={() => setRoadOpen(false)} />}
       {voice && <VoiceBar voice={voice} coach={coach} queue={queue} />}
       <section className="main">
         {pinned.length > 0 && (
