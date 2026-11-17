@@ -63,6 +63,13 @@ font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-
 .field::placeholder{color:var(--mute)}
 .revb{display:grid;place-items:center;width:52px;height:52px;border:0;border-radius:10px;background:transparent;box-shadow:inset 0 0 0 1px var(--line-2);color:var(--text);flex:none}
 .b{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 18px;border:0;border-radius:8px;background:var(--text);color:var(--bg);font:700 17px 'Atkinson Hyperlegible Next',system-ui,sans-serif}
+.vs{flex:none;display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 48px;background:var(--surf);border-bottom:1px solid var(--line);color:var(--mute);font-size:15px}
+.vs-lamp{flex:none;width:10px;height:10px;border-radius:50%;background:var(--red-tx);box-shadow:0 0 0 3px rgba(194,58,32,.3)}
+.vs b{color:var(--text)}
+.vs-wake{display:flex;align-items:baseline;gap:8px;margin-left:auto}
+.vs kbd{font-family:'Courier Prime',ui-monospace,monospace;font-size:17px;font-weight:700;padding:1px 8px;border-radius:4px;background:var(--slip);color:var(--slip-ink);box-shadow:0 2px 0 var(--slip-line)}
+.vs .meter{display:flex;gap:3px;align-items:center;height:22px;color:var(--red-tx)}
+.vs .meter i{display:block;width:4px;border-radius:2px;background:currentColor}
 a{color:var(--text)}a:hover{color:#fff}
 </style>
 </helmet>
@@ -72,7 +79,7 @@ a{color:var(--text)}a:hover{color:#fff}
 <button class="ib ib-new" aria-label="Hoja de ruta"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="12" r="2"/><path d="M6 7v10M6 9c0 3 4 3 10 3"/></svg></button>
 <button class="ib" aria-label="Copiar el enlace"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>
 <button class="ib ib-close" aria-label="Cerrar el intento"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9l6 6M15 9l-6 6"/></svg></button></div>
-<section class="vb" aria-label="Canal de voz"><span class="air"><span class="lamp"></span></span><p>Coach contesta a Marina<span class="chan">General</span></p><span class="sp"></span><div class="meter" aria-hidden="true"><i style="height:35%"></i><i style="height:80%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:90%"></i><i style="height:40%"></i><i style="height:70%"></i><i style="height:30%"></i></div><kbd class="wake-k">«bebé»</kbd></section>
+<section class="vs" aria-label="Canal de voz" style="padding:8px 16px"><span class="vs-lamp"></span><p><b>Coach contesta a Marina</b></p><span class="meter" aria-hidden="true"><i style="height:40%"></i><i style="height:90%"></i><i style="height:60%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:75%"></i></span><p class="vs-wake"><kbd>«bebé»</kbd></p></section>
 <div class="rows">
 <div><p class="who who-c">Coach <span class="t">22:46</span></p><p class="msg">Las agujas vuelven a moverse. A lo lejos suena un silbato.</p><div class="slip"><div class="slip-h"><b>Despacho</b><span>Coach · 22:46</span></div><p class="rung">Ese silbato no viene del andén. Seguid el sonido.</p></div></div>
 <div><p class="who"><span class="cs cs-s">MA</span>Marina<span class="said" title="dicho por voz"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="t">22:49</span></p><p class="msg">¿El silbato sale del túnel o de la taquilla?</p></div>

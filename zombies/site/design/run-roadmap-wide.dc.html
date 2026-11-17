@@ -92,6 +92,13 @@ font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-
 .col-b{flex:1;padding:16px 24px;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:28px 28px;background-position:-1px -1px}
 .col-b .rm{margin-top:0}
 .col-f{padding:12px 24px 20px;border-top:1px solid var(--line);font-size:14px;color:var(--mute)}
+.vs{flex:none;display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 48px;background:var(--surf);border-bottom:1px solid var(--line);color:var(--mute);font-size:15px}
+.vs-lamp{flex:none;width:10px;height:10px;border-radius:50%;background:var(--red-tx);box-shadow:0 0 0 3px rgba(194,58,32,.3)}
+.vs b{color:var(--text)}
+.vs-wake{display:flex;align-items:baseline;gap:8px;margin-left:auto}
+.vs kbd{font-family:'Courier Prime',ui-monospace,monospace;font-size:17px;font-weight:700;padding:1px 8px;border-radius:4px;background:var(--slip);color:var(--slip-ink);box-shadow:0 2px 0 var(--slip-line)}
+.vs .meter{display:flex;gap:3px;align-items:center;height:22px;color:var(--red-tx)}
+.vs .meter i{display:block;width:4px;border-radius:2px;background:currentColor}
 a{color:var(--text)}a:hover{color:#fff}
 </style>
 </helmet>
@@ -105,13 +112,10 @@ a{color:var(--text)}a:hover{color:#fff}
 <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:16px"><button class="b b-ghost" style="min-height:48px;font-size:16px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Copiar enlace</button><button class="b" style="min-height:48px;padding:0 16px;font-size:16px;background:transparent;color:var(--red-tx);box-shadow:inset 0 0 0 1.5px var(--red)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9l6 6M15 9l-6 6"/></svg>Cerrar</button></div>
 </div>
 
-<section class="voice" aria-label="Canal de voz">
-<div class="air-h"><span class="air"><span class="lamp"></span>En el aire</span><span class="chan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>General</span></div>
-<div class="air-who"><div class="meter" aria-hidden="true"><i style="height:30%"></i><i style="height:70%"></i><i style="height:100%"></i><i style="height:55%"></i><i style="height:85%"></i><i style="height:40%"></i><i style="height:95%"></i><i style="height:60%"></i><i style="height:35%"></i><i style="height:75%"></i></div><p>Coach contesta a Marina</p></div>
-<p class="wake"><span>Di</span><kbd>«bebé»</kbd><span>y tu pregunta</span></p>
-</section>
+
 </aside>
 <section class="main">
+<section class="vs" aria-label="Canal de voz"><span class="vs-lamp"></span><p><b>Coach contesta a Marina</b></p><span class="meter" aria-hidden="true"><i style="height:40%"></i><i style="height:90%"></i><i style="height:60%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:75%"></i></span><p class="vs-wake"><span>Di</span><kbd>«bebé»</kbd><span>y tu pregunta</span></p></section>
 <div class="rows">
 <div class="row"><span class="t">22:46</span><div><p class="who"><span class="cs cs-s cs-me">TE</span>Teo</p><p class="msg">Hemos dado cuerda al reloj del andén y las agujas se mueven.</p></div></div>
 <div class="row"><span class="t">22:46</span><div><p class="who who-c">Coach</p><p class="msg">Las agujas vuelven a moverse. A lo lejos suena un silbato.</p><div class="slip"><div class="slip-h"><b>Despacho</b><span>Coach · 22:46</span></div><p class="rung">Ese silbato no viene del andén. Seguid el sonido.</p></div></div></div>
