@@ -5,7 +5,7 @@ import { askMore, bringCoach, changeVoice, closeRun, fetchCall, fetchRoadmap, re
 import { languageNames, lang, t } from "./i18n";
 import { mapPath, runPath } from "./route";
 import { SurveyZone } from "./art";
-import { RoadmapPanel, RoadmapSheet, useFresh } from "./Roadmap";
+import { RoadmapColumn, RoadmapPanel, RoadmapSheet, useFresh } from "./Roadmap";
 import { JoinSkeleton, RowsSkeleton, RunSkeleton } from "./skeletons";
 import { characterOf, voiceNames, voices, type Character, type Voice as CoachVoice } from "../shared/voices";
 import { forget, known, learn, load as fetchPage, openFreshMs, runSource, nameOf } from "./store";
@@ -995,6 +995,7 @@ function RunView({ sheet, arrive, onChanged }: { sheet: RunSheet; arrive: boolea
         </form>
         )}
       </section>
+      <RoadmapColumn map={road} fresh={fresh} language={sheet.language} />
     </div>
   );
 }

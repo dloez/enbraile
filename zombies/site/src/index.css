@@ -2906,3 +2906,57 @@ a:hover {
     padding: var(--sp-3) var(--sp-4) var(--sp-4);
   }
 }
+
+.road-col {
+  display: none;
+}
+
+@media (min-width: 1181px) {
+  .road-col {
+    width: 360px;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--surf);
+    border-left: 1px solid var(--line);
+  }
+
+  .rail .rmp {
+    display: none;
+  }
+}
+
+@media (min-width: 1600px) {
+  .road-col {
+    width: 420px;
+  }
+}
+
+.road-col-h {
+  padding: var(--sp-8) var(--sp-6) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.road-col-h h2 {
+  font-size: 32px;
+  line-height: 1.05;
+  margin-top: var(--sp-1);
+}
+
+.road-col-b {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--sp-4) var(--sp-6);
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+}
+
+.road-col-f {
+  padding: var(--sp-3) var(--sp-6) var(--sp-5);
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--mute);
+}

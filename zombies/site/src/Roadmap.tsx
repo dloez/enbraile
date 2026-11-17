@@ -164,6 +164,25 @@ export function RoadmapPanel({ map, fresh, language, onOpen }: { map: Roadmap | 
   );
 }
 
+export function RoadmapColumn({ map, fresh, language }: { map: Roadmap | null; fresh: Set<string>; language: Language }) {
+  const body = useRef<HTMLDivElement>(null);
+  const count = map?.nodes.length ?? 0;
+  useEffect(() => {
+    const element = body.current;
+    if (element) element.scrollTop = element.scrollHeight;
+  }, [count]);
+  return (
+    <aside className="road-col" aria-label={t.roadmap}>
+      <div className="road-col-h">
+        <span className="lab">{t.roadmap}</span>
+        <h2 className="cond">{map?.beaten ? t.roadmapBeaten : t.roadmapTitle}</h2>
+      </div>
+      <div className="road-col-b" ref={body}>{map && map.nodes.length ? <RoadmapGraph map={map} fresh={fresh} language={language} /> : <p className="state rmp-empty">{t.roadmapEmpty}</p>}</div>
+      <p className="road-col-f">{t.roadmapFix}</p>
+    </aside>
+  );
+}
+
 export function RoadmapSheet({ map, fresh, language, onClose }: { map: Roadmap | null; fresh: Set<string>; language: Language; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {

@@ -86,6 +86,12 @@ font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-
 .field::placeholder{color:var(--mute)}
 .revb{display:inline-flex;align-items:center;gap:10px;min-height:56px;padding:0 18px;border:0;border-radius:10px;background:transparent;box-shadow:inset 0 0 0 1px var(--line-2);color:var(--text);font:700 16px 'Atkinson Hyperlegible Next',system-ui,sans-serif}
 .cmp .b{min-height:56px}
+.col{width:420px;flex:none;display:flex;flex-direction:column;background:var(--surf);border-left:1px solid var(--line)}
+.col-h{padding:32px 24px 16px;border-bottom:1px solid var(--line)}
+.col-h h2{font-size:32px;line-height:1.05;margin-top:4px}
+.col-b{flex:1;padding:16px 24px;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:28px 28px;background-position:-1px -1px}
+.col-b .rm{margin-top:0}
+.col-f{padding:12px 24px 20px;border-top:1px solid var(--line);font-size:14px;color:var(--mute)}
 a{color:var(--text)}a:hover{color:#fff}
 </style>
 </helmet>
@@ -97,24 +103,7 @@ a{color:var(--text)}a:hover{color:#fff}
 <div><span class="lab">En el intento</span>
 <ul class="mem"><li><span class="cs">MA</span>Marina</li><li><span class="cs cs-me">TE</span>Teo <span class="y">tú</span></li></ul>
 </div>
-<section aria-label="Hoja de ruta"><span class="lab">Hoja de ruta</span>
-<div class="rm">
-<svg width="44" height="168" viewBox="0 0 44 168" aria-hidden="true">
-<path d="M14 28V140" fill="none" stroke="#f27c60" stroke-width="3" stroke-linecap="round"/>
-<path d="M14 28C14 48 36 42 36 62V84" fill="none" stroke="#9db0ff" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 6"/>
-<circle cx="14" cy="28" r="9" fill="#f27c60" stroke="#1e1d16" stroke-width="3"/><path d="M10 28l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="29" y="77" width="14" height="14" rx="2" transform="rotate(45 36 84)" fill="#9db0ff" stroke="#1e1d16" stroke-width="3"/><path d="M32 84l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="14" cy="140" r="20" fill="none" stroke="#f27c60" stroke-width="2" opacity=".35"/>
-<circle cx="14" cy="140" r="9" fill="#f27c60" stroke="#1e1d16" stroke-width="3"/><path d="M10 140l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-<ol>
-<li><span class="rm-label">Farol encendido</span><span class="rm-meta"><span class="cs cs-s">MA</span>Marina <span class="ty">22:14</span></span></li>
-<li><span class="rm-label">Señal al túnel</span><span class="rm-meta"><span class="ty">22:21 desvío</span></span></li>
-<li class="rm-new"><span class="rm-label">El reloj vuelve a andar</span><span class="rm-meta"><span class="cs cs-s cs-me">TE</span>Teo <span class="ty">22:48</span></span></li>
-</ol>
-</div>
-<button class="b b-ghost" style="width:100%;min-height:44px;margin-top:12px">Ver la hoja de ruta entera</button>
-</section>
+<button class="b b-ghost" style="width:100%;min-height:44px;color:var(--mute)">Cerrar el intento</button>
 <section class="voice" aria-label="Canal de voz">
 <div class="air-h"><span class="air"><span class="lamp"></span>En el aire</span><span class="chan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>General</span></div>
 <div class="air-who"><div class="meter" aria-hidden="true"><i style="height:30%"></i><i style="height:70%"></i><i style="height:100%"></i><i style="height:55%"></i><i style="height:85%"></i><i style="height:40%"></i><i style="height:95%"></i><i style="height:60%"></i><i style="height:35%"></i><i style="height:75%"></i></div><p>Coach contesta a Marina</p></div>
@@ -133,6 +122,26 @@ a{color:var(--text)}a:hover{color:#fff}
 </ol>
 <div class="cmp"><div class="cmp-in"><input class="field" aria-label="Mensaje para Coach" placeholder="Escribe a Coach…"><button class="revb" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4"/></svg>Revisión</button><button class="b">Enviar</button></div></div>
 </section>
+<aside class="col" aria-label="Hoja de ruta">
+<div class="col-h"><span class="lab">Hoja de ruta</span><h2 class="cond">Lo que habéis hecho</h2></div>
+<div class="col-b"><div class="rm">
+<svg width="44" height="168" viewBox="0 0 44 168" aria-hidden="true">
+<path d="M14 28V140" fill="none" stroke="#f27c60" stroke-width="3" stroke-linecap="round"/>
+<path d="M14 28C14 48 36 42 36 62V84" fill="none" stroke="#9db0ff" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 6"/>
+<circle cx="14" cy="28" r="9" fill="#f27c60" stroke="#1e1d16" stroke-width="3"/><path d="M10 28l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="29" y="77" width="14" height="14" rx="2" transform="rotate(45 36 84)" fill="#9db0ff" stroke="#1e1d16" stroke-width="3"/><path d="M32 84l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="14" cy="140" r="20" fill="none" stroke="#f27c60" stroke-width="2" opacity=".35"/>
+<circle cx="14" cy="140" r="9" fill="#f27c60" stroke="#1e1d16" stroke-width="3"/><path d="M10 140l3 3 5-6" fill="none" stroke="#1e1d16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<ol>
+<li><span class="rm-label">Farol encendido</span><span class="rm-meta"><span class="cs cs-s">MA</span>Marina <span class="ty">22:14</span></span></li>
+<li><span class="rm-label">Señal al túnel</span><span class="rm-meta"><span class="ty">22:21 desvío</span></span></li>
+<li class="rm-new"><span class="rm-label">El reloj vuelve a andar</span><span class="rm-meta"><span class="cs cs-s cs-me">TE</span>Teo <span class="ty">22:48</span></span></li>
+</ol>
+</div>
+</div>
+<p class="col-f">¿Falta algo, o hay algo que no hicisteis? Díselo a Claude con una revisión.</p>
+</aside>
 </div>
 </div>
 </x-dc>
