@@ -112,6 +112,47 @@ def sentences(text):
     return [part.strip() for part in SENTENCE.split(text.strip()) if part.strip()]
 
 
+SOUNDED = {
+    "mein gott": "main got",
+    "gott": "got",
+    "wunderbar": "vúnderbar",
+    "nein": "nain",
+    "dummkopf": "dúmkopf",
+    "achtung": "ajtung",
+    "natürlich": "natúrlij",
+    "ausgezeichnet": "áusgetsaijnet",
+    "scheiße": "sháise",
+    "scheisse": "sháise",
+    "kaputt": "kapút",
+    "schnell": "shnel",
+    "jawohl": "yavól",
+    "ach": "aj",
+    "herr": "jer",
+}
+SOUNDED_RE = re.compile(r"\b(" + "|".join(sorted(map(re.escape, SOUNDED), key=len, reverse=True)) + r")\b", re.IGNORECASE)
+SHORT_WORDS = 3
+
+
+def spoken_form(text):
+    text = SOUNDED_RE.sub(lambda match: SOUNDED[match.group(0).lower()], text)
+    text = re.sub(r"…+|\.{3,}", ",", text)
+    text = re.sub(r",\s*([.!?])", r"\1", text).strip()
+    return re.sub(r",$", ".", text)
+
+
+def merged(parts):
+    out = []
+    for part in parts:
+        if out and len(out[-1].split()) < SHORT_WORDS:
+            out[-1] = f"{out[-1]} {part}"
+        else:
+            out.append(part)
+    if len(out) > 1 and len(out[-1].split()) < SHORT_WORDS:
+        last = out.pop()
+        out[-1] = f"{out[-1]} {last}"
+    return out
+
+
 def wav_bytes(samples, rate):
     buffer = io.BytesIO()
     sf.write(buffer, samples, rate, format="WAV")
@@ -189,7 +230,7 @@ class Richtofen:
     def sentence(self, text):
         best, best_share = None, -1.0
         for _ in range(RICHTOFEN_TRIES):
-            samples = self.model.inference(text, "es", self.latents, self.speaker, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0)["wav"]
+            samples = self.model.inference(spoken_form(text), "es", self.latents, self.speaker, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0)["wav"]
             if len(text.split()) < RICHTOFEN_CHECKED_WORDS:
                 return samples
             share = heard_share(self.whisper, wav_bytes(samples, 24000), text)
@@ -201,16 +242,16 @@ class Richtofen:
         return best
 
     def wav(self, text, preset):
-        return wav_bytes(joined([self.sentence(part) for part in sentences(text)], 24000), 24000)
+        return wav_bytes(joined([self.sentence(part) for part in merged(sentences(text))], 24000), 24000)
 
     def streams(self, text):
-        return RICHTOFEN_STREAM_WORDS > 0 and all(len(part.split()) <= RICHTOFEN_STREAM_WORDS for part in sentences(text))
+        return RICHTOFEN_STREAM_WORDS > 0 and all(len(part.split()) <= RICHTOFEN_STREAM_WORDS for part in merged(sentences(text)))
 
     def stream(self, text):
-        for index, part in enumerate(sentences(text)):
+        for index, part in enumerate(merged(sentences(text))):
             if index:
                 yield np.zeros(int(24000 * STREAM_GAP_S), dtype=np.float32)
-            for chunk in self.model.inference_stream(part, "es", self.latents, self.speaker, stream_chunk_size=20, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0, enable_text_splitting=False):
+            for chunk in self.model.inference_stream(spoken_form(part), "es", self.latents, self.speaker, stream_chunk_size=20, temperature=0.65, top_p=0.85, top_k=50, repetition_penalty=5.0, enable_text_splitting=False):
                 yield chunk.detach().float().cpu().numpy().reshape(-1)
 
 
