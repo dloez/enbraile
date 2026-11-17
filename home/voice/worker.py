@@ -344,7 +344,7 @@ class Worker:
             return self.chime
         ready = [line for line in spec["lines"] if (spec["voice"], line) in self.clips]
         if not ready:
-            return self.chime
+            return None
         fresh = [line for line in ready if line != self.last_ack.get(word)] or ready
         line = random.choice(fresh)
         self.last_ack[word] = line
@@ -554,11 +554,10 @@ class Worker:
         if not text:
             return
         word, request = self.trigger(user, text)
-        if word and request is None and self.triggers.get(word):
-            await socket.send(frame({"type": "audio", "id": "ack"}, self.ack(word)))
+        acked = self.ack(word) if word and self.triggers.get(word) else None
+        if acked is not None and (request is None or request != text):
+            await socket.send(frame({"type": "audio", "id": "ack"}, acked))
         if word and request is not None:
-            if self.triggers.get(word) and request != text:
-                await socket.send(frame({"type": "audio", "id": "ack"}, self.ack(word)))
             log(f"trigger {word} {user} ({time.time() - started:.2f}s): {request}")
             await socket.send(json.dumps({"type": "trigger", "word": word, "user": user, "text": request}))
 

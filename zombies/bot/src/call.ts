@@ -12,14 +12,14 @@ const COACHES: Record<string, Coach & { unheard: string[]; voice: string; acks: 
     wake: "bebé",
     unheard: ["No te he entendido bien, ¿me lo repites?", "Perdona, se me ha cortado. ¿Qué decías?", "No te he pillado, dímelo otra vez."],
     voice: "chatterbox",
-    acks: ["Mmm…", "A ver…", "Vale, un segundo.", "Ajá, déjame pensar.", "Mmm, veamos."],
+    acks: ["Mmm…", "A ver…", "Vale…"],
   },
   richtofen: {
     name: "Richtofen",
     wake: "richtofen",
     unheard: ["¿Qué? Hablad más claro, que no os entiendo.", "¿Cómo? Repetídmelo, y esta vez vocalizad.", "Se ha perdido en el éter… otra vez, por favor."],
     voice: "richtofen",
-    acks: ["Mmm… interesante.", "Ach, veamos…", "Ah, sí, sí…", "Un momento…", "Hmm, ¿qué tenemos aquí?"],
+    acks: ["Hmm…", "Ach…", "Veamos…"],
   },
 };
 const coachOf = (named: string | null) => (named === "richtofen" ? COACHES.richtofen! : COACHES["bebé"]!);

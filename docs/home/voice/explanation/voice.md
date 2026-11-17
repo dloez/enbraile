@@ -15,7 +15,7 @@ Each message on the socket is JSON text or a binary frame: a 4-byte big-endian h
 | Bot | `{"type": "want", "voices": [names]}` | The voices modules hold; sent on connect and on every change |
 | Bot | binary `{"type": "clip", "user": id, "at": ms}` + Ogg Opus | One person's speech, up to a pause of 0.5 s, and when it started |
 | Worker | `{"type": "transcript", "user": id, "text": …, "at": ms, "ms": …}` | What was said, for the bot's transcripts; empty when the clip held no speech, which tells the bot the clip is done |
-| Worker | binary `{"type": "audio", "id": "ack"}` + Ogg Opus | Play now: a trigger word with `ack` was heard; one of its lines when they are made, else the chime |
+| Worker | binary `{"type": "audio", "id": "ack"}` + Ogg Opus | Play now: a trigger word with `ack` was heard; for an `ack` of lines in a voice, one of its lines once they are made, and nothing at all while that voice is not loaded; for a plain `ack`, the chime |
 | Worker | `{"type": "trigger", "word": …, "user": id, "text": …}` | A trigger word and the words after it |
 | Bot | `{"type": "say", "id": n, "text": …, "voice": name}` | Say this, in that voice (`voice` optional: the default) |
 | Worker | binary `{"type": "audio", "id": n}` + Ogg Opus | The spoken text |
