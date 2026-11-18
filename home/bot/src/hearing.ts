@@ -106,9 +106,16 @@ async function heard(userId: string, text: string, at: number, ms: number | null
   }
 }
 
+const prepared = new Map<string, string[]>();
+
+function sendPrepared(voice: string): void {
+  const lines = prepared.get(voice);
+  if (worker && lines && offered.voices.includes(voice)) worker.send(JSON.stringify({ type: "prepare", voice, lines }));
+}
+
 export function prepare(voice: string, lines: string[]): void {
-  if (!worker || !offered.voices.includes(voice)) return;
-  worker.send(JSON.stringify({ type: "prepare", voice, lines }));
+  prepared.set(voice, lines);
+  sendPrepared(voice);
 }
 
 export function say(text: string, { voice }: SayOptions = {}): Promise<void> {
@@ -229,6 +236,7 @@ function received(data: Buffer, binary: boolean): void {
   if (message.type === "voices" && Array.isArray(message.voices)) {
     offered = { voices: message.voices, loaded: message.loaded ?? [], default: message.default ?? null };
     console.log("voices", offered.voices.join(", "), "loaded", offered.loaded.join(", ") || "none", "default", offered.default);
+    for (const voice of prepared.keys()) sendPrepared(voice);
     return;
   }
   if (message.type === "failed" && typeof message.id === "number") {

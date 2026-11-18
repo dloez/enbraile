@@ -181,10 +181,7 @@ voice.post("/coach", async (c) => {
 
 voice.post("/lines", async (c) => {
   if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
-  const parsed = coachVoiceSchema.safeParse(await c.req.json().catch(() => null));
-  if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
-  const prepared = await preparedLines(parsed.data.userId);
-  return prepared ? c.json(prepared, 200, noStore) : c.json({ error: "notInRun" }, 404, noStore);
+  return c.json({ voices: await preparedLines() }, 200, noStore);
 });
 
 voice.post("/transcript", async (c) => {

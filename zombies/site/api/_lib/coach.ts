@@ -886,8 +886,7 @@ export async function coachTurn(
         .map((key) => state.ladders.find((ladder) => keyOf(ladder) === key))
         .filter((ladder): ladder is Ladder => !!ladder && !isDone(state, ladder) && isReady(stepOf(state, ladder), state.done) && !!ladder.rungs[state.given.get(keyOf(ladder)) ?? 0]);
       const latest = state.ladders.find((ladder) => keyOf(ladder) === state.latest);
-      const stalled = latest && !isDone(state, latest) && !latest.rungs[state.given.get(keyOf(latest)) ?? 0];
-      for (const aimed of stalled ? [] : [...opened, ...firstHints(state)]) {
+      for (const aimed of latest && !isDone(state, latest) ? [latest] : [...opened, ...firstHints(state)]) {
         const given = await deliver(state, aimed, null, null, askedBy.discordId || null);
         if (!given.ok) continue;
         emit({ type: "hint", text: given.text });

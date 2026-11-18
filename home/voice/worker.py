@@ -56,7 +56,8 @@ WARM_VOICES = [name.strip() for name in os.environ.get("WARM_VOICES", DEFAULT_VO
 LOAD_WAIT_S = float(os.environ.get("LOAD_WAIT_S", "30"))
 FOLLOW_UP_S = 8
 CLIPS = DATA / "clips"
-CLIP_WAIT_S = 10
+CLIP_WAIT_S = 4
+TRIGGER_FOLLOW_S = 30
 PREPARE_IDLE_S = 5
 CHATTERBOX_PRESETS = {"chatterbox": (0.5, 0.5), "chatterbox-expressive": (0.8, 0.3)}
 CHATTERBOX_BASE = ("ResembleAI/chatterbox", ["ve.pt", "conds.pt", "s3gen.pt", "Cangjie5_TC.json"])
@@ -339,10 +340,12 @@ class Worker:
         self.turn = asyncio.Lock()
         self.using = asyncio.Lock()
         self.heard = asyncio.Queue()
-        self.making = 0
+        self.saying = 0
         self.quiet = asyncio.Event()
         self.quiet.set()
         self.last_say = 0.0
+        self.last_clip = 0.0
+        self.triggered = {}
         self.prints = {}
         self.to_prepare = {}
         self.prepared = asyncio.Event()
@@ -409,14 +412,7 @@ class Worker:
         (folder / f"{hashlib.sha256(text.encode()).hexdigest()[:24]}.ogg").write_bytes(audio)
 
     async def make(self, text, name):
-        self.making += 1
-        self.quiet.clear()
-        try:
-            return await asyncio.to_thread(self.speak, text, name)
-        finally:
-            self.making -= 1
-            if not self.making:
-                self.quiet.set()
+        return await asyncio.to_thread(self.speak, text, name)
 
     def ack(self, word):
         spec = self.triggers.get(word)
@@ -456,6 +452,7 @@ class Worker:
 
     async def announce(self):
         asyncio.create_task(self.prepare_acks())
+        self.prepared.set()
         if self.socket:
             try:
                 await self.socket.send(json.dumps({"type": "voices", "voices": VOICES, "default": DEFAULT_VOICE, "loaded": self.loaded()}))
@@ -549,7 +546,7 @@ class Worker:
                 for line in missing:
                     if self.prepared.is_set() or name not in self.loaded():
                         break
-                    while not self.heard.empty() or self.turn.locked() or time.time() - self.last_say < PREPARE_IDLE_S:
+                    while not self.heard.empty() or self.turn.locked() or self.saying or time.time() - max(self.last_say, self.last_clip) < PREPARE_IDLE_S:
                         await asyncio.sleep(1)
                     if self.cached(name, line) is not None:
                         continue
@@ -614,6 +611,16 @@ class Worker:
         log(f"streamed in {time.time() - started:.2f}s, first audio after {first or 0:.2f}s")
 
     async def on_say(self, socket, id, text, voice):
+        self.saying += 1
+        self.quiet.clear()
+        try:
+            await self.say(socket, id, text, voice)
+        finally:
+            self.saying -= 1
+            if not self.saying:
+                self.quiet.set()
+
+    async def say(self, socket, id, text, voice):
         self.last_say = time.time()
         async with self.turn:
             self.last_say = time.time()
@@ -650,11 +657,12 @@ class Worker:
     async def listen(self):
         while True:
             socket, user, clip, at = await self.heard.get()
-            try:
-                async with asyncio.timeout(CLIP_WAIT_S):
-                    await self.quiet.wait()
-            except TimeoutError:
-                pass
+            if time.time() - self.triggered.get(user, 0) > TRIGGER_FOLLOW_S:
+                try:
+                    async with asyncio.timeout(CLIP_WAIT_S):
+                        await self.quiet.wait()
+                except TimeoutError:
+                    pass
             try:
                 await self.on_clip(socket, user, clip, at)
             except ConnectionClosed:
@@ -675,6 +683,7 @@ class Worker:
                     if isinstance(message, bytes):
                         header, body = unframe(message)
                         if header.get("type") == "clip":
+                            self.last_clip = time.time()
                             self.heard.put_nowait((socket, header["user"], body, header.get("at")))
                     else:
                         data = json.loads(message)
@@ -703,6 +712,8 @@ class Worker:
         acked = self.ack(word) if word and self.triggers.get(word) else None
         if acked is not None and (request is None or request != text):
             await socket.send(frame({"type": "audio", "id": "ack"}, acked))
+        if word:
+            self.triggered[user] = time.time()
         if word and request is not None:
             log(f"trigger {word} {user} ({time.time() - started:.2f}s): {request}")
             await socket.send(json.dumps({"type": "trigger", "word": word, "user": user, "text": request}))

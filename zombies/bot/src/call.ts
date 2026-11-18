@@ -36,7 +36,6 @@ const secret = process.env.INTERNAL_SECRET ?? "";
 
 let broughtBy: string | null = null;
 let heldVoice: string | null = null;
-let preparing: ReturnType<typeof setInterval> | null = null;
 
 function keepVoice(named: string | null): void {
   if (named === heldVoice) return;
@@ -52,28 +51,21 @@ function keepVoice(named: string | null): void {
 }
 
 async function prepareLines(): Promise<void> {
-  if (!voice.holding(OWNER) || broughtBy === null) return;
-  const response = await site("voice/lines", { userId: broughtBy });
-  if (response.status === 404) return;
+  const response = await site("voice/lines", {});
   if (!response.ok) throw new Error(`site answered ${response.status}`);
-  const { voice: named, lines } = (await response.json()) as { voice?: unknown; lines?: unknown };
-  if (typeof named !== "string" || !Array.isArray(lines)) return;
-  const texts = lines.filter((line): line is string => typeof line === "string");
-  hearing.prepare(named, [...new Set([...texts, ...coachOf(named).unheard].flatMap(sentencesOf))]);
-}
-
-function keepPreparing(held: boolean): void {
-  if (held && !preparing) {
-    preparing = setInterval(() => void prepareLines().catch((error: Error) => console.error("zombies prepare", error.message)), PREPARE_EVERY_MS);
-  } else if (!held && preparing) {
-    clearInterval(preparing);
-    preparing = null;
+  const { voices } = (await response.json()) as { voices?: unknown };
+  if (!Array.isArray(voices)) return;
+  for (const entry of voices as { voice?: unknown; lines?: unknown }[]) {
+    if (typeof entry.voice !== "string" || !Array.isArray(entry.lines)) continue;
+    const texts = entry.lines.filter((line): line is string => typeof line === "string");
+    hearing.prepare(entry.voice, [...new Set([...texts, ...coachOf(entry.voice).unheard].flatMap(sentencesOf))]);
   }
 }
 
+const prepareNow = () => void prepareLines().catch((error: Error) => console.error("zombies prepare", error.message));
+
 function keepTranscripts(): void {
   const held = voice.holding(OWNER);
-  keepPreparing(held);
   if (!held) {
     broughtBy = null;
     keepVoice(null);
@@ -101,7 +93,7 @@ export async function join(userId: string, named?: string | null): Promise<Joine
   await voice.hold(OWNER, channel.id, { listen: true });
   broughtBy = userId;
   keepTranscripts();
-  void prepareLines().catch((error: Error) => console.error("zombies prepare", error.message));
+  prepareNow();
   const coach = named === undefined ? await coachVoice(userId) : named;
   keepVoice(coach);
   const { name, wake } = coachOf(coach);
@@ -237,8 +229,10 @@ export function start(): () => void {
     if (event.type === "members" && voice.holding(OWNER) && voice.members().length === 0) leave();
     else keepTranscripts();
   });
+  const preparing = setInterval(prepareNow, PREPARE_EVERY_MS);
+  prepareNow();
   return () => {
-    keepPreparing(false);
+    clearInterval(preparing);
     for (const stop of unhear) stop();
     unlisten();
     keepVoice(null);
