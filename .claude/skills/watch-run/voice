@@ -4,24 +4,41 @@ dir="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)/home/voice"
 log="$dir/data/worker.log"
 pattern='python[0-9.]* worker\.py'
 
-if pgrep -f "$pattern" >/dev/null; then
-  echo "voice worker: already running"
-  exit 0
-fi
+stamp="$dir/data/worker.stamp"
 if [ ! -f "$dir/.env.local" ]; then
   echo "voice worker: home/voice/.env.local is missing, so it cannot start"
   exit 1
+fi
+current=$(cd "$dir" && cat worker.py pyproject.toml uv.lock .env.local | sha256sum | cut -d' ' -f1)
+
+restarted=""
+if pgrep -f "$pattern" >/dev/null; then
+  if [ -f "$stamp" ] && [ "$(cat "$stamp")" = "$current" ]; then
+    echo "voice worker: already running, up to date"
+    exit 0
+  fi
+  pkill -f "$pattern" || true
+  for _ in $(seq 1 30); do
+    pgrep -f "$pattern" >/dev/null || break
+    sleep 1
+  done
+  if pgrep -f "$pattern" >/dev/null; then
+    echo "voice worker: changed since it started, but the old one did not stop; stop it by hand"
+    exit 1
+  fi
+  restarted=1
 fi
 
 mkdir -p "$dir/data"
 start=0
 [ -f "$log" ] && start=$(wc -l <"$log")
+echo "$current" >"$stamp"
 (cd "$dir" && setsid nohup uv run --env-file .env.local worker.py >>"$log" 2>&1 </dev/null &)
 
 for _ in $(seq 1 120); do
   sleep 1
   if tail -n +"$((start + 1))" "$log" | grep -q "connected to"; then
-    echo "voice worker: started and connected to the bot"
+    echo "voice worker: ${restarted:+restarted after a change, }started and connected to the bot"
     exit 0
   fi
   if ! pgrep -f "$pattern" >/dev/null && ! pgrep -f "uv run --env-file .env.local worker.py" >/dev/null; then
