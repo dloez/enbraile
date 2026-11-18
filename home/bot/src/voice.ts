@@ -16,7 +16,7 @@ const watchers = new Set<(event: VoiceEvent) => void>();
 let connection: VoiceConnection | undefined;
 let channelId = "";
 let output: AudioPlayer | undefined;
-const speech = createAudioPlayer();
+const speech = createAudioPlayer({ behaviors: { maxMissedFrames: Number.POSITIVE_INFINITY } });
 const spoken: AudioResource[] = [];
 let talking = false;
 let lost = false;
