@@ -10,7 +10,7 @@ import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { deleteMap, deleteRun, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
 import { canRead, closeRun, importHistory, importRun, reopenRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, roadmap, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
-import { bringCoach, callState, coachVoice, keepCallLine, voiceTurn } from "./voice.js";
+import { bringCoach, callState, coachVoice, dismissCoach, keepCallLine, voiceTurn } from "./voice.js";
 
 const noStore = { "cache-control": "private, no-store" };
 
@@ -241,7 +241,10 @@ member.post("/runs/:id/close", async (c) => {
   const viewer = c.get("viewer");
   const id = c.req.param("id");
   if (!(await isActiveMember(viewer, id))) return c.json({ error: "notInRun" }, 403, noStore);
-  return (await closeRun(viewer, id)) ? c.json({ id }, 200, noStore) : c.json({ error: "closed" }, 409, noStore);
+  const left = await closeRun(viewer, id);
+  if (!left) return c.json({ error: "closed" }, 409, noStore);
+  dismissCoach(left);
+  return c.json({ id }, 200, noStore);
 });
 
 member.post("/runs/:id/reopen", async (c) => {

@@ -105,3 +105,12 @@ export function speakInCall(runId: string, text: string): void {
   })().catch((error) => console.error("bot say", runId, (error as Error).message));
   inBackground(sent);
 }
+
+export function dismissCoach(userIds: string[]): void {
+  if (!userIds.length || !process.env.BOT_URL) return;
+  const sent = (async () => {
+    const response = await bot("leave", botTimeoutMs, { method: "POST", body: { userIds } });
+    if (response && !response.ok && response.status !== 409) throw new Error(`bot answered ${response.status}`);
+  })().catch((error) => console.error("bot leave", (error as Error).message));
+  inBackground(sent);
+}

@@ -1,6 +1,6 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import type { Locale, Module, Route, SlashCommand } from "../../../home/bot/src/sdk.ts";
-import { channelOf, here, join, leave, namesOf, speak, start } from "./call.ts";
+import { channelOf, here, join, leaveFor, namesOf, speak, start } from "./call.ts";
 
 const MAX_NAMES = 50;
 
@@ -52,8 +52,9 @@ const route: Route = async (method, path, _params, input, userId) => {
     return speak(said, typeof input.voice === "string" ? input.voice : null, userIds) ? [{ ok: true }] : [{ error: "notInCall" }, 409];
   }
   if (path === "leave" && method === "POST") {
-    leave();
-    return [{ ok: true }];
+    const userIds = Array.isArray(input.userIds) ? input.userIds.filter((id): id is string => typeof id === "string") : [];
+    if (!userIds.length) return [{ error: "badRequest" }, 400];
+    return leaveFor(userIds) ? [{ ok: true }] : [{ error: "notInCall" }, 409];
   }
   return [{ error: "notFound" }, 404];
 };

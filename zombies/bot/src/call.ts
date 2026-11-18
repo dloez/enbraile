@@ -84,6 +84,12 @@ export async function join(userId: string, named?: string | null): Promise<Joine
   return { channelId: channel.id, coach: { name, wake } };
 }
 
+export function leaveFor(userIds: string[]): boolean {
+  if (!voice.holding(OWNER) || broughtBy === null || !userIds.includes(broughtBy)) return false;
+  leave();
+  return true;
+}
+
 export function leave(): void {
   if (voice.holding(OWNER)) voice.release(OWNER);
   keepTranscripts();

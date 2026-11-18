@@ -239,15 +239,15 @@ export async function canRead(viewer: Viewer, runId: string): Promise<boolean> {
   return Boolean(run?.closedAt);
 }
 
-export async function closeRun(viewer: Viewer, runId: string): Promise<boolean> {
+export async function closeRun(viewer: Viewer, runId: string): Promise<string[] | null> {
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`coach/${runId}`}))`);
     const [run] = await tx.select({ closedAt: runs.closedAt, busyUntil: runs.coachBusyUntil }).from(runs).where(eq(runs.id, runId));
-    if (!run || run.closedAt || (run.busyUntil && run.busyUntil > new Date())) return false;
+    if (!run || run.closedAt || (run.busyUntil && run.busyUntil > new Date())) return null;
     const now = new Date();
     await tx.update(runs).set({ closedAt: now, closedBy: viewer.discordId, closedByName: viewer.name }).where(eq(runs.id, runId));
-    await tx.update(runMembers).set({ leftAt: now }).where(and(eq(runMembers.runId, runId), activeMember));
-    return true;
+    const left = await tx.update(runMembers).set({ leftAt: now }).where(and(eq(runMembers.runId, runId), activeMember)).returning({ discordId: runMembers.discordId });
+    return left.map((member) => member.discordId);
   });
 }
 
