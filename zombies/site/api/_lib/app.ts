@@ -161,10 +161,10 @@ voice.post("/", async (c) => {
   if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
   const parsed = voiceSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
-  const { userId, text, word } = parsed.data;
+  const { userId, name, text, word, broughtBy } = parsed.data;
   return ndjson<VoiceEvent>(async (send) => {
     try {
-      await voiceTurn(userId, text, word, send);
+      await voiceTurn(userId, text, word, send, { name: name ?? null, broughtBy: broughtBy ?? null });
     } catch (error) {
       console.error("voice turn failed", error);
     }

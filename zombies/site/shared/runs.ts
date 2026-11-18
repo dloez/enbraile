@@ -93,7 +93,13 @@ export type CallState = { reachable: boolean; channel: VoiceChannel | null; coac
 
 export type JoinRefusal = "notInVoice" | "noAccess" | "full" | "botOffline";
 
-export const voiceSchema = z.object({ userId: z.string().min(1), text: z.string().trim().min(1).max(2000), word: z.string().trim().toLowerCase().min(1) });
+export const voiceSchema = z.object({
+  userId: z.string().min(1),
+  name: z.string().trim().min(1).max(100).nullish(),
+  text: z.string().trim().min(1).max(2000),
+  word: z.string().trim().toLowerCase().min(1),
+  broughtBy: z.string().min(1).nullish(),
+});
 
 export const coachVoiceSchema = z.object({ userId: z.string().min(1) });
 

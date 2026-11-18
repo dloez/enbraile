@@ -18,8 +18,10 @@ async function speakerOf(discordId: string): Promise<{ runId: string; viewer: Vi
   return row ? { runId: row.runId, viewer: { discordId, name: row.name, image: row.image } } : null;
 }
 
-export async function voiceTurn(discordId: string, text: string, word: string, send: (event: VoiceEvent) => void): Promise<void> {
-  const speaker = await speakerOf(discordId);
+export async function voiceTurn(discordId: string, text: string, word: string, send: (event: VoiceEvent) => void, guest: { name: string | null; broughtBy: string | null } = { name: null, broughtBy: null }): Promise<void> {
+  const own = await speakerOf(discordId);
+  const host = own || !guest.broughtBy ? null : await speakerOf(guest.broughtBy);
+  const speaker = own ?? (host && guest.name ? { runId: host.runId, viewer: { discordId, name: guest.name, image: null } } : null);
   if (!speaker) return;
   const { runId, viewer } = speaker;
   const [run] = await db.select({ voice: runs.voice, language: runs.language }).from(runs).where(eq(runs.id, runId));

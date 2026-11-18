@@ -161,12 +161,15 @@ async function* events(body: ReadableStream<Uint8Array>): AsyncGenerator<VoiceEv
 async function heard(userId: string, text: string, word: string): Promise<void> {
   if (!voice.holding(OWNER) || !text.trim()) return;
   const queued: Promise<void>[] = [];
-  const speakLine = (line: string) => queued.push(hearing.say(line, heldVoice === null ? {} : { voice: heldVoice }).catch((error: Error) => console.error("zombies say", error.message)));
+  const speakLine = (line: string) => {
+    for (const sentence of sentencesOf(line)) queued.push(hearing.say(sentence, heldVoice === null ? {} : { voice: heldVoice }).catch((error: Error) => console.error("zombies say", error.message)));
+  };
   let answering = false;
   const started = Date.now();
   let firstSay: number | null = null;
   try {
-    const response = await site("voice", { userId, text, word });
+    const name = voice.members().find((member) => member.id === userId)?.name ?? null;
+    const response = await site("voice", { userId, name, text, word, broughtBy });
     if (!response.ok || !response.body) throw new Error(`site answered ${response.status}`);
     for await (const event of events(response.body)) {
       if (event.type === "voice") {

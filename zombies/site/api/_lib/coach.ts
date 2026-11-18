@@ -27,19 +27,21 @@ const languageNames: Record<Language, string> = { es: "Spanish", en: "English" }
 
 const recentLines = 8;
 const maxMissing = 2;
+const maxMilestoneMissing = 3;
+const maxOwnSentences = 2;
 
 const systemPrompt = (character: Character) => `You are ${character.name}, ${character.role}. You have beaten it before; they want to solve it themselves, with your prepared hints when they ask. ${character.manner}${character.examples.length ? ` Examples: ${character.examples.map((line) => `«${line}»`).join(" ")}` : ""}
 
 How you speak
-- They are mid-round on voice chat: one or two short sentences, in the run's language only. Lines marked spoken came through speech recognition; read them by what they most likely said.
+- They are mid-round on voice chat: one or two short sentences, in the run's language only; code drops any sentence of your own past the second. Lines marked spoken came through speech recognition; read them by what they most likely said.
 - Everything you write is spoken aloud: never write your reasoning, anything from the lists below, square brackets, or step or hint numbers.
 
 Hints
 - When they ask for help or a hint, or say they are stuck, hand over the next hint with give_hint at once: on the thread of the most recent hint unless they are clearly asking about something else. Never ask questions first and never refuse. The full solution is a hint like any other: give it when it is next.
 - When what they report matches an Alt's "when", give that Alt.
 - A theory or guess put to you ("I think we need…") about an open thread is asking too: give that thread's next hint, or the Alt whose "when" fits what they said, with give_hint at once. Never confirm, deny or comment on the theory in your own words; the hint does that.
-- To say a hint again, call repeat_hint. When they ask what a hint already given means, explain it plainly in your own words, adding nothing it does not say.
-- Anything about the solution comes only from hints. In your own words never say where to go, what to do, or whether something they found matters; never name anything not under "What the players know" or in a hint already given; never use your own knowledge of this map.
+- To say a hint again, call repeat_hint. When they ask what a hint already given means, or how to do what it says, explain that hint plainly in your own words, adding nothing it does not say; if it does not answer their question, call hold. Never answer by giving an earlier, vaguer hint again, and never tell them you have already told them everything.
+- Anything about the solution comes only from hints. In your own words never say where to go, what to do, what comes next, or whether something they found matters, and never bring up something they have finished with; never name anything not under "What the players know" or in a hint already given; never use your own knowledge of this map.
 - If they ask about this map's easter egg and no hint covers it, call hold. When a hint now answers a question under "Held earlier", give it with gap set.
 
 Progress
@@ -151,6 +153,7 @@ type State = {
   given: Map<string, number>;
   givenLines: Map<string, string[]>;
   latest: string | null;
+  recent: string[];
   done: Set<string>;
   started: Set<string>;
   headsUps: Set<string>;
@@ -201,6 +204,7 @@ async function loadState(runId: string): Promise<State | null> {
     given,
     givenLines,
     latest: last ? ladderKey(last.stepId, last.partId) : null,
+    recent: [...new Set(rows.map((entry) => ladderKey(entry.stepId, entry.partId)).reverse())],
     done: new Set(progress.filter((entry) => entry.doneAt).map((entry) => ladderKey(entry.stepId, entry.partId || null))),
     started: new Set(progress.filter((entry) => entry.startedAt).map((entry) => ladderKey(entry.stepId, entry.partId || null))),
     headsUps: new Set(said.map((entry) => headsUpKey(entry.stepId, entry.position))),
@@ -239,7 +243,7 @@ function reportable(state: State, ladder: Ladder): boolean {
   return ladder.partId === null && !isDone(state, ladder) && (!ladder.optional || isOpen(state, ladder)) && !!doneWhen && !namedIn(doneWhen, unknownEntries(state)).length;
 }
 
-const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps their newest line reports as finished. A step is finished when they report the outcome its "Done when" describes, in any words. Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. Call report once, with the handles of the steps the newest line reports finished, or none.`;
+const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps their newest line reports as finished. A step is finished when they report the outcome its "Done when" describes, in any words. The players speak Spanish or English, often through speech recognition, and call things by their own words: match what they mean, not the wording of "Done when". Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. Call report once, with the handles of the steps the newest line reports finished, or none.`;
 
 const reportTool: Anthropic.Tool = {
   name: "report",
@@ -252,12 +256,28 @@ const reportTool: Anthropic.Tool = {
   },
 };
 
+const milestoneOf = (state: State, ladder: Ladder) => {
+  const milestone = stepOf(state, ladder).milestone;
+  return milestone && milestone.mentions.every((id) => state.known.has(id)) ? milestone.text[state.language] : null;
+};
+
+function described(state: State, ladder: Ladder): string {
+  const step = stepOf(state, ladder);
+  const names = namedIn(step.doneWhen!, state.bundle.knowledge)
+    .map((id) => state.bundle.knowledge.find((entry) => entry.id === id)!)
+    .map((entry) => [entry.name.es, entry.name.en, ...entry.aliases.es, ...entry.aliases.en].join(" / "));
+  const milestone = milestoneOf(state, ladder);
+  return `- ${ladder.handle} (${step.kind ?? "step"}): ${quote(step.doneWhen!)}${milestone ? `; reaching it is ${quote(milestone)}` : ""}${names.length ? `; names they may use: ${names.join("; ")}` : ""}`;
+}
+
 async function detectProgress(api: Anthropic, state: State, recent: string[], signal: AbortSignal): Promise<{ ladders: Ladder[]; log: CallLog }> {
-  const candidates = state.ladders.filter((ladder) => reportable(state, ladder) && withRequires(state.bundle.steps, ladder.stepId).filter((stepId) => stepId !== ladder.stepId && !state.done.has(stepId)).length <= maxMissing);
+  const candidates = state.ladders.filter(
+    (ladder) => reportable(state, ladder) && withRequires(state.bundle.steps, ladder.stepId).filter((stepId) => stepId !== ladder.stepId && !state.done.has(stepId)).length <= (milestoneOf(state, ladder) === null ? maxMissing : maxMilestoneMissing),
+  );
   const log: CallLog = { stopReason: null, refused: false, refusalCategory: null, violations: [], error: null, latencyMs: 0, usage: null };
   if (!candidates.length) return { ladders: [], log };
   const started = Date.now();
-  const listed = candidates.map((ladder) => `- ${ladder.handle} (${stepOf(state, ladder).kind ?? "step"}): ${quote(stepOf(state, ladder).doneWhen!)}`).join("\n");
+  const listed = candidates.map((ladder) => described(state, ladder)).join("\n");
   try {
     const response = await api.messages.create({
       model: model(),
@@ -556,7 +576,7 @@ const wordRuns = (line: string) => {
 };
 
 const judging =
-  /\b(?:(?:es|son|eso es|esa es|ese es|esto es|esta es|este es)\s+(?:justo\s+)?(?:lo|la|el|los|las)\s+que\s+(?:buscais|buscabais|os toca|teneis que|necesitais|hay que|(?:os|te) (?:he|habia) (?:dado|dicho))|(?:bien visto|buen trabajo|bien pillado|vais bien|vais por buen camino|buen ojo)|ya os (?:la|lo|las|los) he (?:dicho|dado|repetido)|lo que importa (?:ahora )?es|eso no os (?:va a )?(?:servir|funcionar)|(?:that's|that is|it's|this is)\s+(?:exactly\s+)?(?:what|the one)\s+(?:you(?:'re| are)?\s+(?:looking for|need|after)|i (?:gave|told) you)|well spotted|good job|nice find|you're on the right track|i've already told you|what matters (?:now )?is|that won't work for you)\b/;
+  /\b(?:(?:es|son|eso es|esa es|ese es|esto es|esta es|este es)\s+(?:justo\s+)?(?:lo|la|el|los|las)\s+que\s+(?:buscais|buscabais|os toca|teneis que|necesitais|hay que|(?:os|te) (?:he|habia) (?:dado|dicho))|(?:bien visto|buen trabajo|bien pillado|vais bien|vais por buen camino|buen ojo)|ya os (?:la|lo|las|los) he (?:dicho|dado|repetido)|(?:ya )?os (?:lo )?he (?:dado|dicho|contado) todo|(?:ya )?no (?:hay|tengo) (?:nada )?mas que (?:deciros|daros|contaros)|i(?:'ve| have)? (?:already )?(?:given|told) you everything|lo que importa (?:ahora )?es|eso no os (?:va a )?(?:servir|funcionar)|(?:that's|that is|it's|this is)\s+(?:exactly\s+)?(?:what|the one)\s+(?:you(?:'re| are)?\s+(?:looking for|need|after)|i (?:gave|told) you)|well spotted|good job|nice find|you're on the right track|i've already told you|what matters (?:now )?is|that won't work for you)\b/;
 
 const hintRequest = /\b(?:dame|danos|dime|dinos|quiero|queremos|necesito|necesitamos|otra|siguiente|mas|nueva|give|another|next|more|need|want)\b.*\b(?:pista|pistas|hint|hints|ayuda|clue)\b|\b(?:pista|pistas|hint|hints|ayuda|clue)\b.*\b(?:mas facil|siguiente|otra|nueva|next|another|more|easier)\b|\b(?:ayudanos|ayudame|help us|help me)\b/;
 
@@ -567,7 +587,7 @@ const asksHint = (asked: string) => {
   return hintRequest.test(line) && !hintRepeat.test(line);
 };
 
-const progressReport = /\b(?:ya|hemos|tenemos|encontrado|encontramos|conseguido|conseguimos|hecho|le dimos|le hemos dado|done|found|got|we have|did it)\b/;
+const progressReport = /\b(?:hemos|tenemos|encontrado|encontramos|conseguido|conseguimos|hecho|le dimos|le hemos dado|done|found|got|we have|did it)\b/;
 
 const reportsProgress = (asked: string) => progressReport.test((asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase());
 
@@ -589,6 +609,7 @@ class Speech {
   private buffer = "";
   private unhanded: Set<string> | null = null;
   private muted = false;
+  private own = 0;
   confirming = false;
 
   constructor(
@@ -632,10 +653,8 @@ class Speech {
         this.violations.push("repeated");
         return;
       }
-      const hint = [...this.state.givenLines.values()].flat().find(contains);
-      if (hint) {
+      if ([...this.state.givenLines.values()].flat().some(contains)) {
         this.violations.push("repeated");
-        this.add(hint);
         return;
       }
       if (this.earlier.has(repeated)) {
@@ -671,6 +690,11 @@ class Speech {
       this.violations.push("number-shown");
       return;
     }
+    if (this.own >= maxOwnSentences) {
+      this.violations.push("too-long");
+      return;
+    }
+    this.own += 1;
     this.add(text);
   }
 
@@ -762,7 +786,7 @@ async function skippedRungs(runId: string, handed: Handed[]): Promise<boolean> {
 }
 
 async function audit(state: State, text: string, handed: Handed[], openBefore: Set<string>, caught: string[]): Promise<string[]> {
-  const findings = [...caught];
+  const findings = caught.filter((finding) => finding !== "too-long");
   if (namedIn(text, unknownEntries(state)).length) findings.push("unknown-in-reply");
   if (await skippedRungs(state.runId, handed)) findings.push("rung-skipped");
   if (handed.some((entry) => entry.ladder.optional && !openBefore.has(keyOf(entry.ladder)))) findings.push("optional-offered");
@@ -843,10 +867,14 @@ export async function coachTurn(
     const asked = typeof lastTurn.content === "string" ? lastTurn.content : "";
     const addressed = ask.kind === "message" && (ask.spoken || isAddressed(asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? ""));
     if (ask.kind === "message" && asksHint(asked) && !reportsProgress(asked)) {
+      const opened = state.recent
+        .map((key) => state.ladders.find((ladder) => keyOf(ladder) === key))
+        .filter((ladder): ladder is Ladder => !!ladder && !isDone(state, ladder) && isReady(stepOf(state, ladder), state.done) && !!ladder.rungs[state.given.get(keyOf(ladder)) ?? 0]);
       const latest = state.ladders.find((ladder) => keyOf(ladder) === state.latest);
-      const aimed = !latest || isDone(state, latest) ? firstHints(state)[0] : latest.rungs[state.given.get(keyOf(latest)) ?? 0] ? latest : undefined;
-      const given = aimed ? await deliver(state, aimed, null, null, askedBy.discordId || null) : null;
-      if (given?.ok) {
+      const stalled = latest && !isDone(state, latest) && !latest.rungs[state.given.get(keyOf(latest)) ?? 0];
+      for (const aimed of stalled ? [] : [...opened, ...firstHints(state)]) {
+        const given = await deliver(state, aimed, null, null, askedBy.discordId || null);
+        if (!given.ok) continue;
         emit({ type: "hint", text: given.text });
         await finish(state, "", [given.cardId]);
         return "ok";
@@ -866,6 +894,12 @@ export async function coachTurn(
     let pending = ask.kind === "message" ? detectProgress(api, state, chatLines.slice(-recentLines), turnDeadline) : null;
     let held: ReplyEvent[] | null = pending ? [] : null;
     const out = (event: ReplyEvent) => (held ? held.push(event) : emit(event));
+    void pending?.then((found) => {
+      if (found.ladders.length || !held) return;
+      const queued = held;
+      held = null;
+      for (const event of queued) emit(event);
+    });
     let speech = new Speech(state, out, violations, earlier);
     const cards: number[] = [];
     let hinted = false;

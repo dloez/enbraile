@@ -540,7 +540,7 @@ class Worker:
                 try:
                     started = time.time()
                     audio = await asyncio.to_thread(self.speak, text, name)
-                    log(f"spoke in {time.time() - started:.2f}s")
+                    log(f"spoke {len(text)} chars in {time.time() - started:.2f}s")
                 except Exception as error:
                     log(f"say in {name} failed: {error}")
                     await socket.send(json.dumps({"type": "failed", "id": id, "error": f"{name} could not speak"}))
