@@ -44,6 +44,7 @@ DATA = Path(os.environ.get("DATA_DIR", Path(__file__).parent / "data"))
 RICHTOFEN_DIR = Path(os.environ.get("RICHTOFEN_DIR", DATA / "richtofen-cosyvoice"))
 RICHTOFEN_HOP = int(os.environ.get("RICHTOFEN_HOP", "16"))
 RICHTOFEN_STEPS = int(os.environ.get("RICHTOFEN_STEPS", "5"))
+STREAM = os.environ.get("STREAM", "") == "1"
 RICHTOFEN_POLL_S = 0.01
 COSYVOICE_REPO = "https://github.com/FunAudioLLM/CosyVoice.git"
 COSYVOICE_COMMIT = "074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc"
@@ -529,7 +530,7 @@ class Worker:
                     await socket.send(json.dumps({"type": "failed", "id": id, "error": "no voice is loaded"}))
                     return
                 engine = self.engines[ENGINES[name][0]]
-                if hasattr(engine, "stream"):
+                if STREAM and hasattr(engine, "stream"):
                     try:
                         await self.stream_say(socket, id, engine, text)
                     except Exception as error:
@@ -537,7 +538,9 @@ class Worker:
                         await socket.send(json.dumps({"type": "failed", "id": id, "error": f"{name} could not speak"}))
                     return
                 try:
+                    started = time.time()
                     audio = await asyncio.to_thread(self.speak, text, name)
+                    log(f"spoke in {time.time() - started:.2f}s")
                 except Exception as error:
                     log(f"say in {name} failed: {error}")
                     await socket.send(json.dumps({"type": "failed", "id": id, "error": f"{name} could not speak"}))
