@@ -10,7 +10,7 @@ import { imageFacts, maxImageBytes } from "../../shared/image.js";
 import { deleteMap, deleteRun, hasImage, imageOf, storeImage, storeVersion } from "./maps.js";
 import { canRead, closeRun, importHistory, importRun, reopenRun, type Time, isActiveMember, joinRun, mapPage, mapsPage, postMessage, postRevision, rateCard, roadmap, runEvents, runList, runLog, runSheet, runVoice, setVoice, startRun, transcript } from "./runs.js";
 import { devUserCookie, devUsers, viewerOf } from "./viewer.js";
-import { bringCoach, callState, coachVoice, dismissCoach, keepCallLine, voiceTurn } from "./voice.js";
+import { bringCoach, callState, coachVoice, dismissCoach, keepCallLine, preparedLines, voiceTurn } from "./voice.js";
 
 const noStore = { "cache-control": "private, no-store" };
 
@@ -177,6 +177,14 @@ voice.post("/coach", async (c) => {
   const parsed = coachVoiceSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
   return c.json({ voice: await coachVoice(parsed.data.userId) }, 200, noStore);
+});
+
+voice.post("/lines", async (c) => {
+  if (!bearerIs(c.req.header("authorization"), "INTERNAL_SECRET")) return c.json({ error: "forbidden" }, 403, noStore);
+  const parsed = coachVoiceSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalidVoice" }, 400, noStore);
+  const prepared = await preparedLines(parsed.data.userId);
+  return prepared ? c.json(prepared, 200, noStore) : c.json({ error: "notInRun" }, 404, noStore);
 });
 
 voice.post("/transcript", async (c) => {

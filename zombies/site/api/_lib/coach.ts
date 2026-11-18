@@ -37,7 +37,7 @@ How you speak
 - Everything you write is spoken aloud: never write your reasoning, anything from the lists below, square brackets, or step or hint numbers.
 
 Hints
-- When they ask for help or a hint, or say they are stuck, hand over the next hint with give_hint at once: on the thread of the most recent hint unless they are clearly asking about something else. Never ask questions first and never refuse. The full solution is a hint like any other: give it when it is next.
+- When they ask for help or a hint, or say they are stuck, hand over the next hint with give_hint at once: on the thread of the most recent hint unless they are clearly asking about something else. Never ask questions first and never refuse. The full solution is a hint like any other: give it when it is next. Never announce a hint in your own words before or instead of give_hint; when give_hint says there is nothing more, tell them plainly there is no further hint on that.
 - When what they report matches an Alt's "when", give that Alt.
 - A theory or guess put to you ("I think we need…") about an open thread is asking too: give that thread's next hint, or the Alt whose "when" fits what they said, with give_hint at once. Never confirm, deny or comment on the theory in your own words; the hint does that.
 - To say a hint again, call repeat_hint. When they ask what a hint already given means, or how to do what it says, explain that hint plainly in your own words, adding nothing it does not say; if it does not answer their question, call hold. Never answer by giving an earlier, vaguer hint again, and never tell them you have already told them everything.
@@ -610,6 +610,7 @@ class Speech {
   private unhanded: Set<string> | null = null;
   private muted = false;
   private own = 0;
+  private lead: string | null = null;
   confirming = false;
 
   constructor(
@@ -633,7 +634,16 @@ class Speech {
     this.buffer = "";
   }
 
+  handing(): void {
+    if (this.lead === null) return;
+    const lead = this.lead;
+    this.lead = null;
+    this.own += 1;
+    this.add(lead);
+  }
+
   add(text: string): void {
+    this.handing();
     this.prepared.push(flat(text));
     this.spoken.push(text);
     this.emit({ type: "text", text: `${this.spoken.length > 1 ? " " : ""}${text}` });
@@ -690,10 +700,15 @@ class Speech {
       this.violations.push("number-shown");
       return;
     }
-    if (this.own >= maxOwnSentences) {
+    if (this.own + (this.lead === null ? 0 : 1) >= maxOwnSentences) {
       this.violations.push("too-long");
       return;
     }
+    if (/:["»”')]*$/.test(text)) {
+      this.lead = text;
+      return;
+    }
+    this.handing();
     this.own += 1;
     this.add(text);
   }
@@ -927,6 +942,7 @@ export async function coachTurn(
         const result = await deliver(state, chosen, null, null, askedBy.discordId || null);
         if (result.ok) {
           hinted = true;
+          speech.handing();
           emit({ type: "hint", text: result.text });
           handed.push({ ladder: chosen, deliveryId: result.deliveryId });
           cards.push(result.cardId);
@@ -1041,6 +1057,7 @@ export async function coachTurn(
               const result = await deliver(state, aimed, alt, sameLadder, askedBy.discordId || null);
               if (result.ok) {
                 hinted = true;
+                speech.handing();
                 emit({ type: "hint", text: result.text });
                 handed.push({ ladder: aimed, deliveryId: result.deliveryId });
                 if (sameLadder === null) cards.push(result.cardId);
@@ -1167,6 +1184,7 @@ export async function coachTurn(
           const result = await deliver(state, chosen, null, null, askedBy.discordId || null);
           if (result.ok) {
             hinted = true;
+            speech.handing();
             emit({ type: "hint", text: result.text });
             handed.push({ ladder: chosen, deliveryId: result.deliveryId });
             cards.push(result.cardId);

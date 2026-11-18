@@ -28,6 +28,7 @@ const unheardOf = (named: string | null) => {
   return lines[Math.floor(Math.random() * lines.length)]!;
 };
 const SITE_TIMEOUT_MS = 25_000;
+const PREPARE_EVERY_MS = 5 * 60_000;
 const AVATAR = { size: 128, extension: "webp" } as const;
 
 const siteUrl = (process.env.ZOMBIES_URL ?? "https://zombies.enbraile.vip").replace(/\/$/, "");
@@ -35,6 +36,7 @@ const secret = process.env.INTERNAL_SECRET ?? "";
 
 let broughtBy: string | null = null;
 let heldVoice: string | null = null;
+let preparing: ReturnType<typeof setInterval> | null = null;
 
 function keepVoice(named: string | null): void {
   if (named === heldVoice) return;
@@ -49,8 +51,29 @@ function keepVoice(named: string | null): void {
   }
 }
 
+async function prepareLines(): Promise<void> {
+  if (!voice.holding(OWNER) || broughtBy === null) return;
+  const response = await site("voice/lines", { userId: broughtBy });
+  if (response.status === 404) return;
+  if (!response.ok) throw new Error(`site answered ${response.status}`);
+  const { voice: named, lines } = (await response.json()) as { voice?: unknown; lines?: unknown };
+  if (typeof named !== "string" || !Array.isArray(lines)) return;
+  const texts = lines.filter((line): line is string => typeof line === "string");
+  hearing.prepare(named, [...new Set([...texts, ...coachOf(named).unheard].flatMap(sentencesOf))]);
+}
+
+function keepPreparing(held: boolean): void {
+  if (held && !preparing) {
+    preparing = setInterval(() => void prepareLines().catch((error: Error) => console.error("zombies prepare", error.message)), PREPARE_EVERY_MS);
+  } else if (!held && preparing) {
+    clearInterval(preparing);
+    preparing = null;
+  }
+}
+
 function keepTranscripts(): void {
   const held = voice.holding(OWNER);
+  keepPreparing(held);
   if (!held) {
     broughtBy = null;
     keepVoice(null);
@@ -78,6 +101,7 @@ export async function join(userId: string, named?: string | null): Promise<Joine
   await voice.hold(OWNER, channel.id, { listen: true });
   broughtBy = userId;
   keepTranscripts();
+  void prepareLines().catch((error: Error) => console.error("zombies prepare", error.message));
   const coach = named === undefined ? await coachVoice(userId) : named;
   keepVoice(coach);
   const { name, wake } = coachOf(coach);
@@ -214,6 +238,7 @@ export function start(): () => void {
     else keepTranscripts();
   });
   return () => {
+    keepPreparing(false);
     for (const stop of unhear) stop();
     unlisten();
     keepVoice(null);

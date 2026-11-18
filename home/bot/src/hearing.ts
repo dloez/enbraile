@@ -106,6 +106,11 @@ async function heard(userId: string, text: string, at: number, ms: number | null
   }
 }
 
+export function prepare(voice: string, lines: string[]): void {
+  if (!worker || !offered.voices.includes(voice)) return;
+  worker.send(JSON.stringify({ type: "prepare", voice, lines }));
+}
+
 export function say(text: string, { voice }: SayOptions = {}): Promise<void> {
   if (!worker) return Promise.reject(new Error("the voice worker is not connected"));
   if (voice !== undefined && !offered.voices.includes(voice)) return Promise.reject(new Error(`the voice worker may not load "${voice}"`));

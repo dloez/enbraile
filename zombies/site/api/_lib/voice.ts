@@ -5,7 +5,7 @@ import { anyOf, characterOf, type Voice } from "../../shared/voices.js";
 import { bot, inBackground } from "./bot.js";
 import { db } from "./db.js";
 import { postMessage, postRevision } from "./runs.js";
-import { callLines, runMembers, runs } from "./schema.js";
+import { bundleVersions, callLines, maps, runMembers, runs } from "./schema.js";
 
 const botTimeoutMs = 5000;
 const voiceLeaseWaitMs = 12 * 1000;
@@ -59,6 +59,32 @@ export async function coachVoice(discordId: string): Promise<Voice | null> {
   if (!speaker) return null;
   const [run] = await db.select({ voice: runs.voice }).from(runs).where(eq(runs.id, speaker.runId));
   return run?.voice ?? null;
+}
+
+export async function preparedLines(discordId: string): Promise<{ voice: Voice; lines: string[] } | null> {
+  const speaker = await speakerOf(discordId);
+  if (!speaker) return null;
+  const [row] = await db
+    .select({ voice: runs.voice, language: runs.language, bundle: bundleVersions.bundle })
+    .from(runs)
+    .innerJoin(maps, and(eq(maps.game, runs.game), eq(maps.map, runs.map)))
+    .innerJoin(bundleVersions, and(eq(bundleVersions.game, maps.game), eq(bundleVersions.map, maps.map), eq(bundleVersions.version, maps.latestVersion)))
+    .where(and(eq(runs.id, speaker.runId), isNull(runs.closedAt)));
+  if (!row) return null;
+  const lang = row.language;
+  const fixed = characterOf(row.voice).lines[lang];
+  const lines = [
+    ...row.bundle.steps.flatMap((step) => [
+      ...[step.ladder, ...step.parts.map((part) => part.ladder)].flat().flatMap((rung) => [rung.text[lang], ...rung.alts.map((alt) => alt.text[lang])]),
+      step.onSuccess.text[lang],
+      ...step.headsUps.map((headsUp) => headsUp.text[lang]),
+    ]),
+    fixed.round,
+    ...fixed.hold,
+    ...fixed.unheard,
+    ...fixed.busy,
+  ];
+  return { voice: row.voice, lines: [...new Set(lines)] };
 }
 
 export async function keepCallLine(line: CallLine): Promise<boolean> {

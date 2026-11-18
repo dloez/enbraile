@@ -2,6 +2,7 @@ import asyncio
 import ctypes
 import gc
 import glob
+import hashlib
 import io
 import json
 import logging
@@ -54,6 +55,9 @@ DEFAULT_VOICE = os.environ.get("DEFAULT_VOICE", VOICES[0] if VOICES else "")
 WARM_VOICES = [name.strip() for name in os.environ.get("WARM_VOICES", DEFAULT_VOICE).split(",") if name.strip()]
 LOAD_WAIT_S = float(os.environ.get("LOAD_WAIT_S", "30"))
 FOLLOW_UP_S = 8
+CLIPS = DATA / "clips"
+CLIP_WAIT_S = 10
+PREPARE_IDLE_S = 5
 CHATTERBOX_PRESETS = {"chatterbox": (0.5, 0.5), "chatterbox-expressive": (0.8, 0.3)}
 CHATTERBOX_BASE = ("ResembleAI/chatterbox", ["ve.pt", "conds.pt", "s3gen.pt", "Cangjie5_TC.json"])
 CHATTERBOX_SPAIN = ("ResembleAI/Chatterbox-Multilingual-es-es", ["t3_es_es.safetensors", "grapheme_mtl_merged_expanded_v1.json"])
@@ -281,6 +285,21 @@ class Richtofen:
 ENGINES = {"piper": (Piper, None), "richtofen": (Richtofen, None)} | {name: (Chatterbox, preset) for name, preset in CHATTERBOX_PRESETS.items()}
 
 
+def seconds(wav):
+    return sf.info(io.BytesIO(wav)).duration
+
+
+def fingerprint(name):
+    kind, preset = ENGINES[name]
+    if kind is Richtofen:
+        parts = [str(RICHTOFEN_STEPS)] + [f"{path.name}:{path.stat().st_size}:{int(path.stat().st_mtime)}" for path in sorted(RICHTOFEN_DIR.iterdir()) if path.is_file()]
+    elif kind is Piper:
+        parts = [PIPER_VOICE]
+    else:
+        parts = [repr(preset)]
+    return hashlib.sha256("\n".join([name, *parts]).encode()).hexdigest()[:12]
+
+
 def frame(header, body):
     head = json.dumps(header).encode()
     return struct.pack(">I", len(head)) + head + body
@@ -319,6 +338,14 @@ class Worker:
         self.socket = None
         self.turn = asyncio.Lock()
         self.using = asyncio.Lock()
+        self.heard = asyncio.Queue()
+        self.making = 0
+        self.quiet = asyncio.Event()
+        self.quiet.set()
+        self.last_say = 0.0
+        self.prints = {}
+        self.to_prepare = {}
+        self.prepared = asyncio.Event()
         self.changed = asyncio.Condition()
         self.wake = asyncio.Event()
         log(f"ready: {WHISPER_MODEL}, voices {', '.join(VOICES)} (default {DEFAULT_VOICE}), loaded {', '.join(self.loaded()) or 'none'} in {time.time() - started:.1f}s")
@@ -361,6 +388,36 @@ class Worker:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
+    def cached(self, name, text):
+        key = (name, text)
+        if key in self.clips:
+            return self.clips[key]
+        if name not in self.prints:
+            self.prints[name] = fingerprint(name)
+        path = CLIPS / f"{name}-{self.prints[name]}" / f"{hashlib.sha256(text.encode()).hexdigest()[:24]}.ogg"
+        if path.exists():
+            self.clips[key] = path.read_bytes()
+            return self.clips[key]
+        return None
+
+    def keep(self, name, text, audio):
+        self.clips[(name, text)] = audio
+        if name not in self.prints:
+            self.prints[name] = fingerprint(name)
+        folder = CLIPS / f"{name}-{self.prints[name]}"
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{hashlib.sha256(text.encode()).hexdigest()[:24]}.ogg").write_bytes(audio)
+
+    async def make(self, text, name):
+        self.making += 1
+        self.quiet.clear()
+        try:
+            return await asyncio.to_thread(self.speak, text, name)
+        finally:
+            self.making -= 1
+            if not self.making:
+                self.quiet.set()
+
     def ack(self, word):
         spec = self.triggers.get(word)
         if not isinstance(spec, dict):
@@ -382,15 +439,15 @@ class Worker:
             if not isinstance(spec, dict) or spec.get("voice") not in self.loaded():
                 continue
             for line in spec.get("lines", []):
-                key = (spec["voice"], line)
-                if key in self.clips:
+                if self.cached(spec["voice"], line) is not None:
                     continue
                 async with self.turn:
                     async with self.using:
                         if spec["voice"] not in self.loaded():
                             break
                         try:
-                            self.clips[key] = await asyncio.to_thread(self.speak, line, spec["voice"])
+                            audio, _ = await self.make(line, spec["voice"])
+                            self.keep(spec["voice"], line, audio)
                         except Exception as error:
                             log(f"ack in {spec['voice']} failed: {error}")
                             break
@@ -475,7 +532,43 @@ class Worker:
 
     def speak(self, text, name):
         kind, preset = ENGINES[name]
-        return opus(self.engines[kind].wav(text, preset))
+        wav = self.engines[kind].wav(text, preset)
+        return opus(wav), seconds(wav)
+
+    async def prepare(self):
+        while True:
+            await self.prepared.wait()
+            self.prepared.clear()
+            for name in list(self.to_prepare):
+                lines = self.to_prepare.get(name, [])
+                if name not in self.loaded():
+                    continue
+                missing = [line for line in lines if self.cached(name, line) is None]
+                made = 0
+                started = time.time()
+                for line in missing:
+                    if self.prepared.is_set() or name not in self.loaded():
+                        break
+                    while not self.heard.empty() or self.turn.locked() or time.time() - self.last_say < PREPARE_IDLE_S:
+                        await asyncio.sleep(1)
+                    if self.cached(name, line) is not None:
+                        continue
+                    async with self.turn:
+                        async with self.using:
+                            if name not in self.loaded():
+                                break
+                            try:
+                                audio, _ = await self.make(line, name)
+                            except Exception as error:
+                                log(f"prepare in {name} failed: {error}")
+                                continue
+                            self.keep(name, line, audio)
+                            made += 1
+                left = sum(self.cached(name, line) is None for line in lines)
+                log(f"prepared {name}: {len(lines)} lines, {len(lines) - len(missing)} kept, {made} made in {time.time() - started:.0f}s, {left} left")
+                if left and made and not self.prepared.is_set():
+                    self.prepared.set()
+                    await asyncio.sleep(PREPARE_IDLE_S)
 
     async def stream_say(self, socket, id, engine, text):
         loop = asyncio.get_running_loop()
@@ -521,7 +614,9 @@ class Worker:
         log(f"streamed in {time.time() - started:.2f}s, first audio after {first or 0:.2f}s")
 
     async def on_say(self, socket, id, text, voice):
+        self.last_say = time.time()
         async with self.turn:
+            self.last_say = time.time()
             name = voice if voice in VOICES else DEFAULT_VOICE
             if name not in self.loaded():
                 name = await self.voice_for(name)
@@ -530,6 +625,11 @@ class Worker:
                     await socket.send(json.dumps({"type": "failed", "id": id, "error": "no voice is loaded"}))
                     return
                 engine = self.engines[ENGINES[name][0]]
+                kept = self.cached(name, text)
+                if kept is not None:
+                    await socket.send(frame({"type": "audio", "id": id}, kept))
+                    log("spoke from the cache")
+                    return
                 if STREAM and hasattr(engine, "stream"):
                     try:
                         await self.stream_say(socket, id, engine, text)
@@ -539,16 +639,33 @@ class Worker:
                     return
                 try:
                     started = time.time()
-                    audio = await asyncio.to_thread(self.speak, text, name)
-                    log(f"spoke {len(text)} chars in {time.time() - started:.2f}s")
+                    audio, length = await self.make(text, name)
+                    log(f"spoke {length:.1f}s of audio in {time.time() - started:.2f}s")
                 except Exception as error:
                     log(f"say in {name} failed: {error}")
                     await socket.send(json.dumps({"type": "failed", "id": id, "error": f"{name} could not speak"}))
                     return
             await socket.send(frame({"type": "audio", "id": id}, audio))
 
+    async def listen(self):
+        while True:
+            socket, user, clip, at = await self.heard.get()
+            try:
+                async with asyncio.timeout(CLIP_WAIT_S):
+                    await self.quiet.wait()
+            except TimeoutError:
+                pass
+            try:
+                await self.on_clip(socket, user, clip, at)
+            except ConnectionClosed:
+                pass
+            except Exception as error:
+                log(f"clip failed: {error}")
+
     async def serve(self):
         asyncio.create_task(self.reconcile())
+        asyncio.create_task(self.listen())
+        asyncio.create_task(self.prepare())
         async for socket in connect(f"{BOT_URL}/voice/connect", additional_headers={"Authorization": f"Bearer {SECRET}"}, max_size=None):
             log("connected to", BOT_URL)
             self.socket = socket
@@ -558,7 +675,7 @@ class Worker:
                     if isinstance(message, bytes):
                         header, body = unframe(message)
                         if header.get("type") == "clip":
-                            await self.on_clip(socket, header["user"], body, header.get("at"))
+                            self.heard.put_nowait((socket, header["user"], body, header.get("at")))
                     else:
                         data = json.loads(message)
                         if data.get("type") == "triggers":
@@ -567,6 +684,10 @@ class Worker:
                             asyncio.create_task(self.prepare_acks())
                         elif data.get("type") == "want":
                             await self.want(data["voices"])
+                        elif data.get("type") == "prepare":
+                            if data.get("voice") in VOICES:
+                                self.to_prepare[data["voice"]] = [line for line in data.get("lines", []) if isinstance(line, str) and line.strip()]
+                                self.prepared.set()
                         elif data.get("type") == "say":
                             asyncio.create_task(self.on_say(socket, data["id"], data["text"], data.get("voice")))
             except ConnectionClosed:
