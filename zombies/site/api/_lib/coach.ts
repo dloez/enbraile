@@ -564,7 +564,7 @@ const numbered = new RegExp(`\\b(?:(?:${named})\\s+(?:no?\\s*)?(?:${amount})|(?:
 
 const meta = /\bs\d+(?:p\d+)?\b|\b(?:alts?|ladders?|threads?|cards?|tarjetas?|escaleras?|the players|los jugadores|give_hint|repeat_hint|record_progress)\b/;
 
-const english = new Set(["the", "they", "they're", "is", "are", "and", "this", "that", "which", "what", "with", "their", "doesn't", "should", "would", "hint", "players", "next", "match", "matches"]);
+const english = new Set(["the", "they", "they're", "is", "are", "and", "this", "that", "which", "what", "with", "their", "doesn't", "should", "would", "hint", "players", "next", "match", "matches", "i", "in", "you", "we", "to", "of", "for", "it", "be", "have", "has", "does", "need", "about", "player", "asked", "asking", "respond", "reply", "answer", "i'm", "i'll", "let's", "just", "only", "nothing"]);
 
 const englishWords = (text: string) => text.split(/[^a-z']+/).filter((word) => english.has(word)).length;
 
@@ -605,6 +605,7 @@ const flat = (text: string) =>
 
 class Speech {
   readonly spoken: string[] = [];
+  readonly headsUps: { stepId: string; position: number; text: string }[] = [];
   private readonly prepared: string[] = [];
   private buffer = "";
   private unhanded: Set<string> | null = null;
@@ -682,6 +683,15 @@ class Speech {
           : wordRuns(repeated).some((run) => this.unhandedRuns().has(run))
             ? "echoes-unhanded"
             : null;
+    if (caught === "echoes-unhanded" && !this.headsUps.length) {
+      const offered = this.offeredHeadsUp(new Set(wordRuns(repeated)));
+      if (offered) {
+        this.state.headsUps.add(headsUpKey(offered.stepId, offered.position));
+        this.headsUps.push(offered);
+        this.add(offered.text);
+        return;
+      }
+    }
     if (caught && !(caught === "judging" && this.confirming)) {
       this.violations.push(caught);
       if (caught !== "judging") this.muted = true;
@@ -711,6 +721,19 @@ class Speech {
     this.handing();
     this.own += 1;
     this.add(text);
+  }
+
+  private offeredHeadsUp(runs: Set<string>): { stepId: string; position: number; text: string } | null {
+    const unknown = unknownEntries(this.state);
+    for (const step of this.state.bundle.steps) {
+      if (!stepOpen(this.state, step.id)) continue;
+      for (const [position, headsUp] of step.headsUps.entries()) {
+        if (this.state.headsUps.has(headsUpKey(step.id, position)) || !headsUp.mentions.every((id) => this.state.known.has(id)) || namedIn(headsUp.when, unknown).length) continue;
+        const text = headsUp.text[this.state.language];
+        if (wordRuns(flat(text)).some((run) => runs.has(run))) return { stepId: step.id, position, text };
+      }
+    }
+    return null;
   }
 
   private unhandedRuns(): Set<string> {
@@ -1121,7 +1144,7 @@ export async function coachTurn(
           if (!ladder || !headsUp || !stepOpen(state, ladder.stepId) || !headsUp.mentions.every((id) => state.known.has(id)) || namedIn(headsUp.when, unknownEntries(state)).length) {
             violations.push("unknown-heads-up");
             content = "There is no such heads-up you may give.";
-          } else if (headsUpSaid) {
+          } else if (headsUpSaid || speech.headsUps.length) {
             content = "One heads-up per reply.";
           } else {
             const text = headsUp.text[state.language];
@@ -1200,6 +1223,7 @@ export async function coachTurn(
       if (complete) break;
       conversation.push({ role: "user", content: results });
     }
+    for (const said of speech.headsUps) await db.insert(headsUpsGiven).values({ runId, stepId: said.stepId, position: said.position, text: said.text, bundleVersion: state.version }).onConflictDoNothing();
     if (round && hinted) await db.update(runs).set({ roundAskedAt: askedBefore }).where(eq(runs.id, runId));
     else if (round) speech.add(state.character.lines[state.language].round);
     if (!failed && addressed && !speech.spoken.length && !cards.length) {
