@@ -243,17 +243,25 @@ function reportable(state: State, ladder: Ladder): boolean {
   return ladder.partId === null && !isDone(state, ladder) && (!ladder.optional || isOpen(state, ladder)) && !!doneWhen && !namedIn(doneWhen, unknownEntries(state)).length;
 }
 
-const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps their newest line reports as finished. A step is finished when they report the outcome its "Done when" describes, in any words. The players speak Spanish or English, often through speech recognition, and call things by their own words: match what they mean, not the wording of "Done when". Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. Call report once, with the handles of the steps the newest line reports finished, or none.`;
+const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps their newest line reports as finished. A step is finished when they report the outcome its "Done when" describes, about the same thing it names, in any words. A line about a different item finishes nothing. The players speak Spanish or English, often through speech recognition, and call things by their own words: match what they mean, not the wording of "Done when". Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. A question never reports a step finished. When prepared answers are listed and the newest line asks something one of them is for (its "for when" describes what they ask, in any words), give that answer's handle as answer; otherwise leave it out. Call report once.`;
 
 const reportTool: Anthropic.Tool = {
   name: "report",
   description: "The steps the newest line reports as finished.",
   input_schema: {
     type: "object",
-    properties: { done: { type: "array", items: { type: "string" }, description: "Handles such as s4, or empty." } },
+    properties: {
+      done: { type: "array", items: { type: "string" }, description: "Handles such as s4, or empty." },
+      answer: { type: "string", description: "The handle of the prepared answer the newest line asks for, such as a2, or empty." },
+    },
     required: ["done"],
     additionalProperties: false,
   },
+};
+
+const doneOnly: Anthropic.Tool = {
+  ...reportTool,
+  input_schema: { type: "object", properties: { done: { type: "array", items: { type: "string" }, description: "Handles such as s4, or empty." } }, required: ["done"], additionalProperties: false },
 };
 
 const milestoneOf = (state: State, ladder: Ladder) => {
@@ -270,34 +278,62 @@ function described(state: State, ladder: Ladder): string {
   return `- ${ladder.handle} (${step.kind ?? "step"}): ${quote(step.doneWhen!)}${milestone ? `; reaching it is ${quote(milestone)}` : ""}${names.length ? `; names they may use: ${names.join("; ")}` : ""}`;
 }
 
-async function detectProgress(api: Anthropic, state: State, recent: string[], signal: AbortSignal): Promise<{ ladders: Ladder[]; log: CallLog }> {
+const asksQuestion = (line: string) => /[?¿]/.test(line) || /\b(?:como|que|por que|para que|cuando|donde|cual|se puede|podemos|how|what|why|when|where|which|can we|is there)\b/.test(flat(line.replace(/^[^:]*: /, "")));
+
+type OfferedHeadsUp = { stepId: string; position: number; when: string; text: string };
+
+function offeredHeadsUps(state: State): OfferedHeadsUp[] {
+  const unknown = unknownEntries(state);
+  return state.bundle.steps.flatMap((step) =>
+    stepOpen(state, step.id)
+      ? step.headsUps.flatMap((headsUp, position) =>
+          state.headsUps.has(headsUpKey(step.id, position)) || !headsUp.mentions.every((id) => state.known.has(id)) || namedIn(headsUp.when, unknown).length
+            ? []
+            : [{ stepId: step.id, position, when: headsUp.when, text: headsUp.text[state.language] }],
+        )
+      : [],
+  );
+}
+
+const handlesOf = (call: Anthropic.ContentBlock | undefined, key: string): Set<string> => {
+  const value = call?.type === "tool_use" ? (call.input as Record<string, unknown>)[key] : undefined;
+  return new Set(Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : typeof value === "string" && value ? [value] : []);
+};
+
+type Detected = { ladders: Ladder[]; headsUp: OfferedHeadsUp | null; logs: CallLog[] };
+
+async function detectProgress(api: Anthropic, state: State, recent: string[], signal: AbortSignal): Promise<Detected> {
   const candidates = state.ladders.filter(
     (ladder) => reportable(state, ladder) && withRequires(state.bundle.steps, ladder.stepId).filter((stepId) => stepId !== ladder.stepId && !state.done.has(stepId)).length <= (milestoneOf(state, ladder) === null ? maxMissing : maxMilestoneMissing),
   );
   const log: CallLog = { stopReason: null, refused: false, refusalCategory: null, violations: [], error: null, latencyMs: 0, usage: null };
-  if (!candidates.length) return { ladders: [], log };
+  const answers = asksQuestion(recent.at(-1) ?? "") ? offeredHeadsUps(state) : [];
+  if (!candidates.length && !answers.length) return { ladders: [], headsUp: null, logs: [log] };
   const started = Date.now();
-  const listed = candidates.map((ladder) => described(state, ladder)).join("\n");
+  const listed = candidates.map((ladder) => described(state, ladder)).join("\n") || "- none";
+  const answerList = answers.length ? `\n\nPrepared answers:\n${answers.map((answer, index) => `- a${index + 1}: for when ${quote(answer.when)}`).join("\n")}` : "";
   try {
     const response = await api.messages.create({
       model: model(),
       max_tokens: 200,
       system: detectorPrompt,
-      tools: [reportTool],
+      tools: [answers.length ? reportTool : doneOnly],
       tool_choice: { type: "tool", name: "report" },
       thinking: { type: "disabled" },
-      messages: [{ role: "user", content: `Steps not recorded as finished:\n${listed}\n\nThe chat, oldest first; the last line is the newest:\n${recent.join("\n")}` }],
+      messages: [{ role: "user", content: `Steps not recorded as finished:\n${listed}${answerList}\n\nThe chat, oldest first; the last line is the newest:\n${recent.join("\n")}` }],
     }, { signal: AbortSignal.any([signal, AbortSignal.timeout(callDeadlineMs)]) });
     log.latencyMs = Date.now() - started;
     log.usage = response.usage;
     log.stopReason = response.stop_reason;
     const call = response.content.find((block) => block.type === "tool_use");
-    const handles = new Set(Array.isArray((call?.input as { done?: unknown })?.done) ? ((call!.input as { done: unknown[] }).done.filter((entry) => typeof entry === "string") as string[]) : []);
-    return { ladders: candidates.filter((ladder) => handles.has(ladder.handle)), log };
+    const handles = handlesOf(call, "done");
+    const picked = [...handlesOf(call, "answer")][0];
+    const headsUp = picked && /^a\d+$/.test(picked) ? (answers[Number(picked.slice(1)) - 1] ?? null) : null;
+    return { ladders: candidates.filter((ladder) => handles.has(ladder.handle)), headsUp, logs: [log] };
   } catch (error) {
     log.latencyMs = Date.now() - started;
     log.error = error instanceof Error ? error.message : String(error);
-    return { ladders: [], log };
+    return { ladders: [], headsUp: null, logs: [log] };
   }
 }
 
@@ -605,7 +641,7 @@ const flat = (text: string) =>
 
 class Speech {
   readonly spoken: string[] = [];
-  readonly headsUps: { stepId: string; position: number; text: string }[] = [];
+  readonly headsUps: OfferedHeadsUp[] = [];
   private readonly prepared: string[] = [];
   private buffer = "";
   private unhanded: Set<string> | null = null;
@@ -686,9 +722,7 @@ class Speech {
     if (caught === "echoes-unhanded" && !this.headsUps.length) {
       const offered = this.offeredHeadsUp(new Set(wordRuns(repeated)));
       if (offered) {
-        this.state.headsUps.add(headsUpKey(offered.stepId, offered.position));
-        this.headsUps.push(offered);
-        this.add(offered.text);
+        this.sayHeadsUp(offered);
         return;
       }
     }
@@ -723,17 +757,14 @@ class Speech {
     this.add(text);
   }
 
-  private offeredHeadsUp(runs: Set<string>): { stepId: string; position: number; text: string } | null {
-    const unknown = unknownEntries(this.state);
-    for (const step of this.state.bundle.steps) {
-      if (!stepOpen(this.state, step.id)) continue;
-      for (const [position, headsUp] of step.headsUps.entries()) {
-        if (this.state.headsUps.has(headsUpKey(step.id, position)) || !headsUp.mentions.every((id) => this.state.known.has(id)) || namedIn(headsUp.when, unknown).length) continue;
-        const text = headsUp.text[this.state.language];
-        if (wordRuns(flat(text)).some((run) => runs.has(run))) return { stepId: step.id, position, text };
-      }
-    }
-    return null;
+  private offeredHeadsUp(runs: Set<string>): OfferedHeadsUp | null {
+    return offeredHeadsUps(this.state).find((offered) => wordRuns(flat(offered.text)).some((run) => runs.has(run))) ?? null;
+  }
+
+  sayHeadsUp(offered: OfferedHeadsUp): void {
+    this.state.headsUps.add(headsUpKey(offered.stepId, offered.position));
+    this.headsUps.push(offered);
+    this.add(offered.text);
   }
 
   private unhandedRuns(): Set<string> {
@@ -932,7 +963,7 @@ export async function coachTurn(
     let held: ReplyEvent[] | null = pending ? [] : null;
     const out = (event: ReplyEvent) => (held ? held.push(event) : emit(event));
     void pending?.then((found) => {
-      if (found.ladders.length || !held) return;
+      if (found.ladders.length || found.headsUp || !held) return;
       const queued = held;
       held = null;
       for (const event of queued) emit(event);
@@ -946,9 +977,18 @@ export async function coachTurn(
     let failed = false;
     let onward = null as { next: string | null; quiet: boolean; result: number } | null;
     const askedBefore = state.roundAskedAt;
-    const record = async (detected: Ladder[]) => {
+    const record = async (detected: Ladder[], answer: OfferedHeadsUp | null) => {
       const notes: string[] = [];
       let unsaid = false;
+      if (answer) {
+        speech.sayHeadsUp(answer);
+        headsUpSaid = true;
+      }
+      if (!detected.length) {
+        const playerTurn = conversation[conversation.length - 1]!;
+        playerTurn.content = `${playerTurn.content as string}\n(Not a player: code said for you the prepared answer to their question. Add nothing, reply with exactly ${silence})`;
+        return;
+      }
       for (const ladder of detected) {
         if (isDone(state, ladder)) continue;
         await markSteps(state, ladder, "done");
@@ -980,12 +1020,12 @@ export async function coachTurn(
       if (!pending) return false;
       const found = await pending;
       pending = null;
-      if (found.log.latencyMs) await logCall(runId, found.log);
-      if (found.ladders.length) {
+      for (const log of found.logs) if (log.latencyMs) await logCall(runId, log);
+      if (found.ladders.length || found.headsUp) {
         held = null;
         violations.splice(0);
         speech = new Speech(state, out, violations, earlier);
-        await record(found.ladders);
+        await record(found.ladders, found.headsUp);
         return true;
       }
       const queued = held ?? [];
