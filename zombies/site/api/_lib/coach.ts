@@ -243,7 +243,7 @@ function reportable(state: State, ladder: Ladder): boolean {
   return ladder.partId === null && !isDone(state, ladder) && (!ladder.optional || isOpen(state, ladder)) && !!doneWhen && !namedIn(doneWhen, unknownEntries(state)).length;
 }
 
-const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps their newest line reports as finished. A step is finished when they report the outcome its "Done when" describes, about the same thing it names, in any words. A line about a different item finishes nothing. The players speak Spanish or English, often through speech recognition, and call things by their own words: match what they mean, not the wording of "Done when". Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. A question never reports a step finished. When prepared answers are listed and the newest line asks something one of them is for (its "for when" describes what they ask, in any words), give that answer's handle as answer; otherwise leave it out. Call report once.`;
+const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps their newest line reports as finished. A step is finished when they report the outcome its "Done when" describes, about the same thing it names, in any words. A line about a different item finishes nothing. Only a step whose outcome the newest line itself states is finished, never one the line merely relates to. Getting partway is not finished: finding, reaching, seeing, knocking down or picking up something the outcome needs, when the "Done when" names a later result. The players speak Spanish or English, often through speech recognition, and call things by their own words: match what they mean, not the wording of "Done when". Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. A question never reports a step finished. When prepared answers are listed and the newest line asks something one of them is for (its "for when" describes what they ask, in any words), give that answer's handle as answer; otherwise leave it out. Call report once.`;
 
 const reportTool: Anthropic.Tool = {
   name: "report",
@@ -624,6 +624,10 @@ const judging =
 
 const hintRequest = /\b(?:dame|danos|dime|dinos|quiero|queremos|necesito|necesitamos|otra|siguiente|mas|nueva|give|another|next|more|need|want)\b.*\b(?:pista|pistas|hint|hints|ayuda|clue)\b|\b(?:pista|pistas|hint|hints|ayuda|clue)\b.*\b(?:mas facil|siguiente|otra|nueva|next|another|more|easier)\b|\b(?:ayudanos|ayudame|help us|help me)\b/;
 
+const hintOffer = /\b(?:pista|pistas|hint|hints|ayuda|help|solucion|respuesta|answer)\b/;
+
+const affirmative = /^(?:(?:si|vale|venga|dale|claro|porfa|por favor|adelante|yes|yeah|sure|ok|okay|please|go on)\b\s*)+$/;
+
 const hintRepeat = /\b(?:repite|repitela|repetir|otra vez|de nuevo|explica|explicame|explicanos|again|repeat|explain)\b/;
 
 const asksHint = (asked: string) => {
@@ -740,7 +744,7 @@ class Speech {
     }
     if (caught && !(caught === "judging" && this.confirming)) {
       this.drop(caught, text);
-      if (caught !== "judging") this.muted = true;
+      if (caught === "echoes-unhanded" || (caught === "meta" && this.spoken.length)) this.muted = true;
       return;
     }
     if (asksRound.test(plain)) {
@@ -965,7 +969,9 @@ export async function coachTurn(
     if (lastTurn?.role !== "user") return "ok";
     const asked = typeof lastTurn.content === "string" ? lastTurn.content : "";
     const addressed = ask.kind === "message" && (ask.spoken || isAddressed(asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? ""));
-    if (ask.kind === "message" && asksHint(asked) && !reportsProgress(asked)) {
+    const offeredBefore = [...conversation].reverse().find((turn) => turn.role === "assistant" && typeof turn.content === "string")?.content as string | undefined;
+    const acceptsOffer = !!offeredBefore && hintOffer.test(flat(offeredBefore.split(sentenceEnd).filter(Boolean).at(-1) ?? "")) && /[?¿]\s*$/.test(offeredBefore.trim()) && affirmative.test(flat(asked.split("\n").at(-1)?.replace(/^[^:]*: /, "") ?? ""));
+    if (ask.kind === "message" && (acceptsOffer || (asksHint(asked) && !reportsProgress(asked)))) {
       const opened = state.recent
         .map((key) => state.ladders.find((ladder) => keyOf(ladder) === key))
         .filter((ladder): ladder is Ladder => !!ladder && !isDone(state, ladder) && isReady(stepOf(state, ladder), state.done) && !!ladder.rungs[state.given.get(keyOf(ladder)) ?? 0]);
