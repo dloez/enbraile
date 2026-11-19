@@ -64,6 +64,11 @@ CHATTERBOX_BASE = ("ResembleAI/chatterbox", ["ve.pt", "conds.pt", "s3gen.pt", "C
 CHATTERBOX_SPAIN = ("ResembleAI/Chatterbox-Multilingual-es-es", ["t3_es_es.safetensors", "grapheme_mtl_merged_expanded_v1.json"])
 SENTENCE = re.compile(r"(?<=[.!?…])\s+")
 GAP_S = 0.15
+FADE_IN_S = 0.008
+FADE_OUT_S = 0.02
+EDGE_PAD_S = 0.03
+SHORT_CLIP_S = 0.3
+SPEAK_TRIES = 3
 
 
 def log(*parts):
@@ -270,8 +275,25 @@ class Richtofen:
 
     def part(self, text):
         self.tts.model.token_hop_len = RICHTOFEN_HOP
+        fade_in = int(self.rate * FADE_IN_S)
+        fade_out = int(self.rate * FADE_OUT_S)
+        held = None
+        first = True
         for chunk in self.tts.inference_zero_shot(spoken_form(text), "", "", zero_shot_spk_id="richtofen", stream=True, text_frontend=False):
-            yield chunk["tts_speech"].float().cpu().numpy().reshape(-1)
+            audio = chunk["tts_speech"].float().cpu().numpy().reshape(-1).copy()
+            if first:
+                count = min(fade_in, len(audio))
+                audio[:count] *= np.linspace(0.0, 1.0, count, dtype=np.float32)
+                yield np.zeros(int(self.rate * EDGE_PAD_S), dtype=np.float32)
+                first = False
+            if held is not None:
+                yield held
+            held = audio
+        if held is not None:
+            count = min(fade_out, len(held))
+            held[len(held) - count :] *= np.linspace(1.0, 0.0, count, dtype=np.float32)
+            yield held
+            yield np.zeros(int(self.rate * EDGE_PAD_S), dtype=np.float32)
 
     def stream(self, text):
         for index, part in enumerate(merged(sentences(text))):
@@ -293,7 +315,7 @@ def seconds(wav):
 def fingerprint(name):
     kind, preset = ENGINES[name]
     if kind is Richtofen:
-        parts = [str(RICHTOFEN_STEPS)] + [f"{path.name}:{path.stat().st_size}:{int(path.stat().st_mtime)}" for path in sorted(RICHTOFEN_DIR.iterdir()) if path.is_file()]
+        parts = [str(RICHTOFEN_STEPS), f"edges {FADE_IN_S} {FADE_OUT_S} {EDGE_PAD_S}"] + [f"{path.name}:{path.stat().st_size}:{int(path.stat().st_mtime)}" for path in sorted(RICHTOFEN_DIR.iterdir()) if path.is_file()]
     elif kind is Piper:
         parts = [PIPER_VOICE]
     else:
@@ -529,8 +551,14 @@ class Worker:
 
     def speak(self, text, name):
         kind, preset = ENGINES[name]
-        wav = self.engines[kind].wav(text, preset)
-        return opus(wav), seconds(wav)
+        letters = len(re.sub(r"[^a-záéíóúñü]", "", text.lower()))
+        for _ in range(SPEAK_TRIES):
+            wav = self.engines[kind].wav(text, preset)
+            length = seconds(wav)
+            if letters < 2 or length >= SHORT_CLIP_S + 2 * EDGE_PAD_S:
+                break
+            log(f"{name} made {length:.2f}s for {letters} letters, making it again")
+        return opus(wav), length
 
     async def prepare(self):
         while True:
