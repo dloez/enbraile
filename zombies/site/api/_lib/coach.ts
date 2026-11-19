@@ -602,7 +602,13 @@ const meta = /\bs\d+(?:p\d+)?\b|\b(?:alts?|ladders?|threads?|cards?|tarjetas?|es
 
 const english = new Set(["the", "they", "they're", "is", "are", "and", "this", "that", "which", "what", "with", "their", "doesn't", "should", "would", "hint", "players", "next", "match", "matches", "i", "in", "you", "we", "to", "of", "for", "it", "be", "have", "has", "does", "need", "about", "player", "asked", "asking", "respond", "reply", "answer", "i'm", "i'll", "let's", "just", "only", "nothing"]);
 
-const englishWords = (text: string) => text.split(/[^a-z']+/).filter((word) => english.has(word)).length;
+const spanish = new Set(["de", "la", "el", "los", "las", "un", "una", "y", "que", "en", "es", "por", "con", "se", "lo", "me", "te", "os", "al", "del", "para", "mi", "tu", "su", "ya", "muy", "mas", "pero", "como", "si", "esto", "eso", "esta", "este", "aqui", "hay", "vale", "bien", "vosotros", "estais", "habeis", "teneis"]);
+
+const readsEnglish = (text: string, plain: string) => {
+  const words = plain.split(/[^a-z']+/).filter(Boolean);
+  const found = words.filter((word) => english.has(word)).length;
+  return found >= 2 || (found >= 1 && words.length >= 3 && !/[áéíóúñ¿¡]/i.test(text) && !words.some((word) => spanish.has(word)));
+};
 
 const runLength = 5;
 
@@ -712,7 +718,7 @@ class Speech {
     if (this.muted) return;
     const plain = text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
     const caught =
-      meta.test(plain) || (this.state.language === "es" && englishWords(plain) >= 2)
+      meta.test(plain) || (this.state.language === "es" && readsEnglish(text, plain))
         ? "meta"
         : judging.test(plain)
           ? "judging"
