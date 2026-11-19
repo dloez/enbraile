@@ -120,6 +120,13 @@
       "when": 1794926529553,
       "tag": "0016_close_run",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795047978489,
+      "tag": "0017_call_dropped",
+      "breakpoints": true
     }
   ]
 }

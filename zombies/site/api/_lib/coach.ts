@@ -564,6 +564,7 @@ async function markSteps(state: State, ladder: Ladder, status: "started" | "done
 }
 
 type CallLog = {
+  dropped?: Dropped[];
   stopReason: string | null;
   refused: boolean;
   refusalCategory: string | null;
@@ -586,6 +587,7 @@ async function logCall(runId: string, log: CallLog): Promise<void> {
     refused: log.refused,
     refusalCategory: log.refusalCategory,
     violations: log.violations,
+    dropped: log.dropped ?? [],
     error: log.error,
   });
 }
@@ -645,6 +647,8 @@ const flat = (text: string) =>
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
 
+type Dropped = { tag: string; text: string };
+
 class Speech {
   readonly spoken: string[] = [];
   readonly headsUps: OfferedHeadsUp[] = [];
@@ -660,7 +664,9 @@ class Speech {
     private readonly state: State,
     private readonly emit: (event: ReplyEvent) => void,
     private readonly violations: string[],
+    private readonly dropped: Dropped[],
     private readonly earlier: Set<string> = new Set(),
+    private readonly heard: Set<string> = new Set(),
   ) {}
 
   push(delta: string): void {
@@ -696,22 +702,22 @@ class Speech {
     const text = raw.replace(/\s+/g, " ").trim();
     if (!text || text.replace(/[\s.…]/g, "") === "" || text.includes(silence) || /^\([^()]{0,40}\)$/.test(text)) return;
     if (text.includes("[") || text.includes("]")) {
-      this.violations.push("brackets");
+      this.drop("brackets", text);
       return;
     }
     const repeated = flat(text);
     if (repeated.split(" ").length >= 3) {
       const contains = (line: string) => ` ${flat(line)} `.includes(` ${repeated} `);
       if (this.prepared.some((line) => ` ${line} `.includes(` ${repeated} `))) {
-        this.violations.push("repeated");
+        this.drop("repeated", text);
         return;
       }
       if ([...this.state.givenLines.values()].flat().some(contains)) {
-        this.violations.push("repeated");
+        this.drop("repeated", text);
         return;
       }
       if (this.earlier.has(repeated)) {
-        this.violations.push("repeated-own");
+        this.drop("repeated-own", text);
         return;
       }
     }
@@ -733,25 +739,29 @@ class Speech {
       }
     }
     if (caught && !(caught === "judging" && this.confirming)) {
-      this.violations.push(caught);
+      this.drop(caught, text);
       if (caught !== "judging") this.muted = true;
       return;
     }
     if (asksRound.test(plain)) {
-      this.violations.push("round-asked");
+      this.drop("round-asked", text);
       return;
     }
     const unknown = this.state.bundle.knowledge.filter((entry) => !this.state.known.has(entry.id));
     if (namedIn(text, unknown).length) {
-      this.violations.push("named-unknown");
+      this.drop("named-unknown", text);
       return;
     }
     if (showsNumber(text)) {
-      this.violations.push("number-shown");
+      this.drop("number-shown", text);
+      return;
+    }
+    if (namedIn(text, this.state.bundle.knowledge).some((id) => this.ahead().has(id))) {
+      this.drop("points-ahead", text);
       return;
     }
     if (this.own + (this.lead === null ? 0 : 1) >= maxOwnSentences) {
-      this.violations.push("too-long");
+      this.drop("too-long", text);
       return;
     }
     if (/:["»”')]*$/.test(text)) {
@@ -761,6 +771,20 @@ class Speech {
     this.handing();
     this.own += 1;
     this.add(text);
+  }
+
+  private drop(tag: string, text: string): void {
+    this.violations.push(tag);
+    this.dropped.push({ tag, text });
+  }
+
+  private ahead(): Set<string> {
+    const ids = (ladders: Ladder[]) => new Set(ladders.flatMap((ladder) => ladder.rungs.flatMap((rung) => [rung, ...rung.alts].flatMap((line) => [...line.mentions, ...line.reveals]))));
+    const reached = this.state.ladders.filter((ladder) => isOpen(this.state, ladder) || isDone(this.state, ladder));
+    const seen = ids(reached);
+    for (const step of this.state.bundle.steps.filter((entry) => this.state.done.has(entry.id))) for (const id of [...step.onSuccess.mentions, ...step.onSuccess.reveals]) seen.add(id);
+    const later = ids(this.state.ladders.filter((ladder) => !reached.includes(ladder)));
+    return new Set([...later].filter((id) => !seen.has(id) && !this.heard.has(id)));
   }
 
   private offeredHeadsUp(runs: Set<string>): OfferedHeadsUp | null {
@@ -861,7 +885,7 @@ async function skippedRungs(runId: string, handed: Handed[]): Promise<boolean> {
 }
 
 async function audit(state: State, text: string, handed: Handed[], openBefore: Set<string>, caught: string[]): Promise<string[]> {
-  const findings = caught.filter((finding) => finding !== "too-long");
+  const findings = caught.filter((finding) => finding !== "too-long" && finding !== "points-ahead");
   if (namedIn(text, unknownEntries(state)).length) findings.push("unknown-in-reply");
   if (await skippedRungs(state.runId, handed)) findings.push("rung-skipped");
   if (handed.some((entry) => entry.ladder.optional && !openBefore.has(keyOf(entry.ladder)))) findings.push("optional-offered");
@@ -956,6 +980,7 @@ export async function coachTurn(
     }
     const recent = conversation.flatMap((turn) => (typeof turn.content === "string" ? turn.content.split("\n") : [])).slice(-recentLines);
     const violations: string[] = [];
+    const dropped: Dropped[] = [];
     const caught: string[] = [];
     const handed: Handed[] = [];
     const openBefore = new Set(state.ladders.filter((ladder) => isOpen(state, ladder)).map(keyOf));
@@ -974,7 +999,7 @@ export async function coachTurn(
       held = null;
       for (const event of queued) emit(event);
     });
-    let speech = new Speech(state, out, violations, earlier);
+    let speech = new Speech(state, out, violations, dropped, earlier, heard);
     const cards: number[] = [];
     let hinted = false;
     let repeated = false;
@@ -1030,7 +1055,8 @@ export async function coachTurn(
       if (found.ladders.length || found.headsUp) {
         held = null;
         violations.splice(0);
-        speech = new Speech(state, out, violations, earlier);
+        dropped.splice(0);
+        speech = new Speech(state, out, violations, dropped, earlier, heard);
         await record(found.ladders, found.headsUp);
         return true;
       }
@@ -1068,6 +1094,7 @@ export async function coachTurn(
           continue;
         }
         log.violations = violations.splice(0);
+        log.dropped = dropped.splice(0);
         caught.push(...log.violations);
         await logCall(runId, log);
         failed = true;
@@ -1083,6 +1110,7 @@ export async function coachTurn(
       if (response.stop_reason === "refusal") {
         log.refused = true;
         log.violations = violations.splice(0);
+        log.dropped = dropped.splice(0);
         caught.push(...log.violations);
         log.refusalCategory = response.stop_details?.category ?? null;
         await logCall(runId, log);
@@ -1091,6 +1119,7 @@ export async function coachTurn(
       conversation.push({ role: "assistant", content: response.content });
       if (response.stop_reason !== "tool_use") {
         log.violations = violations.splice(0);
+        log.dropped = dropped.splice(0);
         caught.push(...log.violations);
         await logCall(runId, log);
         break;
@@ -1264,6 +1293,7 @@ export async function coachTurn(
         onward = null;
       }
       log.violations = violations.splice(0);
+      log.dropped = dropped.splice(0);
       caught.push(...log.violations);
       await logCall(runId, log);
       if (complete) break;

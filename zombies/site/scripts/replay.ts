@@ -72,7 +72,7 @@ for (const line of lines) {
     .where(and(eq(deliveries.runId, runId), gt(deliveries.id, delivered?.last ?? 0)))
     .orderBy(asc(deliveries.id));
   const calls = await db
-    .select({ latencyMs: coachCalls.latencyMs, inputTokens: coachCalls.inputTokens, cacheReadTokens: coachCalls.cacheReadTokens, outputTokens: coachCalls.outputTokens, violations: coachCalls.violations })
+    .select({ latencyMs: coachCalls.latencyMs, inputTokens: coachCalls.inputTokens, cacheReadTokens: coachCalls.cacheReadTokens, outputTokens: coachCalls.outputTokens, violations: coachCalls.violations, dropped: coachCalls.dropped })
     .from(coachCalls)
     .where(and(eq(coachCalls.runId, runId), gt(coachCalls.id, called?.last ?? 0)))
     .orderBy(asc(coachCalls.id));

@@ -28,7 +28,7 @@ Maps live in their own Postgres database, never pkmn's, through Drizzle with `pg
 | `heads_ups_given` | Each heads-up the coach gave in a run, so none is given twice |
 | `gaps` | Each time the coach held: the line asked, what the model said it was about, the holding line said, the bundle version, and the run's marks, open ladders, done steps and last lines at that moment; then the last version the coach was offered it again on, and when a later version's rung answered it and which delivery that was |
 | `feedback` | Each revision (its text, its message and the coach's line it refers to, with that line's card and newest rung) and each member's rating of a card (`obvious`, `right` or `vague`, one per member per card, the newest rung it was given on) |
-| `coach_calls` | Every Claude call: model, tokens, latency, stop reason, refusal and its category, the rules code caught the model breaking, and any error |
+| `coach_calls` | Every Claude call: model, tokens, latency, stop reason, refusal and its category, the rules code caught the model breaking, each sentence a filter dropped with its rule (`dropped`, so a replay's drops can be judged), and any error |
 | `audits` | Each reply of the coach's in which code found a rule broken: the coach's line it became (none when nothing was posted) and the findings |
 
 ## Map Bundles
@@ -127,7 +127,8 @@ Its own words are streamed to the asker sentence by sentence as newline-delimite
 - is `judging`: a confirmation, praise or scolding phrase ("eso es lo que buscáis", "bien visto", "good job", "I've already told you"), or a claim that something is what it gave before ("eso es justo lo que os he dado", "that's what I told you"), except in the call that confirms a step just recorded done;
 - is `repeated-own`: a sentence the coach already said in a reply among the last 24 lines;
 - `echoes-unhanded`: shares a run of five words with any prepared text not yet handed over in the run (a rung, an Alt, the full answer, an `onSuccess` line, a heads-up) of a step not recorded done, except that when the run of words comes from a heads-up the coach may give now (its step open, its mentions known, its `when` naming nothing unknown, not given before) and none was given in the reply, that heads-up is said whole and recorded as given, as `heads_up` would, rather than muting the reply (from 2026-11-19, after replays where the model paraphrased the heads-up that answered the players' question and they heard nothing);
-- is `round-asked`: asks the round in its own words.
+- is `round-asked`: asks the round in its own words;
+- is `points-ahead`: names something the players know that appears only in the rungs of steps neither open nor done, and that they have not named themselves, since in replays the coach's own words nudged towards steps not reached yet (from 2026-11-19; kept out of the audit, like `too-long`).
 
 Once a sentence is dropped as `meta` or `echoes-unhanded`, every later sentence of the model's own in that reply is dropped too, so no fragment refers back to what was cut; lines code says itself (rungs, fixed lines, a rung restored in place of a verbatim piece of it) still go through.
 

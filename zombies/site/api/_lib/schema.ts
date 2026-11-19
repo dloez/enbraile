@@ -218,6 +218,7 @@ export const coachCalls = pgTable(
     refused: boolean("refused").notNull().default(false),
     refusalCategory: text("refusal_category"),
     violations: jsonb("violations").$type<string[]>().notNull().default([]),
+    dropped: jsonb("dropped").$type<{ tag: string; text: string }[]>().notNull().default([]),
     error: text("error"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
