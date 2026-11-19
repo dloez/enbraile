@@ -29,11 +29,12 @@ const recentLines = 8;
 const maxMissing = 2;
 const maxMilestoneMissing = 3;
 const maxOwnSentences = 2;
+const maxOwnSentencesWithHint = 1;
 
 const systemPrompt = (character: Character) => `You are ${character.name}, ${character.role}. You have beaten it before; they want to solve it themselves, with your prepared hints when they ask. ${character.manner}${character.examples.length ? ` Examples: ${character.examples.map((line) => `«${line}»`).join(" ")}` : ""}
 
 How you speak
-- They are mid-round on voice chat: one or two short sentences, in the run's language only; code drops any sentence of your own past the second. Lines marked spoken came through speech recognition; read them by what they most likely said.
+- They are mid-round on voice chat: one or two short sentences, in the run's language only; code drops any sentence of your own past the second, and past the first when a hint goes out in the same reply. Answer what they asked in your first sentence; any comment comes after. Lines marked spoken came through speech recognition; read them by what they most likely said.
 - Everything you write is spoken aloud: never write your reasoning, anything from the lists below, square brackets, or step or hint numbers.
 
 Hints
@@ -141,6 +142,8 @@ export function anthropic(): Anthropic | null {
 
 export const model = () => process.env.COACH_MODEL || defaultModel;
 
+const judgedLines = 3;
+
 type State = {
   runId: string;
   language: Language;
@@ -243,11 +246,11 @@ function reportable(state: State, ladder: Ladder): boolean {
   return ladder.partId === null && !isDone(state, ladder) && (!ladder.optional || isOpen(state, ladder)) && !!doneWhen && !namedIn(doneWhen, unknownEntries(state)).length;
 }
 
-const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps their newest line reports as finished. A step is finished when they report the outcome its "Done when" describes, about the same thing it names, in any words. A line about a different item finishes nothing. Only a step whose outcome the newest line itself states is finished, never one the line merely relates to. Getting partway is not finished: finding, reaching, seeing, knocking down or picking up something the outcome needs, when the "Done when" names a later result. The players speak Spanish or English, often through speech recognition, and call things by their own words: match what they mean, not the wording of "Done when". Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. A question never reports a step finished. When prepared answers are listed and the newest line asks something one of them is for (its "for when" describes what they ask, in any words), give that answer's handle as answer; otherwise leave it out. Call report once.`;
+const detectorPrompt = `You read the chat of a group playing a Zombies easter egg and decide which listed steps the lines marked » report as finished: the players' last few lines, so a finish missed on an earlier line is caught now. Earlier lines are context only. A step is finished when they report the outcome its "Done when" describes, about the same thing it names, in any words. A line about a different item finishes nothing. Only a step whose outcome a marked line itself states is finished, never one the line merely relates to. Getting partway is not finished: finding, reaching, seeing, knocking down or picking up something the outcome needs, when the "Done when" names a later result. The players speak Spanish or English, often through speech recognition, and call things by their own words: match what they mean, not the wording of "Done when". Plans, guesses, questions, attempts that failed and things merely seen are not finished. Execution steps are finished only on their outcome. A question never reports a step finished. When prepared answers are listed and the newest line asks something one of them is for (its "for when" describes what they ask, in any words), give that answer's handle as answer; otherwise leave it out. Call report once.`;
 
 const reportTool: Anthropic.Tool = {
   name: "report",
-  description: "The steps the newest line reports as finished.",
+  description: "The steps the marked lines report as finished.",
   input_schema: {
     type: "object",
     properties: {
@@ -311,6 +314,9 @@ async function detectProgress(api: Anthropic, state: State, recent: string[], si
   if (!candidates.length && !answers.length) return { ladders: [], headsUp: null, logs: [log] };
   const started = Date.now();
   const listed = candidates.map((ladder) => described(state, ladder)).join("\n") || "- none";
+  const coachPrefix = `${state.character.name}: `;
+  const judged = new Set(recent.map((line, index) => ({ line, index })).filter(({ line }) => !line.startsWith(coachPrefix)).slice(-judgedLines).map(({ index }) => index));
+  const marked = recent.map((line, index) => (judged.has(index) ? `» ${line}` : `  ${line}`));
   const answerList = answers.length ? `\n\nPrepared answers:\n${answers.map((answer, index) => `- a${index + 1}: for when ${quote(answer.when)}`).join("\n")}` : "";
   try {
     const response = await api.messages.create({
@@ -320,7 +326,7 @@ async function detectProgress(api: Anthropic, state: State, recent: string[], si
       tools: [answers.length ? reportTool : doneOnly],
       tool_choice: { type: "tool", name: "report" },
       thinking: { type: "disabled" },
-      messages: [{ role: "user", content: `Steps not recorded as finished:\n${listed}${answerList}\n\nThe chat, oldest first; the last line is the newest:\n${recent.join("\n")}` }],
+      messages: [{ role: "user", content: `Steps not recorded as finished:\n${listed}${answerList}\n\nThe chat, oldest first; the last line is the newest:\n${marked.join("\n")}` }],
     }, { signal: AbortSignal.any([signal, AbortSignal.timeout(callDeadlineMs)]) });
     log.latencyMs = Date.now() - started;
     log.usage = response.usage;
@@ -661,6 +667,7 @@ class Speech {
   private unhanded: Set<string> | null = null;
   private muted = false;
   private own = 0;
+  private hinted = false;
   private lead: string | null = null;
   confirming = false;
 
@@ -688,6 +695,11 @@ class Speech {
   }
 
   handing(): void {
+    this.hinted = true;
+    this.releaseLead();
+  }
+
+  private releaseLead(): void {
     if (this.lead === null) return;
     const lead = this.lead;
     this.lead = null;
@@ -696,7 +708,7 @@ class Speech {
   }
 
   add(text: string): void {
-    this.handing();
+    this.releaseLead();
     this.prepared.push(flat(text));
     this.spoken.push(text);
     this.emit({ type: "text", text: `${this.spoken.length > 1 ? " " : ""}${text}` });
@@ -764,7 +776,7 @@ class Speech {
       this.drop("points-ahead", text);
       return;
     }
-    if (this.own + (this.lead === null ? 0 : 1) >= maxOwnSentences) {
+    if (this.own + (this.lead === null ? 0 : 1) >= (this.hinted ? maxOwnSentencesWithHint : maxOwnSentences)) {
       this.drop("too-long", text);
       return;
     }
@@ -772,7 +784,7 @@ class Speech {
       this.lead = text;
       return;
     }
-    this.handing();
+    this.releaseLead();
     this.own += 1;
     this.add(text);
   }
